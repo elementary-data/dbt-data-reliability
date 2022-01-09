@@ -7,7 +7,7 @@ version: '1.0.0'
 config-version: 2
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'elementary_observability'
+profile: 'elementary_snowflake'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -33,6 +33,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 # using the `{{ config(...) }}` macro.
 models:
   elementary_observability:
-    # Config indicated by + and applies to all files under models/example/
-    example:
       +materialized: view
+
+
+vars:
+  elementary:
+    monitoring_configuration_table: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_CONFIGURATION
+    bad_jsons_rate_threshold: 20
+    global_limit_unit: 'day'
+    global_limit_value: -1
