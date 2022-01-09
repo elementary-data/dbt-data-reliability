@@ -122,4 +122,4 @@ select
 from all_column_changes
 {% if is_incremental() %}
    where detected_at > (select max(detected_at) from {{ this }})
- {% endif %}
+{% endif %}

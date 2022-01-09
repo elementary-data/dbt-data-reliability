@@ -5,7 +5,7 @@ with source_tables_schema_configuration as (
     type as data_type,
     -- placeholder for supporting is_nullable in configuration
     null as is_nullable
-    from {{ var('elementary')['monitoring_configuration_table'] }}
+    from {{ var('elementary')['columns_monitoring_configuration'] }}
     where monitored = true
 )
 select * from source_tables_schema_configuration
