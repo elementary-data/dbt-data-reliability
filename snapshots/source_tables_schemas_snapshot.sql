@@ -23,7 +23,10 @@ final as (
         database_name,
         table_schema,
         table_name,
-        array_agg(object_construct('column_name', column_name, 'data_type', data_type, 'is_nullable', is_nullable)) within group (order by column_name) as columns_schema,
+
+        array_agg(object_construct('column_name', column_name, 'data_type', data_type, 'is_nullable', is_nullable))
+        within group (order by column_name) as columns_schema,
+
         {{ dbt_utils.current_timestamp() }} as updated_at
     from monitored_dbs_schemas
     group by 1, 2, 3, 4
