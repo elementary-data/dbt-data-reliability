@@ -18,18 +18,23 @@ tables_changes_desc as (
         full_table_name,
         detected_at,
         change,
+
         case
-            when change='table_added' then concat('the table "',full_table_name, '" was added')
-            when change='table_removed' then concat('the table "',full_table_name, '" was removed')
+            when change='table_added'
+                then concat('the table "',full_table_name, '" was added')
+            when change='table_removed'
+                then concat('the table "',full_table_name, '" was removed')
             else 'no description'
-        end
-        as change_description,
+        end as change_description,
+
         case
-            when change='table_added' then to_varchar(current_schema)
-            when change='table_removed' then to_varchar(current_schema)
+            when change='table_added'
+                then to_varchar(current_schema)
+            when change='table_removed'
+                then to_varchar(current_schema)
             else null
-        end
-        as change_info
+        end as change_info
+
     from tables_changes
 
 )

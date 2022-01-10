@@ -16,7 +16,7 @@ flat_previous_jsons as (
         full_table_name,
         f.value as columns_jsons
     from current_and_previous_schemas,
-        table (flatten(current_and_previous_schemas.previous_schema)) f
+    table (flatten(current_and_previous_schemas.previous_schema)) f
     where previous_schema is not null
 
 ),

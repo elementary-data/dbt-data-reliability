@@ -37,7 +37,7 @@ final as (
         cur.dbt_valid_from,
         cur.dbt_valid_to
     from current_schemas cur
-        left join previous_schemas pre
+    left join previous_schemas pre
         on (cur.full_table_name = pre.full_table_name)
 
 )
