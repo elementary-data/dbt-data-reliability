@@ -37,7 +37,7 @@ alerts_tables_changes as (
     select
         change_id as alert_id,
         detected_at,
-        table_changes.full_table_name,
+        tables_changes.full_table_name,
         'table_schema_change' as alert_type,
         change as alert_reason,
         change_description as alert_reason_value,
@@ -45,7 +45,7 @@ alerts_tables_changes as (
         array_construct(change_info) as alert_details_values
     from tables_for_alerts
     left join tables_changes
-        on (tables_for_alerts.full_table_name = table_changes.full_table_name)
+        on (tables_for_alerts.full_table_name = tables_changes.full_table_name)
 
 ),
 

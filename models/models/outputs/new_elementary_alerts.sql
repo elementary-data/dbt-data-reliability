@@ -9,7 +9,7 @@ new_alerts as (
 
     select *
     from elementary_alerts
-    where detected_at > (select max(detected_at) from {{ this }})
+    where detected_at > (select max(detected_at) from elementary_alerts)
 
 )
 
