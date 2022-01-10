@@ -6,7 +6,7 @@ profile: 'elementary_snowflake'
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
-seed-paths: ["seeds"]
+seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
@@ -23,9 +23,6 @@ models:
 
 vars:
   elementary:
-    schemas_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_SCHEMAS_CONFIGURATION
-    tables_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_TABLES_CONFIGURATION
-    columns_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_COLUMNS_CONFIGURATION
-    bad_jsons_rate_threshold: 20
-    global_limit_unit: 'day'
-    global_limit_value: -1
+    schemas_monitoring_configuration: ELEMENTARY_MONITORING.TEST_ELEMENTARY_OBSERVABILITY.MONITORING_SCHEMAS_CONFIGURATION
+    tables_monitoring_configuration: ELEMENTARY_MONITORING.TEST_ELEMENTARY_OBSERVABILITY.MONITORING_TABLES_CONFIGURATION
+    columns_monitoring_configuration: ELEMENTARY_MONITORING.TEST_ELEMENTARY_OBSERVABILITY.MONITORING_COLUMNS_CONFIGURATION
