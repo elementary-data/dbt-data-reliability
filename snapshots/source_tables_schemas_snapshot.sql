@@ -16,7 +16,7 @@
 
 with monitored_dbs_schemas as (
 
-    {{ union_all_diff_dbs(monitored_dbs, get_schemas_snapshot_data) }}
+    {{ union_schemas_for_snapshot() }}
 
 ),
 
