@@ -1,8 +1,8 @@
-{% macro get_schemas_snapshot_data(monitored_db, monitored_schema) %}
-    {{ return(adapter.dispatch('get_schemas_snapshot_data')(monitored_db, monitored_schema)) }}
+{% macro get_columns_from_information_schema(monitored_db, monitored_schema) %}
+    {{ return(adapter.dispatch('get_columns_from_information_schema')(monitored_db, monitored_schema)) }}
 {% endmacro %}
 
-{% macro snowflake__get_schemas_snapshot_data(monitored_db, monitored_schema) %}
+{% macro snowflake__get_columns_from_information_schema(monitored_db, monitored_schema) %}
 
     select
         upper(concat(table_catalog,'.',table_schema,'.',table_name)) as full_table_name,

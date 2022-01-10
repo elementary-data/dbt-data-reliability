@@ -4,9 +4,9 @@
   config (
     target_database= target.database,
     target_schema= target.schema,
-    unique_key='full_table_name',
+    unique_key='full_schema_name',
     strategy='check',
-    check_cols=['columns_schema'],
+    check_cols=['tables_in_schema'],
     invalidate_hard_deletes=true
     )
 }}
@@ -15,24 +15,23 @@
 
 with monitored_dbs_schemas as (
 
-    {{ union_schemas_for_snapshot() }}
+    {{ union_schemas_for_snapshot(get_tables_from_information_schema) }}
 
 ),
 
 final as (
 
     select
-        full_table_name,
+        concat(database_name,'.',schema_name) as full_schema_name,
         database_name,
         schema_name,
-        table_name,
 
-        array_agg(object_construct('column_name', column_name, 'data_type', data_type))
-            within group (order by column_name)
-        as columns_schema
+        array_agg(distinct table_name)
+            within group (order by table_name)
+        as tables_in_schema
 
     from monitored_dbs_schemas
-    group by 1, 2, 3, 4
+    group by 1, 2, 3
 
 )
 
