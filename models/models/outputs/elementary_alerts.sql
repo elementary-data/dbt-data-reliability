@@ -44,7 +44,7 @@ alerts_tables_changes as (
         array_construct('change_info') as alert_details_keys,
         array_construct(change_info) as alert_details_values
     from tables_for_alerts
-    left join tables_changes
+    inner join tables_changes
         on (tables_for_alerts.full_table_name = tables_changes.full_table_name)
 
 ),
@@ -55,13 +55,13 @@ alerts_columns_changes as (
         change_id as alert_id,
         detected_at,
         columns_changes.full_table_name,
-        'table_schema_change' as alert_type,
+        'column_schema_change' as alert_type,
         change as alert_reason,
         change_description as alert_reason_value,
         array_construct('change_info') as alert_details_keys,
         array_construct(change_info) as alert_details_values
     from columns_for_alerts
-    left join columns_changes
+    inner join columns_changes
         on (columns_for_alerts.full_table_name = columns_changes.full_table_name
         and columns_for_alerts.column_name = columns_changes.column_name)
 
