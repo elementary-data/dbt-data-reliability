@@ -1,13 +1,11 @@
 with schemas_snapshot as (
 
-    select *
-    from {{ ref('source_tables_schemas_snapshot') }}
+    select * from {{ ref('source_tables_schemas_snapshot') }}
 ),
 
 schemas_order as (
 
-    select
-        *,
+    select *,
         row_number() over (partition by full_table_name order by dbt_updated_at desc) as schema_order
     from schemas_snapshot
 
@@ -17,7 +15,7 @@ current_schemas as (
 
     select *
     from schemas_order
-    where schema_order=1
+    where schema_order = 1
 
 ),
 
@@ -25,7 +23,7 @@ previous_schemas as (
 
     select *
     from schemas_order
-    where schema_order=2
+    where schema_order = 2
 
 ),
 

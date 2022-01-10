@@ -6,15 +6,15 @@
 
 with current_and_previous_schemas as (
 
-    select *
-    from {{ ref('current_and_previous_schemas') }},
+    select * from {{ ref('current_and_previous_schemas') }}
 
 ),
 
 flat_jsons_cs as (
 
     select
-        full_table_name, dbt_updated_at,
+        full_table_name,
+        dbt_updated_at,
         f.value as columns_jsons
     from current_and_previous_schemas,
         table(flatten(current_and_previous_schemas.current_schema)) f
@@ -27,9 +27,8 @@ current_schemas_col as (
     select
         full_table_name,
         dbt_updated_at,
-        {{trim_quotes('columns_jsons:name')}} as column_name,
-        {{trim_quotes('columns_jsons:data_type')}} as data_type,
-        {{trim_quotes('columns_jsons:is_nullable')}} as is_nullable
+        {{trim_quotes('columns_jsons:column_name')}} as column_name,
+        {{trim_quotes('columns_jsons:data_type')}} as data_type
     from flat_jsons_cs
 
 )

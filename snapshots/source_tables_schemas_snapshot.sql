@@ -12,24 +12,27 @@
     )
 }}
 
+{% set monitored_dbs = get_monitored_dbs() %}
+
 with monitored_dbs_schemas as (
-    select *
-    from {{ ref('stg_information_schema__columns') }}
+
+    {{ union_all_diff_dbs(monitored_dbs, get_schemas_snapshot_data) }}
+
 ),
 
 final as (
+
     select
         full_table_name,
         database_name,
-        table_schema,
+        schema_name,
         table_name,
-
-        array_agg(object_construct('column_name', column_name, 'data_type', data_type, 'is_nullable', is_nullable))
+        array_agg(object_construct('column_name', column_name, 'data_type', data_type))
         within group (order by column_name) as columns_schema,
-
         {{ dbt_utils.current_timestamp() }} as updated_at
     from monitored_dbs_schemas
     group by 1, 2, 3, 4
+
 )
 
 select * from final

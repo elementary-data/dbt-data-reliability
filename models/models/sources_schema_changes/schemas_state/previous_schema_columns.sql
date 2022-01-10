@@ -6,8 +6,7 @@
 
 with current_and_previous_schemas as (
 
-    select *
-    from {{ ref('current_and_previous_schemas') }},
+    select * from {{ ref('current_and_previous_schemas') }}
 
 ),
 
@@ -26,9 +25,8 @@ previous_schemas_columns as (
 
     select
         full_table_name,
-        {{trim_quotes('columns_jsons:name')}} as column_name,
-        {{trim_quotes('columns_jsons:data_type')}} as data_type,
-        {{trim_quotes('columns_jsons:is_nullable')}} as is_nullable
+        {{trim_quotes('columns_jsons:column_name')}} as column_name,
+        {{trim_quotes('columns_jsons:data_type')}} as data_type
     from flat_previous_jsons
 
 )
