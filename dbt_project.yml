@@ -20,11 +20,13 @@ models:
   elementary_observability:
       +materialized: view
       system:
-        +schema: elementary_system
+        +schema: system
+
+
 
 
 vars:
   elementary:
-    schemas_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_SCHEMAS_CONFIGURATION
-    tables_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_TABLES_CONFIGURATION
-    columns_monitoring_configuration: ELEMENTARY_MONITORING.ELEMENTARY_OBSERVABILITY.MONITORING_COLUMNS_CONFIGURATION
+    schemas_monitoring_configuration: MONITORING_SCHEMAS_CONFIGURATION
+    tables_monitoring_configuration: MONITORING_TABLES_CONFIGURATION
+    columns_monitoring_configuration: MONITORING_COLUMNS_CONFIGURATION
