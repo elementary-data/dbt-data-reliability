@@ -5,59 +5,70 @@
   )
 }}
 
+with cur as (
 
-{% set latest_update %}
-    (select max(dbt_updated_at) from {{ ref('current_and_previous_schemas')}})
-{% endset %}
-
-with all_tables as (
-
-    select * from {{ ref('current_and_previous_schemas')}}
+    select * from {{ ref('current_schema_tables')}}
 
 ),
 
-new_tables as (
+pre as (
 
+    select * from {{ ref('previous_schema_tables')}}
+
+),
+
+columns_schemas as (
+
+    select * from {{ ref('current_and_previous_columns')}}
+
+),
+
+tables_added as (
     select
-        full_table_name,
+        cur.full_table_name,
         'table_added' as change,
-        current_schema,
-        dbt_updated_at as detected_at
-    from all_tables
-    where dbt_valid_from = {{latest_update}}
+        cur.dbt_updated_at as detected_at
+    from cur
+    left join pre
+        on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
+    where pre.full_table_name is null
 
 ),
 
-removed_tables as (
+tables_removed as (
 
     select
-        full_table_name,
+        pre.full_table_name,
         'table_removed' as change,
-        current_schema,
-        dbt_updated_at as detected_at
-    from all_tables
-    where dbt_valid_to = {{latest_update}}
+        cur.dbt_updated_at as detected_at
+    from pre
+    left join cur
+        on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
+    where cur.full_table_name is null
+
+),
+
+
+union_tables_changes as (
+
+    select * from tables_removed
+    union all
+    select * from tables_added
 
 ),
 
 tables_changes as (
 
-    select * from new_tables
-    union all
-    select * from removed_tables
-
-),
-
-all_tables_changes as (
-
     select
-        {{ dbt_utils.surrogate_key(['full_table_name', 'change', 'detected_at']) }} as change_id,
-        full_table_name,
-        change,
-        current_schema,
-        detected_at
-    from tables_changes
+        {{ dbt_utils.surrogate_key(['tables.full_table_name', 'tables.change', 'tables.detected_at']) }} as change_id,
+        tables.full_table_name,
+        tables.change,
+        columns.current_schema as table_schema,
+        tables.detected_at
+    from union_tables_changes as tables
+    left join columns_schemas as columns
+        on (tables.full_table_name = columns.full_table_name)
 
 )
 
-select * from all_tables_changes
+select * from tables_changes

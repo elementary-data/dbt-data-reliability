@@ -29,9 +29,9 @@ tables_changes_desc as (
 
         case
             when change='table_added'
-                then to_varchar(current_schema)
+                then to_varchar(table_schema)
             when change='table_removed'
-                then to_varchar(current_schema)
+                then to_varchar(table_schema)
             else null
         end as change_info
 

@@ -6,7 +6,7 @@
 
 with current_and_previous_schemas as (
 
-    select * from {{ ref('current_and_previous_schemas') }}
+    select * from {{ ref('current_and_previous_columns') }}
 
 ),
 

@@ -1,4 +1,4 @@
-{% snapshot source_columns_schemas_snapshot %}
+{% snapshot source_tables_columns_snapshot %}
 
 {{
   config (
