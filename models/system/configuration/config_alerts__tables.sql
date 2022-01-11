@@ -1,16 +1,7 @@
-{% set schemas_monitoring_configuration %}
-    {{ target.database ~"."~ target.schema ~"."~ var('elementary')['schemas_monitoring_configuration']}}
-{% endset %}
-
-{% set tables_monitoring_configuration %}
-    {{ target.database ~"."~ target.schema ~"."~ var('elementary')['tables_monitoring_configuration']}}
-{% endset %}
-
-
 
 with schemas_config as (
 
-    select * from {{ schemas_monitoring_configuration }}
+    select * from {{ get_schemas_configuration() }}
 
 ),
 
@@ -19,7 +10,7 @@ tables_config as (
 
     select *,
         {{ full_table_name()}}
-    from {{ tables_monitoring_configuration }}
+    from {{ get_tables_configuration() }}
 
 ),
 

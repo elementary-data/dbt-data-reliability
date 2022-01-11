@@ -1,13 +1,9 @@
-{% set columns_monitoring_configuration %}
-    {{ target.database ~"."~ target.schema ~"."~ var('elementary')['columns_monitoring_configuration']}}
-{% endset %}
-
 
 with columns_config as (
 
     select *,
         {{ full_table_name() }}
-     from {{ columns_monitoring_configuration }}
+     from {{ get_columns_configuration() }}
 
 ),
 

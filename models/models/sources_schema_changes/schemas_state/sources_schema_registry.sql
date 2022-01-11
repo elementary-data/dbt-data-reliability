@@ -1,7 +1,7 @@
 with columns_monitoring_configuration as (
 
     select *
-    from {{ var('elementary')['columns_monitoring_configuration'] }}
+    from {{ get_columns_configuration() }}
 
 ),
 
