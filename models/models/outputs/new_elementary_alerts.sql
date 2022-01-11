@@ -1,15 +1,14 @@
-
 with elementary_alerts as (
 
-    select distinct * from {{ ref('elementary_alerts')}}
+    select * from {{ ref('elementary_alerts')}}
 
 ),
 
 new_alerts as (
 
-    select *
+    select distinct *
     from elementary_alerts
-    where detected_at > (select max(detected_at) from elementary_alerts)
+    where alert_created_at = ( select max(alert_created_at) from elementary_alerts )
 
 )
 

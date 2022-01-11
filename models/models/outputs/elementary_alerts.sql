@@ -1,3 +1,11 @@
+{{
+  config(
+    materialized = 'incremental',
+    unique_key = 'alert_id'
+  )
+}}
+
+
 with tables_for_alerts as (
 
     select * from {{ ref('config_alerts__tables') }}
@@ -64,6 +72,15 @@ union_alerts as (
     select * from alerts_tables_changes
         union all
     select * from alerts_columns_changes
+),
+
+alerts as (
+
+    select
+        *,
+        {{ dbt_utils.current_timestamp() }} as alert_created_at
+    from union_alerts
+
 )
 
-select * from union_alerts
+select * from alerts
