@@ -96,7 +96,7 @@ columns_removed as (
         null as data_type,
         pre.column_name as pre_column_name,
         pre.data_type as pre_data_type,
-        cur.dbt_updated_at as detected_at
+        pre.dbt_updated_at as detected_at
     from pre
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)

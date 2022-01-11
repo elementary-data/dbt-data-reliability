@@ -17,16 +17,18 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 
 models:
+
   elementary_observability:
       +materialized: view
       system:
         +schema: system
-
-
-
 
 vars:
   elementary:
     schemas_monitoring_configuration: MONITORING_SCHEMAS_CONFIGURATION
     tables_monitoring_configuration: MONITORING_TABLES_CONFIGURATION
     columns_monitoring_configuration: MONITORING_COLUMNS_CONFIGURATION
+
+
+seeds:
+  +schema: system

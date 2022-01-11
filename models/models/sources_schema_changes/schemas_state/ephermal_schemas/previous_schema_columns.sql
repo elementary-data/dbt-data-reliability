@@ -14,6 +14,7 @@ flat_previous_jsons as (
 
     select
         full_table_name,
+        dbt_updated_at,
         f.value as columns_jsons
     from current_and_previous_schemas,
     table (flatten(current_and_previous_schemas.previous_schema)) f
@@ -25,6 +26,7 @@ previous_schemas_columns as (
 
     select
         full_table_name,
+        dbt_updated_at,
         {{trim_quotes('columns_jsons:column_name')}} as column_name,
         {{trim_quotes('columns_jsons:data_type')}} as data_type
     from flat_previous_jsons

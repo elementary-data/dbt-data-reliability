@@ -48,6 +48,15 @@ columns_changes_desc as (
 
     from columns_changes
 
+),
+
+column_changes_with_full_name as (
+
+    select
+        *,
+        concat(full_table_name, '.', column_name) as full_column_name
+    from columns_changes_desc
+
 )
 
-select * from columns_changes_desc
+select * from column_changes_with_full_name
