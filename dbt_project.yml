@@ -1,7 +1,7 @@
 name: 'elementary_observability'
 version: '1.0.0'
 config-version: 2
-profile: 'elementary_snowflake'
+profile: 'elementary'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -19,6 +19,8 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   elementary_observability:
       +materialized: view
+      system:
+        +schema: elementary_system
 
 
 vars:
