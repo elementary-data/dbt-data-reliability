@@ -48,3 +48,4 @@ joined_columns_and_configuration as (
 )
 
 select * from joined_columns_and_configuration
+group by 1,2,3,4,5,6,7,8,9
