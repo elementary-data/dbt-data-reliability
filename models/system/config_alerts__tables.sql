@@ -23,10 +23,10 @@ all_sources as (
 joined_tables_and_configuration as (
 
     select
-        COALESCE(all.full_table_name, conf.full_table_name) as full_table_name,
-        COALESCE(all.database_name, conf.database_name) as database_name,
-        COALESCE(all.schema_name, conf.schema_name) as schema_name,
-        COALESCE(all.table_name, conf.table_name) as table_name,
+        COALESCE(alls.full_table_name, conf.full_table_name) as full_table_name,
+        COALESCE(alls.database_name, conf.database_name) as database_name,
+        COALESCE(alls.schema_name, conf.schema_name) as schema_name,
+        COALESCE(alls.table_name, conf.table_name) as table_name,
         schemas_config.alert_on_schema_changes as is_schema_monitored,
         conf.alert_on_schema_changes as is_table_monitored,
         case
@@ -35,12 +35,12 @@ joined_tables_and_configuration as (
             else schemas_config.alert_on_schema_changes
         end as alert_on_schema_changes
 
-    from all_sources as all
+    from all_sources as alls
         full outer join tables_config as conf
-            on (all.full_table_name = conf.full_table_name)
+            on (alls.full_table_name = conf.full_table_name)
         left join schemas_config
-            on (all.database_name = schemas_config.database_name
-            and all.schema_name = schemas_config.schema_name)
+            on (alls.database_name = schemas_config.database_name
+            and alls.schema_name = schemas_config.schema_name)
 
 
 )
