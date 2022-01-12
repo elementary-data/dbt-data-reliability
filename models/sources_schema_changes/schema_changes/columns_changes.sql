@@ -1,3 +1,5 @@
+-- Remove comparison to configuration
+
 {{
   config(
     materialized = 'incremental',
@@ -11,50 +13,13 @@ with cur as (
 
 ),
 
-reg as (
-
-    select * from {{ ref('sources_schema_registry')}}
-
-),
-
 pre as (
 
     select * from {{ ref('previous_schema_columns')}}
 
 ),
 
-type_changes_from_config as (
-
-    select
-        cur.full_table_name,
-        'type_changed_from_configuration' as change,
-        cur.column_name,
-        cur.data_type as data_type,
-        reg.column_name as pre_column_name,
-        reg.data_type as pre_data_type,
-        cur.dbt_updated_at as detected_at
-    from cur
-    inner join reg
-        on (cur.full_table_name = reg.full_table_name and cur.column_name = reg.column_name)
-    where cur.data_type != reg.data_type
-
-),
-
-columns_with_no_type_configured as (
-
-    select
-        cur.full_table_name,
-        cur.column_name,
-        cur.data_type,
-        cur.dbt_updated_at
-    from cur
-    left join reg
-        on (cur.full_table_name = reg.full_table_name and cur.column_name = reg.column_name)
-    where reg.data_type is null
-
-),
-
-type_changes_from_pre as (
+type_changes as (
 
     select
         cur.full_table_name,
@@ -64,7 +29,7 @@ type_changes_from_pre as (
         pre.column_name as pre_column_name,
         pre.data_type as pre_data_type,
         cur.dbt_updated_at as detected_at
-    from columns_with_no_type_configured cur
+    from cur
     inner join pre
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.data_type != pre.data_type
@@ -107,9 +72,7 @@ columns_removed as (
 
 all_column_changes_union as (
 
-    select * from type_changes_from_config
-    union all
-    select * from type_changes_from_pre
+    select * from type_changes
     union all
     select * from columns_removed
     union all

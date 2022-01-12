@@ -24,8 +24,6 @@ columns_changes_desc as (
                 then concat('the column "', column_name,'" was added')
             when change= 'column_removed'
                 then concat('the column "', pre_column_name,'" was removed')
-            when change= 'type_changed_from_configuration'
-                then concat('the type of "', column_name,'" was changed to ', data_type,' and is configured to be: ', pre_data_type)
             when change= 'type_changed'
                 then concat('the type of "',column_name,'" was changed to ', data_type,' from: ', pre_data_type)
             else 'no description'

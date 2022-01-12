@@ -25,8 +25,8 @@ alerts_tables_changes as (
         detected_at,
         {{ full_table_name_to_schema() }} as schema_name,
         full_table_name,
-        'table_schema_change' as alert_type,
-        change as alert_reason,
+        'schema_change' as alert_type,
+        change as sub_type,
         change_description as alert_reason_value,
         array_construct('change_info') as alert_details_keys,
         array_construct(change_info) as alert_details_values
@@ -43,8 +43,8 @@ alerts_columns_changes as (
         detected_at,
         {{ full_table_name_to_schema() }} as schema_name,
         full_table_name,
-        'column_schema_change' as alert_type,
-        change as alert_reason,
+        'schema_change' as alert_type,
+        change as sub_type,
         change_description as alert_reason_value,
         array_construct('change_info') as alert_details_keys,
         array_construct(change_info) as alert_details_values
