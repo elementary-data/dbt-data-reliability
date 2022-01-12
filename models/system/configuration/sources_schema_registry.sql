@@ -10,7 +10,7 @@ source_tables_schema_configuration as (
     select
         {{ full_table_name() }},
         upper(column_name) as column_name,
-        data_type
+        column_type as data_type
     from columns_monitoring_configuration
 
 )
