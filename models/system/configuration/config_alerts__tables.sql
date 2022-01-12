@@ -39,7 +39,7 @@ joined_tables_and_configuration as (
         full outer join tables_config
             on (all_sources.full_table_name = tables_config.full_table_name)
         left join schemas_config
-            on (all_sources.database_name = schemas_config.db_name
+            on (all_sources.database_name = schemas_config.database_name
             and all_sources.schema_name = schemas_config.schema_name)
 
 
