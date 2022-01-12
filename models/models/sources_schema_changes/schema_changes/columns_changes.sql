@@ -120,7 +120,7 @@ all_column_changes_union as (
 all_column_changes as (
 
     select
-        {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as change_id,
+        {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'pre_column_name', 'change', 'detected_at']) }} as change_id,
         full_table_name,
         change,
         column_name,
