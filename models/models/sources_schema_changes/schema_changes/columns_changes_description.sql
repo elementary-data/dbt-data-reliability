@@ -1,10 +1,3 @@
-{{
-  config(
-    materialized = 'incremental',
-    unique_key = 'change_id'
-  )
-}}
-
 with columns_changes as (
 
     select * from {{ref ('columns_changes')}}
