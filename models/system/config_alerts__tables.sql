@@ -22,7 +22,7 @@ all_sources as (
 
 joined_tables_and_configuration as (
 
-    select distinct
+    select
         COALESCE(all.full_table_name, conf.full_table_name) as full_table_name,
         COALESCE(all.database_name, conf.database_name) as database_name,
         COALESCE(all.schema_name, conf.schema_name) as schema_name,
