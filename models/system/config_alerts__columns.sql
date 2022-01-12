@@ -23,26 +23,28 @@ all_sources as (
 joined_columns_and_configuration as (
 
     select distinct
-        all_sources.full_table_name,
-        all_sources.database_name,
-        all_sources.schema_name,
-        all_sources.table_name,
-        all_sources.column_name,
-        concat(all_sources.full_table_name, '.',all_sources.column_name) as full_column_name,
+        COALESCE(all.full_table_name, conf.full_table_name) as full_table_name,
+        COALESCE(all.database_name, conf.database_name) as database_name,
+        COALESCE(all.schema_name, conf.schema_name) as schema_name,
+        COALESCE(all.table_name, conf.table_name) as table_name,
+        COALESCE(all.column_name, conf.column_name) as column_name,
+        COALESCE(concat(all.full_table_name, '.',all.column_name),
+            concat(conf.full_table_name, '.',conf.column_name))
+        as full_column_name,
         tables_alerts.alert_on_schema_changes as is_table_monitored,
-        columns_config.alert_on_schema_changes as is_column_monitored,
+        conf.alert_on_schema_changes as is_column_monitored,
         case
-            when columns_config.alert_on_schema_changes = true then true
-            when columns_config.alert_on_schema_changes = false then false
+            when conf.alert_on_schema_changes = true then true
+            when conf.alert_on_schema_changes = false then false
             else tables_alerts.alert_on_schema_changes
         end as alert_on_schema_changes
 
-    from all_sources
-         full outer join columns_config
-            on (all_sources.full_table_name = columns_config.full_table_name
-            and all_sources.column_name = columns_config.column_name)
+    from all_sources as all
+         full outer join columns_config as conf
+            on (all.full_table_name = conf.full_table_name
+            and all.column_name = conf.column_name)
          left join tables_alerts
-            on (all_sources.full_table_name = tables_alerts.full_table_name)
+            on (all.full_table_name = tables_alerts.full_table_name)
 )
 
 select * from joined_columns_and_configuration
