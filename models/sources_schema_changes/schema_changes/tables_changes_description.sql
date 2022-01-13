@@ -21,9 +21,9 @@ tables_changes_desc as (
 
         case
             when change='table_added'
-                then concat('the table "',full_table_name, '" was added')
+                then concat('the table "', full_table_name, '" was added')
             when change='table_removed'
-                then concat('the table "',full_table_name, '" was removed')
+                then concat('the table "', full_table_name, '" was removed')
             else 'no description'
         end as change_description,
 

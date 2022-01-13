@@ -40,7 +40,7 @@ tables_removed as (
     select
         pre.full_table_name,
         'table_removed' as change,
-        cur.dbt_updated_at as detected_at
+        pre.dbt_updated_at as detected_at
     from pre
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
