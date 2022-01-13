@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: {{ target.schema }}
+    database: {{ target.database }}
+    meta:
+      observability:
+        alert_on_schema_changes: true
+    tables:
+      - name: groups
+        meta:
+          observability:
+            alert_on_schema_changes: true
+        columns:
+          - name: group_a
+            meta:
+              column_type: text
+          - name: group_b
+            meta:
+              column_type: text
+      - name: matches
+        meta:
+          observability:
+            alert_on_schema_changes: true
+      - name: stats_players
+        meta:
+          observability:
+            alert_on_schema_changes: true
+      - name: stats_team
+        meta:
+          observability:
+            alert_on_schema_changes: true
+        columns:
+          - name: crosses
+            meta:
+              column_type: number
+          - name: interceptions
+            meta:
+              column_type: number
