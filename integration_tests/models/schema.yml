@@ -1,8 +1,33 @@
 version: 2
 
+models:
+  - name: elementary_alerts
+    tests:
+      - dbt_utils.equality:
+          compare_model: ref('expected_alerts')
+          compare_columns:
+            - schema_name
+            - full_table_name
+            - alert_type
+            - sub_type
+            - alert_reason_value
+    columns:
+      - name: alert_id
+        tests:
+          - unique
+          - not_null
+      - name: detected_at
+          - not_null
+      - name: alert_details_keys
+          - not_null
+      - name: alert_details_values
+          - not_null
+
+
+
 sources:
-  - name: {{ target.schema }}
-    database: {{ target.database }}
+  - name: TEST_DATA
+    schema: target.schema
     meta:
       observability:
         alert_on_schema_changes: true
