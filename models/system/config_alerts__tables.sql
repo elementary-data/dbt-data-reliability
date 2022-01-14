@@ -1,7 +1,7 @@
 
 with schemas_config as (
 
-    select * from {{ get_schemas_configuration() }}
+    select * from {{ schemas_configuration_table() }}
 
 ),
 
@@ -10,7 +10,7 @@ tables_config as (
 
     select *,
         {{ full_table_name()}}
-    from {{ get_tables_configuration() }}
+    from {{ tables_configuration_table() }}
 
 ),
 

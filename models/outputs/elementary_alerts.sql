@@ -5,7 +5,6 @@
   )
 }}
 
-
 with tables_changes as (
 
     select * from {{ ref('tables_changes_description') }}
@@ -63,3 +62,9 @@ union_alerts as (
 )
 
 select * from union_alerts
+{% if is_incremental() %}
+    {% set row_count = get_row_count(this) %}
+    {% if row_count > 0 %}
+        where detected_at > (select max(detected_at) from {{ this }})
+    {%- endif %}
+{%- endif %}

@@ -1,26 +1,39 @@
 {% macro do_schema_changes() %}
 
     {% set schema_changes_query -%}
-    alter table {{ target.database ~"."~ target.schema }}_data.GROUPS
-    drop column GROUP_A;
 
-    alter table {{ target.database ~"."~ target.schema }}_data.STATS_PLAYERS
-    add RED_CARDS varchar(100);
+    {# column_removed #}
+    alter table {{ ref('groups') }}
+    drop column group_a;
 
-    alter table {{ target.database ~"."~ target.schema }}_data.STATS_PLAYERS
-    add KEY_CROSSES varchar(100);
+    {# column_removed #}
+    alter table {{ ref('stats_players') }}
+    drop column offsides;
 
-    alter table {{ target.database ~"."~ target.schema }}_data.STATS_PLAYERS
-    drop column OFFSIDES;
+    {# column_added #}
+    alter table {{ ref('stats_players') }}
+    add red_cards varchar(100);
 
-    alter table {{ target.database ~"."~ target.schema }}_data.GROUPS
-    drop column GROUP_B;
+    {# column_added #}
+    alter table {{ ref('stats_players') }}
+    add key_crosses varchar(100);
 
-    alter table {{ target.database ~"."~ target.schema }}_data.GROUPS
-    add GROUP_B integer;
+    {# column_type_change #}
+    alter table {{ ref('groups') }}
+    drop column group_b;
+    alter table {{ ref('groups') }}
+    add group_b integer;
 
-    drop table {{ target.database ~"."~ target.schema }}_data.STATS_TEAM;
+    {# column_type_change_should_not_alert #}
+    alter table {{ ref('matches') }}
+    drop column home;
+    alter table {{ ref('matches') }}
+    add home integer;
 
+    {# table_removed #}
+    drop table {{ ref('stats_team') }};
+
+    {# table_added #}
     create table {{ target.database ~"."~ target.schema }}_data.stadiums (
     stadium_name varchar,
     location varchar,

@@ -59,7 +59,14 @@
 
 {% macro get_schemas_for_alerts() %}
 
-    {% set schemas_for_alerts = get_monitored_schemas() %}
+    {% set schemas_for_alerts_query %}
+        select
+            {{ full_schema_name() }}
+        from {{ schemas_configuration_table() }}
+        where alert_on_schema_changes = true
+    {% endset %}
+
+    {% set schemas_for_alerts = column_to_list(schemas_for_alerts_query) %}
     {% set schemas_for_alerts_tuple = list_to_tuple(schemas_for_alerts) %}
     {{ return(schemas_for_alerts_tuple) }}
 

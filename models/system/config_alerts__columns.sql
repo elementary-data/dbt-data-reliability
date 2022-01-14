@@ -3,7 +3,7 @@ with columns_config as (
 
     select *,
         {{ full_table_name() }}
-     from {{ get_columns_configuration() }}
+     from {{ columns_configuration_table() }}
 
 ),
 

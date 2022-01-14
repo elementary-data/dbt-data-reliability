@@ -4,7 +4,7 @@
 
     {% set monitored_dbs_query %}
         select distinct upper(database_name) as database_name
-        from {{ get_schemas_configuration() }}
+        from {{ schemas_configuration_table() }}
     {% endset %}
 
     {% set monitored_dbs = column_to_list(monitored_dbs_query) %}
@@ -18,8 +18,8 @@
 
     {% set monitored_schemas_query %}
         select distinct
-        upper(concat(database_name, '.', schema_name)) as schemas_full_names
-        from {{ get_schemas_configuration() }}
+        {{ full_schema_name() }}
+        from {{ schemas_configuration_table() }}
         group by 1
     {% endset %}
 

@@ -1,10 +1,10 @@
 version: 2
 
 models:
-  - name: elementary_alerts
+  - name: schema_changes_alerts
     tests:
       - dbt_utils.equality:
-          compare_model: ref('expected_alerts')
+          compare_model: ref('expected_alerts_schema_changes')
           compare_columns:
             - schema_name
             - full_table_name

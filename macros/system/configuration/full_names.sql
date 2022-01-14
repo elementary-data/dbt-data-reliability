@@ -6,3 +6,6 @@
     substr(full_table_name, 1, regexp_instr(full_table_name, '\\.' ,1, 2)-1)
 {%- endmacro %}
 
+{% macro full_schema_name() -%}
+    upper(concat(database_name, '.', schema_name)) as full_schema_name
+{%- endmacro %}
