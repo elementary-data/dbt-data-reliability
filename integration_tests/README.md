@@ -12,6 +12,8 @@ dbt run-operation do_schema_changes
 dbt snapshot
 dbt run
 dbt run-operation do_configuration_changes
+dbt snapshot
+dbt run
 dbt test
 
 ```
