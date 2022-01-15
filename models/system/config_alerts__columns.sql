@@ -23,13 +23,13 @@ all_sources as (
 joined_columns_and_configuration as (
 
     select distinct
-        COALESCE(alls.full_table_name, conf.full_table_name) as full_table_name,
-        COALESCE(alls.database_name, conf.database_name) as database_name,
-        COALESCE(alls.schema_name, conf.schema_name) as schema_name,
-        COALESCE(alls.table_name, conf.table_name) as table_name,
-        COALESCE(alls.column_name, conf.column_name) as column_name,
-        COALESCE(concat(alls.full_table_name, '.',alls.column_name),
-            concat(conf.full_table_name, '.',conf.column_name))
+        upper(coalesce(alls.full_table_name, conf.full_table_name)) as full_table_name,
+        upper(coalesce(alls.database_name, conf.database_name)) as database_name,
+        upper(coalesce(alls.schema_name, conf.schema_name)) as schema_name,
+        upper(coalesce(alls.table_name, conf.table_name)) as table_name,
+        upper(coalesce(alls.column_name, conf.column_name)) as column_name,
+        upper(coalesce(concat(alls.full_table_name, '.',alls.column_name),
+            concat(conf.full_table_name, '.',conf.column_name)))
         as full_column_name,
         tables_alerts.alert_on_schema_changes as is_table_monitored,
         conf.alert_on_schema_changes as is_column_monitored,

@@ -23,10 +23,10 @@ all_sources as (
 joined_tables_and_configuration as (
 
     select
-        COALESCE(alls.full_table_name, conf.full_table_name) as full_table_name,
-        COALESCE(alls.database_name, conf.database_name) as database_name,
-        COALESCE(alls.schema_name, conf.schema_name) as schema_name,
-        COALESCE(alls.table_name, conf.table_name) as table_name,
+        upper(coalesce(alls.full_table_name, conf.full_table_name)) as full_table_name,
+        upper(coalesce(alls.database_name, conf.database_name)) as database_name,
+        upper(coalesce(alls.schema_name, conf.schema_name)) as schema_name,
+        upper(coalesce(alls.table_name, conf.table_name)) as table_name,
         schemas_config.alert_on_schema_changes as is_schema_monitored,
         conf.alert_on_schema_changes as is_table_monitored,
         case

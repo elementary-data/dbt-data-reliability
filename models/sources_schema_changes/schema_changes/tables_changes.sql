@@ -61,6 +61,7 @@ tables_changes as (
 
     select
         {{ dbt_utils.surrogate_key(['tables.full_table_name', 'tables.change', 'tables.detected_at']) }} as change_id,
+        upper(substr(tables.full_table_name, 1, regexp_instr(full_table_name, '\\.' ,1, 2)-1)) as full_schema_name,
         tables.full_table_name,
         tables.change,
         columns.current_schema as table_schema,

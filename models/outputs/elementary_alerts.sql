@@ -32,7 +32,7 @@ alerts_tables_changes as (
         false as alert_sent
     from tables_changes
     where (full_table_name in {{ get_tables_for_alerts() }}
-        or schema_name in {{ get_schemas_for_alerts() }})
+        or full_schema_name in {{ get_schemas_for_alerts() }})
         and full_table_name not in {{ get_excluded_tables_for_alerts() }}
 ),
 
