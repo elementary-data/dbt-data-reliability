@@ -27,7 +27,7 @@ models:
 
 sources:
   - name: e2e_test_data
-    database: integration_tests
+    database: elementary_tests
     meta:
       observability:
         alert_on_schema_changes: true
