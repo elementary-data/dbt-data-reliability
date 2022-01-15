@@ -26,7 +26,7 @@ models:
 
 
 sources:
-  - name: e2e_test_data
+  - name: e2e_tests_data
     database: elementary_tests
     meta:
       observability:
