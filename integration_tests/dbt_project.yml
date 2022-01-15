@@ -1,7 +1,7 @@
 name: 'integration_tests_elementary_observability'
 version: '1.0.0'
 config-version: 2
-profile: 'integration_tests'
+profile: 'elementary_tests'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
