@@ -21,11 +21,11 @@ columns_changes_desc as (
 
         case
             when change= 'column_added'
-                then concat('the column "', column_name,'" was added')
+                then concat('The column "', column_name,'" was added')
             when change= 'column_removed'
-                then concat('the column "', pre_column_name,'" was removed')
+                then concat('The column "', pre_column_name,'" was removed')
             when change= 'type_changed'
-                then concat('the type of "',column_name,'" was changed to ', data_type,' from: ', pre_data_type)
+                then concat('The type of "',column_name,'" was changed to ', data_type,' from: ', pre_data_type)
             else 'no description'
         end as change_description,
 

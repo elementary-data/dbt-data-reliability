@@ -22,13 +22,14 @@ alerts_tables_changes as (
     select
         change_id as alert_id,
         detected_at,
-        {{ full_table_name_to_schema() }} as schema_name,
-        full_table_name,
+        {{ full_name_to_db() }},
+        {{ full_name_to_schema() }},
+        {{ full_name_to_table() }},
+        NULL as column_name,
         'schema_change' as alert_type,
         change as sub_type,
-        change_description as alert_reason_value,
-        array_construct('change_info') as alert_details_keys,
-        array_construct(change_info) as alert_details_values
+        change_description as alert_description,
+        false as alert_sent
     from tables_changes
     where (full_table_name in {{ get_tables_for_alerts() }}
         or schema_name in {{ get_schemas_for_alerts() }})
@@ -40,13 +41,14 @@ alerts_columns_changes as (
     select
         change_id as alert_id,
         detected_at,
-        {{ full_table_name_to_schema() }} as schema_name,
-        full_table_name,
+        {{ full_name_to_db() }},
+        {{ full_name_to_schema() }},
+        {{ full_name_to_table() }},
+        column_name,
         'schema_change' as alert_type,
         change as sub_type,
-        change_description as alert_reason_value,
-        array_construct('change_info') as alert_details_keys,
-        array_construct(change_info) as alert_details_values
+        change_description as alert_description,
+        false as alert_sent
     from columns_changes
     where (full_column_name in {{ get_columns_for_alerts() }}
         or full_table_name in {{ get_tables_for_alerts() }})
