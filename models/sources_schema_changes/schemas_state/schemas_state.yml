@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: current_and_previous_columns
+    description: ""
+    columns:
+      - name: full_table_name
+        description: ""
+
+      - name: current_schema
+        description: ""
+
+      - name: previous_schema
+        description: ""
+
+      - name: dbt_updated_at
+        description: ""
+
+      - name: dbt_valid_from
+        description: ""
+
+      - name: dbt_valid_to
+        description: ""
+
+
+  - name: current_and_previous_tables
+    description: ""
+    columns:
+      - name: full_schema_name
+        description: "Full schema name consists of the database name and the schema name in the format <database_name>.<schema_name>"
+
+      - name: current_tables
+        description: ""
+
+      - name: previous_tables
+        description: ""
+
+      - name: dbt_updated_at
+        description: ""
+
+      - name: dbt_valid_from
+        description: ""
+
+      - name: dbt_valid_to
+        description: ""

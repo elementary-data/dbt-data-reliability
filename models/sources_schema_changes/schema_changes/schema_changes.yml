@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: columns_changes
+    description: ""
+    columns:
+      - name: change_id
+        description: ""
+
+      - name: full_table_name
+        description: ""
+
+      - name: change
+        description: ""
+
+      - name: column_name
+        description: ""
+
+      - name: data_type
+        description: ""
+
+      - name: pre_column_name
+        description: ""
+
+      - name: pre_data_type
+        description: ""
+
+      - name: detected_at
+        description: ""
+
+
+  - name: columns_changes_description
+    description: ""
+    columns:
+      - name: change_id
+        description: ""
+
+      - name: full_table_name
+        description: ""
+
+      - name: column_name
+        description: ""
+
+      - name: detected_at
+        description: ""
+
+      - name: change
+        description: ""
+
+      - name: change_description
+        description: ""
+
+      - name: change_info
+        description: ""
+
+      - name: full_column_name
+        description: ""
+
+
+  - name: tables_changes
+    description: ""
+    columns:
+      - name: change_id
+        description: ""
+
+      - name: full_table_name
+        description: ""
+
+      - name: change
+        description: ""
+
+      - name: table_schema
+        description: ""
+
+      - name: detected_at
+        description: ""
+
+  - name: tables_changes_description
+    description: ""
+    columns:
+      - name: change_id
+        description: ""
+
+      - name: full_table_name
+        description: ""
+
+      - name: detected_at
+        description: ""
+
+      - name: change
+        description: ""
+
+      - name: change_description
+        description: ""
+
+      - name: change_info
+        description: ""

@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: config_alerts__columns
+    description: ""
+    columns:
+      - name: full_table_name
+        description: ""
+
+      - name: database_name
+        description: ""
+
+      - name: schema_name
+        description: ""
+
+      - name: table_name
+        description: ""
+
+      - name: column_name
+        description: ""
+
+      - name: full_column_name
+        description: ""
+
+      - name: is_table_monitored
+        description: ""
+
+      - name: is_column_monitored
+        description: ""
+
+      - name: alert_on_schema_changes
+        description: ""
+
+  - name: config_alerts__tables
+    description: ""
+    columns:
+      - name: full_table_name
+        description: ""
+
+      - name: database_name
+        description: ""
+
+      - name: schema_name
+        description: ""
+
+      - name: table_name
+        description: ""
+
+      - name: is_schema_monitored
+        description: ""
+
+      - name: is_table_monitored
+        description: ""
+
+      - name: alert_on_schema_changes
+        description: ""
