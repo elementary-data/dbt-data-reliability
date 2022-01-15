@@ -2,7 +2,7 @@
 {% macro get_tables_for_alerts() %}
 
     {% set tables_for_alerts_query %}
-        select full_table_name
+        select upper(full_table_name) as full_table_name
         from {{ ref('config_alerts__tables') }}
         where alert_on_schema_changes = true
     {% endset %}
@@ -17,7 +17,7 @@
 {% macro get_columns_for_alerts() %}
 
     {% set columns_for_alerts_query %}
-        select full_column_name
+        select upper(full_table_name) as full_table_name
         from {{ ref('config_alerts__columns') }}
         where alert_on_schema_changes = true
     {% endset %}
@@ -31,7 +31,7 @@
 {% macro get_excluded_columns_for_alerts() %}
 
     {% set columns_for_alerts_query %}
-        select full_column_name
+        select upper(full_table_name) as full_table_name
         from {{ ref('config_alerts__columns') }}
         where alert_on_schema_changes = false
     {% endset %}
@@ -45,7 +45,7 @@
 {% macro get_excluded_tables_for_alerts() %}
 
     {% set tables_for_alerts_query %}
-        select full_table_name
+        select upper(full_table_name) as full_table_name
         from {{ ref('config_alerts__tables') }}
         where alert_on_schema_changes = false
     {% endset %}

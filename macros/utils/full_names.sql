@@ -3,7 +3,7 @@
 {%- endmacro %}
 
 {% macro full_table_name_to_schema() -%}
-    substr(full_table_name, 1, regexp_instr(full_table_name, '\\.' ,1, 2)-1)
+    substr(upper(full_table_name), 1, regexp_instr(full_table_name, '\\.' ,1, 2)-1)
 {%- endmacro %}
 
 {% macro full_schema_name() -%}
