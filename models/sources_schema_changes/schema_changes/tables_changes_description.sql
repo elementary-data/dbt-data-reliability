@@ -15,6 +15,7 @@ tables_changes_desc as (
 
     select
         change_id,
+        full_schema_name,
         full_table_name,
         detected_at,
         change,
