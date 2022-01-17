@@ -7,10 +7,13 @@ models:
           compare_model: ref('expected_alerts_schema_changes')
           compare_columns:
             - schema_name
-            - full_table_name
+            - database_name
+            - table_name
+            - column_name
             - alert_type
             - sub_type
-            - alert_reason_value
+            - alert_description
+            - alert_sent
     columns:
       - name: alert_id
         tests:
@@ -18,11 +21,6 @@ models:
           - not_null
       - name: detected_at
           - not_null
-      - name: alert_details_keys
-          - not_null
-      - name: alert_details_values
-          - not_null
-
 
 
 sources:
