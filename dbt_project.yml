@@ -1,5 +1,8 @@
 name: 'elementary_observability'
 version: '1.0.0'
+
+require-dbt-version: [">=0.20.0", "<1.1.0"]
+
 config-version: 2
 profile: 'elementary'
 
