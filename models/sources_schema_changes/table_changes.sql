@@ -17,7 +17,7 @@ pre as (
 
 ),
 
-tables_added as (
+table_added as (
     select
         cur.full_table_name,
         'table_added' as change,
@@ -29,7 +29,7 @@ tables_added as (
 
 ),
 
-tables_removed as (
+table_removed as (
 
     select
         pre.full_table_name,
@@ -42,15 +42,15 @@ tables_removed as (
 
 ),
 
-union_tables_changes as (
+union_table_changes as (
 
-    select * from tables_removed
+    select * from table_removed
     union all
-    select * from tables_added
+    select * from table_added
 
 ),
 
-tables_changes_desc as (
+table_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'change', 'detected_at']) }} as change_id,
@@ -64,11 +64,11 @@ tables_changes_desc as (
                 then concat('The table "', full_table_name, '" was added')
             when change='table_removed'
                 then concat('The table "', full_table_name, '" was removed')
-            else 'no description'
+            else NULL
         end as change_description
 
-    from union_tables_changes
+    from union_table_changes
 
 )
 
-select * from tables_changes_desc
+select * from table_changes_desc

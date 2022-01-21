@@ -27,7 +27,7 @@ models:
 
 
 vars:
-  elementary:
-    schemas_monitoring_configuration: MONITORING_SCHEMAS_CONFIGURATION
-    tables_monitoring_configuration: MONITORING_TABLES_CONFIGURATION
-    columns_monitoring_configuration: MONITORING_COLUMNS_CONFIGURATION
+  monitoring_configuration:
+    schemas: MONITORING_SCHEMAS_CONFIGURATION
+    tables: MONITORING_TABLES_CONFIGURATION
+    columns: MONITORING_COLUMNS_CONFIGURATION

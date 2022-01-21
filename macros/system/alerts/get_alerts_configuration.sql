@@ -8,7 +8,7 @@
     {% endset %}
 
     {% set tables_for_alerts = column_to_list(tables_for_alerts_query) %}
-    {% set tables_for_alerts_tuple = list_to_tuple(tables_for_alerts) %}
+    {% set tables_for_alerts_tuple = strings_list_to_tuple(tables_for_alerts) %}
     {{ return(tables_for_alerts_tuple) }}
 
 {% endmacro %}
@@ -23,7 +23,7 @@
     {% endset %}
 
     {% set columns_for_alerts = column_to_list(columns_for_alerts_query) %}
-    {% set columns_for_alerts_tuple = list_to_tuple(columns_for_alerts) %}
+    {% set columns_for_alerts_tuple = strings_list_to_tuple(columns_for_alerts) %}
     {{ return(columns_for_alerts_tuple) }}
 
 {% endmacro %}
@@ -37,7 +37,7 @@
     {% endset %}
 
     {% set columns_for_alerts = column_to_list(columns_for_alerts_query) %}
-    {% set columns_for_alerts_tuple = list_to_tuple(columns_for_alerts) %}
+    {% set columns_for_alerts_tuple = strings_list_to_tuple(columns_for_alerts) %}
     {{ return(columns_for_alerts_tuple) }}
 
 {% endmacro %}
@@ -51,7 +51,7 @@
     {% endset %}
 
     {% set tables_for_alerts = column_to_list(tables_for_alerts_query) %}
-    {% set tables_for_alerts_tuple = list_to_tuple(tables_for_alerts) %}
+    {% set tables_for_alerts_tuple = strings_list_to_tuple(tables_for_alerts) %}
     {{ return(tables_for_alerts_tuple) }}
 
 {% endmacro %}
@@ -67,7 +67,7 @@
     {% endset %}
 
     {% set schemas_for_alerts = column_to_list(schemas_for_alerts_query) %}
-    {% set schemas_for_alerts_tuple = list_to_tuple(schemas_for_alerts) %}
+    {% set schemas_for_alerts_tuple = strings_list_to_tuple(schemas_for_alerts) %}
     {{ return(schemas_for_alerts_tuple) }}
 
 {% endmacro %}

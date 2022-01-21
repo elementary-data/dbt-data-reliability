@@ -1,6 +1,6 @@
 with elementary_alerts as (
 
-    select * from {{ ref('elementary_alerts')}}
+    select * from {{ ref('alerts')}}
 
 ),
 
