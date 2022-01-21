@@ -17,12 +17,6 @@ pre as (
 
 ),
 
-columns_schemas as (
-
-    select * from {{ ref('current_and_previous_columns')}}
-
-),
-
 tables_added as (
     select
         cur.full_table_name,
@@ -48,7 +42,6 @@ tables_removed as (
 
 ),
 
-
 union_tables_changes as (
 
     select * from tables_removed
@@ -57,19 +50,25 @@ union_tables_changes as (
 
 ),
 
-tables_changes as (
+tables_changes_desc as (
 
     select
-        {{ dbt_utils.surrogate_key(['tables.full_table_name', 'tables.change', 'tables.detected_at']) }} as change_id,
-        upper(substr(tables.full_table_name, 1, regexp_instr(tables.full_table_name, '\\.' ,1, 2)-1)) as full_schema_name,
-        tables.full_table_name,
-        tables.change,
-        columns.current_schema as table_schema,
-        tables.detected_at
-    from union_tables_changes as tables
-    left join columns_schemas as columns
-        on (tables.full_table_name = columns.full_table_name)
+        {{ dbt_utils.surrogate_key(['full_table_name', 'change', 'detected_at']) }} as change_id,
+        {{ full_table_name_to_schema() }},
+        full_table_name,
+        detected_at,
+        change,
+
+        case
+            when change='table_added'
+                then concat('The table "', full_table_name, '" was added')
+            when change='table_removed'
+                then concat('The table "', full_table_name, '" was removed')
+            else 'no description'
+        end as change_description
+
+    from union_tables_changes
 
 )
 
-select * from tables_changes
+select * from tables_changes_desc

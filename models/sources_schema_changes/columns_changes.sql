@@ -1,5 +1,3 @@
--- Remove comparison to configuration
-
 {{
   config(
     materialized = 'incremental',
@@ -80,19 +78,42 @@ all_column_changes_union as (
 
 ),
 
-all_column_changes as (
+columns_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'pre_column_name', 'change', 'detected_at']) }} as change_id,
         full_table_name,
+
+        case
+            when change = 'column_removed'
+                then pre_column_name
+            else column_name
+        end as column_name,
+
+        detected_at,
         change,
-        column_name,
-        data_type,
-        pre_column_name,
-        pre_data_type,
-        detected_at
+
+        case
+            when change= 'column_added'
+                then concat('The column "', column_name,'" was added')
+            when change= 'column_removed'
+                then concat('The column "', pre_column_name,'" was removed')
+            when change= 'type_changed'
+                then concat('The type of "',column_name,'" was changed from ', pre_data_type,' to: ', data_type)
+            else 'no description'
+        end as change_description
+
     from all_column_changes_union
+
+),
+
+column_changes_with_full_name as (
+
+    select
+        *,
+        concat(full_table_name, '.', column_name) as full_column_name
+    from columns_changes_desc
 
 )
 
-select * from all_column_changes
+select * from column_changes_with_full_name

@@ -17,7 +17,7 @@
 {% macro get_columns_for_alerts() %}
 
     {% set columns_for_alerts_query %}
-        select upper(full_table_name) as full_table_name
+        select upper(full_column_name) as full_column_name
         from {{ ref('config_alerts__columns') }}
         where alert_on_schema_changes = true
     {% endset %}
@@ -31,7 +31,7 @@
 {% macro get_excluded_columns_for_alerts() %}
 
     {% set columns_for_alerts_query %}
-        select upper(full_table_name) as full_table_name
+        select upper(full_column_name) as full_column_name
         from {{ ref('config_alerts__columns') }}
         where alert_on_schema_changes = false
     {% endset %}

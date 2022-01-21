@@ -18,7 +18,6 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 
 seeds:
-  +quote_columns: false
 
   integration_tests_elementary_observability:
       test_data:
@@ -27,9 +26,4 @@ seeds:
       expected:
           expected_alerts:
           +column_types:
-            full_table_name: varchar
-            alert_type: varchar
-            sub_type: varchar
-            alert_reason_value: varchar
-
-
+            alert_sent: boolean

@@ -7,13 +7,13 @@
 
 with tables_changes as (
 
-    select * from {{ ref('tables_changes_description') }}
+    select * from {{ ref('tables_changes') }}
 
 ),
 
 columns_changes as (
 
-    select * from {{ ref('columns_changes_description') }}
+    select * from {{ ref('columns_changes') }}
 
 ),
 

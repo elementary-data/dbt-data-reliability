@@ -1,3 +1,10 @@
+{{
+  config(
+    materialized='ephemeral'
+  )
+}}
+
+
 with schemas_snapshot as (
 
     select * from {{ ref('source_tables_columns_snapshot') }}
@@ -27,19 +34,40 @@ previous_schemas as (
 
 ),
 
-final as (
+current_and_previous_columns as (
 
     select
         cur.full_table_name,
         cur.columns_schema as current_schema,
         pre.columns_schema as previous_schema,
-        cur.dbt_updated_at,
-        cur.dbt_valid_from,
-        cur.dbt_valid_to
+        cur.dbt_updated_at
     from current_schemas cur
     left join previous_schemas pre
         on (cur.full_table_name = pre.full_table_name)
 
+),
+
+flat_current_columns as (
+
+    select
+        full_table_name,
+        dbt_updated_at,
+        f.value as columns_jsons
+    from current_and_previous_columns,
+    table(flatten(current_and_previous_columns.current_schema)) f
+    where previous_schema is not null
+
+),
+
+current_schemas_columns as (
+
+    select
+        full_table_name,
+        dbt_updated_at,
+        {{trim_quotes('columns_jsons:column_name')}} as column_name,
+        {{trim_quotes('columns_jsons:data_type')}} as data_type
+    from flat_current_columns
+
 )
 
-select * from final
+select * from current_schemas_columns

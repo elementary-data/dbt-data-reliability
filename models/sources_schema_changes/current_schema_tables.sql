@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized='ephemeral'
+  )
+}}
+
 with schemas_snapshot as (
 
     select * from {{ ref('source_schemas_tables_snapshot') }}
@@ -27,19 +33,29 @@ previous_schemas as (
 
 ),
 
-final as (
+current_and_previous_tables as (
 
     select
         cur.full_schema_name,
         cur.tables_in_schema as current_tables,
         pre.tables_in_schema as previous_tables,
-        cur.dbt_updated_at,
-        cur.dbt_valid_from,
-        cur.dbt_valid_to
+        cur.dbt_updated_at
     from current_schemas cur
     left join previous_schemas pre
         on (cur.full_schema_name = pre.full_schema_name)
 
+),
+
+flat_current_tables as (
+
+    select
+        full_schema_name,
+        dbt_updated_at,
+        concat(full_schema_name, '.', {{ trim_quotes('f.value') }}) as full_table_name
+    from current_and_previous_tables,
+    table (flatten(current_and_previous_tables.current_tables)) f
+    where previous_tables is not null
+
 )
 
-select * from final
+select * from flat_current_tables
