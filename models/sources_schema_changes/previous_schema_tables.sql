@@ -6,7 +6,7 @@
 
 with schemas_snapshot as (
 
-    select * from {{ ref('source_schemas_tables_snapshot') }}
+    select * from {{ ref('schema_tables_snapshot') }}
 ),
 
 schemas_order as (

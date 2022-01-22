@@ -1,4 +1,4 @@
-{% snapshot source_tables_columns_snapshot %}
+{% snapshot table_columns_snapshot %}
 
 {{
   config (
@@ -11,11 +11,11 @@
     )
 }}
 
-{% set monitored_dbs = get_monitored_dbs() %}
+{% set configured_schemas = get_configured_schemas() %}
 
-with monitored_dbs_schemas as (
+with filtered_information_schema_columns as (
 
-    {{ union_schemas_for_snapshot(get_columns_from_information_schema) }}
+    {{ query_different_schemas(get_columns_from_information_schema, configured_schemas) }}
 
 ),
 
@@ -23,16 +23,12 @@ final as (
 
     select
         full_table_name,
-        database_name,
-        schema_name,
-        table_name,
-
         array_agg(object_construct('column_name', column_name, 'data_type', data_type))
             within group (order by column_name)
         as columns_schema
 
-    from monitored_dbs_schemas
-    group by 1, 2, 3, 4
+    from filtered_information_schema_columns
+    group by 1
 
 )
 

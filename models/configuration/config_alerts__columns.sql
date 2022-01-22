@@ -1,9 +1,10 @@
+{% set configured_schemas = get_configured_schemas() %}
 
 with columns_config as (
 
     select *,
         {{ full_table_name() }}
-     from {{ columns_configuration_table() }}
+     from {{ configured_columns_path() }}
 
 ),
 
@@ -14,21 +15,21 @@ tables_alerts as (
 
 ),
 
-all_sources as (
+filtered_information_schema_columns as (
 
-    {{ union_columns_from_monitored_schemas() }}
+    {{ query_different_schemas(get_columns_from_information_schema, configured_schemas) }}
 
 ),
 
 joined_columns_and_configuration as (
 
     select distinct
-        upper(coalesce(alls.full_table_name, conf.full_table_name)) as full_table_name,
-        upper(coalesce(alls.database_name, conf.database_name)) as database_name,
-        upper(coalesce(alls.schema_name, conf.schema_name)) as schema_name,
-        upper(coalesce(alls.table_name, conf.table_name)) as table_name,
-        upper(coalesce(alls.column_name, conf.column_name)) as column_name,
-        upper(coalesce(concat(alls.full_table_name, '.',alls.column_name),
+        upper(coalesce(info_schema.full_table_name, conf.full_table_name)) as full_table_name,
+        upper(coalesce(info_schema.database_name, conf.database_name)) as database_name,
+        upper(coalesce(info_schema.schema_name, conf.schema_name)) as schema_name,
+        upper(coalesce(info_schema.table_name, conf.table_name)) as table_name,
+        upper(coalesce(info_schema.column_name, conf.column_name)) as column_name,
+        upper(coalesce(concat(info_schema.full_table_name, '.',info_schema.column_name),
             concat(conf.full_table_name, '.',conf.column_name)))
         as full_column_name,
         tables_alerts.alert_on_schema_changes as is_table_monitored,
@@ -39,13 +40,13 @@ joined_columns_and_configuration as (
             else tables_alerts.alert_on_schema_changes
         end as alert_on_schema_changes
 
-    from all_sources as alls
+    from filtered_information_schema_columns as info_schema
          full outer join columns_config as conf
-            on (alls.full_table_name = conf.full_table_name
-            and alls.column_name = conf.column_name)
+            on (info_schema.full_table_name = conf.full_table_name
+            and info_schema.column_name = conf.column_name)
          left join tables_alerts
-            on (alls.full_table_name = tables_alerts.full_table_name)
+            on (info_schema.full_table_name = tables_alerts.full_table_name)
+    group by 1,2,3,4,5,6,7,8,9
 )
 
 select * from joined_columns_and_configuration
-group by 1,2,3,4,5,6,7,8,9

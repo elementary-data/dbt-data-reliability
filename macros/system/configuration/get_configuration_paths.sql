@@ -1,29 +1,29 @@
 
-{% macro schemas_configuration_table() %}
+{% macro configured_schemas_path() %}
 
-    {% set schemas_monitoring_configuration %}
+    {% set schemas_configuration_path %}
         {{ target.database ~"."~ target.schema ~"."~ var('monitoring_configuration')['schemas']}}
     {% endset %}
-    {{ return(schemas_monitoring_configuration) }}
+    {{ return(schemas_configuration_path) }}
 
 {% endmacro %}
 
 
-{% macro tables_configuration_table() %}
+{% macro configured_tables_path() %}
 
-    {% set tables_monitoring_configuration %}
+    {% set tables_configuration_path %}
         {{ target.database ~"."~ target.schema ~"."~ var('monitoring_configuration')['tables']}}
     {% endset %}
-    {{ return(tables_monitoring_configuration) }}
+    {{ return(tables_configuration_path) }}
 
 {% endmacro %}
 
 
-{% macro columns_configuration_table() %}
+{% macro configured_columns_path() %}
 
-    {% set columns_monitoring_configuration %}
+    {% set columns_configuration_path %}
         {{ target.database ~"."~ target.schema ~"."~ var('monitoring_configuration')['columns']}}
     {% endset %}
-    {{ return(columns_monitoring_configuration) }}
+    {{ return(columns_configuration_path) }}
 
 {% endmacro %}

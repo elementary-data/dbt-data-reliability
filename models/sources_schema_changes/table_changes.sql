@@ -42,7 +42,7 @@ table_removed as (
 
 ),
 
-union_table_changes as (
+all_table_changes as (
 
     select * from table_removed
     union all
@@ -67,7 +67,7 @@ table_changes_desc as (
             else NULL
         end as change_description
 
-    from union_table_changes
+    from all_table_changes
 
 )
 

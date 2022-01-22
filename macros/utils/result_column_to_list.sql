@@ -1,4 +1,4 @@
-{% macro column_to_list(single_column_query) %}
+{% macro result_column_to_list(single_column_query) %}
     {% set results_list = [] %}
 
     {% call statement('get_query_results', fetch_result=True,auto_begin=false) %}

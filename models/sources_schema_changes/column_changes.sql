@@ -65,7 +65,7 @@ columns_removed as (
 ),
 
 
-all_column_changes_union as (
+all_column_changes as (
 
     select * from type_changes
     union all
@@ -94,7 +94,7 @@ column_changes_desc as (
             else NULL
         end as change_description
 
-    from all_column_changes_union
+    from all_column_changes
 
 ),
 
