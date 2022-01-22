@@ -79,7 +79,9 @@ column_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as change_id,
-        full_table_name,
+        {{ full_name_to_db() }},
+        {{ full_name_to_schema() }},
+        {{ full_name_to_table() }},
         column_name,
         detected_at,
         change,
@@ -96,15 +98,6 @@ column_changes_desc as (
 
     from all_column_changes
 
-),
-
-column_changes_with_full_name as (
-
-    select
-        *,
-        concat(full_table_name, '.', column_name) as full_column_name
-    from column_changes_desc
-
 )
 
-select * from column_changes_with_full_name
+select * from column_changes_desc

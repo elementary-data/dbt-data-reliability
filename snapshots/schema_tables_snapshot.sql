@@ -22,7 +22,7 @@ with filtered_information_schema_tables as (
 final as (
 
     select
-        {{ full_schema_name() }},
+        {{ full_schema_name() }} as full_schema_name,
         array_agg(table_name)
             within group (order by table_name)
         as tables_in_schema

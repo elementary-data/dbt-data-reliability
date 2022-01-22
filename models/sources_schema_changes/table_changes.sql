@@ -54,8 +54,9 @@ table_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'change', 'detected_at']) }} as change_id,
-        {{ full_table_name_to_schema() }},
-        full_table_name,
+        {{ full_name_to_db() }},
+        {{ full_name_to_schema() }},
+        {{ full_name_to_table() }},
         detected_at,
         change,
 
