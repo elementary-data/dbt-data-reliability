@@ -56,6 +56,18 @@ flat_current_tables as (
     table (flatten(current_and_previous_tables.current_tables)) f
     where previous_tables is not null
 
+),
+
+current_tables_including_empty_schema as (
+
+    select
+        coalesce(flat.full_schema_name, schemas.full_schema_name) as full_schema_name,
+        coalesce(flat.dbt_updated_at, schemas.dbt_updated_at) as dbt_updated_at,
+        flat.full_table_name
+    from flat_current_tables as flat
+        full outer join current_and_previous_tables as schemas
+        on (flat.full_schema_name = schemas.full_schema_name)
+
 )
 
-select * from flat_current_tables
+select * from current_tables_including_empty_schema

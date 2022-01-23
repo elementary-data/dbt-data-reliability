@@ -2,10 +2,11 @@ version: 2
 
 models:
   - name: schema_tables_snapshot
-    description:
-    "Snapshot of the tables of all configured schemas. 
-    A new record per schema is created if there is a difference between the tables that a schema had on the last execution and he current one.
-    The unique key of the snapshot is 'full_schema_name', and the checked column is 'tables_in_schema'."
+    description: >
+      Snapshot of the tables of all configured schemas. 
+      A new record per schema is created if there is a difference between the tables that a schema had on the last execution and he current one.
+      The unique key of the snapshot is 'full_schema_name', and the checked column is 'tables_in_schema'.
+
     columns:
       - name: full_schema_name
         description: "The schema and database name, in the following format: '<database_name>.<schema_name>'. This is the snapshot unique key."
@@ -31,10 +32,11 @@ models:
 
 
   - name: table_columns_snapshot
-    description:
-    "Snapshot of the columns of all tables in configured schemas. 
-    A new record per table is created if there is a difference between the columns names or data types that a table had on the last execution and he current one.
-    The unique key of the snapshot is 'full_table_name', and the checked column is 'columns_schema'."
+    description: >
+      Snapshot of the columns of all tables in configured schemas. 
+      A new record per table is created if there is a difference between the columns names or data types that a table had on the last execution and he current one.
+      The unique key of the snapshot is 'full_table_name', and the checked column is 'columns_schema'.
+
     columns:
       - name: full_table_name
         description: "The full table name, in the following format: '<database_name>.<schema_name>.<table_name>'. This is the snapshot unique key."

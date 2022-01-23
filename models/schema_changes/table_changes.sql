@@ -25,7 +25,7 @@ table_added as (
     from cur
     left join pre
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
-    where pre.full_table_name is null
+    where pre.full_table_name is null and cur.full_table_name is not null
 
 ),
 
@@ -34,7 +34,7 @@ table_removed as (
     select
         pre.full_table_name,
         'table_removed' as change,
-        pre.dbt_updated_at as detected_at
+        coalesce(cur.dbt_updated_at, pre.dbt_updated_at) as detected_at
     from pre
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)

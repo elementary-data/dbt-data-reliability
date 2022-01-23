@@ -7,7 +7,7 @@
     unique_key='full_schema_name',
     strategy='check',
     check_cols=['tables_in_schema'],
-    invalidate_hard_deletes=true
+    invalidate_hard_deletes=True
     )
 }}
 
