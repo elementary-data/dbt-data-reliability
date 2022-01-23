@@ -97,13 +97,21 @@ models:
           - not_null
 
   - name: previous_schema_columns
-    description: ""
+    description: >
+      The columns of each table as recorded in the run previous to this one. 
+      This is an ephemeral model.
 
   - name: previous_schema_tables
-    description: ""
+    description: >
+      The tables of each schema as recorded in the run previous to this one. 
+      This is an ephemeral model.
 
   - name: current_schema_columns
-    description: ""
+    description: > 
+      The columns of each table as recorded in the current run.
+      This is an ephemeral model.
 
   - name: current_schema_tables
-    description: ""
+    description: >
+      The tables of each schema as recorded in the current run. 
+      This is an ephemeral model.
