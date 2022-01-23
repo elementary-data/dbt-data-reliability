@@ -1,4 +1,4 @@
-# dbt-elementary
+# Elementary data reliability
 Elementary is an open-source data reliability solution for modern data teams.\
 Our goal is to provide data teams **immediate visibility, detection of data issues, and impact analysis**.\
 We focus on **simple effortless setup**, and integrations with the existing stack. 

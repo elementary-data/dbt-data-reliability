@@ -1,5 +1,5 @@
-name: 'elementary_observability'
-version: '1.0.0'
+name: 'elementary_data_reliability'
+version: '0.1.0'
 
 require-dbt-version: [">=0.20.0", "<1.1.0"]
 
