@@ -40,6 +40,11 @@
     capacity integer
     );
 
+    {# table_added_should_not_alert #}
+    create table {{ target.database ~"."~ target.schema }}_data.scores (
+    new_col varchar
+    );
+
     {%- endset %}
 
     {% do run_query(schema_changes_query) %}
