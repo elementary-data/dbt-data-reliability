@@ -2,8 +2,10 @@
 
     {% set monitor_query %}
         select {{ full_schema_name() }}
-        from {{ configured_schemas_path() }}
+        from {{ get_configuration_path() }}
         where alert_on_schema_changes = true
+              and table_name is null
+              and column_name is null
     {% endset %}
 
     {% set monitored = result_column_to_list(monitor_query) %}
@@ -17,8 +19,10 @@
 
     {% set tables_to_monitor_query %}
         select {{ full_table_name() }} as full_table_name
-        from {{ configured_tables_path() }}
+        from {{ get_configuration_path() }}
         where alert_on_schema_changes = true
+              and table_name is not null
+              and column_name is null
     {% endset %}
 
     {% set monitored_tables = result_column_to_list(tables_to_monitor_query) %}
@@ -32,8 +36,10 @@
 
     {% set tables_to_monitor_query %}
         select {{ full_table_name() }} as full_table_name
-        from {{ configured_tables_path() }}
+        from {{ get_configuration_path() }}
         where alert_on_schema_changes = false
+              and table_name is not null
+              and column_name is null
     {% endset %}
 
     {% set monitored_tables = result_column_to_list(tables_to_monitor_query) %}
@@ -46,9 +52,10 @@
 {% macro monitored_columns() %}
 
     {% set monitor_query %}
-        select upper(concat(database_name, '.', schema_name, '.', table_name, '.', column_name)) as full_column_name
-        from {{ configured_columns_path() }}
+        select {{ full_column_name() }} as full_column_name
+        from {{ get_configuration_path() }}
         where alert_on_schema_changes = true
+              and column_name is not null
     {% endset %}
 
     {% set monitored = result_column_to_list(monitor_query) %}
@@ -61,9 +68,10 @@
 {% macro excluded_columns() %}
 
     {% set monitor_query %}
-        select upper(concat(database_name, '.', schema_name, '.', table_name, '.', column_name)) as full_column_name
-        from {{ configured_columns_path() }}
+        select {{ full_column_name() }} as full_column_name
+        from {{ get_configuration_path() }}
         where alert_on_schema_changes = false
+              and column_name is not null
     {% endset %}
 
     {% set monitored = result_column_to_list(monitor_query) %}

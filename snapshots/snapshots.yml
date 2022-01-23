@@ -1,6 +1,6 @@
 version: 2
 
-models:
+snapshots:
   - name: schema_tables_snapshot
     description: >
       Snapshot of the tables of all configured schemas. 
