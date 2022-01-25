@@ -15,7 +15,11 @@
 
 with filtered_information_schema_columns as (
 
-    {{ query_different_schemas(get_columns_from_information_schema, configured_schemas) }}
+    {% if configured_schemas != [] %}
+        {{ query_different_schemas(get_columns_from_information_schema, configured_schemas) }}
+    {% else %}
+        {{ empty_table([('full_table_name', 'string'), ('column_name', 'string'), ('data_type', 'string')]) }}
+    {% endif %}
 
 ),
 

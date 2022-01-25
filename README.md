@@ -4,7 +4,7 @@ Our goal is to provide data teams **immediate visibility, detection of data issu
 We focus on **simple effortless setup**, and integrations with the existing stack. 
 
 **This package is designed for source tables monitoring.**\
-Make sure the sources your dbt project depends on are reliable.
+Make sure the sources your dbt project depends on are reliable, and discover new data you can leverage. 
 
 Detections:
 - Columns and tables that were removed.

@@ -15,8 +15,11 @@
 
 with filtered_information_schema_tables as (
 
-    {{ query_different_schemas(get_tables_from_information_schema, configured_schemas) }}
-
+    {% if configured_schemas != [] %}
+        {{ query_different_schemas(get_tables_from_information_schema, configured_schemas) }}
+    {% else %}
+        {{ empty_table([('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string')]) }}
+    {% endif %}
 ),
 
 final as (
@@ -28,6 +31,7 @@ final as (
         as tables_in_schema
 
     from filtered_information_schema_tables
+    where schema_name is not null
     group by 1
 
 )
