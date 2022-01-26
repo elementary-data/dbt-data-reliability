@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: schema_changes_alerts
+    tests:
+      - dbt_utils.equality:
+          compare_model: ref('expected_alerts_schema_changes')
+          compare_columns:
+            - schema_name
+            - database_name
+            - table_name
+            - column_name
+            - alert_type
+            - sub_type
+            - alert_description
+            - alert_sent
+    columns:
+      - name: alert_id
+        tests:
+          - unique
+          - not_null
+      - name: detected_at
+          - not_null
+
+
+sources:
+  - name: e2e_tests_data
+    database: elementary_tests
+    meta:
+      edr:
+        schema_changes: true
+    tables:
+      - name: groups
+        meta:
+          edr:
+            schema_changes: true
+        columns:
+          - name: group_a
+            meta:
+              column_type: text
+          - name: group_b
+            meta:
+              column_type: text
+      - name: matches
+        meta:
+          edr:
+            schema_changes: true
+      - name: stats_players
+        meta:
+          edr:
+            schema_changes: true
+      - name: stats_team
+        meta:
+          edr:
+            schema_changes: true
+        columns:
+          - name: crosses
+            meta:
+              column_type: number
+          - name: interceptions
+            meta:
+              column_type: number

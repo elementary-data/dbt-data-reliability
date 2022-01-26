@@ -1,10 +1,7 @@
-name: 'elementary_data_reliability'
-version: '0.1.0'
-
-require-dbt-version: [">=0.20.0", "<1.1.0"]
-
+name: 'integration_tests_elementary_observability'
+version: '1.0.0'
 config-version: 2
-profile: 'elementary'
+profile: 'elementary_tests'
 
 source-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -20,11 +17,13 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_modules"
 
 
-models:
+seeds:
 
-  elementary_observability:
-      +materialized: view
+  integration_tests_elementary_observability:
+      test_data:
+        +schema: data
 
-
-vars:
-  monitoring_configuration: MONITORING_CONFIGURATION
+      expected:
+          expected_alerts:
+          +column_types:
+            alert_sent: boolean
