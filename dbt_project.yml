@@ -22,9 +22,5 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
 
-  elementary_observability:
-      +materialized: view
-
-
 vars:
   monitoring_configuration: MONITORING_CONFIGURATION
