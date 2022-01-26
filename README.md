@@ -4,7 +4,7 @@ Our goal is to provide data teams **immediate visibility, detection of data issu
 We focus on **simple effortless setup**, and integrations with the existing stack. 
 
 **This package is designed for source tables monitoring.**\
-Elementary leverage your source defintions in your dbt project, so no extra configuration is needed (and if you don't have sources definied yet, see our [documnetation](https://docs.elementary-data.com/) on how to create a minimal version of it).
+Elementary leverages your source defintions in your dbt project, so no extra configuration is needed (and if you don't have sources definied yet, see our [documnetation](https://docs.elementary-data.com/) on how to create a minimal version of it).
 
 Detections:
 - Columns and tables that were removed.
