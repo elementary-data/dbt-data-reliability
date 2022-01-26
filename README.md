@@ -10,7 +10,7 @@ Detections:
 - Columns and tables that were removed.
 - Data type changes.
 - New columns and tables.
-- Coming soon - jsons schema changes and much more.
+- Coming soon - jsons schema validation.
 
 To learn more on how to monitor your sources, including configuration and Slack alerts, refer to our [main repo](https://github.com/elementary-data/elementary-lineage). 
 
