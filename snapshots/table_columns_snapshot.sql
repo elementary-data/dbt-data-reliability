@@ -32,6 +32,7 @@ final as (
         as columns_schema
 
     from filtered_information_schema_columns
+    where full_table_name is not null
     group by 1
 
 )
