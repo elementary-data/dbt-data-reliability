@@ -21,7 +21,7 @@ data_lineage as (
         qh.role_name,
         qh.user_name,
         qh.rows_modified,
-        qh.query_star_time,
+        qh.query_start_time,
         qh.query_end_time,
         ah.modified_table_name as target_table,
         ah.modified_table_type as target_table_type,
@@ -36,7 +36,7 @@ data_lineage as (
     from query_history as qh
         join access_history as ah
         on (qh.query_id = ah.query_id)
-    where qh.execution_status) = 'SUCCESS'
+    where qh.execution_status = 'SUCCESS'
         and ah.modified_table_type = 'TABLE'
 )
 

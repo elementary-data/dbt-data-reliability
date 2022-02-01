@@ -56,7 +56,7 @@ query_history AS (
             'REMOVE_FILES', 'REVOKE')
           and start_time > (current_date - 14)::timestamp
           {% if is_incremental() %}
-                query_start_time > (select max(query_start_time)  from {{ this }})
+              and query_start_time > (select max(query_start_time)  from {{ this }})
           {% endif %}
 
 )
