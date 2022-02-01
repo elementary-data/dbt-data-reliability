@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_access_history
+  - name: stg_query_history
+  - name: stg_views
+
+
+sources:
+  - name: snowflake_account_usage
+    database: snowflake
+    schema: account_usage
+
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+
+    tables:
+      - name: query_history
+      - name: access_history
+      - name: views

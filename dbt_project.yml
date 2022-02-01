@@ -4,7 +4,7 @@ version: '0.1.0'
 require-dbt-version: [">=0.20.0", "<1.1.0"]
 
 config-version: 2
-profile: 'elementary'
+profile: 'elementary_tests'
 
 source-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -19,11 +19,6 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-
-models:
-
-  elementary_observability:
-      +materialized: view
 
 
 vars:
