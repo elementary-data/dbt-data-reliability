@@ -4,7 +4,7 @@ version: '0.1.0'
 require-dbt-version: [">=0.20.0", "<1.1.0"]
 
 config-version: 2
-profile: 'elementary_tests'
+profile: 'elementary'
 
 source-paths: ["models"]
 analysis-paths: ["analyses"]
