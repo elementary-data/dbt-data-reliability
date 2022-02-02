@@ -22,6 +22,7 @@ query_history as (
 
     select
         query_id,
+        database_id,
         database_name,
         schema_name,
         query_text,

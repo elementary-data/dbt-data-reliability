@@ -16,6 +16,7 @@ data_lineage as (
         qh.query_id,
         qh.query_type,
         qh.query_text,
+        qh.database_id,
         qh.database_name,
         qh.schema_name,
         qh.role_name,

@@ -1,7 +1,7 @@
 -- TODO: add dbs filter
 
 select
-    table_catalog_id,
+    table_catalog_id as database_id,
     table_catalog as database_name,
     table_schema as schema_name,
     view_definition,
