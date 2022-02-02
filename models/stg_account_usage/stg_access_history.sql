@@ -13,6 +13,7 @@ with source as (
 
     select *
     from {{ source('snowflake_account_usage','access_history') }}
+    where query_start_time > (current_date - {{ var('account_usage_days_back_limit') }})::timestamp
     qualify row_number() over (partition by query_id order by query_id) = 1
 
 ),
@@ -39,7 +40,6 @@ access_history as (
             lateral flatten(input => src.base_objects_accessed) as modified
          where direct.value:"objectId" is not null
              and lower(base.value:"objectDomain") != 'stage'
-             and src.query_start_time >= (current_date - 14)::timestamp
              {% if is_incremental() %}
                  and query_start_time > (select max(query_start_time)  from {{ this }})
              {% endif %}
