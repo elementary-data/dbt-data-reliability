@@ -1,6 +1,3 @@
--- TODO: add dbs filter
--- TODO: change  global time limit to var
-
 {{
   config(
     materialized='incremental',
@@ -8,6 +5,9 @@
   )
 }}
 
+{%- set query_text_clean -%}
+    replace(query_text, '"', '')
+{%- endset -%}
 
 with source as (
 
@@ -17,7 +17,7 @@ with source as (
 
 ),
 
-query_history AS (
+query_history as (
 
     select
         query_id,
@@ -42,9 +42,10 @@ query_history AS (
         end_time as query_end_time,
         start_time as query_start_time,
         total_elapsed_time as query_elapsed_time,
-        bytes_spilled_to_local_storage    AS query_bytes_spillover_local,
-        bytes_spilled_to_remote_storage   AS query_bytes_spillover_remote,
-        bytes_scanned                     AS query_bytes_scanned
+        bytes_spilled_to_local_storage as query_bytes_spillover_local,
+        bytes_spilled_to_remote_storage as query_bytes_spillover_remote,
+        bytes_scanned as query_bytes_scanned
+
     from source
     where is_client_generated_statement = false
           and (lower(query_text) not ilike '%.query_history%')
@@ -55,6 +56,11 @@ query_history AS (
             'CREATE_ROLE', 'CREATE_USER', 'DESCRIBE_QUERY', 'DROP_NETWORK_POLICY', 'DROP_ROLE', 'DROP_USER', 'LIST_FILES',
             'REMOVE_FILES', 'REVOKE')
           and start_time > (current_date - 14)::timestamp
+          and ({{ like_any_string_from_list(query_text_clean , var('query_history_include_dbs'), right_string='.') }}
+            or {{ where_in_list('database_name', var('query_history_include_dbs')) }})
+          {% if var('query_history_exclude_dbs')|length > 0 %}
+              and not ({{ like_any_string_from_list(query_text_clean, var('query_history_exclude_dbs'), right_string='.') }} and database_name is null)
+          {% endif %}
           {% if is_incremental() %}
               and query_start_time > (select max(query_start_time)  from {{ this }})
           {% endif %}
