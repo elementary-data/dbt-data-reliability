@@ -24,13 +24,13 @@ data_lineage as (
         qh.rows_modified,
         qh.query_start_time,
         qh.query_end_time,
-        ah.modified_table_name as target_table,
+        ah.modified_table_name as target_table_name,
         ah.modified_table_type as target_table_type,
         ah.modified_columns as target_columns,
-        ah.base_access_table_name as source_base_table,
+        ah.base_access_table_name as source_base_table_name,
         ah.base_access_table_type as source_base_table_type,
         ah.base_access_columns as source_base_columns,
-        ah.direct_access_table_name as source_direct_table,
+        ah.direct_access_table_name as source_direct_table_name,
         ah.direct_access_table_type as source_direct_table_type,
         ah.direct_access_columns as source_direct_columns
 

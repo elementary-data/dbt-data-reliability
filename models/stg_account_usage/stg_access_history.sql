@@ -27,13 +27,13 @@ access_history as (
              src.direct_objects_accessed,
              src.base_objects_accessed,
              src.objects_modified,
-             direct.value:"objectName"::varchar as direct_access_table_name,
+             {{ low_no_quotes('direct.value:"objectName"::varchar') }} as direct_access_table_name,
              direct.value:"objectDomain"::varchar as direct_access_table_type,
              direct.value:"columns"::varchar as direct_access_columns,
-             base.value:"objectName"::varchar as base_access_table_name,
+             {{ low_no_quotes('base.value:"objectName"::varchar') }} as base_access_table_name,
              base.value:"objectDomain"::varchar as base_access_table_type,
              base.value:"columns"::varchar as base_access_columns,
-             modified.value:"objectName"::varchar as modified_table_name,
+             {{ low_no_quotes('modified.value:"objectName"::varchar') }} as modified_table_name,
              modified.value:"objectDomain"::varchar as modified_table_type,
              modified.value:"columns"::varchar as modified_columns
 
