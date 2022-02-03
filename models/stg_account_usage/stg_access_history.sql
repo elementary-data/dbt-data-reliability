@@ -37,7 +37,7 @@ access_history as (
          from source as src,
             lateral flatten(input => src.direct_objects_accessed) as direct,
             lateral flatten(input => src.base_objects_accessed) as base,
-            lateral flatten(input => src.base_objects_accessed) as modified
+            lateral flatten(input => src.objects_modified) as modified
          where direct.value:"objectId" is not null
              and lower(base.value:"objectDomain") != 'stage'
              {% if is_incremental() %}
