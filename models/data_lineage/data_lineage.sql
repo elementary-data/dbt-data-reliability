@@ -1,44 +1,36 @@
-with query_history as (
+with query_and_access_history as (
 
-    select * from {{ ref('stg_query_history') }}
-
-),
-
-access_history as (
-
-    select * from {{ ref('stg_access_history') }}
+    select * from {{ ref('query_and_access_history') }}
 
 ),
 
 data_lineage as (
 
     select
-        qh.query_id,
-        qh.query_type,
-        qh.query_text,
-        qh.database_id,
-        qh.database_name,
-        qh.schema_name,
-        qh.role_name,
-        qh.user_name,
-        qh.rows_modified,
-        qh.query_start_time,
-        qh.query_end_time,
-        ah.modified_table_name as target_table_name,
-        ah.modified_table_type as target_table_type,
-        ah.modified_columns as target_columns,
-        ah.base_access_table_name as source_base_table_name,
-        ah.base_access_table_type as source_base_table_type,
-        ah.base_access_columns as source_base_columns,
-        ah.direct_access_table_name as source_direct_table_name,
-        ah.direct_access_table_type as source_direct_table_type,
-        ah.direct_access_columns as source_direct_columns
+        query_id,
+        query_type,
+        query_text,
+        database_id,
+        database_name,
+        schema_name,
+        role_name,
+        user_name,
+        rows_modified,
+        query_start_time,
+        query_end_time,
+        modified_table_name as target_table_name,
+        modified_table_type as target_table_type,
+        modified_columns as target_columns,
+        direct_access_table_name as source_direct_table_name,
+        direct_access_table_type as source_direct_table_type,
+        direct_access_columns as source_direct_columns
 
-    from query_history as qh
-        join access_history as ah
-        on (qh.query_id = ah.query_id)
-    where qh.execution_status = 'SUCCESS'
-        and ah.modified_table_type = 'TABLE'
+    from query_and_access_history
+    where
+        target_table_name is not null
+        and target_table_name != source_direct_table_name
+        and execution_status = 'SUCCESS'
+
 )
 
 select * from data_lineage
