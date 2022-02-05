@@ -50,9 +50,9 @@ query_and_access_history as (
         ah.direct_access_columns
 
     from query_history as qh
-        join access_history as ah
+        left join access_history as ah
         on (qh.query_id = ah.query_id)
-
+    {{ dbt_utils.group_by(35) }}
 )
 
 select * from query_and_access_history

@@ -23,6 +23,5 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 vars:
   monitoring_configuration: MONITORING_CONFIGURATION
-  query_history_include_dbs: ['ANALYTICS', 'ANALYTICS_RAW']
-  query_history_exclude_dbs: []
+  query_history_include_dbs: ['ELEMENTARY_TESTS']
   account_usage_days_back_limit: 14

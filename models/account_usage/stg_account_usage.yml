@@ -19,4 +19,3 @@ sources:
     tables:
       - name: query_history
       - name: access_history
-      - name: views

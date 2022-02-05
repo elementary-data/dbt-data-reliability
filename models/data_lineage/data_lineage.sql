@@ -10,26 +10,23 @@ data_lineage as (
         query_id,
         query_type,
         query_text,
-        database_id,
         database_name,
         schema_name,
         role_name,
         user_name,
         rows_modified,
-        query_start_time,
         query_end_time,
-        modified_table_name as target_table_name,
-        modified_table_type as target_table_type,
-        modified_columns as target_columns,
-        direct_access_table_name as source_direct_table_name,
-        direct_access_table_type as source_direct_table_type,
-        direct_access_columns as source_direct_columns
+        query_elapsed_time,
+        modified_table_name as target_table,
+        array_agg(distinct direct_access_table_name) as source_tables
 
     from query_and_access_history
     where
-        target_table_name is not null
-        and target_table_name != source_direct_table_name
+        modified_table_name is not null
+        and modified_table_name != direct_access_table_name
         and execution_status = 'SUCCESS'
+    group by 1,2,3,4,5,6,7,8,9,10,11
+    order by query_end_time
 
 )
 

@@ -59,9 +59,6 @@ query_history as (
             'REMOVE_FILES', 'REVOKE')
           and ({{ like_any_string_from_list(query_text_clean , var('query_history_include_dbs'), right_string='.') }}
             or {{ where_in_list('database_name', var('query_history_include_dbs')) }})
-          {% if var('query_history_exclude_dbs')|length > 0 %}
-              and not ({{ like_any_string_from_list(query_text_clean, var('query_history_exclude_dbs'), right_string='.') }} and database_name is null)
-          {% endif %}
           {% if is_incremental() %}
               and query_start_time > (select max(query_start_time)  from {{ this }})
           {% endif %}

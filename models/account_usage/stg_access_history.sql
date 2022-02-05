@@ -42,7 +42,6 @@ access_history as (
             lateral flatten(input => src.base_objects_accessed) as base,
             lateral flatten(input => src.objects_modified) as modified
          where direct.value:"objectId" is not null
-             and lower(base.value:"objectDomain") != 'stage'
              {% if is_incremental() %}
                  and query_start_time > (select max(query_start_time)  from {{ this }})
              {% endif %}
