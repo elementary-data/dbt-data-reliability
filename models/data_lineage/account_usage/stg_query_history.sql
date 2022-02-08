@@ -15,7 +15,7 @@ with source as (
     from {{ source('snowflake_account_usage','query_history') }}
     where start_time > (current_date - {{ var('account_usage_days_back_limit') }})::timestamp
     {% if is_incremental() %}
-        and query_start_time > (select max(query_start_time)  from {{ this }})
+        and start_time > (select max(query_start_time)  from {{ this }})
     {% endif %}
     qualify row_number() over (partition by query_id order by query_id) = 1
 

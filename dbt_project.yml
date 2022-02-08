@@ -20,6 +20,12 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_modules"
 
 
+models:
+  data_lineage:
+    +enabled: true
+  monitor:
+    +enabled: true
+
 
 vars:
   monitoring_configuration: MONITORING_CONFIGURATION
