@@ -25,3 +25,4 @@ vars:
   monitoring_configuration: MONITORING_CONFIGURATION
   query_history_include_dbs: []
   account_usage_days_back_limit: 14
+  lineage_max_depth: 20
