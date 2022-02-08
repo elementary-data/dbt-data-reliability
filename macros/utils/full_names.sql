@@ -10,6 +10,10 @@
     upper(concat(database_name, '.', schema_name, '.', table_name, '.', column_name))
 {%- endmacro %}
 
+{% macro schema_table_name() -%}
+    upper(concat(schema_name, '.', table_name))
+{%- endmacro %}
+
 {% macro full_name_to_db() -%}
     trim(split(full_table_name,'.')[0],'"') as database_name
 {%- endmacro %}

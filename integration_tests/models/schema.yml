@@ -37,7 +37,8 @@ sources:
         columns:
           - name: group_a
             meta:
-              column_type: text
+              edr:
+                schema_changes: false
           - name: group_b
             meta:
               column_type: text
