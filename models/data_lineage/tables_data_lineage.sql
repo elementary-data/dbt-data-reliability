@@ -85,7 +85,6 @@ table_lineage as (
     select
         coalesce(up.target_table, down.source_table) as table_name,
         upstream_tables,
-        concat('->'|| coalesce(up.target_table, down.source_table) || '->') as table_node,
         downstream_tables
     from downstream_lineage as down full outer join upstream_lineage as up
         on (up.target_table = down.source_table)
