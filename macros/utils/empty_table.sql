@@ -6,6 +6,8 @@
         cast (null as {{ dbt_utils.type_timestamp()}}) as {{ column_name }}
      {% elif data_type == 'int' %}
         cast (null as {{ dbt_utils.type_int()}}) as {{ column_name }}
+     {% elif data_type == 'float' %}
+        cast (null as {{ dbt_utils.type_float()}}) as {{ column_name }}
      {% else %}
         cast (null as {{ dbt_utils.type_string()}}) as {{ column_name }}
      {% endif %}
