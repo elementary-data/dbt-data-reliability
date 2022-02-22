@@ -5,4 +5,4 @@
   )
 }}
 
-{{ empty_table([('unique_id', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('name', 'string'), ('alias','string'), ('status','string'), ('execution_time', 'float'), ('run_started_at', 'timestamp')]) }}
+{{ empty_table([('unique_id', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('name', 'string'), ('alias','string'), ('status','string'), ('execution_time', 'float'), ('run_started_at', 'string')]) }}
