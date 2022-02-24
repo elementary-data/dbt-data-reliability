@@ -11,7 +11,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from  {{ database_name }}.information_schema.columns
-    where table_schema = '{{ schema_name }}'
+    from  {{ from_information_schema('COLUMNS', schema_name, database_name) }}
+    where table_schema = upper('{{ schema_name }}')
 
 {% endmacro %}

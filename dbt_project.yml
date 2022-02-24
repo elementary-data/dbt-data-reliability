@@ -1,4 +1,4 @@
-name: 'elementary'
+name: 'elementary_data_reliability'
 version: '0.1.1'
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]
@@ -18,3 +18,21 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
   - "dbt_modules"
+
+
+models:
+
+  elementary_observability:
+      +materialized: view
+
+
+vars:
+  monitoring_configuration: MONITORING_CONFIGURATION
+  table_to_monitor: snowflake.account_usage.query_history
+  timestamp_field: end_time
+  column_to_monitor: total_elapsed_time
+  days_back: 7
+  configured_schemas: ['ELEMENTARY_DB.STRESSTEST', 'ELEMENTARY_DB.TEST']
+  monitored_tables: ['ELEMENTARY_DB.STRESSTEST.TEST_TEST3', 'ELEMENTARY_DB.STRESSTEST.TEST_TEST2', 'ELEMENTARY_DB.STRESSTEST.TEST_TESTA']
+
+

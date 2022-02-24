@@ -4,47 +4,32 @@
   )
 }}
 
-with schemas_snapshot as (
+with columns_snapshot as (
 
-    select * from {{ ref('table_columns_snapshot') }}
+    select * from {{ ref('columns_snapshot') }}
 ),
 
-schemas_order as (
+previous_run_time as (
 
-    select *,
-        row_number() over (partition by full_table_name order by dbt_updated_at desc) as schema_order
-    from schemas_snapshot
-
-),
-
-previous_schemas as (
-
-    select *
-    from schemas_order
-    where schema_order = 2
+    select detected_at
+    from columns_snapshot
+    group by detected_at
+    order by detected_at desc
+    limit 1 offset 1
 
 ),
 
-flat_previous_columns as (
+previous_run as (
 
     select
         full_table_name,
-        dbt_updated_at,
-        f.value as columns_jsons
-    from previous_schemas,
-    table (flatten(previous_schemas.columns_schema)) f
-
-),
-
-previous_schemas_columns as (
-
-    select
-        full_table_name,
-        dbt_updated_at,
-        {{trim_quotes('columns_jsons:column_name')}} as column_name,
-        {{trim_quotes('columns_jsons:data_type')}} as data_type
-    from flat_previous_columns
+        column_name,
+        data_type,
+        is_new,
+        detected_at
+    from columns_snapshot
+    where detected_at = (select detected_at from previous_run_time)
 
 )
 
-select * from previous_schemas_columns
+select * from previous_run

@@ -4,36 +4,31 @@
   )
 }}
 
-with schemas_snapshot as (
+with tables_snapshot as (
 
-    select * from {{ ref('schema_tables_snapshot') }}
+    select * from {{ ref('tables_snapshot') }}
 ),
 
-schemas_order as (
+previous_run_time as (
 
-    select *,
-        row_number() over (partition by full_schema_name order by dbt_updated_at desc) as schema_order
-    from schemas_snapshot
-
-),
-
-previous_schemas as (
-
-    select *
-    from schemas_order
-    where schema_order = 2
+    select detected_at
+    from tables_snapshot
+    group by detected_at
+    order by detected_at desc
+    limit 1 offset 1
 
 ),
 
-flat_previous_tables as (
+previous_run as (
 
     select
         full_schema_name,
-        dbt_updated_at,
-        concat(full_schema_name, '.', {{ trim_quotes('f.value') }}) as full_table_name
-    from previous_schemas,
-    table (flatten(previous_schemas.tables_in_schema)) f
+        full_table_name,
+        is_new,
+        detected_at
+    from tables_snapshot
+    where detected_at = (select detected_at from previous_run_time)
 
 )
 
-select * from flat_previous_tables
+select * from previous_run

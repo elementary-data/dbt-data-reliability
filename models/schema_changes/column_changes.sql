@@ -25,7 +25,7 @@ type_changes as (
         cur.column_name,
         cur.data_type as data_type,
         pre.data_type as pre_data_type,
-        cur.dbt_updated_at as detected_at
+        pre.detected_at
     from cur
     inner join pre
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
@@ -35,16 +35,14 @@ type_changes as (
 
 columns_added as (
     select
-        cur.full_table_name,
+        full_table_name,
         'column_added' as change,
-        cur.column_name,
-        cur.data_type as data_type,
+        column_name,
+        data_type,
         null as pre_data_type,
-        cur.dbt_updated_at as detected_at
+        detected_at as detected_at
     from cur
-    left join pre
-        on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
-    where pre.full_table_name is null and pre.column_name is null
+    where is_new = true
 
 ),
 
@@ -56,11 +54,12 @@ columns_removed as (
         pre.column_name as column_name,
         null as data_type,
         pre.data_type as pre_data_type,
-        pre.dbt_updated_at as detected_at
+        pre.detected_at as detected_at
     from pre
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.full_table_name is null and cur.column_name is null
+    and pre.full_table_name in {{ strings_list_to_tuple( var('monitored_tables') ) }}
 
 ),
 
@@ -83,7 +82,7 @@ column_changes_desc as (
         {{ full_name_to_schema() }},
         {{ full_name_to_table() }},
         column_name,
-        detected_at,
+        {{ run_start_column() }} as detected_at,
         change,
 
         case

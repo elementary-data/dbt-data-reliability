@@ -4,70 +4,30 @@
   )
 }}
 
-with schemas_snapshot as (
+with tables_snapshot as (
 
-    select * from {{ ref('schema_tables_snapshot') }}
+    select * from {{ ref('tables_snapshot') }}
 ),
 
-schemas_order as (
+this_run_time as (
 
-    select *,
-        row_number() over (partition by full_schema_name order by dbt_updated_at desc) as schema_order
-    from schemas_snapshot
-
-),
-
-current_schemas as (
-
-    select *
-    from schemas_order
-    where schema_order = 1
+    select detected_at
+    from tables_snapshot
+    order by detected_at desc
+    limit 1
 
 ),
 
-previous_schemas as (
-
-    select *
-    from schemas_order
-    where schema_order = 2
-
-),
-
-current_and_previous_tables as (
-
-    select
-        cur.full_schema_name,
-        cur.tables_in_schema as current_tables,
-        pre.tables_in_schema as previous_tables,
-        cur.dbt_updated_at
-    from current_schemas cur
-    left join previous_schemas pre
-        on (cur.full_schema_name = pre.full_schema_name)
-
-),
-
-flat_current_tables as (
+current_tables as (
 
     select
         full_schema_name,
-        dbt_updated_at,
-        concat(full_schema_name, '.', {{ trim_quotes('f.value') }}) as full_table_name
-    from current_and_previous_tables,
-    table (flatten(current_and_previous_tables.current_tables)) f
-    where previous_tables is not null
-
-),
-
-current_tables_including_empty_schema as (
-
-    select
-        coalesce(flat.full_schema_name, schemas.full_schema_name) as full_schema_name,
-        coalesce(flat.dbt_updated_at, schemas.dbt_updated_at) as dbt_updated_at,
-        flat.full_table_name
-    from flat_current_tables as flat
-        full outer join current_and_previous_tables as schemas
-        on (flat.full_schema_name = schemas.full_schema_name)
+        full_table_name,
+        is_new,
+        detected_at
+    from tables_snapshot
+    where detected_at = (select detected_at from this_run_time)
 
 )
 
-select * from current_tables_including_empty_schema
+select * from current_tables

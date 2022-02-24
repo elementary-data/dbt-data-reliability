@@ -19,13 +19,11 @@ pre as (
 
 table_added as (
     select
-        cur.full_table_name,
+        full_table_name,
         'table_added' as change,
-        cur.dbt_updated_at as detected_at
+        detected_at
     from cur
-    left join pre
-        on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
-    where pre.full_table_name is null and cur.full_table_name is not null
+    where is_new = true
 
 ),
 
@@ -34,11 +32,13 @@ table_removed as (
     select
         pre.full_table_name,
         'table_removed' as change,
-        coalesce(cur.dbt_updated_at, pre.dbt_updated_at) as detected_at
+        pre.detected_at as detected_at
     from pre
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
     where cur.full_table_name is null
+        -- TODO_CONFIG
+        and pre.full_schema_name in {{ strings_list_to_tuple( var('configured_schemas') ) }}
 
 ),
 
@@ -57,7 +57,7 @@ table_changes_desc as (
         {{ full_name_to_db() }},
         {{ full_name_to_schema() }},
         {{ full_name_to_table() }},
-        detected_at,
+        {{ run_start_column() }} as detected_at,
         change,
 
         case

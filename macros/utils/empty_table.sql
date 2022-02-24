@@ -3,7 +3,7 @@
      {% if data_type == 'boolean' %}
         cast (null as {{ type_bool()}}) as {{ column_name }}
      {% elif data_type == 'timestamp' %}
-        cast (null as {{ dbt_utils.type_timestamp()}}) as {{ column_name }}
+        cast (null as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
      {% elif data_type == 'int' %}
         cast (null as {{ dbt_utils.type_int()}}) as {{ column_name }}
      {% elif data_type == 'float' %}
