@@ -25,14 +25,7 @@
 {% endmacro %}
 
 
--- for each metric+table or metric+column, i need to know when was the last time it was collected
--- so I could support configuration changes and gaps in runs.
--- do you have an idea for that?
--- could you pass me a 'new' flag for metric added to the config? maybe I can decide on what is new with the validated_config?
-
--- idea: let's re-run on table if something was added to it's config (easier than setting timeframe for each metric)
-
-{% macro timeframe_for_query(days_back) %}
+{% macro timeframe_to_query(days_back) %}
 
     {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d %H:%M:%S") ~ "'" %}
     {%- set days_subtract = '-' ~ days_back %}
@@ -41,21 +34,20 @@
         with start_times as (
             select run_started_at as last_run, {{ dbt_utils.dateadd('day', days_subtract, timeframe_end ) }} as start_limit
             from {{ ref('elementary_runs')}}
-            order by run_started_at_timestamp desc
-            limit 2 offset 1
-        )
-        select case when start_limit > last_run then start_limit
+            order by run_started_at desc
+            limit 1 offset 1
+        ),
+        start_time_limit as (
+            select case when start_limit > last_run then start_limit
                else last_run end as start_time
-        from start_times
+            from start_times
+        )
+        select {{ dbt_utils.datediff('start_time', timeframe_end, 'hour') }} as timeframe_to_query
+        from start_time_limit
     {%- endset -%}
 
-    {%- set timeframe_start_limit = result_column_to_list(query_start_time)[0] %}
+    {%- set timeframe_to_query = result_column_to_list(query_start_time)[0] %}
 
-    {% if timeframe_start_limit|length %}
-        {%- set timeframe_start = timeframe_start_limit %}
-    {% else %}
-    -- figure out this else
-        {%- set timeframe_start = 0%}
-    {% endif %}
+    {{ return(timeframe_to_query) }}
 
 {% endmacro %}

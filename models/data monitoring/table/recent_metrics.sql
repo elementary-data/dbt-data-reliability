@@ -8,4 +8,4 @@
     from
         {{ ref('table_metrics') }}
     where
-        timeframe_end = {{ max_timeframe_end() }}
+        timeframe_end = '{{ max_timeframe_end(24) }}'

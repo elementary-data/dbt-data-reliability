@@ -4,33 +4,30 @@
   )
 }}
 
-with columns_snapshot as (
+with tables_snapshot as (
 
-    select * from {{ ref('columns_snapshot') }}
+    select * from {{ ref('schema_tables_snapshot') }}
 ),
 
 this_run_time as (
 
     select detected_at
-    from columns_snapshot
-    group by detected_at
+    from tables_snapshot
     order by detected_at desc
     limit 1
 
 ),
 
-current_columns as (
+current_tables as (
 
     select
+        full_schema_name,
         full_table_name,
-        column_name,
-        data_type,
         is_new,
         detected_at
-    from columns_snapshot
+    from tables_snapshot
     where detected_at = (select detected_at from this_run_time)
 
 )
 
-select * from current_columns
-
+select * from current_tables

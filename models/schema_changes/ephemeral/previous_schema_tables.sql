@@ -6,7 +6,7 @@
 
 with tables_snapshot as (
 
-    select * from {{ ref('tables_snapshot') }}
+    select * from {{ ref('schema_tables_snapshot') }}
 ),
 
 previous_run_time as (

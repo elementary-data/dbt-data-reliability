@@ -28,6 +28,8 @@ models:
 
 vars:
   monitoring_configuration: MONITORING_CONFIGURATION
+  tables_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.TABLES_CONFIG
+  columns_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMNS_CONFIG
   table_to_monitor: snowflake.account_usage.query_history
   timestamp_field: end_time
   column_to_monitor: total_elapsed_time

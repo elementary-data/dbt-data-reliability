@@ -5,7 +5,7 @@
 }}
 
 -- TODO_CONFIG update get schemas
-{% set configured_schemas =  ['ELEMENTARY_DB.STRESSTEST'] %}
+{% set configured_schemas = get_configured_schemas() %}
 
 with filtered_information_schema_columns as (
 

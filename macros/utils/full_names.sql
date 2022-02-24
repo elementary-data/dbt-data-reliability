@@ -1,5 +1,6 @@
-{% macro full_table_name() -%}
-    upper(concat(database_name, '.', schema_name, '.', table_name))
+{% macro full_table_name(alias) -%}
+    {% if alias is defined %}{%- set alias_dot = alias ~ '.' %}{% endif %}
+    upper(concat({{ alias_dot }}database_name, '.', {{ alias_dot }}schema_name, '.', {{ alias_dot }}table_name))
 {%- endmacro %}
 
 {% macro full_schema_name() -%}

@@ -5,8 +5,7 @@
     with monitoring_configuration as (
 
         select {{ full_schema_name() }} as full_schema_name
-        from {{ get_configuration_path() }}
-        where alert_on_schema_changes = true
+        from {{ var('tables_config') }}
         group by 1
 
     )

@@ -36,7 +36,7 @@
 {% endmacro %}
 
 
-{% macro table_timeframe_metrics_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, table_monitors, column_config) %}
+{% macro table_one_timeframe_metrics_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) %}
 
     (
     with timeframe_data as (
@@ -44,7 +44,11 @@
         select *
         from {{ monitored_table }}
         where
+        {% if timestamp_field|length %}
             {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
+        {% else %}
+            true
+        {% endif %}
 
     ),
 
@@ -71,12 +75,14 @@
     metrics_final as (
 
         select
-            '{{ table_to_monitor }}' as table_name,
+            '{{ monitored_table }}' as table_name,
             column_name,
             metric_name,
             metric_value,
             {{ timeframe_start }} as timeframe_start,
-            {{ timeframe_end }} as timeframe_end
+            {{ timeframe_end }} as timeframe_end,
+            {{ timeframe_duration }} as timeframe_duration,
+            {{ run_start_column() }} as run_started_at
         from
             union_metrics
 
@@ -89,19 +95,44 @@
 
 
 
-{% macro table_metrics_query(table_to_monitor, timestamp_field, days_back, timeframe_duration, table_monitors, column_config) %}
+{% macro table_metrics_query(table_to_monitor, timestamp_field, days_back, timeframe_duration, table_monitors, column_config, should_backfill) %}
 
     {%- set max_timeframe_end = "'" ~ max_timeframe_end(timeframe_duration) ~ "'" -%}
 
-    {%- for i in range(days_back) -%}
-        {%- set time_diff_end = -(i*timeframe_duration) -%}
-        {%- set time_diff_start = -((i+1)*timeframe_duration) -%}
-        {%- set timeframe_end = dbt_utils.dateadd('hour', time_diff_end , max_timeframe_end) -%}
-        {%- set timeframe_start = dbt_utils.dateadd('hour', time_diff_start , max_timeframe_end) -%}
+    {% if should_backfill and timestamp_field|length %}
 
-        {{- metrics_calc_query(table_to_monitor, timestamp_field, timeframe_start, timeframe_end) -}}
-        {%- if not loop.last %} union all {%- endif %}
+        {%- set timeframes = (days_back*24/timeframe_duration)|int %}
+        {%- for i in range(timeframes) -%}
+            {%- set time_diff_end = -(i*timeframe_duration) -%}
+            {%- set time_diff_start = -((i+1)*timeframe_duration) -%}
+            {%- set timeframe_end = dbt_utils.dateadd('hour', time_diff_end , max_timeframe_end) -%}
+            {%- set timeframe_start = dbt_utils.dateadd('hour', time_diff_start , max_timeframe_end) -%}
 
-    {%- endfor -%}
+            {{- table_one_timeframe_metrics_query(table_to_monitor, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) -}}
+
+            {%- if not loop.last %} union all {%- endif %}
+
+        {%- endfor -%}
+
+    {% elif should_backfill is sameas false and timestamp_field|length %}
+
+        {%- set hours_back = timeframe_to_query(days_back) %}
+        {%- set timeframes = (hours_back/timeframe_duration)|int %}
+        {%- for i in range(timeframes) -%}
+            {%- set time_diff_end = -(i*timeframe_duration) -%}
+            {%- set time_diff_start = -((i+1)*timeframe_duration) -%}
+            {%- set timeframe_end = dbt_utils.dateadd('hour', time_diff_end , max_timeframe_end) -%}
+            {%- set timeframe_start = dbt_utils.dateadd('hour', time_diff_start , max_timeframe_end) -%}
+
+            {{- table_one_timeframe_metrics_query(table_to_monitor, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) -}}
+            {%- if not loop.last %} union all {%- endif %}
+
+        {%- endfor -%}
+
+    {% else %}
+
+        {{- table_one_timeframe_metrics_query(table_to_monitor, timestamp_field, null, null, null, table_monitors, column_config) -}}
+
+    {% endif %}
 
 {% endmacro %}

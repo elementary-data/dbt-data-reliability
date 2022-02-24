@@ -6,7 +6,7 @@
 
 with columns_snapshot as (
 
-    select * from {{ ref('columns_snapshot') }}
+    select * from {{ ref('schema_columns_snapshot') }}
 ),
 
 previous_run_time as (
