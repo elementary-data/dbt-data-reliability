@@ -1,13 +1,17 @@
 {% macro empty_column(column_name, data_type) %}
 
      {% if data_type == 'boolean' %}
-        cast (null as boolean) as {{ column_name }}
+        cast (null as {{ type_bool()}}) as {{ column_name }}
      {% elif data_type == 'timestamp' %}
         cast (null as {{ dbt_utils.type_timestamp()}}) as {{ column_name }}
      {% elif data_type == 'int' %}
         cast (null as {{ dbt_utils.type_int()}}) as {{ column_name }}
      {% elif data_type == 'float' %}
         cast (null as {{ dbt_utils.type_float()}}) as {{ column_name }}
+     {% elif data_type == 'array' %}
+        cast (null as {{ type_array()}}) as {{ column_name }}
+     {% elif data_type == 'json' %}
+        cast (null as {{ type_json()}}) as {{ column_name }}
      {% else %}
         cast (null as {{ dbt_utils.type_string()}}) as {{ column_name }}
      {% endif %}
