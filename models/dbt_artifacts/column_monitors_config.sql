@@ -2,7 +2,8 @@
   config(
     materialized = 'table',
     transient=false,
-    unique_key = 'id'
+    unique_key = 'id',
+    post_hook = "{% if execute %}{{ elementary_data_reliability.upload_columns_configuration() }}{% endif %}"
   )
 }}
 
