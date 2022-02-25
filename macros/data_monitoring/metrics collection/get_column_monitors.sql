@@ -1,6 +1,6 @@
 {% macro get_column_monitors(data_type, config_monitors) %}
 
-    {%- set all_types_monitors %}
+    {%- set all_types_monitors_except_schema %}
         [
         'null_percent'
         ]
@@ -22,7 +22,7 @@
 
     {%- set column_monitors = [] %}
 
-    {% set all_types_intersect = lists_intersection(config_monitors, all_types_monitors) %}
+    {% set all_types_intersect = lists_intersection(config_monitors, all_types_monitors_except_schema) %}
     {% for monitor in all_types_intersect %}
         {{ column_monitors.append(monitor) }}
     {% endfor %}

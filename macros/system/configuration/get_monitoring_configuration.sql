@@ -15,23 +15,6 @@
 {% endmacro %}
 
 
-{% macro monitored_tables() %}
-
-    {% set tables_to_monitor_query %}
-        select {{ full_table_name() }} as full_table_name
-        from {{ get_configuration_path() }}
-        where alert_on_schema_changes = true
-              and table_name is not null
-              and column_name is null
-    {% endset %}
-
-    {% set monitored_tables = result_column_to_list(tables_to_monitor_query) %}
-    {% set monitored_tables_tuple = strings_list_to_tuple(monitored_tables) %}
-    {{ return(monitored_tables_tuple) }}
-
-{% endmacro %}
-
-
 {% macro excluded_tables() %}
 
     {% set tables_to_monitor_query %}

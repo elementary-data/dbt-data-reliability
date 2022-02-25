@@ -36,7 +36,7 @@
 {% endmacro %}
 
 
-{% macro table_one_timeframe_metrics_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) %}
+{% macro one_bucket_monitors_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) %}
 
     (
     with timeframe_data as (
@@ -108,7 +108,7 @@
             {%- set timeframe_end = dbt_utils.dateadd('hour', time_diff_end , max_timeframe_end) -%}
             {%- set timeframe_start = dbt_utils.dateadd('hour', time_diff_start , max_timeframe_end) -%}
 
-            {{- table_one_timeframe_metrics_query(table_to_monitor, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) -}}
+            {{- one_bucket_monitors_query(table_to_monitor, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) -}}
 
             {%- if not loop.last %} union all {%- endif %}
 

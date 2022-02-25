@@ -5,7 +5,7 @@
     with monitoring_configuration as (
 
         select {{ full_schema_name() }} as full_schema_name
-        from {{ var('tables_config') }}
+        from {{ var('table_monitors_config') }}
         group by 1
 
     )

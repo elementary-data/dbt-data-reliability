@@ -8,7 +8,7 @@
 
 with tables_config as (
 
-    select * from {{ var('tables_config') }}
+    select * from {{ var('table_monitors_config') }}
 
 ),
 
@@ -30,7 +30,7 @@ config_existing_tables as (
         upper(config.table_name) as table_name,
         timestamp_column,
         bucket_duration_hours,
-        monitored,
+        monitored as table_monitored,
         monitors,
         {{ run_start_column() }} as config_loaded_at
     from
@@ -50,14 +50,14 @@ final as (
         table_name,
         timestamp_column,
         bucket_duration_hours,
-        monitored,
+        table_monitored,
         monitors,
 
         {% if is_incremental() %}
             {%- set active_configs_query %}
                 select config_id from {{ this }}
                 where config_loaded_at = (select max(config_loaded_at) from {{ this }})
-                and monitored = true
+                and table_monitored = true
             {% endset %}
             {%- set active_configs = result_column_to_list(active_configs_query) %}
 
