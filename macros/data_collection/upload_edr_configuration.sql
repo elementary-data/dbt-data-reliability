@@ -20,11 +20,9 @@
         {% set nodes = elementary_data_reliability.get_nodes_from_graph() %}
         {% set column_monitors = [] %}
         {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
-            {% if node.resource_type in ['seed', 'source', 'model'] %}
-                {% set columns_config_dict = elementary_data_reliability.get_columns_config(node) %}
-                {% if columns_config_dict is not none %}
-                    {% do column_monitors.append(columns_config_dict) %}
-                {% endif %}
+            {% set columns_config_dict = elementary_data_reliability.get_columns_config(node) %}
+            {% if columns_config_dict is not none %}
+                {% do column_monitors.append(columns_config_dict) %}
             {% endif %}
         {% endfor %}
         {% if column_monitors|length > 0 %}
@@ -52,13 +50,62 @@
     {{ return(table_name) }}
 {% endmacro %}
 
+{% macro get_edr_config_in_columns(node) %}
+    {% set edr_config_in_columns = [] %}
+    {% if 'columns' in node %}
+        {% set columns = node.columns %}
+        {% if columns is mapping %}
+            {% for column in columns.values() %}
+                {% if column is mapping %}
+                    {% set column_meta = column.get('meta') %}
+                    {% if column_meta is mapping %}
+                        {% set column_edr_config = column_meta.get('edr') %}
+                        {% if column_edr_config is mapping %}
+                            {% do column_edr_config.update({'name': column.get('name')}) %}
+                            {% do edr_config_in_columns.append(column_edr_config) %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+    {{ return(edr_config_in_columns) }}
+{% endmacro %}
+
+{% macro get_edr_config(node) %}
+    {% set res = {} %}
+    {% set edr_config = node.config.get('edr') %}
+    {% if edr_config is not none %}
+        {% do res.update(edr_config) %}
+    {% endif %}
+    {% set config_meta = node.config.get('meta') %}
+    {% if config_meta is not none %}
+        {% set edr_config = config_meta.get('edr') %}
+        {% if edr_config is not none %}
+            {% do res.update(edr_config) %}
+        {% endif %}
+    {% endif %}
+    {% set edr_config = node.meta.get('edr') %}
+    {% if edr_config is not none %}
+        {% do res.update(edr_config) %}
+    {% endif %}
+    {% set edr_config_in_columns = elementary_data_reliability.get_edr_config_in_columns(node) %}
+    {% if edr_config_in_columns | length > 0 %}
+        {% do res.update({'columns': edr_config_in_columns}) %}
+    {% endif %}
+    {{ return(res) }}
+{% endmacro %}
 
 {% macro get_table_config(node) %}
     {% set table_name = elementary_data_reliability.get_table_name(node) %}
-    {% set edr_monitored = node.config.get('edr_monitored') %}
-    {% if edr_monitored is not none %}
-        {% set id = node.database + '.' + node.schema + '.' + table_name %}
-        {{ return({'id': id, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'timestamp_column': node.config.get('edr_timestamp_column'), 'bucket_duration_hours': 24, 'monitored': edr_monitored, 'monitors': node.config.get('edr_table_monitors')}) }}
+    {% set edr_config = elementary_data_reliability.get_edr_config(node) %}
+    {% if edr_config is not none %}
+        {% set table_monitored = edr_config.get('monitored') %}
+        {% set columns_monitored = edr_config.get('columns_monitored') %}
+        {% if table_monitored is not none or columns_monitored is not none %}
+            {% set full_name = node.database + '.' + node.schema + '.' + table_name %}
+            {{ return({'full_name': full_name, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'timestamp_column': edr_config.get('timestamp_column'), 'bucket_duration_hours': 24, 'table_monitored': table_monitored, 'table_monitors': edr_config.get('table_monitors'), 'columns_monitored': columns_monitored}) }}
+        {% endif %}
     {% endif %}
     {{ return(none) }}
 {% endmacro %}
@@ -66,22 +113,20 @@
 
 {% macro get_columns_config(node) %}
     {% set table_name = elementary_data_reliability.get_table_name(node) %}
-    {% set edr_columns_monitored = node.config.get('edr_columns_monitored') %}
-    {% if edr_columns_monitored is not none %}
-        {% set edr_columns = node.config.get('edr_columns') %}
-        {% if edr_columns is not none %}
-            {% for edr_column in edr_columns %}
-                {% if edr_column is mapping %}
-                    {% set edr_column_name = edr_column.get('name') %}
-                    {% set edr_column_monitors = edr_column.get('monitors') %}
-                    {% if edr_column_name is not none %}
-                        {% set id = node.database + '.' + node.schema + '.' + table_name + '.' + edr_column_name %}
-                        {{ return({'id': id, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'column_name': edr_column_name, 'monitored': edr_columns_monitored, 'monitors': edr_column_monitors}) }}
+    {% set edr_config = elementary_data_reliability.get_edr_config(node) %}
+    {% if edr_config is not none %}
+        {% set columns = edr_config.get('columns') %}
+        {% if columns is not none %}
+            {% for column in columns %}
+                {% if column is mapping %}
+                    {% set column_name = column.get('name') %}
+                    {% set column_monitors = column.get('column_monitors') %}
+                    {% if column_name is not none %}
+                        {% set full_name = node.database + '.' + node.schema + '.' + table_name + '.' + column_name %}
+                        {{ return({'full_name': full_name, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'column_name': column_name, 'column_monitors': column_monitors}) }}
                     {% endif %}
                 {% endif %}
             {% endfor %}
-        {% else %}
-            {{ return({'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'column_name': none, 'monitored': edr_columns_monitored, 'monitors': none}) }}
         {% endif %}
     {% endif %}
     {{ return(none) }}
