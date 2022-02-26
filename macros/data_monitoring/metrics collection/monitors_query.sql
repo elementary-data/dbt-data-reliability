@@ -17,10 +17,12 @@
         {%- set columns_monitored = monitored_table[table_config_column_names[9]] %}
         {%- set table_should_backfill = monitored_table[table_config_column_names[10]] %}
 
-        {%- if monitored_table[table_config_column_names[8]] is not none %}
-            {%- set config_column_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
+        {%- if table_monitored is sameas true %}
+            {%- if monitored_table[table_config_column_names[8]] is not none %}
+                {%- set config_column_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
+            {%- endif %}
+            {%- set table_monitors = get_table_monitors(config_table_monitors) %}
         {%- endif %}
-        {%- set table_monitors = get_table_monitors(config_table_monitors) %}
 
         {%- if columns_monitored is sameas true %}
             {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
