@@ -1,5 +1,3 @@
--- TODO: Get the config from the new format
-
 {{
   config(
     materialized = 'incremental',
@@ -40,9 +38,9 @@ column_changes_alerts as (
     select
         change_id as alert_id,
         detected_at,
-         database_name,
-         schema_name,
-         table_name,
+        database_name,
+        schema_name,
+        table_name,
         column_name,
         'schema_change' as alert_type,
         change as sub_type,
@@ -63,21 +61,8 @@ filtered_alerts as (
     select *
     from all_alerts
     where
-        {{ full_column_name() }} in {{ monitored_columns() }}
-        or
-        (
-        ({{ full_column_name() }} not in {{ excluded_columns() }} or column_name is null)
-        and
-        {{ full_table_name() }} in {{ monitored_tables() }}
-        )
-        or
-        (
-        ({{ full_column_name() }} not in {{ excluded_columns() }} or column_name is null)
-        and
-        {{ full_table_name() }} not in {{ excluded_tables() }}
-        and
-        {{ full_schema_name() }} in {{ monitored_schemas() }}
-        )
+        {{ full_table_name() }} in {{ tables_for_alert_on_schema_changes() }}
+        or {{ full_schema_name() }} in {{ schemas_for_alert_on_schema_changes() }}
 
 )
 

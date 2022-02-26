@@ -1,7 +1,8 @@
 {% macro monitors_query(thread_number) %}
+    -- depends_on: {{ ref('edr_tables_config') }}
     -- depends_on: {{ ref('edr_columns_config') }}
 
-    {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
+    {%- set monitored_tables = run_query(monitored_tables('1,2,3,4')) %}
     {%- if execute %}
         {%- set table_config_column_names = monitored_tables.column_names %}
     {%- endif %}

@@ -25,14 +25,10 @@ models:
 
 
 vars:
-  monitoring_configuration: MONITORING_CONFIGURATION
   table_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.TABLE_MONITORS_CONFIG
   columns_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMN_MONITORS_CONFIG
-  table_to_monitor: snowflake.account_usage.query_history
-  timestamp_field: end_time
-  column_to_monitor: total_elapsed_time
   days_back: 7
-  configured_schemas: ['ELEMENTARY_DB.STRESSTEST', 'ELEMENTARY_DB.TEST']
-  monitored_tables: ['ELEMENTARY_DB.STRESSTEST.TEST_TEST3', 'ELEMENTARY_DB.STRESSTEST.TEST_TEST2', 'ELEMENTARY_DB.STRESSTEST.TEST_TESTA']
-
+  schemas_for_alert_on_schema_changes:
+    - elementary_db.jaffle_shop
+    - elementary_db.stresstest
 
