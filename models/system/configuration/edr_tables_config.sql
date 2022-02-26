@@ -1,3 +1,6 @@
+-- TODO: validate that timestamp column exists
+-- TODO: create schema changes monitored column
+
 {{
   config(
     materialized = 'incremental',
@@ -22,16 +25,17 @@ config_existing_tables as (
 
     select
         {{ dbt_utils.surrogate_key([
-            'config.database_name', 'config.schema_name', 'config.table_name', 'config.monitors',
+            'config.full_name', 'config.table_monitors', 'config.columns_monitored', 'config.timestamp_column'
         ]) }} as config_id,
-        {{ full_table_name('config') }} as full_table_name,
+        upper(config.full_name) as full_table_name,
         upper(config.database_name) as database_name,
         upper(config.schema_name) as schema_name,
         upper(config.table_name) as table_name,
         timestamp_column,
         bucket_duration_hours,
-        monitored as table_monitored,
-        monitors,
+        table_monitored,
+        table_monitors,
+        columns_monitored,
         {{ run_start_column() }} as config_loaded_at
     from
         information_schema_tables as info_schema join tables_config as config
@@ -51,7 +55,8 @@ final as (
         timestamp_column,
         bucket_duration_hours,
         table_monitored,
-        monitors,
+        table_monitors,
+        columns_monitored,
 
         {% if is_incremental() %}
             {%- set active_configs_query %}
@@ -74,7 +79,8 @@ final as (
         ntile(4) over (partition by full_table_name order by config_id) as thread_number
 
     from config_existing_tables
-    group by 1,2,3,4,5,6,7,8,9,10
+    group by 1,2,3,4,5,6,7,8,9,10,11
+
 )
 
 select *

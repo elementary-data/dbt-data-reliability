@@ -1,3 +1,5 @@
+-- TODO: remove old and unused
+
 {% macro monitored_schemas() %}
 
     {% set monitor_query %}
@@ -32,7 +34,7 @@
 {% endmacro %}
 
 
-{% macro monitored_columns() %}
+{% macro old_monitored_columns() %}
 
     {% set monitor_query %}
         select {{ full_column_name() }} as full_column_name

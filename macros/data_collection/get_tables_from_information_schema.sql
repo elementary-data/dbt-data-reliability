@@ -2,6 +2,7 @@
     {{ return(adapter.dispatch('get_tables_from_information_schema')(database_name, schema_name)) }}
 {% endmacro %}
 
+
 {% macro snowflake__get_tables_from_information_schema(database_name, schema_name) %}
 
     (with information_schema_tables as (

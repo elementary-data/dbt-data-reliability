@@ -1,19 +1,13 @@
 {% macro get_table_monitors(config_monitors) %}
 
-    {%- set all_table_monitors_except_schema %}
-        [
-        'row_count'
-        ]
-    {% endset %}
+    {%- set all_table_monitors = ['row_count'] %}
 
-    {%- set table_monitors = [] %}
+    {%- if config_monitors is defined and config_monitors|length %}
+        {%- set monitors_list = lists_intersection(config_monitors, all_table_monitors) %}
+    {%- else %}
+        {%- set monitors_list = all_table_monitors %}
+    {%- endif %}
 
-    {% set monitors_intersect = lists_intersection(config_monitors, all_table_monitors_except_schema) %}
-    {% for monitor in monitors_intersect %}
-        {{ table_monitors.append(monitor) }}
-    {% endfor %}
-
-    {{ return(table_monitors) }}
+    {{ return(monitors_list) }}
 
 {% endmacro %}
-

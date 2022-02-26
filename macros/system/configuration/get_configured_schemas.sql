@@ -6,6 +6,7 @@
 
         select {{ full_schema_name() }} as full_schema_name
         from {{ var('table_monitors_config') }}
+        where database_name is not null and schema_name is not null
         group by 1
 
     )

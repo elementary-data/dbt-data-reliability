@@ -22,14 +22,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
 
-  elementary_observability:
-      +materialized: view
 
 
 vars:
   monitoring_configuration: MONITORING_CONFIGURATION
-  table_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.TABLES_CONFIG
-  columns_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMNS_CONFIG
+  table_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.TABLE_MONITORS_CONFIG
+  columns_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMN_MONITORS_CONFIG
   table_to_monitor: snowflake.account_usage.query_history
   timestamp_field: end_time
   column_to_monitor: total_elapsed_time
