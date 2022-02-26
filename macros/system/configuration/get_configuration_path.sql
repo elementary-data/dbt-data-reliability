@@ -1,3 +1,4 @@
+
 {% macro get_configuration_path() %}
 
     {% set schemas_configuration_path %}

@@ -5,11 +5,11 @@
     with monitoring_configuration as (
 
         select {{ full_schema_name() }} as full_schema_name
-    from {{ get_configuration_path() }}
-    where alert_on_schema_changes = true
-    group by 1
+        from {{ get_configuration_path() }}
+        where alert_on_schema_changes = true
+        group by 1
 
-        )
+    )
 
     select distinct full_schema_name
     from monitoring_configuration
