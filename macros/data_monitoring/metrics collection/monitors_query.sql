@@ -1,6 +1,9 @@
 {% macro monitors_query(thread_number) %}
+    -- depends_on: {{ ref('elementary_runs') }}
     -- depends_on: {{ ref('edr_tables_config') }}
     -- depends_on: {{ ref('edr_columns_config') }}
+
+    {%- set tables_queried = [] %}
 
     {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
     {%- if execute %}
@@ -29,22 +32,33 @@
             {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
         {%- endif %}
 
-        {%- if table_should_backfill %}
+        {%- if table_should_backfill is sameas true %}
             {%- set should_backfill = true %}
         {%- elif column_monitors_config is defined %}
             {%- set should_backfill_columns = [] %}
             {%- for i in column_monitors_config %}
-                {{ should_backfill_columns.append(i['should_backfill']) }}
+                {% do should_backfill_columns.append(i['should_backfill']) %}
             {%- endfor %}
-            {%- set should_backfill = should_backfill_columns[0] %}
+            {%- if should_backfill_columns[0] is sameas true %}
+                {%- set should_backfill = true %}
+            {%- endif %}
         {%- else %}
             {%- set should_backfill = false %}
         {%- endif %}
 
-        {{ table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill) }}
-        {%- if not loop.last %} union all {%- endif %}
+        {% set table_query = table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill) %}
+        {%- if 'select' in table_query %}
+            {{ table_query }}
+            {%- if not loop.last %} union all {%- endif %}
+            {% do tables_queried.append(full_table_name) %}
+        {%- endif %}
 
     {%- endfor %}
+
+    {%- if not tables_queried|length %}
+        {{ empty_table([('table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('timeframe_start','timestamp'),('timeframe_end','timestamp'),('timeframe_duration','int'),('run_started_at','timestamp')]) }}
+        where table_name is not null
+    {%- endif %}
 
 {% endmacro %}
 
