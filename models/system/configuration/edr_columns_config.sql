@@ -1,5 +1,3 @@
--- TODO: create schema changes monitored column
-
 {{
   config(
     materialized = 'incremental',
@@ -112,7 +110,6 @@ final as (
             {%- set active_configs_query %}
                 select config_id from {{ this }}
                 where config_loaded_at = (select max(config_loaded_at) from {{ this }})
-                and monitored = true
             {% endset %}
             {%- set active_configs = result_column_to_list(active_configs_query) %}
 

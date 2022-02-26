@@ -1,5 +1,4 @@
 -- TODO: validate that timestamp column exists
--- TODO: create schema changes monitored column
 
 {{
   config(

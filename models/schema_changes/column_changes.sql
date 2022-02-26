@@ -59,7 +59,7 @@ columns_removed as (
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.full_table_name is null and cur.column_name is null
-    and pre.full_table_name in {{ strings_list_to_tuple( var('monitored_tables') ) }}
+    and pre.full_table_name in {{ get_tables_for_columns_removed() }}
 
 ),
 
