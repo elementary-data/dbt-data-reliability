@@ -25,7 +25,7 @@
                 {% do column_monitors.append(columns_config_dict) %}
             {% endif %}
         {% endfor %}
-        {% if column_monitors|length > 0 %}
+        {% if column_monitors | length > 0 %}
             {% do elementary_data_reliability.insert_dicts_to_table(this, column_monitors) %}
         {% endif %}
     {% endif %}
@@ -75,18 +75,18 @@
 {% macro get_edr_config(node) %}
     {% set res = {} %}
     {% set edr_config = node.config.get('edr') %}
-    {% if edr_config is not none %}
+    {% if edr_config is mapping %}
         {% do res.update(edr_config) %}
     {% endif %}
     {% set config_meta = node.config.get('meta') %}
-    {% if config_meta is not none %}
+    {% if config_meta is mapping %}
         {% set edr_config = config_meta.get('edr') %}
-        {% if edr_config is not none %}
+        {% if edr_config is mapping %}
             {% do res.update(edr_config) %}
         {% endif %}
     {% endif %}
     {% set edr_config = node.meta.get('edr') %}
-    {% if edr_config is not none %}
+    {% if edr_config is mapping %}
         {% do res.update(edr_config) %}
     {% endif %}
     {% set edr_config_in_columns = elementary_data_reliability.get_edr_config_in_columns(node) %}
@@ -99,7 +99,7 @@
 {% macro get_table_config(node) %}
     {% set table_name = elementary_data_reliability.get_table_name(node) %}
     {% set edr_config = elementary_data_reliability.get_edr_config(node) %}
-    {% if edr_config is not none %}
+    {% if edr_config is mapping %}
         {% set table_monitored = edr_config.get('monitored') %}
         {% set columns_monitored = edr_config.get('columns_monitored') %}
         {% if table_monitored is not none or columns_monitored is not none %}
@@ -114,9 +114,9 @@
 {% macro get_columns_config(node) %}
     {% set table_name = elementary_data_reliability.get_table_name(node) %}
     {% set edr_config = elementary_data_reliability.get_edr_config(node) %}
-    {% if edr_config is not none %}
+    {% if edr_config is mapping %}
         {% set columns = edr_config.get('columns') %}
-        {% if columns is not none %}
+        {% if columns is sequence %}
             {% for column in columns %}
                 {% if column is mapping %}
                     {% set column_name = column.get('name') %}
