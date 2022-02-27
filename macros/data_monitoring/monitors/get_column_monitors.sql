@@ -4,7 +4,7 @@
 
     {%- set all_types_monitors_except_schema = ['null_percent', 'null_count', 'unique'] | list %}
     {%- set numeric_monitors = ['min','max','zero_count','zero_percent', 'average', 'standard_deviation', 'variance'] | list %}
-    {%- set string_monitors = ['min_length','max_length','missing_count','missing_percent'] | list %}
+    {%- set string_monitors = ['min_length','max_length','missing_count','missing_percent','average_length'] | list %}
 
     {# If config_monitors is null, default is to use all relevant monitors for this data type #}
     {%- if config_monitors is defined and config_monitors|length %}

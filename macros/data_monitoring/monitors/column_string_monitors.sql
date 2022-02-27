@@ -6,6 +6,10 @@
     min(length({{ column_name }}))
 {%- endmacro %}
 
+{% macro average_length_monitor(column_name) -%}
+    avg(length({{ column_name }}))
+{%- endmacro %}
+
 {% macro missing_count_monitor(column_name) %}
    coalesce(sum(case when {{ column_name }} is null then 1 when {{ column_name }} = '' then 1 when lower({{ column_name }}) = 'null' then 1 else 0 end), 0)
 {% endmacro %}
