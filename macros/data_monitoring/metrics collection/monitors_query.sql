@@ -39,8 +39,10 @@
             {%- for i in column_monitors_config %}
                 {% do should_backfill_columns.append(i['should_backfill']) %}
             {%- endfor %}
-            {%- if should_backfill_columns[0] is sameas true %}
-                {%- set should_backfill = true %}
+            {%- if should_backfill_columns %}
+                {%- if should_backfill_columns[0] is sameas true %}
+                    {%- set should_backfill = true %}
+                {%- endif %}
             {%- endif %}
         {%- else %}
             {%- set should_backfill = false %}
@@ -56,7 +58,7 @@
     {%- endfor %}
 
     {%- if not tables_queried|length %}
-        {{ empty_table([('table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('timeframe_start','timestamp'),('timeframe_end','timestamp'),('timeframe_duration','int'),('run_started_at','timestamp')]) }}
+        {{ empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('timeframe_start','timestamp'),('timeframe_end','timestamp'),('timeframe_duration_hours','int')]) }}
         where table_name is not null
     {%- endif %}
 

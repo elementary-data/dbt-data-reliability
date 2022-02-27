@@ -40,9 +40,14 @@
 
     {%- set results = result_column_to_list(query_start_time) %}
     {%- if results %}
-        {%- set timeframe_to_query = result_column_to_list(query_start_time)[0] %}
+        {%- set max_timeframe_to_query = result_column_to_list(query_start_time)[0] %}
+    {%- else %}
+        {%- set max_timeframe_to_query = 0 %}
+    {%- endif %}
+    {%- if max_timeframe_to_query < var('default_run_hours_back') %}
+        {%- set timeframe_to_query = var('default_run_hours_back') %}
     {% else %}
-        {%- set timeframe_to_query = 0 %}
+        {%- set timeframe_to_query = max_timeframe_to_query %}
     {%- endif %}
 
     {{ return(timeframe_to_query) }}

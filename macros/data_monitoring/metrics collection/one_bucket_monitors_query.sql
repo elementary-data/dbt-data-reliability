@@ -5,7 +5,7 @@
 
             select *
             from {{ monitored_table }}
-                where
+            where
             {% if timestamp_field and timeframe_start and timeframe_end %}
                 {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
             {% else %}
@@ -37,7 +37,7 @@
     metrics_final as (
 
         select
-            '{{ monitored_table }}' as table_name,
+            '{{ monitored_table }}' as full_table_name,
             column_name,
             metric_name,
             metric_value,
@@ -51,12 +51,11 @@
             {%- else %}
                 null as timeframe_end,
             {%- endif %}
-            {%- if timeframe_duration is defined %}
-                {{ timeframe_duration }} as timeframe_duration,
+            {%- if timeframe_start and timeframe_end %}
+                {{ dbt_utils.datediff(timeframe_start, timeframe_end, 'hour' ) }} as timeframe_duration_hours
             {%- else %}
-                null as timeframe_duration,
+                null as timeframe_duration_hours
             {%- endif %}
-            {{ run_start_column() }} as run_started_at
         from
             union_metrics
         where metric_name is not null
