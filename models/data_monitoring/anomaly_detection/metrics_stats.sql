@@ -6,7 +6,6 @@ select
     stddev(metric_value) as metric_stddev,
     min(timeframe_start) as timeframe_start,
     max(timeframe_end) as timeframe_end
-
 from
     {{ ref('data_monitoring_metrics') }}
 where
