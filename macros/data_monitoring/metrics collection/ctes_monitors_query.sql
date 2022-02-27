@@ -13,7 +13,7 @@
         {%- endfor -%}
 
     {%- else %}
-        {{ empty_table([('column_name', 'string'), ('column_monitor', 'string'), ('metric_value', 'int')]) }}
+        {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
 {% endmacro %}
@@ -38,7 +38,7 @@
         {%- endfor -%}
 
     {%- else %}
-        {{ empty_table([('column_name', 'string'), ('column_monitor', 'string'), ('metric_value', 'int')]) }}
+        {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
 {% endmacro %}
