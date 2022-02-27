@@ -1,9 +1,12 @@
 {% macro table_monitors_cte(table_monitors, timestamp_field, timeframe_end) %}
 
+    {%- set executed_table_monitors = [] %}
     {%- if table_monitors %}
-        {%- for table_monitor in table_monitors -%}
+        {%- do table_monitors.remove('schema_changes') -%}
+        {%- for table_monitor in table_monitors %}
             {%- set monitor_macro = get_monitor_macro(table_monitor) %}
             {%- if table_monitor == 'freshness' %}
+                {%- do executed_table_monitors.append(table_monitor) %}
                 select
                     null as column_name,
                     '{{ table_monitor }}' as metric_name,
@@ -11,6 +14,7 @@
                 from
                     timeframe_data
             {%- else %}
+                {%- do executed_table_monitors.append(table_monitor) %}
                 select
                     null as column_name,
                     '{{ table_monitor }}' as metric_name,
@@ -18,10 +22,11 @@
                 from
                     timeframe_data
             {%- endif %}
-            {% if not loop.last %} union all {%- endif %}
+            {%- if not loop.last %} union all {% endif %}
         {%- endfor -%}
+    {%- endif %}
 
-    {%- else %}
+    {%- if not executed_table_monitors %}
         {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
@@ -30,11 +35,13 @@
 
 {% macro column_monitors_cte(column_config) %}
 
+    {%- set executed_column_monitors = [] %}
     {%- if column_config %}
         {%- for monitored_column in column_config -%}
             {%- set monitored_column = column_config[loop.index0]['column_name'] %}
             {%- for column_monitor in column_config[loop.index0]['column_monitors'] %}
                 {%- set monitor_macro = get_monitor_macro(column_monitor) %}
+                {%- do executed_column_monitors.append(column_monitor) %}
                 select
                     '{{ monitored_column }}' as column_name,
                     '{{ column_monitor }}' as metric_name,
@@ -45,8 +52,9 @@
             {%- endfor %}
             {% if not loop.last %} union all {%- endif %}
         {%- endfor -%}
+    {%- endif %}
 
-    {%- else %}
+    {%- if not executed_column_monitors %}
         {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 

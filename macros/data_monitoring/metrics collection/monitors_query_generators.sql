@@ -4,7 +4,7 @@
 
     {%- set max_timeframe_end = "'" ~ max_timeframe_end(timeframe_duration) ~ "'" -%}
 
-    {% if should_backfill is sameas true and timestamp_field %}
+    {%- if should_backfill is sameas true and timestamp_field -%}
 
         {%- set timeframes = (days_back*24/timeframe_duration)|int %}
         {%- if timeframes > 0 %}
@@ -20,7 +20,7 @@
             {%- endfor -%}
         {%- endif %}
 
-    {% elif should_backfill is sameas false and timestamp_field %}
+    {%- elif should_backfill is sameas false and timestamp_field -%}
         {%- set hours_back = timeframe_to_query(days_back) %}
         {%- set timeframes = (hours_back/timeframe_duration)|int %}
         {%- if timeframes > 0 %}
@@ -36,8 +36,8 @@
             {%- endfor -%}
         {%- endif %}
 
-    {% else %}
+    {%- else -%}
         {{- one_bucket_monitors_query(table_to_monitor, null, null, null, null, table_monitors, column_config) -}}
-    {% endif %}
+    {%- endif -%}
 
 {% endmacro %}

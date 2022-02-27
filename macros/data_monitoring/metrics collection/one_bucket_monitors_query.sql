@@ -6,23 +6,23 @@
             select *
             from {{ monitored_table }}
             where
-            {% if timestamp_field and timeframe_start and timeframe_end %}
+            {% if timestamp_field and timeframe_start and timeframe_end -%}
                 {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
-            {% else %}
+            {%- else -%}
                 true
-            {% endif %}
+            {%- endif -%}
 
     ),
 
     table_monitors as (
 
-        {{ table_monitors_cte(table_monitors, timestamp_field, timeframe_end) }}
+        {{- table_monitors_cte(table_monitors, timestamp_field, timeframe_end) }}
 
     ),
 
     column_monitors as (
 
-        {{ column_monitors_cte(column_config) }}
+        {{- column_monitors_cte(column_config) }}
 
     ),
 
@@ -42,17 +42,17 @@
             metric_name,
             metric_value,
             {%- if timeframe_start is defined %}
-                {{ timeframe_start }} as timeframe_start,
+                {{- timeframe_start }} as timeframe_start,
             {%- else %}
                 null as timeframe_start,
             {%- endif %}
             {%- if timeframe_end is defined %}
-                {{ timeframe_end }} as timeframe_end,
+                {{- timeframe_end }} as timeframe_end,
             {%- else %}
                 null as timeframe_end,
             {%- endif %}
             {%- if timeframe_start and timeframe_end %}
-                {{ dbt_utils.datediff(timeframe_start, timeframe_end, 'hour' ) }} as timeframe_duration_hours
+                {{- dbt_utils.datediff(timeframe_start, timeframe_end, 'hour' ) }} as timeframe_duration_hours
             {%- else %}
                 null as timeframe_duration_hours
             {%- endif %}
