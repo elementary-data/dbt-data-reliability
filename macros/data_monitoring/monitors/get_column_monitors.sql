@@ -2,7 +2,7 @@
 
     {%- set converted_data_type = convert_data_type(data_type) %}
 
-    {%- set all_types_monitors_except_schema = ['null_percent', 'unique'] | list %}
+    {%- set all_types_monitors_except_schema = ['null_percent', 'null_count', 'unique'] | list %}
     {%- set numeric_monitors = ['min','max'] | list %}
     {%- set string_monitors = ['min_length','max_length'] | list %}
 
