@@ -7,13 +7,13 @@
             {%- endfor -%}) values
             {% for dict in dict_list -%}
                 ({%- for column in columns -%}
-                    {%- set column_value = get_dict_value_with_default(dict, column.name, none) -%}
+                    {%- set column_value = elementary_data_reliability.get_dict_value_with_default(dict, column.name, none) -%}
                     {%- if column_value is string -%}
-                        '{{column_value}}'
+                        '{{column_value | replace("'", "\\'") }}'
                     {%- elif column_value is number -%}
                         {{-column_value-}}
                     {%- elif column_value is mapping or column_value is sequence -%}
-                        '{{- tojson(column_value) -}}'
+                        '{{- tojson(column_value) | replace("'", "\\'") -}}'
                     {%- else -%}
                         NULL
                     {%- endif -%}
@@ -33,3 +33,5 @@
         {{- return(default) -}}
     {% endif %}
 {%- endmacro %}
+
+
