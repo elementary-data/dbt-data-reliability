@@ -50,6 +50,7 @@ config_existing_tables as (
             and upper(col.schema_name) = upper(config.schema_name)
             and upper(col.table_name) = upper(config.table_name)
             and upper(col.column_name) = upper(config.timestamp_column))
+        where col.data_type in {{ strings_list_to_tuple(data_type_list('datetime')) }}
 
 ),
 
