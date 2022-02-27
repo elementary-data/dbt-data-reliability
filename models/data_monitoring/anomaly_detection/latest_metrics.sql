@@ -64,7 +64,7 @@ latest_no_time_metrics as (
             and m.updated_at = lm.latest_updated_at)
 ),
 
-union_latest as (
+latest_metrics as (
 
     select * from latest_time_based_metrics
     union all
@@ -72,4 +72,4 @@ union_latest as (
 
 )
 
-select * from union_latest
+select * from latest_metrics

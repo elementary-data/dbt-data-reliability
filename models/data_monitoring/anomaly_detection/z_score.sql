@@ -8,8 +8,8 @@ select
     stats.metric_stddev,
     recent.timeframe_end
 from
-    {{ ref('metrics_stats') }} as stats,
-    {{ ref('recent_metrics') }} as recent
+    {{ ref('metrics_stats_for_anomalies') }} as stats,
+    {{ ref('latest_metrics') }} as recent
 where
     stats.table_name = recent.table_name and
     stats.column_name = recent.column_name and
