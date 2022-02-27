@@ -38,7 +38,12 @@
         from start_time_limit
     {%- endset -%}
 
-    {%- set timeframe_to_query = result_column_to_list(query_start_time)[0] %}
+    {%- set results = result_column_to_list(query_start_time) %}
+    {%- if results %}
+        {%- set timeframe_to_query = result_column_to_list(query_start_time)[0] %}
+    {% else %}
+        {%- set timeframe_to_query = 0 %}
+    {%- endif %}
 
     {{ return(timeframe_to_query) }}
 

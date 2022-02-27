@@ -22,8 +22,8 @@
         {%- set table_should_backfill = monitored_table[table_config_column_names[10]] %}
 
         {%- if table_monitored is sameas true %}
-            {%- if monitored_table[table_config_column_names[8]] is not none %}
-                {%- set config_column_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
+            {%- if monitored_table[table_config_column_names[8]] %}
+                {%- set config_table_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
             {%- endif %}
             {%- set table_monitors = get_table_monitors(config_table_monitors) %}
         {%- endif %}
@@ -34,7 +34,7 @@
 
         {%- if table_should_backfill is sameas true %}
             {%- set should_backfill = true %}
-        {%- elif column_monitors_config is defined %}
+        {%- elif column_monitors_config is defined and column_monitors_config|length %}
             {%- set should_backfill_columns = [] %}
             {%- for i in column_monitors_config %}
                 {% do should_backfill_columns.append(i['should_backfill']) %}
