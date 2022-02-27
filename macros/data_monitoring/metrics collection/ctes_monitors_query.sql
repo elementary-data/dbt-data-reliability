@@ -1,3 +1,5 @@
+-- TODO: If snowflake, column name needs to have ""
+
 {% macro table_monitors_cte(table_monitors, timestamp_field, timeframe_end, full_table_name) %}
 
     {%- set executed_table_monitors = [] %}
@@ -39,11 +41,12 @@
             {%- set monitored_column = column_config[loop.index0]['column_name'] %}
             {%- for column_monitor in column_config[loop.index0]['column_monitors'] %}
                 {%- set monitor_macro = get_monitor_macro(column_monitor) %}
+                {%- set column_name = column_quote(monitored_column) %}
                 {%- do executed_column_monitors.append(column_monitor) %}
                 select
                     '{{ monitored_column }}' as column_name,
                     '{{ column_monitor }}' as metric_name,
-                    {{ monitor_macro(monitored_column) }} as metric_value
+                    {{ monitor_macro(column_name) }} as metric_value
                 from timeframe_data
                     {% if not loop.last %} union all {%- endif %}
             {%- endfor %}
