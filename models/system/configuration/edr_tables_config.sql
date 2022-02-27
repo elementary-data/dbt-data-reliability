@@ -1,5 +1,3 @@
--- TODO: validate that timestamp column exists
-
 {{
   config(
     materialized = 'incremental',
@@ -20,6 +18,12 @@ information_schema_tables as (
 
 ),
 
+information_schema_columns as (
+
+    select * from {{ ref('information_schema_columns') }}
+
+),
+
 config_existing_tables as (
 
     select
@@ -30,7 +34,7 @@ config_existing_tables as (
         upper(config.database_name) as database_name,
         upper(config.schema_name) as schema_name,
         upper(config.table_name) as table_name,
-        timestamp_column,
+        col.column_name as timestamp_column,
         bucket_duration_hours,
         table_monitored,
         table_monitors,
@@ -41,6 +45,12 @@ config_existing_tables as (
         on (upper(info_schema.database_name) = upper(config.database_name)
             and upper(info_schema.schema_name) = upper(config.schema_name)
             and upper(info_schema.table_name) = upper(config.table_name))
+        left join information_schema_columns as col
+        on (upper(col.database_name) = upper(config.database_name)
+            and upper(col.schema_name) = upper(config.schema_name)
+            and upper(col.table_name) = upper(config.table_name)
+            and upper(col.column_name) = upper(config.timestamp_column))
+
 ),
 
 final as (

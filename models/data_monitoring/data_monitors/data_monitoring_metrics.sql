@@ -7,7 +7,7 @@
 
 with monitors_run as (
 
-    {{ monitors_query('1,2,3,4') }}
+    select * from {{ ref('temp_monitoring_metrics') }}
 
 ),
 

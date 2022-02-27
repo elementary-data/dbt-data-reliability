@@ -1,4 +1,4 @@
-{% macro table_monitors_cte(table_monitors, timestamp_field, timeframe_end) %}
+{% macro table_monitors_cte(table_monitors, timestamp_field, timeframe_end, full_table_name) %}
 
     {%- set executed_table_monitors = [] %}
     {%- if table_monitors %}
@@ -10,16 +10,15 @@
                     null as column_name,
                     '{{ table_monitor }}' as metric_name,
                     {{ monitor_macro(timestamp_field, timeframe_end) }} as metric_value
-                from
-                    timeframe_data
+                from {{ full_table_name }}
+                where {{ timestamp_field }} <= {{ timeframe_end }}
             {%- else %}
                 {%- do executed_table_monitors.append(table_monitor) %}
                 select
                     null as column_name,
                     '{{ table_monitor }}' as metric_name,
                     {{ monitor_macro() }} as metric_value
-                from
-                    timeframe_data
+                from timeframe_data
             {%- endif %}
             {%- if not loop.last %} union all {% endif %}
         {%- endfor -%}
@@ -45,8 +44,7 @@
                     '{{ monitored_column }}' as column_name,
                     '{{ column_monitor }}' as metric_name,
                     {{ monitor_macro(monitored_column) }} as metric_value
-                from
-                    timeframe_data
+                from timeframe_data
                     {% if not loop.last %} union all {%- endif %}
             {%- endfor %}
             {% if not loop.last %} union all {%- endif %}
