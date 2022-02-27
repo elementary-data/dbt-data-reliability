@@ -1,6 +1,6 @@
 {% macro table_monitors_cte(table_monitors) %}
 
-    {%- if table_monitors is defined and table_monitors|length %}
+    {%- if table_monitors %}
         {%- for table_monitor in table_monitors -%}
             {%- set monitor_macro = get_monitor_macro(table_monitor) %}
             select
@@ -21,7 +21,7 @@
 
 {% macro column_monitors_cte(column_config) %}
 
-    {%- if column_config is defined and column_config|length %}
+    {%- if column_config %}
         {%- for monitored_column in column_config -%}
             {%- set monitored_column = column_config[loop.index0]['column_name'] %}
             {%- for column_monitor in column_config[loop.index0]['column_monitors'] %}

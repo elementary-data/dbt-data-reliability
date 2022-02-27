@@ -9,8 +9,8 @@
             {% if timestamp_field and timeframe_start and timeframe_end %}
                 {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
             {% else %}
-            true
-        {% endif %}
+                true
+            {% endif %}
 
     ),
 

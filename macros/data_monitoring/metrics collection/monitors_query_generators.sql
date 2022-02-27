@@ -1,3 +1,5 @@
+-- TODO: add here some condition about the time since last run
+
 {% macro table_monitors_query(table_to_monitor, timestamp_field, days_back, timeframe_duration, table_monitors, column_config, should_backfill) %}
 
     {%- set max_timeframe_end = "'" ~ max_timeframe_end(timeframe_duration) ~ "'" -%}
@@ -19,7 +21,7 @@
         {%- endif %}
 
     {% elif should_backfill is sameas false and timestamp_field %}
-
+-- TODO: reconsider the timeframe_to_query macro, should be solved with incremental maybe
         {%- set hours_back = timeframe_to_query(days_back) %}
         {%- set timeframes = (hours_back/timeframe_duration)|int %}
         {%- if timeframes > 0 %}
@@ -36,13 +38,8 @@
         {%- endif %}
 
     {% else %}
-        {%- set hours_back = timeframe_to_query(days_back) %}
-        {%- set timeframes = (hours_back/timeframe_duration)|int %}
-        {%- if timeframes > 0 %}
-            {{- one_bucket_monitors_query(table_to_monitor, timestamp_field, null, null, null, table_monitors, column_config) -}}
-            {%- if not loop.last %} union all {%- endif %}
-        {%- endif %}
-
+    -- TODO: add here some condition about the time since last run
+        {{- one_bucket_monitors_query(table_to_monitor, null, null, null, null, table_monitors, column_config) -}}
     {% endif %}
 
 {% endmacro %}
