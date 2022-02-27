@@ -4,7 +4,7 @@
     {%- if table_monitors %}
         {%- for table_monitor in table_monitors %}
             {%- set monitor_macro = get_monitor_macro(table_monitor) %}
-            {%- if table_monitor == 'freshness' %}
+            {%- if table_monitor == 'freshness' and timestamp_field %}
                 {%- do executed_table_monitors.append(table_monitor) %}
                 select
                     null as column_name,
