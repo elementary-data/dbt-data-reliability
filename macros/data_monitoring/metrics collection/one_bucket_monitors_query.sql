@@ -16,7 +16,7 @@
 
     table_monitors as (
 
-        {{ table_monitors_cte(table_monitors) }}
+        {{ table_monitors_cte(table_monitors, timestamp_field, timeframe_end) }}
 
     ),
 

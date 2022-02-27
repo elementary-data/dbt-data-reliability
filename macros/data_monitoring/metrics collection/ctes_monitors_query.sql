@@ -1,15 +1,24 @@
-{% macro table_monitors_cte(table_monitors) %}
+{% macro table_monitors_cte(table_monitors, timestamp_field, timeframe_end) %}
 
     {%- if table_monitors %}
         {%- for table_monitor in table_monitors -%}
             {%- set monitor_macro = get_monitor_macro(table_monitor) %}
-            select
-                null as column_name,
-                '{{ table_monitor }}' as metric_name,
-                {{ monitor_macro() }} as metric_value
-            from
-                timeframe_data
-                {% if not loop.last %} union all {%- endif %}
+            {%- if table_monitor == 'freshness' %}
+                select
+                    null as column_name,
+                    '{{ table_monitor }}' as metric_name,
+                    {{ monitor_macro(timestamp_field, timeframe_end) }} as metric_value
+                from
+                    timeframe_data
+            {%- else %}
+                select
+                    null as column_name,
+                    '{{ table_monitor }}' as metric_name,
+                    {{ monitor_macro() }} as metric_value
+                from
+                    timeframe_data
+            {%- endif %}
+            {% if not loop.last %} union all {%- endif %}
         {%- endfor -%}
 
     {%- else %}
