@@ -31,6 +31,7 @@ latest_metrics_no_times as (
 latest_time_based_metrics as (
 
     select
+        m.id,
         m.full_table_name,
         m.column_name,
         m.metric_name,
@@ -49,6 +50,7 @@ latest_time_based_metrics as (
 latest_no_time_metrics as (
 
      select
+         m.id,
          m.full_table_name,
          m.column_name,
          m.metric_name,

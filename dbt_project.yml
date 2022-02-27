@@ -29,6 +29,7 @@ vars:
   columns_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMN_MONITORS_CONFIG
   days_back: 7
   default_run_hours_back: 24
+  minimal_sample_size: 1
   schemas_for_alert_on_schema_changes:
     - elementary_db.jaffle_shop
     - elementary_db.stresstest
