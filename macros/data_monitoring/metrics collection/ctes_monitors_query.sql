@@ -2,7 +2,6 @@
 
     {%- set executed_table_monitors = [] %}
     {%- if table_monitors %}
-        {%- do table_monitors.remove('schema_changes') -%}
         {%- for table_monitor in table_monitors %}
             {%- set monitor_macro = get_monitor_macro(table_monitor) %}
             {%- if table_monitor == 'freshness' %}
