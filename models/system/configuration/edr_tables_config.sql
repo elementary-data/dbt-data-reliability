@@ -75,7 +75,6 @@ final as (
                 and table_monitored = true
             {% endset %}
             {%- set active_configs = result_column_to_list(active_configs_query) %}
-
             case when
                 config_id not in {{ strings_list_to_tuple(active_configs) }}
             then true

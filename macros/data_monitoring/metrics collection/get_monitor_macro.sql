@@ -1,10 +1,10 @@
 {% macro get_monitor_macro(monitor) %}
 
     {%- set macro_name = monitor + '_monitor' -%}
-    {%- if context['elementary_data_reliability'].get(macro_name) -%}
-        {%- set monitor_macro = context['elementary_data_reliability'][macro_name] -%}
+    {%- if context['elementary'].get(macro_name) -%}
+        {%- set monitor_macro = context['elementary'][macro_name] -%}
     {%- else -%}
-        {%- set monitor_macro = context['elementary_data_reliability']['no_monitor'] -%}
+        {%- set monitor_macro = context['elementary']['no_monitor'] -%}
     {%- endif -%}
 
     {{- return(monitor_macro) -}}

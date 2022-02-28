@@ -25,8 +25,8 @@ models:
 
 
 vars:
-  table_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.TABLE_MONITORS_CONFIG
-  columns_monitors_config: EDC_METABASE_EXPRIMENTS.SCHEMA_CHANGES.COLUMN_MONITORS_CONFIG
+  table_monitors_config: "{{ ref('table_monitors_config') }}"
+  columns_monitors_config: "{{ ref('column_monitors_config') }}"
   days_back: 7
   default_run_hours_back: 24
   minimal_sample_size: 1
