@@ -8,33 +8,33 @@
     {% if execute %}
         -- handle models
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_model'] %}
-        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_models'), nodes, flatten_node_macro) %}
+        {% set flatten_node_macro = context['elementary']['flatten_model'] %}
+        {% do elementary.insert_nodes_to_table(ref('dbt_models'), nodes, flatten_node_macro) %}
 
         -- handle tests
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_test'] %}
-        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_tests'), nodes, flatten_node_macro) %}
+        {% set flatten_node_macro = context['elementary']['flatten_test'] %}
+        {% do elementary.insert_nodes_to_table(ref('dbt_tests'), nodes, flatten_node_macro) %}
 
         -- handle sources
         {% set nodes = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_source'] %}
-        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_sources'), nodes, flatten_node_macro) %}
+        {% set flatten_node_macro = context['elementary']['flatten_source'] %}
+        {% do elementary.insert_nodes_to_table(ref('dbt_sources'), nodes, flatten_node_macro) %}
 
         -- handle exposures
         {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_exposure'] %}
-        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_exposures'), nodes, flatten_node_macro) %}
+        {% set flatten_node_macro = context['elementary']['flatten_exposure'] %}
+        {% do elementary.insert_nodes_to_table(ref('dbt_exposures'), nodes, flatten_node_macro) %}
 
         -- handle metrics
         {% set nodes = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
-        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_metric'] %}
-        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_metrics'), nodes, flatten_node_macro) %}
+        {% set flatten_node_macro = context['elementary']['flatten_metric'] %}
+        {% do elementary.insert_nodes_to_table(ref('dbt_metrics'), nodes, flatten_node_macro) %}
 
         -- handle run_results
         {% if results %}
-            {% set flatten_node_macro = context['elementary_data_reliability']['flatten_run_result'] %}
-            {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_run_results'), results, flatten_node_macro) %}
+            {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
+            {% do elementary.insert_nodes_to_table(ref('dbt_run_results'), results, flatten_node_macro) %}
         {% endif %}
     {% endif %}
     {{ return ('') }}
@@ -49,7 +49,7 @@
         {% endif %}
     {% endfor %}
     {% if artifacts | length > 0 %}
-        {% do elementary_data_reliability.insert_dicts_to_table(table_name, artifacts) %}
+        {% do elementary.insert_dicts_to_table(table_name, artifacts) %}
     {% endif %}
     -- remove empty rows created by dbt's materialization
     {% do remove_empty_rows(table_name) %}
