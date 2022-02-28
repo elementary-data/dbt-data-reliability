@@ -4,7 +4,6 @@
   )
 }}
 
--- TODO_CONFIG: change configured_schemas
 {% set configured_schemas = get_configured_schemas() %}
 
 with filtered_information_schema_tables as (
