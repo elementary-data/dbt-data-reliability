@@ -1,4 +1,4 @@
-name: 'elementary_data_reliability'
+name: 'elementary'
 version: '0.1.1'
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]
@@ -18,13 +18,3 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
   - "dbt_modules"
-
-
-models:
-
-  elementary_observability:
-      +materialized: view
-
-
-vars:
-  monitoring_configuration: MONITORING_CONFIGURATION
