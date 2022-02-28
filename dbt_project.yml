@@ -1,4 +1,4 @@
-name: 'elementary_data_reliability'
+name: 'elementary'
 version: '0.1.1'
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]

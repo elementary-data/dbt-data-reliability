@@ -1,5 +1,5 @@
 {%- macro type_bool() -%}
-    {{ return(adapter.dispatch('type_bool', 'elementary_data_reliability')()) }}
+    {{ return(adapter.dispatch('type_bool', 'elementary')()) }}
     {%- endmacro -%}
 
 {% macro default__type_bool() %}
