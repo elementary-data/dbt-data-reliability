@@ -35,7 +35,7 @@ metrics_no_timestamp as (
     select *
     from metrics
     where timeframe_start is null
-    and updated_at >= {{- zscore_timeframe_start() -}}
+        and updated_at >= {{- zscore_timeframe_start() -}}
 
 ),
 

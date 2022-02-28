@@ -8,7 +8,7 @@
 
 with columns_config as (
 
-    select * from {{ var('columns_monitors_config') }}
+    select * from {{ elementary.get_column_config_path() }}
 
 ),
 

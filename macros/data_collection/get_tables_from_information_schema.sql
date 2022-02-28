@@ -1,5 +1,5 @@
 {% macro get_tables_from_information_schema(database_name, schema_name) %}
-    {{ return(adapter.dispatch('get_tables_from_information_schema')(database_name, schema_name)) }}
+    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(database_name, schema_name)) }}
 {% endmacro %}
 
 

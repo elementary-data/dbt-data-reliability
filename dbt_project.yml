@@ -25,12 +25,11 @@ models:
 
 
 vars:
-  table_monitors_config: "{{ ref('table_monitors_config') }}"
-  columns_monitors_config: "{{ ref('column_monitors_config') }}"
   days_back: 7
   default_run_hours_back: 24
   minimal_sample_size: 1
   z_score_treshold: 3
+  edr_run: false
 
   schemas_for_alert_on_schema_changes:
     - elementary_db.jaffle_shop
