@@ -38,9 +38,9 @@
         from start_time_limit
     {%- endset -%}
 
-    {%- set results = result_column_to_list(query_start_time) %}
-    {%- if results %}
-        {%- set max_timeframe_to_query = result_column_to_list(query_start_time)[0] %}
+    {%- set result_value = elementary.result_value(query_start_time) %}
+    {%- if result_value %}
+        {%- set max_timeframe_to_query = result_value %}
     {%- else %}
         {%- set max_timeframe_to_query = 0 %}
     {%- endif %}
