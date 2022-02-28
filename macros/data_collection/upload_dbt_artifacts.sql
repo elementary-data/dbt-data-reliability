@@ -52,7 +52,7 @@
         {% do elementary.insert_dicts_to_table(table_name, artifacts) %}
     {% endif %}
     -- remove empty rows created by dbt's materialization
-    {% do remove_empty_rows(table_name) %}
+    {% do elementary.remove_empty_rows(table_name) %}
 {% endmacro %}
 
 {% macro flatten_run_result(run_result) %}

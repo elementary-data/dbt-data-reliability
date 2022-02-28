@@ -11,7 +11,10 @@
         {% if table_monitors|length > 0 %}
             {% do elementary.insert_dicts_to_table(this, table_monitors) %}
         {% endif %}
+        -- remove empty rows created by dbt's materialization
+        {% do elementary.remove_empty_rows(this) %}
     {% endif %}
+    {{ return('') }}
 {% endmacro %}
 
 {% macro upload_columns_configuration() %}
@@ -27,7 +30,10 @@
         {% if column_monitors | length > 0 %}
             {% do elementary.insert_dicts_to_table(this, column_monitors) %}
         {% endif %}
+        -- remove empty rows created by dbt's materialization
+        {% do elementary.remove_empty_rows(this) %}
     {% endif %}
+    {{ return('') }}
 {% endmacro %}
 
 {% macro get_nodes_from_graph() %}

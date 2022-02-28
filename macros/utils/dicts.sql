@@ -24,7 +24,6 @@
     {% do run_query(insert_dicts_query) %}
 {%- endmacro %}
 
-
 {% macro remove_empty_rows(table_name) %}
     {% set columns = adapter.get_columns_in_relation(table_name) -%}
     {% set delete_empty_rows_query %}
