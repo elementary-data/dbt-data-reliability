@@ -1,13 +1,7 @@
 {{
   config(
     materialized = 'incremental',
-    unique_key = 'change_id',
-    edr = {'monitored': True,
-           'timestamp_column': 'created_at',
-           'table_monitors': ['freshness', 'schema_changes'],
-           'columns_monitored': True,
-           'columns': [{'name': 'customer_id', 'column_monitors': ['null_percent']}]
-    }
+    unique_key = 'change_id'
   )
 }}
 
