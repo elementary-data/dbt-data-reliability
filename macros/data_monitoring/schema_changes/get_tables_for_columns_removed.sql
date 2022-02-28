@@ -1,6 +1,6 @@
 {% macro get_tables_for_columns_removed() %}
     {%- set tables_query %}
-        select upper(full_name) as full_table_name
+        select upper(full_table_name) as full_table_name
         from {{ var('table_monitors_config') }}
         where full_name is not null
     {%- endset %}
