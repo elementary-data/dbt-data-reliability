@@ -30,7 +30,10 @@ metrics_z_score as (
         latest.full_table_name,
         latest.column_name,
         latest.metric_name,
-        (latest.metric_value - stats.metric_avg) / (stats.metric_stddev) as z_score,
+        case
+            when stats.metric_stddev = 0 then 0
+            else (latest.metric_value - stats.metric_avg) / (stats.metric_stddev)
+        end as z_score,
         latest.metric_value as latest_value,
         latest.updated_at as value_updated_at,
         stats.metric_avg,

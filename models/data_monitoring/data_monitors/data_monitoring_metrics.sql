@@ -5,6 +5,9 @@
   )
 }}
 
+-- depends on: {{ ref('temp_monitoring_metrics') }}
+-- depends on: {{ ref('empty_monitoring_metrics') }}
+
 with monitors_run as (
 
     select * from {{ ref('temp_monitoring_metrics') }}
