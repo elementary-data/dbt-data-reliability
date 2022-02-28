@@ -7,13 +7,13 @@
             {%- endfor -%}) values
             {% for dict in dict_list -%}
                 ({%- for column in columns -%}
-                    {%- set column_value = get_dict_value_with_default(dict, column.name, none) -%}
+                    {%- set column_value = elementary.insensitive_get_dict_value(dict, column.name, none) -%}
                     {%- if column_value is string -%}
-                        '{{column_value}}'
+                        '{{column_value | replace("'", "\\'") }}'
                     {%- elif column_value is number -%}
                         {{-column_value-}}
                     {%- elif column_value is mapping or column_value is sequence -%}
-                        '{{- tojson(column_value) -}}'
+                        '{{- tojson(column_value) | replace("'", "\\'") -}}'
                     {%- else -%}
                         NULL
                     {%- endif -%}
@@ -24,7 +24,15 @@
     {% do run_query(insert_dicts_query) %}
 {%- endmacro %}
 
-{% macro get_dict_value_with_default(dict, key, default) -%}
+{% macro remove_empty_rows(table_name) %}
+    {% set columns = adapter.get_columns_in_relation(table_name) -%}
+    {% set delete_empty_rows_query %}
+        delete from {{ table_name }} where {% for column in columns -%} {{ column.name }} is NULL {{- " and " if not loop.last else "" -}} {%- endfor -%}
+    {% endset %}
+    {% do run_query(delete_empty_rows_query) %}
+{% endmacro %}
+
+{% macro insensitive_get_dict_value(dict, key, default) -%}
     {%- if key in dict -%}
         {{- return(dict[key]) -}}
     {%- elif key.lower() in dict -%}
@@ -33,3 +41,5 @@
         {{- return(default) -}}
     {% endif %}
 {%- endmacro %}
+
+
