@@ -2,7 +2,6 @@
     count(1)
 {%- endmacro %}
 
-
 {% macro freshness_monitor(timestamp_field, timeframe_end) -%}
     {%- if not timestamp_field %}
          cast (null as {{ dbt_utils.type_int()}})

@@ -28,9 +28,9 @@ config_existing_tables as (
 
     select
         {{ dbt_utils.surrogate_key([
-            'config.full_name', 'config.table_monitors', 'config.columns_monitored', 'config.timestamp_column'
+            'config.full_table_name', 'config.table_monitors', 'config.columns_monitored', 'config.timestamp_column'
         ]) }} as config_id,
-        upper(config.full_name) as full_table_name,
+        upper(config.full_table_name) as full_table_name,
         upper(config.database_name) as database_name,
         upper(config.schema_name) as schema_name,
         upper(config.table_name) as table_name,

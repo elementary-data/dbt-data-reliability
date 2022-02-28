@@ -2,8 +2,7 @@
     -- depends_on: {{ ref('elementary_runs') }}
     -- depends_on: {{ ref('edr_tables_config') }}
     -- depends_on: {{ ref('edr_columns_config') }}
-
-    {%- set tables_queried = [] %}
+    -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
     {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
     {%- if execute %}
@@ -48,19 +47,12 @@
             {%- set should_backfill = false %}
         {%- endif %}
 
-        {% set table_query = table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill) %}
-        {%- if 'select' in table_query %}
-            {{ table_query }}
-            {%- if not loop.last %} union all {%- endif %}
-            {% do tables_queried.append(full_table_name) %}
-        {%- endif %}
+        {% do table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill) %}
 
     {%- endfor %}
 
-    {%- if not tables_queried|length %}
-        {{ empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('timeframe_start','timestamp'),('timeframe_end','timestamp'),('timeframe_duration_hours','int')]) }}
-        where table_name is not null
-    {%- endif %}
+    select 1 as num
+    where num = 2
 
 {% endmacro %}
 

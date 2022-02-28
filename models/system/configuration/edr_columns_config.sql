@@ -29,7 +29,7 @@ config_explicit_columns as (
 
     select
         {{ dbt_utils.surrogate_key([
-            'config.full_name', 'config.column_monitors',
+            'config.full_column_name', 'config.column_monitors',
         ]) }} as config_id,
         {{ full_table_name('config') }} as full_table_name,
         upper(config.database_name) as database_name,

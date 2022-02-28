@@ -4,4 +4,4 @@
   )
 }}
 
-{{ monitors_query('1,2,3,4') }}
+{{ empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('timeframe_start','timestamp'),('timeframe_end','timestamp'),('timeframe_duration_hours','int')]) }}

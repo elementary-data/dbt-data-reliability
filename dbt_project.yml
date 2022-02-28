@@ -31,6 +31,7 @@ vars:
   default_run_hours_back: 24
   minimal_sample_size: 1
   z_score_treshold: 3
+
   schemas_for_alert_on_schema_changes:
     - elementary_db.jaffle_shop
     - elementary_db.stresstest
@@ -56,7 +57,7 @@ vars:
       - min
       - max
       - zero_count
-      - zero_precent
+      - zero_percent
       - average
       - standard_deviation
       - variance
