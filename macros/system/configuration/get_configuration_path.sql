@@ -1,7 +1,7 @@
 {% macro get_table_config_path() %}
 
     {%- if var('edr_run') is sameas false %}
-        {%- set table_monitors_config_path = "{{ ref('table_monitors_config') }}" %}
+        {%- set table_monitors_config_path = adapter.get_relation(database=target_database(), schema=target.schema, identifier='table_monitors_config') %}
         {{ return(table_monitors_config_path) }}
     {%- elif var('edr_run') is sameas true %}
         {%- set table_monitors_config_path = find_config_in_target('table') %}
@@ -14,7 +14,7 @@
 {% macro get_column_config_path() %}
 
     {%- if var('edr_run') is sameas false %}
-        {%- set column_monitors_config_path = "{{ ref('column_monitors_config') }}" %}
+        {%- set column_monitors_config_path = adapter.get_relation(database=target_database(), schema=target.schema, identifier='column_monitors_config') %}
         {{ return(column_monitors_config_path) }}
     {%- elif var('edr_run') is sameas true %}
         {%- set column_monitors_config_path = find_config_in_target('column') %}
