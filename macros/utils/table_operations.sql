@@ -7,7 +7,7 @@
             {%- endfor -%}) values
             {% for dict in dict_list -%}
                 ({%- for column in columns -%}
-                    {%- set column_value = elementary.get_dict_value_with_default(dict, column.name, none) -%}
+                    {%- set column_value = elementary.insensitive_get_dict_value(dict, column.name, none) -%}
                     {%- if column_value is string -%}
                         '{{column_value | replace("'", "\\'") }}'
                     {%- elif column_value is number -%}
@@ -32,7 +32,7 @@
     {% do run_query(delete_empty_rows_query) %}
 {% endmacro %}
 
-{% macro get_dict_value_with_default(dict, key, default) -%}
+{% macro insensitive_get_dict_value(dict, key, default) -%}
     {%- if key in dict -%}
         {{- return(dict[key]) -}}
     {%- elif key.lower() in dict -%}
