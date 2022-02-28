@@ -6,61 +6,53 @@
     -- depends_on: {{ ref('dbt_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
     {% if execute %}
-        {% set nodes = graph.nodes.values() %}
         -- handle models
-        {% set flatten_model_artifacts = [] %}
-        {% for node in nodes | selectattr('resource_type', '==', 'model') %}
-            {% set flatten_model_metadata = elementary_data_reliability.flatten_model_metadata(node) %}
-            {% do flatten_model_artifacts.append(flatten_model_metadata) %}
-        {% endfor %}
-        {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_models'), flatten_model_artifacts) %}
+        {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
+        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_model'] %}
+        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_models'), nodes, flatten_node_macro) %}
 
         -- handle tests
-        {% set flatten_test_artifacts = [] %}
-        {% for node in nodes | selectattr('resource_type', '==', 'test') %}
-            {% set flatten_test_metadata = elementary_data_reliability.flatten_test_metadata(node) %}
-            {% do flatten_test_artifacts.append(flatten_test_metadata) %}
-        {% endfor %}
-        {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_tests'), flatten_test_artifacts) %}
+        {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
+        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_test'] %}
+        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_tests'), nodes, flatten_node_macro) %}
 
         -- handle sources
-        {% set nodes = graph.sources.values() %}
-        {% set flatten_source_artifacts = [] %}
-        {% for node in nodes | selectattr('resource_type', '==', 'source') %}
-            {% set flatten_source_metadata = elementary_data_reliability.flatten_source_metadata(node) %}
-            {% do flatten_source_artifacts.append(flatten_source_metadata) %}
-        {% endfor %}
-        {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_sources'), flatten_source_artifacts) %}
+        {% set nodes = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
+        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_source'] %}
+        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_sources'), nodes, flatten_node_macro) %}
 
         -- handle exposures
-        {% set nodes = graph.exposures.values() %}
-        {% set flatten_exposure_artifacts = [] %}
-        {% for node in nodes | selectattr('resource_type', '==', 'exposure') %}
-            {% set flatten_exposure_metadata = elementary_data_reliability.flatten_exposure_metadata(node) %}
-            {% do flatten_exposure_artifacts.append(flatten_exposure_metadata) %}
-        {% endfor %}
-        {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_exposures'), flatten_exposure_artifacts) %}
+        {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
+        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_exposure'] %}
+        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_exposures'), nodes, flatten_node_macro) %}
 
         -- handle metrics
-        {% set nodes = graph.metrics.values() %}
-        {% set flatten_metric_artifacts = [] %}
-        {% for node in nodes | selectattr('resource_type', '==', 'metric') %}
-            {% set flatten_metric_metadata = elementary_data_reliability.flatten_metric_metadata(node) %}
-            {% do flatten_metric_artifacts.append(flatten_metric_metadata) %}
-        {% endfor %}
-        {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_metrics'), flatten_metric_artifacts) %}
+        {% set nodes = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
+        {% set flatten_node_macro = context['elementary_data_reliability']['flatten_metric'] %}
+        {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_metrics'), nodes, flatten_node_macro) %}
 
         -- handle run_results
         {% if results %}
-                {% set run_result_flatten_dicts = [] %}
-                {% for run_result in results -%}
-                    {% set flatten_run_result_dict = elementary_data_reliability.flatten_run_result(run_result) %}
-                    {% do run_result_flatten_dicts.append(flatten_run_result_dict) %}
-                {% endfor %}
-                {% do elementary_data_reliability.insert_dicts_to_table(ref('dbt_run_results'), run_result_flatten_dicts) %}
-            {% endif %}
+            {% set flatten_node_macro = context['elementary_data_reliability']['flatten_run_result'] %}
+            {% do elementary_data_reliability.insert_nodes_to_table(ref('dbt_run_results'), results, flatten_node_macro) %}
         {% endif %}
+    {% endif %}
     {{ return ('') }}
+{% endmacro %}
+
+{% macro insert_nodes_to_table(table_name, nodes, flatten_node_macro) %}
+    {% set artifacts = [] %}
+    {% for node in nodes %}
+        {% set metadata_dict = flatten_node_macro(node) %}
+        {% if metadata_dict is not none %}
+            {% do artifacts.append(metadata_dict) %}
+        {% endif %}
+    {% endfor %}
+    {% if artifacts | length > 0 %}
+        {% do elementary_data_reliability.insert_dicts_to_table(table_name, artifacts) %}
+    {% endif %}
+    -- remove empty rows created by dbt's materialization
+    {% do remove_empty_rows(table_name) %}
 {% endmacro %}
 
 {% macro flatten_run_result(run_result) %}
@@ -96,9 +88,7 @@
     {{ return(flatten_run_result_dict) }}
 {% endmacro %}
 
-
-
-{% macro flatten_model_metadata(node_dict) %}
+{% macro flatten_model(node_dict) %}
     {% set flatten_model_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'alias': node_dict.get('alias'),
@@ -121,7 +111,7 @@
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}
 
-{% macro flatten_test_metadata(node_dict) %}
+{% macro flatten_test(node_dict) %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': node_dict.get('test_metadata', {}).get('name'),
@@ -147,8 +137,7 @@
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 
-
-{% macro flatten_source_metadata(node_dict) %}
+{% macro flatten_source(node_dict) %}
     {% set flatten_source_metadata_dict = {
          'unique_id': node_dict.get('unique_id'),
          'database_name': node_dict.get('database'),
@@ -173,7 +162,7 @@
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}
 
-{% macro flatten_exposure_metadata(node_dict) %}
+{% macro flatten_exposure(node_dict) %}
     {% set flatten_exposure_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
@@ -194,7 +183,7 @@
     {{ return(flatten_exposure_metadata_dict) }}
 {% endmacro %}
 
-{% macro flatten_metric_metadata(node_dict) %}
+{% macro flatten_metric(node_dict) %}
     {% set flatten_metrics_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
@@ -218,5 +207,3 @@
     {{ return(flatten_metrics_metadata_dict) }}
 {% endmacro %}
 
-
-{# TODO: separate run results and test results #}
