@@ -9,7 +9,7 @@ metrics_timestamp_based as (
     select *
     from metrics
     where timeframe_start is not null
-        and timeframe_start >= {{- zscore_timeframe_start() -}}
+        and timeframe_start >= {{- elementary.zscore_timeframe_start() -}}
         and metric_value is not null
 
 ),
@@ -36,7 +36,7 @@ metrics_no_timestamp as (
     select *
     from metrics
     where timeframe_start is null
-        and updated_at >= {{- zscore_timeframe_start() -}}
+        and updated_at >= {{- elementary.zscore_timeframe_start() -}}
         and metric_value is not null
 ),
 

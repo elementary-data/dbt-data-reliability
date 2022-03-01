@@ -2,6 +2,7 @@
     -- depends_on: {{ ref('elementary_runs') }}
     -- depends_on: {{ ref('final_tables_config') }}
     -- depends_on: {{ ref('final_columns_config') }}
+    -- depends_on: {{ ref('final_should_backfill') }}
     -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
     {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
@@ -32,18 +33,12 @@
             {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
         {%- endif %}
 
-        --TODO: for columns - one of them could be with should_backfill=True and the rest will be False
-        {%- set should_backfill = false %}
-        {%- if table_should_backfill is sameas true %}
-            {%- set should_backfill = true %}
-        {%- elif column_monitors_config is sequence and column_monitors_config| length > 0 %}
-            {%- set column_monitor_config = column_monitors_config[0] %}
-            {%- if column_monitor_config is mapping %}
-                {%- if column_monitor_config.get('should_backfill') is sameas true %}
-                    {%- set should_backfill = true %}
-                {% endif %}
-            {%- endif %}
-        {%- endif %}
+        {%- set should_backfill_query %}
+            select should_backfill
+            from {{ ref('final_should_backfill') }}
+            where full_table_name = '{{ full_table_name }}'
+        {%- endset %}
+        {%- set should_backfill = elementary.result_value(should_backfill_query) %}
 
         {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
         {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}

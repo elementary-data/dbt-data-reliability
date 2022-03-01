@@ -8,7 +8,7 @@ anomaly_detection as (
 
     select
         *,
-        {{ anomaly_detection_description() }}
+        {{ elementary.anomaly_detection_description() }}
     from z_score
     where abs(z_score) > {{ var('z_score_treshold') }}
 

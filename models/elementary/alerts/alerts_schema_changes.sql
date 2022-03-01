@@ -61,14 +61,14 @@ filtered_alerts as (
     select *
     from all_alerts
     where
-        {{ full_table_name() }} in {{ tables_for_alert_on_schema_changes() }}
-        or {{ full_schema_name() }} in {{ schemas_for_alert_on_schema_changes() }}
+        {{ elementary.full_table_name() }} in {{ elementary.tables_for_alert_on_schema_changes() }}
+        or {{ elementary.full_schema_name() }} in {{ elementary.schemas_for_alert_on_schema_changes() }}
 
 )
 
 select * from filtered_alerts
 {% if is_incremental() %}
-    {% set row_count = get_row_count(this) %}
+    {% set row_count = elementary.get_row_count(this) %}
     {% if row_count > 0 %}
         where detected_at > (select max(detected_at) from {{ this }})
     {%- endif %}
