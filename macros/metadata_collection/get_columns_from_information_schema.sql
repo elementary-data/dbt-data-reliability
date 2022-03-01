@@ -11,7 +11,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from  {{ from_information_schema('COLUMNS', database_name, schema_name) }}
+    from  {{ elementary.from_information_schema('COLUMNS', database_name, schema_name) }}
     where table_schema = upper('{{ schema_name }}')
 
 {% endmacro %}

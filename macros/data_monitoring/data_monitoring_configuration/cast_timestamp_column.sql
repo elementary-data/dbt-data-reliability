@@ -1,4 +1,4 @@
-{% macro check_timestamp_column(full_table_name, timestamp_column) %}
+{% macro cast_timestamp_column(full_table_name, timestamp_column) %}
 
     {%- set query %}
         select {{ dbt_utils.safe_cast(timestamp_column, dbt_utils.type_timestamp()) }} as timestamp_column
@@ -18,3 +18,4 @@
 
 {% endmacro %}
 
+-- TODO: should this be here or in configuration?

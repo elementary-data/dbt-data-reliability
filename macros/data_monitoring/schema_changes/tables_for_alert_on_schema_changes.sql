@@ -18,7 +18,7 @@
         {%- endif %}
     {%- endfor %}
 
-    {%- set alert_on_schema_changes = strings_list_to_tuple(alert_on_schema_changes_list) %}
+    {%- set alert_on_schema_changes = elementary.strings_list_to_tuple(alert_on_schema_changes_list) %}
 
     {{ return(alert_on_schema_changes) }}
 

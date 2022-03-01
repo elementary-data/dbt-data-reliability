@@ -1,7 +1,7 @@
 {% macro empty_column(column_name, data_type) %}
 
      {%- if data_type == 'boolean' %}
-        cast (null as {{ type_bool()}}) as {{ column_name }}
+        cast (null as {{ elementary.type_bool()}}) as {{ column_name }}
      {%- elif data_type == 'timestamp' -%}
         cast (null as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
      {%- elif data_type == 'int' %}
@@ -21,7 +21,7 @@
     with empty_table as (
         select
         {%- for column in column_name_and_type_list -%}
-            {{ empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
+            {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
         {%- endfor -%}
     )
     select * from empty_table

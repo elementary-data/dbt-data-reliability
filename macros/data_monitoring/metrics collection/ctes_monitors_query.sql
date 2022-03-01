@@ -3,7 +3,7 @@
     {%- set executed_table_monitors = [] %}
     {%- if table_monitors %}
         {%- for table_monitor in table_monitors %}
-            {%- set monitor_macro = get_monitor_macro(table_monitor) %}
+            {%- set monitor_macro = elementary.get_monitor_macro(table_monitor) %}
             {%- if table_monitor == 'freshness' and timestamp_field %}
                 {%- do executed_table_monitors.append(table_monitor) %}
                 select
@@ -25,7 +25,7 @@
     {%- endif %}
 
     {%- if not executed_table_monitors %}
-        {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
+        {{ elementary.empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
 {% endmacro %}
@@ -38,8 +38,8 @@
         {%- for monitored_column in column_config -%}
             {%- set monitored_column = column_config[loop.index0]['column_name'] %}
             {%- for column_monitor in column_config[loop.index0]['column_monitors'] %}
-                {%- set monitor_macro = get_monitor_macro(column_monitor) %}
-                {%- set column_name = column_quote(monitored_column) %}
+                {%- set monitor_macro = elementary.get_monitor_macro(column_monitor) %}
+                {%- set column_name = elementary.column_quote(monitored_column) %}
                 {%- if monitor_macro and column_name %}
                     {%- do executed_column_monitors.append(column_monitor) %}
                     select
@@ -58,7 +58,7 @@
     {%- endif %}
 
     {%- if not executed_column_monitors %}
-        {{ empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
+        {{ elementary.empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
 {% endmacro %}

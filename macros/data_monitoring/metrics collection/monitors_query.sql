@@ -26,11 +26,11 @@
             {%- if monitored_table[table_config_column_names[8]] %}
                 {%- set config_table_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
             {%- endif %}
-            {%- set table_monitors = get_table_monitors(config_table_monitors) %}
+            {%- set table_monitors = elementary.get_table_monitors(config_table_monitors) %}
         {%- endif %}
 
         {%- if columns_monitored is sameas true %}
-            {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
+            {%- set column_monitors_config = elementary.get_columns_monitors_config(full_table_name) %}
         {%- endif %}
 
         {%- set should_backfill_query %}
@@ -42,9 +42,9 @@
 
         {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
         {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
-        {% do edr_log(start_msg) %}
-        {% do table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill, timestamp_column_data_type) %}
-        {% do edr_log(end_msg) %}
+        {% do elementary.edr_log(start_msg) %}
+        {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill, timestamp_column_data_type) %}
+        {% do elementary.edr_log(end_msg) %}
     {%- endfor %}
 
     select 1 as num

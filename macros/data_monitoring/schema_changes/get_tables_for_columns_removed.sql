@@ -4,7 +4,7 @@
         from {{ elementary.get_table_config_path() }}
         where full_table_name is not null
     {%- endset %}
-    {%- set tables_list = result_column_to_list(tables_query) %}
-    {%- set tables = strings_list_to_tuple(tables_list) %}
+    {%- set tables_list = elementary.result_column_to_list(tables_query) %}
+    {%- set tables = elementary.strings_list_to_tuple(tables_list) %}
     {{ return(tables) }}
 {% endmacro %}

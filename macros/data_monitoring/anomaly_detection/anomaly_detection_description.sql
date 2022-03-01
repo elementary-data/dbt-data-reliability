@@ -1,8 +1,8 @@
 {% macro anomaly_detection_description() %}
     case
-        when metric_name = 'freshness' then {{ freshness_description() }}
-        when column_name is null then {{ table_metric_description() }}
-        when column_name is not null then {{ column_metric_description() }}
+        when metric_name = 'freshness' then {{ elementary.freshness_description() }}
+        when column_name is null then {{ elementary.table_metric_description() }}
+        when column_name is not null then {{ elementary.column_metric_description() }}
         else null
     end as description
 {% endmacro %}

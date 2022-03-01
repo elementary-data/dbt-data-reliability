@@ -6,7 +6,7 @@
     {%- if not timestamp_field %}
          cast (null as {{ dbt_utils.type_int()}})
     {%- else %}
-         {{ freshness_check(timestamp_field, timeframe_end) }}
+         {{ elementary.freshness_check(timestamp_field, timeframe_end) }}
     {%- endif %}
 {%- endmacro %}
 

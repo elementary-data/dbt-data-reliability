@@ -15,7 +15,7 @@
 {% endmacro %}
 
 {% macro missing_percent_monitor(column_name) %}
-    {{ percent(missing_count_monitor(column_name), row_count_monitor()) }}
+    {{ elementary.percent(elementary.missing_count_monitor(column_name), row_count_monitor()) }}
 {% endmacro %}
 
 --TODO: handle whitespaces using strip

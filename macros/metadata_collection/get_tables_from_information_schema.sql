@@ -2,7 +2,6 @@
     {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(database_name, schema_name)) }}
 {% endmacro %}
 
-
 {% macro snowflake__get_tables_from_information_schema(database_name, schema_name) %}
 
     (with information_schema_tables as (
@@ -11,7 +10,7 @@
             upper(table_catalog) as database_name,
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
-        from  {{ from_information_schema('TABLES', database_name, schema_name) }}
+        from  {{ elementary.from_information_schema('TABLES', database_name, schema_name) }}
         where table_schema = upper('{{ schema_name }}')
 
     ),
@@ -21,7 +20,7 @@
         select
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
-        from  {{ from_information_schema('SCHEMATA', database_name, schema_name) }}
+        from  {{ elementary.from_information_schema('SCHEMATA', database_name, schema_name) }}
         where schema_name = upper('{{ schema_name }}')
 
     )

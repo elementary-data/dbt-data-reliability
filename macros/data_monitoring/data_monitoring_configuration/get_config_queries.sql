@@ -13,3 +13,5 @@
     where full_table_name = upper('{{ full_table_name }}')
         and config_loaded_at = (select max(config_loaded_at) from {{ ref('final_columns_config') }})
 {% endmacro %}
+
+-- TODO: should this be here or in configuration?

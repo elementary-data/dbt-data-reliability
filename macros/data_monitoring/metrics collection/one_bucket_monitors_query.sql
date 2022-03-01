@@ -20,13 +20,13 @@
 
     table_monitors as (
 
-        {{- table_monitors_cte(table_monitors, timestamp_field, timeframe_end, monitored_table) }}
+        {{- elementary.table_monitors_cte(table_monitors, timestamp_field, timeframe_end, monitored_table) }}
 
     ),
 
     column_monitors as (
 
-        {{- column_monitors_cte(column_config) }}
+        {{- elementary.column_monitors_cte(column_config) }}
 
     ),
 

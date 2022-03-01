@@ -14,6 +14,6 @@
 
 {% macro no_monitor(monitor) -%}
     {%- set error = 'Monitor macro for ' ~ monitor ~ ' is missing' %}
-    {%- do log(error) -%}
+    {% do elementary.edr_log(error) %}
     null
 {%- endmacro %}

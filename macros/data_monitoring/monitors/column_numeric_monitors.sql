@@ -15,7 +15,7 @@
 {% endmacro %}
 
 {% macro zero_percent_monitor(column_name) %}
-    {{ percent(zero_count_monitor(column_name), row_count_monitor()) }}
+    {{ elementary.percent(elementary.zero_count_monitor(column_name), row_count_monitor()) }}
 {% endmacro %}
 
 {% macro standard_deviation_monitor(column_name) -%}

@@ -3,5 +3,5 @@
 {% endmacro %}
 
 {% macro null_percent_monitor(column_name) %}
-    {{ percent(null_count_monitor(column_name), row_count_monitor()) }}
+    {{ elementary.percent(elementary.null_count_monitor(column_name), row_count_monitor()) }}
 {% endmacro %}
