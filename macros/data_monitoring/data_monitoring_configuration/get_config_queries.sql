@@ -2,7 +2,7 @@
     select *
     from {{ ref('final_tables_config') }}
     where (table_monitored = true or columns_monitored = true)
-        and thread_number in ({{ thread_number }})
+        and partition_number in ({{ thread_number }})
         and config_loaded_at = (select max(config_loaded_at) from {{ ref('final_tables_config') }})
 {% endmacro %}
 
