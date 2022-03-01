@@ -5,6 +5,16 @@ Tests flow:
 
 Run:
 ```
+python data_generation.py
+dbt deps
+dbt seed -s training 
+dbt run
+dbt seed -s validation
+dbt run
+```
+
+Old - 
+```
 dbt seed
 dbt snapshot
 dbt run

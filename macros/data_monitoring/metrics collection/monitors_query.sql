@@ -32,20 +32,16 @@
             {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
         {%- endif %}
 
+        {%- set should_backfill = false %}
         {%- if table_should_backfill is sameas true %}
             {%- set should_backfill = true %}
-        {%- elif column_monitors_config is defined and column_monitors_config|length %}
-            {%- set should_backfill_columns = [] %}
-            {%- for i in column_monitors_config %}
-                {% do should_backfill_columns.append(i['should_backfill']) %}
-            {%- endfor %}
-            {%- if should_backfill_columns %}
-                {%- if should_backfill_columns[0] is sameas true %}
+        {%- elif column_monitors_config is sequence and column_monitors_config| length > 0 %}
+            {%- set column_monitor_config = column_monitors_config[0] %}
+            {%- if column_monitor_config is mapping %}
+                {%- if column_monitor_config.get('should_backfill') is sameas true %}
                     {%- set should_backfill = true %}
-                {%- endif %}
+                {% endif %}
             {%- endif %}
-        {%- else %}
-            {%- set should_backfill = false %}
         {%- endif %}
 
         {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}

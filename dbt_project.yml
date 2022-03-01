@@ -22,7 +22,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:
 
-
+#TODO: add a var to recieve end_date (default should be run_started_at)
 
 vars:
   days_back: 7

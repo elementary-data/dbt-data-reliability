@@ -10,3 +10,5 @@
 -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
 {{ monitors_query('1,2,3,4') }}
+
+--TODO: rename to monitoring_metrics and run macro as post_hook

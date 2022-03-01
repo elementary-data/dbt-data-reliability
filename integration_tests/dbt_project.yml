@@ -1,4 +1,4 @@
-name: 'integration_tests_elementary_observability'
+name: 'elementary_integration_tests'
 version: '1.0.0'
 config-version: 2
 profile: 'elementary_tests'
@@ -19,7 +19,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 seeds:
 
-  integration_tests_elementary_observability:
+  elementary_integration_tests:
       test_data:
         +schema: data
 
