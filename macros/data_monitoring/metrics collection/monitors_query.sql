@@ -1,7 +1,7 @@
 {% macro monitors_query(thread_number) %}
     -- depends_on: {{ ref('elementary_runs') }}
-    -- depends_on: {{ ref('edr_tables_config') }}
-    -- depends_on: {{ ref('edr_columns_config') }}
+    -- depends_on: {{ ref('final_tables_config') }}
+    -- depends_on: {{ ref('final_columns_config') }}
     -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
     {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
@@ -32,6 +32,7 @@
             {%- set column_monitors_config = get_columns_monitors_config(full_table_name) %}
         {%- endif %}
 
+        --TODO: for columns - one of them could be with should_backfill=True and the rest will be False
         {%- set should_backfill = false %}
         {%- if table_should_backfill is sameas true %}
             {%- set should_backfill = true %}

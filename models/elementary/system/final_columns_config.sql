@@ -14,7 +14,7 @@ with columns_config as (
 
 tables_config as (
 
-    select * from {{ ref('edr_tables_config') }}
+    select * from {{ ref('final_tables_config') }}
     where columns_monitored = true
 
 ),
@@ -31,23 +31,24 @@ config_explicit_columns as (
         {{ dbt_utils.surrogate_key([
             'config.full_column_name', 'config.column_monitors',
         ]) }} as config_id,
-        {{ full_table_name('config') }} as full_table_name,
+        {{ elementary.full_table_name('config') }} as full_table_name,
         upper(config.database_name) as database_name,
         upper(config.schema_name) as schema_name,
         upper(config.table_name) as table_name,
         upper(config.column_name) as column_name,
         info_schema.data_type,
         column_monitors,
-        {{ run_start_column() }} as config_loaded_at
+        {{ elementary.run_start_column() }} as config_loaded_at
     from
         information_schema_columns as info_schema join columns_config as config
         on (upper(info_schema.database_name) = upper(config.database_name)
             and upper(info_schema.schema_name) = upper(config.schema_name)
             and upper(info_schema.table_name) = upper(config.table_name)
             and upper(info_schema.column_name) = upper(config.column_name))
+
 ),
 
-no_explicit_columns as (
+tables_with_no_explicit_columns as (
 
     select
         tab.full_table_name,
@@ -77,9 +78,9 @@ config_no_explicit_columns as (
         upper(info_schema.column_name) as column_name,
         info_schema.data_type,
         null as column_monitors,
-        {{ run_start_column() }} as config_loaded_at
+        {{ elementary.run_start_column() }} as config_loaded_at
     from
-        information_schema_columns as info_schema join no_explicit_columns as tab
+        information_schema_columns as info_schema join tables_with_no_explicit_columns as tab
     on (upper(info_schema.database_name) = upper(tab.database_name)
         and upper(info_schema.schema_name) = upper(tab.schema_name)
         and upper(info_schema.table_name) = upper(tab.table_name))
@@ -111,10 +112,10 @@ final as (
                 select config_id from {{ this }}
                 where config_loaded_at = (select max(config_loaded_at) from {{ this }})
             {% endset %}
-            {%- set active_configs = result_column_to_list(active_configs_query) %}
+            {%- set active_configs = elementary.result_column_to_list(active_configs_query) %}
 
             case when
-                config_id not in {{ strings_list_to_tuple(active_configs) }}
+                config_id not in {{ elementary.strings_list_to_tuple(active_configs) }}
             then true
             else false end
             as should_backfill,
@@ -132,4 +133,3 @@ final as (
 select *
 from final
 
---TODO: rename this file - it's confusing to have both column_monitors_config and edr_columns_config

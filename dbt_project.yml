@@ -29,7 +29,7 @@ vars:
   default_run_hours_back: 24
   minimal_sample_size: 1
   z_score_treshold: 3
-  edr_run: false
+  edr_cli_run: false
   max_int: 2147483647
 
   schemas_for_alert_on_schema_changes:

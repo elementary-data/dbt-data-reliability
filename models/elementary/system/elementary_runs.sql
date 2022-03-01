@@ -6,5 +6,5 @@
 }}
 
 select
-    {{ dbt_utils.hash(run_started_at.timestamp()) }} as run_id,
+    {{ invocation_id }} as run_id,
     {{ elementary.run_start_column() }} as run_started_at

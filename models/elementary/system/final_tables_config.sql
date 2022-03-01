@@ -40,11 +40,11 @@ config_existing_tables as (
         table_monitors,
         columns_monitored,
         case
-            when col.data_type in {{ strings_list_to_tuple(data_type_list('datetime')) }} then 'datetime'
-            when col.data_type in {{ strings_list_to_tuple(data_type_list('string')) }} then 'string'
+            when col.data_type in {{ elementary.strings_list_to_tuple(elementary.data_type_list('datetime')) }} then 'datetime'
+            when col.data_type in {{ elementary.strings_list_to_tuple(elementary.data_type_list('string')) }} then 'string'
             else null
         end as timestamp_column_data_type,
-        {{ run_start_column() }} as config_loaded_at
+        {{ elementary.run_start_column() }} as config_loaded_at
     from
         information_schema_tables as info_schema join tables_config as config
         on (upper(info_schema.database_name) = upper(config.database_name)
@@ -78,9 +78,9 @@ final as (
                 where config_loaded_at = (select max(config_loaded_at) from {{ this }})
                 and table_monitored = true
             {% endset %}
-            {%- set active_configs = result_column_to_list(active_configs_query) %}
+            {%- set active_configs = elementary.result_column_to_list(active_configs_query) %}
             case when
-                config_id not in {{ strings_list_to_tuple(active_configs) }}
+                config_id not in {{ elementary.strings_list_to_tuple(active_configs) }}
             then true
             else false end
             as should_backfill,
@@ -90,7 +90,7 @@ final as (
 
         timestamp_column_data_type,
         max(config_loaded_at) as config_loaded_at,
-        ntile(4) over (partition by full_table_name order by config_id) as thread_number
+        ntile(4) over (partition by full_table_name order by config_id) as partition_number
 
     from config_existing_tables
     group by 1,2,3,4,5,6,7,8,9,10,11,12
@@ -99,5 +99,3 @@ final as (
 
 select *
 from final
-
---TODO: rename this file - it's confusing to have both table_monitors_config and edr_tables_config

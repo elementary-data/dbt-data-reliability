@@ -5,8 +5,8 @@
 }}
 
 -- depends_on: {{ ref('elementary_runs') }}
--- depends_on: {{ ref('edr_tables_config') }}
--- depends_on: {{ ref('edr_columns_config') }}
+-- depends_on: {{ ref('final_tables_config') }}
+-- depends_on: {{ ref('final_columns_config') }}
 -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
 {{ monitors_query('1,2,3,4') }}
