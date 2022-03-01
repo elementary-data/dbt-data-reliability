@@ -45,6 +45,7 @@ latest_time_based_metrics as (
             and m.column_name = lm.column_name
             and m.metric_name = lm.metric_name
             and m.timeframe_end = lm.latest_timeframe_end)
+    where metric_value is not null
 ),
 
 latest_no_time_metrics as (

@@ -9,4 +9,3 @@
 {% macro bigquery__type_bool() %}
     BOOL
 {% endmacro %}
-

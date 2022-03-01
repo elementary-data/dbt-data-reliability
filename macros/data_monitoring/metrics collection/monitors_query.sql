@@ -19,6 +19,7 @@
         {%- set table_monitored = monitored_table[table_config_column_names[7]] %}
         {%- set columns_monitored = monitored_table[table_config_column_names[9]] %}
         {%- set table_should_backfill = monitored_table[table_config_column_names[10]] %}
+        {%- set timestamp_column_data_type = monitored_table[table_config_column_names[11]] %}
 
         {%- if table_monitored is sameas true %}
             {%- if monitored_table[table_config_column_names[8]] %}
@@ -47,8 +48,11 @@
             {%- set should_backfill = false %}
         {%- endif %}
 
-        {% do table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill) %}
-
+        {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
+        {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
+        {% do edr_log(start_msg) %}
+        {% do table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors_config, should_backfill, timestamp_column_data_type) %}
+        {% do edr_log(end_msg) %}
     {%- endfor %}
 
     select 1 as num

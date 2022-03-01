@@ -47,6 +47,9 @@
                         '{{ column_monitor }}' as metric_name,
                         {{ monitor_macro(column_name) }} as metric_value
                     from timeframe_data
+                        {%- if column_monitor in var('edr_monitors')['column_numeric'] %}
+                            where {{ column_name }} < {{ var('max_int') }}
+                        {%- endif %}
                         {% if not loop.last %} union all {% endif %}
                 {%- endif %}
             {%- endfor %}

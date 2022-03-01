@@ -1,4 +1,4 @@
-{% macro one_bucket_monitors_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config) %}
+{% macro one_bucket_monitors_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
 
     (
         with timeframe_data as (
@@ -7,7 +7,11 @@
             from {{ monitored_table }}
             where
             {% if timestamp_field and timeframe_start and timeframe_end -%}
-                {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
+                {%- if timestamp_column_data_type == 'datetime' %}
+                    {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
+                {%- elif timestamp_column_data_type == 'string' %}
+                    cast({{ timestamp_field }} as {{ dbt_utils.type_timestamp() }}) > {{ timeframe_start }} and cast({{ timestamp_field }} as {{ dbt_utils.type_timestamp() }}) < {{ timeframe_end }}
+                {%- endif %}
             {%- else -%}
                 true
             {%- endif -%}
@@ -59,6 +63,7 @@
         from
             union_metrics
         where metric_name is not null
+        and metric_value < {{ var('max_int') }}
 
     )
 

@@ -39,6 +39,11 @@ config_existing_tables as (
         table_monitored,
         table_monitors,
         columns_monitored,
+        case
+            when col.data_type in {{ strings_list_to_tuple(data_type_list('datetime')) }} then 'datetime'
+            when col.data_type in {{ strings_list_to_tuple(data_type_list('string')) }} then 'string'
+            else null
+        end as timestamp_column_data_type,
         {{ run_start_column() }} as config_loaded_at
     from
         information_schema_tables as info_schema join tables_config as config
@@ -50,7 +55,6 @@ config_existing_tables as (
             and upper(col.schema_name) = upper(config.schema_name)
             and upper(col.table_name) = upper(config.table_name)
             and upper(col.column_name) = upper(config.timestamp_column))
-        where col.data_type in {{ strings_list_to_tuple(data_type_list('datetime')) }}
 
 ),
 
@@ -84,11 +88,12 @@ final as (
             true as should_backfill,
         {% endif %}
 
+        timestamp_column_data_type,
         max(config_loaded_at) as config_loaded_at,
         ntile(4) over (partition by full_table_name order by config_id) as thread_number
 
     from config_existing_tables
-    group by 1,2,3,4,5,6,7,8,9,10,11
+    group by 1,2,3,4,5,6,7,8,9,10,11,12
 
 )
 

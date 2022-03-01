@@ -10,6 +10,7 @@ metrics_timestamp_based as (
     from metrics
     where timeframe_start is not null
         and timeframe_start >= {{- zscore_timeframe_start() -}}
+        and metric_value is not null
 
 ),
 
@@ -36,7 +37,7 @@ metrics_no_timestamp as (
     from metrics
     where timeframe_start is null
         and updated_at >= {{- zscore_timeframe_start() -}}
-
+        and metric_value is not null
 ),
 
 metrics_no_timestamp_stats as (
