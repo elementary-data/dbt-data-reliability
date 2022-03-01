@@ -37,7 +37,7 @@ table_removed as (
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
     where cur.full_table_name is null
-        and pre.full_schema_name in {{ strings_list_to_tuple(get_configured_schemas()) }}
+        and pre.full_schema_name in {{ elementary.strings_list_to_tuple(elementary.get_configured_schemas()) }}
 
 ),
 
@@ -53,10 +53,10 @@ table_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'change', 'detected_at']) }} as change_id,
-        {{ full_name_to_db() }},
-        {{ full_name_to_schema() }},
-        {{ full_name_to_table() }},
-        {{ run_start_column() }} as detected_at,
+        {{ elementary.full_name_to_db() }},
+        {{ elementary.full_name_to_schema() }},
+        {{ elementary.full_name_to_table() }},
+        {{ elementary.run_start_column() }} as detected_at,
         change,
 
         case

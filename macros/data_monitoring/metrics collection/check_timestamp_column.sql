@@ -2,8 +2,8 @@
 
     {%- set query %}
         select {{ dbt_utils.safe_cast(timestamp_column, dbt_utils.type_timestamp()) }} as timestamp_column
-        from {{ full_table_name }}
-        where {{ timestamp_column }} is not null
+        from {{ elementary.full_table_name }}
+        where {{ elementary.timestamp_column }} is not null
         limit 1
     {%- endset %}
 
@@ -17,3 +17,4 @@
     {{ return(to_timestamp) }}
 
 {% endmacro %}
+

@@ -59,7 +59,7 @@ columns_removed as (
     left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.full_table_name is null and cur.column_name is null
-    and pre.full_table_name in {{ get_tables_for_columns_removed() }}
+    and pre.full_table_name in {{ elementary.get_tables_for_columns_removed() }}
 
 ),
 
@@ -78,11 +78,11 @@ column_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as change_id,
-        {{ full_name_to_db() }},
-        {{ full_name_to_schema() }},
-        {{ full_name_to_table() }},
+        {{ elementary.full_name_to_db() }},
+        {{ elementary.full_name_to_schema() }},
+        {{ elementary.full_name_to_table() }},
         column_name,
-        {{ run_start_column() }} as detected_at,
+        {{ elementary.run_start_column() }} as detected_at,
         change,
 
         case
