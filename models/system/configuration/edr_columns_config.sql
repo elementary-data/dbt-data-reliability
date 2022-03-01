@@ -131,3 +131,5 @@ final as (
 
 select *
 from final
+
+--TODO: rename this file - it's confusing to have both column_monitors_config and edr_columns_config

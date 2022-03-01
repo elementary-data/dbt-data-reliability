@@ -1,7 +1,7 @@
 {% macro table_exists_in_target(table_name) %}
 
     {%- set source_relation = adapter.get_relation(
-          database=target_database(),
+          database=elementary.target_database(),
           schema=target.schema,
           identifier=table_name) -%}
 

@@ -1,5 +1,5 @@
 {% macro target_database() -%}
-    {{ return(adapter.dispatch('target_database','elementary')()) }}
+    {{ return(adapter.dispatch('target_database', 'elementary')()) }}
 {%- endmacro %}
 
 -- Postgres and Redshift

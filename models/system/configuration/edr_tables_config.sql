@@ -94,3 +94,5 @@ final as (
 
 select *
 from final
+
+--TODO: rename this file - it's confusing to have both table_monitors_config and edr_tables_config
