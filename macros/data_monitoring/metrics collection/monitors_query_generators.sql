@@ -2,9 +2,17 @@
 
 {% macro table_monitors_query(table_to_monitor, timestamp_field, days_back, timeframe_duration, table_monitors, column_config, should_backfill, timestamp_column_data_type) %}
 
+    {%- if timestamp_column_data_type == 'string' %}
+        {%- set is_timestamp = elementary.check_timestamp_column(table_to_monitor, timestamp_field) %}
+    {%- elif timestamp_column_data_type == 'datetime' %}
+        {%- set is_timestamp = true %}
+    {%- else %}
+        {%- set is_timestamp = false %}
+    {%- endif %}
+
     {%- set max_timeframe_end = "'" ~ max_timeframe_end(timeframe_duration) ~ "'" -%}
 
-    {%- if should_backfill is sameas true and timestamp_field and timestamp_column_data_type -%}
+    {%- if should_backfill is sameas true and timestamp_field and is_timestamp -%}
 
         {%- set timeframes = (days_back*24/timeframe_duration)|int %}
         {%- if timeframes > 0 %}
@@ -20,7 +28,7 @@
             {%- endfor -%}
         {%- endif %}
 
-    {%- elif should_backfill is sameas false and timestamp_field and timestamp_column_data_type -%}
+    {%- elif should_backfill is sameas false and timestamp_field and is_timestamp -%}
         {%- set hours_back = timeframe_to_query(days_back) %}
         {%- set timeframes = (hours_back/timeframe_duration)|int %}
         {%- if timeframes > 0 %}
