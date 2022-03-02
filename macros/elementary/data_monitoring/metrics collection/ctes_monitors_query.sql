@@ -24,7 +24,7 @@
         {%- endfor -%}
     {%- endif %}
 
-    {%- if not executed_table_monitors %}
+    {%- if executed_table_monitors | length == 0 %}
         {{ elementary.empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 
@@ -36,28 +36,31 @@
     {%- set executed_column_monitors = [] %}
     {%- if column_config %}
         {%- for monitored_column in column_config -%}
-            {%- set monitored_column = column_config[loop.index0]['column_name'] %}
-            {%- for column_monitor in column_config[loop.index0]['column_monitors'] %}
-                {%- set monitor_macro = elementary.get_monitor_macro(column_monitor) %}
-                {%- set column_name = elementary.column_quote(monitored_column) %}
-                {%- if monitor_macro and column_name %}
-                    {%- do executed_column_monitors.append(column_monitor) %}
-                    select
-                        '{{ monitored_column }}' as column_name,
-                        '{{ column_monitor }}' as metric_name,
-                        {{ monitor_macro(column_name) }} as metric_value
-                    from timeframe_data
-                        {%- if column_monitor in var('edr_monitors')['column_numeric'] %}
-                            where {{ column_name }} < {{ var('max_int') }}
-                        {%- endif %}
-                        {% if not loop.last %} union all {% endif %}
-                {%- endif %}
-            {%- endfor %}
+            {%- set column_name = monitored_column.get('column_name') -%}
+            {%- set column_monitors = monitored_column.get('column_monitors') -%}
+            {% if column_name and column_monitors %}
+                {%- for column_monitor in column_monitors %}
+                    {%- set monitor_macro = elementary.get_monitor_macro(column_monitor) %}
+                    {%- set quoted_column_name = elementary.column_quote(column_name) %}
+                    {%- if monitor_macro and quoted_column_name %}
+                        {%- do executed_column_monitors.append(column_monitor) %}
+                        select
+                            '{{ column_name }}' as column_name,
+                            '{{ column_monitor }}' as metric_name,
+                            {{ monitor_macro(quoted_column_name) }} as metric_value
+                        from timeframe_data
+                            {%- if column_monitor in var('edr_monitors')['column_numeric'] %}
+                                where {{ quoted_column_name }} < {{ var('max_int') }}
+                            {%- endif %}
+                            {% if not loop.last %} union all {% endif %}
+                    {%- endif %}
+                {%- endfor %}
+            {% endif %}
             {% if not loop.last %} union all {% endif %}
         {%- endfor -%}
     {%- endif %}
 
-    {%- if not executed_column_monitors %}
+    {%- if executed_column_monitors | length == 0 %}
         {{ elementary.empty_table([('column_name', 'string'), ('metric_name', 'string'), ('metric_value', 'int')]) }}
     {%- endif %}
 

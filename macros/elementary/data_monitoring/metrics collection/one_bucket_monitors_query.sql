@@ -10,7 +10,7 @@
                 {%- if timestamp_column_data_type == 'datetime' %}
                     {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
                 {%- elif timestamp_column_data_type == 'string' %}
-                    cast({{ timestamp_field }} as {{ dbt_utils.type_timestamp() }}) > {{ timeframe_start }} and cast({{ timestamp_field }} as {{ dbt_utils.type_timestamp() }}) < {{ timeframe_end }}
+                    elementary.cast_string_column_to_timestamp(timestamp_field) > {{ timeframe_start }} and elementary.cast_string_column_to_timestamp(timestamp_field) < {{ timeframe_end }}
                 {%- endif %}
             {%- else -%}
                 true
@@ -45,12 +45,12 @@
             column_name,
             metric_name,
             metric_value,
-            {%- if timeframe_start is defined %}
+            {%- if timeframe_start %}
                 {{- timeframe_start }} as timeframe_start,
             {%- else %}
                 null as timeframe_start,
             {%- endif %}
-            {%- if timeframe_end is defined %}
+            {%- if timeframe_end %}
                 {{- timeframe_end }} as timeframe_end,
             {%- else %}
                 null as timeframe_end,
@@ -71,3 +71,4 @@
 
 
 {% endmacro %}
+

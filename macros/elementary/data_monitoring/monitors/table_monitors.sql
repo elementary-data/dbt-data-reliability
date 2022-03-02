@@ -15,9 +15,9 @@
 {% endmacro %}
 
 {% macro default__freshness_check( timestamp_field, timeframe_end) %}
-    timediff(minute, max({{ timestamp_field }}), {{ timeframe_end}})
+    timediff(minute, max({{ elementary.cast_string_column_to_timestamp(timestamp_field) }}), {{ timeframe_end}})
 {% endmacro %}
 
 {% macro bigquery__freshness_check( timestamp_field, timeframe_end) %}
-    timestamp_diff( timestamp({{ timeframe_end }}), timestamp(max({{ timestamp_field }})), minute)
+    timestamp_diff( timestamp({{ timeframe_end }}), timestamp(max({{ elementary.cast_string_column_to_timestamp(timestamp_field) }})), minute)
 {% endmacro %}
