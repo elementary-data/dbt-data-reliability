@@ -10,7 +10,8 @@
                 {%- if timestamp_column_data_type == 'datetime' %}
                     {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
                 {%- elif timestamp_column_data_type == 'string' %}
-                    elementary.cast_string_column_to_timestamp(timestamp_field) > {{ timeframe_start }} and elementary.cast_string_column_to_timestamp(timestamp_field) < {{ timeframe_end }}
+                    {{ elementary.cast_string_column_to_timestamp(timestamp_field) }} > {{ timeframe_start }}
+                    and {{ elementary.cast_string_column_to_timestamp(timestamp_field) }} < {{ timeframe_end }}
                 {%- endif %}
             {%- else -%}
                 true
