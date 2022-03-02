@@ -2,7 +2,7 @@
 
     {%- if timestamp_column_data_type == 'string' %}
         {%- set is_timestamp = elementary.try_cast_column_to_timestamp(full_table_name, timestamp_column) %}
-    {%- elif timestamp_column_data_type == 'datetime' %}
+    {%- elif timestamp_column_data_type == 'timestamp' %}
         {%- set is_timestamp = true %}
     {%- else %}
         {%- set is_timestamp = false %}
@@ -30,9 +30,12 @@
             {%- endif %}
         {% endif %}
     {%- else -%}
-        {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, null, null, null, null, table_monitors, column_config) -%}
-        {%- set insert_one_bucket = elementary.insert_as_select('temp_monitoring_metrics', one_bucket_query) %}
-        {%- do run_query(insert_one_bucket)%}
+        {%- set hours_back = elementary.hours_since_last_run(days_back, max_timeframe_end) -%}
+        {%- if hours_back is not none and hours_back >= timeframe_duration %}
+            {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, null, null, null, null, table_monitors, column_config) -%}
+            {%- set insert_one_bucket = elementary.insert_as_select('temp_monitoring_metrics', one_bucket_query) %}
+            {%- do run_query(insert_one_bucket)%}
+        {%- endif %}
     {%- endif -%}
 
 {% endmacro %}

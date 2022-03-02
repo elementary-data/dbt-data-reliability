@@ -25,11 +25,15 @@
 
     {% set numeric_list = ['INT64','NUMERIC','BIGNUMERIC','FLOAT64','INTEGER'] | list %}
 
+    {% set timestamp_list = ['DATE','DATETIME','TIMESTAMP'] | list %}
+
     {%- if data_type == 'string' %}
         {{ return(string_list) }}
     {%- elif data_type == 'numeric' %}
         {{ return(numeric_list) }}
-    {%- else%}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- else %}
         {{ return([]) }}
     {%- endif %}
 
@@ -42,14 +46,14 @@
 
     {% set numeric_list = ['NUMBER','DECIMAL','NUMERIC','INT','INTEGER','BIGINT','SMALLINT','TINYINT','BYTEINT','FLOAT','FLOAT4','FLOAT8','DOUBLE','DOUBLE PRECISION','REAL'] | list %}
 
-    {% set datetime_list = ['DATE','DATETIME','TIME','TIMESTAMP','TIMESTAMP_LTZ','TIMESTAMP_NTZ','TIMESTAMP_TZ'] | list %}
+    {% set timestamp_list = ['DATE','DATETIME','TIME','TIMESTAMP','TIMESTAMP_LTZ','TIMESTAMP_NTZ','TIMESTAMP_TZ'] | list %}
 
     {%- if data_type == 'string' %}
         {{ return(string_list) }}
     {%- elif data_type == 'numeric' %}
         {{ return(numeric_list) }}
-    {%- elif data_type == 'datetime' %}
-        {{ return(datetime_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
     {%- else %}
         {{ return([]) }}
     {%- endif %}

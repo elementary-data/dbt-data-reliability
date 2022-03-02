@@ -1,6 +1,35 @@
--- depends_on: {{ ref('alerts_data_monitoring') }}
--- depends_on: {{ ref('alerts_schema_changes') }}
--- depends_on: {{ ref('alerts_dbt') }}
+{{
+  config(
+    materialized = 'incremental',
+    unique_key = 'alert_id'
+  )
+}}
 
+with alerts_schema_changes as (
 
-    select 1 as num
+    select * from {{ ref('alerts_schema_changes') }}
+
+),
+
+alerts_data_monitoring as (
+
+    select * from {{ ref('alerts_data_monitoring') }}
+
+),
+
+all_alerts as (
+
+     select * from alerts_schema_changes
+     union all
+     select * from alerts_data_monitoring
+
+)
+
+select *, false as alert_sent
+from all_alerts
+{%- if is_incremental() %}
+{%- set row_count = get_row_count(this) %}
+    {%- if row_count > 0 %}
+        where detected_at > (select max(detected_at) from {{ this }})
+    {%- endif %}
+{%- endif %}

@@ -40,7 +40,7 @@ config_existing_tables as (
         table_monitors,
         columns_monitored,
         case
-            when col.data_type in {{ elementary.strings_list_to_tuple(elementary.data_type_list('datetime')) }} then 'datetime'
+            when col.data_type in {{ elementary.strings_list_to_tuple(elementary.data_type_list('timestamp')) }} then 'timestamp'
             when col.data_type in {{ elementary.strings_list_to_tuple(elementary.data_type_list('string')) }} then 'string'
             else null
         end as timestamp_column_data_type,
