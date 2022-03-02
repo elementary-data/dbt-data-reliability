@@ -6,10 +6,10 @@ require-dbt-version: [">=1.0.0", "<2.0.0"]
 config-version: 2
 profile: 'elementary'
 
-source-paths: ["models"]
+model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
-data-paths: ["data"]
+seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
