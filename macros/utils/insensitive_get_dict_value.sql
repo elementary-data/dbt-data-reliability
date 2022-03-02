@@ -1,9 +1,17 @@
 {% macro insensitive_get_dict_value(dict, key, default) -%}
-    {%- if key in dict -%}
-        {{- return(dict[key]) -}}
-    {%- elif key.lower() in dict -%}
-        {{- return(dict[key.lower()]) -}}
-    {%- elif default is defined -%}
+    {%- set value = dict.get(key) %}
+    {%- if value is not none -%}
+        {{- return(value) -}}
+    {%- endif %}
+    {%- set value = dict.get(key.lower()) %}
+    {%- if value is not none -%}
+        {{- return(value) -}}
+    {%- endif %}
+    {%- set value = dict.get(key.upper()) %}
+    {%- if value is not none -%}
+        {{- return(value) -}}
+    {%- endif %}
+    {%- if default is defined -%}
         {{- return(default) -}}
     {% else %}
         {{ return(none) }}

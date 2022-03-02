@@ -1,6 +1,6 @@
 {% macro get_columns_monitors_config(full_table_name) %}
 
-    {%- set monitored_columns = run_query(elementary.monitored_columns(full_table_name)) %}
+    {%- set monitored_columns = run_query(elementary.get_monitored_columns(full_table_name)) %}
     {%- set columns_config = [] %}
 
     {%- for monitored_column in monitored_columns %}

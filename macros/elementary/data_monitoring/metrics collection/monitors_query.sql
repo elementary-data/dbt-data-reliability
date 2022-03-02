@@ -5,7 +5,7 @@
     -- depends_on: {{ ref('final_should_backfill') }}
     -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
-    {%- set monitored_tables = run_query(elementary.monitored_tables(thread_number)) %}
+    {%- set monitored_tables = run_query(elementary.get_monitored_tables(thread_number)) %}
 
     {%- for monitored_table in monitored_tables %}
         {%- set full_table_name = elementary.insensitive_get_dict_value(monitored_table, 'full_table_name') %}
