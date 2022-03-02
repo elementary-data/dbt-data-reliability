@@ -1,7 +1,8 @@
 {{
   config(
     materialized='incremental',
-    unique_key = 'id'
+    unique_key = 'id',
+    post_hook = "{{ monitors_run_end() }}"
   )
 }}
 
@@ -13,12 +14,16 @@
 with monitors_run as (
 
     select * from {{ ref('run_data_monitors_thread_1') }}
+    where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
     select * from {{ ref('run_data_monitors_thread_2') }}
+    where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
     select * from {{ ref('run_data_monitors_thread_3') }}
+    where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
     select * from {{ ref('run_data_monitors_thread_4') }}
+    where not (full_table_name is null and metric_name is null and metric_value is null)
 
 ),
 

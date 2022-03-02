@@ -13,7 +13,7 @@
 
         {% set table_monitors = none %}
         {%- if table_monitored is sameas true %}
-            {%- set default_monitors = elementary.get_default_table_monitors() %}
+            {%- set default_table_monitors = elementary.get_default_table_monitors() %}
             {%- if table_monitors_str is not none %}
                 {%- set configured_table_monitors = fromjson(table_monitors_str) %}
             {%- endif %}
@@ -23,7 +23,7 @@
                 {%- set table_monitors = default_table_monitors %}
             {%- endif %}
             {# schema_changes is a different flow #}
-            {% if 'schema_changes' in monitors_list %}
+            {% if 'schema_changes' in table_monitors %}
                 {%- do table_monitors.remove('schema_changes') %}
             {% endif %}
         {%- endif %}
@@ -46,14 +46,6 @@
         {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type, thread_number) %}
         {% do elementary.edr_log(end_msg) %}
     {%- endfor %}
-
-    {%- set monitors_run_end_query %}
-        update {{ ref('elementary_runs') }}
-        set monitors_run_end = {{ dbt_utils.current_timestamp_in_utc() }}
-        where run_id = '{{ invocation_id }}'
-    {%- endset %}
-    {%- do run_query(monitors_run_end_query) -%}
-    {%- do edr_log('Finished running data monitors') -%}
 
     select 1 as num
     where num = 2
