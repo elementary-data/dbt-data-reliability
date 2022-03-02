@@ -19,7 +19,7 @@ this_run_time as (
 
 ),
 
-current_columns as (
+current_schema as (
 
     select
         full_table_name,
@@ -32,5 +32,5 @@ current_columns as (
 
 )
 
-select * from current_columns
+select * from current_schema
 

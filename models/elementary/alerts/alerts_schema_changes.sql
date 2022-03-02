@@ -61,8 +61,8 @@ filtered_alerts as (
     select *
     from all_alerts
     where
-        {{ elementary.full_table_name() }} in {{ elementary.tables_for_alert_on_schema_changes() }}
-        or {{ elementary.full_schema_name() }} in {{ elementary.schemas_for_alert_on_schema_changes() }}
+        {{ elementary.full_table_name() }} in {{ elementary.tables_to_alert_on_schema_changes() }}
+        or ({{ elementary.full_schema_name() }} in {{ elementary.schemas_to_alert_on_new_tables() }} and sub_type = 'table_added')
 
 )
 

@@ -91,7 +91,7 @@ column_changes_desc as (
             when change= 'column_removed'
                 then concat('The column "', column_name,'" was removed')
             when change= 'type_changed'
-                then concat('The type of "',column_name,'" was changed from ', pre_data_type,' to: ', data_type)
+                then concat('The type of "',column_name,'" was changed from ', pre_data_type,' to ', data_type)
             else NULL
         end as change_description
 

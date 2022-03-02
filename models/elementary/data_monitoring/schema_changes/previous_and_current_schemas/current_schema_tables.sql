@@ -18,7 +18,7 @@ this_run_time as (
 
 ),
 
-current_tables as (
+current_schema as (
 
     select
         full_schema_name,
@@ -30,4 +30,4 @@ current_tables as (
 
 )
 
-select * from current_tables
+select * from current_schema

@@ -19,7 +19,7 @@ with tables as (
                 select full_table_name from {{ this }}
                 where detected_at = (select max(detected_at) from {{ this }})
             {% endset %}
-            {%- set known_tables = result_column_to_list(known_tables_query) %}
+            {%- set known_tables = elementary.result_column_to_list(known_tables_query) %}
 
             {%- set known_schemas_query %}
                 select distinct full_schema_name from {{ this }}
@@ -37,14 +37,13 @@ with tables as (
             false as is_new
         {% endif %}
 
-    from {{ ref('information_schema_tables') }}
+    from {{ ref('filtered_information_schema_tables') }}
 
 )
 
 select
     {{ dbt_utils.surrogate_key([
-      'full_schema_name',
-      'table_name'
+      'full_table_name'
     ]) }} as table_state_id,
     full_schema_name,
     full_table_name,

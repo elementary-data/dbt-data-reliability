@@ -32,7 +32,7 @@ vars:
   edr_cli_run: false
   max_int: 2147483647
 
-  schemas_for_alert_on_schema_changes:
+  schemas_to_alert_on_new_tables:
     - elementary_db.jaffle_shop
     - elementary_db.stresstest
 

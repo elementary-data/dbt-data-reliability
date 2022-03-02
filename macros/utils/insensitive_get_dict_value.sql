@@ -3,7 +3,9 @@
         {{- return(dict[key]) -}}
     {%- elif key.lower() in dict -%}
         {{- return(dict[key.lower()]) -}}
-    {%- else -%}
+    {%- elif default is defined -%}
         {{- return(default) -}}
+    {% else %}
+        {{ return(none) }}
     {% endif %}
 {%- endmacro %}

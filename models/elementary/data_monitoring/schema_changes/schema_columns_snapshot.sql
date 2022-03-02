@@ -41,7 +41,7 @@ select
     {% endif %}
 
 from
-    {{ ref('information_schema_columns') }}
+    {{ ref('filtered_information_schema_columns') }}
 
 )
 

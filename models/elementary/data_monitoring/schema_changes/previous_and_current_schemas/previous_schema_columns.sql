@@ -19,7 +19,7 @@ previous_run_time as (
 
 ),
 
-previous_run as (
+previous_schema as (
 
     select
         full_table_name,
@@ -32,4 +32,4 @@ previous_run as (
 
 )
 
-select * from previous_run
+select * from previous_schema

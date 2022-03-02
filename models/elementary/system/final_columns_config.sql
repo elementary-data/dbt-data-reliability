@@ -21,7 +21,7 @@ tables_config as (
 
 information_schema_columns as (
 
-    select * from {{ ref('information_schema_columns') }}
+    select * from {{ ref('filtered_information_schema_columns') }}
 
 ),
 

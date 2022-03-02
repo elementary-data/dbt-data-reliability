@@ -1,5 +1,5 @@
-{% macro schemas_for_alert_on_schema_changes() %}
-    {%- set schemas_list = var('schemas_for_alert_on_schema_changes') %}
+{% macro schemas_to_alert_on_new_tables() %}
+    {%- set schemas_list = var('schemas_to_alert_on_new_tables') %}
     {%- set upper_schemas_list = [] %}
     {%- for schema in schemas_list %}
         {%- do upper_schemas_list.append(schema.upper()) %}
