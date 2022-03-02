@@ -5,12 +5,20 @@
   )
 }}
 
--- depends on: {{ ref('temp_monitoring_metrics') }}
--- depends on: {{ ref('empty_monitoring_metrics') }}
+-- depends on: {{ ref('init_data_monitors_thread_1') }}
+-- depends on: {{ ref('init_data_monitors_thread_2') }}
+-- depends on: {{ ref('init_data_monitors_thread_3') }}
+-- depends on: {{ ref('init_data_monitors_thread_4') }}
 
 with monitors_run as (
 
-    select * from {{ ref('temp_monitoring_metrics') }}
+    select * from {{ ref('run_data_monitors_thread_1') }}
+    union all
+    select * from {{ ref('run_data_monitors_thread_2') }}
+    union all
+    select * from {{ ref('run_data_monitors_thread_3') }}
+    union all
+    select * from {{ ref('run_data_monitors_thread_4') }}
 
 ),
 

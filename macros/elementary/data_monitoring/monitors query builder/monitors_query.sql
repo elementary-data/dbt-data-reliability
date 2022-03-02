@@ -1,9 +1,4 @@
 {% macro monitors_query(thread_number) %}
-    -- depends_on: {{ ref('elementary_runs') }}
-    -- depends_on: {{ ref('final_tables_config') }}
-    -- depends_on: {{ ref('final_columns_config') }}
-    -- depends_on: {{ ref('final_should_backfill') }}
-    -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
     {%- set monitored_tables = run_query(elementary.get_monitored_tables_query(thread_number)) %}
 
@@ -48,7 +43,7 @@
         {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
         {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
         {% do elementary.edr_log(start_msg) %}
-        {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type) %}
+        {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type, thread_number) %}
         {% do elementary.edr_log(end_msg) %}
     {%- endfor %}
 
