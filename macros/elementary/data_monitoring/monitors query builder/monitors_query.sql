@@ -40,11 +40,8 @@
         {%- endset %}
         {%- set should_backfill = elementary.result_value(should_backfill_query) %}
 
-        {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
-        {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
-        {% do elementary.edr_log(start_msg) %}
         {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type, thread_number) %}
-        {% do elementary.edr_log(end_msg) %}
+
     {%- endfor %}
 
     select 1 as num
