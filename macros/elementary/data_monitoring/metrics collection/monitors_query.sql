@@ -13,7 +13,6 @@
         {%- set bucket_duration_hours = elementary.insensitive_get_dict_value(monitored_table, 'bucket_duration_hours') | int %}
         {%- set table_monitored = elementary.insensitive_get_dict_value(monitored_table, 'table_monitored') %}
         {%- set columns_monitored = elementary.insensitive_get_dict_value(monitored_table, 'columns_monitored') %}
-        {%- set table_should_backfill = elementary.insensitive_get_dict_value(monitored_table, 'should_backfill') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(monitored_table, 'timestamp_column_data_type') %}
 
         {%- if table_monitored is sameas true %}
