@@ -12,12 +12,18 @@
 
     {% if timestamp_column is defined and timestamp_column is not none and is_timestamp is sameas true %}
         {%- if should_backfill is sameas true -%}
+            {%- set backfill_message = 'Running full backfill on table ' ~ full_table_name %}
+            {% do edr_log(backfill_message) %}
             {%- set timeframes = (days_back * 24 / timeframe_duration) | int -%}
             {%- if timeframes >= 1 -%}
                 {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
             {%- endif %}
         {%- else -%}
             {%- set hours_back = elementary.hours_since_last_run(days_back, max_timeframe_end) -%}
+            {%- if hours_back == days_back*24 %}
+                {%- set backfill_message = 'Running full backfill on table ' ~ full_table_name %}
+                {% do edr_log(backfill_message) %}
+            {%- endif %}
             {%- set timeframes = (hours_back / timeframe_duration) | int -%}
             {%- if timeframes >= 1 -%}
                 {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}

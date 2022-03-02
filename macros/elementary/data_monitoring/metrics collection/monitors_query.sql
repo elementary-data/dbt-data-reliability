@@ -52,6 +52,14 @@
         {% do elementary.edr_log(end_msg) %}
     {%- endfor %}
 
+    {%- set monitors_run_end_query %}
+        update {{ ref('elementary_runs') }}
+        set monitors_run_end = {{ dbt_utils.current_timestamp_in_utc() }}
+        where run_id = '{{ invocation_id }}'
+    {%- endset %}
+    {%- do run_query(monitors_run_end_query) -%}
+    {%- do edr_log('Finished running data monitors') -%}
+
     select 1 as num
     where num = 2
 

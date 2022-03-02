@@ -22,14 +22,17 @@
 
     {%- set query_start_time %}
         with start_times as (
-            select run_started_at as last_run, {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }} as start_limit
+            select monitors_run_end as last_run, {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }} as start_limit
             from {{ ref('elementary_runs')}}
-            order by run_started_at desc
-            limit 1 offset 1
+            where monitors_run_end is not null
+            order by monitors_run_end desc
+            limit 1
         ),
         start_time_limit as (
-            select case when start_limit > last_run then start_limit
-               else last_run end as start_time
+            select
+                case
+                    when start_limit > last_run then start_limit
+                    else last_run end as start_time
             from start_times
         )
         select {{ dbt_utils.datediff('start_time', max_timeframe_end, 'hour') }} as timeframe_to_query
