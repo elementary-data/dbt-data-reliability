@@ -90,7 +90,10 @@ final as (
 
         timestamp_column_data_type,
         max(config_loaded_at) as config_loaded_at,
-        ntile(4) over (partition by full_table_name order by config_id) as partition_number
+        case
+            when (table_monitored = true or columns_monitored = true) then ntile(4) over (partition by table_monitored order by config_id)
+            else null
+        end as partition_number
 
     from config_existing_tables
     group by 1,2,3,4,5,6,7,8,9,10,11,12
