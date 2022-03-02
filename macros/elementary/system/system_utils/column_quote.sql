@@ -1,5 +1,5 @@
 {% macro column_quote(column_name) %}
-    {{ adapter.dispatch('column_quote')(column_name) }}
+    {{ adapter.dispatch('column_quote','elementary')(column_name) }}
 {% endmacro %}
 
 {% macro default__column_quote(column_name) %}

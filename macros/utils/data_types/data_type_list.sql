@@ -1,5 +1,5 @@
 {% macro data_type_list(data_type) %}
-    {% set result = adapter.dispatch('data_type_list')(data_type) %}
+    {% set result = adapter.dispatch('data_type_list','elementary')(data_type) %}
     {{ return(result) }}
 {% endmacro %}
 

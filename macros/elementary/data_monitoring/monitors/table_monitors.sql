@@ -10,8 +10,8 @@
     {%- endif %}
 {%- endmacro %}
 
-{% macro freshness_check( timestamp_field, timeframe_end) %}
-    {{ adapter.dispatch('freshness_check')( timestamp_field, timeframe_end) }}
+{% macro freshness_check(timestamp_field, timeframe_end) %}
+    {{ adapter.dispatch('freshness_check','elementary')( timestamp_field, timeframe_end) }}
 {% endmacro %}
 
 {% macro default__freshness_check( timestamp_field, timeframe_end) %}

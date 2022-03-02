@@ -70,6 +70,5 @@
 
     select * from metrics_final )
 
-
 {% endmacro %}
 
