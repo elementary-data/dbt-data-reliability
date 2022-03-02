@@ -2,11 +2,13 @@
 
 with filtered_information_schema_tables as (
 
-    {% if configured_schemas != [] %}
-        {{ elementary.query_different_schemas(get_tables_from_information_schema, configured_schemas) }}
+    {% if configured_schemas | length > 0 %}
+        {% set tables_from_info_schema_macro = context['elementary']['get_tables_from_information_schema'] %}
+        {{ elementary.run_query_macro_on_list(tables_from_info_schema_macro, configured_schemas) }}
     {% else %}
         {{ elementary.empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string')]) }}
     {% endif %}
+
 )
 
 select *

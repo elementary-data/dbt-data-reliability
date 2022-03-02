@@ -1,8 +1,11 @@
-{% macro get_tables_from_information_schema(database_name, schema_name) %}
-    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(database_name, schema_name)) }}
+{% macro get_tables_from_information_schema(full_schema_name) %}
+    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(full_schema_name)) }}
 {% endmacro %}
 
-{% macro snowflake__get_tables_from_information_schema(database_name, schema_name) %}
+{% macro snowflake__get_tables_from_information_schema(full_schema_name) %}
+    {% set full_schema_name_split = full_schema_name.split('.') %}
+    {% set database_name = full_schema_name_split[0] %}
+    {% set schema_name = full_schema_name_split[1] %}
 
     (with information_schema_tables as (
 
