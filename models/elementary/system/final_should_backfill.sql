@@ -5,7 +5,7 @@ with tables_config as (
         and config_loaded_at = (select max(config_loaded_at) from {{ ref('final_tables_config') }})
 ),
 
-columns_config as (
+columns_config_should_backfill_true as (
 
     select * from {{ ref('final_columns_config') }}
     where config_loaded_at = (select max(config_loaded_at) from {{ ref('final_columns_config') }})
@@ -22,7 +22,7 @@ should_backfill as (
             when col.should_backfill = true then true
             else false end
         as should_backfill
-    from tables_config as tab left join columns_config as col
+    from tables_config as tab left join columns_config_should_backfill_true as col
         on (tab.full_table_name = col.full_table_name)
     group by 1,2
 
