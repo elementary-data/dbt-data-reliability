@@ -5,26 +5,20 @@
     -- depends_on: {{ ref('final_should_backfill') }}
     -- depends_on: {{ ref('temp_monitoring_metrics') }}
 
-    {%- set monitored_tables = run_query(monitored_tables(thread_number)) %}
-    {%- if execute %}
-        {%- set table_config_column_names = monitored_tables.column_names %}
-    {%- endif %}
+    {%- set monitored_tables = run_query(elementary.monitored_tables(thread_number)) %}
 
     {%- for monitored_table in monitored_tables %}
-        {%- set full_table_name = monitored_table[table_config_column_names[1]] %}
-        {%- set database_name = monitored_table[table_config_column_names[2]] %}
-        {%- set schema_name = monitored_table[table_config_column_names[3]] %}
-        {%- set table_name = monitored_table[table_config_column_names[4]] %}
-        {%- set timestamp_column = monitored_table[table_config_column_names[5]] %}
-        {%- set bucket_duration_hours = monitored_table[table_config_column_names[6]] | int %}
-        {%- set table_monitored = monitored_table[table_config_column_names[7]] %}
-        {%- set columns_monitored = monitored_table[table_config_column_names[9]] %}
-        {%- set table_should_backfill = monitored_table[table_config_column_names[10]] %}
-        {%- set timestamp_column_data_type = monitored_table[table_config_column_names[11]] %}
+        {%- set full_table_name = elementary.insensitive_get_dict_value(monitored_table, 'full_table_name') %}
+        {%- set timestamp_column = elementary.insensitive_get_dict_value(monitored_table, 'timestamp_column') %}
+        {%- set bucket_duration_hours = elementary.insensitive_get_dict_value(monitored_table, 'bucket_duration_hours') | int %}
+        {%- set table_monitored = elementary.insensitive_get_dict_value(monitored_table, 'table_monitored') %}
+        {%- set columns_monitored = elementary.insensitive_get_dict_value(monitored_table, 'columns_monitored') %}
+        {%- set table_should_backfill = elementary.insensitive_get_dict_value(monitored_table, 'should_backfill') %}
+        {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(monitored_table, 'timestamp_column_data_type') %}
 
         {%- if table_monitored is sameas true %}
-            {%- if monitored_table[table_config_column_names[8]] %}
-                {%- set config_table_monitors = fromjson(monitored_table[table_config_column_names[8]]) %}
+            {%- if elementary.insensitive_get_dict_value(monitored_table, 'table_monitors') %}
+                {%- set config_table_monitors = elementary.insensitive_get_dict_value(monitored_table, 'table_monitors') %}
             {%- endif %}
             {%- set table_monitors = elementary.get_table_monitors(config_table_monitors) %}
         {%- endif %}
