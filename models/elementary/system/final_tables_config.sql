@@ -5,6 +5,9 @@
   )
 }}
 
+{%- if var('edr_cli_run') is sameas false %}
+    -- depends on: {{ 'table_monitors_config' }}
+{%- endif %}
 
 with tables_config as (
 

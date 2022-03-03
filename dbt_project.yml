@@ -62,3 +62,7 @@ vars:
       - average
       - standard_deviation
       - variance
+
+models:
+  elementary_sources:
+    +enabled: false

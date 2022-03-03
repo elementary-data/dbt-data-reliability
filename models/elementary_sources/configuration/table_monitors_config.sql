@@ -7,4 +7,5 @@
   )
 }}
 
+
 {{ empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string'), ('timestamp_column', 'string'), ('bucket_duration_hours', 'int'), ('table_monitored', 'boolean'), ('table_monitors', 'string'), ('columns_monitored', 'boolean')]) }}

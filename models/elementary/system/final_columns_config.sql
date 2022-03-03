@@ -5,6 +5,9 @@
   )
 }}
 
+{%- if var('edr_cli_run') is sameas false %}
+    -- depends on: {{ 'column_monitors_config' }}
+{%- endif %}
 
 with columns_config as (
 
