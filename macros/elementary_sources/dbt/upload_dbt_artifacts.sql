@@ -246,18 +246,3 @@
     }%}
     {{ return(flatten_metrics_metadata_dict) }}
 {% endmacro %}
-
-{% macro safe_get_with_default(dict, key, default) %}
-    {% set value = dict.get(key) %}
-    {% if not value %}
-        {% set value = default %}
-    {% endif %}
-    {{ return(value) }}
-{% endmacro %}
-
-{% macro union_lists(list1, list2) %}
-    {% set union_list = [] %}
-    {% do union_list.extend(list1) %}
-    {% do union_list.extend(list2) %}
-    {{ return(union_list | unique | list) }}
-{% endmacro %}
