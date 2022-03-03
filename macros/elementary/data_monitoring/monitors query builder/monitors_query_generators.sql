@@ -1,6 +1,5 @@
-{% macro table_monitors_query(full_table_name, timestamp_column, days_back, timeframe_duration, table_monitors, column_config, should_backfill, timestamp_column_data_type, thread_number) %}
+{% macro table_monitors_query(full_table_name, timestamp_column, days_back, timeframe_duration, table_monitors, column_config, should_backfill, timestamp_column_data_type) %}
 
-    {%- set thread_insert_model = 'init_data_monitors_thread_' ~ thread_number %}
     {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
     {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
     {%- set pass_msg = 'No need to run data monitors on table: ' ~ full_table_name %}
@@ -22,7 +21,7 @@
             {%- if timeframes >= 1 -%}
                 {% do elementary.edr_log(start_msg) %}
                 {% do edr_log(backfill_message) %}
-                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type, thread_insert_model) %}
+                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
                 {% do elementary.edr_log(end_msg) %}
             {%- else %}
                 {% do elementary.edr_log(pass_msg) %}
@@ -35,7 +34,7 @@
                 {%- if hours_back == days_back*24 %}
                     {% do edr_log(backfill_message) %}
                 {%- endif %}
-                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type, thread_insert_model) %}
+                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
                 {% do elementary.edr_log(end_msg) %}
             {%- else %}
                 {% do elementary.edr_log(pass_msg) %}
@@ -46,7 +45,7 @@
         {%- if hours_back is not none and hours_back >= timeframe_duration %}
             {% do elementary.edr_log(start_msg) %}
             {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, null, null, null, null, table_monitors, column_config) -%}
-            {%- set insert_one_bucket = elementary.insert_as_select(thread_insert_model, one_bucket_query) %}
+            {%- set insert_one_bucket = elementary.insert_as_select(this, one_bucket_query) %}
             {%- do run_query(insert_one_bucket)%}
             {% do elementary.edr_log(end_msg) %}
         {%- else %}
@@ -57,7 +56,7 @@
 {% endmacro %}
 
 
-{% macro insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type, thread_insert_model) %}
+{% macro insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
     {%- for i in range(timeframes) -%}
         {%- set time_diff_end = -(i * timeframe_duration) -%}
         {%- set time_diff_start = -((i + 1) * timeframe_duration) -%}
@@ -65,7 +64,7 @@
         {%- set timeframe_start = dbt_utils.dateadd('hour', time_diff_start , max_timeframe_end) -%}
 
         {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) -%}
-        {%- set insert_one_bucket = elementary.insert_as_select(thread_insert_model, one_bucket_query) %}
+        {%- set insert_one_bucket = elementary.insert_as_select(this, one_bucket_query) %}
         {%- do run_query(insert_one_bucket) %}
     {%- endfor -%}
 {% endmacro %}

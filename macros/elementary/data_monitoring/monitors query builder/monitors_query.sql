@@ -40,7 +40,7 @@
         {%- endset %}
         {%- set should_backfill = elementary.result_value(should_backfill_query) %}
 
-        {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type, thread_number) %}
+        {% do elementary.table_monitors_query(full_table_name, timestamp_column, var('days_back'), bucket_duration_hours, table_monitors, column_monitors, should_backfill, timestamp_column_data_type) %}
 
     {%- endfor %}
 

@@ -6,11 +6,6 @@
   )
 }}
 
--- depends on: {{ ref('run_data_monitors_thread_1') }}
--- depends on: {{ ref('run_data_monitors_thread_2') }}
--- depends on: {{ ref('run_data_monitors_thread_3') }}
--- depends on: {{ ref('run_data_monitors_thread_4') }}
-
 with monitors_run as (
 
     select * from {{ ref('init_data_monitors_thread_1') }}

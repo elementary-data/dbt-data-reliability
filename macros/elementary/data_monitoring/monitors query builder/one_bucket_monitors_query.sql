@@ -7,12 +7,8 @@
             from {{ monitored_table }}
             where
             {% if timestamp_field and timeframe_start and timeframe_end -%}
-                {%- if timestamp_column_data_type == 'timestamp' %}
-                    {{ timestamp_field }} > {{ timeframe_start }} and {{ timestamp_field }} < {{ timeframe_end }}
-                {%- elif timestamp_column_data_type == 'string' %}
-                    {{ elementary.cast_string_column_to_timestamp(timestamp_field) }} > {{ timeframe_start }}
-                    and {{ elementary.cast_string_column_to_timestamp(timestamp_field) }} < {{ timeframe_end }}
-                {%- endif %}
+                {{ elementary.cast_column_to_timestamp(timestamp_field) }} >= {{ elementary.cast_column_to_timestamp(timeframe_start) }}
+                and {{ elementary.cast_column_to_timestamp(timestamp_field) }} <= {{ elementary.cast_column_to_timestamp(timeframe_end) }}
             {%- else -%}
                 true
             {%- endif -%}

@@ -11,7 +11,7 @@
                     '{{ table_monitor }}' as metric_name,
                     {{ monitor_macro(timestamp_field, timeframe_end) }} as metric_value
                 from {{ full_table_name }}
-                where {{ timestamp_field }} <= {{ timeframe_end }}
+                where {{ elementary.cast_column_to_timestamp(timestamp_field) }} <= {{ elementary.cast_column_to_timestamp(timeframe_end) }}
             {%- else %}
                 {%- do executed_table_monitors.append(table_monitor) %}
                 select
