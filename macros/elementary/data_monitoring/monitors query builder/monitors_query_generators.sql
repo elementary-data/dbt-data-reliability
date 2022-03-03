@@ -3,7 +3,7 @@
     {%- set thread_insert_model = 'init_data_monitors_thread_' ~ thread_number %}
     {%- set start_msg = 'Started running data monitors on table: ' ~ full_table_name %}
     {%- set end_msg = 'Finished running data monitors on table: ' ~ full_table_name %}
-    {%- set pass_msg = 'No need to run datamonitors on table: ' ~ full_table_name %}
+    {%- set pass_msg = 'No need to run data monitors on table: ' ~ full_table_name %}
     {%- set backfill_message = 'Running full backfill on table ' ~ full_table_name %}
 
     {%- if timestamp_column_data_type == 'string' %}
