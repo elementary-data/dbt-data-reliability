@@ -1,7 +1,7 @@
 {{
   config(
     materialized='table',
-    post_hook="{{ monitors_query(2) }}"
+    post_hook="{{ elementary.monitors_query(2) }}"
   )
 }}
 

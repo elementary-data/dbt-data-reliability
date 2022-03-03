@@ -2,7 +2,7 @@
   config(
     materialized='incremental',
     unique_key = 'id',
-    post_hook = "{{ monitors_run_end() }}"
+    post_hook = "{{ elementary.monitors_run_end() }}"
   )
 }}
 
