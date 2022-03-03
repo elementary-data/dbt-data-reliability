@@ -16,6 +16,8 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
+vars:
+  days_back: 30
 
 seeds:
 
