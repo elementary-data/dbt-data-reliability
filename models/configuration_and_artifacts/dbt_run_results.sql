@@ -8,7 +8,7 @@
 {{ empty_table([('model_execution_id', 'string'),
                 ('unique_id', 'string'),
                 ('invocation_id', 'string'),
-                ('run_started_at', 'string'),
+                ('generated_at', 'string'),
                 ('name', 'string'),
                 ('status', 'string'),
                 ('resource_type', 'string'),

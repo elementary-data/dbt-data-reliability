@@ -20,6 +20,7 @@
                 ('meta', 'string'),
                 ('package_name', 'string'),
                 ('original_path', 'string'),
-                ('path', 'string')])
+                ('path', 'string'),
+                ('generated_at', 'string')])
 }}
 

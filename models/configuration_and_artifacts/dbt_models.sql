@@ -10,8 +10,6 @@
                 ('alias', 'string'),
                 ('checksum', 'string'),
                 ('materialization', 'string'),
-                ('config_tags', 'string'),
-                ('config_meta', 'string'),
                 ('tags', 'string'),
                 ('meta', 'string'),
                 ('database_name', 'string'),
@@ -22,5 +20,6 @@
                 ('name', 'string'),
                 ('package_name', 'string'),
                 ('original_path', 'string'),
-                ('path', 'string')])
+                ('path', 'string'),
+                ('generated_at', 'string')])
 }}

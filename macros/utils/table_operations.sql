@@ -32,6 +32,13 @@
     {% do run_query(delete_empty_rows_query) %}
 {% endmacro %}
 
+{% macro remove_rows(table_name) %}
+    {% set remove_rows_query %}
+        delete from {{ table_name }}
+    {% endset %}
+    {% do run_query(remove_rows_query) %}
+{% endmacro %}
+
 {% macro insensitive_get_dict_value(dict, key, default) -%}
     {%- if key in dict -%}
         {{- return(dict[key]) -}}

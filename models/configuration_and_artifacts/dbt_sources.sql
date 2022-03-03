@@ -17,12 +17,12 @@
                 ('freshness_error_after', 'string'),
                 ('freshness_filter', 'string'),
                 ('relation_name', 'string'),
-                ('source_meta', 'string'),
                 ('tags', 'string'),
                 ('meta', 'string'),
                 ('package_name', 'string'),
                 ('original_path', 'string'),
                 ('path', 'string'),
                 ('source_description', 'string'),
-                ('description', 'string')])
+                ('description', 'string'),
+                ('generated_at', 'string')])
 }}

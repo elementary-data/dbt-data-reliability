@@ -16,8 +16,6 @@
                 ('severity', 'string'),
                 ('warn_if', 'string'),
                 ('error_if', 'string'),
-                ('config_tags', 'string'),
-                ('config_meta', 'string'),
                 ('tags', 'string'),
                 ('meta', 'string'),
                 ('depends_on_macros', 'string'),
@@ -25,5 +23,6 @@
                 ('description', 'string'),
                 ('package_name', 'string'),
                 ('original_path', 'string'),
-                ('path', 'string')])
+                ('path', 'string'),
+                ('generated_at', 'string')])
 }}
