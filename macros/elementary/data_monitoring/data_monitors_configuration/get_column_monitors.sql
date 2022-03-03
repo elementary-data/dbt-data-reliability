@@ -12,8 +12,8 @@
     {%- else %}
         {% set monitors_list = [] %}
         {% do monitors_list.extend(default_all_types) %}
-        {% do monitors_list.extend(numeric_monitors) %}
-        {% do monitors_list.extend(string_monitors) %}
+        {% do monitors_list.extend(default_numeric_monitors) %}
+        {% do monitors_list.extend(default_string_monitors) %}
     {%- endif %}
 
     {%- set column_monitors = [] %}
