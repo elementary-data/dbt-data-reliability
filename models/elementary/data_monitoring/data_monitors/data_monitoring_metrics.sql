@@ -8,16 +8,16 @@
 
 with monitors_run as (
 
-    select * from {{ ref('init_data_monitors_thread_1') }}
+    select * from {{ ref('data_monitors_thread_1') }}
     where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
-    select * from {{ ref('init_data_monitors_thread_2') }}
+    select * from {{ ref('data_monitors_thread_2') }}
     where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
-    select * from {{ ref('init_data_monitors_thread_3') }}
+    select * from {{ ref('data_monitors_thread_3') }}
     where not (full_table_name is null and metric_name is null and metric_value is null)
     union all
-    select * from {{ ref('init_data_monitors_thread_4') }}
+    select * from {{ ref('data_monitors_thread_4') }}
     where not (full_table_name is null and metric_name is null and metric_value is null)
 
 ),
