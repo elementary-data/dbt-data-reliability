@@ -18,39 +18,33 @@
     {% if timestamp_column is defined and timestamp_column is not none and is_timestamp is sameas true %}
         {%- if should_backfill is sameas true -%}
             {%- set timeframes = (days_back * 24 / timeframe_duration) | int -%}
-            {%- if timeframes >= 1 -%}
-                {% do elementary.edr_log(start_msg) %}
-                {% do edr_log(backfill_message) %}
-                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
-                {% do elementary.edr_log(end_msg) %}
-            {%- else %}
-                {% do elementary.edr_log(pass_msg) %}
+            {%- if timeframes < var('min_buckets_per_run') -%}
+                {%- set timeframes = var('min_buckets_per_run') %}
             {%- endif %}
+            {% do elementary.edr_log(start_msg) %}
+            {% do edr_log(backfill_message) %}
+            {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
+            {% do elementary.edr_log(end_msg) %}
         {%- else -%}
             {%- set hours_back = elementary.hours_since_last_run(days_back, max_timeframe_end) -%}
             {%- set timeframes = (hours_back / timeframe_duration) | int -%}
-            {%- if timeframes >= 1 -%}
-                {% do elementary.edr_log(start_msg) %}
-                {%- if hours_back == days_back*24 %}
-                    {% do edr_log(backfill_message) %}
-                {%- endif %}
-                {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
-                {% do elementary.edr_log(end_msg) %}
-            {%- else %}
-                {% do elementary.edr_log(pass_msg) %}
+            {# Running on at least one bucket #}
+            {%- if timeframes < var('min_buckets_per_run') -%}
+                {%- set timeframes = var('min_buckets_per_run') %}
             {%- endif %}
+            {% do elementary.edr_log(start_msg) %}
+            {%- if hours_back == days_back*24 %}
+                {% do edr_log(backfill_message) %}
+            {%- endif %}
+            {% do elementary.insert_metrics_to_table(timeframes, max_timeframe_end, full_table_name, timestamp_column, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
+            {% do elementary.edr_log(end_msg) %}
         {% endif %}
     {%- else -%}
-        {%- set hours_back = elementary.hours_since_last_run(days_back, max_timeframe_end) -%}
-        {%- if hours_back is not none and hours_back >= timeframe_duration %}
-            {% do elementary.edr_log(start_msg) %}
-            {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, null, null, null, null, table_monitors, column_config) -%}
-            {%- set insert_one_bucket = elementary.insert_as_select(this, one_bucket_query) %}
-            {%- do run_query(insert_one_bucket)%}
-            {% do elementary.edr_log(end_msg) %}
-        {%- else %}
-            {% do elementary.edr_log(pass_msg) %}
-        {%- endif %}
+        {%- do elementary.edr_log(start_msg) %}
+        {%- set one_bucket_query = elementary.one_bucket_monitors_query(full_table_name, null, null, null, null, table_monitors, column_config) -%}
+        {%- set insert_one_bucket = elementary.insert_as_select(this, one_bucket_query) %}
+        {%- do run_query(insert_one_bucket)%}
+        {% do elementary.edr_log(end_msg) %}
     {%- endif -%}
 
 {% endmacro %}

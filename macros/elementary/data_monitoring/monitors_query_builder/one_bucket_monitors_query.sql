@@ -1,6 +1,7 @@
 {% macro one_bucket_monitors_query(monitored_table, timestamp_field, timeframe_start, timeframe_end, timeframe_duration, table_monitors, column_config, timestamp_column_data_type) %}
 
     (
+
         with timeframe_data as (
 
             select *
