@@ -23,7 +23,7 @@ anomaly_alerts as (
          'anomaly_detection' as alert_type,
          metric_name as sub_type,
          description as alert_description
-     from anomaly_detection
+     from anomalies
 
 )
 

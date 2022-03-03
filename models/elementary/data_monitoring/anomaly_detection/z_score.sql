@@ -1,10 +1,3 @@
-{{
-  config(
-    materialized='incremental',
-    unique_key = 'id'
-  )
-}}
-
 with stats as (
 
     select * from {{ ref('metrics_stats_for_anomalies') }}
