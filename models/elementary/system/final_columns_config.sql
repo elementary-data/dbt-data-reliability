@@ -16,6 +16,7 @@ tables_config as (
 
     select * from {{ ref('final_tables_config') }}
     where columns_monitored = true
+    or (columns_monitored is null and table_monitored = true)
 
 ),
 
