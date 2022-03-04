@@ -10,7 +10,7 @@ anomaly_detection as (
         *,
         {{ elementary.anomaly_detection_description() }}
     from z_score
-    where abs(z_score) > {{ var('anomaly_score_treshold') }}
+    where abs(z_score) > {{ var('anomaly_score_threshold') }}
 
 )
 

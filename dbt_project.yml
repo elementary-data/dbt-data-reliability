@@ -26,7 +26,7 @@ models:
 
 vars:
   days_back: 14
-  anomaly_score_treshold: 3
+  anomaly_score_threshold: 3
   min_buckets_per_run: 2
 
   default_run_hours_back: 24
