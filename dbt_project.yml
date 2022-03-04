@@ -30,6 +30,7 @@ vars:
   minimal_sample_size: 1
   z_score_treshold: 3
   min_buckets_per_run: 2
+
   edr_cli_run: false
   max_int: 2147483647
 
@@ -65,4 +66,4 @@ vars:
 
 models:
   elementary_sources:
-    +enabled: { var('edr_cli_run') }
+    +enabled: { elementary.not_edr_run() }

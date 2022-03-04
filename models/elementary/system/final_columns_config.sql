@@ -5,10 +5,6 @@
   )
 }}
 
-{%- if var('edr_cli_run') is sameas false %}
-    -- depends on: {{ 'column_monitors_config' }}
-{%- endif %}
-
 with columns_config as (
 
     select * from {{ elementary.get_column_config_path() }}
