@@ -61,8 +61,8 @@ final_metrics_for_anomalies as (
 select
     *,
     {{ elementary.anomaly_detection_description() }}
+from final_metrics_for_anomalies
 where abs(z_score) > {{ var('anomaly_score_threshold') }}
-select * from final
 
 
 
