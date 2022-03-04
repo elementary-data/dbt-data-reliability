@@ -16,7 +16,6 @@
     '. The anomaly score is ' || round(z_score, 3) || ' and the average for this metric is ' || round(metric_avg,3) || '.'
 {% endmacro %}
 
-
 {% macro column_metric_description() %}
     'The column ' || column_name || ' in table ' || full_table_name || ' last ' || metric_name || ' value is ' || round(latest_value,3) ||
     '. The anomaly score is ' || round(z_score, 3) || ' and the average for this metric is ' || round(metric_avg,3) || '.'
