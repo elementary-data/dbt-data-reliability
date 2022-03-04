@@ -55,14 +55,13 @@ final_metrics_for_anomalies as (
         max(updated_at) as updated_at
     from metrics_z_score
     group by 1,2,3,4,5,6,7,8,9,10,11,12
-        where abs(z_score) > {{ var('anomaly_score_threshold') }}
 
 )
 
 select
     *,
     {{ elementary.anomaly_detection_description() }}
- where abs(z_score) > {{ var('anomaly_score_threshold') }}
+where abs(z_score) > {{ var('anomaly_score_threshold') }}
 select * from final
 
 
