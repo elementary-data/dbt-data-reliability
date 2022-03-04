@@ -65,4 +65,4 @@ vars:
 
 models:
   elementary_sources:
-    +enabled: false
+    +enabled: { var('edr_cli_run') }
