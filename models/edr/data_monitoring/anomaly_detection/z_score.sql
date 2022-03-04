@@ -44,7 +44,7 @@ metrics_z_score as (
         latest.metric_value is not null and
         stats.metric_avg is not null and
         stats.metric_stddev is not null and
-        stats.values_in_timeframe > {{ var('minimal_sample_size') }}
+        stats.values_in_timeframe >= {{ var('days_back') - 1 }}
 
 ),
 
