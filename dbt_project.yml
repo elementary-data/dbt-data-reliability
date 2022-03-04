@@ -4,7 +4,7 @@ version: '0.1.1'
 require-dbt-version: [">=1.0.0", "<2.0.0"]
 
 config-version: 2
-profile: 'elementary'
+profile: 'elementary_snowflake'
 
 source-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -18,3 +18,53 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
   - "dbt_modules"
+
+
+models:
+
+#TODO: add a var to recieve end_date (default should be run_started_at)
+
+vars:
+  days_back: 14
+  anomaly_score_threshold: 3
+  min_buckets_per_run: 2
+
+  default_run_hours_back: 24
+  minimal_sample_size: 14
+  edr_cli_run: false
+
+  max_int: 2147483647
+
+  schemas_to_alert_on_new_tables:
+    - elementary_db.jaffle_shop
+    - elementary_db.stresstest
+
+  edr_monitors:
+    table:
+      - schema_changes
+      - row_count
+      - freshness
+
+    column_any_type:
+      - null_count
+      - null_percent
+
+    column_string:
+      - min_length
+      - max_length
+      - average_length
+      - missing_count
+      - missing_percent
+
+    column_numeric:
+      - min
+      - max
+      - zero_count
+      - zero_percent
+      - average
+      - standard_deviation
+      - variance
+
+models:
+  elementary_sources:
+    +enabled: { elementary.not_edr_run() }
