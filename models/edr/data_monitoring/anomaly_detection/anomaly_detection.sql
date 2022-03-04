@@ -48,29 +48,21 @@ metrics_z_score as (
 
 ),
 
-final as (
+final_metrics_for_anomalies as (
 
     select
-        id,
-        full_table_name,
-        column_name,
-        metric_name,
-        z_score,
-        latest_value,
-        value_updated_at,
-        metric_avg,
-        metric_stddev,
-        stats_timeframe_start,
-        stats_timeframe_end,
-        values_in_timeframe,
-        max(updated_at) as updated_at,
-        {{ elementary.anomaly_detection_description() }}
+        *,
+        max(updated_at) as updated_at
     from metrics_z_score
-    group by 1,2,3,4,5,6,7,8,9,10,11,12, 13
+    group by 1,2,3,4,5,6,7,8,9,10,11,12
         where abs(z_score) > {{ var('anomaly_score_threshold') }}
 
-),
+)
 
+select
+    *,
+    {{ elementary.anomaly_detection_description() }}
+ where abs(z_score) > {{ var('anomaly_score_threshold') }}
 select * from final
 
 
