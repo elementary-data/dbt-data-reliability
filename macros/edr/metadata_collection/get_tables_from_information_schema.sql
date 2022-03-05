@@ -2,7 +2,8 @@
     {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(full_schema_name)) }}
 {% endmacro %}
 
-{% macro snowflake__get_tables_from_information_schema(full_schema_name) %}
+{# Snowflake and Bigquery #}
+{% macro default__get_tables_from_information_schema(full_schema_name) %}
     {% set full_schema_name_split = full_schema_name.split('.') %}
     {% set database_name = full_schema_name_split[0] %}
     {% set schema_name = full_schema_name_split[1] %}
@@ -23,15 +24,16 @@
         select
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
-        from  {{ elementary.from_information_schema('SCHEMATA', database_name, schema_name) }}
+        from  {{ elementary.from_information_schema('SCHEMATA', database_name) }}
         where schema_name = upper('{{ schema_name }}')
 
     )
 
     select
         case when tables.table_name is not null
-            then upper(concat(schemas.database_name,'.',schemas.schema_name,'.',tables.table_name))
+            then {{ elementary.full_table_name('tables') }}
         else null end as full_table_name,
+        upper(concat(schemas.database_name, '.', schemas.schema_name)) as full_schema_name,
         schemas.database_name as database_name,
         schemas.schema_name as schema_name,
         tables.table_name

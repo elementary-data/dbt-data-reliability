@@ -17,6 +17,13 @@ alerts_data_monitoring as (
 
 ),
 
+alerts_dbt_run_results as (
+
+    select * from {{ ref('alerts_dbt_run_results') }}
+
+),
+
+
 all_alerts as (
 
      select * from alerts_schema_changes

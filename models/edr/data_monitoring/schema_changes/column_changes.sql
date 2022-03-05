@@ -39,7 +39,7 @@ columns_added as (
         'column_added' as change,
         column_name,
         data_type,
-        null as pre_data_type,
+        {{ elementary.null_to_string() }} as pre_data_type,
         detected_at as detected_at
     from cur
     where is_new = true
@@ -52,7 +52,7 @@ columns_removed as (
         pre.full_table_name,
         'column_removed' as change,
         pre.column_name as column_name,
-        null as data_type,
+        {{ elementary.null_to_string() }} as data_type,
         pre.data_type as pre_data_type,
         pre.detected_at as detected_at
     from pre

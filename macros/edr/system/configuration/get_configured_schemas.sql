@@ -4,7 +4,7 @@
 
         with monitoring_configuration as (
             select {{ elementary.full_schema_name() }} as full_schema_name
-            from {{ elementary.get_table_config_path() }}
+            from {{ elementary.get_source_path('table_monitors_config') }}
             where database_name is not null and schema_name is not null
             group by 1
         )

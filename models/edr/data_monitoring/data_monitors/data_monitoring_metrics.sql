@@ -41,9 +41,11 @@ final_metrics as (
         timeframe_duration_hours,
         {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
     from monitors_run
+
 )
 
 select
+
     id,
     full_table_name,
     column_name,
@@ -53,5 +55,6 @@ select
     timeframe_end,
     timeframe_duration_hours,
     max(updated_at) as updated_at
+
 from final_metrics
 group by 1,2,3,4,5,6,7,8

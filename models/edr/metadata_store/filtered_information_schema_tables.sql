@@ -6,7 +6,7 @@ with filtered_information_schema_tables as (
         {%- set tables_from_info_schema_macro = context['elementary']['get_tables_from_information_schema'] -%}
         {{ elementary.run_query_macro_on_list(configured_schemas, tables_from_info_schema_macro) }}
     {%- else %}
-        {{ elementary.empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string')]) }}
+        {{ elementary.empty_table([('full_table_name', 'string'), ('full_schema_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string')]) }}
     {%- endif %}
 
 )

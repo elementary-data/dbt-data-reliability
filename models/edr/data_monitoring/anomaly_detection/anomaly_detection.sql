@@ -1,16 +1,16 @@
-with z_score as (
+with metrics_for_anomalies as (
 
-    select * from {{ ref('z_score') }}
+    select * from {{ ref('metrics_for_anomalies') }}
 
 ),
 
 anomaly_detection as (
 
-    select
-        *,
-        {{ elementary.anomaly_detection_description() }}
-    from z_score
-    where abs(z_score) > {{ var('anomaly_score_threshold') }}
+     select
+         *,
+         {{ elementary.anomaly_detection_description() }}
+     from metrics_for_anomalies
+     where abs(z_score) > {{ var('anomaly_score_threshold') }}
 
 )
 
