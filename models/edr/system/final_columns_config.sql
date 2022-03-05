@@ -77,7 +77,7 @@ config_no_explicit_columns as (
         upper(tab.table_name) as table_name,
         upper(info_schema.column_name) as column_name,
         info_schema.data_type,
-        null as column_monitors,
+        cast(null as {{ dbt_utils.type_string() }}) as column_monitors,
         {{ elementary.run_start_column() }} as config_loaded_at
     from
         information_schema_columns as info_schema join tables_with_no_explicit_columns as tab

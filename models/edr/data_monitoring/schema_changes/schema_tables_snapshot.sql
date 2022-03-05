@@ -9,7 +9,7 @@
 with tables as (
 
     select
-        {{ elementary.full_schema_name() }} as full_schema_name,
+        full_schema_name,
         table_name,
         full_table_name,
         {{ elementary.run_start_column() }} as detected_at,

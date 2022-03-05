@@ -31,8 +31,9 @@
 
     select
         case when tables.table_name is not null
-            then upper(concat(schemas.database_name,'.',schemas.schema_name,'.',tables.table_name))
+            then {{ elementary.full_table_name }}
         else null end as full_table_name,
+        {{ elementary.full_schema_name }} as full_schema_name,
         schemas.database_name as database_name,
         schemas.schema_name as schema_name,
         tables.table_name
