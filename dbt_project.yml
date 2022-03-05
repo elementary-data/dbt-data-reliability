@@ -33,7 +33,7 @@ vars:
 
   max_int: 2147483647
 
-  schemas_to_alert_on_new_tables:
+  schemas_to_alert_on_new_tables: []
 
   edr_monitors:
     table:
