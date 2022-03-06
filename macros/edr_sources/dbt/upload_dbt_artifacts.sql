@@ -1,46 +1,70 @@
 {% macro upload_dbt_artifacts(results) %}
-    -- depends_on: {{ ref('dbt_models') }}
-    -- depends_on: {{ ref('dbt_tests') }}
-    -- depends_on: {{ ref('dbt_sources') }}
-    -- depends_on: {{ ref('dbt_exposures') }}
-    -- depends_on: {{ ref('dbt_metrics') }}
-    -- depends_on: {{ ref('dbt_run_results') }}
     {% if execute %}
         -- handle models
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% set flatten_node_macro = context['elementary']['flatten_model'] %}
-        {% do elementary.insert_nodes_to_table(ref('dbt_models'), nodes, flatten_node_macro, true) %}
+        {% set dbt_models_empty_table_query = elementary.get_dbt_models_empty_table_query() %}
+        {% set dbt_models = elementary.create_source_table('dbt_models', dbt_models_empty_table_query, True) %}
+        {% do elementary.insert_nodes_to_table(dbt_models, nodes, flatten_node_macro) %}
 
         -- handle tests
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
         {% set flatten_node_macro = context['elementary']['flatten_test'] %}
-        {% do elementary.insert_nodes_to_table(ref('dbt_tests'), nodes, flatten_node_macro, true) %}
+        {% set dbt_tests_empty_table_query = elementary.get_dbt_tests_empty_table_query() %}
+        {% set dbt_tests = elementary.create_source_table('dbt_tests', dbt_tests_empty_table_query, True) %}
+        {% do elementary.insert_nodes_to_table(dbt_tests, nodes, flatten_node_macro) %}
 
         -- handle sources
         {% set nodes = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
         {% set flatten_node_macro = context['elementary']['flatten_source'] %}
-        {% do elementary.insert_nodes_to_table(ref('dbt_sources'), nodes, flatten_node_macro, true) %}
+        {% set dbt_sources_empty_table_query = elementary.get_dbt_sources_empty_table_query() %}
+        {% set dbt_sources = elementary.create_source_table('dbt_sources', dbt_sources_empty_table_query, True) %}
+        {% do elementary.insert_nodes_to_table(dbt_sources, nodes, flatten_node_macro) %}
 
         -- handle exposures
         {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
         {% set flatten_node_macro = context['elementary']['flatten_exposure'] %}
-        {% do elementary.insert_nodes_to_table(ref('dbt_exposures'), nodes, flatten_node_macro, true) %}
+        {% set dbt_exposures_empty_table_query = elementary.get_dbt_exposures_empty_table_query() %}
+        {% set dbt_exposures = elementary.create_source_table('dbt_exposures', dbt_exposures_empty_table_query, True) %}
+        {% do elementary.insert_nodes_to_table(dbt_exposures, nodes, flatten_node_macro) %}
 
         -- handle metrics
         {% set nodes = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
         {% set flatten_node_macro = context['elementary']['flatten_metric'] %}
-        {% do elementary.insert_nodes_to_table(ref('dbt_metrics'), nodes, flatten_node_macro, true) %}
+        {% set dbt_metrics_empty_table_query = elementary.get_dbt_metrics_empty_table_query() %}
+        {% set dbt_metrics = elementary.create_source_table('dbt_metrics', dbt_metrics_empty_table_query, True) %}
+        {% do elementary.insert_nodes_to_table(dbt_metrics, nodes, flatten_node_macro) %}
 
         -- handle run_results
         {% if results %}
             {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
-            {% do elementary.insert_nodes_to_table(ref('dbt_run_results'), results, flatten_node_macro, false) %}
+            {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
+            {% set dbt_run_results = elementary.create_source_table('dbt_run_results', dbt_run_results_empty_table_query, False) %}
+            {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
         {% endif %}
     {% endif %}
     {{ return ('') }}
 {% endmacro %}
 
-{% macro insert_nodes_to_table(table_name, nodes, flatten_node_macro, remove_old_rows_before_insert) %}
+{% macro create_artifact_source_table(table_name, sql_query, drop_if_exists) %}
+    {% set edr_sources_database = elementary.get_edr_sources_db() %}
+    {% set edr_sources_schema = elementary.get_edr_sources_schema() %}
+    {% set artifact_table_exists, artifact_table_relation = dbt.get_or_create_relation(database=edr_sources_database,
+                                                                                       schema=edr_sources_schema,
+                                                                                       identifier=table_name,
+                                                                                       type='table') -%}
+    {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
+        {% do dbt.create_schema(artifact_table_relation) %}
+    {% endif %}
+    {% if (artifact_table_exists and drop_if_exists) or flags.FULL_REFRESH %}
+        {% do adapter.drop_relation(artifact_table_relation) %}
+    {% endif %}
+    {% do run_query(dbt.create_table_as(False, artifact_table_relation, sql_query)) %}
+    {{ return(artifact_table_relation) }}
+{% endmacro %}
+
+
+{% macro insert_nodes_to_table(table_name, nodes, flatten_node_macro) %}
     {% set artifacts = [] %}
     {% for node in nodes %}
         {% set metadata_dict = flatten_node_macro(node) %}
@@ -49,13 +73,28 @@
         {% endif %}
     {% endfor %}
     {% if artifacts | length > 0 %}
-        {% if remove_old_rows_before_insert %}
-            {% do elementary.remove_rows(table_name) %}
-        {% endif %}
         {% do elementary.insert_dicts_to_table(table_name, artifacts) %}
     {% endif %}
-    -- remove empty rows created by dbt's materialization
+    -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}
+{% endmacro %}
+
+{% macro get_dbt_run_results_empty_table_query() %}
+    {% set dbt_run_results_empty_table_query = elementary.empty_table([('model_execution_id', 'string'),
+                                                                       ('unique_id', 'string'),
+                                                                       ('invocation_id', 'string'),
+                                                                       ('generated_at', 'string'),
+                                                                       ('name', 'string'),
+                                                                       ('status', 'string'),
+                                                                       ('resource_type', 'string'),
+                                                                       ('execution_time', 'float'),
+                                                                       ('execute_started_at', 'string'),
+                                                                       ('execute_completed_at', 'string'),
+                                                                       ('compile_started_at', 'string'),
+                                                                       ('compile_completed_at', 'string'),
+                                                                       ('rows_affected', 'int'),
+                                                                       ('full_refresh', 'boolean')]) %}
+    {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
 
 {% macro flatten_run_result(run_result) %}
@@ -93,6 +132,26 @@
     {{ return(flatten_run_result_dict) }}
 {% endmacro %}
 
+{% macro get_dbt_models_empty_table_query() %}
+    {% set dbt_models_empty_table_query = elementary.empty_table([('unique_id', 'string'),
+                                                                  ('alias', 'string'),
+                                                                  ('checksum', 'string'),
+                                                                  ('materialization', 'string'),
+                                                                  ('tags', 'string'),
+                                                                  ('meta', 'string'),
+                                                                  ('database_name', 'string'),
+                                                                  ('schema_name', 'string'),
+                                                                  ('depends_on_macros', 'string'),
+                                                                  ('depends_on_nodes', 'string'),
+                                                                  ('description', 'string'),
+                                                                  ('name', 'string'),
+                                                                  ('package_name', 'string'),
+                                                                  ('original_path', 'string'),
+                                                                  ('path', 'string'),
+                                                                  ('generated_at', 'string')]) %}
+    {{ return(dbt_models_empty_table_query) }}
+{% endmacro %}
+
 {% macro flatten_model(node_dict) %}
     {% set checksum_dict = elementary.safe_get_with_default(node_dict, 'checksum', {}) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
@@ -126,6 +185,30 @@
     }%}
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}
+
+{% macro get_dbt_tests_empty_table_query() %}
+    {% set dbt_tests_empty_table_query = elementary.empty_table([('unique_id', 'string'),
+                                                                 ('database_name', 'string'),
+                                                                 ('schema_name', 'string'),
+                                                                 ('name', 'string'),
+                                                                 ('short_name', 'string'),
+                                                                 ('alias', 'string'),
+                                                                 ('test_column_name', 'string'),
+                                                                 ('severity', 'string'),
+                                                                 ('warn_if', 'string'),
+                                                                 ('error_if', 'string'),
+                                                                 ('tags', 'string'),
+                                                                 ('meta', 'string'),
+                                                                 ('depends_on_macros', 'string'),
+                                                                 ('depends_on_nodes', 'string'),
+                                                                 ('description', 'string'),
+                                                                 ('package_name', 'string'),
+                                                                 ('original_path', 'string'),
+                                                                 ('path', 'string'),
+                                                                 ('generated_at', 'string')]) %}
+    {{ return(dbt_tests_empty_table_query) }}
+{% endmacro %}
+
 
 {% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
@@ -163,6 +246,29 @@
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 
+{% macro get_dbt_sources_empty_table_query() %}
+    {% set dbt_sources_empty_table_query = elementary.empty_table([('unique_id', 'string'),
+                                                                   ('database_name', 'string'),
+                                                                   ('schema_name', 'string'),
+                                                                   ('source_name', 'string'),
+                                                                   ('name', 'string'),
+                                                                   ('identifier', 'string'),
+                                                                   ('loaded_at_field', 'string'),
+                                                                   ('freshness_warn_after', 'string'),
+                                                                   ('freshness_error_after', 'string'),
+                                                                   ('freshness_filter', 'string'),
+                                                                   ('relation_name', 'string'),
+                                                                   ('tags', 'string'),
+                                                                   ('meta', 'string'),
+                                                                   ('package_name', 'string'),
+                                                                   ('original_path', 'string'),
+                                                                   ('path', 'string'),
+                                                                   ('source_description', 'string'),
+                                                                   ('description', 'string'),
+                                                                   ('generated_at', 'string')]) %}
+    {{ return(dbt_sources_empty_table_query) }}
+{% endmacro %}
+
 {% macro flatten_source(node_dict) %}
     {% set freshness_dict = elementary.safe_get_with_default(node_dict, 'freshness', {}) %}
     {% set source_meta_dict = elementary.safe_get_with_default(node_dict, 'source_meta', {}) %}
@@ -193,6 +299,26 @@
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}
 
+{% macro get_dbt_exposures_empty_table_query() %}
+    {% set dbt_exposures_empty_table_query = elementary.empty_table([('unique_id', 'string'),
+                                                                     ('name', 'string'),
+                                                                     ('maturity', 'string'),
+                                                                     ('type', 'string'),
+                                                                     ('owner_email', 'string'),
+                                                                     ('owner_name', 'string'),
+                                                                     ('url', 'string'),
+                                                                     ('depends_on_macros', 'string'),
+                                                                     ('depends_on_nodes', 'string'),
+                                                                     ('description', 'string'),
+                                                                     ('tags', 'string'),
+                                                                     ('meta', 'string'),
+                                                                     ('package_name', 'string'),
+                                                                     ('original_path', 'string'),
+                                                                     ('path', 'string'),
+                                                                     ('generated_at', 'string')]) %}
+    {{ return(dbt_exposures_empty_table_query) }}
+{% endmacro %}
+
 {% macro flatten_exposure(node_dict) %}
     {% set owner_dict = elementary.safe_get_with_default(node_dict, 'owner', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
@@ -217,6 +343,29 @@
         'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
       }%}
     {{ return(flatten_exposure_metadata_dict) }}
+{% endmacro %}
+
+{% macro get_dbt_metrics_empty_table_query() %}
+    {% set dbt_metrics_empty_table_query = elementary.empty_table([('unique_id', 'string'),
+                                                                   ('name', 'string'),
+                                                                   ('label', 'string'),
+                                                                   ('model', 'string'),
+                                                                   ('type', 'string'),
+                                                                   ('sql', 'string'),
+                                                                   ('timestamp', 'string'),
+                                                                   ('filters', 'string'),
+                                                                   ('time_grains', 'string'),
+                                                                   ('dimensions', 'string'),
+                                                                   ('depends_on_macros', 'string'),
+                                                                   ('depends_on_nodes', 'string'),
+                                                                   ('description', 'string'),
+                                                                   ('tags', 'string'),
+                                                                   ('meta', 'string'),
+                                                                   ('package_name', 'string'),
+                                                                   ('original_path', 'string'),
+                                                                   ('path', 'string'),
+                                                                   ('generated_at', 'string')]) %}
+    {{ return(dbt_metrics_empty_table_query) }}
 {% endmacro %}
 
 {% macro flatten_metric(node_dict) %}

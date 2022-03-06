@@ -7,7 +7,7 @@
 
 with dbt_runs as (
 
-    select * from {{ elementary.get_source_path('dbt_run_results') }}
+    select * from {{ elementary.get_source_path('edr_dbt_artifacts', 'dbt_run_results') }}
 
 ),
 

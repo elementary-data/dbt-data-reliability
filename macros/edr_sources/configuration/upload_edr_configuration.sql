@@ -1,5 +1,20 @@
+{% macro upload_edr_configuration() %}
+    {% do elementary.upload_tables_configuration() %}
+    {% do elementary.upload_columns_configuration() %}
+{% endmacro %}
+
 {% macro upload_tables_configuration() %}
     {% if execute %}
+        {% set empty_table_config_query = elementary.empty_table([('full_table_name', 'string'),
+                                                                  ('database_name', 'string'),
+                                                                  ('schema_name', 'string'),
+                                                                  ('table_name', 'string'),
+                                                                  ('timestamp_column', 'string'),
+                                                                  ('bucket_duration_hours', 'int'),
+                                                                  ('table_monitored', 'boolean'),
+                                                                  ('table_monitors', 'string'),
+                                                                  ('columns_monitored', 'boolean')]) %}
+        {% set table_config_relation = elementary.create_source_table('table_monitors_config', empty_table_config_query, True) %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% set table_monitors = [] %}
         {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
@@ -9,16 +24,23 @@
             {% endif %}
         {% endfor %}
         {% if table_monitors|length > 0 %}
-            {% do elementary.insert_dicts_to_table(this, table_monitors) %}
+            {% do elementary.insert_dicts_to_table(table_config_relation, table_monitors) %}
         {% endif %}
-        -- remove empty rows created by dbt's materialization
-        {% do elementary.remove_empty_rows(this) %}
+        -- remove empty rows
+        {% do elementary.remove_empty_rows(table_config_relation) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
 
 {% macro upload_columns_configuration() %}
     {% if execute %}
+        {% set empty_columns_config_query = elementary.empty_table([('full_column_name', 'string'),
+                                                                    ('database_name', 'string'),
+                                                                    ('schema_name', 'string'),
+                                                                    ('table_name', 'string'),
+                                                                    ('column_name', 'string'),
+                                                                    ('column_monitors', 'string')]) %}
+        {% set column_config_relation = elementary.create_source_table('column_monitors_config', empty_columns_config_query, True) %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% set column_monitors = [] %}
         {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
@@ -28,10 +50,10 @@
             {% endif %}
         {% endfor %}
         {% if column_monitors | length > 0 %}
-            {% do elementary.insert_dicts_to_table(this, column_monitors) %}
+            {% do elementary.insert_dicts_to_table(column_config_relation, column_monitors) %}
         {% endif %}
-        -- remove empty rows created by dbt's materialization
-        {% do elementary.remove_empty_rows(this) %}
+        -- remove empty rows
+        {% do elementary.remove_empty_rows(column_config_relation) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
