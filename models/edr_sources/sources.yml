@@ -39,13 +39,3 @@ sources:
             description: The name of the monitored column
           - name: 'column_monitors'
             description: A list of column monitors that will be used on this table, if empty and columns_monitored is enabled for the table all monitors are applied
-  - name: 'edr_dbt_artifacts'
-    schema: '{{ var("edr_sources_schema", target.schema) }}'
-    database: '{{ var("edr_sources_database", target.database) }}'
-    tables:
-      - name: 'dbt_run_results'
-      - name: 'dbt_models'
-      - name: 'dbt_tests'
-      - name: 'dbt_sources'
-      - name: 'dbt_exposures'
-      - name: 'dbt_metrics'
