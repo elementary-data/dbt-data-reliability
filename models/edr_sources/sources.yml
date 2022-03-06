@@ -1,0 +1,41 @@
+version: 2
+
+sources:
+  - name: 'edr_configuration'
+    schema: '{{ var("edr_sources_schema", target.schema) }}'
+    database: '{{ var("edr_sources_database", target.database) }}'
+    tables:
+      - name: table_monitors_config
+        columns:
+          - name: 'full_table_name'
+            description: The fully qualified name of the monitored table
+          - name: 'database_name'
+            description: The database name of the monitored table
+          - name: 'schema_name'
+            description: The schema name of the monitored table
+          - name: 'table_name'
+            description: The name of the monitored table
+          - name: 'timestamp_column'
+            description: The timestamp column of the monitored table will be used to section the table into buckets and to check its freshness
+          - name: 'bucket_duration_hours'
+            description: The bucket duration in hours that will be used for training and validation of anomaly detection
+          - name: 'table_monitored'
+            description: A flag that indicates if this table should be monitored
+          - name: 'table_monitors'
+            description: A list of table monitors that will be used on this table, if empty all monitors are applied
+          - name: 'columns_monitored'
+            description: This flag determines whether or not column monitors should be applied to this table
+      - name: column_monitors_config
+        columns:
+          - name: 'full_column_name'
+            description: The fully qualified name of the monitored column
+          - name: 'database_name'
+            description: The database name of the monitored column
+          - name: 'schema_name'
+            description: The schema name of the monitored column
+          - name: 'table_name'
+            description: The table name of the monitored column
+          - name: 'column_name'
+            description: The name of the monitored column
+          - name: 'column_monitors'
+            description: A list of column monitors that will be used on this table, if empty and columns_monitored is enabled for the table all monitors are applied
