@@ -7,7 +7,7 @@
 
 with columns_config as (
 
-    select * from {{ elementary.get_source_path('column_monitors_config') }}
+    select * from {{ elementary.get_source_path('edr_configuration', 'column_monitors_config') }}
 
 ),
 

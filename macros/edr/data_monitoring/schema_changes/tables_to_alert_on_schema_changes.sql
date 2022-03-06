@@ -3,7 +3,7 @@
     {%- set table_config_query -%}
     {# We query from config without validating against information_schema, so we could alert on deleted tables #}
         select *
-            from {{ elementary.get_source_path('table_monitors_config') }}
+            from {{ elementary.get_source_path('edr_configuration', 'table_monitors_config') }}
             where table_monitored = true
     {%- endset -%}
     {%- set monitored_tables = run_query(table_config_query) -%}

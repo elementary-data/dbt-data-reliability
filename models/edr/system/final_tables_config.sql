@@ -8,7 +8,7 @@
 
 with tables_config as (
 
-    select * from {{ elementary.get_source_path('table_monitors_config') }}
+    select * from {{ elementary.get_source_path('edr_configuration', 'table_monitors_config') }}
 
 ),
 

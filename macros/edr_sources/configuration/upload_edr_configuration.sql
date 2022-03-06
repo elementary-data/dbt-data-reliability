@@ -14,19 +14,7 @@
                                                                   ('table_monitored', 'boolean'),
                                                                   ('table_monitors', 'string'),
                                                                   ('columns_monitored', 'boolean')]) %}
-        {% set edr_sources_database = elementary.get_edr_sources_db() %}
-        {% set edr_sources_schema = elementary.get_edr_sources_schema() %}
-        {% set table_config_exists, table_config_relation = dbt.get_or_create_relation(database=edr_sources_database,
-                                                                                       schema=edr_sources_schema,
-                                                                                       identifier='table_monitors_config',
-                                                                                       type='table') -%}
-        {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
-            {% do dbt.create_schema(table_config_relation) %}
-        {% endif %}
-        {% if table_config_exists %}
-            {% do adapter.drop_relation(table_config_relation) %}
-        {% endif %}
-        {% do run_query(dbt.create_table_as(False, table_config_relation, empty_table_config_query)) %}
+        {% set table_config_relation = elementary.create_source_table('table_monitors_config', empty_table_config_query, True) %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% set table_monitors = [] %}
         {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
@@ -52,19 +40,7 @@
                                                                     ('table_name', 'string'),
                                                                     ('column_name', 'string'),
                                                                     ('column_monitors', 'string')]) %}
-        {% set edr_sources_database = elementary.get_edr_sources_db() %}
-        {% set edr_sources_schema = elementary.get_edr_sources_schema() %}
-        {% set column_config_table_exists, column_config_relation = dbt.get_or_create_relation(database=edr_sources_database,
-                                                                                               schema=edr_sources_schema,
-                                                                                               identifier='column_monitors_config',
-                                                                                               type='table') -%}
-        {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
-            {% do dbt.create_schema(column_config_relation) %}
-        {% endif %}
-        {% if column_config_table_exists %}
-            {% do adapter.drop_relation(column_config_relation) %}
-        {% endif %}
-        {% do run_query(dbt.create_table_as(False, column_config_relation, empty_columns_config_query)) %}
+        {% set column_config_relation = elementary.create_source_table('column_monitors_config', empty_columns_config_query, True) %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% set column_monitors = [] %}
         {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
