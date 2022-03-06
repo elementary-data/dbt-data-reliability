@@ -5,7 +5,7 @@ We focus on **simple effortless setup**, and integrations with the existing stac
 
 **This package is designed for tables data monitoring and dbt monitoring.**
 The package is Elementary integration with your dbt project, read more here [documentation](https://docs.elementary-data.com/).
-Using an 'on-run-end' macro, it uploads your monitoring configuration and dbt artifacts.
+Using an 'on-run-start' and 'on-run-end' macros, it uploads your monitoring configuration and dbt artifacts.
 
 To learn more on how to monitor your DWH, refer to our [main repo](https://github.com/elementary-data/elementary-lineage). 
 
