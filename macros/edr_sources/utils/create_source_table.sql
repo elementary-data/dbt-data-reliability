@@ -8,9 +8,13 @@
     {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
         {% do dbt.create_schema(source_table_relation) %}
     {% endif %}
-    {% if (source_table_exists and drop_if_exists) or flags.FULL_REFRESH %}
-        {% do adapter.drop_relation(source_table_relation) %}
+    {% if source_table_exists %}
+        {% if drop_if_exists or flags.FULL_REFRESH %}
+            {% do adapter.drop_relation(source_table_relation) %}
+            {% do run_query(dbt.create_table_as(False, source_table_relation, sql_query)) %}
+        {% endif %}
+    {% else %}
+        {% do run_query(dbt.create_table_as(False, source_table_relation, sql_query)) %}
     {% endif %}
-    {% do run_query(dbt.create_table_as(False, source_table_relation, sql_query)) %}
     {{ return(source_table_relation) }}
 {% endmacro %}
