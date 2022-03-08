@@ -46,24 +46,6 @@
     {{ return ('') }}
 {% endmacro %}
 
-{% macro create_artifact_source_table(table_name, sql_query, drop_if_exists) %}
-    {% set edr_sources_database = elementary.get_edr_sources_db() %}
-    {% set edr_sources_schema = elementary.get_edr_sources_schema() %}
-    {% set artifact_table_exists, artifact_table_relation = dbt.get_or_create_relation(database=edr_sources_database,
-                                                                                       schema=edr_sources_schema,
-                                                                                       identifier=table_name,
-                                                                                       type='table') -%}
-    {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
-        {% do dbt.create_schema(artifact_table_relation) %}
-    {% endif %}
-    {% if (artifact_table_exists and drop_if_exists) or flags.FULL_REFRESH %}
-        {% do adapter.drop_relation(artifact_table_relation) %}
-    {% endif %}
-    {% do run_query(dbt.create_table_as(False, artifact_table_relation, sql_query)) %}
-    {{ return(artifact_table_relation) }}
-{% endmacro %}
-
-
 {% macro insert_nodes_to_table(table_name, nodes, flatten_node_macro) %}
     {% set artifacts = [] %}
     {% for node in nodes %}
