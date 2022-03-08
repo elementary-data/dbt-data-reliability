@@ -20,9 +20,9 @@
     {%- set empty_table_query -%}
     with empty_table as (
         select
-        {%- for column in column_name_and_type_list -%}
+        {% for column in column_name_and_type_list %}
             {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
-        {%- endfor -%}
+        {%- endfor %}
     )
     select * from empty_table
     {%- endset -%}
@@ -32,5 +32,14 @@
 {% endmacro %}
 
 {% macro empty_alerts_cte() %}
-    {{ empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sun_type','str'),('description','str'),('alert_sent','bollean')]) }}
+    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sun_type','str'),('description','str'),('alert_sent','bollean')]) }}
+{% endmacro %}
+
+{% macro empty_column_monitors_cte() %}
+    {%- set column_monitors_list = elementary.all_column_monitors() %}
+    {%- set columns_definition = [('column_name', 'string'), ('bucket', 'timestamp')] %}
+    {%- for monitor in column_monitors_list %}
+        {%- do columns_definition.append((monitor,'int'))-%}
+    {%- endfor %}
+    {{ elementary.empty_table(columns_definition) }}
 {% endmacro %}

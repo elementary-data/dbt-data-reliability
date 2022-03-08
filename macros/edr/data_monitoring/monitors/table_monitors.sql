@@ -1,5 +1,5 @@
-{% macro row_count_monitor() -%}
-    count(1)
+{% macro row_count() -%}
+    count(*)
 {%- endmacro %}
 
 {% macro freshness_monitor(timestamp_field, timeframe_end) -%}

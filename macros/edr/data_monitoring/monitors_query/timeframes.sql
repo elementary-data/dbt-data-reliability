@@ -16,36 +16,33 @@
 {% endmacro %}
 
 
-{% macro hours_since_last_run(days_back, max_timeframe_end) %}
+{% macro min_start_time(days_back, max_timeframe_end) %}
 
     {%- set days_subtract = '-' ~ days_back %}
 
     {%- set query_start_time %}
         with start_times as (
-            select monitors_run_end as last_run, {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }} as start_limit
-            from {{ ref('elementary_runs')}}
-            where monitors_run_end is not null
-            order by monitors_run_end desc
-            limit 1
-        ),
-        start_time_limit as (
-            select
-                case
-                    when start_limit > last_run then start_limit
-                    else last_run end as start_time
-            from start_times
+            select monitors_run_end as last_run,
+            {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }} as start_limit
+        from {{ ref('elementary_runs')}}
+        where monitors_run_end is not null
+        order by monitors_run_end desc
+        limit 1
         )
-        select {{ dbt_utils.datediff('start_time', max_timeframe_end, 'hour') }} as timeframe_to_query
-        from start_time_limit
+        select
+            case
+                when cast(start_limit as timestamp) > cast(last_run as timestamp) then date_trunc(day, cast(start_limit as timestamp))
+                else date_trunc(day, cast(last_run as timestamp)) end as start_time
+        from start_times
     {%- endset -%}
 
     {%- set result_value = elementary.result_value(query_start_time) %}
     {%- if result_value is defined and result_value is not none %}
-        {%- set max_timeframe_to_query = result_value %}
+        {%- set min_start_time = result_value %}
     {%- else %}
-        {%- set max_timeframe_to_query = days_back * 24 %}
+        {%- set min_start_time = (run_started_at - modules.datetime.timedelta(days_back)).strftime("%Y-%m-%d 00:00:00") %}
     {%- endif %}
 
-    {{ return(max_timeframe_to_query) }}
+    {{ return(min_start_time) }}
 
 {% endmacro %}

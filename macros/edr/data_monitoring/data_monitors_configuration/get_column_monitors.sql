@@ -40,3 +40,12 @@
     {{ return(column_monitors) }}
 
 {% endmacro %}
+
+{% macro all_column_monitors() %}
+    {%- set all_column_monitors = [] %}
+    {%- set numeric = var('edr_monitors')['column_numeric'] %}
+    {%- do all_column_monitors.extend(var('edr_monitors')['column_any_type']) -%}
+    {%- do all_column_monitors.extend(var('edr_monitors')['column_string']) -%}
+    {%- do all_column_monitors.extend(var('edr_monitors')['column_numeric']) -%}
+    {{ return(all_column_monitors) }}
+{% endmacro %}
