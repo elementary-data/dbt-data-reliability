@@ -49,3 +49,36 @@
     {%- do all_column_monitors.extend(var('edr_monitors')['column_numeric']) -%}
     {{ return(all_column_monitors) }}
 {% endmacro %}
+
+
+
+{% macro get_columns_and_types(identifier, schema_name, database_name) %}
+
+    {# dbt models can be found with identifier only #}
+    {# for non-dbt tables database_name and schema_name are required #}
+
+    {%- if not database_name is defined %}
+        {%- set database_name = elementary.target_database() %}
+    {%- endif %}
+    {%- if not database_name is defined %}
+        {%- set schema_name = target.schema %}
+    {%- endif %}
+
+    {%- set columns = [] %}
+
+    {%- set test_relation = adapter.get_relation(
+          database=database_name,
+          schema=schema,
+          identifier=identifier) -%}
+
+    {%- set columns_from_relation = adapter.get_columns_in_relation(test_relation) -%}
+
+    {% for column in columns_from_relation %}
+        {%- set column_item = {'column_name': column['column'], 'data_type': elementary.normalize_data_type(column['dtype'])} %}
+        {%- do columns.append(column_item) -%}
+    {% endfor %}
+
+    {{ return(columns) }}
+
+{% endmacro %}
+

@@ -4,6 +4,8 @@
             {{ return('string') }}
         {%- elif data_type in elementary.data_type_list('numeric') %}
             {{ return('numeric') }}
+        {%- elif data_type in elementary.data_type_list('timestamp') %}
+            {{ return('timestamp') }}
         {%- else %}
             {{ return('other') }}
         {% endif %}
