@@ -5,7 +5,7 @@
 -- depends_on: {{ ref('final_columns_config') }}
 -- depends_on: {{ ref('final_should_backfill') }}
 
-{%- set timeframe_end = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
+{%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
 {%- set column_monitors_list = elementary.all_column_monitors() %}
 
 {%- if execute %}
@@ -16,6 +16,7 @@
     {%- set column_config = elementary.insensitive_get_dict_value(table_config, 'columns_config') %}
     {%- set timeframe_start = "'"~ elementary.insensitive_get_dict_value(table_config, 'timeframe_start') ~"'" %}
 {%- endif %}
+
 
 with timeframe_data as (
 

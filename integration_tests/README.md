@@ -8,7 +8,7 @@ Run:
 python data_generation.py
 dbt deps
 dbt seed -s training 
-dbt run
+dbt run --full-refresh
 dbt seed -s validation
 dbt run
 ```
