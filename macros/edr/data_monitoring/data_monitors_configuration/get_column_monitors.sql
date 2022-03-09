@@ -52,7 +52,7 @@
 
 
 
-{% macro get_columns_and_types(identifier, schema_name, database_name) %}
+{% macro get_columns_and_types(table_name, schema_name, database_name) %}
 
     {# dbt models can be found with identifier only #}
     {# for non-dbt tables database_name and schema_name are required #}
