@@ -28,8 +28,8 @@ with timeframe_data as (
     from {{ full_table_name }}
         where
     {% if is_timestamp -%}
-        {{ elementary.cast_column_to_timestamp(timestamp_column) }} >= {{ elementary.cast_column_to_timestamp(timeframe_start) }}
-        and {{ elementary.cast_column_to_timestamp(timestamp_column) }} <= {{ elementary.cast_column_to_timestamp(timeframe_end) }}
+        {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
+        and {{ elementary.cast_to_timestamp(timestamp_column) }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
     {%- else %}
         true
     {%- endif %}
@@ -78,8 +78,7 @@ table_freshness as (
         select
             edr_daily_bucket as edr_bucket,
             'freshness' as metric_name,
-            -- TODO: this is not cross platform
-            timediff(minute, max({{ timestamp_column }}), {{ dbt_utils.dateadd('day','1','edr_daily_bucket') }}) as metric_value
+            {{ elementary.timediff('minute', 'max('~timestamp_column~')', dbt_utils.dateadd('day','1','edr_daily_bucket')) }} as metric_value
         from daily_buckets, {{ full_table_name }}
         where {{ timestamp_column }} <= {{ dbt_utils.dateadd('day','1','edr_daily_bucket') }}
         group by 1,2

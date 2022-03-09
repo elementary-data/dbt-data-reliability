@@ -29,8 +29,8 @@ with timeframe_data as (
     from {{ full_table_name }}
         where
     {% if is_timestamp -%}
-    {{ elementary.cast_column_to_timestamp(timestamp_column) }} >= {{ elementary.cast_column_to_timestamp(timeframe_start) }}
-    and {{ elementary.cast_column_to_timestamp(timestamp_column) }} <= {{ elementary.cast_column_to_timestamp(timeframe_end) }}
+    {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
+    and {{ elementary.cast_to_timestamp(timestamp_column) }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
     {%- else %}
     true
     {%- endif %}
