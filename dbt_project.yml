@@ -4,7 +4,7 @@ version: '0.1.1'
 require-dbt-version: [">=1.0.0", "<2.0.0"]
 
 config-version: 2
-profile: 'elementary_snowflake'
+profile: 'elementary'
 
 source-paths: ["models"]
 analysis-paths: ["analyses"]
