@@ -29,8 +29,8 @@ final_metrics as (
             'full_table_name',
             'column_name',
             'metric_name',
-            'timeframe_start',
-            'timeframe_end'
+            'bucket_start',
+            'bucket_end'
         ]) }} as id,
         full_table_name,
         column_name,

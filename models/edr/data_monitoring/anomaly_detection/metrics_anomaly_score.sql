@@ -3,14 +3,14 @@
 with data_monitoring_metrics as (
 
     select * from {{ ref('data_monitoring_metrics') }}
-    where timeframe_end >= {{ elementary.cast_to_timestamp(dbt_utils.dateadd('day', '-7', timeframe_end)) }}
+    where bucket_end >= {{ elementary.cast_to_timestamp(dbt_utils.dateadd('day', '-7', timeframe_end)) }}
 
 ),
 
 daily_buckets as (
 
     with dates as (
-         select {{ elementary.date_trunc('day', 'min(timeframe_end)') }} as date
+         select {{ elementary.date_trunc('day', 'min(bucket_end)') }} as date
         from data_monitoring_metrics
     union all
         select {{ dbt_utils.dateadd('day', '1', 'date') }}
@@ -32,7 +32,7 @@ time_window_aggregation as (
         last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) training_end,
         first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
-        data_monitoring_metrics on (edr_daily_bucket = timeframe_end)
+        data_monitoring_metrics on (edr_daily_bucket = bucket_end)
     {{ dbt_utils.group_by(10) }}
 
 ),
@@ -64,7 +64,7 @@ metrics_anomaly_score as (
             and training_stddev is not null
             and training_set_size >= {{ var('days_back') - 1 }}
     {{ dbt_utils.group_by(13) }}
-    order by timeframe_end desc
+    order by bucket_end desc
 
 ),
 
