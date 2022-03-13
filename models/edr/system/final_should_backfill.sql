@@ -1,14 +1,14 @@
 {%- set max_timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
-{%- set last_run_limit = "'"~ elementary.min_start_time(var('days_back'), max_timeframe_end)~"'" %}
-{%- set days_subtract = '-' ~ var('days_back') %}
-{%- set min_buckets_subtract = '-' ~ var('min_buckets_per_run') %}
+{%- set last_run_limit = "'"~ elementary.min_start_time(get_config_var('days_back'), max_timeframe_end)~"'" %}
+{%- set days_subtract = '-' ~ get_config_var('days_back') %}
+{%- set min_buckets_subtract = '-' ~ get_config_var('min_buckets_per_run') %}
 
 -- depends_on: {{ ref('elementary_runs') }}
 
 with tables_config as (
 
     select * from {{ ref('final_tables_config') }}
-    where columns_monitored = true
+    where (table_monitored = true or columns_monitored = true)
         and config_loaded_at = (select max(config_loaded_at) from {{ ref('final_tables_config') }})
 
 ),

@@ -4,9 +4,13 @@ models:
   - name: string_column_anomalies
     config:
       edr:
-        monitored: true
         timestamp_column: 'updated_at'
-        columns_monitored: true
+        monitored: true
+    tests:
+      - elementary.table_anomalies:
+          tags: ['elementary']
+          table_tests:
+            - row_count
   - name: numeric_column_anomalies
     config:
       edr:

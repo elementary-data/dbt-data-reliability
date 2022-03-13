@@ -1,16 +1,7 @@
-{% macro table_monitoring_query(monitored_table) %}
+{% macro table_monitoring_query(full_table_name, timestamp_column, is_timestamp, table_monitors, timeframe_start) %}
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set table_monitors_list = ['row_count'] %}
-
-    {%- if execute %}
-    {%- set table_config = get_table_monitoring_config(monitored_table) %}
-    {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
-    {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-    {%- set is_timestamp = elementary.insensitive_get_dict_value(table_config, 'is_timestamp') %}
-    {%- set table_monitors = elementary.insensitive_get_dict_value(table_config, 'final_table_monitors') | list %}
-    {%- set timeframe_start = "'"~ elementary.insensitive_get_dict_value(table_config, 'timeframe_start') ~"'" %}
-    {%- endif %}
 
     with timeframe_data as (
 
@@ -90,7 +81,7 @@
             '{{ full_table_name }}' as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
-            {{ elementary.cast_as_float('metric_value') }},
+            {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {%- if timestamp_column %}
             edr_bucket as bucket_start,
             {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
@@ -102,10 +93,20 @@
             {%- endif %}
         from
             union_metrics
-        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}
+        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}
 
     )
 
-    select * from metrics_final
+    select *,
+        {{ dbt_utils.surrogate_key([
+            'full_table_name',
+            'column_name',
+            'metric_name',
+            'bucket_start',
+            'bucket_end'
+        ]) }} as id,
+        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
+
+    from metrics_final
 
 {% endmacro %}

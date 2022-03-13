@@ -32,15 +32,6 @@
 
             {% do edr_log(start_msg) %}
 
-            {%- set table_monitoring_query = elementary.table_monitoring_query(monitored_table) %}
-            {%- set column_monitoring_query = elementary.column_monitoring_query(monitored_table) %}
-
-            {%- set insert_table_monitoring = elementary.insert_as_select(this, table_monitoring_query) %}
-            {%- do run_query(insert_table_monitoring) %}
-        -- TODO: split to columns
-            {%- set insert_column_monitoring = elementary.insert_as_select(this, column_monitoring_query) %}
-            {%- do run_query(insert_column_monitoring) %}
-
             {% do edr_log(end_msg) %}
 
         {%- endfor %}
