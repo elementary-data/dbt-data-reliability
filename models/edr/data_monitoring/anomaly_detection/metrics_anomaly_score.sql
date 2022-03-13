@@ -3,7 +3,6 @@
 with data_monitoring_metrics as (
 
     select * from {{ ref('data_monitoring_metrics') }}
-    where bucket_end >= {{ elementary.cast_to_timestamp(dbt_utils.dateadd('day', '-7', timeframe_end)) }}
 
 ),
 
@@ -54,8 +53,10 @@ metrics_anomaly_score as (
             and training_avg is not null
             and training_stddev is not null
             and training_set_size >= {{ var('days_back') - 1 }}
+            and bucket_end >= {{ elementary.cast_to_timestamp(dbt_utils.dateadd('day', '-7', timeframe_end)) }}
     {{ dbt_utils.group_by(13) }}
     order by bucket_end desc
+
 
 ),
 

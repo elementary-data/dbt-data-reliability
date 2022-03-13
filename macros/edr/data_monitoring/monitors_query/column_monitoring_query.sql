@@ -16,18 +16,18 @@
     with timeframe_data as (
 
         select *
-                {% if is_timestamp -%}
+            {% if is_timestamp -%}
              , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
-        {%- else %}
+            {%- else %}
        , null as edr_bucket
-        {%- endif %}
+            {%- endif %}
         from {{ full_table_name }}
         where
         {% if is_timestamp -%}
-        {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
-        and {{ elementary.cast_to_timestamp(timestamp_column) }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
+            {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
+            and {{ elementary.cast_to_timestamp(timestamp_column) }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
         {%- else %}
-        true
+            true
         {%- endif %}
 
     ),
