@@ -18,13 +18,14 @@
 {% macro empty_table(column_name_and_type_list) %}
 
     {%- set empty_table_query -%}
-    with empty_table as (
-        select
-        {% for column in column_name_and_type_list %}
-            {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
-        {%- endfor %}
-    )
-    select * from empty_table
+        with empty_table as (
+            select
+            {% for column in column_name_and_type_list %}
+                {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
+            {%- endfor %}
+        )
+        select * from empty_table
+        where {{ column_name_and_type_list[0][0] }} is not null
     {%- endset -%}
 
     {{- return(empty_table_query)-}}
@@ -32,7 +33,11 @@
 {% endmacro %}
 
 {% macro empty_alerts_cte() %}
-    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sun_type','str'),('description','str'),('alert_sent','bollean')]) }}
+    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('description','str'),('alert_sent','bollean')]) }}
+{% endmacro %}
+
+{% macro empty_data_monitors() %}
+    {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('source_value','str'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
 {% endmacro %}
 
 {% macro empty_column_monitors_cte() %}

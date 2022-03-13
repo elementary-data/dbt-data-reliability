@@ -22,8 +22,7 @@
 
     {%- endfor %}
 
-    select 1 as num
-    where num = 2
+    with no_data as (select 1 as num)
+    select * from no_data where num = 2
 
 {% endmacro %}
-

@@ -26,8 +26,7 @@ type_changes as (
         cur.data_type as data_type,
         pre.data_type as pre_data_type,
         pre.detected_at
-    from cur
-    inner join pre
+    from cur inner join pre
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.data_type != pre.data_type
 
@@ -55,11 +54,10 @@ columns_removed as (
         {{ elementary.null_to_string() }} as data_type,
         pre.data_type as pre_data_type,
         pre.detected_at as detected_at
-    from pre
-    left join cur
+    from pre left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.full_table_name is null and cur.column_name is null
-    and pre.full_table_name in {{ elementary.get_tables_for_columns_removed() }}
+        and pre.full_table_name in {{ elementary.get_tables_for_columns_removed() }}
 
 ),
 
@@ -78,13 +76,12 @@ column_changes_desc as (
 
     select
         {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as change_id,
-        {{ elementary.full_name_to_db() }},
-        {{ elementary.full_name_to_schema() }},
-        {{ elementary.full_name_to_table() }},
+        {{ elementary.full_name_split('database_name') }},
+        {{ elementary.full_name_split('schema_name') }},
+        {{ elementary.full_name_split('table_name') }},
         column_name,
         {{ elementary.run_start_column() }} as detected_at,
         change,
-
         case
             when change= 'column_added'
                 then concat('The column "', column_name,'" was added')
@@ -94,7 +91,6 @@ column_changes_desc as (
                 then concat('The type of "',column_name,'" was changed from ', pre_data_type,' to ', data_type)
             else NULL
         end as change_description
-
     from all_column_changes
 
 )
