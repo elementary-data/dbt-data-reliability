@@ -2,7 +2,7 @@
     {%- if execute %}
         {%- set results_query = elementary.anomalies_test_results_query() %}
         {%- set unique_key = 'alert_id' %}
-        {%- set get_relation = adapter.get_relation(database=elementary.target_database(),
+        {%- set get_relation = adapter.get_relation(database=adapter.database,
                                                         schema=target.schema,
                                                         identifier='alerts_data_monitoring') %}
         {%- set target_relation = get_relation.incorporate(type='table') %}
@@ -42,7 +42,7 @@
                         'anomaly_detection' as alert_type,
                         metric_name as sub_type,
                         description
-                    from {{ elementary.target_database() ~'.'~ result_schema ~'.'~ result_table }}
+                    from {{ adapter.database ~'.'~ result_schema ~'.'~ result_table }}
                          union all
                 {%- endfor %}
             {%- endif %}

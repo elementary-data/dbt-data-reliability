@@ -12,7 +12,7 @@
 
 
 {% macro find_source_table(source_table_name) %}
-    {%- set database = elementary.target_database() %}
+    {%- set database = adapter.database %}
     {%- set info_schema_tables = elementary.from_information_schema('tables', database) %}
     {%- set query %}
         select

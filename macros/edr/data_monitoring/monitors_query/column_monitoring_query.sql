@@ -1,21 +1,11 @@
-{% macro column_monitoring_query(monitored_table) %}
+{% macro column_monitoring_query(full_table_name, timestamp_column, is_timestamp, timeframe_start, column_name, column_monitors) %}
 
     {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
 
-    {%- if execute %}
-    {%- set table_config = get_table_monitoring_config(monitored_table) %}
-    {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
-    {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-    {%- set is_timestamp = elementary.insensitive_get_dict_value(table_config, 'is_timestamp') %}
-    {%- set column_config = elementary.insensitive_get_dict_value(table_config, 'columns_config') %}
-    {%- set timeframe_start = "'"~ elementary.insensitive_get_dict_value(table_config, 'timeframe_start') ~"'" %}
-    {%- endif %}
-
-
     with timeframe_data as (
 
-        select *
+        select {{ elementary.column_quote(column_name) }}
             {% if is_timestamp -%}
              , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
@@ -34,11 +24,8 @@
 
     column_monitors as (
 
-        {%- if column_config %}
-            {%- for monitored_column in column_config -%}
-                {%- set column_name = monitored_column.get('column_name') -%}
-                {%- set column_monitors = monitored_column.get('column_monitors') -%}
-                {%- set column = elementary.column_quote(column_name) -%}
+        {%- if column_monitors %}
+            {%- set column = elementary.column_quote(column_name) -%}
                 select
                     edr_bucket,
                     '{{ column_name }}' as edr_column_name,
@@ -59,19 +46,22 @@
                 from timeframe_data
                 group by 1,2
                 {% if not loop.last %} union all {% endif %}
-        {% endfor %}
-    {%- else %}
-        {{ elementary.empty_column_monitors_cte() }}
-    {%- endif %}
+        {%- else %}
+            {{ elementary.empty_column_monitors_cte() }}
+        {%- endif %}
 
     ),
 
     column_monitors_unpivot as (
-        -- TODO: create list from previous CTE and only union relevant monitors
-        {% for monitor in column_monitors_list %}
-            select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
-            {% if not loop.last %} union all {% endif %}
-        {%- endfor %}
+
+        {%- if column_monitors %}
+            {% for monitor in column_monitors %}
+                select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                {% if not loop.last %} union all {% endif %}
+            {%- endfor %}
+        {%- else %}
+            {{ elementary.empty_column_unpivot_cte() }}
+        {%- endif %}
 
     ),
 
@@ -81,15 +71,15 @@
             '{{ full_table_name }}' as full_table_name,
             edr_column_name as column_name,
             metric_name,
-            {{ elementary.cast_as_float('metric_value') }},
-            {%- if timestamp_column %}
-            edr_bucket as bucket_start,
-            {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
-            24 as bucket_duration_hours
+            {{ elementary.cast_as_float('metric_value') }} as metric_value,
+            {%- if is_timestamp %}
+                edr_bucket as bucket_start,
+                {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
+                24 as bucket_duration_hours
             {%- else %}
-            {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.null_timestamp() }} as bucket_end,
-            {{ elementary.null_int() }} as bucket_duration_hours
+                {{ elementary.null_timestamp() }} as bucket_start,
+                {{ elementary.null_timestamp() }} as bucket_end,
+                {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
         where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}

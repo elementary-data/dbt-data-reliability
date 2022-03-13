@@ -40,6 +40,10 @@
     {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
 {% endmacro %}
 
+{% macro empty_column_unpivot_cte() %}
+    {{ elementary.empty_table([('edr_column_name','str'),('edr_bucket','timestamp'),('metric_name','str'),('metric_value','float')]) }}
+{% endmacro %}
+
 {% macro empty_column_monitors_cte() %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
     {%- set columns_definition = [('column_name', 'string'), ('bucket', 'timestamp')] %}

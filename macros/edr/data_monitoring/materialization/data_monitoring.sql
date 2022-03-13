@@ -15,7 +15,7 @@
     {# create empty target table #}
     {%- set target_relation = api.Relation.create(identifier=model_name,
                                                   schema=target.schema,
-                                                  database=elementary.target_database(),
+                                                  database=adapter.database,
                                                   type='table') -%}
 
     {% call statement('main') -%}
