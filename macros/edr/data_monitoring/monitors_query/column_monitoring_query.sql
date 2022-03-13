@@ -24,8 +24,8 @@
         from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
-            {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
-            and {{ elementary.cast_to_timestamp(timestamp_column) }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(timeframe_start) }}
+            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(timeframe_end) }}
         {%- else %}
             true
         {%- endif %}
@@ -69,7 +69,7 @@
     column_monitors_unpivot as (
 
         {% for monitor in column_monitors_list %}
-        select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ monitor }} as metric_value from column_monitors where {{ monitor }} is not null
+            select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
             {% if not loop.last %} union all {% endif %}
         {%- endfor %}
 
@@ -81,11 +81,11 @@
             '{{ full_table_name }}' as full_table_name,
             edr_column_name as column_name,
             metric_name,
-            metric_value,
+            {{ elementary.cast_as_float('metric_value') }},
             {%- if timestamp_column %}
             edr_bucket as bucket_start,
-            {{ dbt_utils.dateadd('day',1,'edr_bucket') }} as bucket_end,
-            '24' as bucket_duration_hours
+            {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
+            24 as bucket_duration_hours
             {%- else %}
             {{ elementary.null_timestamp() }} as bucket_start,
             {{ elementary.null_timestamp() }} as bucket_end,

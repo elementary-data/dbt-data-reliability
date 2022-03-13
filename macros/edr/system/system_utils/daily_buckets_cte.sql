@@ -9,11 +9,11 @@
 
     {%- set daily_buckets_cte %}
         with dates as (
-            select {{ elementary.cast_to_timestamp(min_bucket_end) }} as date
+            select {{ elementary.cast_as_timestamp(min_bucket_end) }} as date
         union all
         select {{ dbt_utils.dateadd('day', '1', 'date') }}
         from dates
-        where {{ dbt_utils.dateadd('day', '1', 'date') }} <= {{ elementary.cast_to_timestamp(max_bucket_end) }}
+        where {{ dbt_utils.dateadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
             )
         select date as edr_daily_bucket
         from dates
@@ -28,7 +28,7 @@
 
     {%- set daily_buckets_cte %}
         select edr_daily_bucket
-        from unnest(generate_timestamp_array({{ elementary.cast_to_timestamp(min_bucket_end) }}, {{ elementary.cast_to_timestamp(max_bucket_end) }}, interval 1 day)) as edr_daily_bucket
+        from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(min_bucket_end) }}, {{ elementary.cast_as_timestamp(max_bucket_end) }}, interval 1 day)) as edr_daily_bucket
     {%- endset %}
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
