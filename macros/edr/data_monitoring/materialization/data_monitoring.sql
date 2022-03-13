@@ -37,7 +37,7 @@
 
             {%- set insert_table_monitoring = elementary.insert_as_select(this, table_monitoring_query) %}
             {%- do run_query(insert_table_monitoring) %}
-
+        -- TODO: split to columns
             {%- set insert_column_monitoring = elementary.insert_as_select(this, column_monitoring_query) %}
             {%- do run_query(insert_column_monitoring) %}
 

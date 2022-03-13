@@ -67,7 +67,7 @@
     ),
 
     column_monitors_unpivot as (
-
+        -- TODO: create list from previous CTE and only union relevant monitors
         {% for monitor in column_monitors_list %}
             select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
             {% if not loop.last %} union all {% endif %}
