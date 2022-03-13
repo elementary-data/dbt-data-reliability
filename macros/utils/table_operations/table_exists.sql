@@ -6,7 +6,7 @@
     {%- if not database_name is defined %}
         {%- set database_name = elementary.target_database() %}
     {%- endif %}
-    {%- if not database_name is defined %}
+    {%- if not schema_name is defined %}
         {%- set schema_name = target.schema %}
     {%- endif %}
 
