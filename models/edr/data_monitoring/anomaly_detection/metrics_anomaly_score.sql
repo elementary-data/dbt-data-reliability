@@ -9,16 +9,7 @@ with data_monitoring_metrics as (
 
 daily_buckets as (
 
-    with dates as (
-         select {{ elementary.date_trunc('day', 'min(bucket_end)') }} as date
-        from data_monitoring_metrics
-    union all
-        select {{ dbt_utils.dateadd('day', '1', 'date') }}
-        from dates
-        where {{ dbt_utils.dateadd('day', '1', 'date') }} <= {{ elementary.cast_to_timestamp(timeframe_end) }}
-    )
-    select date as edr_daily_bucket
-    from dates
+   {{ elementary.daily_buckets_cte() }}
 
 ),
 

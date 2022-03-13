@@ -22,7 +22,7 @@
 
     {%- set query_start_time %}
         with start_times as (
-            select monitors_run_end as last_run,
+            select {{ elementary.cast_to_timestamp('monitors_run_end') }} as last_run,
                    cast({{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }} as {{ dbt_utils.type_timestamp() }}) as start_limit
             from {{ ref('elementary_runs')}}
                 where monitors_run_end is not null

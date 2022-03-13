@@ -20,7 +20,7 @@ alerts_model_runs as (
          '{{ elementary.target_database() }}' as database_name,
          '{{ target.schema }}' as schema_name,
          name as table_name,
-         {{ elementary.null_to_string() }} as column_name,
+         {{ elementary.null_string() }} as column_name,
          'dbt_model_failed' as alert_type,
          status as sub_type,
          {{ elementary.dbt_model_run_result_description() }} as alert_description

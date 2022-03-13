@@ -25,7 +25,7 @@ table_changes_alerts as (
         database_name,
         schema_name,
         table_name,
-        NULL as column_name,
+        {{ elementary.null_string() }} as column_name,
         'schema_change' as alert_type,
         change as sub_type,
         change_description as alert_description
@@ -50,7 +50,6 @@ column_changes_alerts as (
 ),
 
 all_alerts as (
-
     select * from table_changes_alerts
     union all
     select * from column_changes_alerts

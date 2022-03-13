@@ -7,14 +7,10 @@
 
     {%- set old_relation = adapter.get_relation(identifier=model_name, schema=schema, database=database) -%}
 
-    {# setup: drop old table and run pre hooks outside of transaction #}
+    {# drop old table #}
     {%- if old_relation %}
         {{ adapter.drop_relation(old_relation) }}
     {%- endif %}
-    {{ run_hooks(pre_hooks, inside_transaction=False) }}
-
-    {# 'BEGIN', run pre hooks inside of transaction #}
-    {{ run_hooks(pre_hooks, inside_transaction=True) }}
 
     {# create empty target table #}
     {%- set target_relation = api.Relation.create(identifier=model_name,
@@ -50,13 +46,6 @@
         {%- endfor %}
 
     {%- endif %}
-
-    {{ run_hooks(post_hooks, inside_transaction=True) }}
-
-    {# `COMMIT` happens here #}
-    {{ adapter.commit() }}
-
-    {{ run_hooks(post_hooks, inside_transaction=False) }}
 
     {{ return({'relations': [target_relation]}) }}
 

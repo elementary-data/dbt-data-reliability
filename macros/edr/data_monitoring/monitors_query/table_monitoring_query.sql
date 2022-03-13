@@ -33,15 +33,7 @@
 
     daily_buckets as (
 
-        with dates as (
-            select {{ elementary.cast_to_timestamp(timeframe_start) }} as date
-            union all
-            select {{ dbt_utils.dateadd('day', '1', 'date') }}
-            from dates
-            where {{ dbt_utils.dateadd('day', '1', 'date') }} < {{ elementary.cast_to_timestamp(timeframe_end) }}
-            )
-        select date as edr_daily_bucket
-        from dates
+        {{ elementary.daily_buckets_cte() }}
 
     ),
 
@@ -51,12 +43,13 @@
         select edr_daily_bucket, edr_bucket,
             {%- if 'row_count' in table_monitors %} case when edr_bucket is null then 0 else {{ elementary.row_count() }} end {%- else -%} null {% endif %} as row_count
         from daily_buckets left join timeframe_data on (edr_daily_bucket = edr_bucket)
+        where edr_daily_bucket >= {{ elementary.cast_to_timestamp(timeframe_start) }}
         group by 1,2
             {%- else %}
                 {{ elementary.empty_table([('edr_daily_bucket','timestamp'),('edr_bucket','timestamp'),('row_count','int')]) }}
             {%- endif %}
 
-        ),
+    ),
 
     table_monitors_unpivot as (
 
