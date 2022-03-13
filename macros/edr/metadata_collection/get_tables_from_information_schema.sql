@@ -15,7 +15,7 @@
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
         from  {{ elementary.from_information_schema('TABLES', database_name, schema_name) }}
-        where table_schema = upper('{{ schema_name }}')
+        where upper(table_schema) = upper('{{ schema_name }}')
 
     ),
 
@@ -25,7 +25,7 @@
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
         from  {{ elementary.from_information_schema('SCHEMATA', database_name) }}
-        where schema_name = upper('{{ schema_name }}')
+        where upper(schema_name) = upper('{{ schema_name }}')
 
     )
 
