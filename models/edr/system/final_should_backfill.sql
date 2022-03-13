@@ -1,8 +1,16 @@
+{%- set max_timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+{%- set last_run_limit = "'"~ elementary.min_start_time(var('days_back'), max_timeframe_end)~"'" %}
+{%- set days_subtract = '-' ~ var('days_back') %}
+{%- set min_buckets_subtract = '-' ~ var('min_buckets_per_run') %}
+
+-- depends_on: {{ ref('elementary_runs') }}
+
 with tables_config as (
 
     select * from {{ ref('final_tables_config') }}
     where columns_monitored = true
         and config_loaded_at = (select max(config_loaded_at) from {{ ref('final_tables_config') }})
+
 ),
 
 columns_config_should_backfill_true as (
@@ -20,11 +28,16 @@ should_backfill as (
         case
             when tab.should_backfill = true then true
             when col.should_backfill = true then true
-            else false end
-        as should_backfill
+            else false
+        end as should_backfill,
+        case
+            when tab.should_backfill = true then {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end) }}
+            when col.should_backfill = true then {{ dbt_utils.dateadd('day', days_subtract, max_timeframe_end ) }}
+            else {{ dbt_utils.dateadd('day', min_buckets_subtract, last_run_limit) }}
+        end as min_timeframe_start
     from tables_config as tab left join columns_config_should_backfill_true as col
         on (tab.full_table_name = col.full_table_name)
-    group by 1,2
+    group by 1,2,3
 
 )
 

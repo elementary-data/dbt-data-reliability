@@ -8,4 +8,4 @@
 select
     '{{ invocation_id }}' as run_id,
     {{ elementary.run_start_column() }} as run_started_at,
-    null as monitors_run_end
+    {{ elementary.null_timestamp() }} as monitors_run_end

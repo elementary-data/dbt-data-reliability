@@ -41,9 +41,6 @@ models:
         description: "The type of alert, indicating the module that detected it."
         tests:
           - not_null
-          - accepted_values:
-              values: [ 'schema_change' ]
-
 
       - name: sub_type
         description: "The detected change."

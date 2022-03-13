@@ -1,6 +1,6 @@
-{% macro strings_list_to_tuple(args) %}
-    {%- if args %}
-        ({% for arg in args %} '{{ arg }}' {{ "," if not loop.last else "" }} {% endfor %})
+{% macro strings_list_to_tuple(strings) %}
+    {%- if strings %}
+        ({% for string in strings %} '{{ string }}' {{ "," if not loop.last else "" }} {% endfor %})
     {%- else %}
         ('')
     {%- endif %}

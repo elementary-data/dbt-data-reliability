@@ -29,16 +29,16 @@ final_metrics as (
             'full_table_name',
             'column_name',
             'metric_name',
-            'timeframe_start',
-            'timeframe_end'
+            'bucket_start',
+            'bucket_end'
         ]) }} as id,
         full_table_name,
         column_name,
         metric_name,
         metric_value,
-        timeframe_start,
-        timeframe_end,
-        timeframe_duration_hours,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
         {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
     from monitors_run
 
@@ -51,9 +51,9 @@ select
     column_name,
     metric_name,
     metric_value,
-    timeframe_start,
-    timeframe_end,
-    timeframe_duration_hours,
+    bucket_start,
+    bucket_end,
+    bucket_duration_hours,
     max(updated_at) as updated_at
 
 from final_metrics

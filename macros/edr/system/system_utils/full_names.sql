@@ -11,14 +11,33 @@
     upper(concat(database_name, '.', schema_name, '.', table_name, '.', column_name))
 {%- endmacro %}
 
-{% macro full_name_to_db() -%}
-    trim(split(full_table_name,'.')[0],'"') as database_name
-{%- endmacro %}
 
-{% macro full_name_to_schema() -%}
-    trim(split(full_table_name,'.')[1],'"') as schema_name
-{%- endmacro %}
+{% macro full_name_split(part_name) %}
+    {{ adapter.dispatch('full_name_split','elementary')(part_name) }}
+{% endmacro %}
 
-{% macro full_name_to_table() -%}
-    trim(split(full_table_name,'.')[2],'"') as table_name
-{%- endmacro %}
+{% macro default__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' -%}
+        {%- set part_index = 0 -%}
+    {%- elif part_name == 'schema_name' -%}
+        {%- set part_index = 1 -%}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 2 -%}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+    trim(split(full_table_name,'.')[{{ part_index }}],'"') as {{ part_name }}
+{% endmacro %}
+
+{% macro bigquery__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' %}
+        {%- set part_index = 0 %}
+    {%- elif part_name == 'schema_name' %}
+        {%- set part_index = 1 %}
+    {%- elif part_name == 'table_name' %}
+        {%- set part_index = 2 %}
+    {%- else %}
+        {{ return('') }}
+    {%- endif %}
+    trim(split(full_table_name,'.')[OFFSET({{ part_index }})],'"') as {{ part_name }}
+{% endmacro %}

@@ -4,7 +4,7 @@
 {% endmacro %}
 
 {% macro default__data_type_list(data_type) %}
-
+-- TODO: Redshift timestamp list
     {% set string_list = ['character varying','varchar','character','char','text'] | list %}
     {% set numeric_list = ['integer', 'bigint','smallint','decimal','numeric','real','double precision','enum'] | list %}
 

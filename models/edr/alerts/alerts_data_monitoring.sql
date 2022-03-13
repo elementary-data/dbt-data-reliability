@@ -7,7 +7,10 @@
 
 with anomalies as (
 
-    select * from {{ ref('anomaly_detection') }}
+    select *,
+        {{ elementary.anomaly_detection_description() }}
+    from {{ ref('metrics_anomaly_score') }}
+    where is_anomaly = true
 
 ),
 
@@ -16,9 +19,9 @@ anomaly_alerts as (
      select
          id as alert_id,
          updated_at as detected_at,
-         {{ elementary.full_name_to_db() }},
-         {{ elementary.full_name_to_schema() }},
-         {{ elementary.full_name_to_table() }},
+         {{ elementary.full_name_split('database_name') }},
+         {{ elementary.full_name_split('schema_name') }},
+         {{ elementary.full_name_split('table_name') }},
          column_name,
          'anomaly_detection' as alert_type,
          metric_name as sub_type,
