@@ -3,13 +3,13 @@
      {%- if data_type == 'boolean' %}
         cast (null as {{ elementary.type_bool()}}) as {{ column_name }}
      {%- elif data_type == 'timestamp' -%}
-        cast (null as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
+        {{ elementary.null_timestamp() }} as {{ column_name }}
      {%- elif data_type == 'int' %}
-        cast (null as {{ dbt_utils.type_int()}}) as {{ column_name }}
+        {{ elementary.null_int() }} as {{ column_name }}
      {%- elif data_type == 'float' %}
         cast (null as {{ dbt_utils.type_float()}}) as {{ column_name }}
      {%- else %}
-        cast (null as {{ dbt_utils.type_string()}}) as {{ column_name }}
+        {{ elementary.null_string() }} as {{ column_name }}
      {%- endif %}
 
 {% endmacro %}

@@ -18,7 +18,7 @@
         {% if is_timestamp -%}
              , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
         {%- else %}
-            , null as edr_bucket
+            , {{ elementary.null_timestamp() }} as edr_bucket
         {%- endif %}
         from {{ elementary.from(full_table_name) }}
         where
@@ -88,7 +88,7 @@
 
         select
             '{{ full_table_name }}' as full_table_name,
-            null as column_name,
+            {{ elementary.null_string() }} as column_name,
             metric_name,
             metric_value,
             {%- if timestamp_column %}
@@ -96,9 +96,9 @@
             {{ dbt_utils.dateadd('day',1,'edr_bucket') }} as bucket_end,
             '24' as bucket_duration_hours
             {%- else %}
-            null as bucket_start,
-            null as bucket_end,
-            null as bucket_duration_hours
+            {{ elementary.null_timestamp() }} as bucket_start,
+            {{ elementary.null_timestamp() }} as bucket_end,
+            {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from
             union_metrics

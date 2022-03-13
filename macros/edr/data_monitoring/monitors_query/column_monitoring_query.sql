@@ -87,9 +87,9 @@
             {{ dbt_utils.dateadd('day',1,'edr_bucket') }} as bucket_end,
             '24' as bucket_duration_hours
             {%- else %}
-            null as bucket_start,
-            null as bucket_end,
-            null as bucket_duration_hours
+            {{ elementary.null_timestamp() }} as bucket_start,
+            {{ elementary.null_timestamp() }} as bucket_end,
+            {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
         where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}
