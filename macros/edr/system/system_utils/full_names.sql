@@ -17,11 +17,11 @@
 {% endmacro %}
 
 {% macro default__full_name_split(part_name) %}
-    {%- if part_name in ['database_name'] -%}
+    {%- if part_name == 'database_name' -%}
         {%- set part_index = 0 -%}
-    {%- elif part_name in ['schema_name'] -%}
+    {%- elif part_name == 'schema_name' -%}
         {%- set part_index = 1 -%}
-    {%- elif part_name in ['table_name'] -%}
+    {%- elif part_name == 'table_name' -%}
         {%- set part_index = 2 -%}
     {%- else -%}
         {{ return('') }}
@@ -30,11 +30,11 @@
 {% endmacro %}
 
 {% macro bigquery__full_name_split(part_name) %}
-    {%- if part_name in ['database_name'] %}
+    {%- if part_name == 'database_name' %}
         {%- set part_index = 0 %}
-    {%- elif part_name in ['schema_name'] %}
+    {%- elif part_name == 'schema_name' %}
         {%- set part_index = 1 %}
-    {%- elif part_name in ['table_name'] %}
+    {%- elif part_name == 'table_name' %}
         {%- set part_index = 2 %}
     {%- else %}
         {{ return('') }}

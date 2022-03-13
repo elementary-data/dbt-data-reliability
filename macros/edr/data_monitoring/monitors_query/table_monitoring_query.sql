@@ -20,7 +20,7 @@
         {%- else %}
             , null as edr_bucket
         {%- endif %}
-        from {{ full_table_name }}
+        from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
             {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
@@ -67,7 +67,7 @@
             edr_daily_bucket as edr_bucket,
             'freshness' as metric_name,
             {{ elementary.timediff('minute', 'max('~timestamp_column~')', dbt_utils.dateadd('day','1','edr_daily_bucket')) }} as metric_value
-        from daily_buckets, {{ full_table_name }}
+        from daily_buckets, {{ elementary.from(full_table_name) }}
         where {{ timestamp_column }} <= {{ dbt_utils.dateadd('day','1','edr_daily_bucket') }}
         group by 1,2
             {%- else %}

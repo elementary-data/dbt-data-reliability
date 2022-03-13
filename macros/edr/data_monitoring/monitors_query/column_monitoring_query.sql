@@ -21,7 +21,7 @@
             {%- else %}
        , null as edr_bucket
             {%- endif %}
-        from {{ full_table_name }}
+        from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
             {{ elementary.cast_to_timestamp(timestamp_column) }} >= {{ elementary.cast_to_timestamp(timeframe_start) }}
