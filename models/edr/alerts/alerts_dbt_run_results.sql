@@ -32,7 +32,7 @@ alerts_model_runs as (
         and status = 'error'
         {%- endif %}
     {%- else %}
-        {{ elementary.empty_alerts_cte() }}
+        {{ elementary.empty_alerts() }}
     {%- endif %}
 
 )
