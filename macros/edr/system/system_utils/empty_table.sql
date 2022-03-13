@@ -37,7 +37,7 @@
 {% endmacro %}
 
 {% macro empty_data_monitors() %}
-    {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('source_value','str'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
+    {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','int'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
 {% endmacro %}
 
 {% macro empty_column_monitors_cte() %}

@@ -1,10 +1,5 @@
 {% macro column_monitoring_query(monitored_table) %}
 
--- depends_on: {{ ref('elementary_runs') }}
--- depends_on: {{ ref('final_tables_config') }}
--- depends_on: {{ ref('final_columns_config') }}
--- depends_on: {{ ref('final_should_backfill') }}
-
     {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
 
@@ -88,13 +83,13 @@
             metric_name,
             metric_value,
             {%- if timestamp_column %}
-            edr_bucket as timeframe_start,
-            {{ dbt_utils.dateadd('day',1,'edr_bucket') }} as timeframe_end,
-            '24' as timeframe_duration_hours
+            edr_bucket as bucket_start,
+            {{ dbt_utils.dateadd('day',1,'edr_bucket') }} as bucket_end,
+            '24' as bucket_duration_hours
             {%- else %}
-            null as timeframe_start,
-            null as timeframe_end,
-            null as timeframe_duration_hours
+            null as bucket_start,
+            null as bucket_end,
+            null as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
         where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}

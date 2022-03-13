@@ -29,8 +29,8 @@ time_window_aggregation as (
         avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_avg,
         stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_stddev,
         count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_set_size,
-        last_value(timeframe_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) training_timeframe_end,
-        first_value(timeframe_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_timeframe_start
+        last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) training_end,
+        first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
         data_monitoring_metrics on (edr_daily_bucket = timeframe_end)
     {{ dbt_utils.group_by(10) }}
@@ -49,12 +49,12 @@ metrics_anomaly_score as (
            else (metric_value - training_avg) / (training_stddev)
         end as z_score,
         metric_value as latest_metric_value,
-        timeframe_start,
-        timeframe_end,
+        bucket_start,
+        bucket_end,
         training_avg,
         training_stddev,
-        training_timeframe_start,
-        training_timeframe_end,
+        training_start,
+        training_end,
         training_set_size,
         max(updated_at) as updated_at
     from time_window_aggregation
