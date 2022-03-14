@@ -18,19 +18,19 @@
 
         anomaly_alerts as (
 
-        select
-            id as alert_id,
-            updated_at as detected_at,
-            {{ elementary.full_name_split('database_name') }},
-            {{ elementary.full_name_split('schema_name') }},
-            {{ elementary.full_name_split('table_name') }},
-            column_name,
-            'anomaly_detection' as alert_type,
-            metric_name as sub_type,
-            description as alert_description
-        from anomalies
+            select
+                id as alert_id,
+                updated_at as detected_at,
+                {{ elementary.full_name_split('database_name') }},
+                {{ elementary.full_name_split('schema_name') }},
+                {{ elementary.full_name_split('table_name') }},
+                column_name,
+                'anomaly_detection' as alert_type,
+                metric_name as sub_type,
+                description as alert_description
+            from anomalies
 
-            )
+        )
 
         select * from anomaly_alerts
     {% endset %}
