@@ -1,3 +1,5 @@
+-- TODO: old, remove after we rewrite the merge logic
+
 {% macro anomaly_detection_merge() %}
     {%- if execute %}
         {%- set results_query = elementary.anomalies_test_results_query() %}
