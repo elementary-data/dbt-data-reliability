@@ -46,29 +46,20 @@
             {%- endfor %}
         {%- endif %}
 
-        {#- merge results to incremental metrics table -#}
-        -- TODO: maybe we should use adapter's merge logic?
-        {%- set target_relation = ref('data_monitoring_metrics') %}
-        {%- set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-        {%- set merge_sql = dbt.get_delete_insert_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
-        {%- do run_query(merge_sql) %}
-
         {#- query if there is an anomaly in recent metrics -#}
-        {%- set anomaly_alerts_query = elementary.get_anomaly_alerts_query(full_table_name, column_monitors, column_name) %}
-        {%- set temp_alerts_table_name = this.name ~ '__alerts' %}
-        {%- set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
+        {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
+        {% set anomaly_query = elementary.get_anomaly_query(temp_table_name, full_table_name, columns_only=true) %}
+        {% set temp_alerts_table_name = this.name ~ '__anomalies' %}
+        {% set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {%- do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
-        {%- set alerts_target_relation = ref('alerts_data_monitoring') %}
-        {%- set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
-        {%- set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
-        {%- do run_query(merge_sql) %}
+        {% do run_query(dbt.create_table_as(True, anomalies_temp_table_relation, anomaly_query)) %}
+
         {{ elementary.test_log('end', full_table_name, 'all columns') }}
 
         {# return anomalies query as standart test query #}
-        select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
+        select * from {{ anomalies_temp_table_relation.include(database=True, schema=True, identifier=True) }}
 
     {%- else %}
 

@@ -98,7 +98,7 @@
 
     )
 
-    select *,
+    select
         {{ dbt_utils.surrogate_key([
             'full_table_name',
             'column_name',
@@ -106,6 +106,14 @@
             'bucket_start',
             'bucket_end'
         ]) }} as id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
         {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
 
     from metrics_final

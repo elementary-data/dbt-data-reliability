@@ -1,3 +1,14 @@
+{% macro get_global_min_bucket_start() %}
+    {%- set global_min_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {{ return(global_min_bucket_start) }}
+{% endmacro %}
+
+{% macro get_max_bucket_end() %}
+    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {{ return(max_bucket_end) }}
+{% endmacro %}
+
+
 {% macro max_timeframe_end(timeframe_duration) %}
 
     {% set run_time = run_started_at %}

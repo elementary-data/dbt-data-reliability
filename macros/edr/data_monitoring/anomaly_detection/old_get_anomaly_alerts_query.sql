@@ -1,4 +1,4 @@
-{% macro get_anomaly_alerts_query(full_table_name, monitors, column_name = none) %}
+{% macro old_get_anomaly_alerts_query(full_table_name, monitors, column_name = none) %}
 
 -- TODO: now we get anomalies from last 7 days. should we change this somehow? maybe since min_bucket_start?
 
