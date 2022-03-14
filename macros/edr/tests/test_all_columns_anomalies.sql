@@ -39,7 +39,7 @@
                 {%- set column_monitors = column['monitors'] %}
                 {%- set column_monitoring_query = elementary.column_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
                 {%- if loop.first %}
-                    {%- do run_query(dbt.create_table_as(True, temp_table_relation, column_monitoring_query)) %}
+                    {%- do run_query(dbt.create_table_as(False, temp_table_relation, column_monitoring_query)) %}
                 {%- endif %}
                     {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
                     {%- do elementary.insert_as_select(temp_table_name, column_monitoring_query) -%}
@@ -54,7 +54,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(True, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
 
         {{ elementary.test_log('end', full_table_name, 'all columns') }}
 

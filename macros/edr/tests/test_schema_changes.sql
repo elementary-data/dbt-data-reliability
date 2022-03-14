@@ -29,7 +29,8 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
+        {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, anomaly_alerts_query)) %}
+            -- TODO: do the merge only if there are results
         {% set alerts_target_relation = ref('alerts_schema_changes') %}
         {% set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
         {% set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}

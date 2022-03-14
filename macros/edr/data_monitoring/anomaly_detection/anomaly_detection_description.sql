@@ -4,7 +4,7 @@
         when column_name is null then {{ elementary.table_metric_description() }}
         when column_name is not null then {{ elementary.column_metric_description() }}
         else null
-    end as description
+    end as alert_description
 {% endmacro %}
 
 {% macro freshness_description() %}

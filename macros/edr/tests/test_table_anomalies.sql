@@ -44,7 +44,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(True, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standart test query #}
