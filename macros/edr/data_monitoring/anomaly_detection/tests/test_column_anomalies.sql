@@ -28,14 +28,7 @@
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
-        
-        {%- set column_objects = adapter.get_columns_in_relation(model) -%}
-        {%- set column_monitors = [] -%}
-        {%- for column_obj in column_objects %}
-            {%- if column_obj.name | lower == column_name | lower %}
-                {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests)) %}
-            {%- endif %}
-        {%- endfor %}
+        {%- set column_monitors = get_columns_monitors(model, column_name, column_tests) -%}
 
         {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
 

@@ -32,7 +32,7 @@
 
         {% set column_monitors = none %}
         {%- if columns_monitored is sameas true %}
-            {%- set final_column_monitors = elementary.get_columns_monitors_config(full_table_name) %}
+            {%- set final_column_monitors = elementary.old_get_columns_monitors_config(full_table_name) %}
         {%- endif %}
         {% do table_config.update({'columns_config': final_column_monitors}) %}
 
