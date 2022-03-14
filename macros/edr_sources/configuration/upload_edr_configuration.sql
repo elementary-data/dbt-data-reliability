@@ -1,61 +1,139 @@
 {% macro upload_edr_configuration() %}
-    {% do elementary.upload_tables_configuration() %}
-    {% do elementary.upload_columns_configuration() %}
-{% endmacro %}
-
-{% macro upload_tables_configuration() %}
-    {% if execute %}
-        {% set empty_table_config_query = elementary.empty_table([('full_table_name', 'string'),
-                                                                  ('database_name', 'string'),
-                                                                  ('schema_name', 'string'),
-                                                                  ('table_name', 'string'),
-                                                                  ('timestamp_column', 'string'),
-                                                                  ('bucket_duration_hours', 'int'),
-                                                                  ('table_monitored', 'boolean'),
-                                                                  ('table_monitors', 'string'),
-                                                                  ('columns_monitored', 'boolean')]) %}
-        {% set table_config_relation = elementary.create_source_table('table_monitors_config', empty_table_config_query, True) %}
+    {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
+    {% if execute and not edr_cli_run %}
         {% set nodes = elementary.get_nodes_from_graph() %}
-        {% set table_monitors = [] %}
-        {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
-            {% set table_config_dict = elementary.get_table_config(node) %}
-            {% if table_config_dict is not none %}
-                {% do table_monitors.append(table_config_dict) %}
-            {% endif %}
-        {% endfor %}
-        {% if table_monitors|length > 0 %}
-            {% do elementary.insert_dicts_to_table(table_config_relation, table_monitors) %}
-        {% endif %}
-        -- remove empty rows
-        {% do elementary.remove_empty_rows(table_config_relation) %}
+        {% set test_nodes = nodes | selectattr('resource_type', '==', 'test') %}
+        {% set config_in_tests = elementary.get_config_from_tests(test_nodes) %}
+        {% do elementary.upload_tables_configuration(nodes, config_in_tests) %}
+        {% do elementary.upload_columns_configuration(nodes, config_in_tests) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
 
-{% macro upload_columns_configuration() %}
-    {% if execute %}
-        {% set empty_columns_config_query = elementary.empty_table([('full_column_name', 'string'),
-                                                                    ('database_name', 'string'),
-                                                                    ('schema_name', 'string'),
-                                                                    ('table_name', 'string'),
-                                                                    ('column_name', 'string'),
-                                                                    ('column_monitors', 'string')]) %}
-        {% set column_config_relation = elementary.create_source_table('column_monitors_config', empty_columns_config_query, True) %}
-        {% set nodes = elementary.get_nodes_from_graph() %}
-        {% set column_monitors = [] %}
-        {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
-            {% set columns_config_dict = elementary.get_columns_config(node) %}
-            {% if columns_config_dict is not none %}
-                {% do column_monitors.append(columns_config_dict) %}
+{% macro upload_tables_configuration(nodes, config_in_tests) %}
+    {% set empty_table_config_query = elementary.empty_table([('full_table_name', 'string'),
+                                                              ('database_name', 'string'),
+                                                              ('schema_name', 'string'),
+                                                              ('table_name', 'string'),
+                                                              ('timestamp_column', 'string'),
+                                                              ('bucket_duration_hours', 'int'),
+                                                              ('table_monitored', 'boolean'),
+                                                              ('table_monitors', 'string'),
+                                                              ('columns_monitored', 'boolean')]) %}
+    {% set table_config_relation = elementary.create_source_table('table_monitors_config', empty_table_config_query, True) %}
+    {% set table_monitors = [] %}
+    {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
+        {% set table_config_dict = elementary.get_table_config(node, config_in_tests) %}
+        {% if table_config_dict is not none %}
+            {% do table_monitors.append(table_config_dict) %}
+        {% endif %}
+    {% endfor %}
+    {% if table_monitors|length > 0 %}
+        {% do elementary.insert_dicts_to_table(table_config_relation, table_monitors) %}
+    {% endif %}
+    -- remove empty rows
+    {% do elementary.remove_empty_rows(table_config_relation) %}
+{% endmacro %}
+
+{% macro upload_columns_configuration(nodes, config_in_tests) %}
+    {% set empty_columns_config_query = elementary.empty_table([('full_column_name', 'string'),
+                                                                ('database_name', 'string'),
+                                                                ('schema_name', 'string'),
+                                                                ('table_name', 'string'),
+                                                                ('column_name', 'string'),
+                                                                ('column_monitors', 'string')]) %}
+    {% set column_config_relation = elementary.create_source_table('column_monitors_config', empty_columns_config_query, True) %}
+    {% set column_monitors = [] %}
+    {% for node in nodes | selectattr('resource_type', 'in', 'seed,source,model') -%}
+        {% do column_monitors.extend(elementary.get_columns_config(node, config_in_tests)) %}
+    {% endfor %}
+    {% if column_monitors | length > 0 %}
+        {% do elementary.insert_dicts_to_table(column_config_relation, column_monitors) %}
+    {% endif %}
+    -- remove empty rows
+    {% do elementary.remove_empty_rows(column_config_relation) %}
+{% endmacro %}
+
+{% macro get_config_from_tests(test_nodes) %}
+    {% set config_in_tests = {} %}
+    {% for node in test_nodes %}
+        {% set edr_config = elementary.get_edr_config_from_test(node) %}
+        {% set model_unique_id = edr_config.get('model_unique_id') %}
+        {% if model_unique_id %}
+            {% set table_monitors = edr_config.get('table_monitors') %}
+            {% if not table_monitors %}
+                {% set table_monitors = [] %}
+            {% endif %}
+            {% if model_unique_id not in config_in_tests %}
+                {% do config_in_tests.update({model_unique_id: {'table_monitors': table_monitors, 'columns': {}}}) %}
+            {% else %}
+                {% do config_in_tests[model_unique_id]['table_monitors'].extend(table_monitors) %}
+            {% endif %}
+            {% set column_monitors = edr_config.get('column_monitors') %}
+            {% if not column_monitors %}
+                {% set column_monitors = [] %}
+            {% endif %}
+            {% set column_name = edr_config.get('column_name') %}
+            {% if column_name %}
+                {% if column_name in config_in_tests[model_unique_id]['columns'] %}
+                    {% do config_in_tests[model_unique_id]['columns'][column_name].extend(column_monitors) %}
+                {% else %}
+                    {% do config_in_tests[model_unique_id]['columns'].update({column_name: column_monitors}) %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    {{ return(config_in_tests) }}
+{% endmacro %}
+
+{% macro find_test_model_unique_id(test_depends_on) %}
+    {% set depends_on_nodes = test_depends_on.get('nodes') %}
+    {% if depends_on_nodes %}
+        {% for node in depends_on_nodes %}
+            {% if not node.startswith('model.elementary,') %}
+                {{ return(node) }}
             {% endif %}
         {% endfor %}
-        {% if column_monitors | length > 0 %}
-            {% do elementary.insert_dicts_to_table(column_config_relation, column_monitors) %}
-        {% endif %}
-        -- remove empty rows
-        {% do elementary.remove_empty_rows(column_config_relation) %}
     {% endif %}
-    {{ return('') }}
+    {{ return(none) }}
+{% endmacro %}
+
+{% macro get_edr_config_from_test(test_node) %}
+    {% set edr_config = {} %}
+    {% set test_metadata = test_node.get('test_metadata') %}
+    {% if test_metadata %}
+        {% set test_name = test_metadata.get('name') %}
+        {% set test_namespace = test_metadata.get('namespace') %}
+        {% set test_params = test_metadata.get('kwargs') %}
+        {% if test_params %}
+            {% set test_column_name = test_params.get('column_name') %}
+            {% set test_column_monitors = test_params.get('column_tests') %}
+            {% if not test_column_monitors %}
+                {% set test_column_monitors = [] %}
+            {% endif %}
+            {% set test_table_monitors = test_params.get('table_tests') %}
+            {% if not test_table_monitors %}
+                {% set test_table_monitors = [] %}
+            {% endif %}
+
+            {% if test_namespace == 'elementary' %}
+                {% set test_model_unique_id = none %}
+                {% set test_depends_on = test_node.get('depends_on') %}
+                {% if test_depends_on %}
+                    {% set test_model_unique_id = find_test_model_unique_id(test_depends_on) %}
+                {% endif %}
+                {% if test_name == 'table_anomalies' and test_model_unique_id %}
+                    {% set edr_config = {'model_unique_id': test_model_unique_id,
+                                         'table_monitors': test_table_monitors} %}
+                {% elif test_name == 'column_anomalies' and test_model_unique_id %}
+                    {% set edr_config = {'column_name': test_column_name,
+                                         'model_unique_id': test_model_unique_id,
+                                         'column_monitors': test_column_monitors} %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    {{ return(edr_config) }}
 {% endmacro %}
 
 {% macro get_nodes_from_graph() %}
@@ -76,28 +154,6 @@
     {{ return(table_name) }}
 {% endmacro %}
 
-{% macro get_edr_config_in_columns(node) %}
-    {% set edr_config_in_columns = [] %}
-    {% if 'columns' in node %}
-        {% set columns = node.columns %}
-        {% if columns is mapping %}
-            {% for column in columns.values() %}
-                {% if column is mapping %}
-                    {% set column_meta = column.get('meta') %}
-                    {% if column_meta is mapping %}
-                        {% set column_edr_config = column_meta.get('edr') %}
-                        {% if column_edr_config is mapping %}
-                            {% do column_edr_config.update({'name': column.get('name')}) %}
-                            {% do edr_config_in_columns.append(column_edr_config) %}
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    {% endif %}
-    {{ return(edr_config_in_columns) }}
-{% endmacro %}
-
 {% macro get_edr_config(node) %}
     {% set res = {} %}
     {% set edr_config = node.config.get('edr') %}
@@ -115,44 +171,51 @@
     {% if edr_config is mapping %}
         {% do res.update(edr_config) %}
     {% endif %}
-    {% set edr_config_in_columns = elementary.get_edr_config_in_columns(node) %}
-    {% if edr_config_in_columns | length > 0 %}
-        {% do res.update({'columns': edr_config_in_columns}) %}
-    {% endif %}
     {{ return(res) }}
 {% endmacro %}
 
-{% macro get_table_config(node) %}
-    {% set table_name = elementary.get_table_name(node) %}
+{% macro get_table_config(node, config_in_tests) %}
     {% set edr_config = elementary.get_edr_config(node) %}
-    {% if edr_config is mapping %}
-        {% set table_monitored = edr_config.get('monitored') %}
-        {% set columns_monitored = edr_config.get('columns_monitored') %}
-        {% if table_monitored is not none or columns_monitored is not none %}
-            {% set full_name = node.database + '.' + node.schema + '.' + table_name %}
-            {{ return({'full_table_name': full_name, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'timestamp_column': edr_config.get('timestamp_column'), 'bucket_duration_hours': 24, 'table_monitored': table_monitored, 'table_monitors': edr_config.get('table_monitors'), 'columns_monitored': columns_monitored}) }}
+    {% set node_unique_id = node.get('unique_id') %}
+    {% if edr_config and edr_config is mapping and node_unique_id in config_in_tests %}
+        {% set table_monitors = config_in_tests[node_unique_id].get('table_monitors') %}
+        {% set columns = config_in_tests[node_unique_id].get('columns') %}
+        {% if columns %}
+            {% set columns_monitored = True %}
         {% endif %}
+        {% set table_name = elementary.get_table_name(node) %}
+        {% set full_table_name = node.database + '.' + node.schema + '.' + table_name %}
+        {% set timestamp_column = edr_config.get('timestamp_column') %}
+        {{ return({'full_table_name': full_table_name | upper,
+                   'database_name': node.database | upper,
+                   'schema_name': node.schema | upper,
+                   'table_name': table_name | upper,
+                   'timestamp_column': timestamp_column | upper,
+                   'bucket_duration_hours': 24,
+                   'table_monitored': True,
+                   'table_monitors': table_monitors,
+                   'columns_monitored': columns_monitored}) }}
     {% endif %}
     {{ return(none) }}
 {% endmacro %}
 
-{% macro get_columns_config(node) %}
-    {% set table_name = elementary.get_table_name(node) %}
-    {% set edr_config = elementary.get_edr_config(node) %}
-    {% if edr_config is mapping %}
-        {% set columns = edr_config.get('columns') %}
-        {% if columns is sequence %}
-            {% for column in columns %}
-                {% if column is mapping %}
-                    {% set column_name = column.get('name') %}
-                    {% set column_monitors = column.get('column_monitors') %}
-                    {% if column_name is not none %}
-                        {% set full_name = node.database + '.' + node.schema + '.' + table_name + '.' + column_name %}
-                        {{ return({'full_column_name': full_name, 'database_name': node.database, 'schema_name': node.schema, 'table_name': table_name, 'column_name': column_name, 'column_monitors': column_monitors}) }}
-                    {% endif %}
-                {% endif %}
+{% macro get_columns_config(node, config_in_tests) %}
+    {% set column_config_dicts = [] %}
+    {% set node_unique_id = node.get('unique_id') %}
+    {% if node_unique_id in config_in_tests %}
+        {% set columns = config_in_tests[node_unique_id].get('columns') %}
+        {% if columns %}
+            {% set table_name = elementary.get_table_name(node) %}
+            {% for column_name, column_monitors in columns.items() %}
+                {% set full_column_name = node.database + '.' + node.schema + '.' + table_name + '.' + column_name %}
+                {% do column_config_dicts.append({'full_column_name': full_column_name | upper,
+                                                  'database_name': node.database | upper,
+                                                  'schema_name': node.schema | upper,
+                                                  'table_name': table_name | upper,
+                                                  'column_name': column_name | upper,
+                                                  'column_monitors': column_monitors}) %}
             {% endfor %}
         {% endif %}
     {% endif %}
-    {{ return(none) }}
+    {{ return(column_config_dicts) }}
 {% endmacro %}
