@@ -175,9 +175,8 @@
 {% endmacro %}
 
 {% macro get_table_config(node, config_in_tests) %}
-    {% set edr_config = elementary.get_edr_config(node) %}
     {% set node_unique_id = node.get('unique_id') %}
-    {% if edr_config and edr_config is mapping and node_unique_id in config_in_tests %}
+    {% if node_unique_id in config_in_tests %}
         {% set table_monitors = config_in_tests[node_unique_id].get('table_monitors') %}
         {% set columns = config_in_tests[node_unique_id].get('columns') %}
         {% if columns %}
@@ -185,12 +184,16 @@
         {% endif %}
         {% set table_name = elementary.get_table_name(node) %}
         {% set full_table_name = node.database + '.' + node.schema + '.' + table_name %}
+        {% set edr_config = elementary.get_edr_config(node) %}
         {% set timestamp_column = edr_config.get('timestamp_column') %}
+        {% if timestamp_column %}
+            {% set timestamp_column = timestamp_column | upper %}
+        {% endif %}
         {{ return({'full_table_name': full_table_name | upper,
                    'database_name': node.database | upper,
                    'schema_name': node.schema | upper,
                    'table_name': table_name | upper,
-                   'timestamp_column': timestamp_column | upper,
+                   'timestamp_column': timestamp_column,
                    'bucket_duration_hours': 24,
                    'table_monitored': True,
                    'table_monitors': table_monitors,
