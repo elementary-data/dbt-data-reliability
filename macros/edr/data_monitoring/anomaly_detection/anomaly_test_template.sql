@@ -84,8 +84,81 @@
 
 {% endtest %}
 
-{% macro column_anomalies(model, column_name, column_tests) %}
-{% endmacro %}
+{% test column_anomalies(model, column_name, column_tests) %}
+    -- depends_on: {{ ref('final_should_backfill') }}
+    -- depends_on: {{ ref('data_monitoring_metrics') }}
+    -- depends_on: {{ ref('alerts_data_monitoring') }}
+    -- depends_on: {{ ref('metrics_anomaly_score') }}
+    {% if execute %}
+        {% set database_name = database %}
+        {% set schema_name = target.schema ~ '__elementary_tests' %}
+        --TODO: maybe should contain the monitors or something
+        {% set temp_metrics_table_name = this.name ~ '__metrics' %}
+        {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
+                                                                                   schema=schema_name,
+                                                                                   identifier=temp_metrics_table_name,
+                                                                                   type='table') -%}
+        {% if not adapter.check_schema_exists(database_name, schema_name) %}
+            {% do dbt.create_schema(temp_table_relation) %}
+        {% endif %}
+
+        {% set nodes = elementary.get_nodes_from_graph() %}
+        {% set table_config_dict = dict() %}
+        {% for node in nodes | selectattr('resource_type', 'in', 'model') -%}
+            {% if node.name == model.name %}
+                {% set model_edr_table_config = elementary.get_table_config(node) %}
+                {% if model_edr_table_config %}
+                    {% do table_config_dict.update(model_edr_table_config) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {% set full_table_name = table_config_dict['full_table_name'] %}
+        {% set timestamp_column = table_config_dict['timestamp_column'] %}
+
+        {%- set column_objects = adapter.get_columns_in_relation(model) -%}
+        {% set column_monitors = [] %}
+        {% for column_obj in column_objects %}
+            {% if column_obj.name | lower == column_name | lower %}
+                {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests)) %}
+            {% endif %}
+        {% endfor %}
+
+        --TODO: implement it
+        {%- set is_timestamp = true %}
+        --TODO: use metrics table and remove this model forever
+        {%- set should_backfill_query %}
+        select min_timeframe_start
+        from {{ ref('final_should_backfill') }}
+            where lower(full_table_name) = lower('{{ full_table_name }}')
+        {%- endset %}
+        {%- set timeframe_start = "'" ~ elementary.result_value(should_backfill_query) ~ "'" %}
+
+        {%- set column_monitoring_query = elementary.column_monitoring_query(full_table_name, timestamp_column, is_timestamp, timeframe_start, column_name, column_monitors) %}
+        {% do run_query(dbt.create_table_as(True, temp_table_relation, column_monitoring_query)) %}
+        -- TODO: maybe we should use adapter's merge logic?
+        {% set target_relation = ref('data_monitoring_metrics') %}
+        {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+        {% set merge_sql = dbt.get_delete_insert_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
+        {% do run_query(merge_sql) %}
+
+        {% set anomaly_alerts_query = elementary.get_anomaly_alerts_query(full_table_name, column_monitors, column_name) %}
+        {% set temp_alerts_table_name = this.name ~ '__alerts' %}
+        {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
+                                                                                   schema=schema_name,
+                                                                                   identifier=temp_alerts_table_name,
+                                                                                   type='table') -%}
+        --TODO: if exists should we drop or the following line will run create or replace?
+        {% do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
+        {% set alerts_target_relation = ref('alerts_data_monitoring') %}
+        {% set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
+        {% set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
+        {% do run_query(merge_sql) %}
+        select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
+    {% else %}
+        select 1 as num where num = 2
+    {% endif %}
+{% endtest %}
 
 {% macro get_monitors_empty_table_query() %}
         {% set monitors_empty_table_query = elementary.empty_table([('id','str'),

@@ -4,7 +4,7 @@
 {# for non-dbt tables database_name and schema_name are required #}
 
     {%- if not database_name is defined %}
-        {%- set database_name = adapter.database %}
+        {%- set database_name = elementary.target_database() %}
     {%- endif %}
     {%- if not schema_name is defined %}
         {%- set schema_name = target.schema %}
