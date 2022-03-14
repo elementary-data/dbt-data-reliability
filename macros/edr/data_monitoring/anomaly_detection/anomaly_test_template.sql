@@ -70,7 +70,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        --TODO: if exists should we drop or the following line will run create or replace?
+        -- TODO: if exists should we drop or the following line will run create or replace?
         {% do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
         {% set alerts_target_relation = ref('alerts_data_monitoring') %}
         {% set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
@@ -78,6 +78,7 @@
         {% do run_query(merge_sql) %}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
     {% else %}
+        -- TODO: change to a query that bigquery will not hate
         select 1 as num where num = 2
     {% endif %}
 

@@ -30,14 +30,14 @@
 {% endmacro %}
 
 {% macro bigquery__full_name_split(part_name) %}
-    {%- if part_name == 'database_name' %}
+    {%- if part_name == 'database_name' -%}
         {%- set part_index = 0 %}
-    {%- elif part_name == 'schema_name' %}
+    {%- elif part_name == 'schema_name' -%}
         {%- set part_index = 1 %}
-    {%- elif part_name == 'table_name' %}
-        {%- set part_index = 2 %}
-    {%- else %}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 2 -%}
+    {%- else -%}
         {{ return('') }}
-    {%- endif %}
+    {%- endif -%}
     trim(split(full_table_name,'.')[OFFSET({{ part_index }})],'"') as {{ part_name }}
 {% endmacro %}

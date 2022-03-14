@@ -1,7 +1,6 @@
 {% macro column_monitoring_query(full_table_name, timestamp_column, is_timestamp, timeframe_start, column_name, column_monitors) %}
 
     {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {%- set column_monitors_list = elementary.all_column_monitors() %}
 
     with timeframe_data as (
 
