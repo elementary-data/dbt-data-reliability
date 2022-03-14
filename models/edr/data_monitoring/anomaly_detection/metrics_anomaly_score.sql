@@ -23,7 +23,7 @@ time_window_aggregation as (
         first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
         data_monitoring_metrics on (edr_daily_bucket = bucket_end)
-    {{ dbt_utils.group_by(10) }}
+    {{ dbt_utils.group_by(11) }}
 
 ),
 

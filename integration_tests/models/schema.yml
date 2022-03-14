@@ -19,16 +19,3 @@ models:
               column_tests:
                 - min_length
                 - max_length
-
-  - name: numeric_column_anomalies
-    config:
-      edr:
-        monitored: true
-        timestamp_column: 'updated_at'
-        columns_monitored: true
-  - name: any_type_column_anomalies
-    config:
-      edr:
-        monitored: true
-        timestamp_column: 'updated_at'
-        columns_monitored: true

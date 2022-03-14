@@ -3,6 +3,7 @@
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
+    -- depends_on: {{ ref('final_tables_config') }}
     {%- if execute %}
 
         {#- creates temp relation for test metrics -#}
@@ -28,9 +29,9 @@
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
-        {%- set column_monitors = get_column_monitors(model, column_name, column_tests) -%}
+        {%- set column_monitors = elementary.get_column_monitors(model, column_name, column_tests) -%}
 
-        {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
+        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
 
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
@@ -60,7 +61,7 @@
         {%- set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
         {%- do run_query(merge_sql) %}
 
-        {#- return anomalies query as standart test query -#}
+        {# return anomalies query as standart test query #}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
     
     {%- else %}

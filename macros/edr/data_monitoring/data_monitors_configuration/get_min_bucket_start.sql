@@ -12,7 +12,7 @@
             from {{ ref('monitors_runs') }}
             where upper(full_table_name) = upper('{{ full_table_name }}')
             {%- if monitors %}
-                and monitor_name in {{ monitors_tuple }}
+                and metric_name in {{ monitors_tuple }}
             {%- endif %}
             {%- if column_name %}
                 and upper(column_name) = upper('{{ column_name }}')

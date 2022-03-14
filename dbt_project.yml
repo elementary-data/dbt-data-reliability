@@ -67,8 +67,5 @@ models:
   elementary_sources:
     +enabled: { elementary.not_edr_run() }
 
-on-run-end:
-  - "{{ anomaly_detection_merge() }}"
-
 on-run-start:
   - "{{ elementary.upload_edr_configuration() }}"
