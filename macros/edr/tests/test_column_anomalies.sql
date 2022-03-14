@@ -33,9 +33,11 @@
         {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
 
         {#- execute table monitors and write to temp test table -#}
+        {{ elementary.test_log('start', full_table_name, column_name) }}
         {%- set column_monitoring_query = elementary.column_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
         --TODO: if exists should we drop or the following line will run create or replace?
         {%- do run_query(dbt.create_table_as(True, temp_table_relation, column_monitoring_query)) %}
+        {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {#- merge results to incremental metrics table -#}
         -- TODO: maybe we should use adapter's merge logic?
@@ -62,8 +64,13 @@
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
     
     {%- else %}
-        -- TODO: should we add a log message that no monitors were executed for this test?
+
         {#- test must run an sql query -#}
+        {{ elementary.test_log('no_monitors', full_table_name, column_name) }}
         {{ elementary.no_results_query() }}
+
     {%- endif %}
 {% endtest %}
+
+
+

@@ -82,6 +82,7 @@
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
+            {{ elementary.null_string() }} as source_value,
             {%- if timestamp_column %}
             edr_bucket as bucket_start,
             {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,

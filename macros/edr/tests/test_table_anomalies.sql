@@ -4,8 +4,8 @@
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     {% if execute %}
-
-        {# creates temp relation for test metrics #}
+        
+        {#- creates temp relation for test metrics -#}
         {% set database_name = database %}
         {% set schema_name = target.schema ~ '__elementary_tests' %}
         {% set temp_metrics_table_name = this.name ~ '__metrics' %}
@@ -17,7 +17,7 @@
             {% do dbt.create_schema(temp_table_relation) %}
         {% endif %}
 
-        {# get table configuration #}
+        {#- get table configuration -#}
         --TODO: not sure this works
         {%- set model_relation = dbt.load_relation(model) %}
         {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
@@ -31,19 +31,21 @@
         {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
         {%- set table_monitors = elementary.get_final_table_monitors(table_tests) %}
 
-        {# execute table monitors and write to temp test table #}
+        {#- execute table monitors and write to temp test table -#}
+        {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors) %}
         --TODO: if exists should we drop or the following line will run create or replace?
         {% do run_query(dbt.create_table_as(True, temp_table_relation, table_monitoring_query)) %}
-
-        {# merge results to incremental metrics table #}
+        {{ elementary.test_log('end', full_table_name) }}
+        
+        {#- merge results to incremental metrics table -#}
         -- TODO: maybe we should use adapter's merge logic?
         {% set target_relation = ref('data_monitoring_metrics') %}
         {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
         {% set merge_sql = dbt.get_delete_insert_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
         {% do run_query(merge_sql) %}
 
-        {# query if there is an anomaly in recent metrics #}
+        {#- query if there is an anomaly in recent metrics -#}
         {% set anomaly_alerts_query = elementary.get_anomaly_alerts_query(full_table_name, table_monitors) %}
         {% set temp_alerts_table_name = this.name ~ '__alerts' %}
         {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
@@ -57,13 +59,19 @@
         {% set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
         {% do run_query(merge_sql) %}
 
-        {# return anomalies query as standart test query #}
+        {#- return anomalies query as standart test query -#}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
 
     {% else %}
-        -- TODO: should we add a log message that no monitors were executed for this test?
-        {# test must run an sql query #}
+
+        {#- test must run an sql query -#}
+        {{ elementary.test_log('no_monitors', full_table_name) }}
         {{ elementary.no_results_query() }}
+
     {% endif %}
 
 {% endtest %}
+
+
+  
+

@@ -34,6 +34,7 @@
 
         {#- execute table monitors and write to temp test table -#}
         {%- if columns_config | length > 0 %}
+            {{ elementary.test_log('start', full_table_name, 'all columns') }}
             {%- for column in columns_config %}
                 {%- set column_name = column['column_name'] %}
                 {%- set column_monitors = column['monitors'] %}
@@ -44,6 +45,7 @@
                     {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
                     {%- do elementary.insert_as_select(temp_table_name, column_monitoring_query) -%}
             {%- endfor %}
+        {{ elementary.test_log('end', full_table_name, 'all columns') }}
         {%- endif %}
 
         {#- merge results to incremental metrics table -#}
@@ -71,8 +73,12 @@
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
 
     {%- else %}
-        -- TODO: should we add a log message that no monitors were executed for this test?
+
+        {{ elementary.test_log('no_monitors', full_table_name, 'all columns') }}
         {#- test must run an sql query -#}
         {{ elementary.no_results_query() }}
+
     {%- endif %}
 {% endtest %}
+
+
