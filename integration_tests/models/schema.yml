@@ -66,18 +66,35 @@ models:
           - elementary.column_anomalies:
               tags: ['elementary']
               column_tests:
-                - avg
-      - name: max_
+                - average
+      - name: max
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
+              column_tests:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - average
       - name: average
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
               column_tests:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
                 - average
-                - null_count
       - name: zero_count
         tests:
           - elementary.column_anomalies:

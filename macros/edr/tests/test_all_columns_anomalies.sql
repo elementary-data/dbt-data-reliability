@@ -44,7 +44,6 @@
                     {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
                     {%- do elementary.insert_as_select(temp_table_name, column_monitoring_query) -%}
             {%- endfor %}
-        {{ elementary.test_log('end', full_table_name, 'all columns') }}
         {%- endif %}
 
         {#- merge results to incremental metrics table -#}
@@ -66,6 +65,7 @@
         {%- set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
         {%- set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
         {%- do run_query(merge_sql) %}
+        {{ elementary.test_log('end', full_table_name, 'all columns') }}
 
         {# return anomalies query as standart test query #}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}

@@ -35,7 +35,6 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors) %}
         {%- do run_query(dbt.create_table_as(True, temp_table_relation, table_monitoring_query)) %}
-        {{ elementary.test_log('end', full_table_name) }}
         
         {#- merge results to incremental metrics table -#}
         -- TODO: maybe we should use adapter's merge logic?
@@ -56,6 +55,7 @@
         {% set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
         {% set merge_sql = dbt.get_delete_insert_merge_sql(alerts_target_relation, alerts_temp_table_relation, 'alert_id', dest_columns) %}
         {% do run_query(merge_sql) %}
+        {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standart test query #}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
