@@ -51,10 +51,8 @@
             {% do tables_dict.update({table_key: table_dict}) %}
         {% endfor %}
         {% set sources_dict = {} %}
-        {{ debug() }}
         {% for table_key, table_dict in tables_dict.items() %}
             {% set table_database_name, table_schema_name, table_name = table_key.split('.') %}
-            {{ debug() }}
             {% set source_key = table_database_name ~ '.' ~ table_schema_name %}
             {% set source_dict = sources_dict.get(source_key) %}
             {% if not source_dict %}
@@ -65,6 +63,6 @@
         {% endfor %}
         {% set sources_yml_dict = {'version': 2, 'sources': sources_dict.values() | list} %}
         {% set sources_yml = toyaml(sources_yml_dict) %}
-        {% do log(sources_yml, info=True) %}
+        {% do edr_log(sources_yml, info=True) %}
     {% endif %}
 {% endmacro %}
