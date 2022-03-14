@@ -20,7 +20,7 @@
         {#- get column configuration -#}
         -- TODO: not sure this works
         {%- set model_relation = dbt.load_relation(model) %}
-        {%- set full_table_name = model_relation.include(database=True, schema=True, identifier=True) | upper %}
+        {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
         -- TODO: see if we need to change the query to a new final_table_cofig schema
         {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
         {%- set table_config = elementary.result_row_to_dict(config_query) %}
@@ -28,7 +28,7 @@
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
-        {%- set column_monitors = get_columns_monitors(model, column_name, column_tests) -%}
+        {%- set column_monitors = get_column_monitors(model, column_name, column_tests) -%}
 
         {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
 

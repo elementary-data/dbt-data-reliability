@@ -1,4 +1,4 @@
-{% macro get_columns_monitors(model, column_name, column_tests=none) %}
+{% macro get_column_monitors(model, column_name, column_tests=none) %}
     {%- set column_objects = adapter.get_columns_in_relation(model) -%}
     {%- set column_monitors = [] -%}
     {%- for column_obj in column_objects %}
@@ -7,6 +7,24 @@
         {%- endif %}
     {%- endfor %}
     {{ return(column_monitors) }}
+{% endmacro %}
+
+
+{% macro get_all_columns_monitors(model, column_tests=none) %}
+
+    {%- set columns_config = [] %}
+    {%- set model_relation = dbt.load_relation(model) %}
+    {%- set columns_from_relation = adapter.get_columns_in_relation(relation) -%}
+
+    {%- for column in columns_from_relation %}
+        {%- set column_normalized_type = elementary.normalize_data_type(column['dtype']) %}
+        {%- set column_monitors = elementary.column_monitors_by_type(column_normalized_type, column_tests) %}
+        {%- set column_item = {'column_name': column['column'], 'monitors': column_monitors} %}
+        {%- do columns.append(column_item) -%}
+    {% endfor %}
+
+    {{ return(columns_config) }}
+
 {% endmacro %}
 
 

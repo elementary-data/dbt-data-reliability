@@ -20,7 +20,7 @@
         {# get table configuration #}
         --TODO: not sure this works
         {%- set model_relation = dbt.load_relation(model) %}
-        {%- set full_table_name = model_relation.include(database=True, schema=True, identifier=True) | upper %}
+        {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
         --TODO: see if we need to change the query to a new final_table_cofig schema
         {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
         {%- set table_config = elementary.result_row_to_dict(config_query) %}
