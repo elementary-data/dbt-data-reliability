@@ -2,9 +2,9 @@
 
     {%- set normalized_data_type = elementary.normalize_data_type(data_type) %}
 
-    {%- set default_all_types = var('edr_monitors')['column_any_type'] | list %}
-    {%- set default_numeric_monitors = var('edr_monitors')['column_numeric'] | list %}
-    {%- set default_string_monitors = var('edr_monitors')['column_string'] | list %}
+    {%- set default_all_types = elementary.get_config_var('edr_monitors')['column_any_type'] | list %}
+    {%- set default_numeric_monitors = elementary.get_config_var('edr_monitors')['column_numeric'] | list %}
+    {%- set default_string_monitors = elementary.get_config_var('edr_monitors')['column_string'] | list %}
 
     {# If config_monitors is null, default is to use all relevant monitors for this data type #}
     {%- if config_monitors is defined and config_monitors is not none and config_monitors | length > 0 %}
@@ -43,10 +43,10 @@
 
 {% macro all_column_monitors() %}
     {%- set all_column_monitors = [] %}
-    {%- set numeric = var('edr_monitors')['column_numeric'] %}
-    {%- do all_column_monitors.extend(var('edr_monitors')['column_any_type']) -%}
-    {%- do all_column_monitors.extend(var('edr_monitors')['column_string']) -%}
-    {%- do all_column_monitors.extend(var('edr_monitors')['column_numeric']) -%}
+    {%- set numeric = elementary.get_config_var('edr_monitors')['column_numeric'] %}
+    {%- do all_column_monitors.extend(elementary.get_config_var('edr_monitors')['column_any_type']) -%}
+    {%- do all_column_monitors.extend(elementary.get_config_var('edr_monitors')['column_string']) -%}
+    {%- do all_column_monitors.extend(elementary.get_config_var('edr_monitors')['column_numeric']) -%}
     {{ return(all_column_monitors) }}
 {% endmacro %}
 

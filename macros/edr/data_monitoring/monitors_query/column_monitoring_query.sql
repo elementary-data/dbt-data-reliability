@@ -45,7 +45,6 @@
                     {%- if 'missing_percent' in column_monitors -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent
                 from timeframe_data
                 group by 1,2
-                {% if not loop.last %} union all {% endif %}
         {%- else %}
             {{ elementary.empty_column_monitors_cte() }}
         {%- endif %}
@@ -82,10 +81,19 @@
                 {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
-        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}
+        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}
 
     )
 
-    select * from metrics_final
+    select *,
+        {{ dbt_utils.surrogate_key([
+            'full_table_name',
+            'column_name',
+            'metric_name',
+            'bucket_start',
+            'bucket_end'
+        ]) }} as id,
+        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
+    from metrics_final
 
 {% endmacro %}

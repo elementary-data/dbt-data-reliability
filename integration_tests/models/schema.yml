@@ -11,6 +11,15 @@ models:
           tags: ['elementary']
           table_tests:
             - row_count
+    columns:
+      - name: min_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary_c']
+              column_tests:
+                - min_length
+                - max_length
+
   - name: numeric_column_anomalies
     config:
       edr:
