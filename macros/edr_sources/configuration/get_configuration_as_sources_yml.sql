@@ -63,6 +63,6 @@
         {% endfor %}
         {% set sources_yml_dict = {'version': 2, 'sources': sources_dict.values() | list} %}
         {% set sources_yml = toyaml(sources_yml_dict) %}
-        {% do elementary.edr_log(sources_yml, info=True) %}
+        {% do elementary.edr_log(sources_yml) %}
     {% endif %}
 {% endmacro %}
