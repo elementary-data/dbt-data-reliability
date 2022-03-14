@@ -1,4 +1,4 @@
-{% macro table_monitoring_query(full_table_name, timestamp_column, is_timestamp, table_monitors, timeframe_start) %}
+{% macro table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors) %}
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set table_monitors_list = ['row_count'] %}
@@ -14,7 +14,7 @@
         from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(timeframe_start) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
             and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
         {%- else %}
             true
@@ -25,7 +25,7 @@
     daily_buckets as (
 
         {{ elementary.daily_buckets_cte() }}
-        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(timeframe_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
 
     ),
 
