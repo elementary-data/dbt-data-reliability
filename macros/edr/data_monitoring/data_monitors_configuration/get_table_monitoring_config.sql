@@ -1,14 +1,13 @@
 {% macro get_table_monitoring_config(full_table_name) %}
     -- depends_on: {{ ref('final_columns_config') }}
     -- depends_on: {{ ref('final_tables_config') }}
-    -- depends_on: {{ ref('final_should_backfill') }}
-    {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
-    {%- set table_config = elementary.result_row_to_dict(config_query) %}
-
+    -- depends_on: {{ ref('monitors_runs') }}
     {%- if execute%}
+        {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
+        {%- set table_config = elementary.result_row_to_dict(config_query) %}
+
         {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-        {%- set columns_monitored = elementary.insensitive_get_dict_value(table_config, 'columns_monitored') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {%- set table_monitors_str = elementary.insensitive_get_dict_value(table_config, 'table_monitors') %}
 
@@ -28,13 +27,7 @@
         {% endif %}
         {% do table_config.update({'final_table_monitors': final_table_monitors}) %}
 
-        {%- if timestamp_column_data_type == 'string' %}
-            {%- set is_timestamp = elementary.try_cast_column_to_timestamp(full_table_name, timestamp_column) %}
-        {%- elif timestamp_column_data_type == 'timestamp' %}
-            {%- set is_timestamp = true %}
-        {%- else %}
-            {%- set is_timestamp = false %}
-        {%- endif %}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name,timestamp_column,timestamp_column_data_type) %}
         {% do table_config.update({'is_timestamp': is_timestamp}) %}
 
         {% set column_monitors = none %}

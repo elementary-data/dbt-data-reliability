@@ -7,7 +7,7 @@
 
 
 {% test table_anomalies(model, table_tests) %}
-    -- depends_on: {{ ref('final_should_backfill') }}
+    -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
@@ -25,37 +25,24 @@
             {% do dbt.create_schema(temp_table_relation) %}
         {% endif %}
 
-        {% set nodes = elementary.get_nodes_from_graph() %}
-        {% set table_config_dict = dict() %}
-        {% for node in nodes | selectattr('resource_type', 'in', 'model') -%}
-            {% if node.name == model.name %}
-                {% set model_edr_table_config = elementary.get_table_config(node) %}
-                {% if model_edr_table_config %}
-                    {% do table_config_dict.update(model_edr_table_config) %}
-                {% endif %}
-            {% endif %}
-        {% endfor %}
+        {# getting table configuration #}
+        --TODO: see if we need to change the query to a new final_table_cofig schema
+        {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
+        {%- set table_config = elementary.result_row_to_dict(config_query) %}
 
-        {% set full_table_name = table_config_dict['full_table_name'] %}
-        {% set timestamp_column = table_config_dict['timestamp_column'] %}
+        {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
+        {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
+        {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
 
-        {%- set table_monitors = elementary.get_default_table_monitors() %}
-        {% if table_tests %}
-            {%- set table_monitors = table_tests %}
-        {% endif %}
+        --TODO: how do we get this from the test for lovely user?
+        {%- set table_monitors_str = elementary.insensitive_get_dict_value(table_config, 'table_monitors') %}
+        {%- set table_monitors = elementary.get_final_table_monitors(table_monitors_str) %}
 
-        --TODO: implement it
-        {%- set is_timestamp = true %}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name,timestamp_column,timestamp_column_data_type) %}
+        {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
 
-        --TODO: use metrics table and remove this model forever
-        {%- set should_backfill_query %}
-            select min_timeframe_start
-            from {{ ref('final_should_backfill') }}
-            where lower(full_table_name) = lower('{{ full_table_name }}')
-        {%- endset %}
-        {%- set timeframe_start = "'" ~ elementary.result_value(should_backfill_query) ~ "'" %}
+        {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, table_monitors, min_bucket_start ) %}
 
-        {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, table_monitors, timeframe_start) %}
         --TODO: if exists should we drop or the following line will run create or replace?
         {% do run_query(dbt.create_table_as(True, temp_table_relation, table_monitoring_query)) %}
         -- TODO: maybe we should use adapter's merge logic?
@@ -78,14 +65,15 @@
         {% do run_query(merge_sql) %}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
     {% else %}
-        -- TODO: change to a query that bigquery will not hate
-        select 1 as num where num = 2
+        -- TODO: should we add a log message that no monitors were executed for this test?
+        {# test must run an sql query #}
+        {{ elementary.no_results_query() }}
     {% endif %}
 
 {% endtest %}
 
 {% test column_anomalies(model, column_name, column_tests) %}
-    -- depends_on: {{ ref('final_should_backfill') }}
+    -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
@@ -132,9 +120,9 @@
         from {{ ref('final_should_backfill') }}
             where lower(full_table_name) = lower('{{ full_table_name }}')
         {%- endset %}
-        {%- set timeframe_start = "'" ~ elementary.result_value(should_backfill_query) ~ "'" %}
+        {%- set min_bucket_start  = "'" ~ elementary.result_value(should_backfill_query) ~ "'" %}
 
-        {%- set column_monitoring_query = elementary.column_monitoring_query(full_table_name, timestamp_column, is_timestamp, timeframe_start, column_name, column_monitors) %}
+        {%- set column_monitoring_query = elementary.column_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start , column_name, column_monitors) %}
         {% do run_query(dbt.create_table_as(True, temp_table_relation, column_monitoring_query)) %}
         -- TODO: maybe we should use adapter's merge logic?
         {% set target_relation = ref('data_monitoring_metrics') %}

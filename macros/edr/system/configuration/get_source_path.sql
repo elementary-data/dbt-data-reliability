@@ -12,8 +12,9 @@
 
 
 {% macro find_source_table(source_table_name) %}
-    {%- set database = adapter.database %}
-    {%- set info_schema_tables = elementary.from_information_schema('tables', database) %}
+
+    {%- set database_name = elementary.target_database() %}
+    {%- set info_schema_tables = elementary.from_information_schema('tables', database_name) %}
     {%- set query %}
         select
             concat(table_catalog, '.' , table_schema , '.' , table_name) as full_table_name

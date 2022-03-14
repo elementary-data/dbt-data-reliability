@@ -106,27 +106,9 @@ final as (
         column_name,
         data_type,
         column_monitors,
-
-        {% if is_incremental() %}
-            {%- set active_configs_query %}
-                select config_id from {{ this }}
-                where config_loaded_at = (select max(config_loaded_at) from {{ this }})
-            {% endset %}
-            {%- set active_configs = elementary.result_column_to_list(active_configs_query) %}
-
-            case when
-                config_id not in {{ elementary.strings_list_to_tuple(active_configs) }}
-            then true
-            else false end
-            as should_backfill,
-        {% else %}
-            true as should_backfill,
-        {% endif %}
-
         max(config_loaded_at) as config_loaded_at
-
     from config_existing_columns
-    group by 1,2,3,4,5,6,7,8,9
+    group by 1,2,3,4,5,6,7,8
 
 )
 
