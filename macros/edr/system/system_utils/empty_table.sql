@@ -33,7 +33,7 @@
 {% endmacro %}
 
 {% macro empty_alerts() %}
-    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('alert_description','str')]) }}
+    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('alert_description','str'),('owner','str'),('tags','str'),('alert_results_query','str'),('other','str')]) }}
 {% endmacro %}
 
 {% macro empty_data_monitors() %}

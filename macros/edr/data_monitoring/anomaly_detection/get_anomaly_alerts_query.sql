@@ -27,7 +27,11 @@
                 column_name,
                 'anomaly_detection' as alert_type,
                 metric_name as sub_type,
-                description as alert_description
+                description as alert_description,
+                {{ elementary.null_string() }} as owner,
+                {{ elementary.null_string() }} as tags,
+                {{ elementary.null_string() }} as alert_results_query,
+                {{ elementary.null_string() }} as other
             from anomalies
 
         )

@@ -25,7 +25,11 @@
                 {{ elementary.null_string() }} as column_name,
                 'schema_change' as alert_type,
                 change as sub_type,
-                change_description as alert_description
+                change_description as alert_description,
+                {{ elementary.null_string() }} as owner,
+                {{ elementary.null_string() }} as tags,
+                {{ elementary.null_string() }} as alert_results_query,
+                {{ elementary.null_string() }} as other
             from table_changes
 
         ),
@@ -41,7 +45,11 @@
                 column_name,
                 'schema_change' as alert_type,
                 change as sub_type,
-                change_description as alert_description
+                change_description as alert_description,
+                {{ elementary.null_string() }} as owner,
+                {{ elementary.null_string() }} as tags,
+                {{ elementary.null_string() }} as alert_results_query,
+                {{ elementary.null_string() }} as other
             from column_changes
 
         ),
