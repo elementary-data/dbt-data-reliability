@@ -36,17 +36,17 @@
             {% set table_dict = tables_dict.get(table_key) %}
             {% if not table_dict %}
                 {% set table_dict = {'name': table_name,
-                                     'tests': {'elementary.table_anomalies': {
+                                     'tests': [{'elementary.table_anomalies': {
                                                     'table_tests': table_monitors,
-                                                    'tags': ['elementary']}},
+                                                    'tags': ['elementary']}}],
                                      'columns': []
                                      } %}
             {% endif %}
             {% if column_name and columns_monitored %}
                 {% do table_dict['columns'].append({'name': column_name,
-                                                    'tests': {'elementary.column_anomalies': {
+                                                    'tests': [{'elementary.column_anomalies': {
                                                                     'column_tests': column_monitors,
-                                                                    'tags': ['elementary']}}}) %}
+                                                                    'tags': ['elementary']}}]}) %}
             {% endif %}
             {% do tables_dict.update({table_key: table_dict}) %}
         {% endfor %}
