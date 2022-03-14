@@ -18,7 +18,6 @@
         {% endif %}
 
         {# get table configuration #}
-        --TODO: not sure this works
         {%- set model_relation = dbt.load_relation(model) %}
         {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
         {%- set last_schema_change_alert_time = elementary.get_last_schema_changes_alert_time() %}
@@ -30,7 +29,6 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        -- TODO: if exists should we drop or the following line will run create or replace?
         {% do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
         {% set alerts_target_relation = ref('alerts_schema_changes') %}
         {% set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}
@@ -41,9 +39,10 @@
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
 
     {% else %}
-        -- TODO: should we add a log message that no monitors were executed for this test?
+
         {# test must run an sql query #}
         {{ elementary.no_results_query() }}
+
     {% endif %}
 
 {% endtest %}

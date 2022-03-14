@@ -19,10 +19,8 @@
         {%- endif %}
 
         {#- get column configuration -#}
-        -- TODO: not sure this works
         {%- set model_relation = dbt.load_relation(model) %}
         {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
-        -- TODO: see if we need to change the query to a new final_table_cofig schema
         {%- set config_query = elementary.get_monitored_table_config_query(full_table_name) %}
         {%- set table_config = elementary.result_row_to_dict(config_query) %}
 
@@ -63,7 +61,6 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        --TODO: if exists should we drop or the following line will run create or replace?
         {%- do run_query(dbt.create_table_as(True, alerts_temp_table_relation, anomaly_alerts_query)) %}
         {%- set alerts_target_relation = ref('alerts_data_monitoring') %}
         {%- set dest_columns = adapter.get_columns_in_relation(alerts_target_relation) %}

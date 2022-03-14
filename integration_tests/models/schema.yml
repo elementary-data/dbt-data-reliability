@@ -15,7 +15,86 @@ models:
       - name: min_length
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary_c']
+              tags: ['elementary']
               column_tests:
                 - min_length
                 - max_length
+      - name: max_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: average_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - average_length
+                - null_count
+      - name: missing_count
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: missing_percent
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: updated_at
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+
+models:
+  - name: numeric_column_anomalies
+    config:
+      edr:
+        timestamp_column: 'updated_at'
+        monitored: true
+    tests:
+      - elementary.table_anomalies:
+          tags: ['elementary']
+    columns:
+      - name: min
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - avg
+      - name: max_
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: average
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_tests:
+                - average
+                - null_count
+      - name: zero_count
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: zero_percent
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: updated_at
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: variance
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: standard_deviation
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
