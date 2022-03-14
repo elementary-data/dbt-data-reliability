@@ -33,10 +33,7 @@
         {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
-
-        --TODO: how do we get this from the test for lovely user?
-        {%- set table_monitors_str = elementary.insensitive_get_dict_value(table_config, 'table_monitors') %}
-        {%- set table_monitors = elementary.get_final_table_monitors(table_monitors_str) %}
+        {%- set table_monitors = elementary.get_final_table_monitors(table_tests) %}
 
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name,timestamp_column,timestamp_column_data_type) %}
         {%- set min_bucket_start = "'" ~ get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
@@ -144,22 +141,12 @@
         {% do run_query(merge_sql) %}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
     {% else %}
-        select 1 as num where num = 2
+        -- TODO: should we add a log message that no monitors were executed for this test?
+        {# test must run an sql query #}
+        {{ elementary.no_results_query() }}
     {% endif %}
 {% endtest %}
 
-{% macro get_monitors_empty_table_query() %}
-        {% set monitors_empty_table_query = elementary.empty_table([('id','str'),
-                                                                    ('full_table_name','str'),
-                                                                    ('column_name','str'),
-                                                                    ('metric_name','str'),
-                                                                    ('metric_value','int'),
-                                                                    ('timeframe_start','timestamp'),
-                                                                    ('timeframe_end','timestamp'),
-                                                                    ('timeframe_duration_hours','int'),
-                                                                    ('description','str')]) %}
-        {{ return(monitors_empty_table_query) }}
-{% endmacro %}
 
 
 {% macro create_temp_table(database_name, schema_name, table_name, sql_query) %}
@@ -174,23 +161,4 @@
         {% do run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
     {% endif %}
     {{ return(temp_table_relation) }}
-{% endmacro %}
-
-
-{% macro get_anomalies_empty_table_query() %}
-        {% set monitors_empty_table_query = elementary.empty_table([('id','str'),
-                                                                    ('full_table_name','str'),
-                                                                    ('column_name','str'),
-                                                                    ('metric_name','str'),
-                                                                    ('z_score','int'),
-                                                                    ('latest_value','int'),
-                                                                    ('value_updated_at','timestamp'),
-                                                                    ('metric_avg','int'),
-                                                                    ('metric_stddev','int'),
-                                                                    ('training_timeframe_start','timestamp'),
-                                                                    ('training_timeframe_end','timestamp'),
-                                                                    ('values_in_timeframe','int'),
-                                                                    ('updated_at','timestamp'),
-                                                                    ('description','str')]) %}
-        {{ return(monitors_empty_table_query) }}
 {% endmacro %}
