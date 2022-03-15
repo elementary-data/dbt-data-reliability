@@ -29,7 +29,7 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_tests) ~ "'" %}
 
-        {%- set columns_config = elementary.get_all_columns_monitors(model, column_tests) -%}
+        {%- set columns_config = elementary.get_all_columns_monitors(model_relation, column_tests) -%}
 
         {#- execute table monitors and write to temp test table -#}
         {%- if columns_config | length > 0 %}
