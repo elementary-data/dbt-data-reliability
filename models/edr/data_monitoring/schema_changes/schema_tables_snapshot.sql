@@ -5,8 +5,13 @@
   )
 }}
 
+with information_schema_tables as (
 
-with tables as (
+    select * from {{ ref('filtered_information_schema_tables') }}
+
+),
+
+schema_tables as (
 
     select
         full_schema_name,
@@ -37,7 +42,7 @@ with tables as (
             false as is_new
         {% endif %}
 
-    from {{ ref('filtered_information_schema_tables') }}
+    from information_schema_tables
 
 )
 
@@ -49,5 +54,5 @@ select
     full_table_name,
     is_new,
     max(detected_at) as detected_at
-from tables
+from schema_tables
 group by 1,2,3,4
