@@ -128,7 +128,7 @@
                 {% set test_model_unique_id = none %}
                 {% set test_depends_on = test_node.get('depends_on') %}
                 {% if test_depends_on %}
-                    {% set test_model_unique_id = find_test_model_unique_id(test_depends_on) %}
+                    {% set test_model_unique_id = elementary.find_test_model_unique_id(test_depends_on) %}
                 {% endif %}
                 {% if test_model_unique_id %}
                     {% if test_name == 'table_anomalies' %}
