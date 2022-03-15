@@ -19,13 +19,17 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
+on-run-end:
+  - "{{ merge_test_results() }}"
+
+
 
 models:
 
 vars:
   days_back: 14
   anomaly_score_threshold: 3
-  min_buckets_per_run: 2
+  backfill_days_per_run: 2
   alert_dbt_model_fail: true
   alert_dbt_model_skip: true
 
@@ -63,9 +67,3 @@ vars:
       - standard_deviation
       - variance
 
-models:
-  elementary_sources:
-    +enabled: { elementary.not_edr_run() }
-
-on-run-start:
-  - "{{ elementary.upload_edr_configuration() }}"
