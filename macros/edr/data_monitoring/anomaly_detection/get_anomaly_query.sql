@@ -21,7 +21,7 @@
 
         ),
 
-    -- TODO: change to join that excludes the temp values
+
         union_metrics as (
 
             select * from data_monitoring_metrics
@@ -42,11 +42,11 @@
                 bucket_start,
                 bucket_end,
                 bucket_duration_hours,
-                max(updated_at) as updated_at
+                updated_at
             from union_metrics
-            group by 1,2,3,4,5,6,7,8,9
+            qualify row_number() over (partition by id order by updated_at desc) = 1
 
-        ),
+            ),
 
         daily_buckets as (
 

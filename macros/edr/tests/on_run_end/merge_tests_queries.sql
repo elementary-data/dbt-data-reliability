@@ -33,7 +33,7 @@
     {%- endif %}
 {% endmacro %}
 
--- TODO: change to remove duplicates by partition
+
 {% macro union_metrics_query() %}
     {%- set temp_tables_list = elementary.get_temp_tables('metrics') %}
     {%- if temp_tables_list | length > 0 %}
@@ -44,9 +44,9 @@
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
                 )
-            select id, full_table_name, column_name, metric_name, metric_value, source_value, bucket_start, bucket_end, bucket_duration_hours, max(updated_at) as updated_at
+            select *
             from union_temps
-            group by 1,2,3,4,5,6,7,8,9
+            qualify row_number() over (partition by id order by updated_at desc) = 1
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
@@ -75,8 +75,27 @@
                 {{ elementary.null_string() }} as alert_results_query,
                 {{ elementary.null_string() }} as other
             from union_temp
-            {{ dbt_utils.group_by(13) }}
+            qualify row_number() over (partition by id order by detected_at desc) = 1
         {%- endset %}
         {{ return(anomalies_alerts_query) }}
+    {%- endif %}
+{% endmacro %}
+
+
+{% macro union_schema_changes_query() %}
+    {%- set temp_tables_list = elementary.get_temp_tables('schema_alerts') %}
+    {%- if temp_tables_list | length > 0 %}
+        {%- set union_temp_query -%}
+            with union_temps as (
+            {%- for temp_table in temp_tables_list -%}
+                select * from {{- elementary.from(temp_table) -}}
+                {%- if not loop.last %} union all {% endif %}
+            {%- endfor %}
+                )
+            select *
+            from union_temps
+            qualify row_number() over (partition by alert_id order by detected_at desc) = 1
+        {%- endset %}
+        {{ return(union_temp_query) }}
     {%- endif %}
 {% endmacro %}
