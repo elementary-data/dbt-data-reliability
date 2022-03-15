@@ -1,6 +1,6 @@
 {% macro upload_edr_configuration() %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run %}
+    {% if execute and not edr_cli_run and flags.WHICH == 'run' %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% set test_nodes = nodes | selectattr('resource_type', '==', 'test') %}
         {% set config_in_tests = elementary.get_config_from_tests(test_nodes) %}
