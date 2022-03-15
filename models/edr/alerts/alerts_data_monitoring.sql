@@ -5,4 +5,6 @@
   )
 }}
 
+-- depends_on: {{ ref('metrics_anomaly_score') }}
+
 {{ elementary.empty_alerts() }}

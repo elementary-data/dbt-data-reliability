@@ -5,6 +5,9 @@
   )
 }}
 
+
+-- depends_on: {{ ref('column_changes') }}
+
 {# these are just schema level alerts #}
 {# table level alerts arrive from tests #}
 
