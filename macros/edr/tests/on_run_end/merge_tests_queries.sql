@@ -1,6 +1,7 @@
 {% macro get_temp_tables(temp_tables_type) %}
     {%- set database_name = elementary.target_database() %}
     {%- set tables_suffix = '__' ~  temp_tables_type %}
+    {%- set schema_name = target.schema ~ '__elementary_tests' %}
 
     {%- set info_schema_query %}
         with temp_tables as (
@@ -8,7 +9,7 @@
                    upper(table_schema) as schema_name,
                    upper(table_name) as table_name
             from {{ elementary.from_information_schema('TABLES', database_name) }}
-            where lower(table_schema) like '%__elementary_tests'
+            where lower(table_schema) like lower('{{ schema_name }}')
                 and lower(table_name) like '%{{ tables_suffix }}'
             )
         select {{ elementary.full_table_name() }} as full_table_name
