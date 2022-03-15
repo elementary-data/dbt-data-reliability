@@ -31,6 +31,7 @@
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
+    {{ return(none) }}
 {% endmacro %}
 
 
@@ -50,6 +51,7 @@
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
+    {{ return(none) }}
 {% endmacro %}
 
 
@@ -79,6 +81,7 @@
         {%- endset %}
         {{ return(anomalies_alerts_query) }}
     {%- endif %}
+    {{ return(none) }}
 {% endmacro %}
 
 
@@ -98,4 +101,5 @@
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
+    {{ return(none) }}
 {% endmacro %}
