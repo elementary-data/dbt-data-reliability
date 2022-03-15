@@ -2,7 +2,7 @@
 {% set default_config = {
          'days_back': 14,
          'anomaly_score_threshold': 3,
-         'min_buckets_per_run': 2,
+         'backfill_days_per_run': 2,
          'alert_dbt_model_fail': true,
          'alert_dbt_model_skip': true,
          'default_run_hours_back': 24,

@@ -1,11 +1,15 @@
 {% macro get_anomaly_query(temp_table_name, full_table_name, monitors, column_name = none, columns_only=false) %}
 
+    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start()%}
+    {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set backfill_period = "'-" ~ elementary.get_config_var('backfill_days_per_run') ~ "'" %}
+
     {% set anomaly_query %}
 
         with data_monitoring_metrics as (
 
             select * from {{ ref('data_monitoring_metrics') }}
-            where bucket_start > {{ elementary.cast_as_timestamp(elementary.get_global_min_bucket_start()) }}
+            where bucket_start > {{ elementary.cast_as_timestamp(metrics_min_time) }}
                 and upper(full_table_name) = '{{ full_table_name }}'
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
@@ -85,10 +89,10 @@
             metric_value is not null
           and training_avg is not null
           and training_stddev is not null
-        -- TODO: decide on these time decisions
-          and training_set_size >= {{ elementary.get_config_var('days_back') -3 }}
-            -- TODO: Change to min bucket
-          and bucket_end >= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day', '-3', elementary.get_max_bucket_end())) }}
+        {# training dataset minimal size to make anomaly detection relevant #}
+          and training_set_size >= {{ elementary.get_config_var('days_back') -1 }}
+        {# get anomalies for the whole backfill timeframe #}
+          and bucket_end >= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day', backfill_period, elementary.get_max_bucket_end())) }}
         having abs(z_score) > {{ elementary.get_config_var('anomaly_score_threshold') }}
 
     {% endset %}

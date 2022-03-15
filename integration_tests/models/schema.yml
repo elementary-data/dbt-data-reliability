@@ -23,8 +23,6 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
-          - elementary.column_anomalies:
-              tags: ['elementary']
       - name: average_length
         tests:
           - elementary.column_anomalies:
