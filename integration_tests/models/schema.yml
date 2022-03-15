@@ -7,6 +7,7 @@ models:
         timestamp_column: 'updated_at'
         monitored: true
     tests:
+      - elementary.schema_changes
       - elementary.table_anomalies:
           tags: ['elementary_c']
           table_tests:

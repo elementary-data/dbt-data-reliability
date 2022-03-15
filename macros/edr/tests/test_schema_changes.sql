@@ -29,7 +29,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, anomaly_alerts_query)) %}
+        {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
 
         {# return schema changes query as standart test query #}
         select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
