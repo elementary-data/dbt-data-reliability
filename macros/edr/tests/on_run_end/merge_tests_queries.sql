@@ -27,6 +27,7 @@
             {%- for temp_table in temp_tables_list -%}
                 select * from {{- elementary.from(temp_table) -}}
                 {%- if not loop.last %} union all {% endif %}
+                {%- if loop.last %} {{ elementary.empty_test_anomalies() }} {%- endif %}
             {%- endfor %}
         {%- endset %}
         {{ return(union_temp_query) }}
@@ -42,6 +43,7 @@
             {%- for temp_table in temp_tables_list -%}
                 select * from {{- elementary.from(temp_table) -}}
                 {%- if not loop.last %} union all {% endif %}
+                {%- if loop.last %} {{ elementary.empty_data_monitoring_metrics() }} {%- endif %}
             {%- endfor %}
                 )
             select *
@@ -55,7 +57,7 @@
 
 {% macro anomalies_alerts_query() %}
     {%- set temp_tables_list = elementary.get_temp_tables('anomalies') %}
-    {%- if temp_tables_list | length > 0%}
+    {%- if temp_tables_list | length > 0 %}
         {%- set anomalies_alerts_query %}
             with union_temp as (
                 {{ elementary.union_anomalies_query() }}
@@ -90,6 +92,7 @@
             {%- for temp_table in temp_tables_list -%}
                 select * from {{- elementary.from(temp_table) -}}
                 {%- if not loop.last %} union all {% endif %}
+                {%- if loop.last %} {{ elementary.empty_alerts() }} {%- endif %}
             {%- endfor %}
                 )
             select *

@@ -48,6 +48,10 @@
     {{ elementary.empty_table([('id','string'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('source_value','str'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
 {% endmacro %}
 
+{% macro empty_test_anomalies() %}
+    {{ elementary.empty_table([('id','string'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('z_score','float'),('latest_metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('training_avg','float'),('training_stddev','float'),('training_set_size','int')]) }}
+{% endmacro %}
+
 {% macro empty_column_monitors_cte() %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
     {%- set columns_definition = [('column_name', 'string'), ('bucket', 'timestamp')] %}

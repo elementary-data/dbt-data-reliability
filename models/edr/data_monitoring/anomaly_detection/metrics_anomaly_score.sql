@@ -64,7 +64,7 @@ final as (
 
     select *,
         case
-            when abs(z_score) > {{ var('anomaly_score_threshold') }} then true
+            when abs(z_score) > {{ elementary.get_config_var('anomaly_score_threshold') }} then true
             else false end
         as is_anomaly
     from metrics_anomaly_score
