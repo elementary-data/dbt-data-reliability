@@ -64,6 +64,10 @@
             {% if not table_monitors %}
                 {% set table_monitors = [] %}
             {% endif %}
+            {% set schema_changes = edr_config.get('schema_changes') %}
+            {% if schema_changes %}
+                {% do table_monitors.append('schema_changes') %}
+            {% endif %}
             {% if model_unique_id not in config_in_tests %}
                 {% do config_in_tests.update({model_unique_id: {'table_monitors': table_monitors, 'columns': {}}}) %}
             {% else %}
@@ -74,6 +78,10 @@
                 {% set column_monitors = [] %}
             {% endif %}
             {% set column_name = edr_config.get('column_name') %}
+            {% set all_columns_anomalies_enabled = edr_config.get('all_columns_anomalies') %}
+            {% if all_columns_anomalies_enabled %}
+                {% set column_name = '__ALL_COLUMNS__' %}
+            {% endif %}
             {% if column_name %}
                 {% if column_name in config_in_tests[model_unique_id]['columns'] %}
                     {% do config_in_tests[model_unique_id]['columns'][column_name].extend(column_monitors) %}
@@ -122,13 +130,22 @@
                 {% if test_depends_on %}
                     {% set test_model_unique_id = find_test_model_unique_id(test_depends_on) %}
                 {% endif %}
-                {% if test_name == 'table_anomalies' and test_model_unique_id %}
-                    {% set edr_config = {'model_unique_id': test_model_unique_id,
-                                         'table_monitors': test_table_monitors} %}
-                {% elif test_name == 'column_anomalies' and test_model_unique_id %}
-                    {% set edr_config = {'column_name': test_column_name,
-                                         'model_unique_id': test_model_unique_id,
-                                         'column_monitors': test_column_monitors} %}
+                {% if test_model_unique_id %}
+                    {% if test_name == 'table_anomalies' %}
+                        {% set edr_config = {'model_unique_id': test_model_unique_id,
+                                             'table_monitors': test_table_monitors} %}
+                    {% elif test_name == 'column_anomalies' %}
+                        {% set edr_config = {'column_name': test_column_name,
+                                             'model_unique_id': test_model_unique_id,
+                                             'column_monitors': test_column_monitors} %}
+                    {% elif test_name == 'all_columns_anomalies' %}
+                        {% set edr_config = {'all_columns_anomalies': True,
+                                             'model_unique_id': test_model_unique_id,
+                                             'column_monitors': test_column_monitors} %}
+                    {% elif test_name == 'schema_changes' %}
+                        {% set edr_config = {'model_unique_id': test_model_unique_id,
+                                             'schema_changes': True} %}
+                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endif %}
