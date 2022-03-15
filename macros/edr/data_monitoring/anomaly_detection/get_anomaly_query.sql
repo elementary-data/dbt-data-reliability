@@ -17,6 +17,7 @@
 
         ),
 
+    -- TODO: change to join that excludes the temp values
         union_metrics as (
 
             select * from data_monitoring_metrics
@@ -84,7 +85,9 @@
             metric_value is not null
           and training_avg is not null
           and training_stddev is not null
-          and training_set_size >= {{ elementary.get_config_var('days_back') - 3 }}
+        -- TODO: decide on these time decisions
+          and training_set_size >= {{ elementary.get_config_var('days_back') -3 }}
+            -- TODO: Change to min bucket
           and bucket_end >= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day', '-3', elementary.get_max_bucket_end())) }}
         having abs(z_score) > {{ elementary.get_config_var('anomaly_score_threshold') }}
 

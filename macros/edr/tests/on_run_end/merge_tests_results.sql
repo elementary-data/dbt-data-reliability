@@ -1,4 +1,5 @@
 {% macro merge_test_results() %}
+-- TODO: add flag to run on tests only
     {{ elementary.merge_data_monitoring_metrics() }}
     {{ elementary.merge_data_monitoring_anomalies() }}
     {{ return('') }}

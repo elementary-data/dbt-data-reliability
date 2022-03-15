@@ -19,6 +19,7 @@
     {{ return(temp_tables) }}
 {% endmacro %}
 
+
 {% macro union_anomalies_query() %}
     {%- set temp_tables_list = elementary.get_temp_tables('anomalies') %}
     {%- if temp_tables_list | length > 0 %}
@@ -32,7 +33,7 @@
     {%- endif %}
 {% endmacro %}
 
-
+-- TODO: change to remove duplicates by partition
 {% macro union_metrics_query() %}
     {%- set temp_tables_list = elementary.get_temp_tables('metrics') %}
     {%- if temp_tables_list | length > 0 %}
