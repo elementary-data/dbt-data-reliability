@@ -1,9 +1,3 @@
-{{
-  config(
-    materialized = 'table'
-  )
-}}
-
 with data_monitoring_metrics as (
 
     select * from {{ ref('data_monitoring_metrics') }}
