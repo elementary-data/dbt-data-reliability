@@ -5,7 +5,7 @@
 
 {% macro default__daily_buckets_cte() -%}
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
 
     {%- set daily_buckets_cte %}
         with dates as (
@@ -24,7 +24,7 @@
 
 {% macro bigquery__daily_buckets_cte() %}
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
 
     {%- set daily_buckets_cte %}
         select edr_daily_bucket
