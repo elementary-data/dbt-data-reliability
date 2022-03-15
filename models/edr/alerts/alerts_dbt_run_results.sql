@@ -17,10 +17,8 @@ alerts_model_runs as (
      select
         model_execution_id as alert_id,
         generated_at as detected_at,
-
-    -- TODO: this is not the database and schema of the dbt runs
-        '{{ elementary.target_database() }}' as database_name,
-        '{{ target.schema }}' as schema_name,
+        {{ elementary.null_string() }} as database_name,
+        {{ elementary.null_string() }} as schema_name,
         name as table_name,
         {{ elementary.null_string() }} as column_name,
         'dbt_model_failed' as alert_type,
