@@ -20,14 +20,16 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_metrics_table_name,
                                                                                    type='table') -%}
-        {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+        {%- if temp_tables_union_query %}
+            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
 
-        {% set target_relation = adapter.get_relation(database=elementary.target_database(),
-                                                               schema=target.schema,
-                                                               identifier='data_monitoring_metrics') -%}
-        {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-        {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
-        {% do run_query(merge_sql) %}
+            {% set target_relation = adapter.get_relation(database=elementary.target_database(),
+                                                                   schema=target.schema,
+                                                                   identifier='data_monitoring_metrics') -%}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
+            {% do run_query(merge_sql) %}
+        {%- endif %}
 
     {%- endif %}
 {% endmacro %}
@@ -45,14 +47,16 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_anomalies_table_name,
                                                                                    type='table') -%}
-        {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+        {%- if temp_tables_union_query %}
+            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
 
-        {% set target_relation = adapter.get_relation(database=elementary.target_database(),
-                                                       schema=target.schema,
-                                                       identifier='alerts_data_monitoring') -%}
-        {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-        {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
-        {% do run_query(merge_sql) %}
+            {% set target_relation = adapter.get_relation(database=elementary.target_database(),
+                                                           schema=target.schema,
+                                                           identifier='alerts_data_monitoring') -%}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
+            {% do run_query(merge_sql) %}
+        {%- endif %}
 
     {%- endif %}
 {% endmacro %}
@@ -70,14 +74,15 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_anomalies_table_name,
                                                                                    type='table') -%}
-        {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+        {%- if temp_tables_union_query %}
+            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
 
-        {% set target_relation = adapter.get_relation(database=elementary.target_database(),
-                                                       schema=target.schema,
-                                                       identifier='alerts_schema_changes') -%}
-        {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-        {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
-        {% do run_query(merge_sql) %}
-
+            {% set target_relation = adapter.get_relation(database=elementary.target_database(),
+                                                           schema=target.schema,
+                                                           identifier='alerts_schema_changes') -%}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
+            {% do run_query(merge_sql) %}
+        {%- endif %}
     {%- endif %}
 {% endmacro %}
