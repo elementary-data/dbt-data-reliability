@@ -3,21 +3,23 @@ version: 2
 models:
   - name: string_column_anomalies
     config:
-      edr:
+      elementary:
         timestamp_column: 'updated_at'
-        monitored: true
     tests:
-      - elementary.schema_changes
       - elementary.table_anomalies:
           tags: ['elementary_c']
-          table_tests:
-            - row_count
+      - elementary.table_anomalies:
+          tags: ['elementary_c']
+          table_anomalies:
+            - freshness
+      - elementary.all_columns_anomalies:
+          tags: ['elementary_c']
     columns:
       - name: min_length
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - min_length
                 - max_length
       - name: max_length
@@ -28,7 +30,7 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - average_length
                 - null_count
       - name: missing_count
@@ -52,48 +54,54 @@ models:
     tests:
       - elementary.table_anomalies:
           tags: ['elementary']
+      - elementary.schema_changes:
+          tags: ['elementary']
+      - elementary.all_columns_anomalies:
+          tags: ['elementary']
+          column_anomalies:
+            - max
     columns:
       - name: min
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
-              column_tests:
+              tags: ['debug']
+              column_anomalies:
                 - min
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - max
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - average
       - name: max
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - min
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - max
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - average
       - name: average
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - min
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - max
           - elementary.column_anomalies:
               tags: ['elementary']
-              column_tests:
+              column_anomalies:
                 - average
       - name: zero_count
         tests:

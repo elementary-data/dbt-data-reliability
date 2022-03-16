@@ -16,16 +16,11 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
+
 vars:
   days_back: 30
 
-seeds:
+models:
+  elementary:
+    +schema: elementary
 
-  elementary_integration_tests:
-      test_data:
-        +schema: data
-
-      expected:
-          expected_alerts:
-          +column_types:
-            alert_sent: boolean

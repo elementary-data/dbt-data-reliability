@@ -2,8 +2,7 @@ version: 2
 
 sources:
   - name: 'edr_configuration'
-    schema: '{{ var("edr_sources_schema", target.schema) }}'
-    database: '{{ var("edr_sources_database", target.database) }}'
+    schema: '{{ target.schema ~ "_elementary" }}'
     tables:
       - name: 'table_monitors_config'
         columns:
@@ -40,8 +39,7 @@ sources:
           - name: 'column_monitors'
             description: A list of column monitors that will be used on this table, if empty and columns_monitored is enabled for the table all monitors are applied
   - name: 'edr_dbt_artifacts'
-    schema: '{{ var("edr_sources_schema", target.schema) }}'
-    database: '{{ var("edr_sources_database", target.database) }}'
+    schema: '{{ target.schema ~ "_elementary" }}'
     tables:
       - name: 'dbt_run_results'
         columns:
