@@ -1,6 +1,7 @@
 {% macro table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors) %}
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set table_monitors_list = ['row_count'] %}
 
     with timeframe_data as (
@@ -25,7 +26,7 @@
     daily_buckets as (
 
         {{ elementary.daily_buckets_cte() }}
-        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }}
 
     ),
 
