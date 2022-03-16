@@ -7,7 +7,7 @@
     {% if execute %}
         
         {#- creates temp relation for test metrics -#}
-        {% set database_name = database %}
+        {% set database_name = elementary.target_database() %}
         {% set schema_name = target.schema ~ '__elementary_tests' %}
         {% set temp_metrics_table_name = this.name ~ '__metrics' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
