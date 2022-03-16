@@ -7,7 +7,7 @@
 
         {# creates temp relation for test metrics #}
         {% set database_name = database %}
-        {% set schema_name = schema %}
+        {% set schema_name = target.schema ~ '__elementary_tests' %}
         {% set temp_metrics_table_name = this.name ~ '__schema_changes' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
