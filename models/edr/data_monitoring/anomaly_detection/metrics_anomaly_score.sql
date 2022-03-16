@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
 
 with data_monitoring_metrics as (
@@ -16,14 +22,14 @@ time_window_aggregation as (
 
     select
         *,
-        avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_avg,
-        stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_stddev,
-        count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_set_size,
-        last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) training_end,
-        first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ var('days_back') }} preceding and current row) as training_start
+        avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
+        stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
+        count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
+        last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
+        first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
         data_monitoring_metrics on (edr_daily_bucket = bucket_end)
-    {{ dbt_utils.group_by(10) }}
+    {{ dbt_utils.group_by(11) }}
 
 ),
 
@@ -52,7 +58,7 @@ metrics_anomaly_score as (
             metric_value is not null
             and training_avg is not null
             and training_stddev is not null
-            and training_set_size >= {{ var('days_back') - 1 }}
+            and training_set_size >= {{ elementary.get_config_var('days_back') - 1 }}
             and bucket_end >= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day', '-7', timeframe_end)) }}
     {{ dbt_utils.group_by(13) }}
     order by bucket_end desc
@@ -64,7 +70,7 @@ final as (
 
     select *,
         case
-            when abs(z_score) > {{ var('anomaly_score_threshold') }} then true
+            when abs(z_score) > {{ elementary.get_config_var('anomaly_score_threshold') }} then true
             else false end
         as is_anomaly
     from metrics_anomaly_score

@@ -32,12 +32,24 @@
 
 {% endmacro %}
 
-{% macro empty_alerts_cte() %}
-    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('description','str'),('alert_sent','bollean')]) }}
+{% macro empty_alerts() %}
+    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('alert_description','str'),('owner','str'),('tags','str'),('alert_results_query','str'),('other','str')]) }}
 {% endmacro %}
 
 {% macro empty_data_monitors() %}
     {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
+{% endmacro %}
+
+{% macro empty_column_unpivot_cte() %}
+    {{ elementary.empty_table([('edr_column_name','str'),('edr_bucket','timestamp'),('metric_name','str'),('metric_value','float')]) }}
+{% endmacro %}
+
+{% macro empty_data_monitoring_metrics() %}
+    {{ elementary.empty_table([('id','string'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('source_value','str'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
+{% endmacro %}
+
+{% macro empty_test_anomalies() %}
+    {{ elementary.empty_table([('id','string'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('z_score','float'),('latest_metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('training_avg','float'),('training_stddev','float'),('training_set_size','int')]) }}
 {% endmacro %}
 
 {% macro empty_column_monitors_cte() %}

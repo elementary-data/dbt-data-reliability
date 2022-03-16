@@ -1,9 +1,9 @@
 {% macro get_source_path(source_name, source_table_name) %}
 
-    {%- if var('edr_cli_run') is sameas false %}
+    {%- if elementary.get_config_var('edr_cli_run') is sameas false %}
         {%- set table_monitors_config = source(source_name, source_table_name) %}
         {{ return(table_monitors_config) }}
-    {%- elif var('edr_cli_run') is sameas true %}
+    {%- elif elementary.get_config_var('edr_cli_run') is sameas true %}
         {%- set table_monitors_config = elementary.find_source_table(source_table_name) %}
     {%- endif %}
     {{ return(table_monitors_config) }}
@@ -12,8 +12,9 @@
 
 
 {% macro find_source_table(source_table_name) %}
-    {%- set database = elementary.target_database() %}
-    {%- set info_schema_tables = elementary.from_information_schema('tables', database) %}
+
+    {%- set database_name = elementary.target_database() %}
+    {%- set info_schema_tables = elementary.from_information_schema('tables', database_name) %}
     {%- set query %}
         select
             concat(table_catalog, '.' , table_schema , '.' , table_name) as full_table_name

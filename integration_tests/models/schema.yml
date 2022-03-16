@@ -3,19 +3,123 @@ version: 2
 models:
   - name: string_column_anomalies
     config:
-      edr:
-        monitored: true
+      elementary:
         timestamp_column: 'updated_at'
-        columns_monitored: true
+    tests:
+      - elementary.table_anomalies:
+          tags: ['elementary_c']
+      - elementary.table_anomalies:
+          tags: ['elementary_c']
+          table_anomalies:
+            - freshness
+      - elementary.all_columns_anomalies:
+          tags: ['elementary_c']
+    columns:
+      - name: min_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - min_length
+                - max_length
+      - name: max_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: average_length
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - average_length
+                - null_count
+      - name: missing_count
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: missing_percent
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: updated_at
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+
   - name: numeric_column_anomalies
     config:
       edr:
-        monitored: true
         timestamp_column: 'updated_at'
-        columns_monitored: true
-  - name: any_type_column_anomalies
-    config:
-      edr:
         monitored: true
-        timestamp_column: 'updated_at'
-        columns_monitored: true
+    tests:
+      - elementary.table_anomalies:
+          tags: ['elementary']
+      - elementary.schema_changes:
+          tags: ['elementary']
+      - elementary.all_columns_anomalies:
+          tags: ['elementary']
+          column_anomalies:
+            - max
+    columns:
+      - name: min
+        tests:
+          - elementary.column_anomalies:
+              tags: ['debug']
+              column_anomalies:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - average
+      - name: max
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - average
+      - name: average
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - min
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - max
+          - elementary.column_anomalies:
+              tags: ['elementary']
+              column_anomalies:
+                - average
+      - name: zero_count
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: zero_percent
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: updated_at
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: variance
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']
+      - name: standard_deviation
+        tests:
+          - elementary.column_anomalies:
+              tags: ['elementary']

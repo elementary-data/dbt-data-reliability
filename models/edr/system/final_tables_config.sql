@@ -1,7 +1,6 @@
 {{
   config(
-    materialized = 'incremental',
-    unique_key = 'config_id'
+    materialized = 'table',
   )
 }}
 
@@ -67,36 +66,14 @@ final as (
         schema_name,
         table_name,
         timestamp_column,
+        timestamp_column_data_type,
         bucket_duration_hours,
         table_monitored,
         table_monitors,
         columns_monitored,
-
-        {% if is_incremental() %}
-            {%- set active_configs_query %}
-                select config_id from {{ this }}
-                where config_loaded_at = (select max(config_loaded_at) from {{ this }})
-                and table_monitored = true
-            {% endset %}
-            {%- set active_configs = elementary.result_column_to_list(active_configs_query) %}
-            case when
-                config_id not in {{ elementary.strings_list_to_tuple(active_configs) }}
-            then true
-            else false end
-            as should_backfill,
-        {% else %}
-            true as should_backfill,
-        {% endif %}
-
-        timestamp_column_data_type,
-        max(config_loaded_at) as config_loaded_at,
-        case
-            when (table_monitored = true or columns_monitored = true) then ntile(4) over (partition by table_monitored order by config_id)
-            else null
-        end as partition_number
-
+        max(config_loaded_at) as config_loaded_at
     from config_existing_tables
-    group by 1,2,3,4,5,6,7,8,9,10,11,12
+    group by 1,2,3,4,5,6,7,8,9,10,11
 
 )
 

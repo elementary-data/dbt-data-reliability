@@ -3,7 +3,7 @@
 {% endmacro %}
 
 {%- macro default__column_quote(column_name) -%}
-    {%- set quoted_column = '"' ~ column_name ~ '"' -%}
+    {%- set quoted_column = '"' ~ column_name | upper ~ '"' -%}
     {{- return(quoted_column) -}}
 {%- endmacro -%}
 

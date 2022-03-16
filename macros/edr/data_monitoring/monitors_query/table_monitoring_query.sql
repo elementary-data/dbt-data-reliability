@@ -1,16 +1,8 @@
-{% macro table_monitoring_query(monitored_table) %}
+{% macro table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors) %}
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set table_monitors_list = ['row_count'] %}
-
-    {%- if execute %}
-    {%- set table_config = get_table_monitoring_config(monitored_table) %}
-    {%- set full_table_name = elementary.insensitive_get_dict_value(table_config, 'full_table_name') %}
-    {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-    {%- set is_timestamp = elementary.insensitive_get_dict_value(table_config, 'is_timestamp') %}
-    {%- set table_monitors = elementary.insensitive_get_dict_value(table_config, 'final_table_monitors') | list %}
-    {%- set timeframe_start = "'"~ elementary.insensitive_get_dict_value(table_config, 'timeframe_start') ~"'" %}
-    {%- endif %}
 
     with timeframe_data as (
 
@@ -23,7 +15,7 @@
         from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(timeframe_start) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
             and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
         {%- else %}
             true
@@ -34,7 +26,7 @@
     daily_buckets as (
 
         {{ elementary.daily_buckets_cte() }}
-        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(timeframe_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }}
 
     ),
 
@@ -90,7 +82,8 @@
             '{{ full_table_name }}' as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
-            {{ elementary.cast_as_float('metric_value') }},
+            {{ elementary.cast_as_float('metric_value') }} as metric_value,
+            {{ elementary.null_string() }} as source_value,
             {%- if timestamp_column %}
             edr_bucket as bucket_start,
             {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
@@ -102,10 +95,28 @@
             {%- endif %}
         from
             union_metrics
-        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ var('max_int') }}
+        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}
 
     )
 
-    select * from metrics_final
+    select
+        {{ dbt_utils.surrogate_key([
+            'full_table_name',
+            'column_name',
+            'metric_name',
+            'bucket_start',
+            'bucket_end'
+        ]) }} as id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
+
+    from metrics_final
 
 {% endmacro %}

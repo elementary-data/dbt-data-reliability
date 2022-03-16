@@ -1,6 +1,6 @@
 {% macro create_source_table(table_name, sql_query, drop_if_exists) %}
-    {% set edr_sources_database = elementary.get_edr_sources_db() %}
-    {% set edr_sources_schema = elementary.get_edr_sources_schema() %}
+    {% set edr_sources_database = database %}
+    {% set edr_sources_schema = schema %}
     {% set source_table_exists, source_table_relation = dbt.get_or_create_relation(database=edr_sources_database,
                                                                                    schema=edr_sources_schema,
                                                                                    identifier=table_name,

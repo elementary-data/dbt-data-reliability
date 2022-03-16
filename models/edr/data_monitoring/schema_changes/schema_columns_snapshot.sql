@@ -6,42 +6,45 @@
 }}
 
 
-with columns as (
+with information_schema_columns as (
 
-select
-    full_table_name,
-    database_name,
-    schema_name,
-    table_name,
-    column_name,
-    data_type,
-    {{ elementary.run_start_column() }} as detected_at,
+    select * from {{ ref('filtered_information_schema_columns') }}
 
-    {% if is_incremental() %}
-        {%- set known_columns_query %}
-            select full_column_name from {{ this }}
-            where detected_at = (select max(detected_at) from {{ this }})
-        {% endset %}
-        {%- set known_columns = elementary.result_column_to_list(known_columns_query) %}
+),
 
-        {%- set known_tables_query %}
-            select distinct full_table_name from {{ this }}
-            where detected_at = (select max(detected_at) from {{ this }})
-        {% endset %}
-        {%- set known_tables = elementary.result_column_to_list(known_tables_query) %}
+columns as (
+    select
+        full_table_name,
+        database_name,
+        schema_name,
+        table_name,
+        column_name,
+        data_type,
+        {{ elementary.run_start_column() }} as detected_at,
 
-        case when
-            {{ elementary.full_column_name() }} not in {{ elementary.strings_list_to_tuple(known_columns) }}
-            and full_table_name in {{ elementary.strings_list_to_tuple(known_tables) }}
-        then true
-        else false end
-        as is_new
-    {% else %}
-        false as is_new
-    {% endif %}
+        {% if is_incremental() %}
+            {%- set known_columns_query %}
+                select full_column_name from {{ this }}
+                where detected_at = (select max(detected_at) from {{ this }})
+            {% endset %}
+            {%- set known_columns = elementary.result_column_to_list(known_columns_query) %}
 
-from
-    {{ ref('filtered_information_schema_columns') }}
+            {%- set known_tables_query %}
+                select distinct full_table_name from {{ this }}
+                where detected_at = (select max(detected_at) from {{ this }})
+            {% endset %}
+            {%- set known_tables = elementary.result_column_to_list(known_tables_query) %}
+
+            case when
+                {{ elementary.full_column_name() }} not in {{ elementary.strings_list_to_tuple(known_columns) }}
+                and full_table_name in {{ elementary.strings_list_to_tuple(known_tables) }}
+            then true
+            else false end
+            as is_new
+        {% else %}
+            false as is_new
+        {% endif %}
+    from information_schema_columns
 
 )
 

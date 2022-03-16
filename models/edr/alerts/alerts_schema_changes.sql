@@ -5,19 +5,19 @@
   )
 }}
 
+
+-- depends_on: {{ ref('column_changes') }}
+
+{# these are just schema level alerts #}
+{# table level alerts arrive from tests #}
+
 with table_changes as (
 
     select * from {{ ref('table_changes') }}
 
 ),
 
-column_changes as (
-
-    select * from {{ ref('column_changes') }}
-
-),
-
-table_changes_alerts as (
+table_changes_alerts_filtered as (
 
     select
         change_id as alert_id,
@@ -28,44 +28,18 @@ table_changes_alerts as (
         {{ elementary.null_string() }} as column_name,
         'schema_change' as alert_type,
         change as sub_type,
-        change_description as alert_description
+        change_description as alert_description,
+        {{ elementary.null_string() }} as owner,
+        {{ elementary.null_string() }} as tags,
+        {{ elementary.null_string() }} as alert_results_query,
+        {{ elementary.null_string() }} as other
     from table_changes
-
-),
-
-column_changes_alerts as (
-
-    select
-        change_id as alert_id,
-        detected_at,
-        database_name,
-        schema_name,
-        table_name,
-        column_name,
-        'schema_change' as alert_type,
-        change as sub_type,
-        change_description as alert_description
-    from column_changes
-
-),
-
-all_alerts as (
-    select * from table_changes_alerts
-    union all
-    select * from column_changes_alerts
-),
-
-filtered_alerts as (
-
-    select *
-    from all_alerts
-    where
-        {{ elementary.full_table_name() }} in {{ elementary.tables_to_alert_on_schema_changes() }}
-        or ({{ elementary.full_schema_name() }} in {{ elementary.schemas_to_alert_on_new_tables() }} and sub_type = 'table_added')
+    where ({{ elementary.full_schema_name() }} in {{ elementary.schemas_to_alert_on_new_tables() }} and sub_type = 'table_added')
 
 )
 
-select * from filtered_alerts
+select * from table_changes_alerts_filtered
+
 {% if is_incremental() %}
     {% set row_count = elementary.get_row_count(this) %}
     {% if row_count > 0 %}
