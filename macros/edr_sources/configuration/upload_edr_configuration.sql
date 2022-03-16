@@ -19,7 +19,6 @@
                                                               ('bucket_duration_hours', 'int'),
                                                               ('table_monitored', 'boolean'),
                                                               ('table_monitors', 'string'),
-                                                              ('monitor_schema_changes', 'boolean'),
                                                               ('columns_monitored', 'boolean')]) %}
     {% set table_config_relation = elementary.create_source_table('table_monitors_config', empty_table_config_query, True) %}
     {% set table_monitors = [] %}
@@ -58,26 +57,22 @@
 {% macro get_config_from_tests(test_nodes) %}
     {% set config_in_tests = {} %}
     {% for node in test_nodes %}
-        {% set edr_config = elementary.get_edr_config_from_test(node) %}
+        {% set edr_config = elementary.get_elementary_config_from_test(node) %}
         {% if edr_config %}
             {% set test_name = edr_config.get('test_name') %}
             {% set model_unique_id = edr_config.get('model_unique_id') %}
             {% if model_unique_id %}
                 {% if model_unique_id not in config_in_tests %}
-                    {% do config_in_tests.update({model_unique_id: {'columns': {}}}) %}
+                    {% do config_in_tests.update({model_unique_id: {'table_monitors': [], 'columns': {}}}) %}
                 {% endif %}
                 {% if test_name == 'table_anomalies' %}
                     {% set table_monitors = edr_config.get('table_monitors') %}
                     {% if not table_monitors %}
                         {% set table_monitors = [] %}
                     {% endif %}
-                    {% if 'table_monitors' in config_in_tests[model_unique_id] %}
-                        {% do config_in_tests[model_unique_id]['table_monitors'].extend(table_monitors) %}
-                    {% else %}
-                        {% do config_in_tests[model_unique_id].update({'table_monitors': table_monitors}) %}
-                    {% endif %}
+                    {% do config_in_tests[model_unique_id]['table_monitors'].extend([table_monitors]) %}
                 {% elif test_name == 'schema_changes' %}
-                    {% do config_in_tests[model_unique_id].update({'monitor_schema_changes': True}) %}
+                    {% do config_in_tests[model_unique_id]['table_monitors'].extend([['schema_changes']]) %}
                 {% elif test_name == 'column_anomalies' or 'all_columns_anomalies' %}
                     {% set column_name = edr_config.get('column_name') %}
                     {% if not column_name %}
@@ -88,9 +83,9 @@
                         {% set column_monitors = [] %}
                     {% endif %}
                     {% if column_name in config_in_tests[model_unique_id]['columns'] %}
-                        {% do config_in_tests[model_unique_id]['columns'][column_name].extend(column_monitors) %}
+                        {% do config_in_tests[model_unique_id]['columns'][column_name].extend([column_monitors]) %}
                     {% else %}
-                        {% do config_in_tests[model_unique_id]['columns'].update({column_name: column_monitors}) %}
+                        {% do config_in_tests[model_unique_id]['columns'].update({column_name: [column_monitors]}) %}
                     {% endif %}
                 {% endif %}
             {% endif %}
@@ -111,7 +106,7 @@
     {{ return(none) }}
 {% endmacro %}
 
-{% macro get_edr_config_from_test(test_node) %}
+{% macro get_elementary_config_from_test(test_node) %}
     {% set edr_config = {} %}
     {% set test_metadata = test_node.get('test_metadata') %}
     {% if test_metadata %}
@@ -120,8 +115,8 @@
         {% set test_params = test_metadata.get('kwargs') %}
         {% if test_params %}
             {% set test_column_name = test_params.get('column_name') %}
-            {% set test_column_monitors = test_params.get('column_tests') %}
-            {% set test_table_monitors = test_params.get('table_tests') %}
+            {% set test_column_monitors = test_params.get('column_anomalies') %}
+            {% set test_table_monitors = test_params.get('table_anomalies') %}
             {% if test_namespace == 'elementary' %}
                 {% set test_model_unique_id = none %}
                 {% set test_depends_on = test_node.get('depends_on') %}
@@ -159,20 +154,20 @@
     {{ return(table_name) }}
 {% endmacro %}
 
-{% macro get_edr_config(node) %}
+{% macro get_elementary_config(node) %}
     {% set res = {} %}
-    {% set edr_config = node.config.get('edr') %}
+    {% set edr_config = node.config.get('elementary') %}
     {% if edr_config is mapping %}
         {% do res.update(edr_config) %}
     {% endif %}
     {% set config_meta = node.config.get('meta') %}
     {% if config_meta is mapping %}
-        {% set edr_config = config_meta.get('edr') %}
+        {% set edr_config = config_meta.get('elementary') %}
         {% if edr_config is mapping %}
             {% do res.update(edr_config) %}
         {% endif %}
     {% endif %}
-    {% set edr_config = node.meta.get('edr') %}
+    {% set edr_config = node.meta.get('elementary') %}
     {% if edr_config is mapping %}
         {% do res.update(edr_config) %}
     {% endif %}
@@ -184,13 +179,12 @@
     {% if node_unique_id in config_in_tests %}
         {% set table_monitors = config_in_tests[node_unique_id].get('table_monitors') %}
         {% set columns = config_in_tests[node_unique_id].get('columns') %}
-        {% set monitor_schema_changes = config_in_tests[node_unique_id].get('monitor_schema_changes') %}
         {% if columns %}
             {% set columns_monitored = True %}
         {% endif %}
         {% set table_name = elementary.get_table_name(node) %}
         {% set full_table_name = node.database + '.' + node.schema + '.' + table_name %}
-        {% set edr_config = elementary.get_edr_config(node) %}
+        {% set edr_config = elementary.get_elementary_config(node) %}
         {% set timestamp_column = edr_config.get('timestamp_column') %}
         {% if timestamp_column %}
             {% set timestamp_column = timestamp_column | upper %}
@@ -203,7 +197,6 @@
                    'bucket_duration_hours': 24,
                    'table_monitored': True,
                    'table_monitors': table_monitors,
-                   'monitor_schema_changes': monitor_schema_changes,
                    'columns_monitored': columns_monitored}) }}
     {% endif %}
     {{ return(none) }}

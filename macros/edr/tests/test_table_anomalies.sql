@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_tests) %}
+{% test table_anomalies(model, table_anomalies) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}

@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_tests) %}
+{% test all_columns_anomalies(model, column_anomalies) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
