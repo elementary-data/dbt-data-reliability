@@ -1,7 +1,7 @@
 {% macro get_temp_tables(temp_tables_type) %}
     {%- set database_name = elementary.target_database() %}
     {%- set tables_suffix = '__' ~  temp_tables_type %}
-    {%- set schema_name = target.schema ~ '__elementary_tests' %}
+    {%- set schema_name = schema %}
 
     {%- set info_schema_query %}
         with temp_tables as (
