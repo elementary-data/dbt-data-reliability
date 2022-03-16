@@ -13,7 +13,7 @@ with dbt_runs as (
 
 alerts_model_runs as (
 
-    {%- if var('alert_dbt_model_fail') %}
+    {%- if elementary.get_config_var('alert_dbt_model_fail') %}
      select
         model_execution_id as alert_id,
         generated_at as detected_at,
@@ -30,7 +30,7 @@ alerts_model_runs as (
         {{ elementary.null_string() }} as other
     from dbt_runs
     where resource_type = 'model'
-        {%- if var('alert_dbt_model_skip') %}
+        {%- if elementary.get_config_var('alert_dbt_model_skip') %}
         and status in ('error','skipped')
         {%- else %}
         and status = 'error'

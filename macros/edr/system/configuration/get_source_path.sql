@@ -1,9 +1,9 @@
 {% macro get_source_path(source_name, source_table_name) %}
 
-    {%- if var('edr_cli_run') is sameas false %}
+    {%- if elementary.get_config_var('edr_cli_run') is sameas false %}
         {%- set table_monitors_config = source(source_name, source_table_name) %}
         {{ return(table_monitors_config) }}
-    {%- elif var('edr_cli_run') is sameas true %}
+    {%- elif elementary.get_config_var('edr_cli_run') is sameas true %}
         {%- set table_monitors_config = elementary.find_source_table(source_table_name) %}
     {%- endif %}
     {{ return(table_monitors_config) }}

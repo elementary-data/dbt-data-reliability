@@ -5,8 +5,6 @@
          'backfill_days_per_run': 2,
          'alert_dbt_model_fail': true,
          'alert_dbt_model_skip': true,
-         'default_run_hours_back': 24,
-         'minimal_sample_size': 14,
          'edr_cli_run': false,
          'max_int': 2147483647,
          'schemas_to_alert_on_new_tables': [],
