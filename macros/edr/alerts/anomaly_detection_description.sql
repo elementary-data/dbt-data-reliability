@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro freshness_description() %}
-    'The table ' || full_table_name || ' last update was ' || round(latest_metric_value,2) || ' hours ago. The average for this metric is ' || round(training_avg,2) || '.'
+    'The table ' || full_table_name || ' last update was ' || round(latest_metric_value/60,2) || ' hours ago. The average for this metric is ' || round(training_avg/60,2) || ' hours.'
 {% endmacro %}
 
 {% macro table_metric_description() %}
