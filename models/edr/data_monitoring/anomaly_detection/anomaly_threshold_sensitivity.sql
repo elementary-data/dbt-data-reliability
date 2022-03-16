@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 with metrics_anomaly_score as (
 
     select * from {{ ref('metrics_anomaly_score') }}

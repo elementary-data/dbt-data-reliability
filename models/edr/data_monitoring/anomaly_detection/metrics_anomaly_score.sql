@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
 
 with data_monitoring_metrics as (
