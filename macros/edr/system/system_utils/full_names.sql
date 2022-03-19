@@ -48,6 +48,6 @@
 
 
 {% macro relation_to_full_name(relation) %}
-    {%- set full_table_name = relation.database ~'.'~ relation.schema ~'.'~ relation.identifier | upper %}
+    {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {{ return(full_table_name) }}
 {% endmacro %}

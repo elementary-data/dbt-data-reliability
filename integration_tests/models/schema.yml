@@ -1,6 +1,18 @@
 version: 2
 
 models:
+  - name: any_type_column_anomalies
+    config:
+      elementary:
+        timestamp_column: 'updated_at'
+    tests:
+      - elementary.table_anomalies:
+          tags: ['elementary']
+      - elementary.schema_changes:
+          tags: ['elementary']
+      - elementary.all_columns_anomalies:
+          tags: ['elementary']
+
   - name: string_column_anomalies
     config:
       elementary:
@@ -48,23 +60,18 @@ models:
 
   - name: numeric_column_anomalies
     config:
-      edr:
+      elementary:
         timestamp_column: 'updated_at'
-        monitored: true
     tests:
       - elementary.table_anomalies:
           tags: ['elementary']
       - elementary.schema_changes:
           tags: ['elementary']
-      - elementary.all_columns_anomalies:
-          tags: ['elementary']
-          column_anomalies:
-            - max
     columns:
       - name: min
         tests:
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
@@ -78,15 +85,15 @@ models:
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['debug']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['debug']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['debug']
               column_anomalies:
                 - average
       - name: average
@@ -123,3 +130,4 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ['elementary']
+

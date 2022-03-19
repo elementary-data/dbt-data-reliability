@@ -26,7 +26,7 @@
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
-        {%- set table_monitors = elementary.get_final_table_monitors(table_tests) %}
+        {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
 
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
