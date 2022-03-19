@@ -5,7 +5,7 @@
     {% if execute %}
 
         {# creates temp relation for test metrics #}
-        {% set database_name, schema_name = elementary.get_package_database_and_schema(package) %}
+        {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set schema_name = schema_name ~ '__tests' %}
         {% set temp_metrics_table_name = this.name ~ '__schema_changes' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,

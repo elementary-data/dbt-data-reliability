@@ -2,7 +2,7 @@
     {% if execute %}
         {% set node_in_package = graph.nodes.values()
                                  | selectattr("resource_type", "==", "model")
-                                 | selectattr("package_name", "==", "elementary") | first %}
+                                 | selectattr("package_name", "==", package_name) | first %}
         {% if node_in_package %}
             {{ return([node_in_package.database, node_in_package.schema]) }}
         {% endif %}
