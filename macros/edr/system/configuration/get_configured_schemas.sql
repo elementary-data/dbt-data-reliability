@@ -10,7 +10,7 @@
                         {% set schema_relation = api.Relation.create(database=node.database, schema=node.schema).without_identifier() %}
                         {% if schema_relation %}
                             {% set full_schema_name = schema_relation.render() %}
-                            {% do configured_schemas.append(full_schema_name) %}
+                            {% do configured_schemas.append(full_schema_name | upper) %}
                         {% endif %}
                     {% endif %}
                 {% endif %}

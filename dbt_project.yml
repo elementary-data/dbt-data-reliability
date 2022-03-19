@@ -19,7 +19,6 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-on-run-start: "{{ elementary.upload_edr_configuration() }}"
 on-run-end: "{{ merge_test_results() }}"
 
 
