@@ -136,26 +136,6 @@
     {{ return(edr_config) }}
 {% endmacro %}
 
-{% macro get_elementary_config(node) %}
-    {% set res = {} %}
-    {% set edr_config = node.config.get('elementary') %}
-    {% if edr_config is mapping %}
-        {% do res.update(edr_config) %}
-    {% endif %}
-    {% set config_meta = node.config.get('meta') %}
-    {% if config_meta is mapping %}
-        {% set edr_config = config_meta.get('elementary') %}
-        {% if edr_config is mapping %}
-            {% do res.update(edr_config) %}
-        {% endif %}
-    {% endif %}
-    {% set edr_config = node.meta.get('elementary') %}
-    {% if edr_config is mapping %}
-        {% do res.update(edr_config) %}
-    {% endif %}
-    {{ return(res) }}
-{% endmacro %}
-
 {% macro get_table_config(node, config_in_tests) %}
     {% set node_unique_id = node.get('unique_id') %}
     {% if node_unique_id in config_in_tests %}
@@ -166,8 +146,8 @@
         {% endif %}
         {% set table_name = elementary.get_table_name_from_node(node) %}
         {% set full_table_name = node.database + '.' + node.schema + '.' + table_name %}
-        {% set edr_config = elementary.get_elementary_config(node) %}
-        {% set timestamp_column = edr_config.get('timestamp_column') %}
+        {% set elementary_config = elementary.get_elementary_config_from_node(node) %}
+        {% set timestamp_column = elementary_config.get('timestamp_column') %}
         {% if timestamp_column %}
             {% set timestamp_column = timestamp_column | upper %}
         {% endif %}
