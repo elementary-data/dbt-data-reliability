@@ -2,7 +2,6 @@
     -- depends_on: {{ ref('alerts_schema_changes') }}
     -- depends_on: {{ ref('table_changes') }}
     -- depends_on: {{ ref('column_changes') }}
-    -- depends_on: {{ ref('final_tables_config') }}
     {% if execute %}
 
         {# creates temp relation for test metrics #}

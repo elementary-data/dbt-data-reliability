@@ -3,7 +3,6 @@
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
-    -- depends_on: {{ ref('final_tables_config') }}
     {% if execute %}
         
         {#- creates temp relation for test metrics -#}
