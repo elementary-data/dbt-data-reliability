@@ -34,7 +34,7 @@ table_changes_alerts_filtered as (
         {{ elementary.null_string() }} as alert_results_query,
         {{ elementary.null_string() }} as other
     from table_changes
-    where ({{ elementary.full_schema_name() }} in {{ elementary.schemas_to_alert_on_new_tables() }} and sub_type = 'table_added')
+    where ({{ elementary.full_schema_name() }} in {{ elementary.schemas_to_alert_on_new_tables() }} and change = 'table_added')
 
 )
 

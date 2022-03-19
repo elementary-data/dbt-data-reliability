@@ -33,6 +33,7 @@ type_changes as (
 ),
 
 columns_added as (
+
     select
         full_table_name,
         'column_added' as change,
@@ -57,16 +58,28 @@ columns_removed as (
     from pre left join cur
         on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
     where cur.full_table_name is null and cur.column_name is null
-        and pre.full_table_name in {{ elementary.get_tables_for_columns_removed() }}
 
 ),
 
+columns_removed_filter_deleted_tables as (
+
+    select
+        removed.full_table_name,
+        removed.change,
+        removed.column_name,
+        removed.data_type,
+        removed.pre_data_type,
+        removed.detected_at
+    from columns_removed as removed join cur
+        on (removed.full_table_name = cur.full_table_name)
+
+),
 
 all_column_changes as (
 
     select * from type_changes
     union all
-    select * from columns_removed
+    select * from columns_removed_filter_deleted_tables
     union all
     select * from columns_added
 

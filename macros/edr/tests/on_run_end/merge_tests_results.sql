@@ -1,17 +1,18 @@
 {% macro merge_test_results() %}
     {% if execute and flags.WHICH == 'test' %}
-        {{ elementary.merge_data_monitoring_metrics() }}
-        {{ elementary.merge_data_monitoring_anomalies() }}
-        {{ elementary.merge_schema_changes_alerts() }}
+        {% set temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables = elementary.get_temp_tables_from_graph() %}
+        {{ elementary.merge_data_monitoring_metrics(temp_metrics_tables) }}
+        {{ elementary.merge_data_monitoring_anomalies(temp_anomalies_tables) }}
+        {{ elementary.merge_schema_changes_alerts(temp_schema_changes_tables) }}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
 
 
-{% macro merge_data_monitoring_metrics() %}
-    {%- if elementary.get_temp_tables('metrics') | length >0 %}
+{% macro merge_data_monitoring_metrics(temp_metrics_tables) %}
+    {%- if temp_metrics_tables | length >0 %}
 
-        {%- set temp_tables_union_query = elementary.union_metrics_query() %}
+        {%- set temp_tables_union_query = elementary.union_metrics_query(temp_metrics_tables) %}
 
         {% set database_name = database %}
         {% set schema_name = schema %}
@@ -35,10 +36,10 @@
 {% endmacro %}
 
 
-{% macro merge_data_monitoring_anomalies() %}
-    {%- if elementary.get_temp_tables('anomalies') | length >0 %}
+{% macro merge_data_monitoring_anomalies(temp_anomalies_tables) %}
+    {%- if temp_anomalies_tables | length >0 %}
 
-        {%- set temp_tables_union_query = elementary.anomalies_alerts_query() %}
+        {%- set temp_tables_union_query = elementary.anomalies_alerts_query(temp_anomalies_tables) %}
 
         {% set database_name = database %}
         {% set schema_name = schema %}
@@ -62,10 +63,10 @@
 {% endmacro %}
 
 
-{% macro merge_schema_changes_alerts() %}
-    {%- if elementary.get_temp_tables('schema_alerts') | length >0 %}
+{% macro merge_schema_changes_alerts(temp_schema_changes_tables) %}
+    {%- if temp_schema_changes_tables | length >0 %}
 
-        {%- set temp_tables_union_query = elementary.union_schema_changes_query() %}
+        {%- set temp_tables_union_query = elementary.union_schema_changes_query(temp_schema_changes_tables) %}
 
         {% set database_name = database %}
         {% set schema_name = schema %}

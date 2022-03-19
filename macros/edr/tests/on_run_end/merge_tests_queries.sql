@@ -1,32 +1,54 @@
-{% macro get_temp_tables(temp_tables_type) %}
-    {%- set database_name = elementary.target_database() %}
-    {%- set tables_suffix = '__' ~  temp_tables_type %}
-    {%- set schema_name = target.schema ~ '__elementary_tests' %}
+{% macro get_temp_tables_from_graph() %}
+    {% set temp_metrics_tables = [] %}
+    {% set temp_anomalies_tables = [] %}
+    {% set temp_schema_changes_tables = [] %}
+    {% if execute %}
+        {% set database_name = elementary.target_database() %}
+        {% set schema_name = target.schema ~ '__elementary_tests' %}
+        {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
+            {% set test_metadata = test_node.get('test_metadata') %}
+            {% if test_metadata %}
+                {% set test_name = test_metadata.get('name') %}
+                {% if test_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
+                    {% set temp_metrics_table_name = test_node.name ~ '__metrics' %}
+                    {% set temp_metrics_table_relation = adapter.get_relation(database=database_name,
+                                                                              schema=schema_name,
+                                                                              identifier=temp_metrics_table_name) %}
+                    {% if temp_metrics_table_relation %}
+                        {% set full_metrics_table_name = temp_metrics_table_relation.render() %}
+                        {% do temp_metrics_tables.append(full_metrics_table_name) %}
+                    {% endif %}
 
-    {%- set info_schema_query %}
-        with temp_tables as (
-            select upper(table_catalog) as database_name,
-                   upper(table_schema) as schema_name,
-                   upper(table_name) as table_name
-            from {{ elementary.from_information_schema('TABLES', database_name) }}
-            where lower(table_schema) like lower('{{ schema_name }}')
-                and lower(table_name) like '%{{ tables_suffix }}'
-            )
-        select {{ elementary.full_table_name() }} as full_table_name
-        from temp_tables
-    {%- endset %}
-
-    {%- set temp_tables = elementary.result_column_to_list(info_schema_query) %}
-    {{ return(temp_tables) }}
+                    {% set temp_anomalies_table_name = test_node.name ~ '__anomalies' %}
+                    {% set temp_anomalies_table_relation = adapter.get_relation(database=database_name,
+                                                                                schema=schema_name,
+                                                                                identifier=temp_anomalies_table_name) %}
+                    {% if temp_anomalies_table_relation %}
+                        {% set full_anomalies_table_name = temp_anomalies_table_relation.render() %}
+                        {% do temp_anomalies_tables.append(full_anomalies_table_name) %}
+                    {% endif %}
+                {% elif test_name == 'schema_changes' %}
+                    {% set test_schema_changes_table_name = test_node.name ~ '__schema_changes' %}
+                    {% set test_schema_changes_table_relation = adapter.get_relation(database=database_name,
+                                                                                     schema=schema_name,
+                                                                                     identifier=test_schema_changes_table_name) %}
+                    {% if test_schema_changes_table_relation %}
+                        {% set full_schema_changes_table_name = test_schema_changes_table_relation.render() %}
+                        {% do temp_schema_changes_tables.append(full_schema_changes_table_name) %}
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {{ return([temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables]) }}
 {% endmacro %}
 
 
-{% macro union_anomalies_query() %}
-    {%- set temp_tables_list = elementary.get_temp_tables('anomalies') %}
-    {%- if temp_tables_list | length > 0 %}
+{% macro union_anomalies_query(temp_anomalies_tables) %}
+    {%- if temp_anomalies_tables | length > 0 %}
         {%- set union_temp_query -%}
-            {%- for temp_table in temp_tables_list -%}
-                select * from {{- elementary.from(temp_table) -}}
+            {%- for temp_table in temp_anomalies_tables -%}
+                select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- endset %}
@@ -36,13 +58,12 @@
 {% endmacro %}
 
 
-{% macro union_metrics_query() %}
-    {%- set temp_tables_list = elementary.get_temp_tables('metrics') %}
-    {%- if temp_tables_list | length > 0 %}
+{% macro union_metrics_query(temp_metrics_tables) %}
+    {%- if temp_metrics_tables | length > 0 %}
         {%- set union_temp_query -%}
             with union_temps as (
-            {%- for temp_table in temp_tables_list -%}
-                select * from {{- elementary.from(temp_table) -}}
+            {%- for temp_table in temp_metrics_tables -%}
+                select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
                 )
@@ -56,12 +77,11 @@
 {% endmacro %}
 
 
-{% macro anomalies_alerts_query() %}
-    {%- set temp_tables_list = elementary.get_temp_tables('anomalies') %}
-    {%- if temp_tables_list | length > 0 %}
+{% macro anomalies_alerts_query(temp_anomalies_tables) %}
+    {%- if temp_anomalies_tables | length > 0 %}
         {%- set anomalies_alerts_query %}
             with union_temp as (
-                {{ elementary.union_anomalies_query() }}
+                {{ elementary.union_anomalies_query(temp_anomalies_tables) }}
             )
             select
                 id as alert_id,
@@ -86,13 +106,12 @@
 {% endmacro %}
 
 
-{% macro union_schema_changes_query() %}
-    {%- set temp_tables_list = elementary.get_temp_tables('schema_alerts') %}
-    {%- if temp_tables_list | length > 0 %}
+{% macro union_schema_changes_query(temp_schema_changes_tables) %}
+    {%- if temp_schema_changes_tables | length > 0 %}
         {%- set union_temp_query -%}
             with union_temps as (
-            {%- for temp_table in temp_tables_list -%}
-                select * from {{- elementary.from(temp_table) -}}
+            {%- for temp_table in temp_schema_changes_tables -%}
+                select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
                 )
