@@ -9,8 +9,8 @@
                     {% set test_depends_on_unique_ids = test_node.depends_on.nodes %}
                     {% set depends_on_nodes = elementary.get_nodes_by_unique_ids(test_depends_on_unique_ids) %}
                     {% for node in depends_on_nodes %}
-                        {% set elementart_config = elementary.get_elementary_config_from_node(node) %}
-                        {% if elementart_config %}
+                        {% set node_package_name = node.get('package_name') %}
+                        {% if node_package_name != 'elementary' %}
                             {% if adapter.check_schema_exists(node.database, node.schema) %}
                                     {% set schema_relation = api.Relation.create(database=node.database, schema=node.schema).without_identifier() %}
                                     {% if schema_relation %}
