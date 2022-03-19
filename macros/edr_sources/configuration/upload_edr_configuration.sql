@@ -136,24 +136,6 @@
     {{ return(edr_config) }}
 {% endmacro %}
 
-{% macro get_nodes_from_graph() %}
-    {% set nodes = [] %}
-    {% do nodes.extend(graph.sources.values()) %}
-    {% do nodes.extend(graph.nodes.values()) %}
-    {{ return(nodes) }}
-{% endmacro %}
-
-{% macro get_table_name(node) %}
-    {% if node.identifier %}
-        {% set table_name = node.identifier %}
-    {% elif node.alias %}
-        {% set table_name = node.alias %}
-    {% else %}
-        {% set table_name = node.name %}
-    {% endif %}
-    {{ return(table_name) }}
-{% endmacro %}
-
 {% macro get_elementary_config(node) %}
     {% set res = {} %}
     {% set edr_config = node.config.get('elementary') %}
@@ -182,7 +164,7 @@
         {% if columns %}
             {% set columns_monitored = True %}
         {% endif %}
-        {% set table_name = elementary.get_table_name(node) %}
+        {% set table_name = elementary.get_table_name_from_node(node) %}
         {% set full_table_name = node.database + '.' + node.schema + '.' + table_name %}
         {% set edr_config = elementary.get_elementary_config(node) %}
         {% set timestamp_column = edr_config.get('timestamp_column') %}
@@ -208,7 +190,7 @@
     {% if node_unique_id in config_in_tests %}
         {% set columns = config_in_tests[node_unique_id].get('columns') %}
         {% if columns %}
-            {% set table_name = elementary.get_table_name(node) %}
+            {% set table_name = elementary.get_table_name_from_node(node) %}
             {% for column_name, column_monitors in columns.items() %}
                 {% set full_column_name = node.database + '.' + node.schema + '.' + table_name + '.' + column_name %}
                 {% do column_config_dicts.append({'full_column_name': full_column_name | upper,
