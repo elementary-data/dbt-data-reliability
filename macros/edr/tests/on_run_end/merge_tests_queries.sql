@@ -3,8 +3,8 @@
     {% set temp_anomalies_tables = [] %}
     {% set temp_schema_changes_tables = [] %}
     {% if execute %}
-        {% set database_name = elementary.target_database() %}
-        {% set schema_name = target.schema ~ '__elementary_tests' %}
+        {% set database_name = database %}
+        {% set schema_name = schema ~ '__tests' %}
         {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
             {% set test_metadata = test_node.get('test_metadata') %}
             {% if test_metadata %}
