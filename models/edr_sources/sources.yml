@@ -1,28 +1,26 @@
 version: 2
 
 sources:
-  - name: 'edr_configuration'
-    schema: '{{ target.schema ~ "_elementary" }}'
+  - name: 'elementary_dbt_artifacts'
+    database: '{{ var("elementary_metadata_database", target.database) }}'
+    schema: '{{ var("elementary_metadata_schema", target.schema) }}'
     tables:
-      - name: 'edr_dbt_artifacts'
-        schema: '{{ target.schema ~ "_elementary" }}'
-        tables:
-          - name: 'dbt_run_results'
-            columns:
-              - name: 'model_execution_id'
-              - name: 'unique_id'
-              - name: 'invocation_id'
-              - name: 'generated_at'
-              - name: 'name'
-              - name: 'status'
-              - name: 'resource_type'
-              - name: 'execution_time'
-              - name: 'execute_started_at'
-              - name: 'execute_completed_at'
-              - name: 'compile_started_at'
-              - name: 'compile_completed_at'
-              - name: 'rows_affected'
-              - name: 'full_refresh'
+      - name: 'dbt_run_results'
+        columns:
+          - name: 'model_execution_id'
+          - name: 'unique_id'
+          - name: 'invocation_id'
+          - name: 'generated_at'
+          - name: 'name'
+          - name: 'status'
+          - name: 'resource_type'
+          - name: 'execution_time'
+          - name: 'execute_started_at'
+          - name: 'execute_completed_at'
+          - name: 'compile_started_at'
+          - name: 'compile_completed_at'
+          - name: 'rows_affected'
+          - name: 'full_refresh'
       - name: 'dbt_models'
         columns:
           - name: 'unique_id'

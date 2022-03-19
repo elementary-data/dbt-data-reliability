@@ -9,18 +9,14 @@
                     {% set test_depends_on_unique_ids = test_node.depends_on.nodes %}
                     {% set depends_on_nodes = elementary.get_nodes_by_unique_ids(test_depends_on_unique_ids) %}
                     {% for node in depends_on_nodes %}
-                        {% if 'config' in node %}
-                            {% set node_config = node.config %}
-                            {% if node_config and node_config is mapping %}
-                                {% if 'elementary' in node_config %}
-                                    {% if adapter.check_schema_exists(node.database, node.schema) %}
-                                            {% set schema_relation = api.Relation.create(database=node.database, schema=node.schema).without_identifier() %}
-                                            {% if schema_relation %}
-                                                {% set full_schema_name = schema_relation.render() %}
-                                                {% do configured_schemas.append(full_schema_name | upper) %}
-                                            {% endif %}
+                        {% set elementart_config = elementary.get_elementary_config_from_node(node) %}
+                        {% if elementart_config %}
+                            {% if adapter.check_schema_exists(node.database, node.schema) %}
+                                    {% set schema_relation = api.Relation.create(database=node.database, schema=node.schema).without_identifier() %}
+                                    {% if schema_relation %}
+                                        {% set full_schema_name = schema_relation.render() %}
+                                        {% do configured_schemas.append(full_schema_name | upper) %}
                                     {% endif %}
-                                {% endif %}
                             {% endif %}
                         {% endif %}
                     {% endfor %}
