@@ -5,8 +5,7 @@
     {% if execute %}
         {% set database_name = elementary.target_database() %}
         {% set schema_name = target.schema ~ '__elementary_tests' %}
-        {% set test_nodes = elementary.get_nodes_from_graph() | selectattr('resource_type', '==', 'test') %}
-        {% for test_node in test_nodes %}
+        {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
             {% set test_metadata = test_node.get('test_metadata') %}
             {% if test_metadata %}
                 {% set test_name = test_metadata.get('name') %}
