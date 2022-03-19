@@ -1,4 +1,4 @@
-{% macro get_final_table_monitors(table_tests=none) %}
+{% macro get_final_table_monitors(table_anomalies=none) %}
     {%- set final_table_monitors = [] %}
     {%- set default_table_monitors = elementary.get_default_table_monitors() %}
 
