@@ -98,7 +98,7 @@
     {% set depends_on_nodes = test_depends_on.get('nodes') %}
     {% if depends_on_nodes %}
         {% for node in depends_on_nodes %}
-            {% if not node.startswith('model.elementary,') %}
+            {% if not node.startswith('model.elementary.') %}
                 {{ return(node) }}
             {% endif %}
         {% endfor %}

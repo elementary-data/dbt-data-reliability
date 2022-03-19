@@ -18,7 +18,7 @@
         {%- endif %}
 
         {#- get column configuration -#}
-        {%- set table_config = elementary.get_table_config_from_graph(model, config) %}
+        {%- set table_config = elementary.get_table_config_from_graph(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
 
