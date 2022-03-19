@@ -27,6 +27,7 @@
 
         {{ elementary.daily_buckets_cte() }}
         where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }}
+            and edr_daily_bucket >= (select min(edr_bucket) from timeframe_data)
 
     ),
 
@@ -55,16 +56,16 @@
     table_freshness as (
 
     {%- if 'freshness' in table_monitors and is_timestamp %}
-        {%- if not freshness_column %}
+        {%- if freshness_column is undefined or freshness_column is none %}
             {%- set freshness_column = timestamp_column %}
         {%- endif %}
         select
             edr_daily_bucket as edr_bucket,
             'freshness' as metric_name,
-            {{ elementary.timediff('minute', 'max('~freshness_column~')', dbt_utils.dateadd('day','1','edr_daily_bucket')) }} as metric_value,
+            {{ elementary.timediff('minute', 'max('~freshness_column~')', elementary.cast_as_timestamp(dbt_utils.dateadd('day','1','edr_daily_bucket'))) }} as metric_value,
             {{ elementary.to_char('max('~freshness_column~')') }} as source_value
         from daily_buckets, {{ elementary.from(full_table_name) }}
-        where {{ freshness_column }} <= {{ dbt_utils.dateadd('day','1','edr_daily_bucket') }}
+        where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day','1','edr_daily_bucket')) }}
         group by 1,2
     {%- else %}
         {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('metric_value','int'),('source_value','string')]) }}

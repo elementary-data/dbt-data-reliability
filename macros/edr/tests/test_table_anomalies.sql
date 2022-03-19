@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies=none, freshness_column=none) %}
+{% test table_anomalies(model, table_anomalies, freshness_column=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -30,7 +30,7 @@
 
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column=none) %}
+        {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
         {%- do run_query(dbt.create_table_as(False, temp_table_relation, table_monitoring_query)) %}
 
         {#- query if there is an anomaly in recent metrics -#}
