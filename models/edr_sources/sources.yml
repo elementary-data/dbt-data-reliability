@@ -2,8 +2,8 @@ version: 2
 
 sources:
   - name: 'elementary_dbt_artifacts'
-    database: '{{ var("elementary_metadata_database", target.database) }}'
-    schema: '{{ var("elementary_metadata_schema", target.schema) }}'
+    database: '{{ var("dbt_artifacts_database", target.database) }}'
+    schema: '{{ var("dbt_artifacts_schema", target.schema) }}'
     tables:
       - name: 'dbt_run_results'
         columns:
