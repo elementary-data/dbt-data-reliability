@@ -96,7 +96,7 @@
                 {{ elementary.null_string() }} as owner,
                 {{ elementary.null_string() }} as tags,
                 {{ elementary.null_string() }} as alert_results_query,
-                {{ elementary.null_string() }} as other
+                source_value as other
             from union_temp
             qualify row_number() over (partition by id order by detected_at desc) = 1
         {%- endset %}

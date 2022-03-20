@@ -81,6 +81,7 @@
                     else (metric_value - training_avg) / (training_stddev)
                 end as z_score,
                 metric_value as latest_metric_value,
+                source_value,
                 bucket_start,
                 bucket_end,
                 training_avg,
