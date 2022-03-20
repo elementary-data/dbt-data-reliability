@@ -95,7 +95,7 @@
             {# training dataset minimal size to make anomaly detection relevant #}
               and training_set_size >= {{ elementary.get_config_var('days_back') -1 }}
             {# get anomalies for the whole backfill timeframe #}
-              and bucket_end >= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day', backfill_period, elementary.get_max_bucket_end())) }}
+              and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
 
         )
 

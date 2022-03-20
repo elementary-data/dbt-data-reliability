@@ -73,7 +73,7 @@
             {{ elementary.null_string() }} as source_value,
             {%- if is_timestamp %}
                 edr_bucket as bucket_start,
-                {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
+                {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
                 24 as bucket_duration_hours
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,

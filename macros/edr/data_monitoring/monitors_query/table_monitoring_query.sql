@@ -62,10 +62,10 @@
         select
             edr_daily_bucket as edr_bucket,
             'freshness' as metric_name,
-            {{ elementary.timediff('minute', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.cast_as_timestamp(dbt_utils.dateadd('day','1','edr_daily_bucket'))) }} as metric_value,
+            {{ elementary.timediff('minute', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value,
             {{ elementary.to_char('max('~freshness_column~')') }} as source_value
         from daily_buckets, {{ elementary.from(full_table_name) }}
-        where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day','1','edr_daily_bucket')) }}
+        where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
         group by 1,2
     {%- else %}
         {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('metric_value','int'),('source_value','string')]) }}
@@ -91,7 +91,7 @@
             source_value,
             {%- if timestamp_column %}
             edr_bucket as bucket_start,
-            {{ elementary.cast_as_timestamp(dbt_utils.dateadd('day',1,'edr_bucket')) }} as bucket_end,
+            {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
             24 as bucket_duration_hours
             {%- else %}
             {{ elementary.null_timestamp() }} as bucket_start,

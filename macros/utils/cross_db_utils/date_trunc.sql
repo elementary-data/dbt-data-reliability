@@ -7,5 +7,5 @@
 {% endmacro %}
 
 {% macro bigquery__date_trunc(date_part, date_expression) %}
-    date_trunc(cast({{ date_expression }} as timestamp), {{ date_part }})
+    timestamp_trunc(cast({{ date_expression }} as timestamp), {{ date_part }})
 {% endmacro %}

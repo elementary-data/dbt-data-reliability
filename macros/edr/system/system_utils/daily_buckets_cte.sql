@@ -11,9 +11,9 @@
         with dates as (
             select {{ elementary.cast_as_timestamp(min_bucket_end) }} as date
         union all
-        select {{ dbt_utils.dateadd('day', '1', 'date') }}
+        select {{ elementary.timeadd('day', '1', 'date') }}
         from dates
-        where {{ dbt_utils.dateadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        where {{ elementary.timeadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
             )
         select date as edr_daily_bucket
         from dates
