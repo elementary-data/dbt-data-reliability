@@ -16,6 +16,7 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
+on-run-end: "{{ elementary.upload_dbt_artifacts(results) }}"
 
 vars:
   days_back: 30

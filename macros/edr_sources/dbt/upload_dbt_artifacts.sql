@@ -56,7 +56,7 @@
         {% endif %}
     {% endfor %}
     {% if artifacts | length > 0 %}
-        {% do elementary.insert_dicts_to_table(table_name, artifacts) %}
+        {% do elementary.insert_dicts(table_name, artifacts) %}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}

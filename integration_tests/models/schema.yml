@@ -2,6 +2,12 @@ version: 2
 
 models:
   - name: any_type_column_anomalies
+    description: >
+      This is a very weird description
+      with breaklines
+      and comma,
+      and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
+      WDYT?
     config:
       elementary:
         timestamp_column: 'updated_at'

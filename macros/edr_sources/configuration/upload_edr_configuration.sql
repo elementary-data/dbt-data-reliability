@@ -29,7 +29,7 @@
         {% endif %}
     {% endfor %}
     {% if table_monitors|length > 0 %}
-        {% do elementary.insert_dicts_to_table(table_config_relation, table_monitors) %}
+        {% do elementary.insert_dicts(table_config_relation, table_monitors) %}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_config_relation) %}
@@ -48,7 +48,7 @@
         {% do column_monitors.extend(elementary.get_columns_config(node, config_in_tests)) %}
     {% endfor %}
     {% if column_monitors | length > 0 %}
-        {% do elementary.insert_dicts_to_table(column_config_relation, column_monitors) %}
+        {% do elementary.insert_dicts(column_config_relation, column_monitors) %}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(column_config_relation) %}
