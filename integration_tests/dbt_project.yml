@@ -20,6 +20,7 @@ on-run-end: "{{ elementary.upload_dbt_artifacts(results) }}"
 
 vars:
   days_back: 30
+  elementary_debug_logs: true
 
 models:
   elementary:

@@ -3,11 +3,12 @@
     -- depends_on: {{ ref('table_changes') }}
     -- depends_on: {{ ref('column_changes') }}
     {% if execute %}
-        {{ elementary.debug_log('collecting metrics for test: ' ~ this.name) }}
+        {% set test_name_in_graph = elementary.get_test_name_in_graph() %}
+        {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {# creates temp relation for test metrics #}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set schema_name = schema_name ~ '__tests' %}
-        {% set temp_schema_changes_table_name = this.name ~ '__schema_changes' %}
+        {% set temp_schema_changes_table_name = test_name_in_graph ~ '__schema_changes' %}
         {{ elementary.debug_log('metrics table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_schema_changes_table_name) }}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
@@ -25,7 +26,7 @@
 
         {# query if there were schema changes since last execution #}
         {% set schema_changes_alert_query = elementary.get_schema_changes_alert_query(full_table_name, last_schema_change_alert_time) %}
-        {% set temp_alerts_table_name = this.name ~ '__schema_alerts' %}
+        {% set temp_alerts_table_name = test_name_in_graph ~ '__schema_alerts' %}
         {{ elementary.debug_log('schema alerts table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
