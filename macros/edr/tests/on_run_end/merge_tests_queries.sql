@@ -5,7 +5,10 @@
     {% if execute %}
         {% set database_name = database %}
         {% set schema_name = schema ~ '__tests' %}
-        {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
+        {{ elementary.debug_log('finding test temp tables in database: ' ~ database_name ~ ' and schema: ' ~ schema_name) }}
+        {% set test_nodes = elementary.get_nodes_from_graph() | selectattr('resource_type', '==', 'test') %}
+        {{ elementary.debug_log('iterating over test nodes') }}
+        {% for test_node in test_nodes %}
             {% set test_metadata = test_node.get('test_metadata') %}
             {% if test_metadata %}
                 {% set test_name = test_metadata.get('name') %}
@@ -39,6 +42,9 @@
                 {% endif %}
             {% endif %}
         {% endfor %}
+        {{ elementary.debug_log('found temp_metrics_tables: ' ~ temp_metrics_tables) }}
+        {{ elementary.debug_log('found temp_anomalies_tables: ' ~ temp_anomalies_tables) }}
+        {{ elementary.debug_log('found temp_schema_changes_tables: ' ~ temp_schema_changes_tables) }}
     {% endif %}
     {{ return([temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables]) }}
 {% endmacro %}
