@@ -4,78 +4,78 @@
     {%- set max_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set table_monitors_list = ['row_count'] %}
 
-    with timeframe_data as (
+    {% if is_timestamp %}
+        with timeframe_data as (
+            select *,
+                   {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
+            from {{ elementary.from(full_table_name) }}
+            where
+                {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+                and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        ),
 
-        select *
-        {% if is_timestamp -%}
-             , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
-        {%- else %}
-            , {{ elementary.null_timestamp() }} as edr_bucket
-        {%- endif %}
-        from {{ elementary.from(full_table_name) }}
-        where
-        {% if is_timestamp -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
-        {%- else %}
-            true
-        {%- endif %}
+        daily_buckets as (
+            {{ elementary.daily_buckets_cte() }}
+            where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and
+                  edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }} and
+                  edr_daily_bucket >= (select min(edr_bucket) from timeframe_data)
+        ),
 
-    ),
-
-    daily_buckets as (
-
-        {{ elementary.daily_buckets_cte() }}
-        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }}
-            and edr_daily_bucket >= (select min(edr_bucket) from timeframe_data)
-
-    ),
-
-    table_monitors as (
-
-    {%- if 'row_count' in table_monitors %}
-        select edr_daily_bucket, edr_bucket,
-            {%- if 'row_count' in table_monitors %} case when edr_bucket is null then 0 else {{ elementary.row_count() }} end {%- else -%} {{ elementary.null_float() }} {% endif %} as row_count
-        from daily_buckets left join timeframe_data on (edr_daily_bucket = edr_bucket)
-        group by 1,2
+        row_count as (
+            {%- if 'row_count' in table_monitors %}
+                select edr_daily_bucket as edr_bucket,
+                       'row_count' as metric_name,
+                        {{ elementary.null_string() }} as source_value
+                        case when edr_bucket is null then
+                            0
+                        else {{ elementary.cast_as_float(elementary.row_count()) }} end as metric_value
+                from daily_buckets left join timeframe_data on (edr_daily_bucket = edr_bucket)
+                group by 1,2,3
             {%- else %}
-                {{ elementary.empty_table([('edr_daily_bucket','timestamp'),('edr_bucket','timestamp'),('row_count','int'),('source_value','string')]) }}
+                {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
             {%- endif %}
+        ),
 
-    ),
-
-    table_monitors_unpivot as (
-
-        {% for monitor in table_monitors_list %}
-            select edr_daily_bucket as edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value, {{ elementary.null_string() }} as source_value from table_monitors where {{ monitor }} is not null
-            {% if not loop.last %} union all {% endif %}
-        {%- endfor %}
-
-    ),
-
-    table_freshness as (
-
-    {%- if 'freshness' in table_monitors and is_timestamp %}
-        {%- if freshness_column is undefined or freshness_column is none %}
-            {%- set freshness_column = timestamp_column %}
+        table_freshness as (
+        {%- if 'freshness' in table_monitors %}
+            {%- if freshness_column is undefined or freshness_column is none %}
+                {%- set freshness_column = timestamp_column %}
+            {%- endif %}
+            select
+                edr_daily_bucket as edr_bucket,
+                'freshness' as metric_name,
+                {{ elementary.to_char('max('~freshness_column~')') }} as source_value,
+                {{ elementary.timediff('minute', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
+            from daily_buckets, {{ elementary.from(full_table_name) }}
+            where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
+            group by 1,2
+        {%- else %}
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
         {%- endif %}
-        select
-            edr_daily_bucket as edr_bucket,
-            'freshness' as metric_name,
-            {{ elementary.timediff('minute', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value,
-            {{ elementary.to_char('max('~freshness_column~')') }} as source_value
-        from daily_buckets, {{ elementary.from(full_table_name) }}
-        where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
-        group by 1,2
-    {%- else %}
-        {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('metric_value','int'),('source_value','string')]) }}
-    {%- endif %}
+        ),
+    {% else %}
+        with row_count as (
+            {%- if 'row_count' in table_monitors %}
+                select
+                    {{ elementary.cast_as_timestamp(max_bucket_start) }} as edr_bucket,
+                    'row_count' as metric_name,
+                    {{ elementary.null_string() }} as source_value,
+                    {{ elementary.row_count() }} as metric_value
+                from {{ elementary.from(full_table_name) }}
+                group by 1,2,3
+            {%- else %}
+                {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+            {%- endif %}
+        ),
 
-    ),
+        table_freshness as (
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+        ),
+    {% endif %}
 
     union_metrics as (
 
-        select * from table_monitors_unpivot
+        select * from row_count
         union all
         select * from table_freshness
 
@@ -89,19 +89,13 @@
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             source_value,
-            {%- if timestamp_column %}
             edr_bucket as bucket_start,
             {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
             24 as bucket_duration_hours
-            {%- else %}
-            {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.null_timestamp() }} as bucket_end,
-            {{ elementary.null_int() }} as bucket_duration_hours
-            {%- endif %}
         from
             union_metrics
-        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}
-
+        where (metric_value is not null and cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+              metric_value is null
     )
 
     select
