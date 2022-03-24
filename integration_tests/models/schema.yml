@@ -13,7 +13,7 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['elementary']
+          tags: ['debug']
       - elementary.schema_changes:
           tags: ['elementary']
       - elementary.all_columns_anomalies:
@@ -25,9 +25,9 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['elementary_c']
+          tags: ['elementary']
       - elementary.table_anomalies:
-          tags: ['elementary_c']
+          tags: ['elementary']
           table_anomalies:
             - freshness
       - elementary.all_columns_anomalies:
@@ -91,15 +91,15 @@ models:
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - average
       - name: average
@@ -137,3 +137,18 @@ models:
           - elementary.column_anomalies:
               tags: ['elementary']
 
+sources:
+  - name: training
+    schema: "{{ target.schema }}"
+    tables:
+      - name: any_type_column_anomalies_training
+        tests:
+          - elementary.table_anomalies:
+              tags: ['elementary_source']
+  - name: validation
+    schema: "{{ target.schema }}"
+    tables:
+      - name: any_type_column_anomalies_validation
+        tests:
+          - elementary.all_columns_anomalies:
+              tags: ['elementary_source']
