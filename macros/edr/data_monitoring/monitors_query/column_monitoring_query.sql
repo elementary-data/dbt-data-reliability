@@ -1,20 +1,20 @@
-{% macro column_monitoring_query(full_table_name, timestamp_column, is_timestamp, timeframe_start, column_name, column_monitors) %}
+{% macro column_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
 
-    {%- set timeframe_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
 
-    with timeframe_data as (
+    with filtered_monitored_table as (
 
         select {{ elementary.column_quote(column_name) }}
             {% if is_timestamp -%}
              , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
-       , null as edr_bucket
+            , null as edr_bucket
             {%- endif %}
         from {{ elementary.from(full_table_name) }}
         where
         {% if is_timestamp -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(timeframe_start) }}
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(timeframe_end) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
         {%- else %}
             true
         {%- endif %}
@@ -42,7 +42,7 @@
                     {%- if 'average_length' in column_monitors -%} {{ elementary.average_length(column) }} {%- else -%} null {% endif %} as average_length,
                     {%- if 'missing_count' in column_monitors -%} {{ elementary.missing_count(column) }} {%- else -%} null {% endif %} as missing_count,
                     {%- if 'missing_percent' in column_monitors -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent
-                from timeframe_data
+                from filtered_monitored_table
                 group by 1,2
         {%- else %}
             {{ elementary.empty_column_monitors_cte() }}
@@ -77,7 +77,7 @@
                 24 as bucket_duration_hours
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
-                {{ elementary.null_timestamp() }} as bucket_end,
+                {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
@@ -90,7 +90,6 @@
             'full_table_name',
             'column_name',
             'metric_name',
-            'bucket_start',
             'bucket_end'
         ]) }} as id,
         full_table_name,

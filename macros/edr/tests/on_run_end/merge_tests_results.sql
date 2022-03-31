@@ -1,21 +1,20 @@
 {% macro merge_test_results() %}
     {% if execute and flags.WHICH == 'test' %}
-        {% set temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables = elementary.get_temp_tables_from_graph() %}
-        {{ elementary.merge_data_monitoring_metrics(temp_metrics_tables) }}
-        {{ elementary.merge_data_monitoring_anomalies(temp_anomalies_tables) }}
-        {{ elementary.merge_schema_changes_alerts(temp_schema_changes_tables) }}
+        {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+        {% set temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables = elementary.get_temp_tables_from_graph(database_name, schema_name) %}
+        {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, temp_metrics_tables) }}
+        {{ elementary.merge_data_monitoring_anomalies(database_name, schema_name, temp_anomalies_tables) }}
+        {{ elementary.merge_schema_changes_alerts(database_name, schema_name, temp_schema_changes_tables) }}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
 
 
-{% macro merge_data_monitoring_metrics(temp_metrics_tables) %}
+{% macro merge_data_monitoring_metrics(database_name, schema_name, temp_metrics_tables) %}
     {%- if temp_metrics_tables | length >0 %}
 
         {%- set temp_tables_union_query = elementary.union_metrics_query(temp_metrics_tables) %}
 
-        {% set database_name = database %}
-        {% set schema_name = schema %}
         {% set temp_metrics_table_name = 'temp_union__metrics' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
@@ -38,13 +37,11 @@
 {% endmacro %}
 
 
-{% macro merge_data_monitoring_anomalies(temp_anomalies_tables) %}
+{% macro merge_data_monitoring_anomalies(database_name, schema_name, temp_anomalies_tables) %}
     {%- if temp_anomalies_tables | length >0 %}
 
         {%- set temp_tables_union_query = elementary.anomalies_alerts_query(temp_anomalies_tables) %}
 
-        {% set database_name = database %}
-        {% set schema_name = schema %}
         {% set temp_anomalies_table_name = 'temp_union__anomalies' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
@@ -68,13 +65,11 @@
 {% endmacro %}
 
 
-{% macro merge_schema_changes_alerts(temp_schema_changes_tables) %}
+{% macro merge_schema_changes_alerts(database_name, schema_name, temp_schema_changes_tables) %}
     {%- if temp_schema_changes_tables | length >0 %}
 
         {%- set temp_tables_union_query = elementary.union_schema_changes_query(temp_schema_changes_tables) %}
 
-        {% set database_name = database %}
-        {% set schema_name = schema %}
         {% set temp_schema_changes_table_name = 'temp_union__schema_changes_alerts' %}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,

@@ -1,10 +1,9 @@
-{% macro get_temp_tables_from_graph() %}
+{% macro get_temp_tables_from_graph(database_name, schema_name) %}
     {% set temp_metrics_tables = [] %}
     {% set temp_anomalies_tables = [] %}
     {% set temp_schema_changes_tables = [] %}
     {% if execute %}
-        {% set database_name = database %}
-        {% set schema_name = schema ~ '__tests' %}
+        {% set schema_name = schema_name ~ '__tests' %}
         {{ elementary.debug_log('finding test temp tables in database: ' ~ database_name ~ ' and schema: ' ~ schema_name) }}
         {% set test_nodes = elementary.get_nodes_from_graph() | selectattr('resource_type', '==', 'test') %}
         {{ elementary.debug_log('iterating over test nodes') }}

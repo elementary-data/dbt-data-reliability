@@ -5,10 +5,12 @@ Tests flow:
 
 Run:
 ```
-python data_generation.py
 dbt deps
+python data_generation.py
 dbt seed -s training 
 dbt run --full-refresh
+dbt test -s tag:table_anomalies
+
 dbt seed -s validation
 dbt run
 ```

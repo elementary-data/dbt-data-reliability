@@ -2,8 +2,8 @@
     {%- set final_table_monitors = [] %}
     {%- set default_table_monitors = elementary.get_default_table_monitors() %}
 
-    {%- if table_tests is defined and table_tests is not none and table_tests | length > 0 %}
-        {%- set final_table_monitors = elementary.lists_intersection(table_tests,default_table_monitors) %}
+    {%- if table_anomalies and table_anomalies | length > 0 %}
+        {%- set final_table_monitors = elementary.lists_intersection(table_anomalies, default_table_monitors) %}
     {%- else %}
         {%- set final_table_monitors = default_table_monitors %}
     {%- endif %}
