@@ -5,6 +5,7 @@
          'backfill_days_per_run': 2,
          'alert_dbt_model_fail': true,
          'alert_dbt_model_skip': true,
+         'elementary_debug_logs': false,
          'edr_cli_run': false,
          'max_int': 2147483647,
          'schemas_to_alert_on_new_tables': [],

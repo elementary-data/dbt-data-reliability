@@ -6,9 +6,10 @@
 
 {% macro debug_log(msg) %}
     {%- if execute %}
-        {% do log('EDR_LOG_PRE', info=True) %}
-        {% do log(msg, info=True) %}
-        {% do log('EDR_LOG_AFTER', info=True) %}
+        {% set debug_logs_enabled = elementary.get_config_var('elementary_debug_logs') %}
+        {% if debug_logs_enabled %}
+            {{ elementary.edr_log(msg) }}
+        {% endif %}
     {%- endif %}
 {% endmacro %}
 

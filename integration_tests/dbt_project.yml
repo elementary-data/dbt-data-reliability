@@ -16,10 +16,16 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-on-run-end: "{{ elementary.upload_dbt_artifacts(results) }}"
+on-run-start:
+  - "{{ clear_tests() }}"
+
+on-run-end:
+  - "{{ elementary.merge_test_results() }}" # in prod this is called from within the package, it's called here in tests so we can run validations on the final tables
+  - "{{ tests_validation() }}"
 
 vars:
   days_back: 30
+  elementary_debug_logs: false
 
 models:
   elementary:

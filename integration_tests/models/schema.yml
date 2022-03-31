@@ -13,11 +13,13 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['elementary']
+          tags: ['table_anomalies']
+          table_anomalies:
+            - row_count
       - elementary.schema_changes:
-          tags: ['elementary']
+          tags: ['schema_changes']
       - elementary.all_columns_anomalies:
-          tags: ['elementary']
+          tags: ['all_columns_anomalies']
 
   - name: string_column_anomalies
     config:
@@ -25,44 +27,42 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['elementary_c']
-      - elementary.table_anomalies:
-          tags: ['elementary_c']
+          tags: ['table_anomalies']
           table_anomalies:
             - freshness
       - elementary.all_columns_anomalies:
-          tags: ['elementary_c']
+          tags: ['all_columns_anomalies']
     columns:
       - name: min_length
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['specific_column_anomalies']
               column_anomalies:
                 - min_length
                 - max_length
       - name: max_length
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['column_anomalies']
       - name: average_length
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['specific_column_anomalies']
               column_anomalies:
                 - average_length
                 - null_count
       - name: missing_count
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['column_anomalies']
       - name: missing_percent
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['column_anomalies']
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['column_anomalies']
 
   - name: numeric_column_anomalies
     config:
@@ -70,7 +70,7 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['elementary']
+          tags: ['table_anomalies']
       - elementary.schema_changes:
           tags: ['elementary']
     columns:
@@ -91,15 +91,15 @@ models:
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['elementary']
               column_anomalies:
                 - average
       - name: average
@@ -137,3 +137,25 @@ models:
           - elementary.column_anomalies:
               tags: ['elementary']
 
+sources:
+  - name: training
+    schema: "{{ target.schema }}"
+    tables:
+      - name: any_type_column_anomalies_training
+        tests:
+          - elementary.table_anomalies:
+              tags: ['table_anomalies']
+      - name: string_column_anomalies_training
+        meta:
+          elementary:
+            timestamp_column: 'date'
+        tests:
+          - elementary.table_anomalies:
+              tags: ['table_anomalies']
+  - name: validation
+    schema: "{{ target.schema }}"
+    tables:
+      - name: any_type_column_anomalies_validation
+        tests:
+          - elementary.all_columns_anomalies:
+              tags: ['elementary_source']
