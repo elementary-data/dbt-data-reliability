@@ -36,7 +36,7 @@ models:
       - name: "min_length"
         tests:
           - elementary.column_anomalies:
-              tags: ['debug']
+              tags: ['specific_column_anomalies']
               column_anomalies:
                 - min_length
                 - max_length
