@@ -352,7 +352,7 @@
 {% endmacro %}
 
 {% macro flatten_metric(node_dict) %}
-    {% set depends_on_dict = safe_get_with_default(node_dict, 'depends_on', {}) %}
+    {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set flatten_metrics_metadata_dict = {
