@@ -25,7 +25,7 @@ on-run-end:
 
 vars:
   days_back: 30
-  elementary_debug_logs: false
+  elementary_debug_logs: true
 
 models:
   elementary:

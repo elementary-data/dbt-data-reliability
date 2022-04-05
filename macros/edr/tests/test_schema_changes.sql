@@ -20,8 +20,12 @@
         {% endif %}
 
         {# get table configuration #}
+        {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
-        {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
+        {% if not model_relation %}
+            {{ elementary.test_log('monitored_table_not_found', full_table_name) }}
+            {{ return(elementary.no_results_query()) }}
+        {% endif %}
         {%- set last_schema_change_alert_time = elementary.get_last_schema_changes_alert_time() %}
 
         {# query if there were schema changes since last execution #}
@@ -34,8 +38,8 @@
                                                                                    type='table') -%}
         {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
 
-        {# return schema changes query as standart test query #}
-        select * from {{ alerts_temp_table_relation.include(database=True, schema=True, identifier=True) }}
+        {# return schema changes query as standard test query #}
+        select * from {{ alerts_temp_table_relation }}
 
     {% else %}
 

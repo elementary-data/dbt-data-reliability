@@ -1,6 +1,7 @@
-{% macro column_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
+{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% set full_table_name_str = elementary.relation_to_full_name(monitored_table_relation) %}
 
     with filtered_monitored_table as (
 
@@ -10,7 +11,7 @@
             {%- else %}
             , null as edr_bucket
             {%- endif %}
-        from {{ elementary.from(full_table_name) }}
+        from {{ monitored_table_relation }}
         where
         {% if is_timestamp -%}
             {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
@@ -66,7 +67,7 @@
     metrics_final as (
 
         select
-            '{{ full_table_name }}' as full_table_name,
+            '{{ full_table_name_str }}' as full_table_name,
             edr_column_name as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
