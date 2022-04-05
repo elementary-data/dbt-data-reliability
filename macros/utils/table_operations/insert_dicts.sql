@@ -22,7 +22,7 @@
 {%- endmacro %}
 
 {%- macro escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("'", "\\'") | replace("\n", "\\n")) -}}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", "\\n")) -}}
 {%- endmacro -%}
 
 {%- macro render_value(value) -%}

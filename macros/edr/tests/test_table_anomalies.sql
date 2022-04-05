@@ -23,14 +23,18 @@
         {#- get table configuration -#}
         {%- set table_config = elementary.get_table_config_from_graph(model) %}
         {{ elementary.debug_log('table config - ' ~ table_config) }}
+        {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
-        {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
+        {% if not model_relation %}
+            {{ elementary.test_log('monitored_table_not_found', full_table_name) }}
+            {{ return(elementary.no_results_query()) }}
+        {% endif %}
 
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
-        {%- set is_timestamp = elementary.get_is_column_timestamp(full_table_name, timestamp_column, timestamp_column_data_type) %}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
@@ -38,13 +42,13 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set table_monitoring_query = elementary.table_monitoring_query(full_table_name, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
+        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {%- do run_query(dbt.create_table_as(False, temp_table_relation, table_monitoring_query)) %}
 
         {#- query if there is an anomaly in recent metrics -#}
-        {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_name, full_table_name, table_monitors) %}
+        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors) %}
+        {{ elementary.debug_log('table monitors anomaly query - \n' ~ anomaly_query) }}
         {% set temp_alerts_table_name = test_name_in_graph ~ '__anomalies' %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {% set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
@@ -54,8 +58,8 @@
         {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
         {{ elementary.test_log('end', full_table_name) }}
 
-        {# return anomalies query as standart test query #}
-        select * from {{ anomalies_temp_table_relation.include(database=True, schema=True, identifier=True) }}
+        {# return anomalies query as standard test query #}
+        select * from {{ anomalies_temp_table_relation }}
 
     {% else %}
 

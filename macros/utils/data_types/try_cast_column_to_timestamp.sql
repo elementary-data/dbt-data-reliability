@@ -1,8 +1,8 @@
-{% macro try_cast_column_to_timestamp(full_table_name, timestamp_column) %}
+{% macro try_cast_column_to_timestamp(table_relation, timestamp_column) %}
 
     {%- set query %}
         select {{ dbt_utils.safe_cast(timestamp_column, dbt_utils.type_timestamp()) }} as timestamp_column
-        from {{ elementary.from(full_table_name) }}
+        from {{ table_relation }}
         where {{ timestamp_column }} is not null
         limit 1
     {%- endset %}

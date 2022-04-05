@@ -1,4 +1,4 @@
-{% macro get_anomaly_query(temp_table_name, full_table_name, monitors, column_name = none, columns_only=false) %}
+{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false) %}
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start_as_datetime() %}
     {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
@@ -10,7 +10,7 @@
 
             select * from {{ ref('data_monitoring_metrics') }}
             where bucket_start > {{ elementary.cast_as_timestamp(metrics_min_time) }}
-                and upper(full_table_name) = upper('{{ full_table_name }}')
+                and upper(full_table_name) = upper('{{ full_monitored_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
                     and upper(column_name) = upper('{{ column_name }}')
@@ -26,7 +26,7 @@
 
             select * from data_monitoring_metrics
             union all
-            select * from {{ elementary.from(temp_table_name) }}
+            select * from {{ test_metrics_table_relation }}
 
         ),
 

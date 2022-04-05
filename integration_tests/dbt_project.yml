@@ -22,10 +22,11 @@ on-run-start:
 on-run-end:
   - "{{ elementary.merge_test_results() }}" # in prod this is called from within the package, it's called here in tests so we can run validations on the final tables
   - "{{ tests_validation() }}"
+  - "{{ elementary.upload_dbt_artifacts(results) }}"
 
 vars:
   days_back: 30
-  elementary_debug_logs: false
+  elementary_debug_logs: true
 
 models:
   elementary:
