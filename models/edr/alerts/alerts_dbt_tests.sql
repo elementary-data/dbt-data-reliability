@@ -35,7 +35,7 @@ failed_dbt_tests as (
         dt.compiled_sql as alert_results_query,
         {{ elementary.null_string() }} as other
     from dbt_run_results dr left join dbt_tests_with_models_metadata dt on dr.unique_id = dt.unique_id
-    where resource_type = 'test' and lower(status) != 'success' and dt.generated_at >= {{ run_started_at.strftime('%Y-%m-%d %H:%M:%S') }}
+    where resource_type = 'test' and lower(status) != 'success' and dt.generated_at >= '{{ run_started_at.strftime('%Y-%m-%d %H:%M:%S') }}'
 )
 
 select * from failed_dbt_tests
