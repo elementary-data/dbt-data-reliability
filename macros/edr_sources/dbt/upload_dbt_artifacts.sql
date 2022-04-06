@@ -133,6 +133,7 @@
                                                                   ('materialization', 'string'),
                                                                   ('tags', 'long_string'),
                                                                   ('meta', 'long_string'),
+                                                                  ('owner', 'string'),
                                                                   ('database_name', 'string'),
                                                                   ('schema_name', 'string'),
                                                                   ('depends_on_macros', 'long_string'),
@@ -154,6 +155,7 @@
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
+    {% set owner = meta_dict.get('owner') %}
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
@@ -166,6 +168,7 @@
         'materialization': config_dict.get('materialized'),
         'tags': tags,
         'meta': meta_dict,
+        'owner': owner,
         'database_name': node_dict.get('database'),
         'schema_name': node_dict.get('schema'),
         'depends_on_macros': depends_on_dict.get('macros', []),
@@ -195,9 +198,11 @@
                                                                  ('meta', 'long_string'),
                                                                  ('depends_on_macros', 'long_string'),
                                                                  ('depends_on_nodes', 'long_string'),
+                                                                 ('parent_model_unique_id', 'string'),
                                                                  ('description', 'long_string'),
                                                                  ('package_name', 'string'),
                                                                  ('original_path', 'long_string'),
+                                                                 ('compiled_sql', 'string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
@@ -207,6 +212,7 @@
 {% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
+    {% set parent_model_unique_id = elementary.get_parent_model_unique_id_from_test_node(node_dict) %}
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
@@ -230,10 +236,12 @@
         'schema_name': node_dict.get('schema'),
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
+        'parent_model_unique_id': parent_model_unique_id,
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
+        'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
     }%}
@@ -254,6 +262,7 @@
                                                                    ('relation_name', 'string'),
                                                                    ('tags', 'long_string'),
                                                                    ('meta', 'long_string'),
+                                                                   ('owner', 'string'),
                                                                    ('package_name', 'string'),
                                                                    ('original_path', 'long_string'),
                                                                    ('path', 'string'),
@@ -268,6 +277,7 @@
     {% set source_meta_dict = elementary.safe_get_with_default(node_dict, 'source_meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(source_meta_dict) %}
+    {% set owner = meta_dict.get('owner') %}
     {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set flatten_source_metadata_dict = {
          'unique_id': node_dict.get('unique_id'),
@@ -283,6 +293,7 @@
          'relation_name': node_dict.get('relation_name'),
          'tags': tags,
          'meta': meta_dict,
+         'owner': owner,
          'package_name': node_dict.get('package_name'),
          'original_path': node_dict.get('original_file_path'),
          'path': node_dict.get('path'),
