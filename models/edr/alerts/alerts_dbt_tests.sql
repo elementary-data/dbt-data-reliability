@@ -1,13 +1,13 @@
 with dbt_run_results as (
-    select * from source('elementary_dbt_artifacts', 'dbt_run_results')
+    select * from {{ source('elementary_dbt_artifacts', 'dbt_run_results')  }}
 ),
 
 dbt_models as (
-    select * from source('elementary_dbt_artifacts', 'dbt_models')
+    select * from  {{ source('elementary_dbt_artifacts', 'dbt_models')  }}
 ),
 
 dbt_tests as (
-    select * from source('elementary_dbt_artifacts', 'dbt_tests')
+    select * from {{ source('elementary_dbt_artifacts', 'dbt_tests')  }}
 ),
 
 dbt_tests_with_models_metadata as (
