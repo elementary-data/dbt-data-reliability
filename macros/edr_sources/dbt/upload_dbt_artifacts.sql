@@ -1,4 +1,5 @@
 {% macro upload_dbt_artifacts(results) %}
+    -- depends_on: {{ ref('alerts_dbt_tests') }}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
 
@@ -48,6 +49,7 @@
             {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
             {% set dbt_run_results = elementary.create_source_table('dbt_run_results', dbt_run_results_empty_table_query, False) %}
             {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
+            {% do elementary.update_alerts(results) %}
             {% do adapter.commit() %}
         {% endif %}
     {% endif %}
@@ -72,6 +74,74 @@
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}
 {% endmacro %}
+
+{% macro update_alerts(results) %}
+    {% set test_alerts = [] %}
+    {% for run_result in results %}
+        {% set run_result_dict = run_result.to_dict() %}
+        {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
+        {% set execution_id = [invocation_id, node.get('unique_id')] | join('.') %}
+        {% set resource_type = node.get('resource_type') %}
+        {% set generated_at = run_started_at.strftime('%Y-%m-%d %H:%M:%S') %}
+        {% set status = run_result_dict.get('status') | lower %}
+        {% if resource_type == 'test' and status != 'success' %}
+            {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node) %}
+            {% set parent_model_nodes = elementary.get_nodes_by_unique_ids(parent_model_unique_ids) %}
+            {% set parent_models_owners = [] %}
+            {% set parent_models_tags = [] %}
+            {% for parent_model_node in parent_model_nodes %}
+                {% set flatten_parent_model_node = elementary.flatten_model(parent_model_node) %}
+                {% set parent_model_owner = flatten_parent_model_node.get('owner') %}
+                {% set parent_model_tags = flatten_parent_model_node.get('tags') %}
+                {% if parent_model_owner %}
+                    {% do parent_models_owners.append(parent_model_owner) %}
+                {% endif %}
+                {% if parent_model_tags and parent_model_tags | length > 0 and parent_model_tags is sequence %}
+                    {% do parent_models_tags.extend(parent_model_tags) %}
+                {% endif %}
+            {% endfor %}
+            {% set test_metadata = elementary.safe_get_with_default(node, 'test_metadata', {}) %}
+            {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
+            {% set test_model_jinja = test_kwargs.get('model') %}
+            {% set primary_parent_model_name = none %}
+            {% if test_model_jinja %}
+                {% set primary_parent_model_candidates = [] %}
+                {% for parent_model_unique_id in parent_model_unique_ids %}
+                    {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
+                    {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
+                        {% set parent_model_name = split_parent_model_unique_id[-1] %}
+                        {% if parent_model_name and parent_model_name in test_model_jinja %}
+                            {% do primary_parent_model_candidates.append(parent_model_name) %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                {% if primary_parent_model_candidates | length == 1 %}
+                    {% set primary_parent_model_name = primary_parent_model_candidates[0] %}
+                {% endif %}
+            {% endif %}
+            {% set test_alert_dict = {
+               'alert_id': execution_id,
+               'detected_at': generated_at,
+               'database_name': node.get('database'),
+               'schema_name': node.get('schema'),
+               'table_name': primary_parent_model_name,
+               'column_name': node.get('column_name'),
+               'alert_type': 'dbt_test',
+               'sub_type': status,
+               'alert_description': node.get('name'),
+               'owner': parent_models_owners,
+               'tags': parent_models_tags,
+               'alert_results_query': node.get('compiled_sql'),
+               'other': none
+            }%}
+            {% do test_alerts.append(test_alert_dict) %}
+        {% endif %}
+    {% endfor %}
+    {% if test_alerts | length > 0 %}
+        {% do elementary.insert_dicts(ref('alerts_dbt_tests'), test_alerts) %}
+    {% endif %}
+{% endmacro %}
+
 
 {% macro get_dbt_run_results_empty_table_query() %}
     {% set dbt_run_results_empty_table_query = elementary.empty_table([('model_execution_id', 'string'),
@@ -212,7 +282,7 @@
 {% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
-    {% set parent_model_unique_id = elementary.get_parent_model_unique_id_from_test_node(node_dict) %}
+    {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node_dict) %}
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
@@ -236,7 +306,7 @@
         'schema_name': node_dict.get('schema'),
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
-        'parent_model_unique_id': parent_model_unique_id,
+        'parent_model_unique_id': parent_model_unique_ids[0],
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
