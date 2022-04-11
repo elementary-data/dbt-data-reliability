@@ -13,13 +13,14 @@ with information_schema_columns as (
 ),
 
 columns as (
+
     select
         full_table_name,
         database_name,
         schema_name,
         table_name,
         column_name,
-        data_type,
+        cast(data_type as {{ dbt_utils.type_string() }}) as data_type,
         {{ elementary.run_start_column() }} as detected_at,
 
         {% if is_incremental() %}

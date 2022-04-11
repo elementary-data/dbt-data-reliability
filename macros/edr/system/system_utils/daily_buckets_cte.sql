@@ -32,3 +32,17 @@
     {%- endset %}
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
+
+{% macro redshift__daily_buckets_cte() %}
+    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set days_back = elementary.get_config_var('days_back') %}
+
+    {%- set daily_buckets_cte %}
+        select current_date::timestamp - (i * interval '1 day') as edr_daily_bucket
+        from generate_series(0, {{ days_back }}) i
+        where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_end) }}
+        order by 1 desc
+    {%- endset %}
+    {{ return(daily_buckets_cte) }}
+{% endmacro %}
