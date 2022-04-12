@@ -47,7 +47,37 @@
 {% endmacro %}
 
 
+{% macro redshift__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' -%}
+        {%- set part_index = 1 -%}
+    {%- elif part_name == 'schema_name' -%}
+        {%- set part_index = 2 -%}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 3 -%}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+    trim(split_part(full_table_name,'.',{{ part_index }}),'"') as {{ part_name }}
+{% endmacro %}
+
+
 {% macro relation_to_full_name(relation) %}
     {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {{ return(full_table_name) }}
+{% endmacro %}
+
+
+{% macro full_schema_names_tuple() %}
+
+    {%- set schemas_list_quoted = elementary.get_configured_schemas_from_graph() %}
+    {%- set schemas_list = [] %}
+
+    {%- for schema_name_quoted in schemas_list_quoted %}
+        {%- set schema_name = schema_name_quoted | replace('"','') %}
+        {%- do schemas_list.append(schema_name) -%}
+    {%- endfor %}
+
+    {% set schemas_tuple = elementary.strings_list_to_tuple(schemas_list) %}
+    {{ return(schemas_tuple) }}
+
 {% endmacro %}
