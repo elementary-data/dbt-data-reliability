@@ -30,6 +30,7 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
+        {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
@@ -50,10 +51,9 @@
                 {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
                 {%- if loop.first %}
                     {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
-                    {%- do run_query(dbt.create_table_as(False, temp_table_relation, column_monitoring_query)) %}
-                {%- else %}
-                    {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
+                    {%- do run_query(dbt.create_table_as(False, temp_table_relation, empty_table_query)) %}
                 {% endif %}
+                {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
             {%- endfor %}
         {%- endif %}
 
