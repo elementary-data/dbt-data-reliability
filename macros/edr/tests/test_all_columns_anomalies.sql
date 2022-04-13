@@ -18,6 +18,7 @@
         {%- if not elementary.check_schema_exists(database_name, schema_name) %}
             {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
             {%- do dbt.create_schema(temp_table_relation) %}
+            {% do adapter.commit() %}
         {%- endif %}
 
         {#- get column configuration -#}
@@ -30,6 +31,7 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
+        {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
@@ -49,11 +51,12 @@
                 {%- set column_monitors = column['monitors'] %}
                 {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
                 {%- if loop.first %}
-                    {%- do run_query(dbt.create_table_as(False, temp_table_relation, column_monitoring_query)) %}
-                {%- else %}
-                    {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
+                    {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
+                    {%- do run_query(dbt.create_table_as(False, temp_table_relation, empty_table_query)) %}
                 {% endif %}
+                {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
             {%- endfor %}
+            {% do adapter.commit() %}
         {%- endif %}
 
         {#- query if there is an anomaly in recent metrics -#}
@@ -64,7 +67,9 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
+        {%- do dbt.drop_relation_if_exists(anomalies_temp_table_relation) %}
         {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do adapter.commit() %}
 
         {{ elementary.test_log('end', full_table_name, 'all columns') }}
 
