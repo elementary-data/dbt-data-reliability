@@ -118,7 +118,7 @@
                     {{ elementary.null_string() }} as tags,
                     {{ elementary.null_string() }} as alert_results_query,
                     source_value as other,
-                    row_number() over (partition by id) as row_number
+                    row_number() over (partition by id order by column_name) as row_number
                 from union_temp
             )
             select
