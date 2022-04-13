@@ -7,5 +7,5 @@
 {%- endmacro -%}
 
 {%- macro cast_as_string(column) -%}
-    cast({{ column }} as {{ dbt_utils.type_string() }})
+    cast({{ column }} as {{ elementary.type_string() }})
 {%- endmacro -%}

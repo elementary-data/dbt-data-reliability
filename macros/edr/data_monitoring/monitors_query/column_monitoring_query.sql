@@ -10,7 +10,7 @@
             {% if is_timestamp -%}
              , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
-            , null as edr_bucket
+            , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
         from {{ monitored_table_relation }}
         where

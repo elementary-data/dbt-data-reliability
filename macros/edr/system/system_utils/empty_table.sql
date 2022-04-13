@@ -62,7 +62,7 @@
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
     {%- else %}
-        cast({{ dummy_values['str'] }} as {{ dbt_utils.type_string() }}) as {{ column_name }}
+        cast({{ dummy_values['str'] }} as {{ elementary.type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}
