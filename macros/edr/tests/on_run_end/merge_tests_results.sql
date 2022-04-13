@@ -28,7 +28,7 @@
                                                                    identifier='data_monitoring_metrics') -%}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
             {{ elementary.debug_log('merging metrics to: ' ~ database_name ~ '.' ~ schema_name ~ '.data_monitoring_metrics') }}
-            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
+            {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging metrics') }}
         {%- endif %}
@@ -56,7 +56,7 @@
                                                            identifier='alerts_data_monitoring') -%}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
             {{ elementary.debug_log('merging anomalies to: ' ~ database_name ~ '.' ~ schema_name ~ '.alerts_data_monitoring') }}
-            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
+            {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging anomalies') }}
         {%- endif %}
@@ -84,7 +84,7 @@
                                                            identifier='alerts_schema_changes') -%}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
             {{ elementary.debug_log('merging schema changes alerts to: ' ~ database_name ~ '.' ~ schema_name ~ '.alerts_schema_changes') }}
-            {% set merge_sql = dbt.get_merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
+            {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging schema changes alerts') }}
         {%- endif %}

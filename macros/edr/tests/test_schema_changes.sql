@@ -36,6 +36,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
+        {%- do dbt.drop_relation_if_exists(alerts_temp_table_relation) %}
         {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
 
         {# return schema changes query as standard test query #}
