@@ -53,7 +53,7 @@
     {%- if temp_anomalies_tables | length > 0 %}
         {%- set union_temp_query -%}
             {%- for temp_table in temp_anomalies_tables -%}
-                select * from {{- temp_table -}}
+                select * from {{ temp_table }}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- endset %}
@@ -118,11 +118,11 @@
                     {{ elementary.null_string() }} as tags,
                     {{ elementary.null_string() }} as alert_results_query,
                     source_value as other,
-                    row_number() over (partition by id order by detected_at desc) as row_number
+                    row_number() over (partition by id) as row_number
                 from union_temp
             )
             select
-                id,
+                alert_id,
                 detected_at,
                 database_name,
                 schema_name,
@@ -159,7 +159,7 @@
             from union_temps
             )
             select
-                id,
+                alert_id,
                 detected_at,
                 database_name,
                 schema_name,

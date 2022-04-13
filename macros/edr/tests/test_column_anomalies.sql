@@ -18,6 +18,7 @@
         {%- if not adapter.check_schema_exists(database_name, schema_name) %}
             {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
             {%- do dbt.create_schema(temp_table_relation) %}
+            {% do adapter.commit() %}
         {%- endif %}
 
         {#- get column configuration -#}
@@ -45,6 +46,7 @@
         {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
         {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
         {%- do run_query(dbt.create_table_as(False, temp_table_relation, column_monitoring_query)) %}
+        {% do adapter.commit() %}
 
         {#- query if there is an anomaly in recent metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
@@ -57,6 +59,7 @@
                                                                                    type='table') -%}
         {%- do dbt.drop_relation_if_exists(anomalies_temp_table_relation) %}
         {%- do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do adapter.commit() %}
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {# return anomalies query as standart test query #}

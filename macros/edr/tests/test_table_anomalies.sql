@@ -48,6 +48,7 @@
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
         {%- do run_query(dbt.create_table_as(False, temp_table_relation, table_monitoring_query)) %}
+        {% do adapter.commit() %}
 
         {#- query if there is an anomaly in recent metrics -#}
         {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors) %}
@@ -60,6 +61,7 @@
                                                                                    type='table') -%}
         {%- do dbt.drop_relation_if_exists(anomalies_temp_table_relation) %}
         {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do adapter.commit() %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standard test query #}

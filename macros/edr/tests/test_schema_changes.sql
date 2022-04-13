@@ -17,6 +17,7 @@
         {% if not adapter.check_schema_exists(database_name, schema_name) %}
             {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
             {% do dbt.create_schema(temp_table_relation) %}
+            {% do adapter.commit() %}
         {% endif %}
 
         {# get table configuration #}
@@ -38,7 +39,7 @@
                                                                                    type='table') -%}
         {%- do dbt.drop_relation_if_exists(alerts_temp_table_relation) %}
         {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
-
+        {% do adapter.commit() %}
         {# return schema changes query as standard test query #}
         select * from {{ alerts_temp_table_relation }}
 

@@ -22,7 +22,7 @@
                                                                                    type='table') -%}
         {%- if temp_tables_union_query %}
             {{ elementary.debug_log('pulling metrics from temp metrics tables to: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_metrics_table_name) }}
-            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+            {%- do run_query(dbt.create_table_as(False, temp_table_relation, temp_tables_union_query)) %}
             {% set target_relation = adapter.get_relation(database=database_name,
                                                                    schema=schema_name,
                                                                    identifier='data_monitoring_metrics') -%}
@@ -31,6 +31,7 @@
             {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging metrics') }}
+            {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
         {%- endif %}
 
     {%- endif %}
@@ -49,7 +50,7 @@
                                                                                    type='table') -%}
         {%- if temp_tables_union_query %}
             {{ elementary.debug_log('pulling anomalies from temp anomalies tables to: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_anomalies_table_name) }}
-            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+            {%- do run_query(dbt.create_table_as(False, temp_table_relation, temp_tables_union_query)) %}
 
             {% set target_relation = adapter.get_relation(database=database_name,
                                                            schema=schema_name,
@@ -59,6 +60,7 @@
             {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging anomalies') }}
+            {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
         {%- endif %}
 
     {%- endif %}
@@ -77,7 +79,7 @@
                                                                                    type='table') -%}
         {%- if temp_tables_union_query %}
             {{ elementary.debug_log('pulling schema changes alerts from temp schema changes tables to: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_schema_changes_table_name) }}
-            {%- do run_query(dbt.create_table_as(True, temp_table_relation, temp_tables_union_query)) %}
+            {%- do run_query(dbt.create_table_as(False, temp_table_relation, temp_tables_union_query)) %}
 
             {% set target_relation = adapter.get_relation(database=database_name,
                                                            schema=schema_name,
@@ -87,6 +89,7 @@
             {% set merge_sql = elementary.merge_sql(target_relation, temp_table_relation, 'alert_id', dest_columns) %}
             {% do run_query(merge_sql) %}
             {{ elementary.debug_log('finished merging schema changes alerts') }}
+            {%- do dbt.drop_relation_if_exists(temp_table_relation) %}
         {%- endif %}
     {%- endif %}
 {% endmacro %}
