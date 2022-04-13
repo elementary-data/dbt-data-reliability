@@ -1,7 +1,3 @@
-{%- macro null_string() -%}
-    cast(null as {{ dbt_utils.type_string() }})
-{%- endmacro -%}
-
 {%- macro null_int() -%}
     cast(null as {{ dbt_utils.type_int() }})
 {%- endmacro -%}
@@ -14,3 +10,6 @@
     cast(null as {{ dbt_utils.type_float() }})
 {%- endmacro -%}
 
+{% macro null_string() %}
+    cast(null as {{ dbt_utils.type_string() }})
+{% endmacro %}

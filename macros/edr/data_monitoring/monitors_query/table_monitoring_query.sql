@@ -2,7 +2,7 @@
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set full_table_name_str = elementary.relation_to_full_name(monitored_table_relation) %}
+    {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
 
     {% if is_timestamp %}
         with filtered_monitored_table as (
@@ -78,7 +78,7 @@
         metrics_final as (
 
         select
-            '{{ full_table_name_str }}' as full_table_name,
+            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
@@ -107,7 +107,7 @@
         metrics_final as (
 
         select
-            '{{ full_table_name_str }}' as full_table_name,
+            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,

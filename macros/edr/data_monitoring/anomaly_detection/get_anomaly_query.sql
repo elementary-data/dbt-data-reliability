@@ -30,6 +30,15 @@
 
         ),
 
+        grouped_metrics_duplicates as (
+
+            select
+                *,
+                row_number() over (partition by id order by updated_at desc) as row_number
+            from union_metrics
+
+        ),
+
         grouped_metrics as (
 
             select
@@ -43,10 +52,10 @@
                 bucket_end,
                 bucket_duration_hours,
                 updated_at
-            from union_metrics
-            qualify row_number() over (partition by id order by updated_at desc) = 1
+            from grouped_metrics_duplicates
+            where row_number = 1
 
-            ),
+        ),
 
         daily_buckets as (
 

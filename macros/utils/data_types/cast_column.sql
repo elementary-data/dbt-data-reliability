@@ -6,3 +6,6 @@
     cast({{ column }} as {{ dbt_utils.type_float() }})
 {%- endmacro -%}
 
+{%- macro cast_as_string(column) -%}
+    cast({{ column }} as {{ dbt_utils.type_string() }})
+{%- endmacro -%}
