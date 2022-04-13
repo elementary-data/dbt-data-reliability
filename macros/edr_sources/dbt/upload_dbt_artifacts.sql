@@ -1,6 +1,7 @@
 {% macro upload_dbt_artifacts(results) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
+
         -- handle models
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% set flatten_node_macro = context['elementary']['flatten_model'] %}

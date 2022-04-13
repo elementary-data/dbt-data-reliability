@@ -41,7 +41,7 @@
             {%- endfor %}
             )
         select * from empty_table
-        where {{ first_column_name }} != {{ first_column_value }}
+        where {{ first_column_name }} != '{{ first_column_value }}'
     {%- endset -%}
 
     {{- return(empty_table_query)-}}
@@ -56,13 +56,13 @@
     {%- if data_type == 'boolean' %}
         cast ({{ dummy_values['bool'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast({{ dummy_values['timestamp'] }} as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
         cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
     {%- else %}
-        cast({{ dummy_values['str'] }} as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['str'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}
@@ -71,11 +71,11 @@
 {% macro dummy_values() %}
 
     {%- set dummy_values = {
-     'str': "'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later'",
+     'str': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
      'bool': 'null',
      'int': 123456789,
      'float': 123456789.99,
-     'timestamp': "'2091-02-17'"
+     'timestamp': '2091-02-17'
     } %}
 
     {{ return(dummy_values) }}
