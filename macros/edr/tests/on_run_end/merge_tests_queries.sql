@@ -71,10 +71,25 @@
                 select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
-                )
-            select *
-            from union_temps
-            qualify row_number() over (partition by id order by updated_at desc) = 1
+            ),
+            metrics_with_duplicates as (
+                select *,
+                    row_number() over (partition by id order by updated_at desc) as row_number
+                from union_temps
+            )
+            select
+                id,
+                full_table_name,
+                column_name,
+                metric_name,
+                metric_value,
+                source_value,
+                bucket_start,
+                bucket_end,
+                bucket_duration_hours,
+                updated_at
+            from metrics_with_duplicates
+            where row_number = 1
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
@@ -87,23 +102,41 @@
         {%- set anomalies_alerts_query %}
             with union_temp as (
                 {{ elementary.union_anomalies_query(temp_anomalies_tables) }}
+            ),
+            union_with_duplicates as (
+                select
+                    id as alert_id,
+                    {{ elementary.current_timestamp_column() }} as detected_at,
+                    {{ elementary.full_name_split('database_name') }},
+                    {{ elementary.full_name_split('schema_name') }},
+                    {{ elementary.full_name_split('table_name') }},
+                    column_name,
+                    'anomaly_detection' as alert_type,
+                    metric_name as sub_type,
+                    {{ elementary.anomaly_detection_description() }},
+                    {{ elementary.null_string() }} as owner,
+                    {{ elementary.null_string() }} as tags,
+                    {{ elementary.null_string() }} as alert_results_query,
+                    source_value as other,
+                    row_number() over (partition by id order by detected_at desc) as row_number
+                from union_temp
             )
             select
-                id as alert_id,
-                {{ elementary.current_timestamp_column() }} as detected_at,
-                {{ elementary.full_name_split('database_name') }},
-                {{ elementary.full_name_split('schema_name') }},
-                {{ elementary.full_name_split('table_name') }},
+                id,
+                detected_at,
+                database_name,
+                schema_name,
+                table_name,
                 column_name,
-                'anomaly_detection' as alert_type,
-                metric_name as sub_type,
-                {{ elementary.anomaly_detection_description() }},
-                {{ elementary.null_string() }} as owner,
-                {{ elementary.null_string() }} as tags,
-                {{ elementary.null_string() }} as alert_results_query,
-                source_value as other
-            from union_temp
-            qualify row_number() over (partition by id order by detected_at desc) = 1
+                alert_type,
+                sub_type,
+                alert_description,
+                owner,
+                tags,
+                alert_results_query,
+                other
+            from union_with_duplicates
+            where row_number = 1
         {%- endset %}
         {{ return(anomalies_alerts_query) }}
     {%- endif %}
@@ -119,10 +152,28 @@
                 select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
-                )
-            select *
+            ),
+            union_with_duplicates as (
+            select *,
+                row_number() over (partition by alert_id order by detected_at desc) as row_number
             from union_temps
-            qualify row_number() over (partition by alert_id order by detected_at desc) = 1
+            )
+            select
+                id,
+                detected_at,
+                database_name,
+                schema_name,
+                table_name,
+                column_name,
+                alert_type,
+                sub_type,
+                alert_description,
+                owner,
+                tags,
+                alert_results_query,
+                other
+            from union_with_duplicates
+            where row_number = 1
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
