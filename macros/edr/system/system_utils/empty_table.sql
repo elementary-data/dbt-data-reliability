@@ -72,6 +72,7 @@
 
     {%- set dummy_values = {
      'str': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
+     'string': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
      'bool': 'null',
      'int': 123456789,
      'float': 123456789.99,

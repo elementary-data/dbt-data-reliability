@@ -7,6 +7,7 @@
                                                                                    type='table') -%}
     {% if not elementary.check_schema_exists(edr_sources_database, edr_sources_schema) %}
         {% do dbt.create_schema(source_table_relation) %}
+        {% do adapter.commit() %}
     {% endif %}
     {% if source_table_exists %}
         {% if drop_if_exists or flags.FULL_REFRESH %}
