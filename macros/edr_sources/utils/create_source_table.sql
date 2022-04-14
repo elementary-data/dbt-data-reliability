@@ -5,7 +5,7 @@
                                                                                    schema=edr_sources_schema,
                                                                                    identifier=table_name,
                                                                                    type='table') -%}
-    {% if not elementary.check_schema_exists(edr_sources_database, edr_sources_schema) %}
+    {% if not adapter.check_schema_exists(edr_sources_database, edr_sources_schema) %}
         {% do dbt.create_schema(source_table_relation) %}
         {% do adapter.commit() %}
     {% endif %}

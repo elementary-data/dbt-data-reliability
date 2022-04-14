@@ -15,7 +15,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_metrics_table_name,
                                                                                    type='table') -%}
-        {% if not elementary.check_schema_exists(database_name, schema_name) %}
+        {% if not adapter.check_schema_exists(database_name, schema_name) %}
             {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
             {% do dbt.create_schema(temp_table_relation) %}
             {% do adapter.commit() %}
