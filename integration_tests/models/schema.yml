@@ -1,6 +1,26 @@
 version: 2
 
 models:
+  - name: u_any_Type_column_anomalies #the capital T and the prefix 'u' here are intendend to test how the code handles it
+    description: >
+      This is a very weird description
+      with breaklines
+      and comma,
+      and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
+      WDYT?
+    config:
+      elementary:
+        timestamp_column: 'updated_at'
+    tests:
+      - elementary.table_anomalies:
+          tags: ['table_anomalies']
+          table_anomalies:
+            - row_count
+      - elementary.schema_changes:
+          tags: ['schema_changes']
+      - elementary.all_columns_anomalies:
+          tags: ['all_columns_anomalies']
+
   - name: string_column_anomalies
     config:
       elementary:
@@ -16,7 +36,7 @@ models:
       - name: "min_length"
         tests:
           - elementary.column_anomalies:
-              tags: ['debug8']
+              tags: ['specific_column_anomalies']
               column_anomalies:
                 - min_length
                 - max_length
@@ -51,7 +71,7 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['table_anomalies']
+          tags: ['debug']
       - elementary.schema_changes:
           tags: ['elementary']
     columns:
