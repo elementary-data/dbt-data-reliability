@@ -100,6 +100,7 @@
                     {% do parent_models_tags.extend(parent_model_tags) %}
                 {% endif %}
             {% endfor %}
+            {% set primary_parent_model_database, primary_parent_model_schema = elementary.get_model_database_and_schema_from_test_node(node) %}
             {% set test_metadata = elementary.safe_get_with_default(node, 'test_metadata', {}) %}
             {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
             {% set test_model_jinja = test_kwargs.get('model') %}
@@ -122,17 +123,17 @@
             {% set test_alert_dict = {
                'alert_id': execution_id,
                'detected_at': generated_at,
-               'database_name': node.get('database'),
-               'schema_name': node.get('schema'),
+               'database_name': primary_parent_model_database,
+               'schema_name': primary_parent_model_schema,
                'table_name': primary_parent_model_name,
                'column_name': node.get('column_name'),
                'alert_type': 'dbt_test',
                'sub_type': status,
-               'alert_description': node.get('name'),
+               'alert_description': run_result_dict.get('message'),
                'owner': parent_models_owners,
                'tags': parent_models_tags,
                'alert_results_query': node.get('compiled_sql'),
-               'other': none
+               'other': test_metadata
             }%}
             {% do test_alerts.append(test_alert_dict) %}
         {% endif %}
@@ -229,7 +230,9 @@
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
+    {% set tags = elementary.union_lists(tags, meta_tags) %}
 
     {% set flatten_model_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -290,7 +293,9 @@
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
+    {% set tags = elementary.union_lists(tags, meta_tags) %}
 
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -348,7 +353,9 @@
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(source_meta_dict) %}
     {% set owner = meta_dict.get('owner') %}
-    {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set node_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
+    {% set tags = elementary.union_lists(node_tags, meta_tags) %}
     {% set flatten_source_metadata_dict = {
          'unique_id': node_dict.get('unique_id'),
          'database_name': node_dict.get('database'),
