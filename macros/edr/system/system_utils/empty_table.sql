@@ -1,21 +1,21 @@
 {% macro empty_alerts() %}
-    {{ elementary.empty_table([('alert_id','str'),('detected_at','timestamp'),('database_name','str'),('schema_name','str'),('table_name','str'),('column_name','str'),('alert_type','str'),('sub_type','str'),('alert_description','str'),('owner','str'),('tags','str'),('alert_results_query','str'),('other','str')]) }}
+    {{ elementary.empty_table([('alert_id','string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('alert_type','string'),('sub_type','string'),('alert_description','string'),('owner','string'),('tags','string'),('alert_results_query','string'),('other','string')]) }}
 {% endmacro %}
 
 {% macro empty_data_monitors() %}
-    {{ elementary.empty_table([('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
+    {{ elementary.empty_table([('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int')]) }}
 {% endmacro %}
 
 {% macro empty_column_unpivot_cte() %}
-    {{ elementary.empty_table([('edr_column_name','str'),('edr_bucket','timestamp'),('metric_name','str'),('metric_value','float')]) }}
+    {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
 {% endmacro %}
 
 {% macro empty_data_monitoring_metrics() %}
-    {{ elementary.empty_table([('id','str'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('metric_value','float'),('source_value','str'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
+    {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
 {% endmacro %}
 
 {% macro empty_test_anomalies() %}
-    {{ elementary.empty_table([('id','string'),('full_table_name','str'),('column_name','str'),('metric_name','str'),('z_score','float'),('latest_metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('training_avg','float'),('training_stddev','float'),('training_set_size','int')]) }}
+    {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('z_score','float'),('latest_metric_value','float'),('bucket_start','timestamp'),('bucket_end','timestamp'),('training_avg','float'),('training_stddev','float'),('training_set_size','int')]) }}
 {% endmacro %}
 
 {% macro empty_column_monitors_cte() %}
@@ -61,8 +61,10 @@
         cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
+    {%- elif data_type == 'long_string' %}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast('{{ dummy_values['str'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}
@@ -71,8 +73,8 @@
 {% macro dummy_values() %}
 
     {%- set dummy_values = {
-     'str': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
-     'string': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
+     'string': 'this_is_just_a_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
+     'long_string': 'this_is_just_a_very_very_long_dummy_string_so_we_could_create_empty_tables_using_dbt_and_insert_data_later',
      'bool': 'null',
      'int': 123456789,
      'float': 123456789.99,

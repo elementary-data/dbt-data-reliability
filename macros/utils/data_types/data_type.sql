@@ -26,3 +26,16 @@
 {% macro redshift__type_string() %}
     varchar(256)
 {% endmacro %}
+
+
+{%- macro type_long_string() -%}
+    {{ return(adapter.dispatch('type_long_string', 'elementary')()) }}
+{%- endmacro -%}
+
+{%- macro default__type_long_string() -%}
+    {{ elementary.type_string() }}
+{%- endmacro -%}
+
+{%- macro redshift__type_long_string() -%}
+    varchar(4096)
+{%- endmacro -%}

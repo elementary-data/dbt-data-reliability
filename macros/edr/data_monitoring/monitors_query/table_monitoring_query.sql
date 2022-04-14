@@ -44,7 +44,7 @@
         {%- else %}
 
         row_count as (
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         ),
 
         {%- endif %}
@@ -63,7 +63,7 @@
             where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
             group by 1,2
         {%- else %}
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         {%- endif %}
         ),
 
@@ -100,7 +100,7 @@
                 from {{ monitored_table_relation }}
                 group by 1
             {%- else %}
-                {{ elementary.empty_table([('metric_name','str'),('metric_value','int')]) }}
+                {{ elementary.empty_table([('metric_name','string'),('metric_value','int')]) }}
             {%- endif %}
         ),
 
