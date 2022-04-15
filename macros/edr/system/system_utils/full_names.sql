@@ -67,14 +67,15 @@
 {% endmacro %}
 
 
-{% macro full_schema_names_tuple() %}
+{% macro schema_from_graph_as_tuple() %}
 
-    {%- set schemas_list_quoted = elementary.get_configured_schemas_from_graph() %}
+    {%- set schemas = elementary.get_configured_schemas_from_graph() %}
     {%- set schemas_list = [] %}
 
-    {%- for schema_name_quoted in schemas_list_quoted %}
-        {%- set schema_name = schema_name_quoted | replace('"','') %}
-        {%- do schemas_list.append(schema_name) -%}
+    {%- for schema_tuple in schemas %}
+        {%- set database_name, schema_name = schema_tuple %}
+        {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
+        {%- do schemas_list.append(full_schema_name) -%}
     {%- endfor %}
 
     {% set schemas_tuple = elementary.strings_list_to_tuple(schemas_list) %}
