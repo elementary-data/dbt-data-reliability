@@ -30,8 +30,6 @@
 
 {% macro empty_table(column_name_and_type_list) %}
     {%- set first_column_name = column_name_and_type_list[0][0] %}
-    {%- set first_column_type = column_name_and_type_list[0][1] %}
-    {%- set first_column_value = elementary.dummy_values()[first_column_type]  %}
 
     {%- set empty_table_query -%}
         with empty_table as (
@@ -41,7 +39,7 @@
             {%- endfor %}
             )
         select * from empty_table
-        where {{ first_column_name }} != {{ first_column_value }}
+        where {{ first_column_name }} = 'not_this'
     {%- endset -%}
 
     {{- return(empty_table_query)-}}
@@ -54,17 +52,17 @@
     {%- set dummy_values = elementary.dummy_values() %}
 
     {%- if data_type == 'boolean' %}
-        cast ({{ dummy_values['bool'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
+        cast ({{ dummy_values['boolean'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast({{ dummy_values['timestamp'] }} as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
         cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
-        cast({{ dummy_values['long_string'] }} as {{ elementary.type_long_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast({{ dummy_values['string'] }} as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}
@@ -73,12 +71,12 @@
 {% macro dummy_values() %}
 
     {%- set dummy_values = {
-     'string': "'dummy_string'",
-     'long_string': "'this_is_just_a_long_dummy_string'",
-     'bool': null,
+     'string': 'dummy_string',
+     'long_string': 'this_is_just_a_long_dummy_string',
+     'boolean': 'null',
      'int': 123456789,
      'float': 123456789.99,
-     'timestamp': "'2091-02-17'"
+     'timestamp': '2091-02-17'
     } %}
 
     {{ return(dummy_values) }}

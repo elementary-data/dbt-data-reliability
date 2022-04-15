@@ -37,8 +37,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(elementary.create_or_replace(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
-        {% do adapter.commit() %}
+        {% do elementary.create_or_replace(False, alerts_temp_table_relation, schema_changes_alert_query) %}
         {# return schema changes query as standard test query #}
         select * from {{ alerts_temp_table_relation }}
 

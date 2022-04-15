@@ -298,7 +298,7 @@
                                                                      ('owner_name', 'string'),
                                                                      ('url', 'long_string'),
                                                                      ('depends_on_macros', 'long_string'),
-                                                                     ('depends_on_nodes', 'slong_tring'),
+                                                                     ('depends_on_nodes', 'long_string'),
                                                                      ('description', 'long_string'),
                                                                      ('tags', 'long_string'),
                                                                      ('meta', 'long_string'),

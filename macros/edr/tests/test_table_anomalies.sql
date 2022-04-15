@@ -45,8 +45,7 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
-        {%- do run_query(elementary.create_or_replace(False, temp_table_relation, table_monitoring_query)) %}
-        {% do adapter.commit() %}
+        {%- do elementary.create_or_replace(False, temp_table_relation, table_monitoring_query) %}
 
         {#- query if there is an anomaly in recent metrics -#}
         {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors) %}
@@ -57,8 +56,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(elementary.create_or_replace(False, anomalies_temp_table_relation, anomaly_query)) %}
-        {% do adapter.commit() %}
+        {% do elementary.create_or_replace(False, anomalies_temp_table_relation, anomaly_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standard test query #}
