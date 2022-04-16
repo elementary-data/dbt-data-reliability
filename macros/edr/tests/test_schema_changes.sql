@@ -31,7 +31,7 @@
 
         {# query if there were schema changes since last execution #}
         {% set schema_changes_alert_query = elementary.get_schema_changes_alert_query(full_table_name, last_schema_change_alert_time) %}
-        {% set temp_alerts_table_name = test_name_in_graph ~ '__schema_alerts' %}
+        {% set temp_alerts_table_name = test_name_in_graph ~ '__schema_changes_alerts' %}
         {{ elementary.debug_log('schema alerts table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,

@@ -30,7 +30,7 @@
                         {% do temp_anomalies_tables.append(full_anomalies_table_name) %}
                     {% endif %}
                 {% elif test_name == 'schema_changes' %}
-                    {% set test_schema_changes_table_name = test_node.name ~ '__schema_changes' %}
+                    {% set test_schema_changes_table_name = test_node.name ~ '__schema_changes_alerts' %}
                     {% set test_schema_changes_table_relation = adapter.get_relation(database=database_name,
                                                                                      schema=schema_name,
                                                                                      identifier=test_schema_changes_table_name) %}

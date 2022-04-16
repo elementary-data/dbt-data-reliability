@@ -16,8 +16,6 @@ models:
           tags: ['table_anomalies']
           table_anomalies:
             - row_count
-      - elementary.schema_changes:
-          tags: ['schema_changes']
       - elementary.all_columns_anomalies:
           tags: ['all_columns_anomalies']
 
@@ -27,11 +25,13 @@ models:
         timestamp_column: "updated_at"
     tests:
       - elementary.table_anomalies:
-          tags: ['table_anomalies']
+          tags: ['debug']
           table_anomalies:
             - freshness
       - elementary.all_columns_anomalies:
           tags: ['all_columns_anomalies']
+      - elementary.schema_changes:
+          tags: ['schema_changes']
     columns:
       - name: "min_length"
         tests:
@@ -71,9 +71,9 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
-          tags: ['debug']
+          tags: ['table_anomalies']
       - elementary.schema_changes:
-          tags: ['elementary']
+          tags: ['schema_changes']
     columns:
       - name: min
         tests:
