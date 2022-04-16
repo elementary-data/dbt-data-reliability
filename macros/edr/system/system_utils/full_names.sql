@@ -72,8 +72,8 @@
     {%- set schemas = elementary.get_configured_schemas_from_graph() %}
     {%- set schemas_list = [] %}
 
-    {%- for schema_tuple in schemas %}
-        {%- set database_name, schema_name = schema_tuple %}
+    {%- for schema_array in schemas %}
+        {%- set database_name, schema_name, schema_relation = schema_array %}
         {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
         {%- do schemas_list.append(full_schema_name) -%}
     {%- endfor %}

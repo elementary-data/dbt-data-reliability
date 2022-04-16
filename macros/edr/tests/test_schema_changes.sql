@@ -14,11 +14,6 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_schema_changes_table_name,
                                                                                    type='table') -%}
-        {% if not adapter.check_schema_exists(database_name, schema_name) %}
-            {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
-            {% do dbt.create_schema(temp_table_relation) %}
-            {% do adapter.commit() %}
-        {% endif %}
 
         {# get table configuration #}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}

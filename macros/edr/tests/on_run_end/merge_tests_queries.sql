@@ -66,7 +66,7 @@
 {% macro union_metrics_query(temp_metrics_tables) %}
     {%- if temp_metrics_tables | length > 0 %}
         {%- set union_temp_query -%}
-            with union_temps as (
+            with union_temps_metrics as (
             {%- for temp_table in temp_metrics_tables -%}
                 select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
@@ -75,7 +75,7 @@
             metrics_with_duplicates as (
                 select *,
                     row_number() over (partition by id order by updated_at desc) as row_number
-                from union_temps
+                from union_temps_metrics
             )
             select
                 id,
@@ -97,7 +97,7 @@
 {% endmacro %}
 
 
-{% macro anomalies_alerts_query(temp_anomalies_tables) %}
+{% macro union_anomalies_alerts_query(temp_anomalies_tables) %}
     {%- if temp_anomalies_tables | length > 0 %}
         {%- set anomalies_alerts_query %}
             with union_temp as (
@@ -147,7 +147,7 @@
 {% macro union_schema_changes_query(temp_schema_changes_tables) %}
     {%- if temp_schema_changes_tables | length > 0 %}
         {%- set union_temp_query -%}
-            with union_temps as (
+            with union_temps_schema_changes as (
             {%- for temp_table in temp_schema_changes_tables -%}
                 select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
@@ -156,7 +156,7 @@
             union_with_duplicates as (
             select *,
                 row_number() over (partition by alert_id order by detected_at desc) as row_number
-            from union_temps
+            from union_temps_schema_changes
             )
             select
                 alert_id,

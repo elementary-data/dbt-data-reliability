@@ -18,10 +18,11 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 on-run-start:
   - "{{ clear_tests() }}"
+  - "{{ elementary.create_elementary_tests_schema() if flags.WHICH == 'test' }}"
 
 on-run-end:
-  - "{{ elementary.merge_test_results() }}" # in prod this is called from within the package, it's called here in tests so we can run validations on the final tables
-  - "{{ tests_validation() }}"
+  - "{{ elementary.merge_test_results() if flags.WHICH == 'test' }}" # in prod this is called from within the package, it's called here in tests so we can run validations on the final tables
+  - "{{ tests_validation() if flags.WHICH == 'test' }}"
   - "{{ elementary.upload_dbt_artifacts(results) }}"
 
 vars:

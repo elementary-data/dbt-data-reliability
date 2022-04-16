@@ -1,10 +1,10 @@
-{% macro get_tables_from_information_schema(schema_tuple) %}
-    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(schema_tuple)) }}
+{% macro get_tables_from_information_schema(schema_array) %}
+    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(schema_array)) }}
 {% endmacro %}
 
 {# Snowflake, Bigquery #}
-{% macro default__get_tables_from_information_schema(full_schema_name) %}
-    {%- set database_name, schema_name = schema_tuple %}
+{% macro default__get_tables_from_information_schema(schema_array) %}
+    {%- set database_name, schema_name, schema_relation = schema_array %}
 
     (with information_schema_tables as (
 
@@ -12,7 +12,7 @@
             upper(table_catalog) as database_name,
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
-        from  {{ elementary.from_information_schema('TABLES', database_name, schema_name) }}
+        from {{ schema_relation.information_schema('TABLES') }}
         where upper(table_schema) = upper('{{ schema_name }}')
 
     ),
@@ -22,7 +22,7 @@
         select
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
-        from  {{ elementary.from_information_schema('SCHEMATA', database_name) }}
+        from {{ dbt.information_schema_name(schema_relation.database) }}.SCHEMATA
         where upper(schema_name) = upper('{{ schema_name }}')
 
     )
@@ -43,8 +43,8 @@
 {% endmacro %}
 
 
-{% macro redshift__get_tables_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = schema_tuple %}
+{% macro redshift__get_tables_from_information_schema(schema_array) %}
+    {%- set database_name, schema_name, schema_relation = schema_array %}
 
     (with information_schema_tables as (
 

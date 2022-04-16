@@ -12,7 +12,8 @@
                         {% set node_package_name = node.get('package_name') %}
                         {% if node_package_name != 'elementary' %}
                             {% if adapter.check_schema_exists(node['database'], node['schema']) %}
-                                {% do configured_schemas.append((node['database'], node['schema'])) %}
+                                {% set schema_relation = api.Relation.create(database=node.database, schema=node.schema).without_identifier() %}
+                                {% do configured_schemas.append((node['database'], node['schema'], schema_relation)) %}
                             {% endif %}
                         {% endif %}
                     {% endfor %}

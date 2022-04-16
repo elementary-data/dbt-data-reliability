@@ -4,7 +4,6 @@
   )
 }}
 
-
 {% set configured_schemas = elementary.get_configured_schemas_from_graph() %}
 
 with filtered_information_schema_columns as (
