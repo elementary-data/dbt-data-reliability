@@ -63,7 +63,10 @@
         {% endif %}
     {% endfor %}
     {% if artifacts | length > 0 %}
+        {{ elementary.debug_log('Inserting ' ~ artifacts | length ~ ' rows to table ' ~ table_name) }}
         {% do elementary.insert_dicts(table_name, artifacts) %}
+    {%- else %}
+        {{ elementary.debug_log('No artifacts to insert to ' ~ table_name) }}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}
