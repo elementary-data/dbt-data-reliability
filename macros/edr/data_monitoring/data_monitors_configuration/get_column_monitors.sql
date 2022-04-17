@@ -16,8 +16,7 @@
     {%- set columns_from_relation = adapter.get_columns_in_relation(model_relation) -%}
 
     {%- for column in columns_from_relation %}
-        {%- set column_normalized_type = elementary.normalize_data_type(column['dtype']) %}
-        {%- set column_monitors = elementary.column_monitors_by_type(column_normalized_type, column_tests) %}
+        {%- set column_monitors = elementary.column_monitors_by_type(column['dtype'], column_tests) %}
         {%- set column_item = {'column_name': column['column'], 'monitors': column_monitors} %}
         {%- do columns_config.append(column_item) -%}
     {% endfor %}
@@ -46,7 +45,6 @@
     {%- endif %}
 
     {%- set column_monitors = [] %}
-
     {%- set all_types_intersect = elementary.lists_intersection(monitors_list, default_all_types) %}
     {%- for monitor in all_types_intersect %}
         {{ column_monitors.append(monitor) }}

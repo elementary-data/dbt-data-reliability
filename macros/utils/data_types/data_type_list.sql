@@ -5,7 +5,7 @@
 
 {% macro default__data_type_list(data_type) %}
 
-    {% set string_list = ['character varying','varchar','character','char','text','nchar','bpchar'] | list %}
+    {% set string_list = ['character varying','varchar','character','char','text','nchar','bpchar','string'] | list %}
     {% set numeric_list = ['integer', 'bigint','smallint','decimal','numeric','real','double precision','enum','int2','int4','int','int8','float8','float'] | list %}
     {% set timestamp_list = ['date', 'timestamp','timestamptz','timestamp without time zone','timestamp with time zone'] | list %}
 

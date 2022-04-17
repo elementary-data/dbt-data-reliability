@@ -25,7 +25,7 @@ models:
         timestamp_column: "updated_at"
     tests:
       - elementary.table_anomalies:
-          tags: ['debug']
+          tags: ['table_anomalies']
           table_anomalies:
             - freshness
       - elementary.all_columns_anomalies:
