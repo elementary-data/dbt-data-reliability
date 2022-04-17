@@ -84,7 +84,7 @@
         {% set resource_type = node.get('resource_type') %}
         {% set generated_at = run_started_at.strftime('%Y-%m-%d %H:%M:%S') %}
         {% set status = run_result_dict.get('status') | lower %}
-        {% if resource_type == 'test' and status != 'success' %}
+        {% if resource_type == 'test' and status != 'pass' %}
             {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node) %}
             {% set parent_model_nodes = elementary.get_nodes_by_unique_ids(parent_model_unique_ids) %}
             {% set parent_models_owners = [] %}
