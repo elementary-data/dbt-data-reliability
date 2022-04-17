@@ -160,3 +160,18 @@ sources:
         tests:
           - elementary.all_columns_anomalies:
               tags: ['elementary_source']
+  - name: test_data
+    schema: "{{ target.schema }}"
+    tables:
+      - name: groups
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
+      - name: stats_players
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
+      - name: stats_team
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
