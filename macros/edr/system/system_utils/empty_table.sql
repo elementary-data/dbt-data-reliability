@@ -29,9 +29,6 @@
 
 
 {% macro empty_table(column_name_and_type_list) %}
-    {%- set first_column_name = column_name_and_type_list[0][0] %}
-    {%- set first_column_type = column_name_and_type_list[0][1] %}
-    {%- set first_column_value = elementary.dummy_values()[first_column_type] %}
 
     {%- set empty_table_query -%}
         with empty_table as (
@@ -41,7 +38,7 @@
             {%- endfor %}
             )
         select * from empty_table
-        where {{ first_column_name }} != {{ first_column_value }}
+        where 1 = 0
     {%- endset -%}
 
     {{- return(empty_table_query)-}}
@@ -73,12 +70,12 @@
 {% macro dummy_values() %}
 
     {%- set dummy_values = {
-     'string': "'dummy_string'",
-     'long_string': "'this_is_just_a_long_dummy_string'",
-     'boolean': 'null',
+     'string': "dummy_string",
+     'long_string': "this_is_just_a_long_dummy_string",
+     'boolean': null,
      'int': 123456789,
      'float': 123456789.99,
-     'timestamp': "'2091-02-17'"
+     'timestamp': "2091-02-17"
     } %}
 
     {{ return(dummy_values) }}
