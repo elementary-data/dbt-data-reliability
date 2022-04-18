@@ -1,10 +1,11 @@
-{% macro get_tables_from_information_schema(schema_array) %}
-    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(schema_array)) }}
+{% macro get_tables_from_information_schema(schema_tuple) %}
+    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(schema_tuple)) }}
 {% endmacro %}
 
 {# Snowflake, Bigquery #}
-{% macro default__get_tables_from_information_schema(schema_array) %}
-    {%- set database_name, schema_name, schema_relation = schema_array %}
+{% macro default__get_tables_from_information_schema(schema_tuple) %}
+    {%- set database_name, schema_name = schema_tuple %}
+    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
     (with information_schema_tables as (
 
@@ -12,7 +13,7 @@
             upper(table_catalog) as database_name,
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
-        from {{ schema_relation.information_schema('TABLES') }}
+        from {{ schema_relation.information_schema('tables') }}
         where upper(table_schema) = upper('{{ schema_name }}')
 
     ),
@@ -43,8 +44,8 @@
 {% endmacro %}
 
 
-{% macro redshift__get_tables_from_information_schema(schema_array) %}
-    {%- set database_name, schema_name, schema_relation = schema_array %}
+{% macro redshift__get_tables_from_information_schema(schema_tuple) %}
+    {%- set database_name, schema_name = schema_tuple %}
 
     (with information_schema_tables as (
 
