@@ -67,7 +67,7 @@
 {% endmacro %}
 
 
-{% macro schema_from_graph_as_tuple() %}
+{% macro configured_schemas_from_graph_as_tuple() %}
 
     {%- set schemas = elementary.get_configured_schemas_from_graph() %}
     {%- set schemas_list = [] %}

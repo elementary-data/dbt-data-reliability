@@ -26,7 +26,6 @@
             {{- return(elementary.no_results_query()) }}
         {%- endif %}
 
-        {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
         {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
         {{- elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
@@ -42,6 +41,7 @@
         {%- set monitors = [] %}
         {%- if columns_config | length > 0 %}
             {{- elementary.test_log('start', full_table_name, 'all columns') }}
+            {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
             {%- do elementary.create_or_replace(False, temp_table_relation, empty_table_query) %}
             {%- for column in columns_config %}
                 {%- set column_name = column['column_name'] %}

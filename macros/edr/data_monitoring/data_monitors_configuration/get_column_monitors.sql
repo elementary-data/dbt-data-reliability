@@ -3,7 +3,7 @@
     {%- set column_monitors = [] -%}
     {%- for column_obj in column_objects %}
         {%- if column_obj.name | lower == column_name | lower %}
-            {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests=none)) %}
+            {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests)) %}
         {%- endif %}
     {%- endfor %}
     {{ return(column_monitors) }}
