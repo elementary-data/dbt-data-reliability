@@ -28,7 +28,7 @@
             {%- set column = elementary.column_quote(column_name) -%}
                 select
                     edr_bucket,
-                    {{ elementary.cast_as_string("'"~ column_name ~"'") }} as edr_column_name,
+                    {{ elementary.const_as_string(column_name) }} as edr_column_name,
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
                     {%- if 'max' in column_monitors -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as max,

@@ -48,10 +48,10 @@
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
 
         {%- if test_tables_union_query %}
-            {{ elementary.debug_log('running union query from test tables to ' ~ temp_relation.database ~ '.' ~ temp_relation.schema ~ '.' ~ temp_relation.identifier) }}
+            {{ elementary.debug_log('running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-            {{ elementary.debug_log('merging ' ~ temp_relation.database ~ '.' ~ temp_relation.schema ~ '.' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
+            {{ elementary.debug_log('merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {% set target_unique_id = elementary.get_target_unique_id(target_relation.identifier) %}
             {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, target_unique_id, dest_columns) %}
             {% do run_query(merge_sql) %}

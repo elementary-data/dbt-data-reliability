@@ -35,7 +35,7 @@
 
         row_count as (
             select edr_daily_bucket as edr_bucket,
-                   {{ elementary.cast_as_string('row_count') }} as metric_name,
+                   {{ elementary.const_as_string('row_count') }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value
             from daily_row_count
@@ -56,7 +56,7 @@
             {%- endif %}
             select
                 edr_daily_bucket as edr_bucket,
-                {{ elementary.cast_as_string('freshness') }} as metric_name,
+                {{ elementary.const_as_string('freshness') }} as metric_name,
                 {{ elementary.to_char('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
             from daily_buckets, {{ monitored_table_relation }}
@@ -95,7 +95,7 @@
         with row_count as (
             {%- if 'row_count' in table_monitors %}
                 select
-                    {{ elementary.cast_as_string('row_count') }} as metric_name,
+                    {{ elementary.const_as_string('row_count') }} as metric_name,
                     {{ elementary.row_count() }} as metric_value
                 from {{ monitored_table_relation }}
                 group by 1
