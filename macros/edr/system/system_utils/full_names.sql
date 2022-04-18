@@ -69,11 +69,11 @@
 
 {% macro configured_schemas_from_graph_as_tuple() %}
 
-    {%- set schemas = elementary.get_configured_schemas_from_graph() %}
+    {%- set configured_schema_tuples = elementary.get_configured_schemas_from_graph() %}
     {%- set schemas_list = [] %}
 
-    {%- for schema_array in schemas %}
-        {%- set database_name, schema_name, schema_relation = schema_array %}
+    {%- for configured_schema_tuple in configured_schema_tuples %}
+        {%- set database_name, schema_name = configured_schema_tuple %}
         {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
         {%- do schemas_list.append(full_schema_name) -%}
     {%- endfor %}
