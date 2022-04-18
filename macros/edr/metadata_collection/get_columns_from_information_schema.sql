@@ -14,7 +14,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from {{ schema_relation.information_schema('columns') }}
+    from {{ schema_relation.information_schema('COLUMNS') }}
     where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}

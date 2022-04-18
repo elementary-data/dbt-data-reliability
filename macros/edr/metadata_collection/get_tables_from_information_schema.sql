@@ -13,7 +13,7 @@
             upper(table_catalog) as database_name,
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
-        from {{ schema_relation.information_schema('tables') }}
+        from {{ schema_relation.information_schema('TABLES') }}
         where upper(table_schema) = upper('{{ schema_name }}')
 
     ),
@@ -30,7 +30,7 @@
 
     select
         case when tables.table_name is not null
-            then {{ elementary.full_table_name('tables') }}
+            then {{ elementary.full_table_name('TABLES') }}
         else null end as full_table_name,
         upper(schemas.database_name || '.' || schemas.schema_name) as full_schema_name,
         schemas.database_name as database_name,
