@@ -74,6 +74,11 @@ models:
           tags: ['table_anomalies']
       - elementary.schema_changes:
           tags: ['schema_changes']
+      - elementary.all_columns_anomalies:
+          tags: ['all_columns_anomalies']
+          column_anomalies:
+            - average_length
+            - null_count
     columns:
       - name: min
         tests:
