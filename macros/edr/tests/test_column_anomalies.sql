@@ -39,6 +39,7 @@
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
         {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
+        {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_monitoring_query) %}
 
         {#- query if there is an anomaly in recent metrics -#}

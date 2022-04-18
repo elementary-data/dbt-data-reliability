@@ -2,7 +2,6 @@
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
-    {%- set column_name_str = "'"~ column_name ~"'" %}
 
     with filtered_monitored_table as (
 
@@ -29,7 +28,7 @@
             {%- set column = elementary.column_quote(column_name) -%}
                 select
                     edr_bucket,
-                    {{ elementary.cast_as_string(column_name_str) }} as edr_column_name,
+                    {{ elementary.cast_as_string("'"~ column_name ~"'") }} as edr_column_name,
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
                     {%- if 'max' in column_monitors -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as max,
@@ -56,7 +55,7 @@
 
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
-                select edr_column_name, edr_bucket, '{{ monitor }}' as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                select edr_column_name, edr_bucket, {{ elementary.cast_as_string("'"~ monitor ~"'") }} as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
