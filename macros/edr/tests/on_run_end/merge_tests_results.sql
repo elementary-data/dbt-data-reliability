@@ -23,9 +23,9 @@
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
             {{ elementary.debug_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {% set target_unique_id = elementary.get_target_unique_id(target_name) %}
-            {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, target_unique_id, dest_columns) %}
-            {%- if target_relation and temp_relation and target_unique_id and dest_columns and merge_sql %}
-                {% do run_query(merge_sql) %}
+            {%- if target_relation and temp_relation and target_unique_id and dest_columns %}
+                {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, target_unique_id, dest_columns) %}
+                {%- do run_query(merge_sql) %}
                 {%- do adapter.commit() -%}
                 {{ elementary.debug_log('Finished merging') }}
             {%- else %}
