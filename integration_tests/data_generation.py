@@ -45,7 +45,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
                 'max_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 15))),
                 'average_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 8))),
                 'missing_count': '' if row_index < (5 / 100 * rows_count) else ''.join(random.choices(string.ascii_lowercase, k=5)),
-                'missing_percent': '' if random.randint(1, rows_count) <= (40 / 100 * rows_count) else
+                'missing_percent': '' if random.randint(1, rows_count) <= (60 / 100 * rows_count) else
                 ''.join(random.choices(string.ascii_lowercase, k=5))}
 
     string_columns = ['date', 'min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent']

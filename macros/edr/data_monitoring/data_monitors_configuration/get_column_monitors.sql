@@ -1,27 +1,32 @@
-{% macro get_column_monitors(model, column_name, column_tests=none) %}
-    {%- set column_objects = adapter.get_columns_in_relation(model) -%}
-    {%- set column_monitors = [] -%}
+{% macro get_column_obj_and_monitors(model_relation, column_name, column_tests=none) %}
+
+    {%- set column_obj_and_monitors = [] %}
+    {%- set column_objects = adapter.get_columns_in_relation(model_relation) -%}
+
     {%- for column_obj in column_objects %}
-        {%- if column_obj.name | lower == column_name | lower %}
-            {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests)) %}
-        {%- endif %}
-    {%- endfor %}
-    {{ return(column_monitors) }}
+        {% if column_obj.name | lower == column_name | lower %}
+            {%- set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
+            {%- set column_item = {'column': column_obj, 'monitors': column_monitors} %}
+            {{ return(column_item) }}
+        {% endif %}
+    {% endfor %}
+
+    {{ return(none) }}
+
 {% endmacro %}
 
+{% macro get_all_column_obj_and_monitors(model_relation, column_tests=none) %}
 
-{% macro get_all_columns_monitors(model_relation, column_tests=none) %}
-
-    {%- set columns_config = [] %}
+    {%- set column_obj_and_monitors = [] %}
     {%- set column_objects = adapter.get_columns_in_relation(model_relation) -%}
 
     {%- for column_obj in column_objects %}
         {%- set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
-        {%- set column_item = {'column_name': column_obj.name, 'monitors': column_monitors} %}
-        {%- do columns_config.append(column_item) -%}
+        {%- set column_item = {'column': column_obj, 'monitors': column_monitors} %}
+        {%- do column_obj_and_monitors.append(column_item) -%}
     {% endfor %}
 
-    {{ return(columns_config) }}
+    {{ return(column_obj_and_monitors) }}
 
 {% endmacro %}
 

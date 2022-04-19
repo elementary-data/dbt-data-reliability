@@ -34,20 +34,19 @@
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_tests) ~ "'" %}
         {{- elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
-        {%- set columns_config = elementary.get_all_columns_monitors(model_relation, column_anomalies) -%}
-        {{- elementary.debug_log('columns_config - ' ~ columns_config) }}
+        {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
 
         {#- execute table monitors and write to temp test table -#}
         {%- set monitors = [] %}
-        {%- if columns_config | length > 0 %}
+        {%- if column_objs_and_monitors | length > 0 %}
             {{- elementary.test_log('start', full_table_name, 'all columns') }}
             {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
             {%- do elementary.create_or_replace(False, temp_table_relation, empty_table_query) %}
-            {%- for column in columns_config %}
-                {%- set column_name = column['column_name'] %}
-                {%- set column_monitors = column['monitors'] %}
+            {%- for column_obj_and_monitors in column_objs_and_monitors %}
+                {%- set column_obj = column_obj_and_monitors['column'] %}
+                {%- set column_monitors = column_obj_and_monitors['monitors'] %}
                 {%- do monitors.extend(column_monitors) -%}
-                {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
+                {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
                 {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
             {%- endfor %}
         {%- endif %}

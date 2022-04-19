@@ -32,13 +32,19 @@
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
-        {%- set column_monitors = elementary.get_column_monitors(model, column_name, column_anomalies) -%}
+        {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model, column_name, column_anomalies) -%}
+        {%- if not column_obj_and_monitors -%}
+            {{ elementary.edr_log('column ' ~ column_name ~ ' object was not found') }}
+            {{ return(elementary.no_results_query()) }}
+        {%- endif -%}
+        {%- set column_monitors = column_obj_and_monitors['monitors'] -%}
+        {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
-        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_name, column_monitors) %}
+        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_monitoring_query) %}
 
