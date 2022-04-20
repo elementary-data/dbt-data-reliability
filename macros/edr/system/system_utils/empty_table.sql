@@ -72,7 +72,7 @@
     {%- set dummy_values = {
      'string': "dummy_string",
      'long_string': "this_is_just_a_long_dummy_string",
-     'boolean': 'null',
+     'boolean': 'True',
      'int': 123456789,
      'float': 123456789.99,
      'timestamp': "2091-02-17"

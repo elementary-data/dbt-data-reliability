@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import random
 import string
 import os
+from os.path import expanduser
+from monitor.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -78,8 +80,8 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         return {'date': date.strftime('%Y-%m-%d %H:%M:%S'),
                 'min': random.randint(10, 200),
                 'max': random.randint(100, 300),
-                'zero_count': 0 if row_index < (3 / 100 * rows_count) else random.randint(100, 200),
-                'zero_percent': 0 if random.randint(1, rows_count) <= (40 / 100 * rows_count) else random.randint(100, 200),
+                'zero_count': 0 if row_index < (5 / 100 * rows_count) else random.randint(100, 200),
+                'zero_percent': 0 if random.randint(1, rows_count) <= (60 / 100 * rows_count) else random.randint(100, 200),
                 'average': random.randint(99, 104),
                 'standard_deviation': random.randint(80, 120),
                 'variance': random.randint(80, 120)}
@@ -146,10 +148,70 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
                       any_type_columns)
 
 
-def main():
+def generate_fake_data():
     generate_string_anomalies_training_and_validation_files()
     generate_numeric_anomalies_training_and_validation_files()
     generate_any_type_anomalies_training_and_validation_files()
+
+
+def e2e_tests(target):
+    dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
+    clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
+    for clear_test_log in clear_test_logs:
+        print(clear_test_log)
+
+    dbt_runner.seed(select='training')
+    dbt_runner.run(full_refresh=True)
+    dbt_runner.test(select='tag:table_anomalies')
+    table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
+
+    dbt_runner.seed(select='validation')
+    dbt_runner.run()
+
+    dbt_runner.test(select='tag:string_column_anomalies')
+    string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
+
+    dbt_runner.test(select='tag:numeric_column_anomalies')
+    numeric_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
+    return table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results
+
+
+def print_test_result_list(test_results):
+    for test_result in test_results:
+        print(test_result)
+
+
+def print_tests_results(table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results):
+    print('Table test results')
+    print_test_result_list(table_test_results)
+    print('String columns test results')
+    print_test_result_list(string_column_anomalies_test_results)
+    print('Numeric columns test results')
+    print_test_result_list(numeric_column_anomalies_test_results)
+
+
+def main():
+    generate_fake_data()
+
+    print('Starting Snowflake tests\n')
+    snowflake_table_test_results, snowflake_string_column_anomalies_test_results, \
+        snowflake_numeric_column_anomalies_test_results = e2e_tests('snowflake')
+    print('Starting BigQuery tests\n')
+    bigquery_table_test_results, bigquery_string_column_anomalies_test_results, \
+        bigquery_numeric_column_anomalies_test_results = e2e_tests('bigquery')
+    print('Starting Redshift tests\n')
+    redshift_table_test_results, redshift_string_column_anomalies_test_results, \
+        redshift_numeric_column_anomalies_test_results = e2e_tests('redshift')
+
+    print('\nSnowflake results')
+    print_tests_results(snowflake_table_test_results, snowflake_string_column_anomalies_test_results,
+                        snowflake_numeric_column_anomalies_test_results)
+    print('\nBigQuery results')
+    print_tests_results(bigquery_table_test_results, bigquery_string_column_anomalies_test_results,
+                        bigquery_numeric_column_anomalies_test_results)
+    print('\nRedshift results')
+    print_tests_results(redshift_table_test_results, redshift_string_column_anomalies_test_results,
+                        redshift_numeric_column_anomalies_test_results)
 
 
 if __name__ == '__main__':
