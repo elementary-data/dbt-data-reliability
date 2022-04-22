@@ -30,6 +30,7 @@
     {%- endset %}
 
     {% do run_query(schema_changes_query) %}
+    {% do elementary.edr_log("schema changes executed successfully") %}
 
 {% endmacro %}
 
