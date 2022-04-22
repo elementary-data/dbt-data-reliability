@@ -15,10 +15,6 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_metrics_table_name,
                                                                                    type='table') -%}
-        {% if not adapter.check_schema_exists(database_name, schema_name) %}
-            {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
-            {% do dbt.create_schema(temp_table_relation) %}
-        {% endif %}
 
         {#- get table configuration -#}
         {%- set table_config = elementary.get_table_config_from_graph(model) %}
@@ -44,7 +40,7 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
-        {%- do run_query(dbt.create_table_as(False, temp_table_relation, table_monitoring_query)) %}
+        {%- do elementary.create_or_replace(False, temp_table_relation, table_monitoring_query) %}
 
         {#- query if there is an anomaly in recent metrics -#}
         {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors) %}
@@ -55,7 +51,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(False, anomalies_temp_table_relation, anomaly_query)) %}
+        {% do elementary.create_or_replace(False, anomalies_temp_table_relation, anomaly_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standard test query #}

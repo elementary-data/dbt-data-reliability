@@ -1,11 +1,18 @@
 {% macro clear_tests() %}
-    -- depends_on: {{ ref('alerts_data_monitoring') }}
-    {% if execute and flags.WHICH == 'test' %}
-        -- TODO: change to truncate
-        {% set clear_alerts_tables_query %}
-            DELETE FROM {{ ref('alerts_data_monitoring') }} where TRUE
-        {% endset %}
-        {% do run_query(clear_alerts_tables_query) %}
+    {% if execute %}
+        {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+        {% do drop_schema(database_name, schema_name) %}
+        {% set schema_name = schema_name ~ '__tests' %}
+        {% do drop_schema(database_name, schema_name) %}
+        {% do drop_schema(elementary.target_database(), target.schema) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
+
+{% macro drop_schema(database_name, schema_name) %}
+    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
+    {% do dbt.drop_schema(schema_relation) %}
+    {% do adapter.commit() %}
+    {% do elementary.edr_log("dropped schema " ~ database_name  ~ "." ~ schema_name) %}
+{% endmacro %}
+

@@ -1,16 +1,16 @@
 {% macro full_table_name(alias) -%}
     {% if alias is defined %}{%- set alias_dot = alias ~ '.' %}{% endif %}
-    upper(concat({{ alias_dot }}database_name, '.', {{ alias_dot }}schema_name, '.', {{ alias_dot }}table_name))
+    upper({{ alias_dot }}database_name || '.' || {{ alias_dot }}schema_name || '.' || {{ alias_dot }}table_name)
 {%- endmacro %}
 
 
 {% macro full_schema_name() -%}
-    upper(concat(database_name, '.', schema_name))
+    upper(database_name || '.' || schema_name)
 {%- endmacro %}
 
 
 {% macro full_column_name() -%}
-    upper(concat(database_name, '.', schema_name, '.', table_name, '.', column_name))
+    upper(database_name || '.' || schema_name || '.' || table_name || '.' || column_name)
 {%- endmacro %}
 
 
@@ -47,7 +47,38 @@
 {% endmacro %}
 
 
+{% macro redshift__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' -%}
+        {%- set part_index = 1 -%}
+    {%- elif part_name == 'schema_name' -%}
+        {%- set part_index = 2 -%}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 3 -%}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+    trim(split_part(full_table_name,'.',{{ part_index }}),'"') as {{ part_name }}
+{% endmacro %}
+
+
 {% macro relation_to_full_name(relation) %}
     {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {{ return(full_table_name) }}
+{% endmacro %}
+
+
+{% macro configured_schemas_from_graph_as_tuple() %}
+
+    {%- set configured_schema_tuples = elementary.get_configured_schemas_from_graph() %}
+    {%- set schemas_list = [] %}
+
+    {%- for configured_schema_tuple in configured_schema_tuples %}
+        {%- set database_name, schema_name = configured_schema_tuple %}
+        {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
+        {%- do schemas_list.append(full_schema_name) -%}
+    {%- endfor %}
+
+    {% set schemas_tuple = elementary.strings_list_to_tuple(schemas_list) %}
+    {{ return(schemas_tuple) }}
+
 {% endmacro %}

@@ -20,15 +20,15 @@ with table_changes as (
 table_changes_alerts_filtered as (
 
     select
-        change_id as alert_id,
-        detected_at,
-        database_name,
-        schema_name,
-        table_name,
+        {{ elementary.cast_as_string('change_id') }} as alert_id,
+        {{ elementary.cast_as_timestamp('detected_at') }} as detected_at,
+        {{ elementary.cast_as_string('database_name') }} as database_name,
+        {{ elementary.cast_as_string('schema_name') }} as schema_name,
+        {{ elementary.cast_as_string('table_name') }} as table_name,
         {{ elementary.null_string() }} as column_name,
-        'schema_change' as alert_type,
-        change as sub_type,
-        change_description as alert_description,
+        {{ elementary.cast_as_string("'schema_change'") }} as alert_type,
+        {{ elementary.cast_as_string('change') }} as sub_type,
+        {{ elementary.cast_as_string('change_description') }} as alert_description,
         {{ elementary.null_string() }} as owner,
         {{ elementary.null_string() }} as tags,
         {{ elementary.null_string() }} as alert_results_query,

@@ -1,12 +1,14 @@
 {% macro upload_dbt_artifacts(results) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
+
         -- handle models
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% set flatten_node_macro = context['elementary']['flatten_model'] %}
         {% set dbt_models_empty_table_query = elementary.get_dbt_models_empty_table_query() %}
         {% set dbt_models = elementary.create_source_table('dbt_models', dbt_models_empty_table_query, True) %}
         {% do elementary.insert_nodes_to_table(dbt_models, nodes, flatten_node_macro) %}
+        {% do adapter.commit() %}
 
         -- handle tests
         {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
@@ -14,6 +16,7 @@
         {% set dbt_tests_empty_table_query = elementary.get_dbt_tests_empty_table_query() %}
         {% set dbt_tests = elementary.create_source_table('dbt_tests', dbt_tests_empty_table_query, True) %}
         {% do elementary.insert_nodes_to_table(dbt_tests, nodes, flatten_node_macro) %}
+        {% do adapter.commit() %}
 
         -- handle sources
         {% set nodes = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
@@ -21,6 +24,7 @@
         {% set dbt_sources_empty_table_query = elementary.get_dbt_sources_empty_table_query() %}
         {% set dbt_sources = elementary.create_source_table('dbt_sources', dbt_sources_empty_table_query, True) %}
         {% do elementary.insert_nodes_to_table(dbt_sources, nodes, flatten_node_macro) %}
+        {% do adapter.commit() %}
 
         -- handle exposures
         {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
@@ -28,6 +32,7 @@
         {% set dbt_exposures_empty_table_query = elementary.get_dbt_exposures_empty_table_query() %}
         {% set dbt_exposures = elementary.create_source_table('dbt_exposures', dbt_exposures_empty_table_query, True) %}
         {% do elementary.insert_nodes_to_table(dbt_exposures, nodes, flatten_node_macro) %}
+        {% do adapter.commit() %}
 
         -- handle metrics
         {% set nodes = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
@@ -35,6 +40,7 @@
         {% set dbt_metrics_empty_table_query = elementary.get_dbt_metrics_empty_table_query() %}
         {% set dbt_metrics = elementary.create_source_table('dbt_metrics', dbt_metrics_empty_table_query, True) %}
         {% do elementary.insert_nodes_to_table(dbt_metrics, nodes, flatten_node_macro) %}
+        {% do adapter.commit() %}
 
         -- handle run_results
         {% if results %}
@@ -42,6 +48,7 @@
             {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
             {% set dbt_run_results = elementary.create_source_table('dbt_run_results', dbt_run_results_empty_table_query, False) %}
             {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
+            {% do adapter.commit() %}
         {% endif %}
     {% endif %}
     {{ return ('') }}
@@ -55,8 +62,12 @@
             {% do artifacts.append(metadata_dict) %}
         {% endif %}
     {% endfor %}
-    {% if artifacts | length > 0 %}
+    {%- set artifacts_length = artifacts | length %}
+    {% if artifacts_length > 0 %}
+        {{ elementary.debug_log('Inserting ' ~ artifacts_length ~ ' rows to table ' ~ table_name) }}
         {% do elementary.insert_dicts(table_name, artifacts) %}
+    {%- else %}
+        {{ elementary.debug_log('No artifacts to insert to ' ~ table_name) }}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}
@@ -120,16 +131,16 @@
                                                                   ('alias', 'string'),
                                                                   ('checksum', 'string'),
                                                                   ('materialization', 'string'),
-                                                                  ('tags', 'string'),
-                                                                  ('meta', 'string'),
+                                                                  ('tags', 'long_string'),
+                                                                  ('meta', 'long_string'),
                                                                   ('database_name', 'string'),
                                                                   ('schema_name', 'string'),
-                                                                  ('depends_on_macros', 'string'),
-                                                                  ('depends_on_nodes', 'string'),
-                                                                  ('description', 'string'),
+                                                                  ('depends_on_macros', 'long_string'),
+                                                                  ('depends_on_nodes', 'long_string'),
+                                                                  ('description', 'long_string'),
                                                                   ('name', 'string'),
                                                                   ('package_name', 'string'),
-                                                                  ('original_path', 'string'),
+                                                                  ('original_path', 'long_string'),
                                                                   ('path', 'string'),
                                                                   ('generated_at', 'string')]) %}
     {{ return(dbt_models_empty_table_query) }}
@@ -180,13 +191,13 @@
                                                                  ('severity', 'string'),
                                                                  ('warn_if', 'string'),
                                                                  ('error_if', 'string'),
-                                                                 ('tags', 'string'),
-                                                                 ('meta', 'string'),
-                                                                 ('depends_on_macros', 'string'),
-                                                                 ('depends_on_nodes', 'string'),
-                                                                 ('description', 'string'),
+                                                                 ('tags', 'long_string'),
+                                                                 ('meta', 'long_string'),
+                                                                 ('depends_on_macros', 'long_string'),
+                                                                 ('depends_on_nodes', 'long_string'),
+                                                                 ('description', 'long_string'),
                                                                  ('package_name', 'string'),
-                                                                 ('original_path', 'string'),
+                                                                 ('original_path', 'long_string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
@@ -239,15 +250,15 @@
                                                                    ('loaded_at_field', 'string'),
                                                                    ('freshness_warn_after', 'string'),
                                                                    ('freshness_error_after', 'string'),
-                                                                   ('freshness_filter', 'string'),
+                                                                   ('freshness_filter', 'long_string'),
                                                                    ('relation_name', 'string'),
-                                                                   ('tags', 'string'),
-                                                                   ('meta', 'string'),
+                                                                   ('tags', 'long_string'),
+                                                                   ('meta', 'long_string'),
                                                                    ('package_name', 'string'),
-                                                                   ('original_path', 'string'),
+                                                                   ('original_path', 'long_string'),
                                                                    ('path', 'string'),
-                                                                   ('source_description', 'string'),
-                                                                   ('description', 'string'),
+                                                                   ('source_description', 'long_string'),
+                                                                   ('description', 'long_string'),
                                                                    ('generated_at', 'string')]) %}
     {{ return(dbt_sources_empty_table_query) }}
 {% endmacro %}
@@ -289,14 +300,14 @@
                                                                      ('type', 'string'),
                                                                      ('owner_email', 'string'),
                                                                      ('owner_name', 'string'),
-                                                                     ('url', 'string'),
-                                                                     ('depends_on_macros', 'string'),
-                                                                     ('depends_on_nodes', 'string'),
-                                                                     ('description', 'string'),
-                                                                     ('tags', 'string'),
-                                                                     ('meta', 'string'),
+                                                                     ('url', 'long_string'),
+                                                                     ('depends_on_macros', 'long_string'),
+                                                                     ('depends_on_nodes', 'long_string'),
+                                                                     ('description', 'long_string'),
+                                                                     ('tags', 'long_string'),
+                                                                     ('meta', 'long_string'),
                                                                      ('package_name', 'string'),
-                                                                     ('original_path', 'string'),
+                                                                     ('original_path', 'long_string'),
                                                                      ('path', 'string'),
                                                                      ('generated_at', 'string')]) %}
     {{ return(dbt_exposures_empty_table_query) }}
@@ -334,18 +345,18 @@
                                                                    ('label', 'string'),
                                                                    ('model', 'string'),
                                                                    ('type', 'string'),
-                                                                   ('sql', 'string'),
+                                                                   ('sql', 'long_string'),
                                                                    ('timestamp', 'string'),
-                                                                   ('filters', 'string'),
-                                                                   ('time_grains', 'string'),
-                                                                   ('dimensions', 'string'),
-                                                                   ('depends_on_macros', 'string'),
-                                                                   ('depends_on_nodes', 'string'),
-                                                                   ('description', 'string'),
-                                                                   ('tags', 'string'),
-                                                                   ('meta', 'string'),
+                                                                   ('filters', 'long_string'),
+                                                                   ('time_grains', 'long_string'),
+                                                                   ('dimensions', 'long_string'),
+                                                                   ('depends_on_macros', 'long_string'),
+                                                                   ('depends_on_nodes', 'long_string'),
+                                                                   ('description', 'long_string'),
+                                                                   ('tags', 'long_string'),
+                                                                   ('meta', 'long_string'),
                                                                    ('package_name', 'string'),
-                                                                   ('original_path', 'string'),
+                                                                   ('original_path', 'long_string'),
                                                                    ('path', 'string'),
                                                                    ('generated_at', 'string')]) %}
     {{ return(dbt_metrics_empty_table_query) }}

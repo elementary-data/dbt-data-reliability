@@ -2,7 +2,7 @@
 
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set full_table_name_str = elementary.relation_to_full_name(monitored_table_relation) %}
+    {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
 
     {% if is_timestamp %}
         with filtered_monitored_table as (
@@ -35,7 +35,7 @@
 
         row_count as (
             select edr_daily_bucket as edr_bucket,
-                   'row_count' as metric_name,
+                   {{ elementary.const_as_string('row_count') }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value
             from daily_row_count
@@ -44,7 +44,7 @@
         {%- else %}
 
         row_count as (
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         ),
 
         {%- endif %}
@@ -56,14 +56,14 @@
             {%- endif %}
             select
                 edr_daily_bucket as edr_bucket,
-                'freshness' as metric_name,
+                {{ elementary.const_as_string('freshness') }} as metric_name,
                 {{ elementary.to_char('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
             from daily_buckets, {{ monitored_table_relation }}
             where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
             group by 1,2
         {%- else %}
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','str'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         {%- endif %}
         ),
 
@@ -78,7 +78,7 @@
         metrics_final as (
 
         select
-            '{{ full_table_name_str }}' as full_table_name,
+            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
@@ -95,19 +95,19 @@
         with row_count as (
             {%- if 'row_count' in table_monitors %}
                 select
-                    'row_count' as metric_name,
+                    {{ elementary.const_as_string('row_count') }} as metric_name,
                     {{ elementary.row_count() }} as metric_value
                 from {{ monitored_table_relation }}
                 group by 1
             {%- else %}
-                {{ elementary.empty_table([('metric_name','str'),('metric_value','int')]) }}
+                {{ elementary.empty_table([('metric_name','string'),('metric_value','int')]) }}
             {%- endif %}
         ),
 
         metrics_final as (
 
         select
-            '{{ full_table_name_str }}' as full_table_name,
+            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,

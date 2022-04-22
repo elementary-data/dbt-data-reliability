@@ -37,7 +37,7 @@ table_removed as (
     from pre left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
     where cur.full_table_name is null
-    and pre.full_schema_name in {{ elementary.strings_list_to_tuple(elementary.get_configured_schemas_from_graph()) }}
+    and pre.full_schema_name in {{ elementary.configured_schemas_from_graph_as_tuple() }}
 
 ),
 
@@ -60,9 +60,9 @@ table_changes_desc as (
         change,
         case
             when change='table_added'
-                then concat('The table "', full_table_name, '" was added')
+                then 'The table "' || full_table_name || '" was added'
             when change='table_removed'
-                then concat('The table "', full_table_name, '" was removed')
+                then 'The table "' || full_table_name || '" was removed'
             else NULL
         end as change_description
     from all_table_changes

@@ -1,28 +1,32 @@
-{% macro get_column_monitors(model, column_name, column_tests=none) %}
-    {%- set column_objects = adapter.get_columns_in_relation(model) -%}
-    {%- set column_monitors = [] -%}
+{% macro get_column_obj_and_monitors(model_relation, column_name, column_tests=none) %}
+
+    {%- set column_obj_and_monitors = [] %}
+    {%- set column_objects = adapter.get_columns_in_relation(model_relation) -%}
+
     {%- for column_obj in column_objects %}
-        {%- if column_obj.name | lower == column_name | lower %}
-            {%- do column_monitors.extend(elementary.column_monitors_by_type(column_obj.dtype, column_tests=none)) %}
-        {%- endif %}
-    {%- endfor %}
-    {{ return(column_monitors) }}
-{% endmacro %}
-
-
-{% macro get_all_columns_monitors(model_relation, column_tests=none) %}
-
-    {%- set columns_config = [] %}
-    {%- set columns_from_relation = adapter.get_columns_in_relation(model_relation) -%}
-
-    {%- for column in columns_from_relation %}
-        {%- set column_normalized_type = elementary.normalize_data_type(column['dtype']) %}
-        {%- set column_monitors = elementary.column_monitors_by_type(column_normalized_type, column_tests) %}
-        {%- set column_item = {'column_name': column['column'], 'monitors': column_monitors} %}
-        {%- do columns_config.append(column_item) -%}
+        {% if column_obj.name | lower == column_name | lower %}
+            {%- set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
+            {%- set column_item = {'column': column_obj, 'monitors': column_monitors} %}
+            {{ return(column_item) }}
+        {% endif %}
     {% endfor %}
 
-    {{ return(columns_config) }}
+    {{ return(none) }}
+
+{% endmacro %}
+
+{% macro get_all_column_obj_and_monitors(model_relation, column_tests=none) %}
+
+    {%- set column_obj_and_monitors = [] %}
+    {%- set column_objects = adapter.get_columns_in_relation(model_relation) -%}
+
+    {%- for column_obj in column_objects %}
+        {%- set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
+        {%- set column_item = {'column': column_obj, 'monitors': column_monitors} %}
+        {%- do column_obj_and_monitors.append(column_item) -%}
+    {% endfor %}
+
+    {{ return(column_obj_and_monitors) }}
 
 {% endmacro %}
 
@@ -36,7 +40,7 @@
     {%- set default_string_monitors = elementary.get_config_var('edr_monitors')['column_string'] | list %}
 
     {# if column_tests is null, default is to use all relevant monitors for this data type #}
-    {%- if column_tests is defined and column_tests is not none and column_tests | length > 0 %}
+    {%- if column_tests %}
         {%- set monitors_list = column_tests %}
     {%- else %}
         {% set monitors_list = [] %}
@@ -46,24 +50,17 @@
     {%- endif %}
 
     {%- set column_monitors = [] %}
-
     {%- set all_types_intersect = elementary.lists_intersection(monitors_list, default_all_types) %}
-    {%- for monitor in all_types_intersect %}
-        {{ column_monitors.append(monitor) }}
-    {%- endfor %}
+    {% do column_monitors.extend(all_types_intersect) %}
 
     {%- if normalized_data_type == 'numeric' %}
         {%- set numeric_intersect = elementary.lists_intersection(monitors_list, default_numeric_monitors) %}
-        {%- for monitor in numeric_intersect %}
-            {{ column_monitors.append(monitor) }}
-        {%- endfor %}
+        {% do column_monitors.extend(numeric_intersect) %}
     {%- endif %}
 
     {%- if normalized_data_type == 'string' %}
         {%- set string_intersect = elementary.lists_intersection(monitors_list, default_string_monitors) %}
-        {%- for monitor in string_intersect %}
-            {{ column_monitors.append(monitor) }}
-        {%- endfor %}
+        {% do column_monitors.extend(string_intersect) %}
     {%- endif %}
 
     {{ return(column_monitors) }}

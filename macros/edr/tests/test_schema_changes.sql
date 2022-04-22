@@ -14,10 +14,6 @@
                                                                                    schema=schema_name,
                                                                                    identifier=temp_schema_changes_table_name,
                                                                                    type='table') -%}
-        {% if not adapter.check_schema_exists(database_name, schema_name) %}
-            {{ elementary.debug_log('schema ' ~ database_name ~ '.' ~ schema_name ~ ' doesnt exist, creating it') }}
-            {% do dbt.create_schema(temp_table_relation) %}
-        {% endif %}
 
         {# get table configuration #}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
@@ -30,14 +26,13 @@
 
         {# query if there were schema changes since last execution #}
         {% set schema_changes_alert_query = elementary.get_schema_changes_alert_query(full_table_name, last_schema_change_alert_time) %}
-        {% set temp_alerts_table_name = test_name_in_graph ~ '__schema_alerts' %}
+        {% set temp_alerts_table_name = test_name_in_graph ~ '__schema_changes_alerts' %}
         {{ elementary.debug_log('schema alerts table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}
-        {% do run_query(dbt.create_table_as(False, alerts_temp_table_relation, schema_changes_alert_query)) %}
-
+        {% do elementary.create_or_replace(False, alerts_temp_table_relation, schema_changes_alert_query) %}
         {# return schema changes query as standard test query #}
         select * from {{ alerts_temp_table_relation }}
 

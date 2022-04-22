@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: u_any_Type_column_anomalies #the capital T and the prefix 'u' here are intendend to test how the code handles it
+  - name: any_type_column_anomalies
     description: >
       This is a very weird description
       with breaklines
@@ -16,10 +16,8 @@ models:
           tags: ['table_anomalies']
           table_anomalies:
             - row_count
-      - elementary.schema_changes:
-          tags: ['schema_changes']
       - elementary.all_columns_anomalies:
-          tags: ['all_columns_anomalies']
+          tags: ['all_any_type_columns_anomalies']
 
   - name: string_column_anomalies
     config:
@@ -31,12 +29,14 @@ models:
           table_anomalies:
             - freshness
       - elementary.all_columns_anomalies:
-          tags: ['all_columns_anomalies']
+          tags: ['all_string_column_anomalies']
+      - elementary.schema_changes:
+          tags: ['schema_changes']
     columns:
       - name: "min_length"
         tests:
           - elementary.column_anomalies:
-              tags: ['specific_column_anomalies']
+              tags: ['string_column_anomalies']
               column_anomalies:
                 - min_length
                 - max_length
@@ -44,26 +44,26 @@ models:
       - name: max_length
         tests:
           - elementary.column_anomalies:
-              tags: ['column_anomalies']
+              tags: ['string_column_anomalies']
       - name: average_length
         tests:
           - elementary.column_anomalies:
-              tags: ['specific_column_anomalies']
+              tags: ['string_column_anomalies']
               column_anomalies:
                 - average_length
                 - null_count
       - name: missing_count
         tests:
           - elementary.column_anomalies:
-              tags: ['column_anomalies']
+              tags: ['string_column_anomalies']
       - name: missing_percent
         tests:
           - elementary.column_anomalies:
-              tags: ['column_anomalies']
+              tags: ['string_column_anomalies']
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: ['column_anomalies']
+              tags: ['string_column_anomalies']
 
   - name: numeric_column_anomalies
     config:
@@ -73,70 +73,75 @@ models:
       - elementary.table_anomalies:
           tags: ['table_anomalies']
       - elementary.schema_changes:
-          tags: ['elementary']
+          tags: ['schema_changes']
+      - elementary.all_columns_anomalies:
+          tags: ['all_numeric_columns_anomalies']
+          column_anomalies:
+            - average_length
+            - null_count
     columns:
       - name: min
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - average
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - average
       - name: average
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
               column_anomalies:
                 - average
       - name: zero_count
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
       - name: zero_percent
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
       - name: variance
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
       - name: standard_deviation
         tests:
           - elementary.column_anomalies:
-              tags: ['elementary']
+              tags: ['numeric_column_anomalies']
 
 sources:
   - name: training
@@ -160,3 +165,18 @@ sources:
         tests:
           - elementary.all_columns_anomalies:
               tags: ['elementary_source']
+  - name: schema_changes_data
+    schema: "{{ target.schema }}"
+    tables:
+      - name: groups
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
+      - name: stats_players
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
+      - name: stats_team
+        tests:
+          - elementary.schema_changes:
+              tags: ['schema_changes']
