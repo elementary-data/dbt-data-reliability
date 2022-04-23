@@ -18,7 +18,7 @@ Check out the [full documentation](https://docs.elementary-data.com/).
 Start by [using our CLI](https://github.com/elementary-data/elementary) to monitor and get Slack alerts.
 
 ## Data warehouse support
-This package has been tested on Snowflake and BigQuery.
+This package has been tested on Snowflake, BigQuery and Redshift.
 Additional integrations coming soon!
 Ask us for integrations on [Slack](https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg) or as a [GitHub issue](https://github.com/elementary-data/elementary/issues/new).
 
