@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies = none) %}
+{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -43,12 +43,18 @@
             {%- for column_obj_and_monitors in column_objs_and_monitors %}
                 {%- set column_obj = column_obj_and_monitors['column'] %}
                 {%- set column_monitors = column_obj_and_monitors['monitors'] %}
-                {%- do monitors.extend(column_monitors) -%}
-                {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_obj.name) ~ "'" %}
-                {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
-                {{ elementary.test_log('start', full_table_name, column_obj.name) }}
-                {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
-                {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
+                {%- set column_name = column_obj.name -%}
+                {%- set ignore_column = elementary.should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
+                {%- if not ignore_column -%}
+                    {%- do monitors.extend(column_monitors) -%}
+                    {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
+                    {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
+                    {{ elementary.test_log('start', full_table_name, column_name) }}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
+                    {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
+                {%- else -%}
+                    {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
+                {%- endif -%}
             {%- endfor %}
         {%- endif %}
         {%- set all_columns_monitors = monitors | unique | list %}
@@ -76,4 +82,21 @@
     {%- endif %}
 {% endtest %}
 
+{%- macro should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
+    {%- set regex_module = modules.re -%}
+    {%- if exclude_regexp -%}
+        {%- set is_match = regex_module.match(exclude_regexp, column_name, regex_module.IGNORECASE) %}
+        {%- if is_match -%}
+            {{ return(True) }}
+        {%- endif -%}
+    {%- endif -%}
+    {% if exclude_prefix %}
+        {%- set exclude_regexp = '^' ~ exclude_prefix ~ '.*' %}
+        {%- set is_match = regex_module.match(exclude_regexp, column_name, regex_module.IGNORECASE) %}
+        {%- if is_match -%}
+            {{ return(True) }}
+        {%- endif -%}
+    {%- endif -%}
+    {{ return(False) }}
+{%- endmacro -%}
 
