@@ -88,11 +88,13 @@
                 case
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
-                end as z_score,
-                metric_value as latest_metric_value,
-                source_value,
+                end as anomaly_score,
+                {{ elementary.get_config_var('anomaly_score_threshold') }} as anomaly_score_threshold,
+                {{ elementary.anomaly_detection_description() }},
+                source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
+                metric_value as latest_metric_value,
                 training_avg,
                 training_stddev,
                 training_set_size
@@ -109,7 +111,7 @@
         )
 
         select * from calc_anomaly_score
-        where abs(z_score) > {{ elementary.get_config_var('anomaly_score_threshold') }}
+        where abs(anomaly_score) > {{ elementary.get_config_var('anomaly_score_threshold') }}
 
     {% endset %}
 

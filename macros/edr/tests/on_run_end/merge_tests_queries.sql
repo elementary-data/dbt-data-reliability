@@ -113,11 +113,11 @@
                     column_name,
                     'anomaly_detection' as alert_type,
                     metric_name as sub_type,
-                    {{ elementary.anomaly_detection_description() }},
+                    anomaly_description as alert_description,
                     {{ elementary.null_string() }} as owner,
                     {{ elementary.null_string() }} as tags,
                     {{ elementary.null_string() }} as alert_results_query,
-                    source_value as other,
+                    anomalous_value as other,
                     row_number() over (partition by id order by column_name) as row_number
                 from union_temp
             )

@@ -179,6 +179,8 @@
         {% endif %}
         {% do found_schema_changes.update({column_name: alert}) %}
     {% endfor %}
-    {% do elementary.edr_log("SUCCESS: all expected schema changes were found - " ~ found_schema_changes) %}
+    {% if found_schema_changes %}
+        {% do elementary.edr_log("SUCCESS: all expected schema changes were found - " ~ found_schema_changes) %}
+    {% endif %}
     {{ return(0) }}
 {% endmacro %}

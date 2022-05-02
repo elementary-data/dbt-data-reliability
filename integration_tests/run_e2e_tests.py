@@ -5,6 +5,7 @@ import string
 import os
 from os.path import expanduser
 from monitor.dbt_runner import DbtRunner
+import click
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -220,22 +221,42 @@ def print_tests_results(table_test_results,
     print_test_result_list(schema_changes_test_results)
 
 
-def main():
+@click.command()
+@click.option(
+    '--target', '-t',
+    type=str,
+    default='all',
+    help="snowflake / bigquery / redshift / all (default = all)"
+)
+def main(target):
     generate_fake_data()
+    snowflake_test_results = []
+    bigquery_test_results = []
+    redshift_test_results = []
 
-    print('Starting Snowflake tests\n')
-    snowflake_test_results = e2e_tests('snowflake')
-    print('Starting BigQuery tests\n')
-    bigquery_test_results = e2e_tests('bigquery')
-    print('Starting Redshift tests\n')
-    redshift_test_results = e2e_tests('redshift')
+    if target in {'all', 'snowflake'}:
+        print('Starting Snowflake tests\n')
+        snowflake_test_results = e2e_tests('snowflake')
 
-    print('\nSnowflake results')
-    print_tests_results(*snowflake_test_results)
-    print('\nBigQuery results')
-    print_tests_results(*bigquery_test_results)
-    print('\nRedshift results')
-    print_tests_results(*redshift_test_results)
+    if target in {'all', 'bigquery'}:
+        print('Starting BigQuery tests\n')
+        bigquery_test_results = e2e_tests('bigquery')
+
+    if target in {'all', 'redshift'}:
+        print('Starting Redshift tests\n')
+        redshift_test_results = e2e_tests('redshift')
+
+    if target in {'all', 'snowflake'}:
+        print('\nSnowflake results')
+        print_tests_results(*snowflake_test_results)
+
+    if target in {'all', 'bigquery'}:
+        print('\nBigQuery results')
+        print_tests_results(*bigquery_test_results)
+
+    if target in {'all', 'redshift'}:
+        print('\nRedshift results')
+        print_tests_results(*redshift_test_results)
 
 
 if __name__ == '__main__':

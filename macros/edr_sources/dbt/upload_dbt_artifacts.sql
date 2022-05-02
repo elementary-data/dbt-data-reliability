@@ -80,7 +80,7 @@
     {% for run_result in results %}
         {% set run_result_dict = run_result.to_dict() %}
         {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
-        {% set execution_id = [invocation_id, node.get('unique_id')] | join('.') %}
+        {% set execution_id = elementary.get_node_execution_id(node) %}
         {% set resource_type = node.get('resource_type') %}
         {% set generated_at = run_started_at.strftime('%Y-%m-%d %H:%M:%S') %}
         {% set status = run_result_dict.get('status') | lower %}
@@ -121,7 +121,8 @@
                 {% endif %}
             {% endif %}
             {% set test_alert_dict = {
-               'alert_id': execution_id,
+               'id': execution_id,
+               'alert_id': none,
                'detected_at': generated_at,
                'database_name': primary_parent_model_database,
                'schema_name': primary_parent_model_schema,
