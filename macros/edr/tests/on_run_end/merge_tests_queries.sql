@@ -98,14 +98,19 @@
 
 
 {% macro union_anomalies_alerts_query(temp_anomalies_tables) %}
+    -- depends_on: {{ source('elementary_dbt_artifacts', 'dbt_tests') }}
     {%- if temp_anomalies_tables | length > 0 %}
+        {%- set dbt_tests_exists = elementary.relation_exists(source('elementary_dbt_artifacts', 'dbt_tests')) -%}
         {%- set anomalies_alerts_query %}
             with union_temp as (
                 {{ elementary.union_anomalies_query(temp_anomalies_tables) }}
             ),
-            union_with_duplicates as (
+            data_anomalies as (
                 select
                     id as alert_id,
+                    metric_id as data_issue_id,
+                    test_execution_id,
+                    test_unique_id,
                     {{ elementary.current_timestamp_column() }} as detected_at,
                     {{ elementary.full_name_split('database_name') }},
                     {{ elementary.full_name_split('schema_name') }},
@@ -114,29 +119,49 @@
                     'anomaly_detection' as alert_type,
                     metric_name as sub_type,
                     anomaly_description as alert_description,
-                    {{ elementary.null_string() }} as owner,
+                    anomalous_value as other,
+                    row_number() over (partition by id order by column_name) as row_index
+                from union_temp
+            ),
+            data_anomalies_no_dups as (
+                select * from data_anomalies where row_index = 1
+            ),
+            data_anomalies_enriched_with_operational_context as (
+                select
+                    da.alert_id,
+                    da.data_issue_id,
+                    da.test_execution_id,
+                    da.detected_at,
+                    da.database_name,
+                    da.schema_name,
+                    da.table_name,
+                    da.column_name,
+                    da.alert_type,
+                    da.sub_type,
+                    da.alert_description,
+                {%- if dbt_tests_exists -%}
+                    dt.model_owners as owners,
+                    dt.model_tags as tags,
+                    dt.compiled_sql as alert_results_query,
+                    da.other,
+                    dt.short_name as test_name,
+                    dt.test_params,
+                    dt.severity,
+                    'fail' as status
+                from data_anomalies_no_dups da join {{ source('elementary_dbt_artifacts', 'dbt_tests') }} dt on da.test_unique_id = dt.unique_id
+                {%- else -%}
+                    {{ elementary.null_string() }} as owners,
                     {{ elementary.null_string() }} as tags,
                     {{ elementary.null_string() }} as alert_results_query,
-                    anomalous_value as other,
-                    row_number() over (partition by id order by column_name) as row_number
-                from union_temp
+                    da.other,
+                    {{ elementary.null_string() }} as test_name,
+                    {{ elementary.null_string() }} as test_params,
+                    {{ elementary.null_string() }} as severity,
+                    'fail' as status
+                from data_anomalies_no_dups da
+                {%- endif -%}
             )
-            select
-                alert_id,
-                detected_at,
-                database_name,
-                schema_name,
-                table_name,
-                column_name,
-                alert_type,
-                sub_type,
-                alert_description,
-                owner,
-                tags,
-                alert_results_query,
-                other
-            from union_with_duplicates
-            where row_number = 1
+            select * from data_anomalies_enriched_with_operational_context
         {%- endset %}
         {{ return(anomalies_alerts_query) }}
     {%- endif %}
@@ -145,35 +170,60 @@
 
 
 {% macro union_schema_changes_query(temp_schema_changes_tables) %}
+    -- depends_on: {{ source('elementary_dbt_artifacts', 'dbt_tests') }}
     {%- if temp_schema_changes_tables | length > 0 %}
+        {%- set dbt_tests_exists = elementary.relation_exists(source('elementary_dbt_artifacts', 'dbt_tests')) -%}
         {%- set union_temp_query -%}
-            with union_temps_schema_changes as (
+            with schema_changes as (
             {%- for temp_table in temp_schema_changes_tables -%}
                 select * from {{- temp_table -}}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
             ),
-            union_with_duplicates as (
-            select *,
-                row_number() over (partition by alert_id order by detected_at desc) as row_number
-            from union_temps_schema_changes
+            schema_changes_with_indices as (
+                select *,
+                      row_number() over (partition by alert_id order by detected_at desc) as row_index
+                from schema_changes
+            ),
+            schema_changes_no_dups as (
+                select * from schema_changes_with_indices where row_index = 1
+            ),
+            schema_changes_enriched_with_operational_context as (
+                select
+                    sc.alert_id,
+                    sc.data_issue_id,
+                    sc.test_execution_id,
+                    sc.detected_at,
+                    sc.database_name,
+                    sc.schema_name,
+                    sc.table_name,
+                    sc.column_name,
+                    sc.alert_type,
+                    sc.sub_type,
+                    sc.alert_description,
+                {%- if dbt_tests_exists -%}
+                    dt.model_owners as owners,
+                    dt.model_tags as tags,
+                    dt.compiled_sql as alert_results_query,
+                    sc.other,
+                    dt.short_name as test_name,
+                    dt.test_params,
+                    dt.severity,
+                    'fail' as status
+                from schema_changes_no_dups sc join {{ source('elementary_dbt_artifacts', 'dbt_tests') }} dt on sc.test_unique_id = dt.unique_id
+                {%- else -%}
+                    {{ elementary.null_string() }} as owners,
+                    {{ elementary.null_string() }} as tags,
+                    {{ elementary.null_string() }} as alert_results_query,
+                    sc.other,
+                    {{ elementary.null_string() }} as test_name,
+                    {{ elementary.null_string() }} as test_params,
+                    {{ elementary.null_string() }} as severity,
+                    'fail' as status
+                from schema_changes_no_dups sc
+                {% endif %}
             )
-            select
-                alert_id,
-                detected_at,
-                database_name,
-                schema_name,
-                table_name,
-                column_name,
-                alert_type,
-                sub_type,
-                alert_description,
-                owner,
-                tags,
-                alert_results_query,
-                other
-            from union_with_duplicates
-            where row_number = 1
+            select * from schema_changes_enriched_with_operational_context
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}

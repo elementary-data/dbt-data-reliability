@@ -184,3 +184,27 @@
     {% endif %}
     {{ return(0) }}
 {% endmacro %}
+
+{% macro validate_regular_tests() %}
+    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+    {% set dbt_test_alerts %}
+        select table_name, column_name, test_name
+        from {{ alerts_relation }}
+            where detected_at >= {{ max_bucket_end }}
+        group by 1,2, 3
+    {% endset %}
+    {% set alert_rows = run_query(dbt_test_alerts) %}
+    {% set found_tables = [] %}
+    {% set found_columns = [] %}
+    {% set found_tests = [] %}
+    {% for row in alert_rows %}
+        {% do found_tables.append(row[0]) %}
+        {% do found_columns.append(row[1]) %}
+        {% do found_tests.append(row[2]) %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies']) }}
+    {{ assert_lists_contain_same_items(found_columns, ['min_length']) }}
+    {{ assert_lists_contain_same_items(found_tests, ['relationships']) }}
+
+{% endmacro %}

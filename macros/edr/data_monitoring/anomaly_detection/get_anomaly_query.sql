@@ -3,6 +3,8 @@
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start_as_datetime() %}
     {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {%- set backfill_period = "'-" ~ elementary.get_config_var('backfill_days_per_run') ~ "'" %}
+    {%- set test_execution_id = elementary.get_test_execution_id() %}
+    {%- set test_unique_id = elementary.get_test_unique_id() %}
 
     {% set anomaly_query %}
 
@@ -42,7 +44,7 @@
         grouped_metrics as (
 
             select
-                id,
+                id as metric_id,
                 full_table_name,
                 column_name,
                 metric_name,
@@ -81,7 +83,13 @@
         calc_anomaly_score as (
 
             select
-                id,
+                {{ dbt_utils.surrogate_key([
+                 'metric_id',
+                 elementary.const_as_string(test_execution_id)
+                ]) }} as id,
+                metric_id,
+                {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
+                {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
                 full_table_name,
                 column_name,
                 metric_name,

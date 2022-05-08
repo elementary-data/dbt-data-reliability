@@ -161,6 +161,7 @@ def e2e_tests(target, test_types):
     numeric_column_anomalies_test_results = []
     any_type_column_anomalies_test_results = []
     schema_changes_test_results = []
+    regular_test_results = []
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
     clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
@@ -176,7 +177,7 @@ def e2e_tests(target, test_types):
         # If only table tests were selected no need to continue to the rest of the flow
         if len(test_types) == 1:
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-                    any_type_column_anomalies_test_results, schema_changes_test_results]
+                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results]
 
     dbt_runner.seed(select='validation')
 
@@ -207,8 +208,12 @@ def e2e_tests(target, test_types):
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
 
+    if 'regular' in test_types:
+        dbt_runner.test(select='tag:regular_tests')
+        regular_test_results = dbt_runner.run_operation(macro_name='validate_regular_tests')
+
     return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-            any_type_column_anomalies_test_results, schema_changes_test_results]
+            any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results]
 
 
 def print_test_result_list(test_results):
@@ -220,7 +225,8 @@ def print_tests_results(table_test_results,
                         string_column_anomalies_test_results,
                         numeric_column_anomalies_test_results,
                         any_type_column_anomalies_test_results,
-                        schema_changes_test_results):
+                        schema_changes_test_results,
+                        regular_test_results):
     print('\nTable test results')
     print_test_result_list(table_test_results)
     print('\nString columns test results')
@@ -231,7 +237,8 @@ def print_tests_results(table_test_results,
     print_test_result_list(any_type_column_anomalies_test_results)
     print('\nSchema changes test results')
     print_test_result_list(schema_changes_test_results)
-
+    print('\nRegular test results')
+    print_test_result_list(regular_test_results)
 
 @click.command()
 @click.option(
@@ -244,7 +251,7 @@ def print_tests_results(table_test_results,
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / all (default = all)"
+    help="table / column / schema / regular / all (default = all)"
 )
 def main(target, e2e_type):
     generate_fake_data()
@@ -255,7 +262,7 @@ def main(target, e2e_type):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema']
+        e2e_types = ['table', 'column', 'schema', 'regular']
     else:
         e2e_types = [e2e_type]
 
