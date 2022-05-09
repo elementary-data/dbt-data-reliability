@@ -66,7 +66,7 @@
     {%- set artifacts_length = artifacts | length %}
     {% if artifacts_length > 0 %}
         {{ elementary.debug_log('Inserting ' ~ artifacts_length ~ ' rows to table ' ~ table_name) }}
-        {% do elementary.insert_dicts(table_name, artifacts) %}
+        {% do elementary.insert_dicts(table_name, artifacts, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {%- else %}
         {{ elementary.debug_log('No artifacts to insert to ' ~ table_name) }}
     {% endif %}

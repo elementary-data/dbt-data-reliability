@@ -1,6 +1,9 @@
-{% macro insert_dicts(table_name, dicts) %}
-    {% set insert_dicts_query = elementary.get_insert_dicts_query(table_name, dicts) %}
-    {% do run_query(insert_dicts_query) %}
+{% macro insert_dicts(table_name, dicts, chunk_size=50) %}
+    {% set dicts_chunks = elementary.split_list_to_chunks(dicts, chunk_size) %}
+    {% for dicts_chunk in dicts_chunks %}
+        {% set insert_dicts_query = elementary.get_insert_dicts_query(table_name, dicts_chunk) %}
+        {% do run_query(insert_dicts_query) %}
+    {% endfor %}
 {% endmacro %}
 
 {% macro get_insert_dicts_query(table_name, dicts) -%}
