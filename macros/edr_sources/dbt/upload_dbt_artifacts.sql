@@ -1,5 +1,4 @@
 {% macro upload_dbt_artifacts(results) %}
-    -- depends_on: {{ ref('alerts_dbt_tests') }}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
 
