@@ -261,7 +261,7 @@
 
     {% set dbt_run_results = get_artifacts_table_relation('dbt_run_results') %}
     {% set dbt_run_results_query %}
-        select distinct name from {{ dbt_run_results }}
+        select distinct name from {{ dbt_run_results }} where resource_type in ('model', 'test')
     {% endset %}
     {% set run_results = elementary.result_column_to_list(dbt_run_results_query) %}
     {% set all_executable_nodes = [] %}
