@@ -47,7 +47,10 @@
         {% if results %}
             {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
             {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
-            {% set dbt_run_results = elementary.create_source_table('dbt_run_results', dbt_run_results_empty_table_query, False) %}
+            {% set dbt_run_results = elementary.create_source_table('dbt_run_results',
+                                                                    dbt_run_results_empty_table_query,
+                                                                    False,
+                                                                    elementary.get_config_var('refresh_dbt_artifacts')) %}
             {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
             {% do adapter.commit() %}
         {% endif %}
