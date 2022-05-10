@@ -1,42 +1,48 @@
-{% macro get_temp_tables_from_graph(database_name, schema_name) %}
+{% macro get_temp_tables_from_run_results(results, database_name, schema_name) %}
     {% set temp_metrics_tables = [] %}
     {% set temp_anomalies_tables = [] %}
     {% set temp_schema_changes_tables = [] %}
     {% if execute %}
         {% set schema_name = schema_name ~ '__tests' %}
         {{ elementary.debug_log('finding test temp tables in database: ' ~ database_name ~ ' and schema: ' ~ schema_name) }}
-        {% set test_nodes = elementary.get_nodes_from_graph() | selectattr('resource_type', '==', 'test') %}
         {{ elementary.debug_log('iterating over test nodes') }}
-        {% for test_node in test_nodes %}
-            {% set test_metadata = test_node.get('test_metadata') %}
-            {% if test_metadata %}
-                {% set test_name = test_metadata.get('name') %}
-                {% if test_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
-                    {% set temp_metrics_table_name = test_node.name ~ '__metrics' %}
-                    {% set temp_metrics_table_relation = adapter.get_relation(database=database_name,
-                                                                              schema=schema_name,
-                                                                              identifier=temp_metrics_table_name) %}
-                    {% if temp_metrics_table_relation %}
-                        {% set full_metrics_table_name = temp_metrics_table_relation.render() %}
-                        {% do temp_metrics_tables.append(full_metrics_table_name) %}
-                    {% endif %}
+        {% for result in results %}
+            {% set run_result_dict = result.to_dict() %}
+            {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
+            {% set status = run_result_dict.get('status') | lower %}
+            {% set resource_type = node.get('resource_type') %}
+            {% if resource_type == 'test' and status != 'error' %}
+                {% set test_node = node %}
+                {% set test_metadata = test_node.get('test_metadata') %}
+                {% if test_metadata %}
+                    {% set test_name = test_metadata.get('name') %}
+                    {% if test_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
+                        {% set temp_metrics_table_name = test_node.name ~ '__metrics' %}
+                        {% set temp_metrics_table_relation = adapter.get_relation(database=database_name,
+                                                                                  schema=schema_name,
+                                                                                  identifier=temp_metrics_table_name) %}
+                        {% if temp_metrics_table_relation %}
+                            {% set full_metrics_table_name = temp_metrics_table_relation.render() %}
+                            {% do temp_metrics_tables.append(full_metrics_table_name) %}
+                        {% endif %}
 
-                    {% set temp_anomalies_table_name = test_node.name ~ '__anomalies' %}
-                    {% set temp_anomalies_table_relation = adapter.get_relation(database=database_name,
-                                                                                schema=schema_name,
-                                                                                identifier=temp_anomalies_table_name) %}
-                    {% if temp_anomalies_table_relation %}
-                        {% set full_anomalies_table_name = temp_anomalies_table_relation.render() %}
-                        {% do temp_anomalies_tables.append(full_anomalies_table_name) %}
-                    {% endif %}
-                {% elif test_name == 'schema_changes' %}
-                    {% set test_schema_changes_table_name = test_node.name ~ '__schema_changes_alerts' %}
-                    {% set test_schema_changes_table_relation = adapter.get_relation(database=database_name,
-                                                                                     schema=schema_name,
-                                                                                     identifier=test_schema_changes_table_name) %}
-                    {% if test_schema_changes_table_relation %}
-                        {% set full_schema_changes_table_name = test_schema_changes_table_relation.render() %}
-                        {% do temp_schema_changes_tables.append(full_schema_changes_table_name) %}
+                        {% set temp_anomalies_table_name = test_node.name ~ '__anomalies' %}
+                        {% set temp_anomalies_table_relation = adapter.get_relation(database=database_name,
+                                                                                    schema=schema_name,
+                                                                                    identifier=temp_anomalies_table_name) %}
+                        {% if temp_anomalies_table_relation %}
+                            {% set full_anomalies_table_name = temp_anomalies_table_relation.render() %}
+                            {% do temp_anomalies_tables.append(full_anomalies_table_name) %}
+                        {% endif %}
+                    {% elif test_name == 'schema_changes' %}
+                        {% set test_schema_changes_table_name = test_node.name ~ '__schema_changes_alerts' %}
+                        {% set test_schema_changes_table_relation = adapter.get_relation(database=database_name,
+                                                                                         schema=schema_name,
+                                                                                         identifier=test_schema_changes_table_name) %}
+                        {% if test_schema_changes_table_relation %}
+                            {% set full_schema_changes_table_name = test_schema_changes_table_relation.render() %}
+                            {% do temp_schema_changes_tables.append(full_schema_changes_table_name) %}
+                        {% endif %}
                     {% endif %}
                 {% endif %}
             {% endif %}

@@ -21,7 +21,7 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 
 on-run-start: "{{ elementary.create_elementary_tests_schema() if flags.WHICH == 'test' }}"
-on-run-end: "{{ merge_test_results() if flags.WHICH == 'test' }}"
+on-run-end: "{{ merge_test_results(results) if flags.WHICH == 'test' }}"
 
 
 

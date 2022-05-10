@@ -1,7 +1,7 @@
-{% macro merge_test_results() %}
+{% macro merge_test_results(results) %}
     {% if execute and flags.WHICH == 'test' %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% set temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables = elementary.get_temp_tables_from_graph(database_name, schema_name) %}
+        {% set temp_metrics_tables, temp_anomalies_tables, temp_schema_changes_tables = elementary.get_temp_tables_from_run_results(results, database_name, schema_name) %}
         {{ elementary.merge_test_tables_to_target(database_name, schema_name, temp_metrics_tables, 'data_monitoring_metrics') }}
         {{ elementary.merge_test_tables_to_target(database_name, schema_name, temp_anomalies_tables, 'alerts_data_monitoring') }}
         {{ elementary.merge_test_tables_to_target(database_name, schema_name, temp_schema_changes_tables, 'alerts_schema_changes') }}
