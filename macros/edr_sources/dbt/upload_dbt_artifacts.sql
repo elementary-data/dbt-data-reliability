@@ -46,7 +46,10 @@
         {% if results %}
             {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
             {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
-            {% set dbt_run_results = elementary.create_source_table('dbt_run_results', dbt_run_results_empty_table_query, False) %}
+            {% set dbt_run_results = elementary.create_source_table('dbt_run_results',
+                                                                    dbt_run_results_empty_table_query,
+                                                                    False,
+                                                                    elementary.get_config_var('refresh_dbt_artifacts')) %}
             {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
             {% do adapter.commit() %}
         {% endif %}
@@ -65,13 +68,14 @@
     {%- set artifacts_length = artifacts | length %}
     {% if artifacts_length > 0 %}
         {{ elementary.debug_log('Inserting ' ~ artifacts_length ~ ' rows to table ' ~ table_name) }}
-        {% do elementary.insert_dicts(table_name, artifacts) %}
+        {% do elementary.insert_dicts(table_name, artifacts, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {%- else %}
         {{ elementary.debug_log('No artifacts to insert to ' ~ table_name) }}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_name) %}
 {% endmacro %}
+
 
 {% macro get_dbt_run_results_empty_table_query() %}
     {% set dbt_run_results_empty_table_query = elementary.empty_table([('model_execution_id', 'string'),
@@ -95,7 +99,7 @@
     {% set run_result_dict = run_result.to_dict() %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
     {% set flatten_run_result_dict = {
-        'model_execution_id': [invocation_id, node.get('unique_id')] | join('.'),
+        'model_execution_id': elementary.get_node_execution_id(node),
         'invocation_id': invocation_id,
         'unique_id': node.get('unique_id'),
         'name': node.get('name'),
@@ -133,6 +137,7 @@
                                                                   ('materialization', 'string'),
                                                                   ('tags', 'long_string'),
                                                                   ('meta', 'long_string'),
+                                                                  ('owner', 'string'),
                                                                   ('database_name', 'string'),
                                                                   ('schema_name', 'string'),
                                                                   ('depends_on_macros', 'long_string'),
@@ -154,10 +159,13 @@
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
+    {% set owner = meta_dict.get('owner') %}
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
+    {% set tags = elementary.union_lists(tags, meta_tags) %}
 
     {% set flatten_model_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -166,6 +174,7 @@
         'materialization': config_dict.get('materialized'),
         'tags': tags,
         'meta': meta_dict,
+        'owner': owner,
         'database_name': node_dict.get('database'),
         'schema_name': node_dict.get('schema'),
         'depends_on_macros': depends_on_dict.get('macros', []),
@@ -191,13 +200,19 @@
                                                                  ('severity', 'string'),
                                                                  ('warn_if', 'string'),
                                                                  ('error_if', 'string'),
+                                                                 ('test_params', 'long_string'),
+                                                                 ('test_namespace', 'string'),
                                                                  ('tags', 'long_string'),
+                                                                 ('model_tags', 'long_string'),
+                                                                 ('model_owners', 'long_string'),
                                                                  ('meta', 'long_string'),
                                                                  ('depends_on_macros', 'long_string'),
                                                                  ('depends_on_nodes', 'long_string'),
+                                                                 ('parent_model_unique_id', 'string'),
                                                                  ('description', 'long_string'),
                                                                  ('package_name', 'string'),
                                                                  ('original_path', 'long_string'),
+                                                                 ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
@@ -214,26 +229,71 @@
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
+    {% set tags = elementary.union_lists(tags, meta_tags) %}
+
+    {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node_dict) %}
+    {% set parent_model_nodes = elementary.get_nodes_by_unique_ids(parent_model_unique_ids) %}
+    {% set parent_models_owners = [] %}
+    {% set parent_models_tags = [] %}
+    {% for parent_model_node in parent_model_nodes %}
+        {% set flatten_parent_model_node = elementary.flatten_model(parent_model_node) %}
+        {% set parent_model_owner = flatten_parent_model_node.get('owner') %}
+        {% set parent_model_tags = flatten_parent_model_node.get('tags') %}
+        {% if parent_model_owner %}
+            {% do parent_models_owners.append(parent_model_owner) %}
+        {% endif %}
+        {% if parent_model_tags and parent_model_tags is sequence %}
+            {% do parent_models_tags.extend(parent_model_tags) %}
+        {% endif %}
+    {% endfor %}
+
+    {% set primary_parent_model_database, primary_parent_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
+    {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
+    {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
+    {% set test_model_jinja = test_kwargs.get('model') %}
+    {% set primary_parent_model_id = none %}
+    {% if test_model_jinja %}
+        {% set primary_parent_model_candidates = [] %}
+        {% for parent_model_unique_id in parent_model_unique_ids %}
+            {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
+            {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
+                {% set parent_model_name = split_parent_model_unique_id[-1] %}
+                {% if parent_model_name and parent_model_name in test_model_jinja %}
+                    {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if primary_parent_model_candidates | length == 1 %}
+            {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
+        {% endif %}
+    {% endif %}
 
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
-        'short_name': node_dict.get('test_metadata', {}).get('name'),
+        'short_name': test_metadata.get('name'),
         'alias': node_dict.get('alias'),
         'test_column_name': node_dict.get('column_name'),
         'severity': config_dict.get('severity'),
         'warn_if': config_dict.get('warn_if'),
         'error_if': config_dict.get('error_if'),
+        'test_params': test_kwargs,
+        'test_namespace': test_metadata.get('namespace'),
         'tags': tags,
+        'model_tags': parent_models_tags,
+        'model_owners': parent_models_owners,
         'meta': meta_dict,
-        'database_name': node_dict.get('database'),
-        'schema_name': node_dict.get('schema'),
+        'database_name': primary_parent_model_database,
+        'schema_name': primary_parent_model_schema,
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
+        'parent_model_unique_id': primary_parent_model_id,
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
+        'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
     }%}
@@ -254,6 +314,7 @@
                                                                    ('relation_name', 'string'),
                                                                    ('tags', 'long_string'),
                                                                    ('meta', 'long_string'),
+                                                                   ('owner', 'string'),
                                                                    ('package_name', 'string'),
                                                                    ('original_path', 'long_string'),
                                                                    ('path', 'string'),
@@ -268,7 +329,10 @@
     {% set source_meta_dict = elementary.safe_get_with_default(node_dict, 'source_meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(source_meta_dict) %}
-    {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set owner = meta_dict.get('owner') %}
+    {% set node_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
+    {% set tags = elementary.union_lists(node_tags, meta_tags) %}
     {% set flatten_source_metadata_dict = {
          'unique_id': node_dict.get('unique_id'),
          'database_name': node_dict.get('database'),
@@ -283,6 +347,7 @@
          'relation_name': node_dict.get('relation_name'),
          'tags': tags,
          'meta': meta_dict,
+         'owner': owner,
          'package_name': node_dict.get('package_name'),
          'original_path': node_dict.get('original_file_path'),
          'path': node_dict.get('path'),

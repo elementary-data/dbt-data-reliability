@@ -13,6 +13,8 @@ models:
         timestamp_column: 'updated_at'
     tests:
       - elementary.table_anomalies:
+          config:
+            severity: warn
           tags: ['table_anomalies']
           table_anomalies:
             - row_count
@@ -20,6 +22,9 @@ models:
           tags: ['all_any_type_columns_anomalies']
 
   - name: string_column_anomalies
+    meta:
+      owner: '@or'
+      tags: ['marketing']
     config:
       elementary:
         timestamp_column: "updated_at"
@@ -35,6 +40,10 @@ models:
     columns:
       - name: "min_length"
         tests:
+          - relationships:
+              tags: ['regular_tests']
+              to: source('training', 'string_column_anomalies_training')
+              field: max_length
           - elementary.column_anomalies:
               tags: ['string_column_anomalies']
               column_anomalies:

@@ -1,4 +1,4 @@
-{% macro create_source_table(table_name, sql_query, drop_if_exists) %}
+{% macro create_source_table(table_name, sql_query, drop_if_exists, full_refresh = False) %}
     {% set edr_sources_database = var('dbt_artifacts_database', elementary.target_database()) %}
     {% set edr_sources_schema = var('dbt_artifacts_schema', target.schema) %}
     {% set source_table_exists, source_table_relation = dbt.get_or_create_relation(database=edr_sources_database,
@@ -11,7 +11,7 @@
         {% do adapter.commit() %}
     {% endif %}
     {% if source_table_exists %}
-        {% if drop_if_exists or flags.FULL_REFRESH %}
+        {% if drop_if_exists or full_refresh %}
             {% do adapter.drop_relation(source_table_relation) %}
             {% do run_query(dbt.create_table_as(False, source_table_relation, sql_query)) %}
         {% endif %}

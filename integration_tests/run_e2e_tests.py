@@ -5,6 +5,7 @@ import string
 import os
 from os.path import expanduser
 from monitor.dbt_runner import DbtRunner
+import click
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -154,48 +155,76 @@ def generate_fake_data():
     generate_any_type_anomalies_training_and_validation_files()
 
 
-def e2e_tests(target):
+def e2e_tests(target, test_types):
     table_test_results = []
     string_column_anomalies_test_results = []
     numeric_column_anomalies_test_results = []
     any_type_column_anomalies_test_results = []
     schema_changes_test_results = []
+    regular_test_results = []
+    artifacts_results = []
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
     clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
     for clear_test_log in clear_test_logs:
-       print(clear_test_log)
+        print(clear_test_log)
 
     dbt_runner.seed(select='training')
     dbt_runner.run(full_refresh=True)
-    dbt_runner.test(select='tag:table_anomalies')
-    table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
+
+    if 'table' in test_types:
+        dbt_runner.test(select='tag:table_anomalies')
+        table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
+        print_test_result_list(table_test_results)
+        # If only table tests were selected no need to continue to the rest of the flow
+        if len(test_types) == 1:
+            return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
+                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
+                    artifacts_results]
 
     dbt_runner.seed(select='validation')
-    # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
-    # normal schema
-    dbt_runner.seed(select='schema_changes_data')
-    dbt_runner.run()
 
-    dbt_runner.test(select='tag:string_column_anomalies')
-    string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
-
-    dbt_runner.test(select='tag:numeric_column_anomalies')
-    numeric_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
-
-    dbt_runner.test(select='tag:all_any_type_columns_anomalies')
-    any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_any_type_column_anomalies')
-
-    schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
-    for schema_changes_log in schema_changes_logs:
-        print(schema_changes_log)
+    if 'schema' in test_types:
+        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
+        # normal schema
+        dbt_runner.seed(select='schema_changes_data')
 
     dbt_runner.run()
-    dbt_runner.test(select='tag:schema_changes')
-    schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
+
+    if 'column' in test_types:
+        dbt_runner.test(select='tag:string_column_anomalies')
+        string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
+        print_test_result_list(string_column_anomalies_test_results)
+        dbt_runner.test(select='tag:numeric_column_anomalies')
+        numeric_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
+        print_test_result_list(numeric_column_anomalies_test_results)
+        dbt_runner.test(select='tag:all_any_type_columns_anomalies')
+        any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name=
+                                                                          'validate_any_type_column_anomalies')
+        print_test_result_list(any_type_column_anomalies_test_results)
+
+    if 'schema' in test_types:
+        schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
+        for schema_changes_log in schema_changes_logs:
+            print(schema_changes_log)
+
+        dbt_runner.run()
+        dbt_runner.test(select='tag:schema_changes')
+        schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
+        print_test_result_list(schema_changes_test_results)
+
+    if 'regular' in test_types:
+        dbt_runner.test(select='tag:regular_tests')
+        regular_test_results = dbt_runner.run_operation(macro_name='validate_regular_tests')
+        print_test_result_list(regular_test_results)
+
+    if 'artifacts' in test_types:
+        artifacts_results = dbt_runner.run_operation(macro_name='validate_dbt_artifacts')
+        print_test_result_list(artifacts_results)
 
     return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-            any_type_column_anomalies_test_results, schema_changes_test_results]
+            any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
+            artifacts_results]
 
 
 def print_test_result_list(test_results):
@@ -207,7 +236,9 @@ def print_tests_results(table_test_results,
                         string_column_anomalies_test_results,
                         numeric_column_anomalies_test_results,
                         any_type_column_anomalies_test_results,
-                        schema_changes_test_results):
+                        schema_changes_test_results,
+                        regular_test_results,
+                        artifacts_results):
     print('\nTable test results')
     print_test_result_list(table_test_results)
     print('\nString columns test results')
@@ -218,24 +249,47 @@ def print_tests_results(table_test_results,
     print_test_result_list(any_type_column_anomalies_test_results)
     print('\nSchema changes test results')
     print_test_result_list(schema_changes_test_results)
+    print('\nRegular test results')
+    print_test_result_list(regular_test_results)
+    print('\ndbt artifacts results')
+    print_test_result_list(artifacts_results)
 
-
-def main():
+@click.command()
+@click.option(
+    '--target', '-t',
+    type=str,
+    default='all',
+    help="snowflake / bigquery / redshift / all (default = all)"
+)
+@click.option(
+    '--e2e-type', '-e',
+    type=str,
+    default='all',
+    help="table / column / schema / regular / artifacts / all (default = all)"
+)
+def main(target, e2e_type):
     generate_fake_data()
 
-    print('Starting Snowflake tests\n')
-    snowflake_test_results = e2e_tests('snowflake')
-    print('Starting BigQuery tests\n')
-    bigquery_test_results = e2e_tests('bigquery')
-    print('Starting Redshift tests\n')
-    redshift_test_results = e2e_tests('redshift')
+    if target == 'all':
+        e2e_targets = ['snowflake', 'bigquery', 'redshift']
+    else:
+        e2e_targets = [target]
 
-    print('\nSnowflake results')
-    print_tests_results(*snowflake_test_results)
-    print('\nBigQuery results')
-    print_tests_results(*bigquery_test_results)
-    print('\nRedshift results')
-    print_tests_results(*redshift_test_results)
+    if e2e_type == 'all':
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
+    else:
+        e2e_types = [e2e_type]
+
+    all_results = {}
+    for e2e_target in e2e_targets:
+        print(f'Starting {e2e_target} tests\n')
+        e2e_test_results = e2e_tests(e2e_target, e2e_types)
+        print(f'\n{e2e_target} results')
+        all_results[e2e_target] = e2e_test_results
+
+    for e2e_target, e2e_test_results in all_results.items():
+        print(f'\n{e2e_target} results')
+        print_tests_results(*e2e_test_results)
 
 
 if __name__ == '__main__':
