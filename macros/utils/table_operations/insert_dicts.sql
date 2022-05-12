@@ -4,6 +4,7 @@
         {% set insert_dicts_query = elementary.get_insert_dicts_query(table_name, dicts_chunk) %}
         {% do run_query(insert_dicts_query) %}
     {% endfor %}
+    {% do adapter.commit() %}
 {% endmacro %}
 
 {% macro get_insert_dicts_query(table_name, dicts) -%}
