@@ -1,7 +1,6 @@
 {% macro get_config_var(var_name) %}
 {% set default_config = {
          'days_back': 14,
-         'dbt_monitoring_days_back': 14,
          'anomaly_score_threshold': 3,
          'backfill_days_per_run': 2,
          'alert_dbt_model_fail': true,

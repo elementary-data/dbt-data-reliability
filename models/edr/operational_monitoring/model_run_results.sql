@@ -17,7 +17,12 @@ models_metadata as (
 ),
 
 model_run_results as (
-    select dr.*,
+    select *
+    from dbt_run_results where resource_type = 'model'
+),
+
+model_run_results_with_metadata as (
+    select mr.*,
            alias,
            checksum,
            materialization,
@@ -30,9 +35,7 @@ model_run_results as (
            depends_on_nodes,
            description,
            package_name
-    from dbt_run_results dr join models_metadata mm on dr.unique_id = mm.unique_id
-    where dr.generated_at >= {{ elementary.const_as_string((run_started_at - modules.datetime.timedelta(elementary.get_config_var('dbt_monitoring_days_back'))).strftime("%Y-%m-%d 00:00:00")) }}
-        and dr.resource_type = 'model'
+    from model_run_results mr join models_metadata mm on mr.unique_id = mm.unique_id
 )
 
-select * from model_run_results
+select * from model_run_results_with_metadata

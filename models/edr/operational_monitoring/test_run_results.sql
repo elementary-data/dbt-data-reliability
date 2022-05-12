@@ -45,7 +45,12 @@ tests_metadata_with_model_name as (
 ),
 
 test_run_results as (
-    select dr.*,
+    select *
+    from dbt_run_results where resource_type = 'test'
+),
+
+test_run_results_with_metadata as (
+    select tr.*,
            database_name,
            schema_name,
            short_name,
@@ -65,9 +70,7 @@ test_run_results as (
            model_name as parent_model_name,
            description,
            package_name
-    from dbt_run_results dr join tests_metadata_with_model_name tm on dr.unique_id = tm.unique_id
-    where dr.generated_at >= {{ elementary.const_as_string((run_started_at - modules.datetime.timedelta(elementary.get_config_var('dbt_monitoring_days_back'))).strftime("%Y-%m-%d 00:00:00")) }} and
-        dr.resource_type = 'test'
+    from test_run_results tr left join tests_metadata_with_model_name tm on tr.unique_id = tm.unique_id
 )
 
-select * from test_run_results
+select * from test_run_results_with_metadata
