@@ -167,7 +167,7 @@ def e2e_tests(target, test_types):
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
     clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
     for clear_test_log in clear_test_logs:
-       print(clear_test_log)
+        print(clear_test_log)
 
     dbt_runner.seed(select='training')
     dbt_runner.run(full_refresh=True)
@@ -175,6 +175,7 @@ def e2e_tests(target, test_types):
     if 'table' in test_types:
         dbt_runner.test(select='tag:table_anomalies')
         table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
+        print_test_result_list(table_test_results)
         # If only table tests were selected no need to continue to the rest of the flow
         if len(test_types) == 1:
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
@@ -193,13 +194,14 @@ def e2e_tests(target, test_types):
     if 'column' in test_types:
         dbt_runner.test(select='tag:string_column_anomalies')
         string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
-
+        print_test_result_list(string_column_anomalies_test_results)
         dbt_runner.test(select='tag:numeric_column_anomalies')
         numeric_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
-
+        print_test_result_list(numeric_column_anomalies_test_results)
         dbt_runner.test(select='tag:all_any_type_columns_anomalies')
         any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name=
                                                                           'validate_any_type_column_anomalies')
+        print_test_result_list(any_type_column_anomalies_test_results)
 
     if 'schema' in test_types:
         schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
@@ -209,13 +211,16 @@ def e2e_tests(target, test_types):
         dbt_runner.run()
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
+        print_test_result_list(schema_changes_test_results)
 
     if 'regular' in test_types:
         dbt_runner.test(select='tag:regular_tests')
         regular_test_results = dbt_runner.run_operation(macro_name='validate_regular_tests')
+        print_test_result_list(regular_test_results)
 
     if 'artifacts' in test_types:
         artifacts_results = dbt_runner.run_operation(macro_name='validate_dbt_artifacts')
+        print_test_result_list(artifacts_results)
 
     return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
             any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
@@ -280,7 +285,6 @@ def main(target, e2e_type):
         print(f'Starting {e2e_target} tests\n')
         e2e_test_results = e2e_tests(e2e_target, e2e_types)
         print(f'\n{e2e_target} results')
-        print_tests_results(*e2e_test_results)
         all_results[e2e_target] = e2e_test_results
 
     for e2e_target, e2e_test_results in all_results.items():
