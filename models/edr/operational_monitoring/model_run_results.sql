@@ -35,7 +35,7 @@ model_run_results_with_metadata as (
            depends_on_nodes,
            description,
            package_name
-    from model_run_results mr join models_metadata mm on mr.unique_id = mm.unique_id
+    from model_run_results mr left join models_metadata mm on mr.unique_id = mm.unique_id
 )
 
 select * from model_run_results_with_metadata
