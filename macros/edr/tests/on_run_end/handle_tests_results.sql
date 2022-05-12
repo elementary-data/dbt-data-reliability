@@ -13,9 +13,7 @@
             {% if flatten_test_node.test_namespace == 'elementary' and status != 'error' %}
                 {% set test_row_dicts = [] %}
                 {% if status != 'pass' %}
-                    {% set test_compiled_sql = flatten_test_node.compiled_sql %}
-                    {% set test_table_agate = run_query(test_compiled_sql) %}
-                    {% set test_row_dicts = elementary.agate_to_dicts(test_table_agate) %}
+                    {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
                 {% endif %}
                 {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
                     {% set test_metrics_table = elementary.get_test_metrics_table(database_name, schema_name, flatten_test_node) %}
@@ -128,6 +126,19 @@
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
     }%}
     {{ return(alert_dict) }}
+{% endmacro %}
+
+{% macro get_test_result_rows_as_dicts(flatten_test_node, sample_limit = none) %}
+    {% set test_row_dicts = [] %}
+    {% set test_compiled_sql = flatten_test_node.compiled_sql %}
+    {% if test_compiled_sql %}
+        {% if sample_limit %}
+            {% set test_compiled_sql = test_compiled_sql ~ ' limit ' ~ sample_limit %}
+        {% endif %}
+        {% set test_table_agate = run_query(test_compiled_sql) %}
+        {% set test_row_dicts = elementary.agate_to_dicts(test_table_agate) %}
+    {% endif %}
+    {{ return(test_row_dicts) }}
 {% endmacro %}
 
 {% macro get_test_metrics_table(database_name, schema_name, test_node) %}
