@@ -1,5 +1,5 @@
 {% macro handle_test_results(results) %}
-    {% if execute and flags.WHICH == 'test' %}
+    {% if execute and flags.WHICH in ['test', 'build'] %}
         {% set test_metrics_tables = [] %}
         {% set anomaly_alerts = [] %}
         {% set schema_change_alerts = [] %}
