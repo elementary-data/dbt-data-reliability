@@ -4,6 +4,8 @@
 {% if columns_from_relation and columns_from_relation is iterable %}
     {% for column_obj in columns_from_relation %}
         {% if column_obj.column | lower == column_name | lower %}
-            {% set column_data_type = elementary.normalize_data_type(column_obj.dtype) %}
+            {{ return(elementary.normalize_data_type(column_obj.dtype)) }}
         {% endif %}
 {% endif %}
+
+{% endmacro %}
