@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none) %}
+{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -16,9 +16,7 @@
                                                                                    identifier=temp_metrics_table_name,
                                                                                    type='table') -%}
 
-        {#- get column configuration -#}
-        {%- set table_config = elementary.get_table_config_from_graph(model) %}
-        {{- elementary.debug_log('table config - ' ~ table_config) }}
+        {#- get all columns configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {%- if not model_relation %}
@@ -26,10 +24,17 @@
             {{- return(elementary.no_results_query()) }}
         {%- endif %}
 
-        {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-        {{- elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
-        {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
-        {{- elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
+        {% if timestamp_column %}
+            {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, 'timestamp_column') %}
+        {% else %}
+            {%- set table_config = elementary.get_table_config_from_graph(model) %}
+            {{ elementary.debug_log('table config - ' ~ table_config) }}
+            {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
+            {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
+        {% endif %}
+
+        {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
+        {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
