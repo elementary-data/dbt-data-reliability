@@ -6,6 +6,7 @@
         {% if column_obj.column | lower == column_name | lower %}
             {{ return(elementary.normalize_data_type(column_obj.dtype)) }}
         {% endif %}
+    {% endfor %}
 {% endif %}
 
 {% endmacro %}

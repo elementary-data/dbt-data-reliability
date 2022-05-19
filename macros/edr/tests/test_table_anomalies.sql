@@ -24,19 +24,15 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
-        {% if timestamp_column %}
-            {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, 'timestamp_column') %}
-        {% else %}
-            {%- set table_config = elementary.get_table_config_from_graph(model) %}
-            {{ elementary.debug_log('table config - ' ~ table_config) }}
-            {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
-            {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
+        {% if not timestamp_column %}
+            {%- set timestamp_column = elementary.get_timestamp_column_from_graph(model) %}
         {% endif %}
-
+        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
+
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
