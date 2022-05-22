@@ -21,7 +21,9 @@
                         {% do test_metrics_tables.append(test_metrics_table) %}
                     {% endif %}
                     {% for test_row_dict in test_row_dicts %}
-                        {% do anomaly_alerts.append(elementary.convert_anomaly_dict_to_alert(run_result_dict,
+                        {% do anomaly_alerts.append(elementary.convert_anomaly_dict_to_alert(database_name,
+                                                                                             schema_name,
+                                                                                             run_result_dict,
                                                                                              test_row_dict,
                                                                                              flatten_test_node)) %}
                     {% endfor %}
@@ -54,8 +56,9 @@
     {% endif %}
 {% endmacro %}
 
-{% macro convert_anomaly_dict_to_alert(run_result_dict, anomaly_dict, test_node) %}
-    {% set split_full_table_name = elementary.insensitive_get_dict_value(anomaly_dict, 'full_table_name', '').split('.') %}
+{% macro convert_anomaly_dict_to_alert(elementary_db_name, elementary_schema_name, run_result_dict, anomaly_dict, test_node) %}
+    {% set full_table_name = elementary.insensitive_get_dict_value(anomaly_dict, 'full_table_name', '') %}
+    {% set split_full_table_name = full_table_name.split('.') %}
     {% set database_name = split_full_table_name[0] %}
     {% set schema_name = split_full_table_name[1] %}
     {% set table_name = split_full_table_name[2] %}
@@ -64,6 +67,13 @@
     {% set timestamp_column = elementary.insensitive_get_dict_value(anomaly_dict, 'timestamp_column') %}
     {% do test_params.update({'anomaly_score_threshold': anomaly_score_threshold}) %}
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
+    {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
+    {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
+    {% set training_start = elementary.insensitive_get_dict_value(anomaly_dict, 'training_start') %}
+    {% set training_end = elementary.insensitive_get_dict_value(anomaly_dict, 'training_end') %}
+    --TODO: change to ref
+    {%- set data_monitoring_metrics_relation = elementary.get_data_monitoring_metrics_relation(elementary_db_name, elementary_schema_name) -%}
+    {% set alert_results_query = elementary.get_training_set_query(full_table_name, column_name, metric_name, training_start, training_end, data_monitoring_metrics_relation) %}
     {% set alert_dict = {
         'alert_id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
@@ -74,14 +84,14 @@
         'database_name': database_name,
         'schema_name': schema_name,
         'table_name': table_name,
-        'column_name': elementary.insensitive_get_dict_value(anomaly_dict, 'column_name'),
+        'column_name': column_name,
         'alert_type': 'anomaly_detection',
-        'sub_type': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name'),
+        'sub_type': metric_name,
         'alert_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
         'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'alert_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
+        'alert_results_query': alert_results_query,
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
@@ -162,12 +172,17 @@
     {{ return(none) }}
 {% endmacro %}
 
+{% macro get_data_monitoring_metrics_relation(database_name, schema_name) %}
+    {%- set data_monitoring_metrics_relation = adapter.get_relation(database=database_name,
+                                                                    schema=schema_name,
+                                                                    identifier='data_monitoring_metrics') -%}
+    {{ return(data_monitoring_metrics_relation) }}
+{% endmacro %}
+
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {%- if test_metrics_tables %}
         {%- set test_tables_union_query = elementary.union_metrics_query(test_metrics_tables) -%}
-        {%- set target_relation = adapter.get_relation(database=database_name,
-                                                       schema=schema_name,
-                                                       identifier='data_monitoring_metrics') -%}
+        {%- set target_relation = elementary.get_data_monitoring_metrics_relation(database_name, schema_name) -%}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
