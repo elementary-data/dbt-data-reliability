@@ -1,5 +1,5 @@
 {% macro empty_alerts() %}
-    {{ elementary.empty_table([('alert_id','long_string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('alert_type','string'),('sub_type','string'),('alert_description','long_string'),('owners','string'),('tags','string'),('alert_results_query','long_string'),('other','string'),('test_name','long_string'),('test_params','long_string'),('severity','string'),('status','string')]) }}
+    {{ elementary.empty_table([('alert_id','long_string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('model_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('alert_type','string'),('sub_type','string'),('alert_description','long_string'),('owners','string'),('tags','string'),('alert_results_query','long_string'),('other','string'),('test_name','long_string'),('test_params','long_string'),('severity','string'),('status','string')]) }}
 {% endmacro %}
 
 {% macro empty_column_unpivot_cte() %}

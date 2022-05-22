@@ -1,4 +1,4 @@
-{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false, sensitivity=none, backfill_days=none) %}
+{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, timestamp_column, column_name = none, columns_only=false, sensitivity=none, backfill_days=none) %}
 
     {% set backfill_days_value = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
     {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
@@ -14,7 +14,7 @@
 
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
-            where bucket_end > {{ elementary.cast_as_timestamp(metrics_min_time) }}              
+            where bucket_end > {{ elementary.cast_as_timestamp(metrics_min_time) }}
                 and upper(full_table_name) = upper('{{ full_monitored_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
@@ -109,7 +109,8 @@
                 metric_value as latest_metric_value,
                 training_avg,
                 training_stddev,
-                training_set_size
+                training_set_size,
+                {{ elementary.const_as_string(timestamp_column) }} as timestamp_column
             from time_window_aggregation
             where
                 metric_value is not null

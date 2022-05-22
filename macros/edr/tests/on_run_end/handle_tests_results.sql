@@ -59,11 +59,17 @@
     {% set database_name = split_full_table_name[0] %}
     {% set schema_name = split_full_table_name[1] %}
     {% set table_name = split_full_table_name[2] %}
+    {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
+    {% set anomaly_score_threshold = elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score_threshold') %}
+    {% set timestamp_column = elementary.insensitive_get_dict_value(anomaly_dict, 'timestamp_column') %}
+    {% do test_params.update({'anomaly_score_threshold': anomaly_score_threshold}) %}
+    {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% set alert_dict = {
         'alert_id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
         'test_execution_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_execution_id'),
         'test_unique_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_unique_id'),
+        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'detected_at': elementary.insensitive_get_dict_value(anomaly_dict, 'detected_at'),
         'database_name': database_name,
         'schema_name': schema_name,
@@ -87,6 +93,7 @@
 {% macro convert_schema_change_dict_to_alert(run_result_dict, schema_change_dict, test_node) %}
     {% set alert_dict = schema_change_dict %}
     {% do alert_dict.update({
+        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'alert_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
@@ -108,6 +115,7 @@
         'data_issue_id': none,
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(test_node, 'unique_id'),
+        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'detected_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S'),
         'database_name': elementary.insensitive_get_dict_value(test_node, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(test_node, 'schema_name'),

@@ -51,7 +51,7 @@
 
         {#- query if there is an anomaly in recent metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, column_monitors, column_name, sensitivity=sensitivity, backfill_days=backfill_days) %}
+        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, column_monitors, timestamp_column, column_name, sensitivity=sensitivity, backfill_days=backfill_days) %}
         {{ elementary.debug_log('anomaly_query - \n' ~ anomaly_query) }}
         {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
