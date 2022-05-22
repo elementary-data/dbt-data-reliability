@@ -107,6 +107,8 @@
                 training_avg,
                 training_stddev,
                 training_set_size,
+                training_start,
+                training_end,
                 {{ elementary.const_as_string(timestamp_column) }} as timestamp_column
             from time_window_aggregation
             where
