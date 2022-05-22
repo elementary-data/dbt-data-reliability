@@ -1,4 +1,4 @@
-{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false) %}
+{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, timestamp_column, column_name = none, columns_only=false) %}
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start_as_datetime() %}
     {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
@@ -106,7 +106,8 @@
                 metric_value as latest_metric_value,
                 training_avg,
                 training_stddev,
-                training_set_size
+                training_set_size,
+                {{ elementary.const_as_string(timestamp_column) }} as timestamp_column
             from time_window_aggregation
             where
                 metric_value is not null

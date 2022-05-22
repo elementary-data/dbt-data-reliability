@@ -43,7 +43,7 @@
         {%- do elementary.create_or_replace(False, temp_table_relation, table_monitoring_query) %}
 
         {#- query if there is an anomaly in recent metrics -#}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors) %}
+        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors, timestamp_column) %}
         {{ elementary.debug_log('table monitors anomaly query - \n' ~ anomaly_query) }}
         {% set temp_alerts_table_name = test_name_in_graph ~ '__anomalies' %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}

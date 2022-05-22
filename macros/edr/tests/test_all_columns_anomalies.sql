@@ -59,7 +59,7 @@
         {%- endif %}
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
-        {%- set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, all_columns_monitors, columns_only=true) %}
+        {%- set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, all_columns_monitors, timestamp_column, columns_only=true) %}
         {%- set temp_alerts_table_name = test_name_in_graph ~ '__anomalies' %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {%- set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
