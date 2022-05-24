@@ -1,6 +1,7 @@
 {{
   config(
-    materialized = 'view'
+    materialized = 'view',
+    enabled=var('dbt_run_results') and var('dbt_tests') and var('dbt_models') and var('dbt_sources')
   )
 }}
 

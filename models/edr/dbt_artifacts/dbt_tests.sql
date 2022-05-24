@@ -2,7 +2,8 @@
   config(
     materialized='table',
     transient=False,
-    post_hook='{{ elementary.upload_dbt_tests() }}'
+    post_hook='{{ elementary.upload_dbt_tests() }}',
+    enabled=var('dbt_tests')
   )
 }}
 
