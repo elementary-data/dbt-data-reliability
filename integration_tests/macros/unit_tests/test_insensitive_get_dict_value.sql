@@ -3,6 +3,12 @@
     {% set result = elementary.insensitive_get_dict_value({}, 'test', none) %}
     {{ assert_value(result, none) }}
 
+    {% set result = elementary.insensitive_get_dict_value({'TEST': 1}, 'TEST', none) %}
+    {{ assert_value(result, 1) }}
+
+    {% set result = elementary.insensitive_get_dict_value({'TEST': 1}, 'TEST') %}
+    {{ assert_value(result, 1) }}
+
     {% set result = elementary.insensitive_get_dict_value({'test': 1}, 'test', none) %}
     {{ assert_value(result, 1) }}
 
@@ -23,5 +29,11 @@
 
     {% set result = elementary.insensitive_get_dict_value({'test': none}, 'test') %}
     {{ assert_value(result, none) }}
+
+    {% set result = elementary.insensitive_get_dict_value({'TEST': none}, 'TEST', []) %}
+    {{ assert_value(result, []) }}
+
+    {% set result = elementary.safe_get_with_default({'test': none}, 'test1', {}) %}
+    {{ assert_value(result, {}) }}
 
 {% endmacro %}
