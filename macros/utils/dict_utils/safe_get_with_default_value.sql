@@ -3,5 +3,8 @@
     {% if value %}
         {{ return(value) }}
     {% endif %}
-    {{ return(default) }}
+    {% if default %}
+        {{ return(default) }}
+    {% endif %}
+    {{ return(none) }}
 {% endmacro %}
