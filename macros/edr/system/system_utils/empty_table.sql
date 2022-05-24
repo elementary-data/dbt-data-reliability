@@ -10,6 +10,9 @@
     {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
 {% endmacro %}
 
+{% macro empty_invocation_times() %}
+    {{ elementary.empty_table([('invocation_id','long_string'),('invocation_started_at','timestamp'),('invocation_ended_at','timestamp')]) }}
+{% endmacro %}
 
 {% macro empty_column_monitors_cte() %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
