@@ -90,7 +90,7 @@
                                                                        ('execute_completed_at', 'string'),
                                                                        ('compile_started_at', 'string'),
                                                                        ('compile_completed_at', 'string'),
-                                                                       ('rows_affected', 'int'),
+                                                                       ('rows_affected', 'bigint'),
                                                                        ('full_refresh', 'boolean')]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}

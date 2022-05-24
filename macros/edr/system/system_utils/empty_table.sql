@@ -49,6 +49,8 @@
         cast('{{ dummy_values['timestamp'] }}' as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
         cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
+    {%- elif data_type == 'bigint' %}
+        cast({{ dummy_values['bigint'] }} as {{ dbt_utils.type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
@@ -67,6 +69,7 @@
      'long_string': "this_is_just_a_long_dummy_string",
      'boolean': 'True',
      'int': 123456789,
+     'bigint': 31474836478,
      'float': 123456789.99,
      'timestamp': "2091-02-17"
     } %}
