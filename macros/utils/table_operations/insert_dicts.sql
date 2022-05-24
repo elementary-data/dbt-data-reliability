@@ -35,7 +35,7 @@
 {%- endmacro -%}
 
 {%- macro render_value(value) -%}
-    {%- if value -%}
+    {%- if value is defined and value is not none -%}
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string -%}

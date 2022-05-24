@@ -15,4 +15,10 @@
     {% set result = elementary.render_value([1,2,3]) %}
     {{ assert_value(result, "'[1, 2, 3]'") }}
 
+    {% set result = elementary.render_value([]) %}
+    {{ assert_value(result, "'[]'") }}
+
+    {% set result = elementary.render_value({}) %}
+    {{ assert_value(result, "'{}'") }}
+
 {% endmacro %}
