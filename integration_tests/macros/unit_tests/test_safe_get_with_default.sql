@@ -30,4 +30,10 @@
     {% set result = elementary.safe_get_with_default({'test': none}, 'test1', {}) %}
     {{ assert_value(result, {}) }}
 
+    {% set result = elementary.safe_get_with_default({'test': none}, 'test', undefined) %}
+    {{ assert_value(result, none) }}
+
+    {% set result = elementary.safe_get_with_default({'other': none}, 'test', undefined) %}
+    {{ assert_value(result, none) }}
+
 {% endmacro %}

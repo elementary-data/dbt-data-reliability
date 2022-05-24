@@ -15,6 +15,12 @@
     {% set result = elementary.insensitive_get_dict_value({'other': 1}, 'test', 'default') %}
     {{ assert_value(result, 'default') }}
 
+    {% set result = elementary.insensitive_get_dict_value({'other': 1}, 'test', undefined) %}
+    {{ assert_value(result, none) }}
+
+    {% set result = elementary.insensitive_get_dict_value({'test': none}, 'test', undefined) %}
+    {{ assert_value(result, none) }}
+
     {% set result = elementary.insensitive_get_dict_value({'other': 1}, 'test', none) %}
     {{ assert_value(result, none) }}
 
