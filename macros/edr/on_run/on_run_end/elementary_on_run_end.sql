@@ -14,4 +14,5 @@
         {%- endset %}
         {% do run_query(update_invocation_end_query) %}
     {%- endif %}
+    {{ return('') }}
 {% endmacro %}

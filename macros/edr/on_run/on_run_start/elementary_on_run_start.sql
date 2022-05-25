@@ -12,4 +12,5 @@
         {%- endset %}
         {% do run_query(insert_invocation_query) %}
     {%- endif %}
+    {{ return('') }}
 {% endmacro %}
