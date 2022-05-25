@@ -1,4 +1,8 @@
 {% macro insert_dicts(table_relation, dicts, chunk_size=50) %}
+    {% if not table_relation %}
+        {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
+        {{ return(none) }}
+    {% endif %}
     {% set columns = adapter.get_columns_in_relation(table_relation) -%}
     {% if not columns %}
         {% set table_name = elementary.relation_to_full_name(table_relation) %}
