@@ -82,7 +82,6 @@
                 {{ elementary.null_int() }} as bucket_duration_hours
             {%- endif %}
         from column_monitors_unpivot
-        where cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}
 
     )
 
