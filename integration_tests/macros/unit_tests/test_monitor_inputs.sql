@@ -1,6 +1,8 @@
 {% macro unit_test_numeric_monitors(dicts, table_name, table_schema) %}
 
     {% do drop_unit_test_table(table_name) %}
+    {% do drop_unit_test_table(table_name ~ '__metrics') %}
+
     {% set monitors_inputs_table_relation = create_unit_test_table(table_name=table_name,
                                                              table_schema=table_schema,
                                                              temp=False) %}
@@ -21,8 +23,8 @@
     {% set row_count = elementary.get_row_count(metrics_table_relation) %}
     {{ assert_value(row_count, numeric_monitors | length) }}
 
-    {# do drop_unit_test_table(table_name) #}
-    {# do drop_unit_test_table(metrics_table_name) #}
+    {% do drop_unit_test_table(table_name) %}
+    {% do drop_unit_test_table(metrics_table_name) %}
 
 {% endmacro %}
 
