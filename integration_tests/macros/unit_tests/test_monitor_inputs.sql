@@ -36,9 +36,20 @@
     {% set unit_test_table_schema = [('bigint_column', 'bigint')] %}
     {%- do unit_test_numeric_monitors(dicts, unit_test_table_name, unit_test_table_schema) -%}
 
-    {% set dicts = [{'bigint_column': 111111111111111111111.99999999999999999999999},{'bigint_column': 2981833722}] %}
+
+    {% set dicts = [{'int_column': -10000},{'int_column': 100000000}] %}
     {% set unit_test_table_name = 'unit_test_table' %}
-    {% set unit_test_table_schema = [('bigint_column', 'float')] %}
+    {% set unit_test_table_schema = [('int_column', 'int')] %}
+    {%- do unit_test_numeric_monitors(dicts, unit_test_table_name, unit_test_table_schema) -%}
+
+    {% set dicts = [{'float_column': 111111111111111111111.99999999999999999999999},{'float_column': 2981833722}] %}
+    {% set unit_test_table_name = 'unit_test_table' %}
+    {% set unit_test_table_schema = [('float_column', 'float')] %}
+    {%- do unit_test_numeric_monitors(dicts, unit_test_table_name, unit_test_table_schema) -%}
+
+    {% set dicts = [{'float_column': 111111111111111111111.99999999999999999999999},{'float_column': 1},{'float_column': 1000000},{'float_column': -1000000.222222222222222}] %}
+    {% set unit_test_table_name = 'unit_test_table' %}
+    {% set unit_test_table_schema = [('float_column', 'float')] %}
     {%- do unit_test_numeric_monitors(dicts, unit_test_table_name, unit_test_table_schema) -%}
 
 {% endmacro %}
