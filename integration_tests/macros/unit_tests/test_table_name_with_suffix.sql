@@ -9,6 +9,5 @@
     {% else %}
         {% set expected_length = (500 + '__metrics' | length) %}
     {% endif %}
-    {{ debug() }}
     {{ assert_value(table_name_with_suffix | length == expected_length, True) }}
 {% endmacro %}
