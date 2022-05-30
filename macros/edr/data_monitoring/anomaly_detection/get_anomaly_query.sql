@@ -1,11 +1,11 @@
-{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false, anomaly_threshold=none) %}
+{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false, sensitivity=none) %}
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start_as_datetime() %}
     {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {%- set backfill_period = "'-" ~ elementary.get_config_var('backfill_days_per_run') ~ "'" %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-    {%- set anomaly_score_threshold = elementary.get_anomaly_score_threshold(anomaly_threshold) %}
+    {%- set anomaly_sensitivity = elementary.get_anomaly_sensitivity(sensitivity) %}
 
     {% set anomaly_query %}
 
@@ -99,7 +99,7 @@
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
-                {{ anomaly_score_threshold }} as anomaly_score_threshold,
+                {{ anomaly_sensitivity }} as anomaly_score_threshold,
                 {{ elementary.anomaly_detection_description() }},
                 source_value as anomalous_value,
                 bucket_start,
@@ -121,7 +121,7 @@
         )
 
         select * from calc_anomaly_score
-        where abs(anomaly_score) > {{ anomaly_score_threshold }}
+        where abs(anomaly_score) > {{ anomaly_sensitivity }}
 
     {% endset %}
 
