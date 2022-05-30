@@ -12,7 +12,7 @@
     {% endif %}
     {% if source_table_exists %}
         {% if drop_if_exists or full_refresh %}
-            {{ elementary.edr_log('Recreating ' ~ elementary.relation_to_full_name(source_table_relation)) }}
+            {{ elementary.debug_log('Recreating ' ~ elementary.relation_to_full_name(source_table_relation)) }}
             {% do adapter.drop_relation(source_table_relation) %}
             {% do run_query(dbt.create_table_as(False, source_table_relation, sql_query)) %}
         {% endif %}
