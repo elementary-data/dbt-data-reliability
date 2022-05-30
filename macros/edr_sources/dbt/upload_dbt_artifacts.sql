@@ -78,11 +78,11 @@
 
 
 {% macro get_dbt_run_results_empty_table_query() %}
-    {% set dbt_run_results_empty_table_query = elementary.empty_table([('model_execution_id', 'string'),
-                                                                       ('unique_id', 'string'),
+    {% set dbt_run_results_empty_table_query = elementary.empty_table([('model_execution_id', 'long_string'),
+                                                                       ('unique_id', 'long_string'),
                                                                        ('invocation_id', 'string'),
                                                                        ('generated_at', 'string'),
-                                                                       ('name', 'string'),
+                                                                       ('name', 'long_string'),
                                                                        ('status', 'string'),
                                                                        ('resource_type', 'string'),
                                                                        ('execution_time', 'float'),
