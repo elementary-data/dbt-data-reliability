@@ -20,6 +20,8 @@ models:
             - row_count
       - elementary.all_columns_anomalies:
           tags: ['all_any_type_columns_anomalies']
+          #This here is to simulate a long test name as test params are part of the test name
+          exclude_regexp: '.*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*'
 
   - name: string_column_anomalies
     meta:

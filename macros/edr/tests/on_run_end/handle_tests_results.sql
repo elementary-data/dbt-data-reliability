@@ -142,8 +142,8 @@
 {% endmacro %}
 
 {% macro get_test_metrics_table(database_name, schema_name, test_node) %}
-    {% set temp_metrics_table_name = test_node.name ~ '__metrics' %}
     {% set tests_schema_name = schema_name ~ '__tests' %}
+    {% set temp_metrics_table_name = elementary.table_name_with_suffix(test_node.name, '__metrics') %}
     {% set temp_metrics_table_relation = adapter.get_relation(database=database_name,
                                                               schema=tests_schema_name,
                                                               identifier=temp_metrics_table_name) %}
