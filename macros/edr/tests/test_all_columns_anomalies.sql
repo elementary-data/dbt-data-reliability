@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none) %}
+{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none, sensitivity = none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -60,7 +60,7 @@
         {%- endif %}
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
-        {%- set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, all_columns_monitors, columns_only=true) %}
+        {%- set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, all_columns_monitors, columns_only=true, sensitivity=sensitivity) %}
         {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {%- set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
