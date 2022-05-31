@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, freshness_column=none, sensitivity=none) %}
+{% test table_anomalies(model, table_anomalies, freshness_column=none, timestamp_column=none, sensitivity=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -17,8 +17,6 @@
                                                                                    type='table') -%}
 
         {#- get table configuration -#}
-        {%- set table_config = elementary.get_table_config_from_graph(model) %}
-        {{ elementary.debug_log('table config - ' ~ table_config) }}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {% if not model_relation %}
@@ -26,12 +24,15 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
-        {%- set timestamp_column = elementary.insensitive_get_dict_value(table_config, 'timestamp_column') %}
+        {% if not timestamp_column %}
+            {%- set timestamp_column = elementary.get_timestamp_column_from_graph(model) %}
+        {% endif %}
+        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
-        {%- set timestamp_column_data_type = elementary.insensitive_get_dict_value(table_config, 'timestamp_column_data_type') %}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
+
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name,table_monitors) ~ "'" %}
