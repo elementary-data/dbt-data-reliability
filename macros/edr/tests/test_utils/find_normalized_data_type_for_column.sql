@@ -8,5 +8,6 @@
         {% endif %}
     {% endfor %}
 {% endif %}
+{{ return(none) }}
 
 {% endmacro %}
