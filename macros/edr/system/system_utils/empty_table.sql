@@ -1,5 +1,5 @@
 {% macro empty_alerts() %}
-    {{ elementary.empty_table([('alert_id','string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('alert_type','string'),('sub_type','string'),('alert_description','long_string'),('owners','string'),('tags','string'),('alert_results_query','long_string'),('other','string'),('test_name','string'),('test_params','long_string'),('severity','string'),('status','string')]) }}
+    {{ elementary.empty_table([('alert_id','long_string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('alert_type','string'),('sub_type','string'),('alert_description','long_string'),('owners','string'),('tags','string'),('alert_results_query','long_string'),('other','string'),('test_name','long_string'),('test_params','long_string'),('severity','string'),('status','string')]) }}
 {% endmacro %}
 
 {% macro empty_column_unpivot_cte() %}
@@ -49,6 +49,8 @@
         cast('{{ dummy_values['timestamp'] }}' as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
         cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
+    {%- elif data_type == 'bigint' %}
+        cast({{ dummy_values['bigint'] }} as {{ dbt_utils.type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
@@ -67,6 +69,7 @@
      'long_string': "this_is_just_a_long_dummy_string",
      'boolean': 'True',
      'int': 123456789,
+     'bigint': 31474836478,
      'float': 123456789.99,
      'timestamp': "2091-02-17"
     } %}

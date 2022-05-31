@@ -9,7 +9,7 @@
         {#- creates temp relation for test metrics -#}
         {%- set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {%- set schema_name = schema_name ~ '__tests' %}
-        {%- set temp_metrics_table_name = test_name_in_graph ~ '__metrics' %}
+        {%- set temp_metrics_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__metrics') %}
         {{- elementary.debug_log('metrics table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_metrics_table_name) }}
         {%- set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
@@ -61,7 +61,7 @@
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
         {%- set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, all_columns_monitors, columns_only=true) %}
-        {%- set temp_alerts_table_name = test_name_in_graph ~ '__anomalies' %}
+        {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {%- set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,

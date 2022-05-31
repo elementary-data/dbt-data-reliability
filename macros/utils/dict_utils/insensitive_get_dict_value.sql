@@ -1,13 +1,13 @@
 {% macro insensitive_get_dict_value(dict, key, default) -%}
-    {%- set value = dict.get(key) %}
+    {% set value = elementary.safe_get_with_default(dict, key) %}
     {%- if value is not none -%}
         {{- return(value) -}}
     {%- endif %}
-    {%- set value = dict.get(key.lower()) %}
+    {% set value = elementary.safe_get_with_default(dict, key.lower()) %}
     {%- if value is not none -%}
         {{- return(value) -}}
     {%- endif %}
-    {%- set value = dict.get(key.upper()) %}
+    {% set value = elementary.safe_get_with_default(dict, key.upper()) %}
     {%- if value is not none -%}
         {{- return(value) -}}
     {%- endif %}

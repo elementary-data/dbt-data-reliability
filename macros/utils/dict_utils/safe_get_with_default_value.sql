@@ -1,7 +1,10 @@
 {% macro safe_get_with_default(dict, key, default) %}
     {% set value = dict.get(key) %}
-    {% if not value %}
-        {% set value = default %}
+    {% if value is defined and value is not none %}
+        {{ return(value) }}
     {% endif %}
-    {{ return(value) }}
+    {% if default is defined %}
+        {{ return(default) }}
+    {% endif %}
+    {{ return(none) }}
 {% endmacro %}

@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'view'
+  )
+}}
+
 with dbt_run_results as (
     {% set dbt_run_results = source('elementary_dbt_artifacts', 'dbt_run_results') %}
     {% if elementary.relation_exists(dbt_run_results) %}
