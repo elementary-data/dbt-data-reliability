@@ -12,13 +12,15 @@
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' and status != 'error' %}
                 {% set test_row_dicts = [] %}
-                {% if status != 'pass' %}
-                    {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
-                {% endif %}
                 {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
                     {% set test_metrics_table = elementary.get_test_metrics_table(database_name, schema_name, flatten_test_node) %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
+                    {% endif %}
+                    {% if status != 'pass' %}
+                        {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
+                    {% else %}
+                        {% set test_row_dicts = elementary.get_test_metrics(test_metrics_table, flatten_test_node) %}
                     {% endif %}
                     {% for test_row_dict in test_row_dicts %}
                         {% do anomaly_alerts.append(elementary.convert_anomaly_dict_to_alert(database_name,
@@ -28,13 +30,16 @@
                                                                                              flatten_test_node)) %}
                     {% endfor %}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
+                    {% if status != 'pass' %}
+                        {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
+                    {% endif %}
                     {% for test_row_dict in test_row_dicts %}
                         {% do schema_change_alerts.append(elementary.convert_schema_change_dict_to_alert(run_result_dict,
                                                                                                          test_row_dict,
                                                                                                          flatten_test_node)) %}
                     {% endfor %}
                 {% endif %}
-            {% elif status != 'pass' %}
+            {% else %}
                 {% do dbt_test_alerts.append(elementary.convert_dbt_test_to_alert(run_result_dict,
                                                                                   flatten_test_node)) %}
             {% endif %}
@@ -69,11 +74,9 @@
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
-    {% set training_start = elementary.insensitive_get_dict_value(anomaly_dict, 'training_start') %}
-    {% set training_end = elementary.insensitive_get_dict_value(anomaly_dict, 'training_end') %}
     --TODO: change to ref
     {%- set data_monitoring_metrics_relation = elementary.get_data_monitoring_metrics_relation(elementary_db_name, elementary_schema_name) -%}
-    {% set alert_results_query = elementary.get_training_set_query(full_table_name, column_name, metric_name, training_start, training_end, data_monitoring_metrics_relation) %}
+    {% set alert_results_query = elementary.get_training_set_query(full_table_name, column_name, metric_name, data_monitoring_metrics_relation) %}
     {% set alert_dict = {
         'alert_id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
@@ -159,17 +162,55 @@
     {{ return(test_row_dicts) }}
 {% endmacro %}
 
+{% macro get_test_metrics(test_metrics_table, test_node) %}
+    {% set test_execution_id = elementary.get_node_execution_id(test_node) %}
+    {% set test_unique_id = elementary.insensitive_get_dict_value(test_node, 'unique_id') %}
+    {% set test_metrics_dicts = [] %}
+    {% set test_metrics_query %}
+        with test_metrics as (
+            select
+                id as metric_id,
+                full_table_name,
+                column_name,
+                metric_name,
+                row_number() over (partition by full_table_name, column_name, metric_name order by bucket_end desc) as row_number
+            from {{ test_metrics_table }}
+        ),
+        only_last_metrics as (
+            select
+                metric_id,
+                full_table_name,
+                column_name,
+                metric_name
+            from test_metrics where row_number = 1
+
+        )
+        select
+                {{ dbt_utils.surrogate_key([
+                 'metric_id',
+                 elementary.const_as_string(test_execution_id)
+                ]) }} as id,
+                metric_id,
+                {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
+                {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
+                {{ elementary.current_timestamp_column() }} as detected_at,
+                full_table_name,
+                column_name,
+                metric_name
+            from only_last_metrics
+    {% endset %}
+    {% set test_metrics_agate = run_query(test_metrics_query) %}
+    {% set test_metrics_dicts = elementary.agate_to_dicts(test_metrics_agate) %}
+    {{ return(test_metrics_dicts) }}
+{% endmacro %}
+
 {% macro get_test_metrics_table(database_name, schema_name, test_node) %}
     {% set tests_schema_name = schema_name ~ '__tests' %}
     {% set temp_metrics_table_name = elementary.table_name_with_suffix(test_node.name, '__metrics') %}
     {% set temp_metrics_table_relation = adapter.get_relation(database=database_name,
                                                               schema=tests_schema_name,
                                                               identifier=temp_metrics_table_name) %}
-    {% if temp_metrics_table_relation %}
-        {% set full_metrics_table_name = temp_metrics_table_relation.render() %}
-        {{ return(full_metrics_table_name) }}
-    {% endif %}
-    {{ return(none) }}
+    {{ return(temp_metrics_table_relation) }}
 {% endmacro %}
 
 {% macro get_data_monitoring_metrics_relation(database_name, schema_name) %}

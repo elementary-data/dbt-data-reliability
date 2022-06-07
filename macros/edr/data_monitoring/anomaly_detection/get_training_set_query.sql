@@ -1,9 +1,12 @@
-{% macro get_training_set_query(full_table_name, column_name, metric_name, training_start, training_end, data_monitoring_metrics_relation) %}
+{% macro get_training_set_query(full_table_name, column_name, metric_name, data_monitoring_metrics_relation) %}
+
+    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start_as_datetime() %}
+    {%- set metrics_min_time = "'"~ (global_min_bucket_start - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+
     {% set training_set_query %}
         with data_monitoring_metrics as (
             select * from {{ data_monitoring_metrics_relation }}
-            where bucket_end >= {{ elementary.cast_as_timestamp(elementary.const_as_string(training_start)) }}
-                and bucket_end <= {{ elementary.cast_as_timestamp(elementary.const_as_string(training_end)) }}
+                where bucket_start > {{ elementary.cast_as_timestamp(metrics_min_time) }}
                 and upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
                 and metric_name = {{ elementary.const_as_string(metric_name) }}
                 {%- if column_name %}
