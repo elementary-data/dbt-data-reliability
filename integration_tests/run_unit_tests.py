@@ -31,7 +31,7 @@ def run_unit_tests(test_file, target='snowflake'):
     unit_tests = get_unit_tests(test_file)
     print(f'Running unit tests against target - {target}')
     for unit_test in unit_tests:
-        unit_test_results = dbt_runner.run_operation(macro_name=unit_test)
+        unit_test_results = dbt_runner.run_operation(macro_name=unit_test, log_errors=True)
         print_unit_test_results(unit_test, unit_test_results)
 
 
