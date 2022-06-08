@@ -4,6 +4,7 @@ import random
 import string
 import os
 from os.path import expanduser
+from pathlib import Path
 from monitor.dbt_runner import DbtRunner
 import click
 
@@ -17,6 +18,10 @@ def generate_date_range(base_date, numdays=30):
 
 
 def write_rows_to_csv(csv_path, rows, header):
+    # Creates the csv file directories if needed.
+    directory_path = Path(csv_path).parent.resolve()
+    Path(directory_path).mkdir(parents=True, exist_ok=True)
+
     with open(csv_path, 'w') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=header)
         writer.writeheader()
@@ -181,6 +186,11 @@ def e2e_tests(target, test_types):
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
+    
+    # Creates row_count metrics for anomalies detection.
+    if 'no_timestamp' in test_types:
+        for run_index in range(30):
+            dbt_runner.test(select='tag:no_timestamp')
 
     dbt_runner.seed(select='validation')
 
@@ -189,7 +199,20 @@ def e2e_tests(target, test_types):
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
 
+
     dbt_runner.run()
+
+    if 'debug' in test_types:
+        dbt_runner.test(select='tag:debug')
+        return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
+                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
+                    artifacts_results]
+    
+    if 'no_timestamp' in test_types:
+        dbt_runner.test(select='tag:no_timestamp')
+        return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
+                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
+                    artifacts_results]
 
     if 'column' in test_types:
         dbt_runner.test(select='tag:string_column_anomalies')
@@ -265,7 +288,7 @@ def print_tests_results(table_test_results,
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / regular / artifacts / all (default = all)"
+    help="table / column / schema / regular / artifacts / no_timestamp / debug / all (default = all)"
 )
 def main(target, e2e_type):
     generate_fake_data()
