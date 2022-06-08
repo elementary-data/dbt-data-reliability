@@ -189,8 +189,10 @@ def e2e_tests(target, test_types):
     
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
-        for run_index in range(30):
-            dbt_runner.test(select='tag:no_timestamp')
+        current_time = datetime.now()
+        for run_index in range(14):
+            custom_run_time = (current_time - timedelta(run_index)).isoformat()
+            dbt_runner.test(select='tag:no_timestamp', dbt_vars={"custom_run_started_at": custom_run_time})
 
     dbt_runner.seed(select='validation')
 
