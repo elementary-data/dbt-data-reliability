@@ -68,9 +68,9 @@
     {% set schema_name = split_full_table_name[1] %}
     {% set table_name = split_full_table_name[2] %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
-    {% set anomaly_score_threshold = elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score_threshold') %}
+    {% set test_anomaly_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set timestamp_column = elementary.insensitive_get_dict_value(anomaly_dict, 'timestamp_column') %}
-    {% do test_params.update({'anomaly_score_threshold': anomaly_score_threshold}) %}
+    {% do test_params.update({'sensitivity': elementary.get_anomaly_sensitivity(test_anomaly_sensitivity)}) %}
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
