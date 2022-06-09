@@ -175,7 +175,9 @@
     {% set no_timestamp_row_count_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-            where sub_type = 'row_count' and detected_at >= {{ max_bucket_end }}
+        where sub_type = 'row_count'
+        and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
+        and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(no_timestamp_row_count_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['no_timestamp_anomalies']) }}
