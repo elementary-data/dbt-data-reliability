@@ -28,6 +28,8 @@ models:
     tests:
       - elementary.table_anomalies:
           tags: ["no_timestamp"]
+          table_anomalies:
+            - row_count
 
   - name: string_column_anomalies
     meta:

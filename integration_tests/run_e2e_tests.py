@@ -190,9 +190,12 @@ def e2e_tests(target, test_types):
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
-        for run_index in range(14):
+        # run operation returns the operation value as a list of strings.
+        # so we we convert the days_back value into int.
+        days_back_project_var = int(dbt_runner.run_operation(macro_name="log_config_var", macro_args={"var_name": "days_back"})[0])
+        for run_index in range(days_back_project_var):
             custom_run_time = (current_time - timedelta(run_index)).isoformat()
-            dbt_runner.test(select='tag:no_timestamp', dbt_vars={"custom_run_started_at": custom_run_time})
+            dbt_runner.test(select='tag:no_timestamp', vars={"custom_run_started_at": custom_run_time})
 
     dbt_runner.seed(select='validation')
 
@@ -301,7 +304,7 @@ def main(target, e2e_type):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'no_timestamp']
     else:
         e2e_types = [e2e_type]
 
