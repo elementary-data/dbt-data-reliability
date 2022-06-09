@@ -190,10 +190,11 @@ def e2e_tests(target, test_types):
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
-        # run operation returns the operation value as a list of strings.
-        # so we we convert the days_back value into int.
-        days_back_project_var = int(dbt_runner.run_operation(macro_name="log_config_var", macro_args={"var_name": "days_back"})[0])
-        for run_index in range(days_back_project_var):
+        # Run operation returns the operation value as a list of strings.
+        # So we we convert the days_back value into int.
+        days_back_project_var = int(dbt_runner.run_operation(macro_name="return_config_var", macro_args={"var_name": "days_back"})[0])
+        # No need to create todays metric because the validation run does it.
+        for run_index in range(1, days_back_project_var):
             custom_run_time = (current_time - timedelta(run_index)).isoformat()
             dbt_runner.test(select='tag:no_timestamp', vars={"custom_run_started_at": custom_run_time})
 
@@ -215,9 +216,8 @@ def e2e_tests(target, test_types):
     
     if 'no_timestamp' in test_types:
         dbt_runner.test(select='tag:no_timestamp')
-        return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
-                    artifacts_results]
+        no_timestamp_test_results = dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
+        print_test_result_list(no_timestamp_test_results)
 
     if 'column' in test_types:
         dbt_runner.test(select='tag:string_column_anomalies')

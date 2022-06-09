@@ -167,6 +167,48 @@
                                                  'null_percent_bool']) }}
 {% endmacro %}
 
+{% macro validate_no_timestamp_anomalies() %}
+    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+
+    {# Validating row count for no timestamp table anomaly #}
+    {% set no_timestamp_row_count_validation_query %}
+        select distinct table_name
+        from {{ alerts_relation }}
+            where sub_type = 'row_count' and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(no_timestamp_row_count_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['no_timestamp_anomalies']) }}
+
+    {# Validating any column anomaly with no timestamp #}
+    {% set no_timestamp_column_validation_alerts %}
+        select column_name, sub_type
+        from {{ alerts_relation }}
+            where detected_at >= {{ max_bucket_end }} and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
+                  and column_name is not NULL
+            group by 1,2
+    {% endset %}
+    {% set alert_rows = run_query(no_timestamp_column_validation_alerts) %}
+    {% set indexed_columns = {} %}
+    {% for row in alert_rows %}
+        {% set column_name = row[0] %}
+        {% set alert = row[1] %}
+        {% if column_name in indexed_columns %}
+            {% do indexed_columns[column_name].append(alert) %}
+        {% else %}
+            {% do indexed_columns.update({column_name: [alert]}) %}
+        {% endif %}
+    {% endfor %}
+    {% set results = [] %}
+    {% for column, column_alerts in indexed_columns.items() %}
+        {% for alert in column_alerts %}
+            {% if alert | lower in column | lower %}
+                {% do results.append(column) %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(results, ['null_count_str']) }}
+{% endmacro %}
 
 {% macro validate_schema_changes() %}
     {% set expected_changes = {'red_cards': 'column_added',

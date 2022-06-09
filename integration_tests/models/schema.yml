@@ -23,13 +23,20 @@ models:
           #This here is to simulate a long test name as test params are part of the test name
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
 
-  - name: any_type_column_anomalies_no_timestamp
+  - name: no_timestamp_anomalies
     description: We use this model to test anomalies when there is no timestamp column
     tests:
       - elementary.table_anomalies:
           tags: ["no_timestamp"]
           table_anomalies:
             - row_count
+    columns:
+      - name: "null_count_str"
+        tests:
+          - elementary.column_anomalies:
+              tags: ["no_timestamp"]
+              column_anomalies:
+                - null_count
 
   - name: string_column_anomalies
     meta:
