@@ -24,9 +24,9 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
-        {% if not timestamp_column %}
-            {%- set timestamp_column = elementary.get_timestamp_column_from_graph(model) %}
-        {% endif %}
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+        {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
+
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}

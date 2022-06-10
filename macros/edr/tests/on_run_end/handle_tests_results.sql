@@ -68,9 +68,13 @@
     {% set schema_name = split_full_table_name[1] %}
     {% set table_name = split_full_table_name[2] %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
-    {% set test_anomaly_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
-    {% set timestamp_column = elementary.insensitive_get_dict_value(anomaly_dict, 'timestamp_column') %}
-    {% do test_params.update({'sensitivity': elementary.get_anomaly_sensitivity(test_anomaly_sensitivity)}) %}
+    {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
+    {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
+    {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
+    {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
+    {% set timestamp_column = elementary.get_timestamp_column(test_param_timestamp_column, parent_model_node) %}
+    {% set sensitivity = elementary.get_anomaly_sensitivity(test_param_sensitivity) %}
+    {% do test_params.update({'sensitivity': sensitivity}) %}
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
