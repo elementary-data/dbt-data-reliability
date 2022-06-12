@@ -1,4 +1,4 @@
-{% macro get_anomaly_query(test_metrics_table_relation, full_monitored_table_name, monitors, timestamp_column, column_name = none, columns_only=false, sensitivity=none, backfill_days=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false, sensitivity=none, backfill_days=none) %}
 
     {% set backfill_days_value = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
     {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
@@ -8,7 +8,7 @@
     {%- set test_unique_id = elementary.get_test_unique_id() %}
     {%- set anomaly_sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
 
-    {% set anomaly_query %}
+    {% set anomaly_scores_query %}
 
         with data_monitoring_metrics as (
 
@@ -76,14 +76,17 @@
                 stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
                 count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start,
+                {{ sensitivity }} * training_stddev + training_avg as max_metric_value,
+                (-1) * {{ sensitivity }} * training_stddev + training_avg as min_metric_value,
+                {{ sensitivity }} as anomaly_score_threshold
             from daily_buckets left join
                 grouped_metrics on (edr_daily_bucket = bucket_end)
             {{ dbt_utils.group_by(11) }}
 
         ),
 
-        calc_anomaly_score as (
+        anomaly_scores as (
 
             select
                 {{ dbt_utils.surrogate_key([
@@ -101,34 +104,28 @@
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
-                {{ anomaly_sensitivity }} as anomaly_score_threshold,
-                {{ elementary.anomaly_detection_description() }},
+                anomaly_score_threshold,
                 source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
-                metric_value as latest_metric_value,
+                metric_value,
+                min_metric_value,
+                max_metric_value,
                 training_avg,
                 training_stddev,
                 training_set_size,
                 training_start,
-                training_end,
-                {{ elementary.const_as_string(timestamp_column) }} as timestamp_column
+                training_end
             from time_window_aggregation
             where
                 metric_value is not null
               and training_avg is not null
               and training_stddev is not null
-            {# training dataset minimal size to make anomaly detection relevant #}
-              and training_set_size >= {{ elementary.get_config_var('days_back') -1 }}
-            {# get anomalies for the whole backfill timeframe #}
-              and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
-
         )
 
-        select * from calc_anomaly_score
-        where abs(anomaly_score) > {{ anomaly_sensitivity }}
+        select * from anomaly_scores
 
     {% endset %}
 
-    {{ return(anomaly_query) }}
+    {{ return(anomaly_scores_query) }}
 {% endmacro %}

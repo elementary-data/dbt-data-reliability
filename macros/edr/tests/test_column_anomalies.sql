@@ -49,21 +49,22 @@
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_monitoring_query) %}
 
-        {#- query if there is an anomaly in recent metrics -#}
+        {#- calculate anomaly scores for metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, column_monitors, timestamp_column, column_name, sensitivity=sensitivity, backfill_days=backfill_days) %}
+        {%- set anomaly_sensitivity = elementary.get_anomaly_sensitivity(sensitivity) %}
+        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, column_monitors, column_name, sensitivity=anomaly_sensitivity, backfill_days=backfill_days) %}
         {{ elementary.debug_log('anomaly_query - \n' ~ anomaly_query) }}
-        {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
-        {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
-        {% set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
+        {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
+        {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
+        {% set anomaly_scores_test_table_exists, anomaly_scores_test_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
-                                                                                   identifier=temp_alerts_table_name,
+                                                                                   identifier=anomaly_scores_test_table_name,
                                                                                    type='table') -%}
-        {%- do elementary.create_or_replace(False, anomalies_temp_table_relation, anomaly_query) %}
+        {%- do elementary.create_or_replace(False, anomaly_score_test_table_relation, anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {# return anomalies query as standart test query #}
-        select * from {{ anomalies_temp_table_relation }}
+        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, anomaly_sensitivity) }}
     
     {%- else %}
 
