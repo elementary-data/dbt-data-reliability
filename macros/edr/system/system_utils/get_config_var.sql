@@ -1,4 +1,4 @@
-{% macro get_config_var(var_name, value=none) %}
+{% macro get_config_var(var_name) %}
   {% set default_config = {
     'days_back': 14,
     'anomaly_sensitivity': 3,
@@ -20,9 +20,5 @@
     } 
   } %}
 
-  {% if value %}
-    {{ return(value) }}
-  {% else %}}
-    {{ return(var(var_name, default_config.get(var_name))) }}
-  {% endif %}
+  {{ return(var(var_name, default_config.get(var_name))) }}
 {% endmacro %}

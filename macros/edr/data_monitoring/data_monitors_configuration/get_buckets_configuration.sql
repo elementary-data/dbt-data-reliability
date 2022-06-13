@@ -20,7 +20,7 @@
 {% endmacro %}
 
 {% macro get_backfill_bucket_start(backfill_days=none) %}
-    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var(var_name='backfill_days', value=backfill_days))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_test_argument(argument_name='backfill_days', value=backfill_days))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {{ return(backfill_bucket_start) }}
 {% endmacro %}
 
