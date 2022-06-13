@@ -19,16 +19,16 @@
     {{ return(max_bucket_end) }}
 {% endmacro %}
 
-{% macro get_backfill_bucket_start() %}
-    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('backfill_days_per_run'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+{% macro get_backfill_bucket_start(backfill_days=none) %}
+    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var(var_name='backfill_days', value=backfill_days))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {{ return(backfill_bucket_start) }}
 {% endmacro %}
 
 
-{% macro get_min_bucket_start(full_table_name,monitors=none,column_name=none) %}
+{% macro get_min_bucket_start(full_table_name, monitors=none, column_name=none, backfill_days=none) %}
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start() %}
-    {%- set backfill_bucket_start = elementary.get_backfill_bucket_start() %}
+    {%- set backfill_bucket_start = elementary.get_backfill_bucket_start(backfill_days) %}
 
     {%- if monitors %}
         {%- set monitors_tuple = elementary.strings_list_to_tuple(monitors) %}

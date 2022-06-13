@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none, backfill_days=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
@@ -41,7 +41,7 @@
         {%- set column_monitors = column_obj_and_monitors['monitors'] -%}
         {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
-        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_name) ~ "'" %}
+        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, column_monitors, column_name, backfill_days) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
@@ -51,7 +51,7 @@
 
         {#- query if there is an anomaly in recent metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, column_monitors, column_name, sensitivity=sensitivity) %}
+        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, column_monitors, column_name, sensitivity=sensitivity, backfill_days=backfill_days) %}
         {{ elementary.debug_log('anomaly_query - \n' ~ anomaly_query) }}
         {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
