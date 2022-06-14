@@ -60,7 +60,7 @@
                                                                                    schema=schema_name,
                                                                                    identifier=anomaly_scores_test_table_name,
                                                                                    type='table') -%}
-        {%- do elementary.create_or_replace(False, anomaly_score_test_table_relation, anomaly_scores_query) %}
+        {%- do elementary.create_or_replace(False, anomaly_scores_test_table_relation, anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {# return anomalies query as standart test query #}
