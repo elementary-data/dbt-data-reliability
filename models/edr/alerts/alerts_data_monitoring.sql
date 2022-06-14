@@ -1,11 +1,17 @@
 {{
   config(
-    materialized = 'incremental',
-    unique_key = 'alert_id',
-    on_schema_change = 'append_new_columns'
+    materialized = 'view'
   )
 }}
 
--- depends_on: {{ ref('metrics_anomaly_score') }}
+with elementary_test_results as (
+    select * from {{ ref('elementary_test_results') }}
+),
 
-{{ elementary.empty_alerts() }}
+alerts_data_monitoring as (
+    select *
+        from elementary_test_results
+        where lower(status) != 'pass' and alert_type = 'anomaly_detection'
+)
+
+select * from alerts_data_monitoring
