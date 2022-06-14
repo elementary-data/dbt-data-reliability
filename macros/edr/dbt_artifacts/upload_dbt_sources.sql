@@ -3,7 +3,6 @@
     {% if execute and not edr_cli_run %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
         {% do elementary.upload_artifacts_to_table(this, sources, elementary.get_flatten_source_callback()) %}
-        {% do adapter.commit() %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

@@ -3,7 +3,6 @@
     {% if execute and not edr_cli_run %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
         {% do elementary.upload_artifacts_to_table(this, tests, elementary.get_flatten_test_callback()) %}
-        {% do adapter.commit() %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

@@ -3,7 +3,6 @@
     {% if execute and not edr_cli_run %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
         {% do elementary.upload_artifacts_to_table(this, exposures, elementary.get_flatten_exposure_callback()) %}
-        {% do adapter.commit() %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

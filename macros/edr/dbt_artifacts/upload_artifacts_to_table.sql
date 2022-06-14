@@ -15,4 +15,5 @@
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_relation) %}
+    {% do adapter.commit() %}
 {% endmacro %}

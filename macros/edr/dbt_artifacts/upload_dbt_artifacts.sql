@@ -5,8 +5,9 @@
         {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
                                                                 schema=schema_name,
                                                                 identifier='dbt_run_results') -%}
-        {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback()) %}
-        {% do adapter.commit() %}
+        {%- if dbt_run_results_relation -%}
+            {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback()) %}
+        {%- endif -%}
     {% endif %}
     {{ return ('') }}
 {% endmacro %}
