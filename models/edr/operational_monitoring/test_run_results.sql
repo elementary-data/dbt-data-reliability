@@ -5,39 +5,19 @@
 }}
 
 with dbt_run_results as (
-    {% set dbt_run_results = source('elementary_dbt_artifacts', 'dbt_run_results') %}
-    {% if elementary.relation_exists(dbt_run_results) %}
-        select * from {{ dbt_run_results }}
-    {% else %}
-        {{ elementary.get_dbt_run_results_empty_table_query() }}
-    {% endif %}
+    select * from {{ ref('dbt_run_results') }}
 ),
 
 tests_metadata as (
-    {% set dbt_tests = source('elementary_dbt_artifacts', 'dbt_tests') %}
-    {% if elementary.relation_exists(dbt_tests) %}
-        select * from {{ dbt_tests }}
-    {% else %}
-        {{ elementary.get_dbt_tests_empty_table_query() }}
-    {% endif %}
+    select * from {{ ref('dbt_tests') }}
 ),
 
 models_metadata as (
-    {% set dbt_models = source('elementary_dbt_artifacts', 'dbt_models') %}
-    {% if elementary.relation_exists(dbt_models) %}
-        select * from {{ dbt_models }}
-    {% else %}
-        {{ elementary.get_dbt_models_empty_table_query() }}
-    {% endif %}
+    select * from {{ ref('dbt_models') }}
 ),
 
 sources_metadata as (
-    {% set dbt_sources = source('elementary_dbt_artifacts', 'dbt_sources') %}
-    {% if elementary.relation_exists(dbt_sources) %}
-        select * from {{ dbt_sources }}
-    {% else %}
-        {{ elementary.get_dbt_sources_empty_table_query() }}
-    {% endif %}
+    select * from {{ ref('dbt_sources') }}
 ),
 
 tests_metadata_with_model_name as (

@@ -31,7 +31,7 @@ alerts_dbt_tests as (
            severity,
            status
         from elementary_test_results
-        where lower(status) != 'pass' and alert_type = 'dbt_test'
+        where lower(status) != 'pass' and test_type = 'dbt_test'
 )
 
 select * from alerts_dbt_tests

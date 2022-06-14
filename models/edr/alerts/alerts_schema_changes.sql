@@ -32,7 +32,7 @@ alerts_schema_changes as (
            severity,
            status
         from elementary_test_results
-        where lower(status) != 'pass' and alert_type = 'schema_change'
+        where lower(status) != 'pass' and test_type = 'schema_change'
 )
 
 select * from alerts_schema_changes

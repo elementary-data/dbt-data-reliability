@@ -31,7 +31,7 @@ alerts_data_monitoring as (
            severity,
            status
         from elementary_test_results
-        where lower(status) != 'pass' and alert_type = 'anomaly_detection'
+        where lower(status) != 'pass' and test_type = 'anomaly_detection'
 )
 
 select * from alerts_data_monitoring
