@@ -1,4 +1,4 @@
-{% macro get_schema_changes_alert_query(full_table_name, last_alert=none) %}
+§§{% macro get_schema_changes_test_query(full_table_name, last_schema_changes_time=none) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
 
@@ -17,7 +17,7 @@
 
         ),
 
-        table_changes_alerts as (
+        table_changes_test_results as (
 
             select
                 change_id as data_issue_id,
@@ -26,18 +26,14 @@
                 schema_name,
                 table_name,
                 {{ elementary.null_string() }} as column_name,
-                'schema_change' as alert_type,
-                change as sub_type,
-                change_description as alert_description,
-                {{ elementary.null_string() }} as owner,
-                {{ elementary.null_string() }} as tags,
-                {{ elementary.null_string() }} as alert_results_query,
-                {{ elementary.null_string() }} as other
+                'schema_change' as test_type,
+                change as test_sub_type,
+                change_description as test_results_description
             from table_changes
 
         ),
 
-        column_changes_alerts as (
+        column_changes_test_results as (
 
             select
                 change_id as data_issue_id,
@@ -46,40 +42,35 @@
                 schema_name,
                 table_name,
                 column_name,
-                'schema_change' as alert_type,
-                change as sub_type,
-                change_description as alert_description,
-                {{ elementary.null_string() }} as owner,
-                {{ elementary.null_string() }} as tags,
-                {{ elementary.null_string() }} as alert_results_query,
-                {{ elementary.null_string() }} as other
+                'schema_change' as test_type,
+                change as test_sub_type,
+                change_description as test_results_description
             from column_changes
 
         ),
 
-        all_alerts as (
+        all_test_results as (
 
-            select * from table_changes_alerts
+            select * from table_changes_test_results
             union all
-            select * from column_changes_alerts
+            select * from column_changes_test_results
 
         ),
 
-        all_alerts_with_test_execution_id as (
+        all_test_results_with_test_execution_id as (
             select {{ dbt_utils.surrogate_key([
                      'data_issue_id',
                      elementary.const_as_string(test_execution_id)
-                    ]) }} as alert_id,
+                    ]) }} as id,
                     {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
                     {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
                     *
-            from all_alerts
+            from all_test_results
         )
 
-        select * from all_alerts_with_test_execution_id
-        {%- if last_alert %}
-            {%- set last_alert_quoted = "'"~ last_alert ~"'" %}
-            where detected_at > {{ elementary.cast_as_timestamp(last_alert_quoted) }}
+        select * from all_test_results_with_test_execution_id
+        {%- if last_schema_changes_time %}
+            where detected_at > {{ elementary.cast_as_timestamp(elementary.const_as_string(last_schema_changes_time)) }}
         {%- endif %}
     {%- endset %}
     {{ return(schema_changes_test_query) }}

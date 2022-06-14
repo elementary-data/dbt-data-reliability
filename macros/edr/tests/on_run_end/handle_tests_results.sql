@@ -27,9 +27,9 @@
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
                     {% if status == 'error' or status == 'pass' %}
-                        {% do schema_change_test_results.append(elementary.get_dbt_test_result(run_result_dict,
-                                                                                               flatten_test_node,
-                                                                                               'schema_change')) %}
+                        {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
+                                                                                            flatten_test_node,
+                                                                                            'schema_change')) %}
                     {%- else -%} {# warn or fail #}
                         {% do elementary_test_results.extend(elementary.get_test_result_per_schmea_change(database_name,
                                                                                                           schema_name,
@@ -75,9 +75,9 @@
     {% set schema_change_test_results = [] %}
     {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% for test_row_dict in test_row_dicts %}
-        {% do elementary_test_results.append(elementary.get_schema_change_test_result(run_result_dict,
-                                                                                      test_row_dict,
-                                                                                      flatten_test_node)) %}
+        {% do schema_change_test_results.append(elementary.get_schema_change_test_result(run_result_dict,
+                                                                                         test_row_dict,
+                                                                                         flatten_test_node)) %}
     {% endfor %}
     {{- return(schema_change_test_results) -}}
 {%- endmacro -%}
@@ -103,7 +103,7 @@
         select * from {{ test_anomaly_scores_table }}
     {%- endset -%}
     {% set test_result_dict = {
-        'alert_id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
+        'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
         'test_execution_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_execution_id'),
         'test_unique_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_unique_id'),
@@ -113,13 +113,13 @@
         'schema_name': schema_name,
         'table_name': table_name,
         'column_name': column_name,
-        'alert_type': 'anomaly_detection',
-        'sub_type': metric_name,
-        'alert_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
+        'test_type': 'anomaly_detection',
+        'test_sub_type': metric_name,
+        'test_results_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
         'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'alert_results_query': test_results_query,
+        'test_results_query': test_results_query,
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
@@ -131,10 +131,11 @@
 {% macro get_schema_change_test_result(run_result_dict, schema_change_dict, test_node) %}
     {% set test_result_dict = schema_change_dict %}
     {% do test_result_dict.update({
+        'other': none,
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'alert_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
+        'test_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
@@ -149,7 +150,7 @@
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
     {% set parent_model_name = elementary.get_table_name_from_node(parent_model) %}
     {% set test_result_dict = {
-        'alert_id': test_execution_id,
+        'id': test_execution_id,
         'data_issue_id': none,
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(test_node, 'unique_id'),
@@ -159,13 +160,13 @@
         'schema_name': elementary.insensitive_get_dict_value(test_node, 'schema_name'),
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(test_node, 'test_column_name'),
-        'alert_type': test_type,
-        'sub_type': elementary.insensitive_get_dict_value(test_node, 'short_name'),
-        'alert_description': elementary.insensitive_get_dict_value(run_result_dict, 'message'),
+        'test_type': test_type,
+        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_results_description': elementary.insensitive_get_dict_value(run_result_dict, 'message'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'alert_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
+        'test_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
