@@ -1,58 +1,14 @@
 {% macro upload_dbt_artifacts(results) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run %}
-
-        -- handle models
-        {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set flatten_node_macro = context['elementary']['flatten_model'] %}
-        {% set dbt_models_empty_table_query = elementary.get_dbt_models_empty_table_query() %}
-        {% set dbt_models = elementary.create_source_table('dbt_models', dbt_models_empty_table_query, True) %}
-        {% do elementary.insert_nodes_to_table(dbt_models, nodes, flatten_node_macro) %}
+    {% if execute and not edr_cli_run and results %}
+        {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
+        {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
+        {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
+        {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
+                                                                schema=schema_name,
+                                                                identifier='dbt_run_results') -%}
+        {% do elementary.insert_nodes_to_table(dbt_run_results_relation, results, flatten_node_macro) %}
         {% do adapter.commit() %}
-
-        -- handle tests
-        {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% set flatten_node_macro = context['elementary']['flatten_test'] %}
-        {% set dbt_tests_empty_table_query = elementary.get_dbt_tests_empty_table_query() %}
-        {% set dbt_tests = elementary.create_source_table('dbt_tests', dbt_tests_empty_table_query, True) %}
-        {% do elementary.insert_nodes_to_table(dbt_tests, nodes, flatten_node_macro) %}
-        {% do adapter.commit() %}
-
-        -- handle sources
-        {% set nodes = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% set flatten_node_macro = context['elementary']['flatten_source'] %}
-        {% set dbt_sources_empty_table_query = elementary.get_dbt_sources_empty_table_query() %}
-        {% set dbt_sources = elementary.create_source_table('dbt_sources', dbt_sources_empty_table_query, True) %}
-        {% do elementary.insert_nodes_to_table(dbt_sources, nodes, flatten_node_macro) %}
-        {% do adapter.commit() %}
-
-        -- handle exposures
-        {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% set flatten_node_macro = context['elementary']['flatten_exposure'] %}
-        {% set dbt_exposures_empty_table_query = elementary.get_dbt_exposures_empty_table_query() %}
-        {% set dbt_exposures = elementary.create_source_table('dbt_exposures', dbt_exposures_empty_table_query, True) %}
-        {% do elementary.insert_nodes_to_table(dbt_exposures, nodes, flatten_node_macro) %}
-        {% do adapter.commit() %}
-
-        -- handle metrics
-        {% set nodes = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
-        {% set flatten_node_macro = context['elementary']['flatten_metric'] %}
-        {% set dbt_metrics_empty_table_query = elementary.get_dbt_metrics_empty_table_query() %}
-        {% set dbt_metrics = elementary.create_source_table('dbt_metrics', dbt_metrics_empty_table_query, True) %}
-        {% do elementary.insert_nodes_to_table(dbt_metrics, nodes, flatten_node_macro) %}
-        {% do adapter.commit() %}
-
-        -- handle run_results
-        {% if results %}
-            {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
-            {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
-            {% set dbt_run_results = elementary.create_source_table('dbt_run_results',
-                                                                    dbt_run_results_empty_table_query,
-                                                                    False,
-                                                                    elementary.get_config_var('refresh_dbt_artifacts')) %}
-            {% do elementary.insert_nodes_to_table(dbt_run_results, results, flatten_node_macro) %}
-            {% do adapter.commit() %}
-        {% endif %}
     {% endif %}
     {{ return ('') }}
 {% endmacro %}
