@@ -1,13 +1,11 @@
 {% macro upload_dbt_artifacts(results) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run and results %}
-        {% set flatten_node_macro = context['elementary']['flatten_run_result'] %}
-        {% set dbt_run_results_empty_table_query = elementary.get_dbt_run_results_empty_table_query() %}
         {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
         {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
                                                                 schema=schema_name,
                                                                 identifier='dbt_run_results') -%}
-        {% do elementary.insert_nodes_to_table(dbt_run_results_relation, results, flatten_node_macro) %}
+        {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback()) %}
         {% do adapter.commit() %}
     {% endif %}
     {{ return ('') }}
@@ -32,7 +30,15 @@
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
 
-{% macro flatten_run_result(run_result) %}
+{%- macro get_flatten_run_result_callback() -%}
+    {{- return(adapter.dispatch('flatten_run_result', 'elementary')) -}}
+{%- endmacro -%}
+
+{%- macro flatten_run_result(node_dict) -%}
+    {{- return(adapter.dispatch('flatten_run_result', 'elementary')(node_dict)) -}}
+{%- endmacro -%}
+
+{% macro default__flatten_run_result(run_result) %}
     {% set run_result_dict = run_result.to_dict() %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
     {% set flatten_run_result_dict = {

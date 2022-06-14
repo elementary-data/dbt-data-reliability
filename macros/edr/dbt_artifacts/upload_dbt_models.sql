@@ -1,9 +1,8 @@
 {%- macro upload_dbt_models() -%}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
-        {% set nodes = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set flatten_node_macro = context['elementary']['flatten_model'] %}
-        {% do elementary.insert_nodes_to_table(this, nodes, flatten_node_macro) %}
+        {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
+        {% do elementary.upload_artifacts_to_table(this, models, elementary.get_flatten_model_callback()) %}
         {% do adapter.commit() %}
     {%- endif -%}
     {{- return('') -}}
@@ -30,7 +29,15 @@
     {{ return(dbt_models_empty_table_query) }}
 {% endmacro %}
 
-{% macro flatten_model(node_dict) %}
+{%- macro get_flatten_model_callback() -%}
+    {{- return(adapter.dispatch('flatten_model', 'elementary')) -}}
+{%- endmacro -%}
+
+{%- macro flatten_model(node_dict) -%}
+    {{- return(adapter.dispatch('flatten_model', 'elementary')(node_dict)) -}}
+{%- endmacro -%}
+
+{% macro default__flatten_model(node_dict) %}
     {% set checksum_dict = elementary.safe_get_with_default(node_dict, 'checksum', {}) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}

@@ -1,9 +1,8 @@
 {%- macro upload_dbt_exposures() -%}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
-        {% set nodes = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% set flatten_node_macro = context['elementary']['flatten_exposure'] %}
-        {% do elementary.insert_nodes_to_table(this, nodes, flatten_node_macro) %}
+        {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
+        {% do elementary.upload_artifacts_to_table(this, exposures, elementary.get_flatten_exposure_callback()) %}
         {% do adapter.commit() %}
     {%- endif -%}
     {{- return('') -}}
@@ -31,7 +30,15 @@
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
 
-{% macro flatten_exposure(node_dict) %}
+{%- macro get_flatten_exposure_callback() -%}
+    {{- return(adapter.dispatch('flatten_exposure', 'elementary')) -}}
+{%- endmacro -%}
+
+{%- macro flatten_exposure(node_dict) -%}
+    {{- return(adapter.dispatch('flatten_exposure', 'elementary')(node_dict)) -}}
+{%- endmacro -%}
+
+{% macro default__flatten_exposure(node_dict) %}
     {% set owner_dict = elementary.safe_get_with_default(node_dict, 'owner', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
