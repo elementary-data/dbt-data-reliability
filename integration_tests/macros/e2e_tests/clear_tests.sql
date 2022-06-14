@@ -5,7 +5,6 @@
         {% set schema_name = schema_name ~ '__tests' %}
         {% do drop_schema(database_name, schema_name) %}
         {% do drop_schema(elementary.target_database(), target.schema) %}
-        {% do drop_schema(var('dbt_artifacts_database', elementary.target_database()), var('dbt_artifacts_schema', target.schema)) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}

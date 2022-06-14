@@ -22,7 +22,6 @@ on-run-end:
 vars:
   days_back: 30
   elementary_debug_logs: false
-  dbt_artifacts_schema: "test_artifacts"
 
 models:
   elementary:
