@@ -5,7 +5,8 @@
         {% set serializable_row = {} %}
         {% for col_name, col_value in agate_row.items() %}
             {% set serializable_col_value = column_types[loop.index0].jsonify(col_value) %}
-            {% do serializable_row.update({col_name: serializable_col_value}) %}
+            {% set serializable_col_name = col_name | lower %}
+            {% do serializable_row.update({serializable_col_name: serializable_col_value}) %}
         {% endfor %}
         {% do serializable_rows.append(serializable_row) %}
     {% endfor %}
