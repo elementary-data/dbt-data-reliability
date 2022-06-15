@@ -113,6 +113,7 @@
               {%- if column_name %}
                 and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
               {%- endif %}
+        order by bucket_end desc
     {%- endset -%}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
