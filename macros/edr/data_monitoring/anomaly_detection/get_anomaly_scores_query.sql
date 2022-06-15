@@ -76,10 +76,7 @@
                 stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
                 count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start,
-                {{ sensitivity }} * training_stddev + training_avg as max_metric_value,
-                (-1) * {{ sensitivity }} * training_stddev + training_avg as min_metric_value,
-                {{ sensitivity }} as anomaly_score_threshold
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
             from daily_buckets left join
                 grouped_metrics on (edr_daily_bucket = bucket_end)
             {{ dbt_utils.group_by(11) }}
@@ -104,13 +101,13 @@
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
-                anomaly_score_threshold,
+                {{ sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
                 metric_value,
-                min_metric_value,
-                max_metric_value,
+                (-1) * {{ sensitivity }} * training_stddev + training_avg as min_metric_value,
+                {{ sensitivity }} * training_stddev + training_avg as max_metric_value,
                 training_avg,
                 training_stddev,
                 training_set_size,

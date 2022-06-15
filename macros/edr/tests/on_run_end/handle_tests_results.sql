@@ -99,8 +99,20 @@
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
+    {% set metric_id = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id') %}
     {% set test_results_query %}
-        select * from {{ test_anomaly_scores_table }}
+        select min_metric_value as min_value,
+               max_metric_value as max_value,
+               metric_value as value,
+               bucket_start as start_time,
+               bucket_end as end_time,
+               metric_id
+        from {{ test_anomaly_scores_table }}
+        where upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
+              and metric_name = {{ elementary.const_as_string(metric_name) }}
+              {%- if column_name %}
+                and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
+              {%- endif %}
     {%- endset -%}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
