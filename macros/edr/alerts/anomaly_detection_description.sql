@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro freshness_description() %}
-    'Last update was at ' || source_value || ', ' || abs(round(metric_value/3600,2)) || ' hours ago. Usually the table is updated within ' || abs(round(training_avg/3600,2)) || ' hours.'
+    'Last update was at ' || anomalous_value || ', ' || abs(round(metric_value/3600,2)) || ' hours ago. Usually the table is updated within ' || abs(round(training_avg/3600,2)) || ' hours.'
 {% endmacro %}
 
 {% macro table_metric_description() %}

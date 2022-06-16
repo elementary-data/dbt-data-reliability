@@ -19,13 +19,13 @@
     {{ return(max_bucket_end) }}
 {% endmacro %}
 
-{% macro get_backfill_bucket_start(backfill_days=none) %}
-    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_test_argument(argument_name='backfill_days', value=backfill_days))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+{% macro get_backfill_bucket_start(backfill_days) %}
+    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {{ return(backfill_bucket_start) }}
 {% endmacro %}
 
 
-{% macro get_min_bucket_start(full_table_name, monitors=none, column_name=none, backfill_days=none) %}
+{% macro get_min_bucket_start(full_table_name, backfill_days, monitors=none, column_name=none) %}
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start() %}
     {%- set backfill_bucket_start = elementary.get_backfill_bucket_start(backfill_days) %}

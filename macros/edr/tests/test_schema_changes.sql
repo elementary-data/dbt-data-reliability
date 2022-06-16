@@ -1,5 +1,5 @@
 {% test schema_changes(model) %}
-    -- depends_on: {{ ref('alerts_schema_changes') }}
+    -- depends_on: {{ ref('elementary_test_results') }}
     -- depends_on: {{ ref('table_changes') }}
     -- depends_on: {{ ref('column_changes') }}
     {% if execute %}
@@ -22,10 +22,10 @@
             {{ elementary.test_log('monitored_table_not_found', full_table_name) }}
             {{ return(elementary.no_results_query()) }}
         {% endif %}
-        {%- set last_schema_change_alert_time = elementary.get_last_schema_changes_alert_time() %}
+        {%- set last_schema_change_time = elementary.get_last_schema_changes_time() %}
 
         {# query if there were schema changes since last execution #}
-        {% set schema_changes_alert_query = elementary.get_schema_changes_alert_query(full_table_name, last_schema_change_alert_time) %}
+        {% set schema_changes_alert_query = elementary.get_schema_changes_test_query(full_table_name, last_schema_change_time) %}
         {% set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__schema_changes_alerts') %}
         {{ elementary.debug_log('schema alerts table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
         {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,

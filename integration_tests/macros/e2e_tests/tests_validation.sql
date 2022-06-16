@@ -272,8 +272,9 @@
 {% endmacro %}
 
 {% macro get_artifacts_table_relation(table_name) %}
-    {%- set artifacts_relation = adapter.get_relation(database=var('dbt_artifacts_database', elementary.target_database()),
-                                                      schema=var('dbt_artifacts_schema', target.schema),
+    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+    {%- set artifacts_relation = adapter.get_relation(database=database_name,
+                                                      schema=schema_name,
                                                       identifier=table_name) %}
     {{ return(artifacts_relation) }}
 {% endmacro %}

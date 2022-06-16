@@ -24,9 +24,8 @@
             {{ return(elementary.no_results_query()) }}
         {% endif %}
 
-        {% if not timestamp_column %}
-            {%- set timestamp_column = elementary.get_timestamp_column_from_graph(model) %}
-        {% endif %}
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+        {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ timestamp_column) }}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
@@ -35,7 +34,8 @@
 
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
-        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, table_monitors, backfill_days=backfill_days) ~ "'" %}
+        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
+        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, table_monitors) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
@@ -43,20 +43,21 @@
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, table_monitoring_query) %}
 
-        {#- query if there is an anomaly in recent metrics -#}
-        {% set anomaly_query = elementary.get_anomaly_query(temp_table_relation, full_table_name, table_monitors, sensitivity=sensitivity, backfill_days=backfill_days) %}
-        {{ elementary.debug_log('table monitors anomaly query - \n' ~ anomaly_query) }}
-        {%- set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
-        {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
-        {% set anomalies_temp_table_exists, anomalies_temp_table_relation = dbt.get_or_create_relation(database=database_name,
+        {#- calculate anomaly scores for metrics -#}
+        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, table_monitors) %}
+        {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
+        {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
+        {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
+        {% set anomaly_scores_test_table_exists, anomaly_scores_test_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
-                                                                                   identifier=temp_alerts_table_name,
+                                                                                   identifier=anomaly_scores_test_table_name,
                                                                                    type='table') -%}
-        {% do elementary.create_or_replace(False, anomalies_temp_table_relation, anomaly_query) %}
+        {% do elementary.create_or_replace(False, anomaly_scores_test_table_relation, anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standard test query #}
-        select * from {{ anomalies_temp_table_relation }}
+        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) }}
 
     {% else %}
 
