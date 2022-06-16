@@ -3,33 +3,10 @@
     {%- set test_unique_id = elementary.get_test_unique_id() %}
 
     {%- set schema_changes_test_query %}
-        with table_changes as (
-
-            select * from {{ ref('table_changes') }}
-            where {{ elementary.full_table_name() }} = upper('{{ full_table_name }}')
-
-        ),
-
-        column_changes as (
+        with column_changes as (
 
             select * from {{ ref('column_changes') }}
             where {{ elementary.full_table_name() }} = upper('{{ full_table_name }}')
-
-        ),
-
-        table_changes_test_results as (
-
-            select
-                change_id as data_issue_id,
-                detected_at,
-                database_name,
-                schema_name,
-                table_name,
-                {{ elementary.null_string() }} as column_name,
-                'schema_change' as test_type,
-                change as test_sub_type,
-                change_description as test_results_description
-            from table_changes
 
         ),
 
@@ -49,14 +26,6 @@
 
         ),
 
-        all_test_results as (
-
-            select * from table_changes_test_results
-            union all
-            select * from column_changes_test_results
-
-        ),
-
         all_test_results_with_test_execution_id as (
             select {{ dbt_utils.surrogate_key([
                      'data_issue_id',
@@ -65,7 +34,7 @@
                     {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
                     {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
                     *
-            from all_test_results
+            from column_changes_test_results
         )
 
         select * from all_test_results_with_test_execution_id
