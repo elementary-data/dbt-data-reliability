@@ -56,7 +56,7 @@
 
 {%- macro get_test_result_per_metric(database_name, schema_name, status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomalies') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
         {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% else %}

@@ -46,7 +46,7 @@
         {%- set anomaly_sensitivity = elementary.get_anomaly_sensitivity(sensitivity) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, table_monitors, sensitivity=anomaly_sensitivity, backfill_days=backfill_days) %}
         {{ elementary.debug_log('table monitors anomaly query - \n' ~ anomaly_query) }}
-        {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomalies') %}
+        {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
         {% set anomaly_scores_test_table_exists, anomaly_scores_test_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
