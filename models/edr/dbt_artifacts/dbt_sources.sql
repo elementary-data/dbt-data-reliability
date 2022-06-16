@@ -1,7 +1,7 @@
 {{
   config(
     materialized='table',
-    post_hook='{{ elementary.upload_dbt_sources()  }}'
+    post_hook=after_commit('{{ elementary.upload_dbt_sources() }}')
     )
 }}
 
