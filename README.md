@@ -9,13 +9,16 @@ To learn more on how to monitor your DWH, refer to our [main repo](https://githu
 
 **Elementary data monitors as tests are configured and executed like native tests in your project!**
 
+<img alt="UI" src="https://github.com/elementary-data/elementary/blob/update-readme/static/ui_for_git.png" width="800">
+
+
 # dbt artifacts uploader
 To enable operational monitoring and enrich anomalies alerts, the package includes a **dbt artifacts uploader**. 
 
 
 ## Getting started
 Check out the [full documentation](https://docs.elementary-data.com/). 
-Start by [using our CLI](https://github.com/elementary-data/elementary) to monitor and get Slack alerts.
+Start by [using our CLI](https://github.com/elementary-data/elementary) to monitor, generate the UI and get Slack alerts.
 
 ## Data warehouse support
 This package has been tested on Snowflake, BigQuery and Redshift.
