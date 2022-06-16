@@ -69,4 +69,12 @@ table_changes_desc as (
 
 )
 
-select * from table_changes_desc
+select
+    {{ elementary.cast_as_string('change_id') }} as change_id,
+    {{ elementary.cast_as_string('database_name') }} as database_name,
+    {{ elementary.cast_as_string('schema_name') }} as schema_name,
+    {{ elementary.cast_as_string('table_name') }} as table_name,
+    {{ elementary.cast_as_timestamp('detected_at') }} as detected_at,
+    {{ elementary.cast_as_string('change') }} as change,
+    {{ elementary.cast_as_long_string('change_description') }} as change_description
+from table_changes_desc

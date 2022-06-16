@@ -12,7 +12,7 @@ with information_schema_columns as (
 
 ),
 
-columns as (
+columns_snapshot as (
 
     select
         full_table_name,
@@ -47,19 +47,33 @@ columns as (
         {% endif %}
     from information_schema_columns
 
+),
+
+columns_snapshot_with_id as (
+
+    select
+        {{ dbt_utils.surrogate_key([
+          'full_table_name',
+          'column_name',
+          'data_type'
+        ]) }} as column_state_id,
+        {{ elementary.full_column_name() }} as full_column_name,
+        full_table_name,
+        column_name,
+        data_type,
+        is_new,
+        max(detected_at) as detected_at
+    from columns_snapshot
+    group by 1,2,3,4,5,6
+
 )
 
 select
-    {{ dbt_utils.surrogate_key([
-      'full_table_name',
-      'column_name',
-      'data_type'
-    ]) }} as column_state_id,
-    {{ elementary.full_column_name() }} as full_column_name,
-    full_table_name,
-    column_name,
-    data_type,
-    is_new,
-    max(detected_at) as detected_at
-from columns
-group by 1,2,3,4,5,6
+    {{ elementary.cast_as_string('column_state_id') }} as column_state_id,
+    {{ elementary.cast_as_string('full_column_name') }} as full_column_name,
+    {{ elementary.cast_as_string('full_table_name') }} as full_table_name,
+    {{ elementary.cast_as_string('column_name') }} as column_name,
+    {{ elementary.cast_as_string('data_type') }} as data_type,
+    {{ elementary.cast_as_bool('is_new') }} as is_new,
+    {{ elementary.cast_as_timestamp('detected_at') }} as detected_at
+from columns_snapshot_with_id

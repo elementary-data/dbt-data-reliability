@@ -16,16 +16,21 @@
 {%- endmacro -%}
 
 {% macro default__type_string() %}
+    {# Redshift and Postgres #}
+    varchar(4096)
+{% endmacro %}
+
+{% macro snowflake__type_string() %}
+    {# Default max varchar size in Snowflake is 16MB #}
     varchar
 {% endmacro %}
 
 {% macro bigquery__type_string() %}
+    {# Default max string size in Bigquery is 65K #}
     string
 {% endmacro %}
 
-{% macro redshift__type_string() %}
-    varchar(256)
-{% endmacro %}
+
 
 
 {%- macro type_long_string() -%}
@@ -37,5 +42,9 @@
 {%- endmacro -%}
 
 {%- macro redshift__type_long_string() -%}
-    varchar(4096)
+    varchar(16384)
+{%- endmacro -%}
+
+{%- macro postgres__type_long_string() -%}
+    varchar(16384)
 {%- endmacro -%}

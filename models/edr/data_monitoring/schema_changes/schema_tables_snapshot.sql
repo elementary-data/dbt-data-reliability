@@ -44,15 +44,27 @@ schema_tables as (
 
     from information_schema_tables
 
+),
+
+schema_tables_with_id as (
+
+    select
+        {{ dbt_utils.surrogate_key([
+          'full_table_name'
+        ]) }} as table_state_id,
+        full_schema_name,
+        full_table_name,
+        is_new,
+        max(detected_at) as detected_at
+    from schema_tables
+    group by 1,2,3,4
+
 )
 
 select
-    {{ dbt_utils.surrogate_key([
-      'full_table_name'
-    ]) }} as table_state_id,
-    full_schema_name,
-    full_table_name,
-    is_new,
-    max(detected_at) as detected_at
-from schema_tables
-group by 1,2,3,4
+    {{ elementary.cast_as_string('table_state_id') }} as table_state_id,
+    {{ elementary.cast_as_string('full_schema_name') }} as full_schema_name,
+    {{ elementary.cast_as_string('full_table_name') }} as full_table_name,
+    {{ elementary.cast_as_bool('is_new') }} as is_new,
+    {{ elementary.cast_as_timestamp('detected_at') }} as detected_at
+from schema_tables_with_id
