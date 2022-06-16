@@ -100,20 +100,35 @@
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
     {% set metric_id = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id') %}
+    {%- set backfill_period = "'-" ~ elementary.get_config_var('backfill_days_per_run') ~ "'" -%}
     {% set test_results_query %}
-        select min_metric_value as min_value,
-               max_metric_value as max_value,
-               metric_value as value,
+        with anomaly_scores as (
+            select * from {{ test_anomaly_scores_table }}
+        ),
+        anomaly_scores_with_is_anomalous as (
+        select  *,
+                case when abs(anomaly_score) > {{ sensitivity }}
+                and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
+                and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
+            from anomaly_scores
+        )
+        select metric_value as value,
+               case when is_anomalous = TRUE then
+                lag(min_metric_value) over (partition by full_table_name, column_name, metric_name order by bucket_end)
+               else min_metric_value end as min_value,
+               case when is_anomalous = TRUE then
+                lag(max_metric_value) over (partition by full_table_name, column_name, metric_name order by bucket_end)
+                else max_metric_value end as max_value,
                bucket_start as start_time,
                bucket_end as end_time,
                metric_id
-        from {{ test_anomaly_scores_table }}
+        from anomaly_scores_with_is_anomalous
         where upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
               and metric_name = {{ elementary.const_as_string(metric_name) }}
-              {%- if column_name %}
+             {%- if column_name %}
                 and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
-              {%- endif %}
-        order by bucket_end desc
+             {%- endif %}
+        order by bucket_end
     {%- endset -%}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
