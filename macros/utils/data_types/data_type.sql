@@ -42,9 +42,9 @@
 {%- endmacro -%}
 
 {%- macro redshift__type_long_string() -%}
-    varchar(65535)
+    varchar(16384)
 {%- endmacro -%}
 
 {%- macro postgres__type_long_string() -%}
-    varchar(65535)
+    varchar(16384)
 {%- endmacro -%}
