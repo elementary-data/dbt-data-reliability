@@ -1,12 +1,10 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, monitors, column_name = none, columns_only=false, sensitivity=none, backfill_days=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, column_name = none, columns_only=false) %}
 
-    {% set backfill_days_value = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
     {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days_value)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set backfill_period = "'-" ~ backfill_days_value ~ "'" %}
+    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-    {%- set anomaly_sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
 
     {% set anomaly_scores_query %}
 

@@ -91,16 +91,19 @@
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
     {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
+    {% set test_param_backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
     {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
     {% set timestamp_column = elementary.get_timestamp_column(test_param_timestamp_column, parent_model_node) %}
-    {% set sensitivity = elementary.get_anomaly_sensitivity(test_param_sensitivity) %}
+    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=test_param_sensitivity) %}
+    {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=test_param_backfill_days) %}
     {% do test_params.update({'sensitivity': sensitivity}) %}
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
+    {% do test_params.update({'backfill_days': backfill_days}) %}
     {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
     {% set metric_id = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id') %}
-    {%- set backfill_period = "'-" ~ elementary.get_config_var('backfill_days_per_run') ~ "'" -%}
+    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {% set test_results_query %}
         with anomaly_scores as (
             select * from {{ test_anomaly_scores_table }}
