@@ -4,7 +4,7 @@ Elementary delivers **data monitoring and anomaly detection as dbt tests.**
   
 Elementary dbt tests are data monitors that collect metrics and metadata over time, such as freshness, volume, schema changes, distribution, cardinality, etc. On each execution, the tests analyze the new data, compare it to historical metrics, and alert on anomalies and outliers. 
 
-The package is [Elementary](https://www.elementary-data.com/) integration with your dbt project, read more here [documentation](https://docs.elementary-data.com/).
+This package is a module of [Elementary](https://www.elementary-data.com/) - open source data observability. Read more here [documentation](https://docs.elementary-data.com/).
 To learn more on how to monitor your DWH, refer to our [main repo](https://github.com/elementary-data/elementary-lineage). 
 
 **Elementary data monitors as tests are configured and executed like native tests in your project!**
