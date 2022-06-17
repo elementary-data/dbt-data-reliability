@@ -13,14 +13,14 @@
 {% endmacro %}
 
 
-{% macro assert_value_in_list(value, list) %}
+{% macro assert_value_in_list(value, list, context='') %}
     {% set upper_value = value | upper %}
     {% set lower_value = value | lower %}
     {% if upper_value in list or lower_value in list %}
-        {% do elementary.edr_log("SUCCESS: " ~ upper_value  ~ " in list " ~ list) %}
+        {% do elementary.edr_log(context ~ " SUCCESS: " ~ upper_value  ~ " in list " ~ list) %}
         {{ return(0) }}
     {% else %}
-        {% do elementary.edr_log("FAILED: " ~ upper_value ~ " not in list " ~ list) %}
+        {% do elementary.edr_log(context ~ " FAILED: " ~ upper_value ~ " not in list " ~ list) %}
         {{ return(1) }}
     {% endif %}
 {% endmacro %}
@@ -51,19 +51,19 @@
     {{ return(0) }}
 {% endmacro %}
 
-{% macro assert_list1_in_list2(list1, list2) %}
+{% macro assert_list1_in_list2(list1, list2, context = '') %}
     {% set lower_list2 = list2 | lower %}
-    {% if not list1 and list2 %}
-        {% do elementary.edr_log("FAILED: list1 is empty and list2 is not - " ~ list2) %}
+    {% if not list1 or not list2 %}
+        {% do elementary.edr_log(context ~ " FAILED: list1 is empty or list2 is empty") %}
         {{ return(1) }}
     {% endif %}
     {% for item1 in list1 %}
         {% if item1 | lower not in lower_list2 %}
-            {% do elementary.edr_log("FAILED: " ~ item1 ~ " not in list " ~ list2) %}
+            {% do elementary.edr_log(context ~ " FAILED: " ~ item1 ~ " not in list " ~ list2) %}
             {{ return(1) }}
         {% endif %}
     {% endfor %}
-    {% do elementary.edr_log("SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
+    {% do elementary.edr_log(context ~ " SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
     {{ return(0) }}
 {% endmacro %}
 
@@ -285,18 +285,18 @@
         select distinct name from {{ dbt_models_relation }}
     {% endset %}
     {% set models = elementary.result_column_to_list(dbt_models_query) %}
-    {{ assert_value_in_list('any_type_column_anomalies', models) }}
-    {{ assert_value_in_list('numeric_column_anomalies', models) }}
-    {{ assert_value_in_list('string_column_anomalies', models) }}
+    {{ assert_value_in_list('any_type_column_anomalies', models, context='dbt_models') }}
+    {{ assert_value_in_list('numeric_column_anomalies', models, context='dbt_models') }}
+    {{ assert_value_in_list('string_column_anomalies', models, context='dbt_models') }}
 
     {% set dbt_sources_relation = get_artifacts_table_relation('dbt_sources') %}
     {% set dbt_sources_query %}
         select distinct name from {{ dbt_sources_relation }}
     {% endset %}
     {% set sources = elementary.result_column_to_list(dbt_sources_query) %}
-    {{ assert_value_in_list('any_type_column_anomalies_training', sources) }}
-    {{ assert_value_in_list('string_column_anomalies_training', sources) }}
-    {{ assert_value_in_list('any_type_column_anomalies_validation', sources) }}
+    {{ assert_value_in_list('any_type_column_anomalies_training', sources, context='dbt_sources') }}
+    {{ assert_value_in_list('string_column_anomalies_training', sources, context='dbt_sources') }}
+    {{ assert_value_in_list('any_type_column_anomalies_validation', sources, context='dbt_sources') }}
 
     {% set dbt_tests_relation = get_artifacts_table_relation('dbt_tests') %}
     {% set dbt_tests_query %}
@@ -312,5 +312,5 @@
     {% set all_executable_nodes = [] %}
     {% do all_executable_nodes.extend(models) %}
     {% do all_executable_nodes.extend(tests) %}
-    {{ assert_list1_in_list2(run_results, all_executable_nodes) }}
+    {{ assert_list1_in_list2(run_results, all_executable_nodes, context='dbt_run_results') }}
 {% endmacro %}

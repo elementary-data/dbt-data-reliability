@@ -1,6 +1,7 @@
 {{
   config(
     materialized = 'incremental',
+    transient=False,
     unique_key = 'model_execution_id',
     on_schema_change = 'append_new_columns'
   )
