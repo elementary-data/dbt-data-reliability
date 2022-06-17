@@ -11,7 +11,7 @@ To learn more on how to monitor your DWH, refer to our [main repo](https://githu
 
 <img alt="UI" src="https://github.com/elementary-data/elementary/blob/update-readme/static/ui_for_git.png" width="800">
 
-**Checkout the [live demo](https://www.elementary-data.com/data-observability-demo).
+**Checkout the [live demo](https://www.elementary-data.com/data-observability-demo).**
 
 # dbt artifacts uploader
 To enable operational monitoring and enrich anomalies alerts, the package includes a **dbt artifacts uploader**. 
