@@ -21,13 +21,3 @@ clean-targets: # directories to be removed by `dbt clean`
 
 on-run-start: "{{ elementary.create_elementary_tests_schema() if flags.WHICH in ['test', 'build'] }}"
 on-run-end: "{{ handle_test_results(results) if flags.WHICH in ['test', 'build'] }}"
-
-vars:
-  # vars that are defined here are not accessible in on-run-end and on-run-start.
-  # Avoid defining vars here if possible, define in the 'get_config_var' macro
-  dbt_run_results: true
-  dbt_exposures: true
-  dbt_models: true
-  dbt_sources: true
-  dbt_tests: true
-  dbt_metrics: true

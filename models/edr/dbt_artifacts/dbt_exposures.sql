@@ -2,8 +2,7 @@
   config(
     materialized='table',
     transient=False,
-    post_hook='{{ elementary.upload_dbt_exposures() }}',
-    enabled=var('dbt_exposures')
+    post_hook='{{ elementary.upload_dbt_exposures() }}'
     )
 }}
 
