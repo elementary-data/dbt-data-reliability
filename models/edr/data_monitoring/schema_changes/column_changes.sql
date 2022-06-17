@@ -118,3 +118,4 @@ select
     {{ elementary.cast_as_string('change') }} as change,
     {{ elementary.cast_as_long_string('change_description') }} as change_description
 from column_changes_desc
+{{ dbt_utils.group_by(8) }}

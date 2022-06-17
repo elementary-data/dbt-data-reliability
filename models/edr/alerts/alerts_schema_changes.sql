@@ -36,3 +36,4 @@ alerts_schema_changes as (
 )
 
 select * from alerts_schema_changes
+{{ dbt_utils.group_by(21) }}

@@ -35,3 +35,4 @@ alerts_dbt_tests as (
 )
 
 select * from alerts_dbt_tests
+{{ dbt_utils.group_by(21) }}
