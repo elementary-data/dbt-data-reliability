@@ -6,7 +6,8 @@
                                                                 schema=schema_name,
                                                                 identifier='dbt_run_results') -%}
         {%- if dbt_run_results_relation -%}
-            {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback()) %}
+            {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback(),
+                                                       should_commit=True) %}
         {%- endif -%}
     {% endif %}
     {{ return ('') }}

@@ -1,4 +1,4 @@
-{% macro insert_dicts(table_relation, dicts, chunk_size=50) %}
+{% macro insert_dicts(table_relation, dicts, chunk_size=50, should_commit=False) %}
     {% if not table_relation %}
         {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
         {{ return(none) }}
@@ -14,7 +14,9 @@
         {% set insert_dicts_query = elementary.get_insert_dicts_query(table_relation, columns, dicts_chunk) %}
         {% do run_query(insert_dicts_query) %}
     {% endfor %}
-    {% do adapter.commit() %}
+    {%- if should_commit -%}
+        {% do adapter.commit() %}
+    {%- endif -%}
 {% endmacro %}
 
 {% macro get_insert_dicts_query(table_relation, columns, dicts) -%}
