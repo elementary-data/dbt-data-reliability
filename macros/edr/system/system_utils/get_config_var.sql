@@ -16,6 +16,7 @@
     'max_int': 2147483647,
     'schemas_to_alert_on_new_tables': [],
     'custom_run_started_at': null,
+    'query_comment_string': '____elementary_comment____',
     'edr_monitors': {
       'table': ['schema_changes', 'row_count', 'freshness'],
       'column_any_type': ['null_count', 'null_percent'],
