@@ -4,7 +4,7 @@
   )
 }}
 
-{% set configured_schemas = elementary.get_configured_schemas_from_graph() %}
+{% set configured_schemas = elementary.get_schemas_for_tests_from_graph() %}
 
 with filtered_information_schema_tables as (
 
