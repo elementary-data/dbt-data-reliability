@@ -261,13 +261,19 @@
     {% set found_columns = [] %}
     {% set found_tests = [] %}
     {% for row in alert_rows %}
-        {% do found_tables.append(row[0]) %}
-        {% do found_columns.append(row[1]) %}
-        {% do found_tests.append(row[2]) %}
+        {%- if row[0] -%}
+            {% do found_tables.append(row[0]) %}
+        {%- endif -%}
+        {%- if row[1] -%}
+            {% do found_columns.append(row[1]) %}
+        {%- endif -%}
+        {%- if row[2] -%}
+            {% do found_tests.append(row[2]) %}
+        {%- endif -%}
     {% endfor %}
-    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies']) }}
+    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies', 'numeric_column_anomalies']) }}
     {{ assert_lists_contain_same_items(found_columns, ['min_length']) }}
-    {{ assert_lists_contain_same_items(found_tests, ['relationships']) }}
+    {{ assert_lists_contain_same_items(found_tests, ['relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs']) }}
 
 {% endmacro %}
 

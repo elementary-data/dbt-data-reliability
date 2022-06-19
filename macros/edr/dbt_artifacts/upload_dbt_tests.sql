@@ -81,22 +81,26 @@
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
     {% set test_model_jinja = test_kwargs.get('model') %}
-    {% set primary_parent_model_id = none %}
-    {% if test_model_jinja %}
-        {% set primary_parent_model_candidates = [] %}
-        {% for parent_model_unique_id in parent_model_unique_ids %}
-            {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
-            {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
-                {% set parent_model_name = split_parent_model_unique_id[-1] %}
-                {% if parent_model_name and parent_model_name in test_model_jinja %}
-                    {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+    {%- if parent_model_unique_ids | length == 1 -%}
+        {% set primary_parent_model_id = parent_model_unique_ids[0] %}
+    {%- else -%}
+        {% set primary_parent_model_id = none %}
+        {% if test_model_jinja %}
+            {% set primary_parent_model_candidates = [] %}
+            {% for parent_model_unique_id in parent_model_unique_ids %}
+                {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
+                {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
+                    {% set parent_model_name = split_parent_model_unique_id[-1] %}
+                    {% if parent_model_name and parent_model_name in test_model_jinja %}
+                        {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+                    {% endif %}
                 {% endif %}
+            {% endfor %}
+            {% if primary_parent_model_candidates | length == 1 %}
+                {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
             {% endif %}
-        {% endfor %}
-        {% if primary_parent_model_candidates | length == 1 %}
-            {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
         {% endif %}
-    {% endif %}
+    {%- endif -%}
 
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
