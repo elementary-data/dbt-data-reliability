@@ -155,6 +155,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
 
 
 def generate_fake_data():
+    print('Generating fake data!')
     generate_string_anomalies_training_and_validation_files()
     generate_numeric_anomalies_training_and_validation_files()
     generate_any_type_anomalies_training_and_validation_files()
@@ -295,8 +296,15 @@ def print_tests_results(table_test_results,
     default='all',
     help="table / column / schema / regular / artifacts / no_timestamp / debug / all (default = all)"
 )
-def main(target, e2e_type):
-    generate_fake_data()
+@click.option(
+    '--generate-data', '-g',
+    type=bool,
+    default=True,
+    help="Set to true if you want to re-generate fake data (default = True)"
+)
+def main(target, e2e_type, generate_data):
+    if generate_data:
+        generate_fake_data()
 
     if target == 'all':
         e2e_targets = ['snowflake', 'bigquery', 'redshift']
@@ -304,7 +312,7 @@ def main(target, e2e_type):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'no_timestamp']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
     else:
         e2e_types = [e2e_type]
 
