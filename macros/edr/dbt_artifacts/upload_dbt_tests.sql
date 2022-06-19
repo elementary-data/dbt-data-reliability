@@ -82,8 +82,10 @@
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
     {% set test_model_jinja = test_kwargs.get('model') %}
     {%- if parent_model_unique_ids | length == 1 -%}
+        {# if only one parent model for this test, simply use this model #}
         {% set primary_parent_model_id = parent_model_unique_ids[0] %}
     {%- else -%}
+        {# if there are multiple parent models for a test, try finding it using the model jinja in the test graph node #}
         {% set primary_parent_model_id = none %}
         {% if test_model_jinja %}
             {% set primary_parent_model_candidates = [] %}
