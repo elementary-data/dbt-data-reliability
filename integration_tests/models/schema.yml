@@ -73,8 +73,6 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ["string_column_anomalies"]
-          - generic_test_on_column:
-                        tags: ["regular_tests"]
       - name: average_length
         tests:
           - elementary.column_anomalies:
@@ -196,6 +194,11 @@ sources:
         tests:
           - elementary.all_columns_anomalies:
               tags: ["elementary_source"]
+        columns:
+          - name: null_count_int
+            tests:
+              - generic_test_on_column:
+                  tags: ["regular_tests"]
   - name: schema_changes_data
     schema: "{{ target.schema }}"
     tables:
