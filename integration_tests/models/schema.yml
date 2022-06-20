@@ -22,6 +22,8 @@ models:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
+      - generic_test_on_model:
+          tags: ["regular_tests"]
 
   - name: no_timestamp_anomalies
     description: We use this model to test anomalies when there is no timestamp column
@@ -54,8 +56,6 @@ models:
           tags: ["all_string_column_anomalies"]
       - elementary.schema_changes:
           tags: ["schema_changes"]
-      - generic_test_on_model:
-          tags: ["regular_tests"]
     columns:
       - name: "min_length"
         tests:
@@ -63,8 +63,6 @@ models:
               tags: ["regular_tests"]
               to: source('training', 'string_column_anomalies_training')
               field: max_length
-          - generic_test_on_column:
-              tags: ["regular_tests"]
           - elementary.column_anomalies:
               tags: ["string_column_anomalies"]
               column_anomalies:
@@ -75,6 +73,8 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ["string_column_anomalies"]
+          - generic_test_on_column:
+                        tags: ["regular_tests"]
       - name: average_length
         tests:
           - elementary.column_anomalies:

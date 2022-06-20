@@ -271,9 +271,9 @@
             {% do found_tests.append(row[2]) %}
         {%- endif -%}
     {% endfor %}
-    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies', 'numeric_column_anomalies']) }}
-    {{ assert_lists_contain_same_items(found_columns, ['min_length']) }}
-    {{ assert_lists_contain_same_items(found_tests, ['relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs']) }}
+    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies', 'numeric_column_anomalies', 'any_type_column_anomalies']) }}
+    {{ assert_lists_contain_same_items(found_columns, ['min_length', 'max_length']) }}
+    {{ assert_lists_contain_same_items(found_tests, ['relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs', 'singular_test_with_source_ref', 'generic_test_on_model', 'generic_test_on_column']) }}
 
 {% endmacro %}
 
