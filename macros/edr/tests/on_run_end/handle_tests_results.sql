@@ -199,7 +199,7 @@
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(test_node, 'test_column_name'),
         'test_type': test_type,
-        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'type'),
         'test_results_description': elementary.insensitive_get_dict_value(run_result_dict, 'message'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),

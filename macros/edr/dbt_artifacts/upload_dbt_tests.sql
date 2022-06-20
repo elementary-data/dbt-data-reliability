@@ -32,6 +32,7 @@
                                                                  ('parent_model_unique_id', 'string'),
                                                                  ('description', 'long_string'),
                                                                  ('package_name', 'string'),
+                                                                 ('type', 'string'),
                                                                  ('original_path', 'long_string'),
                                                                  ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
@@ -104,6 +105,7 @@
         {% endif %}
     {%- endif -%}
 
+    {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_metadata.get('name'),
@@ -126,10 +128,21 @@
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
-        'original_path': node_dict.get('original_file_path'),
+        'type': elementary.get_test_type(original_file_path),
+        'original_path': original_file_path,
         'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
     }%}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
+
+{% macro get_test_type(test_path) %}
+    {% set test_type = 'generic' %}
+    {%- if 'tests/generic' in test_path or 'macros/' in test_path -%}
+        {% set test_type = 'generic' %}
+    {%- elif 'tests/' in test_path -%}
+        {% set test_type = 'singular' %}
+    {%- endif -%}
+    {{- return(test_type) -}}
+{%- endmacro -%}

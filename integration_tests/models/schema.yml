@@ -54,6 +54,8 @@ models:
           tags: ["all_string_column_anomalies"]
       - elementary.schema_changes:
           tags: ["schema_changes"]
+      - generic_test_on_model:
+          tags: ["regular_tests"]
     columns:
       - name: "min_length"
         tests:
@@ -61,6 +63,8 @@ models:
               tags: ["regular_tests"]
               to: source('training', 'string_column_anomalies_training')
               field: max_length
+          - generic_test_on_column:
+              tags: ["regular_tests"]
           - elementary.column_anomalies:
               tags: ["string_column_anomalies"]
               column_anomalies:
@@ -184,6 +188,7 @@ sources:
         tests:
           - elementary.table_anomalies:
               tags: ["table_anomalies"]
+      - name: numeric_column_anomalies_training
   - name: validation
     schema: "{{ target.schema }}"
     tables:
