@@ -180,6 +180,13 @@
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
     {% set parent_model_name = elementary.get_table_name_from_node(parent_model) %}
+    {% set test_short_name = elementary.insensitive_get_dict_value(test_node, 'short_name') %}
+    {% set test_long_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
+    {%- if test_short_name -%}
+        {% set test_name = test_short_name %}
+    {%- else -%}
+        {% set test_name = test_long_name %}
+    {%- endif -%}
     {% set test_result_dict = {
         'id': test_execution_id,
         'data_issue_id': none,
@@ -192,13 +199,13 @@
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(test_node, 'test_column_name'),
         'test_type': test_type,
-        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'type'),
         'test_results_description': elementary.insensitive_get_dict_value(run_result_dict, 'message'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
-        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')

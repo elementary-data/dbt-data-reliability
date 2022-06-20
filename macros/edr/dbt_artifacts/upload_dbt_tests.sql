@@ -32,6 +32,7 @@
                                                                  ('parent_model_unique_id', 'string'),
                                                                  ('description', 'long_string'),
                                                                  ('package_name', 'string'),
+                                                                 ('type', 'string'),
                                                                  ('original_path', 'long_string'),
                                                                  ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
@@ -81,23 +82,30 @@
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
     {% set test_model_jinja = test_kwargs.get('model') %}
-    {% set primary_parent_model_id = none %}
-    {% if test_model_jinja %}
-        {% set primary_parent_model_candidates = [] %}
-        {% for parent_model_unique_id in parent_model_unique_ids %}
-            {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
-            {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
-                {% set parent_model_name = split_parent_model_unique_id[-1] %}
-                {% if parent_model_name and parent_model_name in test_model_jinja %}
-                    {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+    {%- if parent_model_unique_ids | length == 1 -%}
+        {# if only one parent model for this test, simply use this model #}
+        {% set primary_parent_model_id = parent_model_unique_ids[0] %}
+    {%- else -%}
+        {# if there are multiple parent models for a test, try finding it using the model jinja in the test graph node #}
+        {% set primary_parent_model_id = none %}
+        {% if test_model_jinja %}
+            {% set primary_parent_model_candidates = [] %}
+            {% for parent_model_unique_id in parent_model_unique_ids %}
+                {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
+                {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
+                    {% set parent_model_name = split_parent_model_unique_id[-1] %}
+                    {% if parent_model_name and parent_model_name in test_model_jinja %}
+                        {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+                    {% endif %}
                 {% endif %}
+            {% endfor %}
+            {% if primary_parent_model_candidates | length == 1 %}
+                {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
             {% endif %}
-        {% endfor %}
-        {% if primary_parent_model_candidates | length == 1 %}
-            {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
         {% endif %}
-    {% endif %}
+    {%- endif -%}
 
+    {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_metadata.get('name'),
@@ -120,10 +128,21 @@
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
-        'original_path': node_dict.get('original_file_path'),
+        'type': elementary.get_test_type(original_file_path),
+        'original_path': original_file_path,
         'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
     }%}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
+
+{% macro get_test_type(test_path) %}
+    {% set test_type = 'generic' %}
+    {%- if 'tests/generic' in test_path or 'macros/' in test_path -%}
+        {% set test_type = 'generic' %}
+    {%- elif 'tests/' in test_path -%}
+        {% set test_type = 'singular' %}
+    {%- endif -%}
+    {{- return(test_type) -}}
+{%- endmacro -%}

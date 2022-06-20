@@ -243,7 +243,7 @@ def e2e_tests(target, test_types):
         print_test_result_list(schema_changes_test_results)
 
     if 'regular' in test_types:
-        dbt_runner.test(select='tag:regular_tests')
+        dbt_runner.test(select='test_type:singular tag:regular_tests')
         regular_test_results = dbt_runner.run_operation(macro_name='validate_regular_tests')
         print_test_result_list(regular_test_results)
 

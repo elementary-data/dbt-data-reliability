@@ -22,6 +22,8 @@ models:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
+      - generic_test_on_model:
+          tags: ["regular_tests"]
 
   - name: no_timestamp_anomalies
     description: We use this model to test anomalies when there is no timestamp column
@@ -184,6 +186,7 @@ sources:
         tests:
           - elementary.table_anomalies:
               tags: ["table_anomalies"]
+      - name: numeric_column_anomalies_training
   - name: validation
     schema: "{{ target.schema }}"
     tables:
@@ -191,6 +194,11 @@ sources:
         tests:
           - elementary.all_columns_anomalies:
               tags: ["elementary_source"]
+        columns:
+          - name: null_count_int
+            tests:
+              - generic_test_on_column:
+                  tags: ["regular_tests"]
   - name: schema_changes_data
     schema: "{{ target.schema }}"
     tables:
