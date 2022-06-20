@@ -2,7 +2,7 @@
     -- depends_on: {{ ref('elementary_test_results') }}
     -- depends_on: {{ ref('table_changes') }}
     -- depends_on: {{ ref('column_changes') }}
-    {% if execute %}
+    {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% set test_name_in_graph = elementary.get_test_name_in_graph() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {# creates temp relation for test metrics #}

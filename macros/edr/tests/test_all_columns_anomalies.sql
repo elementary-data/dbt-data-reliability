@@ -3,7 +3,7 @@
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_data_monitoring') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
-    {%- if execute %}
+    {%- if execute and flags.WHICH in ['test', 'build'] %}
         {%- set test_name_in_graph = elementary.get_test_name_in_graph() %}
         {{- elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {#- creates temp relation for test metrics -#}
@@ -77,7 +77,6 @@
 
     {%- else %}
 
-        {{- elementary.test_log('no_monitors', full_table_name, 'all columns') }}
         {#- test must run an sql query -#}
         {{- elementary.no_results_query() }}
 
