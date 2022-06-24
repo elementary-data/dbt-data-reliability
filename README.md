@@ -9,7 +9,7 @@ To learn more on how to monitor your DWH, refer to our [main repo](https://githu
 
 **Elementary data monitors as tests are configured and executed like native tests in your project!**
 
-<img alt="UI" src="https://github.com/elementary-data/elementary/blob/update-readme/static/ui_for_git.png" width="800">
+<img alt="UI" src="https://github.com/elementary-data/elementary/blob/17e1fca57a98ce6151d1bb0edefb022a0aeecc68/static/ui_for_git.png" width="800">
 
 **Checkout the [live demo](https://www.elementary-data.com/data-observability-demo).**
 
