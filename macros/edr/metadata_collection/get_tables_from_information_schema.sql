@@ -23,7 +23,7 @@
         select
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
-        from {{ schema_relation.information_schema().replace(information_schema_view='SCHEMATA') }}
+        from {{ schema_relation.information_schema('SCHEMATA') }}
         where upper(schema_name) = upper('{{ schema_name }}')
 
     )
