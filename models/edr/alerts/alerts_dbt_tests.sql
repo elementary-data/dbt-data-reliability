@@ -32,7 +32,7 @@ alerts_dbt_tests as (
            severity,
            status
         from elementary_test_results
-        where lower(status) != 'pass' and test_type = 'dbt_test'
+        where lower(status) != 'pass' {%- if elementary.get_config_var('elementary_alerts_ignore_warn') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'dbt_test'
 )
 
 select * from alerts_dbt_tests
