@@ -1,7 +1,8 @@
 {% macro upload_dbt_artifacts(results) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run and results %}
-        {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
+        {% set database_name = elementary.get_config_var('elementary_artifacts_database') %}
+        {% set schema_name = elementary.get_config_var('elementary_artifacts_schema') %}
         {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
                                                                 schema=schema_name,
                                                                 identifier='dbt_run_results') -%}

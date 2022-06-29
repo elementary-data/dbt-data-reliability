@@ -12,6 +12,8 @@
     'elementary_debug_logs': false,
     'refresh_dbt_artifacts': false,
     'dbt_artifacts_chunk_size': 50,
+    'elementary_artifacts_database': target_database(),
+    'elementary_artifacts_schema': "elementary",
     'edr_cli_run': false,
     'max_int': 2147483647,
     'schemas_to_alert_on_new_tables': [],
