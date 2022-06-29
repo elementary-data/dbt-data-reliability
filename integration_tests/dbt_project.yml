@@ -22,7 +22,6 @@ on-run-end:
 vars:
   days_back: 30
   elementary_debug_logs: false
-  elementary_alerts_ignore_warn: true
 
 models:
   elementary:
