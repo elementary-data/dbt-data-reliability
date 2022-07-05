@@ -71,7 +71,11 @@
         {% set parent_model_owner = flatten_parent_model_node.get('owner') %}
         {% set parent_model_tags = flatten_parent_model_node.get('tags') %}
         {% if parent_model_owner %}
-            {% do parent_models_owners.append(parent_model_owner) %}
+            {% if parent_model_owner is string %}
+                {% do parent_models_owners.append(parent_model_owner) %}
+            {% elif parent_model_owner is iterable %}
+                {% do parent_models_owners.extend(parent_model_owner) %}
+            {% endif %}
         {% endif %}
         {% if parent_model_tags and parent_model_tags is sequence %}
             {% do parent_models_tags.extend(parent_model_tags) %}
