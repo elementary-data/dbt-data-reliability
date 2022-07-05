@@ -1,6 +1,7 @@
-
 target/
 dbt_packages/
 logs/
 scripts/
+
+.idea
 
