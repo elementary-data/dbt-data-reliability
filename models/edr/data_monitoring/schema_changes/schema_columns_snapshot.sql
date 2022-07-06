@@ -37,7 +37,6 @@ columns_snapshot as (
                 where detected_at = (select max(detected_at) from {{ this }})
                 )
             {% endset %}
-            {%- set known_tables = elementary.result_column_to_list(known_tables_query) %}
 
             case when
                 {{ elementary.full_column_name() }} not in {{ known_columns_query }}
