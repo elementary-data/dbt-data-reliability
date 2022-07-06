@@ -312,7 +312,7 @@ def main(target, e2e_type, generate_data):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'no_timestamp']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
     else:
         e2e_types = [e2e_type]
 
