@@ -25,20 +25,22 @@ columns_snapshot as (
 
         {% if is_incremental() %}
             {%- set known_columns_query %}
+                (
                 select full_column_name from {{ this }}
                 where detected_at = (select max(detected_at) from {{ this }})
+                )
             {% endset %}
-            {%- set known_columns = elementary.result_column_to_list(known_columns_query) %}
 
             {%- set known_tables_query %}
+                (
                 select distinct full_table_name from {{ this }}
                 where detected_at = (select max(detected_at) from {{ this }})
+                )
             {% endset %}
-            {%- set known_tables = elementary.result_column_to_list(known_tables_query) %}
 
             case when
-                {{ elementary.full_column_name() }} not in {{ elementary.strings_list_to_tuple(known_columns) }}
-                and full_table_name in {{ elementary.strings_list_to_tuple(known_tables) }}
+                {{ elementary.full_column_name() }} not in {{ known_columns_query }}
+                and full_table_name in {{ known_tables_query }}
             then true
             else false end
             as is_new
