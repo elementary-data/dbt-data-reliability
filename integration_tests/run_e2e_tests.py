@@ -5,7 +5,7 @@ import string
 import os
 from os.path import expanduser
 from pathlib import Path
-from monitor.dbt_runner import DbtRunner
+from clients.dbt.dbt_runner import DbtRunner
 import click
 
 any_type_columns = ['date', 'null_count', 'null_percent']
@@ -312,7 +312,7 @@ def main(target, e2e_type, generate_data):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'no_timestamp']
     else:
         e2e_types = [e2e_type]
 
