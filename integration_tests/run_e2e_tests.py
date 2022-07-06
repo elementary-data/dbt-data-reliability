@@ -1,16 +1,17 @@
 import csv
-from datetime import datetime, timedelta
+import os
 import random
 import string
-import os
+from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
-from clients.dbt.dbt_runner import DbtRunner
+
 import click
+from clients.dbt.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
-FILE_DIR = os.path.dirname(__file__)
+FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def generate_date_range(base_date, numdays=30):
@@ -43,7 +44,8 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
                 'min_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 10))),
                 'max_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 10))),
                 'average_length': ''.join(random.choices(string.ascii_lowercase, k=5)),
-                'missing_count': '' if row_index < (3 / 100 * rows_count) else ''.join(random.choices(string.ascii_lowercase, k=5)),
+                'missing_count': '' if row_index < (3 / 100 * rows_count) else ''.join(
+                    random.choices(string.ascii_lowercase, k=5)),
                 'missing_percent': '' if random.randint(1, rows_count) <= (20 / 100 * rows_count) else
                 ''.join(random.choices(string.ascii_lowercase, k=5))}
 
@@ -52,7 +54,8 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
                 'min_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(1, 10))),
                 'max_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 15))),
                 'average_length': ''.join(random.choices(string.ascii_lowercase, k=random.randint(5, 8))),
-                'missing_count': '' if row_index < (20 / 100 * rows_count) else ''.join(random.choices(string.ascii_lowercase, k=5)),
+                'missing_count': '' if row_index < (20 / 100 * rows_count) else ''.join(
+                    random.choices(string.ascii_lowercase, k=5)),
                 'missing_percent': '' if random.randint(1, rows_count) <= (60 / 100 * rows_count) else
                 ''.join(random.choices(string.ascii_lowercase, k=5))}
 
@@ -76,7 +79,8 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
                 'min': random.randint(100, 200),
                 'max': random.randint(100, 200),
                 'zero_count': 0 if row_index < (3 / 100 * rows_count) else random.randint(100, 200),
-                'zero_percent': 0 if random.randint(1, rows_count) <= (20 / 100 * rows_count) else random.randint(100, 200),
+                'zero_percent': 0 if random.randint(1, rows_count) <= (20 / 100 * rows_count) else random.randint(100,
+                                                                                                                  200),
                 'average': random.randint(99, 101),
                 'standard_deviation': random.randint(99, 101),
                 'variance': random.randint(99, 101)}
@@ -87,7 +91,8 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
                 'min': random.randint(10, 200),
                 'max': random.randint(100, 300),
                 'zero_count': 0 if row_index < (80 / 100 * rows_count) else random.randint(100, 200),
-                'zero_percent': 0 if random.randint(1, rows_count) <= (60 / 100 * rows_count) else random.randint(100, 200),
+                'zero_percent': 0 if random.randint(1, rows_count) <= (60 / 100 * rows_count) else random.randint(100,
+                                                                                                                  200),
                 'average': random.randint(101, 110),
                 'standard_deviation': random.randint(80, 120),
                 'variance': random.randint(80, 120)}
@@ -187,13 +192,14 @@ def e2e_tests(target, test_types):
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
-    
+
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
         # So we we convert the days_back value into int.
-        days_back_project_var = int(dbt_runner.run_operation(macro_name="return_config_var", macro_args={"var_name": "days_back"})[0])
+        days_back_project_var = int(
+            dbt_runner.run_operation(macro_name="return_config_var", macro_args={"var_name": "days_back"})[0])
         # No need to create todays metric because the validation run does it.
         for run_index in range(1, days_back_project_var):
             custom_run_time = (current_time - timedelta(run_index)).isoformat()
@@ -206,15 +212,14 @@ def e2e_tests(target, test_types):
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
 
-
     dbt_runner.run()
 
     if 'debug' in test_types:
         dbt_runner.test(select='tag:debug')
         return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
-                    artifacts_results]
-    
+                any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
+                artifacts_results]
+
     if 'no_timestamp' in test_types:
         dbt_runner.test(select='tag:no_timestamp')
         no_timestamp_test_results = dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
@@ -282,6 +287,7 @@ def print_tests_results(table_test_results,
     print_test_result_list(regular_test_results)
     print('\ndbt artifacts results')
     print_test_result_list(artifacts_results)
+
 
 @click.command()
 @click.option(
