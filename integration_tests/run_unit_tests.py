@@ -1,6 +1,6 @@
 import os
 from os.path import expanduser
-from monitor.dbt_runner import DbtRunner
+from clients.dbt.dbt_runner import DbtRunner
 import glob
 import click
 
