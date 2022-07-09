@@ -248,7 +248,6 @@ def e2e_tests(target, test_types):
         for schema_changes_log in schema_changes_logs:
             print(schema_changes_log)
 
-        dbt_runner.run()
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
         print_test_result_list(schema_changes_test_results)
