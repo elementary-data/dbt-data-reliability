@@ -113,8 +113,6 @@
 
     )
 
-    all_test_results_with_test_execution_id as (
-
         select {{ dbt_utils.surrogate_key([
                      'data_issue_id',
                      elementary.const_as_string(test_execution_id)
