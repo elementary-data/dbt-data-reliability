@@ -16,7 +16,7 @@
 
 {% macro test_log(msg_type, table_name, column_name=none) %}
     {% set monitored_table_not_found = 'Monitored table ' ~ table_name ~ ' not found' %}
-    {%- if column_name%}
+    {%- if column_name %}
         {%- set start = 'Started running data monitors on: ' ~ table_name ~ ' ' ~ column_name %}
         {%- set end = 'Finished running data monitors on: ' ~ table_name ~ ' ' ~ column_name %}
         {%- set no_monitors = 'No data monitors to run on: ' ~ table_name ~ ' ' ~ column_name %}

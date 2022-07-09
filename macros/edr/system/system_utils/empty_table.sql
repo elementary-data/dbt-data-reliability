@@ -10,6 +10,10 @@
     {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp')]) }}
 {% endmacro %}
 
+{% macro empty_schema_columns_snapshot() %}
+    {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp')]) }}
+{% endmacro %}
+
 
 {% macro empty_column_monitors_cte() %}
     {%- set column_monitors_list = elementary.all_column_monitors() %}
