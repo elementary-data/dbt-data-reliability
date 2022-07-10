@@ -14,6 +14,8 @@ model_alerts as (
            unique_id,
            generated_at as detected_at,
            database_name,
+           materialization,
+           path,
            schema_name,
            message,
            owner as owners,
@@ -26,4 +28,4 @@ model_alerts as (
 )
 
 select * from model_alerts
-{{ dbt_utils.group_by(11) }}
+{{ dbt_utils.group_by(13) }}
