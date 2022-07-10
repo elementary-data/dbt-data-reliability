@@ -4,8 +4,8 @@
 
 
 {% macro default__daily_buckets_cte() -%}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
 
     {%- set daily_buckets_cte %}
         with dates as (
@@ -23,8 +23,8 @@
 
 
 {% macro bigquery__daily_buckets_cte() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set min_bucket_end = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
 
     {%- set daily_buckets_cte %}
         select edr_daily_bucket
@@ -34,12 +34,12 @@
 {% endmacro %}
 
 {% macro redshift__daily_buckets_cte() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {%- set days_back = elementary.get_config_var('days_back') %}
 
     {%- set daily_buckets_cte %}
         {%- for i in range(0, days_back+1) %}
-            {%- set daily_bucket = "'"~ (run_started_at - modules.datetime.timedelta(i)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+            {%- set daily_bucket = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(i)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
             select {{ elementary.cast_as_timestamp(daily_bucket) }} as edr_daily_bucket
             {%- if not loop.last %} union all {%- endif %}
         {%- endfor %}

@@ -48,7 +48,7 @@
         'invocation_id': invocation_id,
         'unique_id': node.get('unique_id'),
         'name': node.get('name'),
-        'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'generated_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S'),
         'rows_affected': run_result_dict.get('adapter_response', {}).get('rows_affected'),
         'execution_time': run_result_dict.get('execution_time'),
         'status': run_result_dict.get('status'),
