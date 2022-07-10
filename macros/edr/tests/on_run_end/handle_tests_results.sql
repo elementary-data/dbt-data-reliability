@@ -31,7 +31,7 @@
                                                                                             flatten_test_node,
                                                                                             'schema_change')) %}
                     {%- else -%} {# warn or fail #}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_schmea_change(database_name,
+                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(database_name,
                                                                                                           schema_name,
                                                                                                           run_result_dict,
                                                                                                           flatten_test_node)) %}
@@ -71,7 +71,7 @@
     {{- return(anomaly_detection_test_results) -}}
 {%- endmacro -%}
 
-{%- macro get_test_result_per_schmea_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
     {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% for test_row_dict in test_row_dicts %}
