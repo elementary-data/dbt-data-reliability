@@ -1,5 +1,5 @@
 {% macro run_start_column() %}
-    cast ('{{ run_started_at.strftime("%Y-%m-%d %H:%M:%S") }}' as {{ dbt_utils.type_timestamp() }})
+    cast ('{{ elementary.get_run_started_at().strftime("%Y-%m-%d %H:%M:%S") }}' as {{ dbt_utils.type_timestamp() }})
 {% endmacro %}
 
 {% macro current_timestamp_column() %}
