@@ -7,10 +7,12 @@ dbt_models as (
 )
 
 SELECT
+    run_results.model_execution_id,
     run_results.unique_id,
     run_results.generated_at,
     run_results.status,
     run_results.full_refresh,
+    run_results.message,
     models.materialization,
     models.tags,
     models.path,
