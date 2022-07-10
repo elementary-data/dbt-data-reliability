@@ -11,8 +11,6 @@ with elementary_test_results as (
 
 alerts_dbt_tests as (
     select id as alert_id,
-           data_issue_id,
-           test_execution_id,
            test_unique_id,
            model_unique_id,
            detected_at,
@@ -27,13 +25,12 @@ alerts_dbt_tests as (
            tags,
            test_results_query as alert_results_query,
            other,
-           test_name,
+           test_name as name,
            test_params,
-           severity,
            status
         from elementary_test_results
         where lower(status) != 'pass' {%- if elementary.get_config_var('elementary_alerts_ignore_warn') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'dbt_test'
 )
 
 select * from alerts_dbt_tests
-{{ dbt_utils.group_by(21) }}
+{{ dbt_utils.group_by(18) }}
