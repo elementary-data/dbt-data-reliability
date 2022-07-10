@@ -13,6 +13,8 @@ SELECT
     run_results.status,
     run_results.full_refresh,
     run_results.message,
+    models.database_name,
+    models.schema_name,
     models.materialization,
     models.tags,
     models.path,
