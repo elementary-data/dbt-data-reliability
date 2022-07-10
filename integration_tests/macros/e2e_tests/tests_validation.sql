@@ -1,6 +1,6 @@
 {% macro tests_validation() %}
     {% if execute %}
-        {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
         -- no validation data which means table freshness and volume should alert
         {% if not elementary.table_exists_in_target('any_type_column_anomalies_validation') %}
             {{ validate_table_anomalies() }}
@@ -75,7 +75,7 @@
 {% endmacro %}
 
 {% macro validate_table_anomalies() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     -- no validation data which means table freshness and volume should alert
     {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
     {% set freshness_validation_query %}
@@ -100,7 +100,7 @@
 {% endmacro %}
 
 {% macro validate_string_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
     {% set string_column_alerts %}
     select distinct column_name
@@ -114,7 +114,7 @@
 {% endmacro %}
 
 {% macro validate_numeric_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
     {% set numeric_column_alerts %}
     select distinct column_name
@@ -129,7 +129,7 @@
 
 
 {% macro validate_any_type_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
     {% set any_type_column_alerts %}
         select column_name, sub_type
@@ -168,7 +168,7 @@
 {% endmacro %}
 
 {% macro validate_no_timestamp_anomalies() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
 
     {# Validating row count for no timestamp table anomaly #}
@@ -218,7 +218,7 @@
                                'group_b':   'type_changed',
                                'key_crosses': 'column_added',
                                'offsides': 'column_removed'} %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_schema_changes') %}
     {% set schema_changes_alerts %}
     select column_name, sub_type
@@ -248,7 +248,7 @@
 {% endmacro %}
 
 {% macro validate_regular_tests() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
     {% set dbt_test_alerts %}
         select table_name, column_name, test_name

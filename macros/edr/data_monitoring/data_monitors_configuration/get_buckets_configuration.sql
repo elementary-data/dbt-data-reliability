@@ -1,26 +1,26 @@
 {% macro get_global_min_bucket_start() %}
-    {%- set global_min_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set global_min_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {{ return(global_min_bucket_start) }}
 {% endmacro %}
 
 {% macro get_global_min_bucket_start_as_datetime() %}
-    {%- set global_min_bucket_start = run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back')) %}
+    {%- set global_min_bucket_start = elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back')) %}
     {{ return(global_min_bucket_start) }}
 {% endmacro %}
 
 {# bucket_end represents the end of the bucket, so we need to add extra day to the timedelta #}
 {% macro get_global_min_bucket_end_as_datetime() %}
-    {%- set global_min_bucket_end = run_started_at - modules.datetime.timedelta(elementary.get_config_var('days_back') + 1) %}
+    {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') + 1) %}
     {{ return(global_min_bucket_end) }}
 {% endmacro %}
 
 {% macro get_max_bucket_end() %}
-    {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {{ return(max_bucket_end) }}
 {% endmacro %}
 
 {% macro get_backfill_bucket_start(backfill_days) %}
-    {%- set backfill_bucket_start = "'"~ (run_started_at - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set backfill_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {{ return(backfill_bucket_start) }}
 {% endmacro %}
 

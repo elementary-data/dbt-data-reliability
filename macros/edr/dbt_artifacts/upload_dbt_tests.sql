@@ -136,7 +136,7 @@
         'original_path': original_file_path,
         'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
-        'generated_at': run_started_at.strftime('%Y-%m-%d %H:%M:%S')
+        'generated_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S')
     }%}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}

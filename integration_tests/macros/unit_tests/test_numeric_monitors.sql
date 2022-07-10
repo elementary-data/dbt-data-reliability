@@ -15,7 +15,7 @@
     {% do numeric_monitors.extend(default_all_types) %}
     {% do numeric_monitors.extend(default_numeric_monitors) %}
 
-    {%- set column_monitoring_query = elementary.column_monitoring_query(monitors_inputs_table_relation, none, false, run_started_at, column_object, numeric_monitors) %}
+    {%- set column_monitoring_query = elementary.column_monitoring_query(monitors_inputs_table_relation, none, false, elementary.get_run_started_at(), column_object, numeric_monitors) %}
     {%- set metrics_table_name = table_name ~ '__metrics' %}
     {%- set metrics_table_relation = get_or_create_unit_test_table_relation(metrics_table_name)[1] -%}
     {%- do elementary.create_or_replace(False, metrics_table_relation, column_monitoring_query) %}
