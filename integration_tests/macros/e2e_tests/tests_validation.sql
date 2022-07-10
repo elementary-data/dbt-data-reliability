@@ -215,7 +215,7 @@
 {% macro validate_schema_changes() %}
     {% set expected_changes = {'red_cards': 'column_added',
                                'group_a':   'column_removed',
-                               'group_b':   'type_changed',
+                               'goals':   'type_changed',
                                'key_crosses': 'column_added',
                                'offsides': 'column_removed'} %}
     {%- set max_bucket_end = "'"~ run_started_at.strftime("%Y-%m-%d 00:00:00")~"'" %}
@@ -242,7 +242,17 @@
         {% do found_schema_changes.update({column_name: alert}) %}
     {% endfor %}
     {% if found_schema_changes %}
-        {% do elementary.edr_log("SUCCESS: all expected schema changes were found - " ~ found_schema_changes) %}
+        {%- set missing_changes = [] %}
+        {%- for expected_change in expected_changes %}
+            {%- if expected_change | lower not in found_schema_changes %}
+                {% do elementary.edr_log("FAILED: for column " ~ expected_change ~ " expected alert " ~ expected_changes[expected_change] ~ " but alert is missing") %}
+                {%- do missing_changes.append(expected_change) -%}
+            {%- endif %}
+        {%- endfor %}
+        {%- if missing_changes | length == 0 %}
+            {% do elementary.edr_log("SUCCESS: all expected schema changes were found - " ~ found_schema_changes) %}
+            {{ return(0) }}
+        {%- endif %}
     {% endif %}
     {{ return(0) }}
 {% endmacro %}

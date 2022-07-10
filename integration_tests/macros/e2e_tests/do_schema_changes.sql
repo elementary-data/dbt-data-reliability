@@ -19,13 +19,12 @@
         add column key_crosses {{ elementary.type_string() }};
 
     {# column_type_change #}
-    {# alter table {{ ref('groups') }}
-        drop column group_b;
-    alter table {{ ref('groups') }}
-        add column group_b {{ dbt_utils.type_int() }}; #}
+    alter table {{ ref('stats_team') }}
+        drop column goals;
+    alter table {{ ref('stats_team') }}
+        add column goals {{ dbt_utils.type_string() }};
 
-    {# table_removed #}
-    drop table {{ ref('stats_team') }};
+
 
     {%- endset %}
     {% do run_query(schema_changes_query) %}

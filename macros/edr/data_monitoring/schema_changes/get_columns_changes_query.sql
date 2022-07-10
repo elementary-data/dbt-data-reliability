@@ -16,7 +16,6 @@
         from {{ ref('schema_columns_snapshot') }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
         order by detected_at desc
-        limit 1
 
     ),
 
