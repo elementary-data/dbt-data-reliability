@@ -7,7 +7,7 @@
 {% endmacro %}
 
 {% macro bigquery__to_char(column, format) %}
-    cast({{ column }} as STRING {%- if format %}FORMAT '{{ format }}'){%- else %}){%- endif %}
+    cast({{ column }} as STRING {%- if format %} FORMAT '{{ format }}'){%- else %}){%- endif %}
 {% endmacro %}
 
 {% macro redshift__to_char(column, format) %}
