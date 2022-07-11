@@ -19,6 +19,7 @@ score_sensitivity as (
         metric_name,
         latest_metric_value,
         training_avg as metric_avg,
+        training_stddev as metric_stddev,
         anomaly_score,
         case when abs(anomaly_score) >= 1.5 then true else false end as {{ elementary.quote_column('is_anomaly_1_5') }},
         case when abs(anomaly_score) >= 2 then true else false end as {{ elementary.quote_column('is_anomaly_2') }},
