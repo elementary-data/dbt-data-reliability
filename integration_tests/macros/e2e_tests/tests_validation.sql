@@ -77,7 +77,7 @@
 {% macro validate_table_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     -- no validation data which means table freshness and volume should alert
-    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
     {% set freshness_validation_query %}
         select distinct table_name
             from {{ alerts_relation }}
@@ -101,7 +101,7 @@
 
 {% macro validate_string_column_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
     {% set string_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
@@ -115,7 +115,7 @@
 
 {% macro validate_numeric_column_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
     {% set numeric_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
@@ -130,7 +130,7 @@
 
 {% macro validate_any_type_column_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
     {% set any_type_column_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
@@ -169,7 +169,7 @@
 
 {% macro validate_no_timestamp_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_data_monitoring') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
 
     {# Validating row count for no timestamp table anomaly #}
     {% set no_timestamp_row_count_validation_query %}
