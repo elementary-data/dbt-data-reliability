@@ -130,7 +130,7 @@
         'schema_name': primary_test_model_schema,
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
-        'test_model_unique_id': primary_test_model_id,
+        'parent_model_unique_id': primary_test_model_id,
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
