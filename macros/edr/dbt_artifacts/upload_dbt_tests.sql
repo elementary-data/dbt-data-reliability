@@ -81,6 +81,8 @@
             {% do parent_models_tags.extend(parent_model_tags) %}
         {% endif %}
     {% endfor %}
+    {% set parent_models_owners = parent_models_owners | unique | list %}
+    {% set parent_models_tags = parent_models_tags | unique | list %}
 
     {% set primary_parent_model_database, primary_parent_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
