@@ -62,49 +62,51 @@
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
     {% set tags = elementary.union_lists(tags, meta_tags) %}
 
-    {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node_dict) %}
-    {% set parent_model_nodes = elementary.get_nodes_by_unique_ids(parent_model_unique_ids) %}
-    {% set parent_models_owners = [] %}
-    {% set parent_models_tags = [] %}
-    {% for parent_model_node in parent_model_nodes %}
-        {% set flatten_parent_model_node = elementary.flatten_model(parent_model_node) %}
-        {% set parent_model_owner = flatten_parent_model_node.get('owner') %}
-        {% set parent_model_tags = flatten_parent_model_node.get('tags') %}
-        {% if parent_model_owner %}
-            {% if parent_model_owner is string %}
-                {% do parent_models_owners.append(parent_model_owner) %}
-            {% elif parent_model_owner is iterable %}
-                {% do parent_models_owners.extend(parent_model_owner) %}
+    {% set test_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(node_dict) %}
+    {% set test_model_nodes = elementary.get_nodes_by_unique_ids(test_model_unique_ids) %}
+    {% set test_models_owners = [] %}
+    {% set test_models_tags = [] %}
+    {% for test_model_node in test_model_nodes %}
+        {% set flatten_test_model_node = elementary.flatten_model(test_model_node) %}
+        {% set test_model_owner = flatten_test_model_node.get('owner') %}
+        {% if test_model_owner %}
+            {% if test_model_owner is string %}
+                {% do test_models_owners.append(test_model_owner) %}
+            {% elif test_model_owner is iterable %}
+                {% do test_models_owners.extend(test_model_owner) %}
             {% endif %}
         {% endif %}
-        {% if parent_model_tags and parent_model_tags is sequence %}
-            {% do parent_models_tags.extend(parent_model_tags) %}
+        {% set test_model_tags = flatten_test_model_node.get('tags') %}
+        {% if test_model_tags and test_model_tags is sequence %}
+            {% do test_models_tags.extend(test_model_tags) %}
         {% endif %}
     {% endfor %}
+    {% set test_models_owners = test_models_owners | unique | list %}
+    {% set test_models_tags = test_models_tags | unique | list %}
 
-    {% set primary_parent_model_database, primary_parent_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
+    {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
     {% set test_model_jinja = test_kwargs.get('model') %}
-    {%- if parent_model_unique_ids | length == 1 -%}
+    {%- if test_model_unique_ids | length == 1 -%}
         {# if only one parent model for this test, simply use this model #}
-        {% set primary_parent_model_id = parent_model_unique_ids[0] %}
+        {% set primary_test_model_id = test_model_unique_ids[0] %}
     {%- else -%}
         {# if there are multiple parent models for a test, try finding it using the model jinja in the test graph node #}
-        {% set primary_parent_model_id = none %}
+        {% set primary_test_model_id = none %}
         {% if test_model_jinja %}
-            {% set primary_parent_model_candidates = [] %}
-            {% for parent_model_unique_id in parent_model_unique_ids %}
-                {% set split_parent_model_unique_id = parent_model_unique_id.split('.') %}
-                {% if split_parent_model_unique_id and split_parent_model_unique_id | length > 0 %}
-                    {% set parent_model_name = split_parent_model_unique_id[-1] %}
-                    {% if parent_model_name and parent_model_name in test_model_jinja %}
-                        {% do primary_parent_model_candidates.append(parent_model_unique_id) %}
+            {% set primary_test_model_candidates = [] %}
+            {% for test_model_unique_id in test_model_unique_ids %}
+                {% set split_test_model_unique_id = test_model_unique_id.split('.') %}
+                {% if split_test_model_unique_id and split_test_model_unique_id | length > 0 %}
+                    {% set test_model_name = split_test_model_unique_id[-1] %}
+                    {% if test_model_name and test_model_name in test_model_jinja %}
+                        {% do primary_test_model_candidates.append(test_model_unique_id) %}
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            {% if primary_parent_model_candidates | length == 1 %}
-                {% set primary_parent_model_id = primary_parent_model_candidates[0] %}
+            {% if primary_test_model_candidates | length == 1 %}
+                {% set primary_test_model_id = primary_test_model_candidates[0] %}
             {% endif %}
         {% endif %}
     {%- endif -%}
@@ -121,14 +123,14 @@
         'test_params': test_kwargs,
         'test_namespace': test_metadata.get('namespace'),
         'tags': tags,
-        'model_tags': parent_models_tags,
-        'model_owners': parent_models_owners,
+        'model_tags': test_models_tags,
+        'model_owners': test_models_owners,
         'meta': meta_dict,
-        'database_name': primary_parent_model_database,
-        'schema_name': primary_parent_model_schema,
+        'database_name': primary_test_model_database,
+        'schema_name': primary_test_model_schema,
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
-        'parent_model_unique_id': primary_parent_model_id,
+        'test_model_unique_id': primary_test_model_id,
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
