@@ -1,4 +1,4 @@
-{% macro get_package_database_and_schema(package_name) %}
+{% macro get_package_database_and_schema(package_name='elementary') %}
     {% if execute %}
         {% set node_in_package = graph.nodes.values()
                                  | selectattr("resource_type", "==", "model")
