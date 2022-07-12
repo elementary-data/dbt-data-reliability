@@ -1,19 +1,15 @@
 {% macro get_columns_snapshot_query(full_table_name) %}
 
     {%- set known_columns_query %}
-        (
         select full_column_name from {{ ref('schema_columns_snapshot') }}
         where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }})
         and lower(full_table_name) = lower('{{ full_table_name }}')
-        )
     {% endset %}
 
     {%- set known_tables_query %}
-        (
         select distinct full_table_name from {{ ref('schema_columns_snapshot') }}
         where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }})
         and lower(full_table_name) = lower('{{ full_table_name }}')
-        )
     {% endset %}
 
 
@@ -35,8 +31,8 @@
             cast(data_type as {{ dbt_utils.type_string() }}) as data_type,
             {{ elementary.run_start_column() }} as detected_at,
             case when
-                    {{ elementary.full_column_name() }} not in {{ known_columns_query }}
-                    and full_table_name in {{ known_tables_query }}
+                    {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
+                    and full_table_name in ({{ known_tables_query }})
                 then true
                 else false
             end as is_new

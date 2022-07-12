@@ -107,7 +107,7 @@
             'schema_change' as test_type,
             change as test_sub_type,
             case
-                when change= 'column_added'
+                when change = 'column_added'
                     then 'The column "' || column_name || '" was added'
                 when change= 'column_removed'
                     then 'The column "' || column_name || '" was removed'
