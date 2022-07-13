@@ -1,4 +1,4 @@
-{% macro get_configured_schemas_from_graph() %}
+{% macro get_schemas_for_tests_from_graph() %}
     {% set configured_schemas = [] %}
     {% if execute %}
         {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
@@ -21,4 +21,21 @@
         {% endfor %}
     {% endif %}
     {{ return(configured_schemas | unique | list ) }}
+{% endmacro %}
+
+
+{% macro get_schemas_for_tests_from_graph_as_tuple() %}
+
+    {%- set tests_schemas_tuples = elementary.get_schemas_for_tests_from_graph() %}
+    {%- set schemas_list = [] %}
+
+    {%- for tests_schemas_tuple in tests_schemas_tuples %}
+        {%- set database_name, schema_name = tests_schemas_tuple %}
+        {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
+        {%- do schemas_list.append(full_schema_name) -%}
+    {%- endfor %}
+
+    {% set schemas_tuple = elementary.strings_list_to_tuple(schemas_list) %}
+    {{ return(schemas_tuple) }}
+
 {% endmacro %}

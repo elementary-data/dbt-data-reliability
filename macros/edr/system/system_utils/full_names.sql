@@ -65,20 +65,3 @@
     {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {{ return(full_table_name) }}
 {% endmacro %}
-
-
-{% macro configured_schemas_from_graph_as_tuple() %}
-
-    {%- set configured_schema_tuples = elementary.get_configured_schemas_from_graph() %}
-    {%- set schemas_list = [] %}
-
-    {%- for configured_schema_tuple in configured_schema_tuples %}
-        {%- set database_name, schema_name = configured_schema_tuple %}
-        {%- set full_schema_name = database_name | upper ~ '.' ~ schema_name | upper %}
-        {%- do schemas_list.append(full_schema_name) -%}
-    {%- endfor %}
-
-    {% set schemas_tuple = elementary.strings_list_to_tuple(schemas_list) %}
-    {{ return(schemas_tuple) }}
-
-{% endmacro %}

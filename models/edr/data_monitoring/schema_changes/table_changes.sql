@@ -37,7 +37,7 @@ table_removed as (
     from pre left join cur
         on (cur.full_table_name = pre.full_table_name and cur.full_schema_name = pre.full_schema_name)
     where cur.full_table_name is null
-    and pre.full_schema_name in {{ elementary.configured_schemas_from_graph_as_tuple() }}
+    and pre.full_schema_name in {{ elementary.get_schemas_for_tests_from_graph_as_tuple() }}
 
 ),
 

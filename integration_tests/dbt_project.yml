@@ -19,6 +19,10 @@ clean-targets: # directories to be removed by `dbt clean`
 on-run-end:
   - "{{ elementary.upload_dbt_artifacts(results) }}"
 
+query-comment:
+  comment: "{{ elementary.query_comment(node) }}"
+  append: True
+
 vars:
   days_back: 30
   elementary_debug_logs: false
