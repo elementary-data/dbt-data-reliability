@@ -193,7 +193,7 @@
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(test_node, 'unique_id'),
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
-        'detected_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S'),
+        'detected_at': elementary.insensitive_get_dict_value(test_node, 'generated_at'),
         'database_name': elementary.insensitive_get_dict_value(test_node, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(test_node, 'schema_name'),
         'table_name': parent_model_name,
