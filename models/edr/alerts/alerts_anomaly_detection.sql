@@ -36,4 +36,3 @@ alerts_anomaly_detection as (
 )
 
 select * from alerts_anomaly_detection
-{{ dbt_utils.group_by(21) }}

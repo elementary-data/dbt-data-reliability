@@ -28,4 +28,3 @@ model_alerts as (
 )
 
 select * from model_alerts
-{{ dbt_utils.group_by(13) }}
