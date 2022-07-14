@@ -1,5 +1,6 @@
 {% macro handle_test_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
+        {{ elementary.edr_log("Handling test results.") }}
         {% set test_metrics_tables = [] %}
         {% set elementary_test_results = [] %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
@@ -51,6 +52,7 @@
             {%- do elementary.insert_dicts(elementary_test_results_relation, elementary_test_results, should_commit=True) -%}
         {% endif %}
     {% endif %}
+    {{ elementary.edr_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
 
