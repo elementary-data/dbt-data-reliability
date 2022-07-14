@@ -9,7 +9,7 @@ with elementary_test_results as (
     select * from {{ ref('elementary_test_results') }}
 ),
 
-alerts_data_monitoring as (
+alerts_anomaly_detection as (
     select id as alert_id,
            data_issue_id,
            test_execution_id,
@@ -20,12 +20,12 @@ alerts_data_monitoring as (
            schema_name,
            table_name,
            column_name,
-           test_type as alert_type,
-           test_sub_type as sub_type,
-           test_results_description as alert_description,
+           test_type,
+           test_sub_type,
+           test_results_description,
            owners,
            tags,
-           test_results_query as alert_results_query,
+           test_results_query,
            other,
            test_name,
            test_params,
@@ -33,8 +33,6 @@ alerts_data_monitoring as (
            status
         from elementary_test_results
         where lower(status) != 'pass' {%- if elementary.get_config_var('elementary_alerts_ignore_warn') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'anomaly_detection'
-
 )
 
-select * from alerts_data_monitoring
-{{ dbt_utils.group_by(21) }}
+select * from alerts_anomaly_detection

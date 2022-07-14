@@ -1,5 +1,6 @@
 {% macro handle_test_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
+        {{ elementary.edr_log("Handling test results.") }}
         {% set test_metrics_tables = [] %}
         {% set elementary_test_results = [] %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
@@ -31,7 +32,7 @@
                                                                                             flatten_test_node,
                                                                                             'schema_change')) %}
                     {%- else -%} {# warn or fail #}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_schmea_change(database_name,
+                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(database_name,
                                                                                                           schema_name,
                                                                                                           run_result_dict,
                                                                                                           flatten_test_node)) %}
@@ -51,6 +52,7 @@
             {%- do elementary.insert_dicts(elementary_test_results_relation, elementary_test_results, should_commit=True) -%}
         {% endif %}
     {% endif %}
+    {{ elementary.edr_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
 
@@ -71,7 +73,7 @@
     {{- return(anomaly_detection_test_results) -}}
 {%- endmacro -%}
 
-{%- macro get_test_result_per_schmea_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
     {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% for test_row_dict in test_row_dicts %}
@@ -193,7 +195,7 @@
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(test_node, 'unique_id'),
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
-        'detected_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S'),
+        'detected_at': elementary.insensitive_get_dict_value(test_node, 'generated_at'),
         'database_name': elementary.insensitive_get_dict_value(test_node, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(test_node, 'schema_name'),
         'table_name': parent_model_name,

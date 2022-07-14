@@ -1,16 +1,5 @@
 {% macro upload_dbt_artifacts(results) %}
-    {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run and results %}
-        {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
-        {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
-                                                                schema=schema_name,
-                                                                identifier='dbt_run_results') -%}
-        {%- if dbt_run_results_relation -%}
-            {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.get_flatten_run_result_callback(),
-                                                       should_commit=True) %}
-        {%- endif -%}
-    {% endif %}
-    {{ return ('') }}
+        {% do elementary.edr_log("Deprecated - Please remove the call to elementary.upload_dbt_artifacts() on your on-run-end hook as it happens automatically now.") %}
 {% endmacro %}
 
 
@@ -20,6 +9,7 @@
                                                                        ('invocation_id', 'string'),
                                                                        ('generated_at', 'string'),
                                                                        ('name', 'long_string'),
+                                                                       ('message', 'long_string'),
                                                                        ('status', 'string'),
                                                                        ('resource_type', 'string'),
                                                                        ('execution_time', 'float'),
@@ -48,6 +38,7 @@
         'invocation_id': invocation_id,
         'unique_id': node.get('unique_id'),
         'name': node.get('name'),
+        'message': run_result_dict.get('message'),
         'generated_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S'),
         'rows_affected': run_result_dict.get('adapter_response', {}).get('rows_affected'),
         'execution_time': run_result_dict.get('execution_time'),

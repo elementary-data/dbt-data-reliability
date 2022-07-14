@@ -20,12 +20,12 @@ alerts_dbt_tests as (
            schema_name,
            table_name,
            column_name,
-           test_type as alert_type,
-           test_sub_type as sub_type,
-           test_results_description as alert_description,
+           test_type,
+           test_sub_type,
+           test_results_description,
            owners,
            tags,
-           test_results_query as alert_results_query,
+           test_results_query,
            other,
            test_name,
            test_params,
@@ -36,4 +36,3 @@ alerts_dbt_tests as (
 )
 
 select * from alerts_dbt_tests
-{{ dbt_utils.group_by(21) }}
