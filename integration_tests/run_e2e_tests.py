@@ -5,9 +5,8 @@ import string
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
-
-import click
 from clients.dbt.dbt_runner import DbtRunner
+import click
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -181,6 +180,11 @@ def e2e_tests(target, test_types):
         print(clear_test_log)
 
     dbt_runner.seed(select='training')
+    if 'schema' in test_types:
+        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
+        # normal schema
+        dbt_runner.seed(select='schema_changes_data')
+
     dbt_runner.run(full_refresh=True)
 
     if 'table' in test_types:
@@ -192,7 +196,7 @@ def e2e_tests(target, test_types):
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
-
+    
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
@@ -211,6 +215,7 @@ def e2e_tests(target, test_types):
         # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
+
 
     dbt_runner.run()
 
@@ -238,11 +243,11 @@ def e2e_tests(target, test_types):
         print_test_result_list(any_type_column_anomalies_test_results)
 
     if 'schema' in test_types:
+        dbt_runner.test(select='tag:schema_changes')
         schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
         for schema_changes_log in schema_changes_logs:
             print(schema_changes_log)
 
-        dbt_runner.run()
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
         print_test_result_list(schema_changes_test_results)
@@ -287,7 +292,6 @@ def print_tests_results(table_test_results,
     print_test_result_list(regular_test_results)
     print('\ndbt artifacts results')
     print_test_result_list(artifacts_results)
-
 
 @click.command()
 @click.option(

@@ -2,6 +2,7 @@
     {% if execute and flags.WHICH in ['test', 'build'] %}
         {{ elementary.edr_log("Handling test results.") }}
         {% set test_metrics_tables = [] %}
+        {% set test_columns_snapshot_tables = [] %}
         {% set elementary_test_results = [] %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% for result in results | selectattr('node.resource_type', '==', 'test') %}
@@ -27,6 +28,10 @@
                                                                                                    flatten_test_node)) %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
+                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
+                    {% if test_columns_snapshot_table %}
+                        {% do test_columns_snapshot_tables.append(test_columns_snapshot_table) %}
+                    {% endif %}
                     {% if status == 'error' or status == 'pass' %}
                         {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
                                                                                             flatten_test_node,
@@ -45,6 +50,7 @@
             {% endif %}
         {% endfor %}
         {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
+        {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
         {% if elementary_test_results %}
             {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
                                                                             schema=schema_name,
@@ -255,17 +261,11 @@
     {{ return(test_table_relation) }}
 {% endmacro %}
 
-{% macro get_data_monitoring_metrics_relation(database_name, schema_name) %}
-    {%- set data_monitoring_metrics_relation = adapter.get_relation(database=database_name,
-                                                                    schema=schema_name,
-                                                                    identifier='data_monitoring_metrics') -%}
-    {{ return(data_monitoring_metrics_relation) }}
-{% endmacro %}
 
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {%- if test_metrics_tables %}
         {%- set test_tables_union_query = elementary.union_metrics_query(test_metrics_tables) -%}
-        {%- set target_relation = elementary.get_data_monitoring_metrics_relation(database_name, schema_name) -%}
+        {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
@@ -284,5 +284,26 @@
     {%- endif %}
 {% endmacro %}
 
+{% macro merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
+    {%- if test_columns_snapshot_tables %}
+        {%- set test_tables_union_query = elementary.union_columns_snapshot_query(test_columns_snapshot_tables) -%}
+        {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
+        {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
+        {%- if test_tables_union_query %}
+            {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
+            {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {{ elementary.debug_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
+            {%- if target_relation and temp_relation and dest_columns %}
+                {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'column_state_id', dest_columns) %}
+                {%- do run_query(merge_sql) %}
+                {%- do adapter.commit() -%}
+                {{ elementary.debug_log('Finished merging') }}
+            {%- else %}
+                {{ elementary.debug_log('Error: could not merge to table: ' ~ target_name) }}
+            {%- endif %}
+        {%- endif %}
+    {%- endif %}
+{% endmacro %}
 
 
