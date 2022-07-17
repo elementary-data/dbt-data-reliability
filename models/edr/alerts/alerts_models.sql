@@ -1,7 +1,8 @@
 {{
   config(
-    materialized = 'view',
-    bind=False
+    materialized = 'incremental',
+    unique_key = 'alert_id',
+    merge_update_columns = ['alert_id']
   )
 }}
 
@@ -17,6 +18,11 @@ select model_execution_id as alert_id,
        tags,
        alias,
        status,
-       full_refresh
+       full_refresh,
+       false as alert_sent
 from {{ ref('model_run_results') }}
 where {{ not elementary.get_config_var('disable_model_alerts') }} and lower(status) != 'success'
+
+{%- if is_incremental() %}
+    and {{ get_new_alerts_where_clause(this) }}
+{%- endif %}
