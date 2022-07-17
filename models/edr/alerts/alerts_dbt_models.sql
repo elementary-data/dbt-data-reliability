@@ -24,7 +24,7 @@ model_alerts as (
            status,
            full_refresh
     from model_run_results
-    where lower(status) != 'success'
+    where {{ not elementary.get_config_var('disable_model_alerts') }} and lower(status) != 'success'
 )
 
 select * from model_alerts

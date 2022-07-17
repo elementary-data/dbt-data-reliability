@@ -12,6 +12,8 @@
     'elementary_debug_logs': false,
     'refresh_dbt_artifacts': false,
     'elementary_alerts_ignore_warn': false,
+    'disable_model_alerts': false,
+    'disable_dbt_artifacts': false,
     'dbt_artifacts_chunk_size': 50,
     'edr_cli_run': false,
     'max_int': 2147483647,
