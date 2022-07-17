@@ -1,3 +1,10 @@
+{{
+  config(
+    materialized = 'view',
+    bind=False
+  )
+}}
+
 with dbt_run_results as (
     select * from {{ ref('dbt_run_results') }}
 ),
