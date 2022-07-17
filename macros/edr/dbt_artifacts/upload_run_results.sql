@@ -1,6 +1,6 @@
 {% macro upload_run_results(results) %}
-    {% if elementary.get_config_var('disable_dbt_artifacts') %}
-        {% do elementary.edr_log("dbt artifacts are disabled, not uploading the run results.") %}
+    {% if elementary.get_config_var('disable_run_results') %}
+        {% do elementary.edr_log("Run results are disabled, skipping upload.") %}
         {{ return('') }}
     {% endif %}
     {{ elementary.edr_log("Uploading run results.") }}
