@@ -197,6 +197,11 @@ def e2e_tests(target, test_types):
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
     
+    if 'error' in test_types:
+        dbt_runner.test(select='tag:error_test')
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_test')
+        print_test_result_list(error_test_results)
+    
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
@@ -304,7 +309,7 @@ def print_tests_results(table_test_results,
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / regular / artifacts / no_timestamp / debug / all (default = all)"
+    help="table / column / schema / regular / artifacts / error / no_timestamp / debug / all (default = all)"
 )
 @click.option(
     '--generate-data', '-g',
@@ -322,7 +327,7 @@ def main(target, e2e_type, generate_data):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error']
     else:
         e2e_types = [e2e_type]
 
