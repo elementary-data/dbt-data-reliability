@@ -8,7 +8,7 @@
 with failed_tests as (
      select * from {{ ref('elementary', 'alerts_schema_changes') }}
      union all
-     select * from {{ ref('elementary', 'alerts_anomaly_detection') }}
+     select * from {{ ref('elementary', 'alerts_data_monitoring') }}
      union all
      select * from {{ ref('elementary', 'alerts_dbt_tests') }}
 )
