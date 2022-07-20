@@ -11,9 +11,8 @@ with failed_tests as (
      select * from {{ ref('elementary', 'alerts_dbt_tests') }}
      union all
 
-    {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
-    {% set anomaly_detection_relation = adapter.get_relation(elementary_database, elementary_schema, 'alerts_anomaly_detection') %}
-    {% set data_monitoring_relation = adapter.get_relation(elementary_database, elementary_schema, 'alerts_data_monitoring') %}
+    {% set anomaly_detection_relation = adapter.get_relation(this.database, this.schema, 'alerts_anomaly_detection') %}
+    {% set data_monitoring_relation = adapter.get_relation(this.database, this.schema, 'alerts_data_monitoring') %}
 
     {% if anomaly_detection_relation %}
         select * from {{ anomaly_detection_relation }}
