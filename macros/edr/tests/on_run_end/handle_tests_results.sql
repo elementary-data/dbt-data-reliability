@@ -1,6 +1,6 @@
 {% macro handle_tests_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
-        {{ elementary.edr_log("Handling test results.") }}
+        {{ elementary.debug_log("Handling test results.") }}
         {% set test_metrics_tables = [] %}
         {% set test_columns_snapshot_tables = [] %}
         {% set elementary_test_results = [] %}
