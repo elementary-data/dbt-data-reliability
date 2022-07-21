@@ -5,7 +5,7 @@
             {% do elementary.edr_log("Run results are disabled, skipping upload.") %}
             {{ return('') }}
         {% endif %}
-        {{ elementary.edr_log("Uploading run results.") }}
+        {{ elementary.debug_log("Uploading run results.") }}
         {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
         {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
                                                                 schema=schema_name,
