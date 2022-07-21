@@ -5,6 +5,13 @@
   )
 }}
 
+with error_models as (
+    select * from {{ ref('elementary', 'model_run_results') }}
+    union all
+    select * from {{ ref('elementary', 'snapshot_run_results') }}
+)
+
+
 select model_execution_id as alert_id,
        unique_id,
        generated_at as detected_at,
@@ -19,5 +26,5 @@ select model_execution_id as alert_id,
        alias,
        status,
        full_refresh
-from {{ ref('model_run_results') }}
+from error_models
 where {{ not elementary.get_config_var('disable_model_alerts') }} and lower(status) != 'success'
