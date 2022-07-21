@@ -19,5 +19,8 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-on-run-start: "{{ elementary.on_run_start() }}"
-on-run-end: "{{ elementary.on_run_end() }}"
+on-run-start:
+  - "{{ elementary.create_elementary_tests_schema() if flags.WHICH in ['test', 'build'] }}"
+on-run-end:
+  - "{{ elementary.handle_tests_results(results) if flags.WHICH in ['test', 'build'] }}"
+  - "{{ elementary.upload_run_results(results) }}"
