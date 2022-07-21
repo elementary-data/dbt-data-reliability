@@ -213,7 +213,7 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
 
     {# Validating alert for error test was created #}
@@ -224,6 +224,34 @@
         and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_test_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_error_model() %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
+    {% set alerts_relation = get_alerts_table_relation('error_models') %}
+
+    {% set error_model_validation_query %}
+        select distinct status
+        from {{ alerts_relation }}
+        where status = 'error'
+        and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(error_model_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_error_snapshot() %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
+    {% set alerts_relation = get_alerts_table_relation('error_models') %}
+
+    {% set error_snapshot_validation_query %}
+        select distinct status
+        from {{ alerts_relation }}
+        where status = 'error' and materialization = 'snapshot'
+        and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(error_snapshot_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 

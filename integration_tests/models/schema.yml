@@ -42,6 +42,8 @@ models:
 
   - name: error_model
     description: We use this model to create error runs and tests
+    config:
+      tags: ["error_model"]
     columns:
       - name: "missing_column"
         tests:
