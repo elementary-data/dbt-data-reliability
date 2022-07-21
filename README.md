@@ -7,7 +7,7 @@ Data Observability for Analytics Engineers
 
 
 ##
-Elementary enables you to **monitor your data and dbt operation.** To learn more, refer to our [main repo](https://github.com/elementary-data/elementary). 
+Elementary enables you to **monitor your data and dbt operation.** To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
 
 
 ## Quick start
@@ -36,8 +36,9 @@ Run ```dbt deps``` and ```dbt run --select elementary```.
 
 Check out the [full documentation](https://docs.elementary-data.com/). 
 
-## dbt artifacts, Tests and Models run results
-Uploading and modeling to enable operational monitoring and enrich anomalies alerts, the package includes a **dbt artifacts uploader**. 
+## Run Results and dbt artifacts
+The package automatically uploads the dbt artifacts artifacts and run results to your tables in your data warehouse.
+
 
 ## Data anomalies detection as dbt tests 
 
@@ -46,17 +47,37 @@ Executed as any other dbt tests, the Elementary tests alert on anomalies and out
 
 **Elementary tests are configured and executed like native tests in your project!**
 
+
+Example of Elementary test config in ```properties.yml```:
+```yml
+models:
+  - name: your_model_name
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+        - elementary.table_anomalies
+        - elementary.all_columns_anomalies
+```
+
+
+
 ## Data observability report
 <img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/ui_for_git.png" width="800">
 
 **Checkout the [live demo](https://bit.ly/3IXKShW).**
 
-## High level architecture 
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/High_level_flow.png" width="800">
 
 
 ## Slack alerts
 <img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/Slack_alert_elementary.png" width="600">
+
+
+
+## High level architecture 
+<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/High_level_flow.png" width="800">
+
+
 
 
 ## Data warehouse support
