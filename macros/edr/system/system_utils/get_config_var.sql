@@ -11,7 +11,7 @@
     'alert_dbt_model_skip': true,
     'elementary_debug_logs': false,
     'refresh_dbt_artifacts': false,
-    'elementary_alerts_ignore_warn': false,
+    'disable_warn_alerts': false,
     'disable_model_alerts': false,
     'disable_test_alerts': false,
     'disable_run_results': false,
