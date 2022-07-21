@@ -1,3 +1,10 @@
+{{
+  config(
+    materialized = 'view',
+    bind=False
+  )
+}}
+
 with dbt_run_results as (
     select * from {{ ref('dbt_run_results') }}
 ),
@@ -18,6 +25,7 @@ SELECT
     models.materialization,
     models.tags,
     models.path,
+    models.original_path,
     models.owner,
     models.alias
 FROM dbt_run_results run_results

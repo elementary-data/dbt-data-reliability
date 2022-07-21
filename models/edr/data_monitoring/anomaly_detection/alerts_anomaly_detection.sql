@@ -9,7 +9,7 @@ with elementary_test_results as (
     select * from {{ ref('elementary_test_results') }}
 ),
 
-alerts_dbt_tests as (
+alerts_anomaly_detection as (
     select id as alert_id,
            data_issue_id,
            test_execution_id,
@@ -32,7 +32,7 @@ alerts_dbt_tests as (
            severity,
            status
         from elementary_test_results
-        where lower(status) != 'pass' {%- if elementary.get_config_var('elementary_alerts_ignore_warn') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'dbt_test'
+        where {{ not elementary.get_config_var('disable_test_alerts') }} and lower(status) != 'pass' {%- if elementary.get_config_var('disable_warn_alerts') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'anomaly_detection'
 )
 
-select * from alerts_dbt_tests
+select * from alerts_anomaly_detection

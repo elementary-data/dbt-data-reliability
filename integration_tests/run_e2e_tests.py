@@ -5,8 +5,9 @@ import string
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
-from clients.dbt.dbt_runner import DbtRunner
+
 import click
+from clients.dbt.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -196,12 +197,22 @@ def e2e_tests(target, test_types):
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
-    
-    if 'error' in test_types:
+
+    if 'error_test' in test_types:
         dbt_runner.test(select='tag:error_test')
         error_test_results = dbt_runner.run_operation(macro_name='validate_error_test')
         print_test_result_list(error_test_results)
-    
+
+    if 'error_model' in test_types:
+        dbt_runner.run(select='tag:error_model')
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_model')
+        print_test_result_list(error_test_results)
+
+    if 'error_snapshot' in test_types:
+        dbt_runner.snapshot()
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_snapshot')
+        print_test_result_list(error_test_results)
+
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types:
         current_time = datetime.now()
@@ -220,7 +231,6 @@ def e2e_tests(target, test_types):
         # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
-
 
     dbt_runner.run()
 
@@ -298,6 +308,7 @@ def print_tests_results(table_test_results,
     print('\ndbt artifacts results')
     print_test_result_list(artifacts_results)
 
+
 @click.command()
 @click.option(
     '--target', '-t',
@@ -309,7 +320,7 @@ def print_tests_results(table_test_results,
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / regular / artifacts / error / no_timestamp / debug / all (default = all)"
+    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / no_timestamp / debug / all (default = all)"
 )
 @click.option(
     '--generate-data', '-g',
@@ -327,7 +338,7 @@ def main(target, e2e_type, generate_data):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot']
     else:
         e2e_types = [e2e_type]
 
