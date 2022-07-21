@@ -1,11 +1,11 @@
 {% macro upload_run_results(results) %}
-    {% if elementary.get_config_var('disable_run_results') %}
-        {% do elementary.edr_log("Run results are disabled, skipping upload.") %}
-        {{ return('') }}
-    {% endif %}
-    {{ elementary.edr_log("Uploading run results.") }}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run and results %}
+        {% if elementary.get_config_var('disable_run_results') %}
+            {% do elementary.edr_log("Run results are disabled, skipping upload.") %}
+            {{ return('') }}
+        {% endif %}
+        {{ elementary.edr_log("Uploading run results.") }}
         {% set database_name, schema_name = elementary.get_model_database_and_schema('elementary', 'dbt_run_results') %}
         {%- set dbt_run_results_relation = adapter.get_relation(database=database_name,
                                                                 schema=schema_name,
