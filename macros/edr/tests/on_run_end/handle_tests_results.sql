@@ -1,4 +1,4 @@
-{% macro handle_test_results(results) %}
+{% macro handle_tests_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
         {{ elementary.edr_log("Handling test results.") }}
         {% set test_metrics_tables = [] %}
