@@ -1,12 +1,7 @@
 {%- macro upload_dbt_models() -%}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
-        {% set models = [] %}
-        {% for node in graph.nodes.values() %}
-            {% if node.resource_type in ('model', 'snapshot') %}
-                {{ models.append(node) }}
-            {% endif %}
-        {% endfor %}
+        {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% do elementary.upload_artifacts_to_table(this, models, elementary.get_flatten_model_callback()) %}
     {%- endif -%}
     {{- return('') -}}
