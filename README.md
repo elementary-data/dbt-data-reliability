@@ -6,7 +6,7 @@ Data Observability for Analytics Engineers
 </p>
 
 
-##
+
 Elementary enables you to **monitor your data and dbt operation.** To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
 
 
@@ -16,8 +16,8 @@ Include the following in your ```packages.yml``` file:
 packages:
 
 - package: elementary-data/elementary
-  version: 0.4.2
-  ## compatible with Elementary CLI version 0.4.4
+  version: 0.4.5
+  ## compatible with Elementary CLI version 0.4.5
   ## see docs: https://docs.elementary-data.com/
 ```
 
