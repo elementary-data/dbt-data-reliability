@@ -5,7 +5,7 @@
 
     with cur as (
 
-        // This is the current snapshot of the columns.
+        {# This is the current snapshot of the columns. #}
         select full_table_name, column_name, data_type, is_new, detected_at
         from {{ temp_columns_snapshot_relation }}
 
@@ -13,7 +13,7 @@
 
     pre as (
 
-        // This is the previous snapshot of the columns.
+        {# This is the previous snapshot of the columns. #}
         select full_table_name, column_name, data_type, is_new, detected_at
         from {{ ref('schema_columns_snapshot') }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
@@ -23,7 +23,7 @@
 
     type_changes as (
 
-        // Finding the columns that have changed type.
+        {# Finding the columns that have changed type. #}
         select
             cur.full_table_name,
             'type_changed' as change,
@@ -39,7 +39,7 @@
 
     columns_added as (
 
-        // This is the columns that have been added.
+        {# This is the columns that have been added. #}
         select
             full_table_name,
             'column_added' as change,
@@ -54,7 +54,7 @@
 
     columns_removed as (
 
-        // This is finding the columns that have been removed.
+        {# This is finding the columns that have been removed. #}
         select
             pre.full_table_name,
             'column_removed' as change,
@@ -70,7 +70,7 @@
 
     columns_removed_filter_deleted_tables as (
 
-        // This is filtering out the columns of tables that have been deleted.
+        {# This is filtering out the columns of tables that have been deleted. #}
         select
             removed.full_table_name,
             removed.change,
@@ -85,7 +85,7 @@
 
     all_column_changes as (
 
-        // Combining the results of the three queries into one table.
+        {# Combining the results of the three queries into one table. #}
         select * from type_changes
         union all
         select * from columns_removed_filter_deleted_tables
@@ -96,7 +96,7 @@
 
     column_changes_test_results as (
 
-        // This is the query that is creating the test results table, by formatting a description and adding id + detection time
+        {# This is the query that is creating the test results table, by formatting a description and adding id + detection time #}
         select
             {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
             {{ elementary.run_start_column() }} as detected_at,
@@ -120,7 +120,7 @@
 
     )
 
-        // Creating a unique id for each row in the table, and adding execution id
+        {# Creating a unique id for each row in the table, and adding execution id #}
     select {{ dbt_utils.surrogate_key([
                      'data_issue_id',
                      elementary.const_as_string(test_execution_id)
