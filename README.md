@@ -13,17 +13,7 @@ To learn more, refer to our [main repo](https://github.com/elementary-data/eleme
 
 
 ## Quick start
-Include the following in your ```packages.yml``` file:
-```yml
-packages:
-
-- package: elementary-data/elementary
-  version: 0.4.5
-  ## compatible with Elementary CLI version 0.4.5
-  ## see docs: https://docs.elementary-data.com/
-```
-
-Add to your ```dbt_project.yml```:
+After adding the package to `packages.yml` and running `dbt deps`, add to your ```dbt_project.yml```:
 ```yml
 models:
 
@@ -34,7 +24,7 @@ models:
 
 ```
 
-Run ```dbt deps``` and ```dbt run --select elementary```.
+And run ```dbt run --select elementary```.
 
 Check out the [full documentation](https://docs.elementary-data.com/). 
 
