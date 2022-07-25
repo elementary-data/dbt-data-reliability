@@ -48,7 +48,7 @@ models:
       - name: "missing_column"
         tests:
           - uniques:
-              tags: ["error_test"]
+              tags: ["error_test", "regular_tests"]
 
   - name: string_column_anomalies
     meta:

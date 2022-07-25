@@ -229,12 +229,12 @@
 
 {% macro validate_error_model() %}
     {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('error_models') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
 
     {% set error_model_validation_query %}
         select distinct status
         from {{ alerts_relation }}
-        where status = 'error'
+        where status = 'error' and materialization != 'model'
         and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_model_validation_query) %}
@@ -243,7 +243,7 @@
 
 {% macro validate_error_snapshot() %}
     {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('error_models') %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
 
     {% set error_snapshot_validation_query %}
         select distinct status
@@ -307,7 +307,7 @@
         select table_name, column_name, test_name
         from {{ alerts_relation }}
             where detected_at >= {{ max_bucket_end }}
-        group by 1,2, 3
+        group by 1, 2, 3
     {% endset %}
     {% set alert_rows = run_query(dbt_test_alerts) %}
     {% set found_tables = [] %}
