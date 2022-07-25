@@ -234,7 +234,7 @@
     {% set error_model_validation_query %}
         select distinct status
         from {{ alerts_relation }}
-        where status = 'error' and materialization != 'model'
+        where status = 'error' and materialization != 'snapshot'
         and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_model_validation_query) %}
