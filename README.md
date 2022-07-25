@@ -1,30 +1,88 @@
-# Elementary - Data anomalies monitoring as dbt tests
-
-Elementary delivers **data monitoring and anomaly detection as dbt tests.** 
-  
-Elementary dbt tests are data monitors that collect metrics and metadata over time, such as freshness, volume, schema changes, distribution, cardinality, etc. On each execution, the tests analyze the new data, compare it to historical metrics, and alert on anomalies and outliers. 
-
-This package is a module of [Elementary](https://www.elementary-data.com/) - open source data observability. Read more here [documentation](https://docs.elementary-data.com/).
-To learn more on how to monitor your DWH, refer to our [main repo](https://github.com/elementary-data/elementary-lineage). 
-
-**Elementary data monitors as tests are configured and executed like native tests in your project!**
-
-<img alt="UI" src="https://github.com/elementary-data/elementary/blob/17e1fca57a98ce6151d1bb0edefb022a0aeecc68/static/ui_for_git.png" width="800">
-
-**Checkout the [live demo](https://www.elementary-data.com/elementary-demo-data-observability).**
-
-# dbt artifacts uploader
-To enable operational monitoring and enrich anomalies alerts, the package includes a **dbt artifacts uploader**. 
+<p align="center">
+<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/header_git.png"/ width="1000">
+</p>
+<p align="center">
+Data Observability for Analytics Engineers
+</p>
 
 
-## Getting started
+##
+Elementary enables you to **monitor your data and dbt operation.** To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
+
+
+## Quick start
+Include the following in your ```packages.yml``` file:
+```yml
+packages:
+
+- package: elementary-data/elementary
+  version: 0.4.2
+  ## compatible with Elementary CLI version 0.4.4
+  ## see docs: https://docs.elementary-data.com/
+```
+
+Add to your ```dbt_project.yml```:
+```yml
+models:
+
+## elementary models will be created in the schema '<your_schema>_elementary'
+## see docs: https://docs.elementary-data.com/
+  elementary:
+    +schema: 'elementary'
+
+```
+
+Run ```dbt deps``` and ```dbt run --select elementary```.
+
 Check out the [full documentation](https://docs.elementary-data.com/). 
-Start by [using our CLI](https://github.com/elementary-data/elementary) to monitor, generate the UI and get Slack alerts.
+
+## Run Results and dbt artifacts
+The package automatically uploads the dbt artifacts artifacts and run results to your tables in your data warehouse.
+
+
+## Data anomalies detection as dbt tests 
+
+Elementary dbt tests collect metrics and metadata over time, such as freshness, volume, schema changes, distribution, cardinality, etc. 
+Executed as any other dbt tests, the Elementary tests alert on anomalies and outliers. 
+
+**Elementary tests are configured and executed like native tests in your project!**
+
+
+Example of Elementary test config in ```properties.yml```:
+```yml
+models:
+  - name: your_model_name
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+        - elementary.table_anomalies
+        - elementary.all_columns_anomalies
+```
+
+
+
+## Data observability report
+<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/ui_for_git.png" width="800">
+
+**Checkout the [live demo](https://bit.ly/3IXKShW).**
+
+
+
+## Slack alerts
+<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/Slack_alert_elementary.png" width="600">
+
+
+
+## High level architecture 
+<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/High_level_flow.png" width="800">
+
+
+
 
 ## Data warehouse support
 This package has been tested on Snowflake, BigQuery and Redshift.
 Additional integrations coming soon!
-Ask us for integrations on [Slack](https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg) or as a [GitHub issue](https://github.com/elementary-data/elementary/issues/new).
 
 
 ## Community, support & contributions
