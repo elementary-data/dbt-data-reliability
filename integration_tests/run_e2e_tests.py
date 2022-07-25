@@ -166,7 +166,7 @@ def generate_fake_data():
     generate_any_type_anomalies_training_and_validation_files()
 
 
-def e2e_tests(target, test_types):
+def e2e_tests(target, test_types, clear_tests):
     table_test_results = []
     string_column_anomalies_test_results = []
     numeric_column_anomalies_test_results = []
@@ -176,9 +176,11 @@ def e2e_tests(target, test_types):
     artifacts_results = []
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
-    clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
-    for clear_test_log in clear_test_logs:
-        print(clear_test_log)
+
+    if clear_tests:
+        clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
+        for clear_test_log in clear_test_logs:
+            print(clear_test_log)
 
     dbt_runner.seed(select='training')
     if 'schema' in test_types:
@@ -328,7 +330,13 @@ def print_tests_results(table_test_results,
     default=True,
     help="Set to true if you want to re-generate fake data (default = True)"
 )
-def main(target, e2e_type, generate_data):
+@click.option(
+    '--clear-tests',
+    type=bool,
+    default=True,
+    help="Set to true if you want to clear the tests (default = True)"
+)
+def main(target, e2e_type, generate_data, clear_tests):
     if generate_data:
         generate_fake_data()
 
@@ -345,7 +353,7 @@ def main(target, e2e_type, generate_data):
     all_results = {}
     for e2e_target in e2e_targets:
         print(f'Starting {e2e_target} tests\n')
-        e2e_test_results = e2e_tests(e2e_target, e2e_types)
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
         print(f'\n{e2e_target} results')
         all_results[e2e_target] = e2e_test_results
 
