@@ -183,10 +183,6 @@ def e2e_tests(target, test_types, clear_tests):
             print(clear_test_log)
 
     dbt_runner.seed(select='training')
-    if 'schema' in test_types:
-        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
-        # normal schema
-        dbt_runner.seed(select='schema_changes_data')
 
     dbt_runner.run(full_refresh=True)
 
@@ -228,12 +224,6 @@ def e2e_tests(target, test_types, clear_tests):
             dbt_runner.test(select='tag:no_timestamp', vars={"custom_run_started_at": custom_run_time})
 
     dbt_runner.seed(select='validation')
-
-    if 'schema' in test_types:
-        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
-        # normal schema
-        dbt_runner.seed(select='schema_changes_data')
-
     dbt_runner.run()
 
     if 'debug' in test_types:
@@ -260,11 +250,12 @@ def e2e_tests(target, test_types, clear_tests):
         print_test_result_list(any_type_column_anomalies_test_results)
 
     if 'schema' in test_types:
+        dbt_runner.seed(select='schema_changes_data')
         dbt_runner.test(select='tag:schema_changes')
-        schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
+        dbt_runner.seed(select='schema_changes_validation')
+        schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes', log_errors=True)
         for schema_changes_log in schema_changes_logs:
             print(schema_changes_log)
-
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
         print_test_result_list(schema_changes_test_results)
