@@ -8,7 +8,8 @@
         {% set depends_on_nodes = elementary.get_nodes_by_unique_ids(test_depends_on_unique_ids) %}
         {% if depends_on_nodes %}
             {% for node in depends_on_nodes %}
-                {% if node.name | lower == model_name %}
+                {% set node_alias = node.get('alias', '') | lower %}
+                {% if node.name | lower == model_name or node_alias == model_name %}
                     {{ return(node) }}
                 {% endif %}
             {% endfor %}
