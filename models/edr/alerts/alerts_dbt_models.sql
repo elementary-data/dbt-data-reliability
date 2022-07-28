@@ -6,9 +6,9 @@
 }}
 
 with error_models as (
-    select * from {{ ref('elementary', 'model_run_results') }}
+    select * from {{ ref('model_run_results') }}
     union all
-    select * from {{ ref('elementary', 'snapshot_run_results') }}
+    select * from {{ ref('snapshot_run_results') }}
 )
 
 
