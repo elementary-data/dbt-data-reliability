@@ -18,6 +18,11 @@ models:
           tags: ["table_anomalies"]
           table_anomalies:
             - row_count
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimension:
+            - null_count_int
+            - null_percent_int
       - elementary.all_columns_anomalies:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
