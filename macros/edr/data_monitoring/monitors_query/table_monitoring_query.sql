@@ -85,6 +85,8 @@
             source_value,
             edr_bucket as bucket_start,
             {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value,
             24 as bucket_duration_hours
         from
             union_metrics
@@ -114,6 +116,8 @@
             {{ elementary.null_string() }} as source_value,
             {{ elementary.null_timestamp() }} as bucket_start,
             {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value,
             {{ elementary.null_int() }} as bucket_duration_hours
         from row_count
 
@@ -135,8 +139,9 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
-
+        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
+        dimension,
+        dimension_value
     from metrics_final
 
 {% endmacro %}

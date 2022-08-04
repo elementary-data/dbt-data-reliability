@@ -72,6 +72,8 @@
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value,
             {%- if is_timestamp %}
                 edr_bucket as bucket_start,
                 {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
@@ -100,7 +102,9 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at
+        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
+        dimension,
+        dimension_value
     from metrics_final
 
 {% endmacro %}

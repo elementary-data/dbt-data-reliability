@@ -36,7 +36,7 @@
 
         row_count as (
             select edr_daily_bucket as edr_bucket,
-                   {{ elementary.const_as_string('dimension_row_count') }} as metric_name,
+                   {{ elementary.const_as_string('dimension') }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
                    {{ "'" ~ dimension_sql_expression ~ "'" }} as dimension,
@@ -67,7 +67,7 @@
         with row_count as (
             select
                 {{ dimension_sql_expression }},
-                {{ elementary.const_as_string('dimension_row_count') }} as metric_name,
+                {{ elementary.const_as_string('dimension') }} as metric_name,
                 {{ elementary.row_count() }} as metric_value,
                 {{ elementary.null_string() }} as source_value,
                 {{ "'" ~ dimension_sql_expression ~ "'" }} as dimension,
