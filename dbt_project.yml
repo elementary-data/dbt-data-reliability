@@ -21,3 +21,14 @@ clean-targets: # directories to be removed by `dbt clean`
 
 on-run-start: "{{ elementary.on_run_start() }}"
 on-run-end: "{{ elementary.on_run_end() }}"
+
+
+models:
+  elementary:
+    edr:
+      data_monitoring:
+        +enabled: "{{ target.type != 'databricks' | as_bool() }}"
+      metadata_store:
+        +enabled: "{{ target.type != 'databricks' | as_bool() }}"
+      system:
+        +enabled: "{{ target.type != 'databricks' | as_bool() }}"

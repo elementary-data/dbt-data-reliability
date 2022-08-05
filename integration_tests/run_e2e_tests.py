@@ -180,14 +180,14 @@ def e2e_tests(target, test_types):
         print(clear_test_log)
 
     dbt_runner.seed(select='training')
-    if 'schema' in test_types:
+    if 'schema' and target != 'databricks' in test_types:
         # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
 
     dbt_runner.run(full_refresh=True)
 
-    if 'table' in test_types:
+    if 'table' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:table_anomalies')
         table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
         print_test_result_list(table_test_results)
@@ -198,7 +198,7 @@ def e2e_tests(target, test_types):
                     artifacts_results]
     
     # Creates row_count metrics for anomalies detection.
-    if 'no_timestamp' in test_types:
+    if 'no_timestamp' in test_types and target != 'databricks':
         current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
         # So we we convert the days_back value into int.
@@ -211,7 +211,7 @@ def e2e_tests(target, test_types):
 
     dbt_runner.seed(select='validation')
 
-    if 'schema' in test_types:
+    if 'schema' in test_types and target != 'databricks':
         # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
         # normal schema
         dbt_runner.seed(select='schema_changes_data')
@@ -225,12 +225,12 @@ def e2e_tests(target, test_types):
                 any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                 artifacts_results]
 
-    if 'no_timestamp' in test_types:
+    if 'no_timestamp' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:no_timestamp')
         no_timestamp_test_results = dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
         print_test_result_list(no_timestamp_test_results)
 
-    if 'column' in test_types:
+    if 'column' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:string_column_anomalies')
         string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
         print_test_result_list(string_column_anomalies_test_results)
@@ -242,7 +242,7 @@ def e2e_tests(target, test_types):
                                                                           'validate_any_type_column_anomalies')
         print_test_result_list(any_type_column_anomalies_test_results)
 
-    if 'schema' in test_types:
+    if 'schema' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
         for schema_changes_log in schema_changes_logs:
@@ -298,7 +298,7 @@ def print_tests_results(table_test_results,
     '--target', '-t',
     type=str,
     default='all',
-    help="snowflake / bigquery / redshift / all (default = all)"
+    help="snowflake / bigquery / redshift / databricks / all (default = all)"
 )
 @click.option(
     '--e2e-type', '-e',
@@ -317,7 +317,7 @@ def main(target, e2e_type, generate_data):
         generate_fake_data()
 
     if target == 'all':
-        e2e_targets = ['snowflake', 'bigquery', 'redshift']
+        e2e_targets = ['snowflake', 'bigquery', 'redshift', 'databricks']
     else:
         e2e_targets = [target]
 
