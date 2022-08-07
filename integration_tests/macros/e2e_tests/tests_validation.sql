@@ -212,6 +212,49 @@
     {{ assert_lists_contain_same_items(results, ['null_count_str']) }}
 {% endmacro %}
 
+{% macro validate_error_test() %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+
+    {# Validating alert for error test was created #}
+    {% set error_test_validation_query %}
+        select distinct status
+        from {{ alerts_relation }}
+        where status = 'error'
+        and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(error_test_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_error_model() %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+
+    {% set error_model_validation_query %}
+        select distinct status
+        from {{ alerts_relation }}
+        where status = 'error' and materialization != 'snapshot'
+        and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(error_model_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_error_snapshot() %}
+    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+
+    {% set error_snapshot_validation_query %}
+        select distinct status
+        from {{ alerts_relation }}
+        where status = 'error' and materialization = 'snapshot'
+        and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(error_snapshot_validation_query) %}
+    {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
 {% macro validate_schema_changes() %}
     {% set expected_changes = {'red_cards': 'column_added',
                                'group_a':   'column_removed',
@@ -264,7 +307,7 @@
         select table_name, column_name, test_name
         from {{ alerts_relation }}
             where detected_at >= {{ max_bucket_end }}
-        group by 1,2, 3
+        group by 1, 2, 3
     {% endset %}
     {% set alert_rows = run_query(dbt_test_alerts) %}
     {% set found_tables = [] %}
@@ -281,9 +324,9 @@
             {% do found_tests.append(row[2]) %}
         {%- endif -%}
     {% endfor %}
-    {{ assert_lists_contain_same_items(found_tables, ['string_column_anomalies', 'numeric_column_anomalies', 'any_type_column_anomalies', 'any_type_column_anomalies_validation', 'numeric_column_anomalies_training']) }}
-    {{ assert_lists_contain_same_items(found_columns, ['min_length', 'null_count_int']) }}
-    {{ assert_lists_contain_same_items(found_tests, ['relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs', 'singular_test_with_source_ref', 'generic_test_on_model', 'generic_test_on_column']) }}
+    {{ assert_list1_in_list2(['error_model', 'string_column_anomalies', 'numeric_column_anomalies', 'any_type_column_anomalies', 'any_type_column_anomalies_validation', 'numeric_column_anomalies_training'], found_tables) }}
+    {{ assert_list1_in_list2(['missing_column', 'min_length', 'null_count_int'], found_columns) }}
+    {{ assert_list1_in_list2(['uniques', 'relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs', 'singular_test_with_source_ref', 'generic_test_on_model', 'generic_test_on_column'], found_tests) }}
 
 {% endmacro %}
 

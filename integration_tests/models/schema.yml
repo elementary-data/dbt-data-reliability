@@ -40,6 +40,16 @@ models:
               column_anomalies:
                 - null_count
 
+  - name: error_model
+    description: We use this model to create error runs and tests
+    config:
+      tags: ["error_model"]
+    columns:
+      - name: "missing_column"
+        tests:
+          - uniques:
+              tags: ["error_test", "regular_tests"]
+
   - name: string_column_anomalies
     meta:
       owner: "@or"

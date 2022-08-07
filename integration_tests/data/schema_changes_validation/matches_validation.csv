@@ -1,0 +1,32 @@
+match_num,round_group,matchday,home,home_score,away_score,away
+1,Group A,1,Poland,1,1,Greece
+2,Group A,1,Russia,4,1,Czech Republic
+9,Group A,2,Greece,1,2,Czech Republic
+10,Group A,2,Poland,1,1,Russia
+17,Group A,3,Czech Republic,1,0,Poland
+18,Group A,3,Greece,1,0,Russia
+3,Group B,1,Netherlands,0,1,Denmark
+4,Group B,1,Germany,1,0,Portugal
+11,Group B,2,Denmark,2,3,Portugal
+12,Group B,2,Netherlands,1,2,Germany
+19,Group B,3,Portugal,2,1,Netherlands
+20,Group B,3,Denmark,1,2,Germany
+5,Group C,1,ESP,1,1,ITA
+6,Group C,1,IRL,1,3,CRO
+13,Group C,2,ITA,1,1,CRO
+14,Group C,2,ESP,4,0,IRL
+21,Group C,3,CRO,0,1,ESP
+22,Group C,3,ITA,2,0,IRL
+7,Group D,1,FRA,1,1,ENG
+8,Group D,1,UKR,2,1,SWE
+15,Group D,2,SWE,2,3,ENG
+16,Group D,2,UKR,0,2,FRA
+23,Group D,3,ENG,1,0,UKR
+24,Group D,3,SWE,2,0,FRA
+25,Quarter-finals,0,CZE,0,1,POR
+26,Quarter-finals,0,GER,4,2,GRE
+27,Quarter-finals,0,ESP,2,0,FRA
+28,Quarter-finals,0,ENG,0,0,ITA
+29,Semi-finals,0,Portugal,0,0,Spain
+30,Semi-finals,0,Germany,1,2,Italy
+31,Final,0,Spain,4,0,Italy
