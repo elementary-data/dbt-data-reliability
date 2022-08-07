@@ -5,8 +5,9 @@ import string
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
-from clients.dbt.dbt_runner import DbtRunner
+
 import click
+from clients.dbt.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
@@ -165,7 +166,7 @@ def generate_fake_data():
     generate_any_type_anomalies_training_and_validation_files()
 
 
-def e2e_tests(target, test_types):
+def e2e_tests(target, test_types, clear_tests):
     table_test_results = []
     string_column_anomalies_test_results = []
     numeric_column_anomalies_test_results = []
@@ -175,15 +176,13 @@ def e2e_tests(target, test_types):
     artifacts_results = []
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
-    clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
-    for clear_test_log in clear_test_logs:
-        print(clear_test_log)
+
+    if clear_tests:
+        clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
+        for clear_test_log in clear_test_logs:
+            print(clear_test_log)
 
     dbt_runner.seed(select='training')
-    if 'schema' and target != 'databricks' in test_types:
-        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
-        # normal schema
-        dbt_runner.seed(select='schema_changes_data')
 
     dbt_runner.run(full_refresh=True)
 
@@ -196,27 +195,35 @@ def e2e_tests(target, test_types):
             return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
                     any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                     artifacts_results]
-    
+
+    if 'error_test' in test_types:
+        dbt_runner.test(select='tag:error_test')
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_test')
+        print_test_result_list(error_test_results)
+
+    if 'error_model' in test_types:
+        dbt_runner.run(select='tag:error_model')
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_model')
+        print_test_result_list(error_test_results)
+
+    if 'error_snapshot' in test_types:
+        dbt_runner.snapshot()
+        error_test_results = dbt_runner.run_operation(macro_name='validate_error_snapshot')
+        print_test_result_list(error_test_results)
+
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types and target != 'databricks':
         current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
-        # So we we convert the days_back value into int.
+        # So we convert the days_back value into int.
         days_back_project_var = int(
             dbt_runner.run_operation(macro_name="return_config_var", macro_args={"var_name": "days_back"})[0])
         # No need to create todays metric because the validation run does it.
         for run_index in range(1, days_back_project_var):
-            custom_run_time = (current_time - timedelta(run_index)).isoformat()
+            custom_run_time = (current_time - timedelta(days_back_project_var - run_index)).isoformat()
             dbt_runner.test(select='tag:no_timestamp', vars={"custom_run_started_at": custom_run_time})
 
     dbt_runner.seed(select='validation')
-
-    if 'schema' in test_types and target != 'databricks':
-        # We need to upload the schema changes dataset before at least one dbt run, as dbt run takes a snapshot of the
-        # normal schema
-        dbt_runner.seed(select='schema_changes_data')
-
-
     dbt_runner.run()
 
     if 'debug' in test_types:
@@ -243,11 +250,12 @@ def e2e_tests(target, test_types):
         print_test_result_list(any_type_column_anomalies_test_results)
 
     if 'schema' in test_types and target != 'databricks':
+        dbt_runner.seed(select='schema_changes_data')
         dbt_runner.test(select='tag:schema_changes')
-        schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes')
+        dbt_runner.seed(select='schema_changes_validation')
+        schema_changes_logs = dbt_runner.run_operation(macro_name='do_schema_changes', log_errors=True)
         for schema_changes_log in schema_changes_logs:
             print(schema_changes_log)
-
         dbt_runner.test(select='tag:schema_changes')
         schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
         print_test_result_list(schema_changes_test_results)
@@ -293,18 +301,19 @@ def print_tests_results(table_test_results,
     print('\ndbt artifacts results')
     print_test_result_list(artifacts_results)
 
+
 @click.command()
 @click.option(
     '--target', '-t',
     type=str,
     default='all',
-    help="snowflake / bigquery / redshift / databricks / all (default = all)"
+    help="snowflake / bigquery / redshift / all (default = all)"
 )
 @click.option(
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / regular / artifacts / no_timestamp / debug / all (default = all)"
+    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / no_timestamp / debug / all (default = all)"
 )
 @click.option(
     '--generate-data', '-g',
@@ -312,24 +321,30 @@ def print_tests_results(table_test_results,
     default=True,
     help="Set to true if you want to re-generate fake data (default = True)"
 )
-def main(target, e2e_type, generate_data):
+@click.option(
+    '--clear-tests',
+    type=bool,
+    default=True,
+    help="Set to true if you want to clear the tests (default = True)"
+)
+def main(target, e2e_type, generate_data, clear_tests):
     if generate_data:
         generate_fake_data()
 
     if target == 'all':
-        e2e_targets = ['snowflake', 'bigquery', 'redshift', 'databricks']
+        e2e_targets = ['snowflake', 'bigquery', 'redshift']
     else:
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot']
     else:
         e2e_types = [e2e_type]
 
     all_results = {}
     for e2e_target in e2e_targets:
         print(f'Starting {e2e_target} tests\n')
-        e2e_test_results = e2e_tests(e2e_target, e2e_types)
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
         print(f'\n{e2e_target} results')
         all_results[e2e_target] = e2e_test_results
 
