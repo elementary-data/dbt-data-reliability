@@ -1,10 +1,10 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimension, timestamp_column, is_timestamp, min_bucket_start) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, timestamp_column, is_timestamp, min_bucket_start) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
-    {% set dimension_sql_expression = elementary.join_list(dimension, ', ') %}
-    {% set concat_dimension_sql_expression = elementary.list_concat_with_separator(dimension, ', ') %}
+    {% set dimensions_sql_expression = elementary.join_list(dimensions, ', ') %}
+    {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, ', ') %}
     
     {% if is_timestamp %}
         with filtered_monitored_table as (
@@ -26,12 +26,12 @@
         daily_row_count as (
             select edr_daily_bucket,
                    start_bucket_in_data,
-                   {{ dimension_sql_expression }},
+                   {{ dimensions_sql_expression }},
                    case when start_bucket_in_data is null then
                        0
                    else {{ elementary.cast_as_float(elementary.row_count()) }} end as row_count_value
             from daily_buckets left join filtered_monitored_table on (edr_daily_bucket = start_bucket_in_data)
-            {{ dbt_utils.group_by(2 + dimension | length) }}
+            {{ dbt_utils.group_by(2 + dimensions | length) }}
         ),
 
         row_count as (
@@ -39,8 +39,8 @@
                    {{ elementary.const_as_string('dimension') }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
-                   {{ "'" ~ dimension_sql_expression ~ "'" }} as dimension,
-                   {{ concat_dimension_sql_expression }} as dimension_value
+                   {{ "'" ~ dimensions_sql_expression ~ "'" }} as dimension,
+                   {{ concat_dimensions_sql_expression }} as dimension_value
             from daily_row_count
         ),
 
@@ -66,12 +66,12 @@
     {% else %}
         with row_count as (
             select
-                {{ dimension_sql_expression }},
+                {{ dimensions_sql_expression }},
                 {{ elementary.const_as_string('dimension') }} as metric_name,
                 {{ elementary.row_count() }} as metric_value,
                 {{ elementary.null_string() }} as source_value,
-                {{ "'" ~ dimension_sql_expression ~ "'" }} as dimension,
-                {{ concat_dimension_sql_expression }} as dimension_value
+                {{ "'" ~ dimensions_sql_expression ~ "'" }} as dimension,
+                {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
             {{ dbt_utils.group_by(2 + dimension | length) }}
         ),

@@ -20,7 +20,7 @@ models:
             - row_count
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
-          dimension:
+          dimensions:
             - null_count_int
             - null_percent_int
       - elementary.all_columns_anomalies:
