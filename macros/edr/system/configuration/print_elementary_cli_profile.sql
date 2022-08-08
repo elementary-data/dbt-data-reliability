@@ -1,9 +1,9 @@
 {% macro print_elementary_cli_profile() %}
   {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
-  {{ log('\n' ~ adapter.dispatch('print_elementary_profile')(elementary_database, elementary_schema), info=True) }}
+  {{ log('\n' ~ adapter.dispatch('print_elementary_cli_profile')(elementary_database, elementary_schema), info=True) }}
 {% endmacro %}
 
-{% macro snowflake__print_elementary_profile(elementary_database, elementary_schema) %}
+{% macro snowflake__print_elementary_cli_profile(elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -18,7 +18,7 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro bigquery__print_elementary_profile(elementary_database, elementary_schema) %}
+{% macro bigquery__print_elementary_cli_profile(elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -29,7 +29,7 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro redshift__print_elementary_profile(elementary_database, elementary_schema) %}
+{% macro redshift__print_elementary_cli_profile(elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -43,7 +43,7 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro databricks__print_elementary_profile(elementary_database, elementary_schema) %}
+{% macro databricks__print_elementary_cli_profile(elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -58,6 +58,6 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro default__print_elementary_profile() %}
+{% macro default__print_elementary_cli_profile() %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}
