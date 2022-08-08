@@ -53,3 +53,7 @@ elementary:
       token: <TOKEN>
       threads: {{ target.threads }}
 {%- endmacro %}
+
+{% macro default__print_elementary_profile() -%}
+Adapter "{{ target.type }}" is not supported on Elementary.
+{%- endmacro %}
