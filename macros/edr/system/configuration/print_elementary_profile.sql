@@ -6,7 +6,7 @@
 elementary:
   outputs:
     default:
-      type: snowflake
+      type: {{ target.type }}
       account: {{ target.account }}
       user: {{ target.user }}
       password: <PASSWORD>
@@ -21,7 +21,7 @@ elementary:
 elementary:
   outputs:
     default:
-      type: bigquery
+      type: {{ target.type }}
       method: <AUTH_METHOD>
       project: {{ target.project }}
       dataset: {{ target.dataset }}_elementary
@@ -32,7 +32,7 @@ elementary:
 elementary:
   outputs:
     default:
-      type: redshift
+      type: {{ target.type }}
       host: {{ target.host }}
       port: {{ target.port }}
       user: {{ target.user }}
@@ -46,7 +46,7 @@ elementary:
 elementary:
   outputs:
     default:
-      type: databricks
+      type: {{ target.type }}
       host: {{ target.host }}
       http_path: {{ target.http_path }}
       schema: {{ target.schema }}_elementary
