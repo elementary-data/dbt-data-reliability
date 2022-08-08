@@ -1,8 +1,8 @@
 {% macro print_elementary_profile() %}
-  {{ log('\n\n' ~ adapter.dispatch('print_elementary_profile')() ~ '\n\n', info=True) }}
+  {{ log('\n' ~ adapter.dispatch('print_elementary_profile')(), info=True) }}
 {% endmacro %}
 
-{% macro snowflake__print_elementary_profile() -%}
+{% macro snowflake__print_elementary_profile() %}
 elementary:
   outputs:
     default:
@@ -15,9 +15,9 @@ elementary:
       warehouse: {{ target.warehouse }}
       schema: {{ target.schema }}_elementary
       threads: {{ target.threads }}
-{%- endmacro %}
+{% endmacro %}
 
-{% macro bigquery__print_elementary_profile() -%}
+{% macro bigquery__print_elementary_profile() %}
 elementary:
   outputs:
     default:
@@ -26,9 +26,9 @@ elementary:
       project: {{ target.project }}
       dataset: {{ target.dataset }}_elementary
       threads: {{ target.threads }}
-{%- endmacro %}
+{% endmacro %}
 
-{% macro redshift__print_elementary_profile() -%}
+{% macro redshift__print_elementary_profile() %}
 elementary:
   outputs:
     default:
@@ -40,9 +40,9 @@ elementary:
       dbname: {{ target.database }}
       schema: {{ target.schema }}_elementary
       threads: {{ target.threads }}
-{%- endmacro %}
+{% endmacro %}
 
-{% macro databricks__print_elementary_profile() -%}
+{% macro databricks__print_elementary_profile() %}
 elementary:
   outputs:
     default:
@@ -52,8 +52,8 @@ elementary:
       schema: {{ target.schema }}_elementary
       token: <TOKEN>
       threads: {{ target.threads }}
-{%- endmacro %}
+{% endmacro %}
 
-{% macro default__print_elementary_profile() -%}
+{% macro default__print_elementary_profile() %}
 Adapter "{{ target.type }}" is not supported on Elementary.
-{%- endmacro %}
+{% endmacro %}
