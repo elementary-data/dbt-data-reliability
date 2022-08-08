@@ -6,6 +6,8 @@
     {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
 {% endmacro %}
 
+{# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}
+{# Therefore we added "dimension" and "dimension_value" at the end of the table. #}
 {% macro empty_data_monitoring_metrics() %}
     {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp'),('dimension','string'),('dimension_value','string')]) }}
 {% endmacro %}
