@@ -248,7 +248,7 @@
                bucket_start as start_time,
                bucket_end as end_time,
                is_anomalous,
-               dimension,
+               dimension,   
                dimension_value,
                metric_id
         from anomaly_scores_with_is_anomalous
