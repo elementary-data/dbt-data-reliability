@@ -1,5 +1,5 @@
 {% macro print_elementary_cli_profile() %}
-  {% set elementary_database, elementary_schema = get_package_database_and_schema() %}
+  {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
   {{ log('\n' ~ adapter.dispatch('print_elementary_profile')(elementary_database, elementary_schema), info=True) }}
 {% endmacro %}
 
