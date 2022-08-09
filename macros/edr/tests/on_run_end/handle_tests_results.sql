@@ -260,7 +260,7 @@
              {%- if dimension %}
                 and upper(dimension) = upper({{ elementary.const_as_string(dimension) }})
              {%- endif %}
-        order by bucket_end
+        order by dimension_value, bucket_end
     {%- endset -%}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'id'),
