@@ -191,12 +191,12 @@
         {% set most_recent_anomalies_scores = elementary.get_test_result_rows_as_dicts(test_node) %}
     {% endif %}
     {% set recent_anomaly_sample = most_recent_anomalies_scores[0] if most_recent_anomalies_scores else {} %}
-    {% set test_results_description = [] %}
     {% set anomalous_value = [] %}
+    {% set anomalous_dimensions = [] %}
     {% for anomaly in most_recent_anomalies_scores %}
-        {% set anomaly_description = elementary.insensitive_get_dict_value(anomaly, 'anomaly_description') %}
-        {% if anomaly_description %}
-            {% do test_results_description.append(anomaly_description) %}      
+        {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
+        {% if anomaly_dimension %}
+            {% do anomalous_dimensions.append("'" ~ anomaly_dimension ~ "'") %}      
         {% endif %}
 
         {% set anomalous_value = elementary.insensitive_get_dict_value(anomaly, 'anomalous_value') %}
@@ -204,7 +204,12 @@
             {% do anomalous_value.append(anomalous_value) %}
         {% endif %}
     {% endfor %}
-    
+
+    {% if recent_anomaly_sample %}
+        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous for the dimension: '" ~ recent_anomaly_sample.get('dimension') ~ "'" %}
+    {% else %}
+        {% set test_results_description = none %}
+    {% endif %}
     {% set full_table_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'full_table_name', '') %}
     {% set split_full_table_name = full_table_name.split('.') %}
     {% set database_name = split_full_table_name[0] %}
@@ -274,7 +279,7 @@
         'column_name': column_name,
         'test_type': 'anomaly_detection',
         'test_sub_type': metric_name,
-        'test_results_description': test_results_description if test_results_description else none,
+        'test_results_description': test_results_description,
         'other': anomalous_value if anomalous_value else none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
