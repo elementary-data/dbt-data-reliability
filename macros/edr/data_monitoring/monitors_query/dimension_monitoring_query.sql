@@ -18,16 +18,33 @@
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
 
-        all_dimension_values as (
-            select distinct dimension_value, 1 as joiner
+        {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
+        filtered_outdated_dimension_values as (
+            select distinct 
+                dimension_value,
+                sum(metric_value)
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ "'" ~ metric_name ~ "'" }}
                 and dimension = {{ "'" ~ dimensions_saveable_format ~ "'" }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-            union all
-            select distinct dimension_value, 1 as joiner
-            from filtered_monitored_table
+            group by 1
+            having sum(metric_value) > 0
+        ),
+
+        all_dimension_values as (
+            select distinct *
+            from (
+                select distinct 
+                    dimension_value,
+                    1 as joiner
+                from filtered_outdated_dimension_values
+                union all
+                select distinct
+                    dimension_value,
+                    1 as joiner
+                from filtered_monitored_table
+            )
         ),
 
         daily_buckets as (
@@ -101,7 +118,13 @@
 
     {% else %}
         {# Get all of the dimension anomally metrics that were created for the test until this run #}
-        with last_dimension_metrics as (
+        with filtered_monitored_table as (
+            select *,
+                   {{ concat_dimensions_sql_expression }} as dimension_value
+            from {{ monitored_table_relation }}
+        ),
+        
+        last_dimension_metrics as (
             select 
                 bucket_end,
                 dimension_value,
@@ -113,13 +136,41 @@
                 and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_end) }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
+
+        {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
+        filtered_outdated_dimension_values as (
+            select
+                bucket_end,
+                dimension_value,
+                metric_value
+            from last_dimension_metrics
+            where dimension_value in (
+                select dimension_value
+                from (
+                    select distinct 
+                        dimension_value,
+                        sum(metric_value)
+                    from last_dimension_metrics
+                    group by 1
+                    having sum(metric_value) > 0
+                )
+            )
+        ),
         
 
         all_dimension_values as (
-            select distinct 
-                dimension_value,
-                1 as joiner
-            from last_dimension_metrics
+            select distinct *
+            from (
+                select distinct 
+                    dimension_value,
+                    1 as joiner
+                from filtered_outdated_dimension_values
+                union all
+                select distinct 
+                    dimension_value,
+                    1 as joiner
+                from filtered_monitored_table
+            )
         ),
 
         {# Create buckets for each day from max(fisrt metric time, min bucket end) until max bucket end #}
@@ -131,7 +182,7 @@
                 {{ elementary.daily_buckets_cte() }}
                 where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_end) }} and
                       edr_daily_bucket < {{ elementary.cast_as_timestamp(max_bucket_end) }} and
-                      edr_daily_bucket >= (select min(bucket_end) from last_dimension_metrics)
+                      edr_daily_bucket >= (select min(bucket_end) from filtered_outdated_dimension_values)
             )
         ),
 
@@ -143,7 +194,7 @@
                 all_dimension_values.dimension_value as dimension_value,
                 case when metric_value is not null then metric_value else 0 end as metric_value
             from daily_buckets left join all_dimension_values on daily_buckets.joiner = all_dimension_values.joiner
-                left outer join last_dimension_metrics on (daily_buckets.edr_daily_bucket = last_dimension_metrics.bucket_end and all_dimension_values.dimension_value = last_dimension_metrics.dimension_value)
+                left outer join filtered_outdated_dimension_values on (daily_buckets.edr_daily_bucket = filtered_outdated_dimension_values.bucket_end and all_dimension_values.dimension_value = filtered_outdated_dimension_values.dimension_value)
         ),
 
         {# Union between current roe count for each dimension, and the "hydrated" metrics of the test until this run #}
