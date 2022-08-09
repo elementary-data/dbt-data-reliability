@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, timestamp_column=none, sensitivity=none, backfill_days=none) %}
+{% test dimension_anomalies(model, dimensions, where_expression=none, timestamp_column=none, sensitivity=none, backfill_days=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -34,12 +34,13 @@
 
         {% set dimensions_str = elementary.join_list(dimensions, ', ') %}
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
+        {{ elementary.debug_log('where_expression - ' ~ where_expression) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, column_name=dimensions_str) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, timestamp_column, is_timestamp, min_bucket_start) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, dimension_monitoring_query) %}
 

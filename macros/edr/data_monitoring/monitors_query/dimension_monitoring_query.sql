@@ -1,4 +1,4 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, timestamp_column, is_timestamp, min_bucket_start) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
     {% set metric_name = 'dimension' %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set min_bucket_end = "'"~ (modules.datetime.datetime.strptime(min_bucket_start, "'%Y-%m-%d %H:%M:%S'") +  modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
@@ -16,6 +16,9 @@
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+            {% if where_expression %}
+                and {{ where_expression }}
+            {% endif %}
         ),
 
         {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
@@ -117,13 +120,16 @@
         )
 
     {% else %}
-        {# Get all of the dimension anomally metrics that were created for the test until this run #}
         with filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
+        {% if where_expression %}
+            where {{ where_expression }}
+        {% endif %}
         ),
         
+        {# Get all of the dimension anomally metrics that were created for the test until this run #}
         last_dimension_metrics as (
             select 
                 bucket_end,
@@ -197,7 +203,7 @@
                 left outer join filtered_outdated_dimension_values on (daily_buckets.edr_daily_bucket = filtered_outdated_dimension_values.bucket_end and all_dimension_values.dimension_value = filtered_outdated_dimension_values.dimension_value)
         ),
 
-        {# Union between current roe count for each dimension, and the "hydrated" metrics of the test until this run #}
+        {# Union between current row count for each dimension, and the "hydrated" metrics of the test until this run #}
         row_count as (
             select 
                 bucket_end,
@@ -210,6 +216,9 @@
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value
             from {{ monitored_table_relation }}
+            {% if where_expression %}
+                where {{ where_expression }}
+            {% endif %}
             {{ dbt_utils.group_by(2) }}
         ),
 
