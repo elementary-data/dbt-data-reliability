@@ -4,20 +4,11 @@
     {%- set min_bucket_end = "'"~ (modules.datetime.datetime.strptime(min_bucket_start, "'%Y-%m-%d %H:%M:%S'") +  modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
-    {% set dimensions_sql_expression = elementary.join_list(dimensions, ', ') %}
-    {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, ', ') %}
+    {% set dimensions_saveable_format = elementary.join_list(dimensions, '; ') %}
+    {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
     
     {% if is_timestamp %}
-        with all_dimension_values as (
-            select distinct dimension_value, 1 as joiner
-            from {{ ref('data_monitoring_metrics') }}
-            where full_table_name = {{ full_table_name_str }}
-                and metric_name = {{ "'" ~ metric_name ~ "'" }}
-                and dimension = {{ "'" ~ dimensions_sql_expression ~ "'" }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-        ),
-
-        filtered_monitored_table as (
+        with filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
                    {{ elementary.date_trunc('day', timestamp_column) }} as start_bucket_in_data
@@ -25,6 +16,18 @@
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        ),
+
+        all_dimension_values as (
+            select distinct dimension_value, 1 as joiner
+            from {{ ref('data_monitoring_metrics') }}
+            where full_table_name = {{ full_table_name_str }}
+                and metric_name = {{ "'" ~ metric_name ~ "'" }}
+                and dimension = {{ "'" ~ dimensions_saveable_format ~ "'" }}
+                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+            union all
+            select distinct dimension_value, 1 as joiner
+            from filtered_monitored_table
         ),
 
         daily_buckets as (
@@ -72,7 +75,7 @@
                    {{ elementary.const_as_string(metric_name) }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
-                   {{ "'" ~ dimensions_sql_expression ~ "'" }} as dimension,
+                   {{ "'" ~ dimensions_saveable_format ~ "'" }} as dimension,
                    dimension_value
             from hydrated_daily_row_count
         ),
@@ -106,7 +109,7 @@
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ "'" ~ metric_name ~ "'" }}
-                and dimension = {{ "'" ~ dimensions_sql_expression ~ "'" }}
+                and dimension = {{ "'" ~ dimensions_saveable_format ~ "'" }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_end) }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
@@ -163,7 +166,7 @@
             select
                 {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
                 {{ elementary.null_string() }} as column_name,
-                {{ "'" ~ dimensions_sql_expression ~ "'" }} as dimension,
+                {{ "'" ~ dimensions_saveable_format ~ "'" }} as dimension,
                 dimension_value,
                 {{ elementary.const_as_string(metric_name) }} as metric_name,
                 {{ elementary.cast_as_float('metric_value') }} as metric_value,
