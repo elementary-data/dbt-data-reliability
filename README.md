@@ -77,6 +77,13 @@ This package has been tested on Snowflake, BigQuery and Redshift.
 Additional integrations coming soon!
 
 
-## Community, support & contributions
+## Community & Support
 * [Slack](https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg) (Talk to us, support, etc.)
 * [GitHub issues](https://github.com/elementary-data/elementary/issues) (Bug reports, feature requests)
+
+
+## Contributions
+
+Thank you :orange_heart: Whether it’s a bug fix, new feature, or additional documentation - we greatly appreciate contributions!
+
+Check out the [contributions guide](https://docs.elementary-data.com/project-overview/contributions) and [open issues](https://github.com/elementary-data/elementary/issues). 

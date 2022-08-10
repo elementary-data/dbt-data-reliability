@@ -30,6 +30,9 @@
     string
 {% endmacro %}
 
+{% macro databricks__type_string() %}
+    string
+{% endmacro %}
 
 
 

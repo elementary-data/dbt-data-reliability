@@ -46,3 +46,11 @@
     {%- endset %}
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
+
+{% macro databricks__daily_buckets_cte() %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set min_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+
+    select edr_daily_bucket
+    from (select explode(sequence({{ elementary.cast_as_timestamp(min_bucket_end) }}, {{ elementary.cast_as_timestamp(max_bucket_end) }}, interval 1 day)) AS edr_daily_bucket)
+{% endmacro %}

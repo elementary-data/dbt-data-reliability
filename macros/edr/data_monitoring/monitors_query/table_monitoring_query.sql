@@ -57,7 +57,7 @@
             select
                 edr_daily_bucket as edr_bucket,
                 {{ elementary.const_as_string('freshness') }} as metric_name,
-                {{ elementary.to_char('max('~freshness_column~')') }} as source_value,
+                {{ elementary.cast_as_string('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
             from daily_buckets, {{ monitored_table_relation }}
             where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}

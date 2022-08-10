@@ -186,7 +186,7 @@ def e2e_tests(target, test_types, clear_tests):
 
     dbt_runner.run(full_refresh=True)
 
-    if 'table' in test_types:
+    if 'table' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:table_anomalies')
         table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
         print_test_result_list(table_test_results)
@@ -212,15 +212,15 @@ def e2e_tests(target, test_types, clear_tests):
         print_test_result_list(error_test_results)
 
     # Creates row_count metrics for anomalies detection.
-    if 'no_timestamp' in test_types:
+    if 'no_timestamp' in test_types and target != 'databricks':
         current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
-        # So we we convert the days_back value into int.
+        # So we convert the days_back value into int.
         days_back_project_var = int(
             dbt_runner.run_operation(macro_name="return_config_var", macro_args={"var_name": "days_back"})[0])
         # No need to create todays metric because the validation run does it.
         for run_index in range(1, days_back_project_var):
-            custom_run_time = (current_time - timedelta(run_index)).isoformat()
+            custom_run_time = (current_time - timedelta(days_back_project_var - run_index)).isoformat()
             dbt_runner.test(select='tag:no_timestamp', vars={"custom_run_started_at": custom_run_time})
 
     dbt_runner.seed(select='validation')
@@ -232,12 +232,12 @@ def e2e_tests(target, test_types, clear_tests):
                 any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
                 artifacts_results]
 
-    if 'no_timestamp' in test_types:
+    if 'no_timestamp' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:no_timestamp')
         no_timestamp_test_results = dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
         print_test_result_list(no_timestamp_test_results)
 
-    if 'column' in test_types:
+    if 'column' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:string_column_anomalies')
         string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
         print_test_result_list(string_column_anomalies_test_results)
@@ -249,7 +249,7 @@ def e2e_tests(target, test_types, clear_tests):
                                                                           'validate_any_type_column_anomalies')
         print_test_result_list(any_type_column_anomalies_test_results)
 
-    if 'schema' in test_types:
+    if 'schema' in test_types and target != 'databricks':
         dbt_runner.seed(select='schema_changes_data')
         dbt_runner.test(select='tag:schema_changes')
         dbt_runner.seed(select='schema_changes_validation')
