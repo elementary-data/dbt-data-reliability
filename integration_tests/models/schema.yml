@@ -18,12 +18,6 @@ models:
           tags: ["table_anomalies"]
           table_anomalies:
             - row_count
-      - elementary.dimension_anomalies:
-          tags: ["dimension_anomalies"]
-          dimensions:
-            - null_count_int
-            - null_percent_int
-          where_expression: "null_count_int > 150 and null_percent_int > 150"
       - elementary.all_columns_anomalies:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
@@ -45,6 +39,27 @@ models:
               tags: ["no_timestamp"]
               column_anomalies:
                 - null_count
+
+  - name: dimension_anomalies
+    description: We use this model to test dimension anomalies
+    config:
+      elementary:
+        timestamp_column: "updated_at"
+    tests:
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - version
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+            - version
+          where_expression: "platform != 'windows'"
 
   - name: error_model
     description: We use this model to create error runs and tests
