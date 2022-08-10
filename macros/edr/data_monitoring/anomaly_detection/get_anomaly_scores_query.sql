@@ -48,6 +48,8 @@
                 id as metric_id,
                 full_table_name,
                 column_name,
+                dimension,
+                dimension_value,
                 metric_name,
                 metric_value,
                 source_value,
@@ -72,6 +74,8 @@
                 metric_id,
                 full_table_name,
                 column_name,
+                dimension,
+                dimension_value,
                 metric_name,
                 metric_value,
                 source_value,
@@ -87,7 +91,7 @@
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
             from daily_buckets left join
                 grouped_metrics on (edr_daily_bucket = bucket_end)
-            {{ dbt_utils.group_by(11) }}
+            {{ dbt_utils.group_by(13) }}
 
         ),
 
@@ -120,7 +124,9 @@
                 training_stddev,
                 training_set_size,
                 training_start,
-                training_end
+                training_end,
+                dimension,
+                dimension_value
             from time_window_aggregation
             where
                 metric_value is not null

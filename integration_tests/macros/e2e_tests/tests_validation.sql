@@ -99,6 +99,41 @@
 
 {% endmacro %}
 
+{% macro validate_dimension_anomalies() %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set dimension_validation_query %}
+        select *
+            from {{ alerts_relation }}
+            where sub_type = 'dimension' and detected_at >= {{ max_bucket_end }}
+    {% endset %}
+    {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
+    {% set dimensions_with_problems = [] %}
+    
+    {% for result in results %}
+        {% set test_params = fromjson(result.get('test_params', '{}')) %}
+        {% set where_expression = test_params.get('where_expression') %}
+        {% set dimensions = test_params.get('dimensions') %}
+        {% if where_expression %}
+            {% if where_expression != "platform != 'windows'" %}
+                {% do dimensions_with_problems.append[dimensions] %}
+            {% endif %}
+        {% else %}
+            {% if dimensions | length != 1 or dimensions[0] != 'platform' %}
+                {% do dimensions_with_problems.append(dimensions) %}
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+    {% if dimensions_with_problems %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
+        {{ return(1) }}
+    {% else %}
+        {% do elementary.edr_log('SUCCESS: dimension anomalies tests succeded') %}
+        {{ return(0) }}
+    {% endif %}
+{% endmacro %}
+
 {% macro validate_string_column_anomalies() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}

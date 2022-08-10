@@ -23,6 +23,8 @@ time_window_aggregation as (
         id,
         full_table_name,
         column_name,
+        dimension,
+        dimension_value,
         metric_name,
         metric_value,
         source_value,
@@ -38,7 +40,7 @@ time_window_aggregation as (
         first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
         data_monitoring_metrics on (edr_daily_bucket = bucket_end)
-    {{ dbt_utils.group_by(11) }}
+    {{ dbt_utils.group_by(13) }}
 
 ),
 
@@ -48,6 +50,8 @@ metrics_anomaly_score as (
         id,
         full_table_name,
         column_name,
+        dimension,
+        dimension_value,
         metric_name,
         case
            when training_stddev = 0 then 0
@@ -69,7 +73,7 @@ metrics_anomaly_score as (
             and training_stddev is not null
             and training_set_size >= {{ elementary.get_config_var('days_back') - 1 }}
             and bucket_end >= {{ elementary.timeadd('day', '-7', dbt_utils.date_trunc('day', dbt_utils.current_timestamp())) }}
-    {{ dbt_utils.group_by(13) }}
+    {{ dbt_utils.group_by(15) }}
     order by bucket_end desc
 
 
@@ -81,6 +85,8 @@ final as (
         id,
         full_table_name,
         column_name,
+        dimension,
+        dimension_value,
         metric_name,
         anomaly_score,
         latest_metric_value,
@@ -97,8 +103,6 @@ final as (
             else false end
         as is_anomaly
     from metrics_anomaly_score
-    {{ dbt_utils.group_by(14) }}
-
 )
 
 select * from final

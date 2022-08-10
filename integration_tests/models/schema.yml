@@ -40,6 +40,27 @@ models:
               column_anomalies:
                 - null_count
 
+  - name: dimension_anomalies
+    description: We use this model to test dimension anomalies
+    config:
+      elementary:
+        timestamp_column: "updated_at"
+    tests:
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - version
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+            - version
+          where_expression: "platform != 'windows'"
+
   - name: error_model
     description: We use this model to create error runs and tests
     config:

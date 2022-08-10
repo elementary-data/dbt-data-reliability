@@ -22,7 +22,9 @@
                 bucket_start,
                 bucket_end,
                 bucket_duration_hours,
-                updated_at
+                updated_at,
+                dimension,
+                dimension_value
             from metrics_with_duplicates
             where row_number = 1
         {%- endset %}

@@ -11,7 +11,7 @@
             {% set test_node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' %}
-                {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
+                {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
                     {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
@@ -21,11 +21,18 @@
                                                                                             flatten_test_node,
                                                                                             'anomaly_detection')) %}
                     {%- else -%}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
-                                                                                                   schema_name,
-                                                                                                   status,
-                                                                                                   run_result_dict,
-                                                                                                   flatten_test_node)) %}
+                        {% if flatten_test_node.short_name == 'dimension_anomalies' %}
+                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(database_name,
+                                                                                                             schema_name,
+                                                                                                             run_result_dict,
+                                                                                                             flatten_test_node)) %}
+                        {% else %}
+                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
+                                                                                                       schema_name,
+                                                                                                       status,
+                                                                                                       run_result_dict,
+                                                                                                       flatten_test_node)) %}
+                        {% endif %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
                     {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
@@ -124,11 +131,12 @@
             from anomaly_scores
         )
         select metric_value as value,
+               training_avg as average, 
                case when is_anomalous = TRUE then
-                lag(min_metric_value) over (partition by full_table_name, column_name, metric_name order by bucket_end)
+                lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
                else min_metric_value end as min_value,
                case when is_anomalous = TRUE then
-                lag(max_metric_value) over (partition by full_table_name, column_name, metric_name order by bucket_end)
+                lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
                 else max_metric_value end as max_value,
                bucket_start as start_time,
                bucket_end as end_time,
@@ -156,6 +164,115 @@
         'test_sub_type': metric_name,
         'test_results_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
         'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
+        'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
+        'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
+        'test_results_query': test_results_query,
+        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
+        'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+    } %}
+    {{ return(test_result_dict) }}
+{% endmacro %}
+
+{% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, '__anomaly_scores') %}
+    {% if run_result_dict.get('status') == 'pass' %}
+        {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
+    {% else %}
+        {% set most_recent_anomalies_scores = elementary.get_test_result_rows_as_dicts(test_node) %}
+    {% endif %}
+    {% set recent_anomaly_sample = most_recent_anomalies_scores[0] if most_recent_anomalies_scores else {} %}
+    {% set anomalous_value = [] %}
+    {% set anomalous_dimensions = [] %}
+    {% for anomaly in most_recent_anomalies_scores %}
+        {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
+        {% if anomaly_dimension %}
+            {% do anomalous_dimensions.append("'" ~ anomaly_dimension ~ "'") %}      
+        {% endif %}
+
+        {% set anomalous_value = elementary.insensitive_get_dict_value(anomaly, 'anomalous_value') %}
+        {% if anomalous_value %}
+            {% do anomalous_value.append(anomalous_value) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if recent_anomaly_sample %}
+        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous for the dimension: '" ~ recent_anomaly_sample.get('dimension') ~ "'" %}
+    {% else %}
+        {% set test_results_description = none %}
+    {% endif %}
+    {% set full_table_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'full_table_name', '') %}
+    {% set split_full_table_name = full_table_name.split('.') %}
+    {% set database_name = split_full_table_name[0] %}
+    {% set schema_name = split_full_table_name[1] %}
+    {% set table_name = split_full_table_name[2] %}
+    {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
+    {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
+    {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
+    {% set test_param_backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') %}
+    {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
+    {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
+    {% set timestamp_column = elementary.get_timestamp_column(test_param_timestamp_column, parent_model_node) %}
+    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=test_param_sensitivity) %}
+    {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=test_param_backfill_days) %}
+    {% do test_params.update({'sensitivity': sensitivity}) %}
+    {% do test_params.update({'timestamp_column': timestamp_column}) %}
+    {% do test_params.update({'backfill_days': backfill_days}) %}
+    {% set column_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'column_name') %}
+    {% set metric_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'metric_name') %}
+    {% set dimension = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'dimension') %}
+    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+    {% set test_results_query %}
+        with anomaly_scores as (
+            select * from {{ test_anomaly_scores_table }}
+        ),
+        anomaly_scores_with_is_anomalous as (
+        select  *,
+                case when abs(anomaly_score) > {{ sensitivity }}
+                and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
+                and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
+            from anomaly_scores
+        )
+        select metric_value as value,
+               training_avg as average,   
+               case when is_anomalous = TRUE then
+                lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+               else min_metric_value end as min_value,
+               case when is_anomalous = TRUE then
+                lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+                else max_metric_value end as max_value,
+               bucket_start as start_time,
+               bucket_end as end_time,
+               is_anomalous,
+               dimension,   
+               dimension_value,
+               metric_id
+        from anomaly_scores_with_is_anomalous
+        where upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
+              and metric_name = {{ elementary.const_as_string(metric_name) }}
+             {%- if column_name %}
+                and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
+             {%- endif %}
+             {%- if dimension %}
+                and upper(dimension) = upper({{ elementary.const_as_string(dimension) }})
+             {%- endif %}
+        order by dimension_value, bucket_end
+    {%- endset -%}
+    {% set test_result_dict = {
+        'id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'id'),
+        'test_execution_id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'test_execution_id'),
+        'test_unique_id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'test_unique_id'),
+        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
+        'detected_at': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'detected_at'),
+        'database_name': database_name,
+        'schema_name': schema_name,
+        'table_name': table_name,
+        'column_name': column_name,
+        'test_type': 'anomaly_detection',
+        'test_sub_type': metric_name,
+        'test_results_description': test_results_description,
+        'other': anomalous_value if anomalous_value else none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
@@ -239,7 +356,7 @@
     {% set most_recent_anomaly_scores_query %}
         with anomaly_scores as (
             select *,
-                row_number() over (partition by full_table_name, column_name, metric_name order by bucket_end desc) as row_number
+                row_number() over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end desc) as row_number
             from {{ test_anomaly_scores_table }}
         ),
         most_recent_scores as (
@@ -305,5 +422,3 @@
         {%- endif %}
     {%- endif %}
 {% endmacro %}
-
-

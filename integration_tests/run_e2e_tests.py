@@ -159,11 +159,45 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
                       any_type_columns)
 
 
+def generate_dimension_anomalies_training_and_validation_files(rows_count_per_day=300):
+    def get_training_row(date, row_index, rows_count):
+        return {
+            'date': date.strftime('%Y-%m-%d %H:%M:%S'),
+            'platform': 'windows' if row_index < (10 / 100 * rows_count) else
+            random.choice(['android', 'ios']),
+            'version': random.randint(1, 3),
+            'user_id': random.randint(1, rows_count)
+        }     
+
+    def get_validation_row(date, row_index, rows_count):
+        return {
+            'date': date.strftime('%Y-%m-%d %H:%M:%S'),
+            'platform': 'windows' if row_index < (99 / 100 * rows_count) else
+            random.choice(['android', 'ios']),
+            'version': random.randint(1, 3),
+            'user_id': random.randint(1, rows_count)
+        }     
+
+    dimension_columns = ['date', 'platform', 'version', 'user_id']
+    dates = generate_date_range(base_date=datetime.today() - timedelta(days=2), numdays=30)
+    training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
+    write_rows_to_csv(os.path.join(FILE_DIR, 'data', 'training', 'dimension_anomalies_training.csv'),
+                      training_rows,
+                      dimension_columns)
+
+    validation_date = datetime.today() - timedelta(days=1)
+    validation_rows = generate_rows(rows_count_per_day, [validation_date], get_validation_row)
+    write_rows_to_csv(os.path.join(FILE_DIR, 'data', 'validation', 'dimension_anomalies_validation.csv'),
+                      validation_rows,
+                      dimension_columns)
+
+
 def generate_fake_data():
     print('Generating fake data!')
     generate_string_anomalies_training_and_validation_files()
     generate_numeric_anomalies_training_and_validation_files()
     generate_any_type_anomalies_training_and_validation_files()
+    generate_dimension_anomalies_training_and_validation_files()
 
 
 def e2e_tests(target, test_types, clear_tests):
@@ -248,6 +282,11 @@ def e2e_tests(target, test_types, clear_tests):
         any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name=
                                                                           'validate_any_type_column_anomalies')
         print_test_result_list(any_type_column_anomalies_test_results)
+    
+    if 'dimension' in test_types and target != 'databricks':
+        dbt_runner.test(select='tag:dimension_anomalies')
+        dimension_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_dimension_anomalies')
+        print_test_result_list(dimension_anomalies_test_results)
 
     if 'schema' in test_types and target != 'databricks':
         dbt_runner.seed(select='schema_changes_data')
@@ -313,7 +352,7 @@ def print_tests_results(table_test_results,
     '--e2e-type', '-e',
     type=str,
     default='all',
-    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / no_timestamp / debug / all (default = all)"
+    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / dimension / no_timestamp / debug / all (default = all)"
 )
 @click.option(
     '--generate-data', '-g',
@@ -337,7 +376,7 @@ def main(target, e2e_type, generate_data, clear_tests):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot', 'dimension']
     else:
         e2e_types = [e2e_type]
 
