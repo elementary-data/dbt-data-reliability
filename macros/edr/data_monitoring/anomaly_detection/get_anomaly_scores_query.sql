@@ -108,8 +108,6 @@
                 {{ elementary.current_timestamp_column() }} as detected_at,
                 full_table_name,
                 column_name,
-                dimension,
-                dimension_value,
                 metric_name,
                 case
                     when training_stddev = 0 then 0
@@ -126,7 +124,9 @@
                 training_stddev,
                 training_set_size,
                 training_start,
-                training_end
+                training_end,
+                dimension,
+                dimension_value
             from time_window_aggregation
             where
                 metric_value is not null

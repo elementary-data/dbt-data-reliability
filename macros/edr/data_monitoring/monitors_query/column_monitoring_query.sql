@@ -72,17 +72,17 @@
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
-            {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value,
             {%- if is_timestamp %}
                 edr_bucket as bucket_start,
                 {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
-                24 as bucket_duration_hours
+                24 as bucket_duration_hours,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
                 {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
-                {{ elementary.null_int() }} as bucket_duration_hours
+                {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value
         from column_monitors_unpivot
 
     )

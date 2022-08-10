@@ -11,7 +11,7 @@
             {% set test_node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' %}
-                {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies'] %}
+                {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
                     {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
@@ -21,26 +21,18 @@
                                                                                             flatten_test_node,
                                                                                             'anomaly_detection')) %}
                     {%- else -%}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
-                                                                                                   schema_name,
-                                                                                                   status,
-                                                                                                   run_result_dict,
-                                                                                                   flatten_test_node)) %}
-                    {%- endif -%}
-                {% elif flatten_test_node.short_name == 'dimension_anomalies' %}
-                    {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
-                    {% if test_metrics_table %}
-                        {% do test_metrics_tables.append(test_metrics_table) %}
-                    {% endif %}
-                    {%- if status == 'error' -%}
-                        {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
-                                                                                            flatten_test_node,
-                                                                                            'anomaly_detection')) %}
-                    {%- else -%}
-                        {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(database_name,
-                                                                                                         schema_name,
-                                                                                                         run_result_dict,
-                                                                                                         flatten_test_node)) %}
+                        {% if flatten_test_node.short_name == 'dimension_anomalies' %}
+                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(database_name,
+                                                                                                             schema_name,
+                                                                                                             run_result_dict,
+                                                                                                             flatten_test_node)) %}
+                        {% else %}
+                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
+                                                                                                       schema_name,
+                                                                                                       status,
+                                                                                                       run_result_dict,
+                                                                                                       flatten_test_node)) %}
+                        {% endif %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
                     {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
