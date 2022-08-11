@@ -29,7 +29,9 @@ And run ```dbt run --select elementary```.
 Check out the [full documentation](https://docs.elementary-data.com/). 
 
 ## Run Results and dbt artifacts
-The package automatically uploads the dbt artifacts artifacts and run results to your tables in your data warehouse.
+The package automatically uploads the dbt artifacts and run results to your tables in your data warehouse.
+
+Here you can find [additional details](https://docs.elementary-data.com/dbt/dbt-artifacts).
 
 
 ## Data anomalies detection as dbt tests 
