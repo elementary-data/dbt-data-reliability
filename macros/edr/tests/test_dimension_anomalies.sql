@@ -4,6 +4,10 @@
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
+        {% if not dimensions %}
+            {{ exceptions.raise_compiler_error('Dimension anomalies test must get "dimensions" as a parameter!') }}
+        {% endif %}
+
         {% set test_name_in_graph = elementary.get_test_name_in_graph() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {#- creates temp relation for test metrics -#}
