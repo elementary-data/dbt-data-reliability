@@ -198,7 +198,7 @@
     {% endfor %}
 
     {% if recent_anomaly_sample %}
-        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous for the dimension: '" ~ recent_anomaly_sample.get('dimension') ~ "'" %}
+        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous for the dimension: '" ~ recent_anomaly_sample.get('dimension') ~ "' - " ~ anomalous_dimensions %}
     {% else %}
         {% set test_results_description = none %}
     {% endif %}
