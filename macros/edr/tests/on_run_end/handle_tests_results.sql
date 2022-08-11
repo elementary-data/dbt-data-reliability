@@ -183,17 +183,11 @@
         {% set most_recent_anomalies_scores = elementary.get_test_result_rows_as_dicts(test_node) %}
     {% endif %}
     {% set recent_anomaly_sample = most_recent_anomalies_scores[0] if most_recent_anomalies_scores else {} %}
-    {% set anomalous_value = [] %}
     {% set anomalous_dimensions = [] %}
     {% for anomaly in most_recent_anomalies_scores %}
         {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
         {% if anomaly_dimension %}
             {% do anomalous_dimensions.append(anomaly_dimension) %}      
-        {% endif %}
-
-        {% set anomalous_value = elementary.insensitive_get_dict_value(anomaly, 'anomalous_value') %}
-        {% if anomalous_value %}
-            {% do anomalous_value.append(anomalous_value) %}
         {% endif %}
     {% endfor %}
 
