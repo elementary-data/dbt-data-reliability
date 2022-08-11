@@ -95,7 +95,7 @@
                    {{ elementary.const_as_string(metric_name) }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
-                   {{ "'" ~ dimensions_string ~ "'" }} as dimension,
+                   {{ elementary.const_as_string(dimensions_string) }} as dimension,
                    dimension_value
             from full_daily_row_count
         ),
@@ -232,7 +232,7 @@
                 {{ elementary.null_timestamp() }} as bucket_start,
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
-                {{ "'" ~ dimensions_string ~ "'" }} as dimension,
+                {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value
             from row_count
         )
