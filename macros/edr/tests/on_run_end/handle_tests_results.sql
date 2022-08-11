@@ -177,28 +177,21 @@
 
 {% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, '__anomaly_scores') %}
+    {% set anomalous_dimensions = [] %}
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% else %}
         {% set most_recent_anomalies_scores = elementary.get_test_result_rows_as_dicts(test_node) %}
+        {% for anomaly in most_recent_anomalies_scores %}
+            {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
+            {% if anomaly_dimension %}
+                {% do anomalous_dimensions.append(anomaly_dimension) %}      
+            {% endif %}
+        {% endfor %}
     {% endif %}
     {% set recent_anomaly_sample = most_recent_anomalies_scores[0] if most_recent_anomalies_scores else {} %}
-    {% set anomalous_value = [] %}
-    {% set anomalous_dimensions = [] %}
-    {% for anomaly in most_recent_anomalies_scores %}
-        {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
-        {% if anomaly_dimension %}
-            {% do anomalous_dimensions.append("'" ~ anomaly_dimension ~ "'") %}      
-        {% endif %}
-
-        {% set anomalous_value = elementary.insensitive_get_dict_value(anomaly, 'anomalous_value') %}
-        {% if anomalous_value %}
-            {% do anomalous_value.append(anomalous_value) %}
-        {% endif %}
-    {% endfor %}
-
-    {% if recent_anomaly_sample %}
-        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous for the dimension: '" ~ recent_anomaly_sample.get('dimension') ~ "' - " ~ anomalous_dimensions %}
+    {% if anomalous_dimensions %}
+        {% set test_results_description = "There are " ~ anomalous_dimensions | length ~ " anomalous values for '" ~ recent_anomaly_sample.get('dimension') ~ "'" %}
     {% else %}
         {% set test_results_description = none %}
     {% endif %}
@@ -272,7 +265,7 @@
         'test_type': 'anomaly_detection',
         'test_sub_type': metric_name,
         'test_results_description': test_results_description,
-        'other': anomalous_value if anomalous_value else none,
+        'other': anomalous_dimensions if anomalous_dimensions else none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
