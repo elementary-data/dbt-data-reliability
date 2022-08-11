@@ -10,6 +10,7 @@ Data Observability for Analytics Engineers
 Elementary enables you to **monitor your data and dbt operation.** 
 
 To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
+
 For reporting issues, feature requests and contributions, refer to [issues](https://github.com/elementary-data/elementary/issues) in the main repo. 
 
 
