@@ -129,7 +129,7 @@
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
         {{ return(1) }}
     {% else %}
-        {% do elementary.edr_log('SUCCESS: dimension anomalies tests succeded') %}
+        {% do elementary.edr_log('SUCCESS: dimension anomalies tests succeeded') %}
         {{ return(0) }}
     {% endif %}
 {% endmacro %}
