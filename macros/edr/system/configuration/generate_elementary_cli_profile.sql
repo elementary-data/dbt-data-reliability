@@ -1,9 +1,9 @@
-{% macro generate_elementary_cli_profile() %}
+{% macro generate_elementary_cli_profile(method=none) %}
   {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
-  {{ log('\n' ~ adapter.dispatch('generate_elementary_cli_profile')(elementary_database, elementary_schema), info=True) }}
+  {{ log('\n' ~ adapter.dispatch('generate_elementary_cli_profile')(method, elementary_database, elementary_schema), info=True) }}
 {% endmacro %}
 
-{% macro snowflake__generate_elementary_cli_profile(elementary_database, elementary_schema) %}
+{% macro snowflake__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -18,18 +18,21 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro bigquery__generate_elementary_cli_profile(elementary_database, elementary_schema) %}
+{% macro bigquery__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
       type: {{ target.type }}
       method: <AUTH_METHOD>
       project: {{ elementary_database }}
+      {%- if method == 'github-actions' %}
+      keyfile: /tmp/bigquery_keyfile.json # Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`.
+      {%- endif %}
       dataset: {{ elementary_schema }}
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro redshift__generate_elementary_cli_profile(elementary_database, elementary_schema) %}
+{% macro redshift__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -43,7 +46,7 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro databricks__generate_elementary_cli_profile(elementary_database, elementary_schema) %}
+{% macro databricks__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
@@ -58,6 +61,6 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro default__generate_elementary_cli_profile() %}
+{% macro default__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}
