@@ -1,6 +1,7 @@
 {{
   config(
-    materialized = 'view'
+    materialized = 'view',
+    enabled = target.type != 'databricks' | as_bool()
   )
 }}
 
