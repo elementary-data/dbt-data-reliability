@@ -19,15 +19,6 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-models:
-  elementary:
-    edr:
-      data_monitoring:
-        +enabled: "{{ target.type != 'databricks' | as_bool() }}"
-      metadata_store:
-        +enabled: "{{ target.type != 'databricks' | as_bool() }}"
-      system:
-        +enabled: "{{ target.type != 'databricks' | as_bool() }}"
 
 on-run-start:
   - "{{ elementary.create_elementary_tests_schema() if flags.WHICH in ['test', 'build'] }}"
