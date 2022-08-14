@@ -1,7 +1,6 @@
 {% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
     {% set metric_name = 'dimension' %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {%- set min_bucket_end = "'"~ (modules.datetime.datetime.strptime(min_bucket_start, "'%Y-%m-%d %H:%M:%S'") +  modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
@@ -95,7 +94,7 @@
                    {{ elementary.const_as_string(metric_name) }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
-                   {{ "'" ~ dimensions_string ~ "'" }} as dimension,
+                   {{ elementary.const_as_string(dimensions_string) }} as dimension,
                    dimension_value
             from full_daily_row_count
         ),
@@ -139,7 +138,7 @@
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ "'" ~ metric_name ~ "'" }}
                 and dimension = {{ "'" ~ dimensions_string ~ "'" }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_end) }}
+                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
 
@@ -186,7 +185,7 @@
             1 as joiner
             from (
                 {{ elementary.daily_buckets_cte() }}
-                where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_end) }} and
+                where edr_daily_bucket >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }} and
                       edr_daily_bucket < {{ elementary.cast_as_timestamp(max_bucket_end) }} and
                       edr_daily_bucket >= (select min(bucket_end) from dimension_values_without_outdated)
             )
@@ -232,7 +231,7 @@
                 {{ elementary.null_timestamp() }} as bucket_start,
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
-                {{ "'" ~ dimensions_string ~ "'" }} as dimension,
+                {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value
             from row_count
         )
