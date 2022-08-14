@@ -2,12 +2,6 @@
     {% set metric_name = 'dimension' %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
 
-    {# Different platforms returns different time formats, all starts with %Y-%m-%d %H:%M:%S #}
-    {# We use regex to extract the common patern #}
-    {% set re = modules.re %}
-    {% set timestamp_patern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}' %}
-    {% set formated_min_bucket_start = re.findall(timestamp_patern, min_bucket_start)[0] %}
-    {%- set min_bucket_end = "'"~ (modules.datetime.datetime.strptime(formated_min_bucket_start, "%Y-%m-%d %H:%M:%S") +  modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
@@ -145,7 +139,7 @@
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ "'" ~ metric_name ~ "'" }}
                 and dimension = {{ "'" ~ dimensions_string ~ "'" }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_end) }}
+                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }}
                 and {{ elementary.cast_as_timestamp('bucket_end') }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
 
@@ -192,7 +186,7 @@
             1 as joiner
             from (
                 {{ elementary.daily_buckets_cte() }}
-                where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_end) }} and
+                where edr_daily_bucket >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }} and
                       edr_daily_bucket < {{ elementary.cast_as_timestamp(max_bucket_end) }} and
                       edr_daily_bucket >= (select min(bucket_end) from dimension_values_without_outdated)
             )
