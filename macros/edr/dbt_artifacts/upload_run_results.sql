@@ -36,7 +36,7 @@
                                                                        ('compile_completed_at', 'string'),
                                                                        ('rows_affected', 'bigint'),
                                                                        ('full_refresh', 'boolean'),
-                                                                       ('compiled_sql', 'string')
+                                                                       ('compiled_sql', 'long_string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
