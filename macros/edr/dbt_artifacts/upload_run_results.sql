@@ -36,7 +36,6 @@
                                                                        ('compile_completed_at', 'string'),
                                                                        ('rows_affected', 'bigint'),
                                                                        ('full_refresh', 'boolean'),
-                                                                       ('raw_sql', 'string'),
                                                                        ('compiled_sql', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
@@ -69,7 +68,6 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'raw_sql': node.get('raw_sql'),
         'compiled_sql': node.get('compiled_sql')
     }%}
 
