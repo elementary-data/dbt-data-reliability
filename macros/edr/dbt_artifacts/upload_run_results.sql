@@ -35,7 +35,10 @@
                                                                        ('compile_started_at', 'string'),
                                                                        ('compile_completed_at', 'string'),
                                                                        ('rows_affected', 'bigint'),
-                                                                       ('full_refresh', 'boolean')]) %}
+                                                                       ('full_refresh', 'boolean'),
+                                                                       ('raw_sql', 'string'),
+                                                                       ('compiled_sql', 'string')
+                                                                       ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
 
@@ -65,7 +68,9 @@
         'execute_completed_at': none,
         'compile_started_at': none,
         'compile_completed_at': none,
-        'full_refresh': flags.FULL_REFRESH
+        'full_refresh': flags.FULL_REFRESH,
+        'raw_sql': node.get('raw_sql'),
+        'compiled_sql': node.get('compiled_sql')
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}
