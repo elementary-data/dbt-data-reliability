@@ -90,4 +90,4 @@ Additional integrations coming soon!
 
 Thank you :orange_heart: Whether it’s a bug fix, new feature, or additional documentation - we greatly appreciate contributions!
 
-Check out the [contributions guide](https://docs.elementary-data.com/project-overview/contributions) and [open issues](https://github.com/elementary-data/elementary/issues) in the main repo. 
+Check out the [contributions guide](https://docs.elementary-data.com/general/contributions) and [open issues](https://github.com/elementary-data/elementary/issues) in the main repo. 
