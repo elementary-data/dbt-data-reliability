@@ -3,7 +3,7 @@
 {%- endmacro %}
 
 {% macro default__date_trunc(date_part, date_expression) %}
-    date_trunc('{{date_part}}', cast({{ date_expression }} as {{ dbt_utils.type_timestamp() }}))
+    date_trunc('{{date_part}}', cast({{ date_expression }} as {{ elementary.type_timestamp() }}))
 {% endmacro %}
 
 {% macro bigquery__date_trunc(date_part, date_expression) %}
