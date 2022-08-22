@@ -6,4 +6,5 @@ scripts/
 .idea
 
 edr.log
+integration_tests/data
 
