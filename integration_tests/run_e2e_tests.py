@@ -2,11 +2,12 @@ import csv
 import os
 import random
 import string
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
-from typing import List, Dict
+from typing import List
 
 import click
 from clients.dbt.dbt_runner import DbtRunner
@@ -371,15 +372,10 @@ def print_test_results(test_results: List[TestResult]):
         print(test_result)
 
 
-def print_failed_test_results(test_results: Dict[str, List[TestResult]]):
-    for e2e_target, e2e_test_results in test_results.items():
-        failed_test_results = [test_result for test_result in e2e_test_results if not test_result.success]
-        passed_tests_count = len(e2e_test_results) - len(failed_test_results)
-        print(f'\n[{passed_tests_count}/{len(e2e_test_results)}] TESTS PASSED')
-        if failed_test_results:
-            print('Failed tests:\n')
-            for failed_test_result in failed_test_results:
-                print(f'FAILED: {failed_test_result.type} | {e2e_target} | {failed_test_result.message}')
+def print_failed_test_results(e2e_target: str, failed_test_results: List[TestResult]):
+    print(f'Failed {e2e_target} tests:')
+    for failed_test_result in failed_test_results:
+        print(f'{failed_test_result.type}: {failed_test_result.message}')
 
 
 @click.command()
@@ -423,13 +419,23 @@ def main(target, e2e_type, generate_data, clear_tests):
         e2e_types = [e2e_type]
 
     all_results = {}
+    found_failures = False
     for e2e_target in e2e_targets:
         print(f'Starting {e2e_target} tests\n')
         e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
         print(f'\n{e2e_target} results')
         all_results[e2e_target] = e2e_test_results
 
-    print_failed_test_results(all_results)
+    for e2e_target, e2e_test_results in all_results.items():
+        failed_test_results = [test_result for test_result in e2e_test_results if not test_result.success]
+        print(f'\n[{len(e2e_test_results) - len(failed_test_results)}/{len(e2e_test_results)}] TESTS PASSED')
+        if failed_test_results:
+            print_failed_test_results(e2e_target, failed_test_results)
+            found_failures = True
+
+    if found_failures:
+        print('Some of the tests failed.')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
