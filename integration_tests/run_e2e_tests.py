@@ -350,7 +350,7 @@ def get_failed_test_results(e2e_test_results):
                 failed_test_results.append(test_result)
                 continue
             if 'SUCCESS' not in test_result:
-                raise ValueError('Invalid test result, no FAILED or SUCCESS.')
+                raise ValueError('Invalid test result, no FAILED or SUCCESS.', test_result)
     return failed_test_results
 
 
