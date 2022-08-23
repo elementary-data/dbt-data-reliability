@@ -1,5 +1,4 @@
 import csv
-import json
 import os
 import random
 import string
@@ -409,7 +408,7 @@ def main(target, e2e_type, generate_data, clear_tests):
         print_tests_results(*e2e_test_results)
 
     if all_failed_results:
-        print('Some of the tests failed.\n', json.dumps(all_failed_results, indent=2))
+        print('Some of the tests failed.\n', all_failed_results)
         sys.exit(1)
 
 
