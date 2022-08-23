@@ -237,11 +237,11 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
     if 'table' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:table_anomalies')
         results = [
-            TestResult(type='table', message=msg) for msg in
+            TestResult(type='table_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_table_anomalies')
         ]
-        test_results.extend(results)
         print_test_results(results)
+        test_results.extend(results)
 
     if 'error_test' in test_types:
         dbt_runner.test(select='tag:error_test')
@@ -292,7 +292,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
     if 'no_timestamp' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:no_timestamp')
         results = [
-            TestResult(type='no_timestamp', message=msg) for msg in
+            TestResult(type='no_timestamp_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
         ]
         print_test_results(results)
@@ -350,7 +350,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
     if 'regular' in test_types:
         dbt_runner.test(select='test_type:singular tag:regular_tests')
         results = [
-            TestResult(type='regular', message=msg) for msg in
+            TestResult(type='regular_tests', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_regular_tests')
         ]
         print_test_results(results)
