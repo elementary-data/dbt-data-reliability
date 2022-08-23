@@ -7,7 +7,7 @@ from os.path import expanduser
 from pathlib import Path
 
 import click
-from clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
 
