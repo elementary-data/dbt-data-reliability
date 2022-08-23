@@ -2,9 +2,12 @@ import csv
 import os
 import random
 import string
+import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
+from typing import List
 
 import click
 from clients.dbt.dbt_runner import DbtRunner
@@ -167,7 +170,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             random.choice(['android', 'ios']),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
-        }     
+        }
 
     def get_validation_row(date, row_index, rows_count):
         return {
@@ -176,7 +179,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             random.choice(['android', 'ios']),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
-        }     
+        }
 
     dimension_columns = ['date', 'platform', 'version', 'user_id']
     dates = generate_date_range(base_date=datetime.today() - timedelta(days=2), numdays=30)
@@ -200,14 +203,25 @@ def generate_fake_data():
     generate_dimension_anomalies_training_and_validation_files()
 
 
-def e2e_tests(target, test_types, clear_tests):
-    table_test_results = []
-    string_column_anomalies_test_results = []
-    numeric_column_anomalies_test_results = []
-    any_type_column_anomalies_test_results = []
-    schema_changes_test_results = []
-    regular_test_results = []
-    artifacts_results = []
+@dataclass
+class TestResult:
+    type: str
+    message: str
+
+    @property
+    def success(self) -> bool:
+        if 'FAILED' in self.message:
+            return False
+        if 'SUCCESS' in self.message:
+            return True
+        raise ValueError('Invalid test result, no FAILED or SUCCESS.', self.type, self.message)
+
+    def __str__(self):
+        return f'{self.type}: {self.message}'
+
+
+def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
+    test_results = []
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
 
@@ -222,28 +236,39 @@ def e2e_tests(target, test_types, clear_tests):
 
     if 'table' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:table_anomalies')
-        table_test_results = dbt_runner.run_operation(macro_name='validate_table_anomalies')
-        print_test_result_list(table_test_results)
-        # If only table tests were selected no need to continue to the rest of the flow
-        if len(test_types) == 1:
-            return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-                    any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
-                    artifacts_results]
+        results = [
+            TestResult(type='table_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_table_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'error_test' in test_types:
         dbt_runner.test(select='tag:error_test')
-        error_test_results = dbt_runner.run_operation(macro_name='validate_error_test')
-        print_test_result_list(error_test_results)
+        results = [
+            TestResult(type='error_test', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_error_test')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'error_model' in test_types:
         dbt_runner.run(select='tag:error_model')
-        error_test_results = dbt_runner.run_operation(macro_name='validate_error_model')
-        print_test_result_list(error_test_results)
+        results = [
+            TestResult(type='error_model', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_error_model')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'error_snapshot' in test_types:
         dbt_runner.snapshot()
-        error_test_results = dbt_runner.run_operation(macro_name='validate_error_snapshot')
-        print_test_result_list(error_test_results)
+        results = [
+            TestResult(type='error_snapshot', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_error_snapshot')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     # Creates row_count metrics for anomalies detection.
     if 'no_timestamp' in test_types and target != 'databricks':
@@ -262,31 +287,50 @@ def e2e_tests(target, test_types, clear_tests):
 
     if 'debug' in test_types:
         dbt_runner.test(select='tag:debug')
-        return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-                any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
-                artifacts_results]
+        return test_results
 
     if 'no_timestamp' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:no_timestamp')
-        no_timestamp_test_results = dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
-        print_test_result_list(no_timestamp_test_results)
+        results = [
+            TestResult(type='no_timestamp_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'column' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:string_column_anomalies')
-        string_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
-        print_test_result_list(string_column_anomalies_test_results)
+        results = [
+            TestResult(type='string_column_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
+
         dbt_runner.test(select='tag:numeric_column_anomalies')
-        numeric_column_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
-        print_test_result_list(numeric_column_anomalies_test_results)
+        results = [
+            TestResult(type='numeric_column_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
+
         dbt_runner.test(select='tag:all_any_type_columns_anomalies')
-        any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name=
-                                                                          'validate_any_type_column_anomalies')
-        print_test_result_list(any_type_column_anomalies_test_results)
-    
+        results = [
+            TestResult(type='any_type_column_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_any_type_column_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
+
     if 'dimension' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:dimension_anomalies')
-        dimension_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_dimension_anomalies')
-        print_test_result_list(dimension_anomalies_test_results)
+        results = [
+            TestResult(type='dimension_anomalies', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_dimension_anomalies')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'schema' in test_types and target != 'databricks':
         dbt_runner.seed(select='schema_changes_data')
@@ -296,49 +340,42 @@ def e2e_tests(target, test_types, clear_tests):
         for schema_changes_log in schema_changes_logs:
             print(schema_changes_log)
         dbt_runner.test(select='tag:schema_changes')
-        schema_changes_test_results = dbt_runner.run_operation(macro_name='validate_schema_changes')
-        print_test_result_list(schema_changes_test_results)
+        results = [
+            TestResult(type='schema_changes', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_schema_changes')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'regular' in test_types:
         dbt_runner.test(select='test_type:singular tag:regular_tests')
-        regular_test_results = dbt_runner.run_operation(macro_name='validate_regular_tests')
-        print_test_result_list(regular_test_results)
+        results = [
+            TestResult(type='regular_tests', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_regular_tests')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
     if 'artifacts' in test_types:
-        artifacts_results = dbt_runner.run_operation(macro_name='validate_dbt_artifacts')
-        print_test_result_list(artifacts_results)
+        results = [
+            TestResult(type='artifacts', message=msg) for msg in
+            dbt_runner.run_operation(macro_name='validate_dbt_artifacts')
+        ]
+        print_test_results(results)
+        test_results.extend(results)
 
-    return [table_test_results, string_column_anomalies_test_results, numeric_column_anomalies_test_results,
-            any_type_column_anomalies_test_results, schema_changes_test_results, regular_test_results,
-            artifacts_results]
+    return test_results
 
 
-def print_test_result_list(test_results):
+def print_test_results(test_results: List[TestResult]):
     for test_result in test_results:
         print(test_result)
 
 
-def print_tests_results(table_test_results,
-                        string_column_anomalies_test_results,
-                        numeric_column_anomalies_test_results,
-                        any_type_column_anomalies_test_results,
-                        schema_changes_test_results,
-                        regular_test_results,
-                        artifacts_results):
-    print('\nTable test results')
-    print_test_result_list(table_test_results)
-    print('\nString columns test results')
-    print_test_result_list(string_column_anomalies_test_results)
-    print('\nNumeric columns test results')
-    print_test_result_list(numeric_column_anomalies_test_results)
-    print('\nAny type columns test results')
-    print_test_result_list(any_type_column_anomalies_test_results)
-    print('\nSchema changes test results')
-    print_test_result_list(schema_changes_test_results)
-    print('\nRegular test results')
-    print_test_result_list(regular_test_results)
-    print('\ndbt artifacts results')
-    print_test_result_list(artifacts_results)
+def print_failed_test_results(e2e_target: str, failed_test_results: List[TestResult]):
+    print(f'Failed {e2e_target} tests:')
+    for failed_test_result in failed_test_results:
+        print(f'{failed_test_result.type}: {failed_test_result.message}')
 
 
 @click.command()
@@ -376,11 +413,13 @@ def main(target, e2e_type, generate_data, clear_tests):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot', 'dimension']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot',
+                     'dimension']
     else:
         e2e_types = [e2e_type]
 
     all_results = {}
+    found_failures = False
     for e2e_target in e2e_targets:
         print(f'Starting {e2e_target} tests\n')
         e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
@@ -388,8 +427,15 @@ def main(target, e2e_type, generate_data, clear_tests):
         all_results[e2e_target] = e2e_test_results
 
     for e2e_target, e2e_test_results in all_results.items():
-        print(f'\n{e2e_target} results')
-        print_tests_results(*e2e_test_results)
+        failed_test_results = [test_result for test_result in e2e_test_results if not test_result.success]
+        if failed_test_results:
+            print_failed_test_results(e2e_target, failed_test_results)
+            found_failures = True
+        print(f'[{len(e2e_test_results) - len(failed_test_results)}/{len(e2e_test_results)}] {e2e_target} TESTS PASSED')
+
+    if found_failures:
+        print('Some of the tests failed.')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
