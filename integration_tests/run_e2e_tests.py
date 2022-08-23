@@ -214,7 +214,7 @@ class TestResult:
             return False
         if 'SUCCESS' in self.message:
             return True
-        raise ValueError('Invalid test result, no FAILED or SUCCESS.', self.message)
+        raise ValueError('Invalid test result, no FAILED or SUCCESS.', self.type, self.message)
 
     def __str__(self):
         return f'{self.type}: {self.message}'
@@ -428,10 +428,10 @@ def main(target, e2e_type, generate_data, clear_tests):
 
     for e2e_target, e2e_test_results in all_results.items():
         failed_test_results = [test_result for test_result in e2e_test_results if not test_result.success]
-        print(f'\n[{len(e2e_test_results) - len(failed_test_results)}/{len(e2e_test_results)}] TESTS PASSED')
         if failed_test_results:
             print_failed_test_results(e2e_target, failed_test_results)
             found_failures = True
+        print(f'[{len(e2e_test_results) - len(failed_test_results)}/{len(e2e_test_results)}] {e2e_target} TESTS PASSED')
 
     if found_failures:
         print('Some of the tests failed.')
