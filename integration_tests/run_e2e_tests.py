@@ -1,7 +1,9 @@
 import csv
+import json
 import os
 import random
 import string
+import sys
 from datetime import datetime, timedelta
 from os.path import expanduser
 from pathlib import Path
@@ -167,7 +169,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             random.choice(['android', 'ios']),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
-        }     
+        }
 
     def get_validation_row(date, row_index, rows_count):
         return {
@@ -176,7 +178,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             random.choice(['android', 'ios']),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
-        }     
+        }
 
     dimension_columns = ['date', 'platform', 'version', 'user_id']
     dates = generate_date_range(base_date=datetime.today() - timedelta(days=2), numdays=30)
@@ -282,7 +284,7 @@ def e2e_tests(target, test_types, clear_tests):
         any_type_column_anomalies_test_results = dbt_runner.run_operation(macro_name=
                                                                           'validate_any_type_column_anomalies')
         print_test_result_list(any_type_column_anomalies_test_results)
-    
+
     if 'dimension' in test_types and target != 'databricks':
         dbt_runner.test(select='tag:dimension_anomalies')
         dimension_anomalies_test_results = dbt_runner.run_operation(macro_name='validate_dimension_anomalies')
@@ -341,6 +343,18 @@ def print_tests_results(table_test_results,
     print_test_result_list(artifacts_results)
 
 
+def get_failed_test_results(e2e_test_results):
+    failed_test_results = []
+    for e2e_type_test_results in e2e_test_results:
+        for test_result in e2e_type_test_results:
+            if 'FAILED' in test_result:
+                failed_test_results.append(test_result)
+                continue
+            if 'SUCCESS' not in test_result:
+                raise ValueError('Invalid test result, no FAILED or SUCCESS.')
+    return failed_test_results
+
+
 @click.command()
 @click.option(
     '--target', '-t',
@@ -376,20 +390,27 @@ def main(target, e2e_type, generate_data, clear_tests):
         e2e_targets = [target]
 
     if e2e_type == 'all':
-        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot', 'dimension']
+        e2e_types = ['table', 'column', 'schema', 'regular', 'artifacts', 'error_test', 'error_model', 'error_snapshot',
+                     'dimension']
     else:
         e2e_types = [e2e_type]
 
     all_results = {}
+    all_failed_results = []
     for e2e_target in e2e_targets:
         print(f'Starting {e2e_target} tests\n')
         e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
         print(f'\n{e2e_target} results')
         all_results[e2e_target] = e2e_test_results
+        all_failed_results.extend(get_failed_test_results(e2e_test_results))
 
     for e2e_target, e2e_test_results in all_results.items():
         print(f'\n{e2e_target} results')
         print_tests_results(*e2e_test_results)
+
+    if all_failed_results:
+        print('Some of the tests failed.\n', json.dumps(all_failed_results, indent=2))
+        sys.exit(1)
 
 
 if __name__ == '__main__':
