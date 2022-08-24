@@ -1,4 +1,4 @@
-{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
+{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
@@ -7,7 +7,7 @@
 
         select {{ column_obj.quoted }}
             {% if is_timestamp -%}
-             , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
+             , {{ elementary.date_trunc(period, timestamp_column) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
@@ -74,12 +74,10 @@
             {{ elementary.null_string() }} as source_value,
             {%- if is_timestamp %}
                 edr_bucket as bucket_start,
-                {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
-                24 as bucket_duration_hours,
+                {{ elementary.timeadd(period,1,'edr_bucket') }} as bucket_end,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
                 {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
-                {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value
@@ -101,7 +99,11 @@
         source_value,
         bucket_start,
         bucket_end,
-        bucket_duration_hours,
+        {%- if is_timestamp %}
+            {{ timediff('hour', bucket_start, bucket_end)}} as bucket_duration_hours,
+        {%- else %}
+            {{ elementary.null_int() }} as bucket_duration_hours,
+        {%- endif %}
         {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
         dimension,
         dimension_value
