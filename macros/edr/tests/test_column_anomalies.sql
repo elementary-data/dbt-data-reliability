@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none, backfill_days=none) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none, backfill_days=none, period=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -33,6 +33,9 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
+         {% set period = elementary.get_period(period, model_graph_node) %}
+         {{ elementary.debug_log('period - ' ~ period) }}
+
         {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model, column_name, column_anomalies) -%}
         {%- if not column_obj_and_monitors -%}
             {{ elementary.edr_log('column ' ~ column_name ~ ' object was not found') }}
@@ -46,7 +49,7 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
-        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
+        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_monitoring_query) %}
 
@@ -65,7 +68,7 @@
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {# return anomalies query as standart test query #}
-        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) }}
+        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days, period) }}
     
     {%- else %}
 

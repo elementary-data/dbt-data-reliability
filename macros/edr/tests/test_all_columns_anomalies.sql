@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none, sensitivity = none, backfill_days=none) %}
+{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none, sensitivity = none, backfill_days=none, period = none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -33,6 +33,9 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
+         {% set period = elementary.get_period(period, model_graph_node) %}
+         {{ elementary.debug_log('period - ' ~ period) }}
+
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
         {#- execute table monitors and write to temp test table -#}
@@ -51,7 +54,7 @@
                     {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, column_monitors, column_name) ~ "'" %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
@@ -73,7 +76,7 @@
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
 
         {# return anomalies query as standard test query #}
-        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) }}
+        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days, period) }}
 
     {%- else %}
 
