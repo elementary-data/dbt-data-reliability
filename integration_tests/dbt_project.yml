@@ -25,3 +25,6 @@ models:
     +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}"
   elementary:
     +schema: elementary
+
+seeds:
+  +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}"
