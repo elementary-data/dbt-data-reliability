@@ -24,7 +24,7 @@ models:
   elementary_integration_tests:
     +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}"
   elementary:
-    +schema: elementary
+    +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}_elementary"
 
 seeds:
   +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}"
