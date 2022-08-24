@@ -1,4 +1,4 @@
-{%- macro get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) -%}
+{%- macro get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days, period) -%}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set anomaly_query -%}
         select
