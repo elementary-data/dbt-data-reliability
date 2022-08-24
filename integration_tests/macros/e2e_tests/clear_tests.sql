@@ -4,7 +4,8 @@
         {% do drop_schema(database_name, schema_name) %}
         {% set schema_name = schema_name ~ '__tests' %}
         {% do drop_schema(database_name, schema_name) %}
-        {% do drop_schema(elementary.target_database(), target.schema) %}
+        {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary_integration_tests') %}
+        {% do drop_schema(database_name, schema_name) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}

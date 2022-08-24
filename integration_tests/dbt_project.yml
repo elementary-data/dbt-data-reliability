@@ -3,12 +3,12 @@ version: "1.0.0"
 config-version: 2
 profile: "elementary_tests"
 
-model-paths: ["models"]
-analysis-paths: ["analyses"]
-test-paths: ["tests"]
-seed-paths: ["data"]
-macro-paths: ["macros"]
-snapshot-paths: ["snapshots"]
+model-paths: [ "models" ]
+analysis-paths: [ "analyses" ]
+test-paths: [ "tests" ]
+seed-paths: [ "data" ]
+macro-paths: [ "macros" ]
+snapshot-paths: [ "snapshots" ]
 
 target-path: "target" # directory which will store compiled SQL files
 clean-targets: # directories to be removed by `dbt clean`
@@ -21,5 +21,7 @@ vars:
   elementary_debug_logs: false
 
 models:
+  elementary_integration_tests:
+    +schema: "{{ env_var('CUSTOM_SCHEMA', 'default') | replace('-', '_') }}"
   elementary:
     +schema: elementary
