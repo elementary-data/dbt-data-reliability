@@ -1,3 +1,4 @@
+{# Same as datediff, but used on timestamps instead #}
 {% macro timediff(timepart, first_timestamp, second_timestamp) -%}
     {{ return(adapter.dispatch('timediff', 'elementary')(timepart, first_timestamp, second_timestamp)) }}
 {%- endmacro %}

@@ -7,7 +7,7 @@
 
         select {{ column_obj.quoted }}
             {% if is_timestamp -%}
-             , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
+             , {{ elementary.time_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}

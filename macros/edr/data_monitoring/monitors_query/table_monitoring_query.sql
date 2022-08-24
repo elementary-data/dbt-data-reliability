@@ -7,7 +7,7 @@
     {% if is_timestamp %}
         with filtered_monitored_table as (
             select *,
-                   {{ elementary.date_trunc('day', timestamp_column) }} as start_bucket_in_data
+                   {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
