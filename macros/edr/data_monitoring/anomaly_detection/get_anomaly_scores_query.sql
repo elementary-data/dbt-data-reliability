@@ -140,4 +140,6 @@
         select * from anomaly_scores
 
     {% endset %}
+    
+    {{ return(anomaly_scores_query) }}
 {% endmacro %}
