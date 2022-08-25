@@ -3,7 +3,7 @@
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_config_var('tests_schema_name') %}
         {% if not tests_schema_name %}
-            {{ return() }}
+            {{ return('') }}
         {% endif %}
         {% set schema_name = schema_name ~ tests_schema_name %}
         {%- if not adapter.check_schema_exists(database_name, schema_name) %}
