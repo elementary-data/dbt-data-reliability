@@ -51,3 +51,39 @@
 {%- macro postgres__type_long_string() -%}
     varchar(16384)
 {%- endmacro -%}
+
+
+{% macro type_bigint() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_bigint()) }}
+    {% else %}
+        {{ return(dbt_utils.type_bigint()) }}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro type_float() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_float()) }}
+    {% else %}
+        {{ return(dbt_utils.type_float()) }}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro type_int() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_int()) }}
+    {% else %}
+        {{ return(dbt_utils.type_int()) }}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro type_timestamp() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_timestamp()) }}
+    {% else %}
+        {{ return(dbt_utils.type_timestamp()) }}
+    {% endif %}
+{% endmacro %}
