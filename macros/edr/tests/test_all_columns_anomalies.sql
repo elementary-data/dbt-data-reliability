@@ -54,7 +54,6 @@
                     {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, period, column_monitors, column_name) ~ "'" %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {#- TODO continue here -#}
                     {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
@@ -65,6 +64,7 @@
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {#- TODO continue here -#}
         {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, all_columns_monitors, period, columns_only=true) %}
         {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
