@@ -140,5 +140,4 @@
         select * from anomaly_scores
 
     {% endset %}
-    {{log(anomaly_scores_query, info=True)}}
 {% endmacro %}
