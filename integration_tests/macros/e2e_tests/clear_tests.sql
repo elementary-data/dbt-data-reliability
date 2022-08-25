@@ -2,7 +2,7 @@
     {% if execute %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% do drop_schema(database_name, schema_name) %}
-        {% set schema_name = schema_name ~ '__tests' %}
+        {% set schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
         {% do drop_schema(database_name, schema_name) %}
         {% do drop_schema(elementary.target_database(), target.schema) %}
     {% endif %}
