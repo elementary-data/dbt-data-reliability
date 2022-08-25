@@ -3,7 +3,7 @@ import os
 from os.path import expanduser
 
 import click
-from clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.dbt_runner import DbtRunner
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
