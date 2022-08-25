@@ -1,4 +1,4 @@
-{# Same as dateadd, but used on timestamps instead #}
+{# Same as dateadd, but supports timestamps as well and not just dates #}
 {% macro timeadd(date_part, number, timestamp_expression) -%}
     {{ return(adapter.dispatch('timeadd', 'elementary')(date_part, number, timestamp_expression)) }}
 {%- endmacro %}
