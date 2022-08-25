@@ -51,9 +51,10 @@
                 {%- set ignore_column = elementary.should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
-                    {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, column_monitors, column_name) ~ "'" %}
+                    {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, period, column_monitors, column_name) ~ "'" %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
+                    {#- TODO continue here -#}
                     {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
