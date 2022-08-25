@@ -1,7 +1,7 @@
 {% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, period, column_name = none, columns_only = false, dimensions = none) %}
 
-    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime(period) %}
+    {%- set metrics_min_time = "'"~ get_metric_min_time(global_min_bucket_end, backfill_days, period).strftime("%Y-%m-%d %H:00:00") ~"'" %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -64,7 +64,7 @@
             where row_number = 1
 
         ),
-
+        {# Continue here#}
         daily_buckets as (
 
             {{ elementary.daily_buckets_cte() }}

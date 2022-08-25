@@ -1,5 +1,5 @@
 {% macro get_period(period, model_node) %}
-    {% set supported_values = ['hour', 'day', 'week', 'month'] %}
+    {% set supported_values = ['hour', 'day', 'month'] %}
     {% if period is none %}
         {% set elementary_config = elementary.get_elementary_config_from_node(model_node) %}
         {% if elementary_config and elementary_config is mapping %}
