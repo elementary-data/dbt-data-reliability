@@ -30,16 +30,20 @@ on:
         type: string
         required: true
 
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
     concurrency:
-      group: tests-${{ inputs.warehouse-type }}-${{ github.ref_name }}
+      group: tests-${{ inputs.warehouse-type }}-$BRANCH_NAME
     steps:
       - name: Write dbt profiles
         run: |
           mkdir -p ~/.dbt
-          echo "${{ secrets.CI_PROFILES_YML }}" | base64 -d | sed "s/<SCHEMA_NAME>/${{ github.ref_name }}/g" > ~/.dbt/profiles.yml
+          UNDERSCORED_REF_NAME=$(echo "$BRANCH_NAME" | sed 's/-/_/g')
+          echo "${{ secrets.CI_PROFILES_YML }}" | base64 -d | sed "s/<SCHEMA_NAME>/$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Checkout Elementary
         uses: actions/checkout@v3
