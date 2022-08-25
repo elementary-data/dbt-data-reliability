@@ -141,5 +141,4 @@
 
     {% endset %}
     {{log(anomaly_scores_query, info=True)}}
-    {{ return(anomaly_scores_query) }}
 {% endmacro %}
