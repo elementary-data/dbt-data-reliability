@@ -52,13 +52,13 @@
     {%- if data_type == 'boolean' %}
         cast ({{ dummy_values['boolean'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast('{{ dummy_values['timestamp'] }}' as {{ dbt_utils.type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
-        cast({{ dummy_values['int'] }} as {{ dbt_utils.type_int() }}) as {{ column_name }}
+        cast({{ dummy_values['int'] }} as {{ elementary.type_int() }}) as {{ column_name }}
     {%- elif data_type == 'bigint' %}
-        cast({{ dummy_values['bigint'] }} as {{ dbt_utils.type_bigint() }}) as {{ column_name }}
+        cast({{ dummy_values['bigint'] }} as {{ elementary.type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
-        cast({{ dummy_values['float'] }} as {{ dbt_utils.type_float() }}) as {{ column_name }}
+        cast({{ dummy_values['float'] }} as {{ elementary.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
         cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
     {%- else %}
