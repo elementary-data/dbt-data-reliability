@@ -5,7 +5,7 @@
 {% macro default__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {# We only try casting for snowflake and bigquery, as these support safe cast and the query will not fail if the cast fails #}
     {%- set query %}
-        select {{ dbt_utils.safe_cast(timestamp_column, dbt_utils.type_timestamp()) }} as timestamp_column
+        select {{ elementary.safe_cast(timestamp_column, elementary.type_timestamp()) }} as timestamp_column
         from {{ table_relation }}
         where {{ timestamp_column }} is not null
         limit 1
