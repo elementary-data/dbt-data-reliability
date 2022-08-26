@@ -7,7 +7,7 @@
 
         select {{ column_obj.quoted }}
             {% if is_timestamp -%}
-             , {{ elementary.date_trunc('day', timestamp_column) }} as edr_bucket
+             , {{ elementary.time_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
@@ -102,7 +102,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
+        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
         dimension,
         dimension_value
     from metrics_final
