@@ -22,12 +22,25 @@
     {{ return(global_min_bucket_end) }}
 {% endmacro %}
 
+{% macro get_max_bucket_start(period) %}
+    {% if period == 'hour' %}
+        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:00:00")~"'" %}
+    {% elif period == 'day' %}
+        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(days=1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% else %}
+        {# TODO fix months bucket. Substract elementary.get_config_var('days_back') months #}
+        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(days=1)).strftime("%Y-%m-01 00:00:00")~"'" %}
+    {% endif %}
+    {{ return(max_bucket_end) }}
+{% endmacro %}
+
 {% macro get_max_bucket_end(period) %}
     {% if period == 'hour' %}
         {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d %H:00:00")~"'" %}
     {% elif period == 'day' %}
         {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% else %}
+        {# TODO fix months bucket. Substract elementary.get_config_var('days_back') months #}
         {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-01 00:00:00")~"'" %}
     {% endif %}
     {{ return(max_bucket_end) }}

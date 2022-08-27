@@ -100,7 +100,7 @@
         source_value,
         bucket_start,
         bucket_end,
-        datediff('hour', bucket_start, bucket_end) as bucket_duration_hours,
+        {{ elementary.timediff('hours', 'bucket_start', 'bucket_end') }} as bucket_duration_hours,
         {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
         dimension,
         dimension_value
