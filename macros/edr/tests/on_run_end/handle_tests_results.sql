@@ -77,6 +77,7 @@
     {% else %}
         {% set test_row_dicts = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% endif %}
+    {{debug()}}
     {% for test_row_dict in test_row_dicts %}
         {% do anomaly_detection_test_results.append(elementary.get_metric_test_result(run_result_dict,
                                                                                       test_row_dict,
@@ -359,6 +360,7 @@
     {% endset %}
     {% set most_recent_anomaly_scores_agate = run_query(most_recent_anomaly_scores_query) %}
     {% set most_recent_anomaly_scores = elementary.agate_to_dicts(most_recent_anomaly_scores_agate) %}
+    {{debug()}}
     {{ return(most_recent_anomaly_scores) }}
 {% endmacro %}
 
