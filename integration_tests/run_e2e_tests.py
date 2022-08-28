@@ -166,8 +166,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
     def get_training_row(date, row_index, rows_count):
         return {
             'date': date.strftime('%Y-%m-%d %H:%M:%S'),
-            'platform': 'windows' if row_index < (10 / 100 * rows_count) else
-            random.choice(['android', 'ios']),
+            'platform': 'windows' if row_index < (10 / 100 * rows_count) else ('android' if row_index < (55 / 100 * rows_count) else 'ios'),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
         }
