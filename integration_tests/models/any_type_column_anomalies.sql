@@ -22,7 +22,7 @@ with training as (
 
  final as (
      select
-         TO_TIMESTAMP_TZ(date) as updated_at,
+         date as updated_at,
          null_count_str,
          null_percent_str,
          null_count_float,
