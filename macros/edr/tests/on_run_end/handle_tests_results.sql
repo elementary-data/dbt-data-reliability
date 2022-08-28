@@ -150,6 +150,13 @@
              {%- endif %}
         order by bucket_end
     {%- endset -%}
+    {% set test_results_description %}
+        {% if elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score') is none %}
+            Could not calculate anomaly score for this test due to lack of data.
+        {% else %}
+            {{ elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description') }}
+        {% endif %}
+    {% endset %}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
@@ -163,7 +170,7 @@
         'column_name': column_name,
         'test_type': 'anomaly_detection',
         'test_sub_type': metric_name,
-        'test_results_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
+        'test_results_description': test_results_description,
         'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
