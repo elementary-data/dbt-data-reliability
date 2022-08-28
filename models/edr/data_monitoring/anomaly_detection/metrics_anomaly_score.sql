@@ -5,6 +5,9 @@
     enabled = target.type != 'databricks' | as_bool()
   )
 }}
+-- #TODO this needs to be changed to get the bucket logic.
+-- The bucket_duratio_hours can be a proxy to know the lenght of the buckets
+-- We can't pass period to the CTE because each column/model can have different periods
 
 with data_monitoring_metrics as (
 
