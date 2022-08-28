@@ -152,7 +152,7 @@
     {%- endset -%}
     {% set test_results_description %}
         {% if elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score') is none %}
-            Could not calculate anomaly score for this test due to lack of data.
+            Not enough data to calculate anomaly score.
         {% else %}
             {{ elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description') }}
         {% endif %}
