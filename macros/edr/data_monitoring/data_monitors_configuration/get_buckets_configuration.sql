@@ -58,7 +58,6 @@
 
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start(period) %}
     {%- set backfill_bucket_start = elementary.get_backfill_bucket_start(backfill_days, period) %}
-
     {%- if monitors %}
         {%- set monitors_tuple = elementary.strings_list_to_tuple(monitors) %}
     {%- endif %}

@@ -2,7 +2,6 @@
     {%- set run_started_at = "'"~elementary.get_run_started_at()~"'" %}
     {%- set max_bucket_end = date_trunc(period, run_started_at) %}
     {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
-
     with filtered_monitored_table as (
 
         select {{ column_obj.quoted }}
