@@ -15,7 +15,7 @@ models:
       - elementary.table_anomalies:
           config:
             severity: warn
-          tags: ["table_anomalies_r"]
+          tags: ["table_anomalies"]
           table_anomalies:
             - row_count
       - elementary.all_columns_anomalies:
