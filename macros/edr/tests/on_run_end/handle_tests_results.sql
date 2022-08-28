@@ -112,6 +112,7 @@
     {% set timestamp_column = elementary.get_timestamp_column(test_param_timestamp_column, parent_model_node) %}
     {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=test_param_sensitivity) %}
     {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=test_param_backfill_days) %}
+    {% set period = elementary.get_period(none, parent_model_node) %}
     {% do test_params.update({'sensitivity': sensitivity}) %}
     {% do test_params.update({'timestamp_column': timestamp_column}) %}
     {% do test_params.update({'backfill_days': backfill_days}) %}
@@ -119,6 +120,7 @@
     {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
     {% set metric_id = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id') %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+    
     {% set test_results_query %}
         with anomaly_scores as (
             select * from {{ test_anomaly_scores_table }}
@@ -126,7 +128,7 @@
         anomaly_scores_with_is_anomalous as (
         select  *,
                 case when abs(anomaly_score) > {{ sensitivity }}
-                and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
+                and bucket_end >= {{ elementary.timeadd(period, backfill_period, elementary.get_max_bucket_end(period)) }}
                 and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
             from anomaly_scores
         )
@@ -223,7 +225,7 @@
         anomaly_scores_with_is_anomalous as (
         select  *,
                 case when abs(anomaly_score) > {{ sensitivity }}
-                and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
+                and bucket_end >= {{ elementary.timeadd(period, backfill_period, elementary.get_max_bucket_end(period)) }}
                 and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
             from anomaly_scores
         )

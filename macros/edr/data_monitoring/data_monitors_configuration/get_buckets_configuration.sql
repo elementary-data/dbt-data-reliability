@@ -16,8 +16,6 @@
         {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(hours=elementary.get_config_var('days_back') + 1) %}
     {% elif period == 'day' %}
         {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back') + 1) %}
-    {% else %}
-        {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(months=elementary.get_config_var('days_back') + 1) %}
     {% endif %}
     {{ return(global_min_bucket_end) }}
 {% endmacro %}
@@ -27,9 +25,6 @@
         {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:00:00")~"'" %}
     {% elif period == 'day' %}
         {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(days=1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% else %}
-        {# TODO fix months bucket. Substract elementary.get_config_var('days_back') months #}
-        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(days=1)).strftime("%Y-%m-01 00:00:00")~"'" %}
     {% endif %}
     {{ return(max_bucket_end) }}
 {% endmacro %}
@@ -39,9 +34,6 @@
         {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d %H:00:00")~"'" %}
     {% elif period == 'day' %}
         {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% else %}
-        {# TODO fix months bucket. Substract elementary.get_config_var('days_back') months #}
-        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-01 00:00:00")~"'" %}
     {% endif %}
     {{ return(max_bucket_end) }}
 {% endmacro %}
@@ -51,9 +43,6 @@
         {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(hours=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d %H:00:00")~"'" %}
     {% elif period == 'day' %}
         {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% else %}
-        {# TODO fix months bucket. Substract elementary.get_config_var('days_back') months #}
-        {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back'))).strftime("%Y-%m-01 00:00:00")~"'" %}
     {% endif %}    
     {{ return(min_bucket_end) }}
 {% endmacro %}
@@ -119,11 +108,6 @@
                                                                             month=global_min_bucket_end.month, 
                                                                             day=global_min_bucket_end.day,) %}
         {%- set metrics_min_time = truncated_global_min_bucket_end - modules.datetime.timedelta(days=backfill_days + 1) %}
-    {% else %}
-        {# TODO fix months bucket. Substract backfill_days + 1 months #}    
-        {%- set truncated_global_min_bucket_end = modules.datetime.datetime(year=global_min_bucket_end.year, 
-                                                                            month=global_min_bucket_end.month,) %}
-        {%- set metrics_min_time = truncated_global_min_bucket_end  - modules.datetime.timedelta(days=backfill_days + 1) %}
     {% endif %}
     {{ return(metrics_min_time) }}
 {% endmacro %}
