@@ -26,7 +26,7 @@
         {% endif %}
 
         {#- query current schema and write to temp test table -#}
-        {{ elementary.edr_log('Started testing schema chages on:' ~ full_table_name) }}
+        {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
         {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_snapshot_query) %}
