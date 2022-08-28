@@ -60,9 +60,9 @@
     {%- elif data_type == 'float' %}
         cast({{ dummy_values['float'] }} as {{ elementary.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
-        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.elementary_type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.elementary_type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}

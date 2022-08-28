@@ -11,5 +11,5 @@
 {%- endmacro -%}
 
 {% macro null_string() %}
-    cast(null as {{ elementary.type_string() }})
+    cast(null as {{ elementary.elementary_type_string() }})
 {% endmacro %}

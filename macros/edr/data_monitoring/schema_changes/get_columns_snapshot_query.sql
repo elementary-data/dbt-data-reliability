@@ -28,7 +28,7 @@
             schema_name,
             table_name,
             column_name,
-            cast(data_type as {{ elementary.type_string() }}) as data_type,
+            cast(data_type as {{ elementary.elementary_type_string() }}) as data_type,
             {{ elementary.run_start_column() }} as detected_at,
             case when
                     {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
@@ -43,7 +43,7 @@
     columns_snapshot_with_id as (
 
         select
-            {{ dbt_utils.surrogate_key([
+            {{ elementary.surrogate_key([
               'full_table_name',
               'column_name',
               'data_type'

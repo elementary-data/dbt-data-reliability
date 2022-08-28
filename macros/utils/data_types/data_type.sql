@@ -11,46 +11,56 @@
 {% endmacro %}
 
 
-{%- macro type_string() -%}
-    {{ return(adapter.dispatch('type_string', 'elementary')()) }}
+{# In our project we defined type_string different from dbt, so we have a new macro for it #}
+{%- macro elementary_type_string() -%}
+    {{ return(adapter.dispatch('elementary_type_string', 'elementary')()) }}
 {%- endmacro -%}
 
-{% macro default__type_string() %}
+{% macro default__elementary_type_string() %}
     {# Redshift and Postgres #}
     varchar(4096)
 {% endmacro %}
 
-{% macro snowflake__type_string() %}
+{% macro snowflake__elementary_type_string() %}
     {# Default max varchar size in Snowflake is 16MB #}
     varchar
 {% endmacro %}
 
-{% macro bigquery__type_string() %}
+{% macro bigquery__elementary_type_string() %}
     {# Default max string size in Bigquery is 65K #}
     string
 {% endmacro %}
 
-{% macro databricks__type_string() %}
+{% macro databricks__elementary_type_string() %}
     string
 {% endmacro %}
 
 
 
-{%- macro type_long_string() -%}
-    {{ return(adapter.dispatch('type_long_string', 'elementary')()) }}
+{%- macro elementary_type_long_string() -%}
+    {{ return(adapter.dispatch('elementary_type_long_string', 'elementary')()) }}
 {%- endmacro -%}
 
-{%- macro default__type_long_string() -%}
-    {{ elementary.type_string() }}
+{%- macro default__elementary_type_long_string() -%}
+    {{ elementary.elementary_type_string() }}
 {%- endmacro -%}
 
-{%- macro redshift__type_long_string() -%}
+{%- macro redshift__elementary_type_long_string() -%}
     varchar(16384)
 {%- endmacro -%}
 
-{%- macro postgres__type_long_string() -%}
+{%- macro postgres__elementary_type_long_string() -%}
     varchar(16384)
 {%- endmacro -%}
+
+
+{% macro type_string() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_string()) }}
+    {% else %}
+        {{ return(dbt_utils.type_string()) }}
+    {% endif %}
+{% endmacro %}
 
 
 {% macro type_bigint() %}

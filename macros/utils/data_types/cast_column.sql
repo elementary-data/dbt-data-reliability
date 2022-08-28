@@ -7,11 +7,11 @@
 {%- endmacro -%}
 
 {%- macro cast_as_string(column) -%}
-    cast({{ column }} as {{ elementary.type_string() }})
+    cast({{ column }} as {{ elementary.elementary_type_string() }})
 {%- endmacro -%}
 
 {%- macro cast_as_long_string(column) -%}
-    cast({{ column }} as {{ elementary.type_long_string() }})
+    cast({{ column }} as {{ elementary.elementary_type_long_string() }})
 {%- endmacro -%}
 
 {%- macro cast_as_bool(column) -%}
@@ -19,5 +19,5 @@
 {%- endmacro -%}
 
 {%- macro const_as_string(string) -%}
-    cast('{{ string }}' as {{ elementary.type_string() }})
+    cast('{{ string }}' as {{ elementary.elementary_type_string() }})
 {%- endmacro -%}
