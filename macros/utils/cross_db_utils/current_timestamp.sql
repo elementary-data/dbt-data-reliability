@@ -1,6 +1,6 @@
 {% macro current_timestamp() -%}
   {% if dbt_version >= '1.2.0' %}
-        {# This method is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
+        {# This macro is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
         {# Should be replaced to the equivalent macro once it released #}
         {{ return(dbt_utils.current_timestamp()) }}
     {% else %}
@@ -11,7 +11,7 @@
 
 {% macro current_timestamp_in_utc() -%}
   {% if dbt_version >= '1.2.0' %}
-        {# This method is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
+        {# This macro is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
         {# Should be replaced to the equivalent macro once it released #}
         {{ return(dbt_utils.current_timestamp_in_utc()) }}
     {% else %}
