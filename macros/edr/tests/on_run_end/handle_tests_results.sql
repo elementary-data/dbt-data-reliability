@@ -129,6 +129,7 @@
                 and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
                 and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
             from anomaly_scores
+            where anomaly_score is not null
         )
         select metric_value as value,
                training_avg as average, 
@@ -149,6 +150,13 @@
              {%- endif %}
         order by bucket_end
     {%- endset -%}
+    {% set test_results_description %}
+        {% if elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score') is none %}
+            Not enough data to calculate anomaly score.
+        {% else %}
+            {{ elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description') }}
+        {% endif %}
+    {% endset %}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
@@ -162,7 +170,7 @@
         'column_name': column_name,
         'test_type': 'anomaly_detection',
         'test_sub_type': metric_name,
-        'test_results_description': elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description'),
+        'test_results_description': test_results_description,
         'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
@@ -226,6 +234,7 @@
                 and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
                 and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
             from anomaly_scores
+            where anomaly_score is not null
         )
         select metric_value as value,
                training_avg as average,   
