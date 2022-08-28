@@ -33,8 +33,8 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
-         {% set period = elementary.get_period(period, model_graph_node) %}
-         {{ elementary.debug_log('period - ' ~ period) }}
+        {% set period = elementary.get_period(period, model_graph_node) %}
+        {{ elementary.debug_log('period - ' ~ period) }}
 
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}

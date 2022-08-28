@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, where_expression=none, timestamp_column=none, sensitivity=none, backfill_days=none) %}
+{% test dimension_anomalies(model, dimensions, where_expression=none, timestamp_column=none, sensitivity=none, backfill_days=none, period=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -40,17 +40,21 @@
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
         {{ elementary.debug_log('where_expression - ' ~ where_expression) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, column_name=dimensions_str) ~ "'" %}
+        
+        {% set period = elementary.get_period(period, model_graph_node) %}
+        {{ elementary.debug_log('period - ' ~ period) }}
+
+        {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, period, column_name=dimensions_str) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start, period) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, dimension_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
-        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, ['dimension'], dimensions=dimensions) %}
+        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, ['dimension'], period, dimensions=dimensions) %}
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
         {{ elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
@@ -62,7 +66,7 @@
         {{ elementary.test_log('end', full_table_name) }}
 
         {# return anomalies query as standard test query #}
-        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) }}
+        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days, period) }}
 
     {% else %}
 
