@@ -11,7 +11,7 @@
         {% set schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
         {% set temp_schema_changes_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__schema_changes') %}
         {{ elementary.debug_log('schema columns table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_schema_changes_table_name) }}
-        {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
+        {% set temp_table_exists, temp_table_relation = elementary.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=temp_schema_changes_table_name,
                                                                                    type='table') -%}
@@ -35,7 +35,7 @@
         {% set schema_changes_alert_query = elementary.get_columns_changes_query(full_table_name, temp_table_relation) %}
         {% set temp_alerts_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__schema_changes_alerts') %}
         {{ elementary.debug_log('schema alerts table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_alerts_table_name) }}
-        {% set alerts_temp_table_exists, alerts_temp_table_relation = dbt.get_or_create_relation(database=database_name,
+        {% set alerts_temp_table_exists, alerts_temp_table_relation = elementary.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=temp_alerts_table_name,
                                                                                    type='table') -%}

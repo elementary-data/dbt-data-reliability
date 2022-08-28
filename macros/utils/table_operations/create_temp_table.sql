@@ -1,5 +1,5 @@
 {% macro create_temp_table(database_name, schema_name, table_name, sql_query) %}
-    {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
+    {% set temp_table_exists, temp_table_relation = elementary.get_or_create_relation(database=database_name,
                                                                                schema=schema_name,
                                                                                identifier=table_name,
                                                                                type='table') -%}
