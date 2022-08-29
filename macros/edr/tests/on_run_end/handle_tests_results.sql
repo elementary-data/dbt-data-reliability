@@ -5,6 +5,7 @@
         {% set test_columns_snapshot_tables = [] %}
         {% set elementary_test_results = [] %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+        {% set test_relations = list_test_relations(database_name, schema_name) %}
         {% for result in results | selectattr('node.resource_type', '==', 'test') %}
             {% set status = result.status | lower %}
             {% set run_result_dict = result.to_dict() %}
@@ -12,7 +13,7 @@
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' %}
                 {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
-                    {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
+                    {% set test_metrics_table = elementary.get_elementary_test_table(test_relations, flatten_test_node.name, '__metrics') %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
                     {% endif %}
@@ -35,7 +36,7 @@
                         {% endif %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
-                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
+                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(test_relations, flatten_test_node.name, '__schema_changes') %}
                     {% if test_columns_snapshot_table %}
                         {% do test_columns_snapshot_tables.append(test_columns_snapshot_table) %}
                     {% endif %}
@@ -71,7 +72,7 @@
 
 {%- macro get_test_result_per_metric(database_name, schema_name, status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_relations, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
         {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% else %}
@@ -182,7 +183,7 @@
 {% endmacro %}
 
 {% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, '__anomaly_scores') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_relations, test_node.name, '__anomaly_scores') %}
     {% set anomalous_dimensions = [] %}
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
@@ -371,13 +372,13 @@
     {{ return(most_recent_anomaly_scores) }}
 {% endmacro %}
 
-{% macro get_elementary_test_table(database_name, schema_name, test_name, suffix) %}
-    {% set tests_schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
+{% macro get_elementary_test_table(test_relations, test_name, suffix) %}
     {% set test_table_name = elementary.table_name_with_suffix(test_name, suffix) %}
-    {% set test_table_relation = adapter.get_relation(database=database_name,
-                                                      schema=tests_schema_name,
-                                                      identifier=test_table_name) %}
-    {{ return(test_table_relation) }}
+    {% for test_relation in test_relations %}
+        {% if test_relation['name'] == test_table_name %}
+            {{ return(api.Relation.create(database=test_relation['database_name'], schema=test_relation['schema_name'], identifier=test_relation['name'])) }}
+        {% endif %}
+    {% endfor %}
 {% endmacro %}
 
 
@@ -423,4 +424,10 @@
             {%- endif %}
         {%- endif %}
     {%- endif %}
+{% endmacro %}
+
+{% macro list_test_relations(database, schema) %}
+    {% set tests_schema_name = schema ~ elementary.get_config_var('tests_schema_name') %}
+    {% set tests_schema_relation = api.Relation.create(database=database, schema=tests_schema_name) %}
+    {{ return(dbt.list_relations_without_caching(tests_schema_relation)) }}
 {% endmacro %}
