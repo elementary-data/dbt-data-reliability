@@ -8,7 +8,7 @@
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {# creates temp relation for schema columns info #}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% set schema_name = schema_name ~ '__tests' %}
+        {% set schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
         {% set temp_schema_changes_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__schema_changes') %}
         {{ elementary.debug_log('schema columns table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_schema_changes_table_name) }}
         {% set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
@@ -26,7 +26,7 @@
         {% endif %}
 
         {#- query current schema and write to temp test table -#}
-        {{ elementary.edr_log('Started testing schema chages on:' ~ full_table_name) }}
+        {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
         {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
         {%- do elementary.create_or_replace(False, temp_table_relation, column_snapshot_query) %}

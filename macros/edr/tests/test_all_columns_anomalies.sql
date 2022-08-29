@@ -8,7 +8,7 @@
         {{- elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {#- creates temp relation for test metrics -#}
         {%- set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {%- set schema_name = schema_name ~ '__tests' %}
+        {% set schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
         {%- set temp_metrics_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__metrics') %}
         {{- elementary.debug_log('metrics table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_metrics_table_name) }}
         {%- set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,

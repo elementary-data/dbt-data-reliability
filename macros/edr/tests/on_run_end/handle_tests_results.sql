@@ -372,7 +372,7 @@
 {% endmacro %}
 
 {% macro get_elementary_test_table(database_name, schema_name, test_name, suffix) %}
-    {% set tests_schema_name = schema_name ~ '__tests' %}
+    {% set tests_schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
     {% set test_table_name = elementary.table_name_with_suffix(test_name, suffix) %}
     {% set test_table_relation = adapter.get_relation(database=database_name,
                                                       schema=tests_schema_name,
