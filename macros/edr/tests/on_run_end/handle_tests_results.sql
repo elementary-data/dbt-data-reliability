@@ -424,7 +424,10 @@
 {% endmacro %}
 
 {% macro list_test_relations(database, schema) %}
-    {% set tests_schema_name = schema ~ elementary.get_config_var('tests_schema_name') %}
-    {% set tests_schema_relation = api.Relation.create(database=database, schema=tests_schema_name) %}
+    {% set tests_schema_suffix = elementary.get_config_var('tests_schema_name') %}
+    {% if tests_schema_suffix %}
+        {% set schema = schema ~ tests_schema_suffix %}
+    {% endif %}
+    {% set tests_schema_relation = api.Relation.create(database=database, schema=schema) %}
     {{ return(dbt.list_relations_without_caching(tests_schema_relation)) }}
 {% endmacro %}

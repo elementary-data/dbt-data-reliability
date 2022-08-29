@@ -10,7 +10,7 @@
             {% set schema_name = schema_name ~ tests_schema_name %}
             {% do drop_schema(database_name, schema_name) %}
         {% else %}
-            {{ elementary.edr_log("No tests schema to drop") }}
+            {{ elementary.edr_log("No tests schema to drop.") }}
         {% endif %}
     {% endif %}
     {{ return('') }}
