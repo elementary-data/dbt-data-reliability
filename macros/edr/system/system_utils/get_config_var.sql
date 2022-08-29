@@ -10,7 +10,7 @@
     'tests_schema_name': '__tests',
     'alert_dbt_model_fail': true,
     'alert_dbt_model_skip': true,
-    'elementary_debug_logs': false,
+    'debug_logs': false,
     'refresh_dbt_artifacts': false,
     'disable_warn_alerts': false,
     'disable_model_alerts': false,
