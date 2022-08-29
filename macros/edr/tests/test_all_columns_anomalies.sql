@@ -11,7 +11,7 @@
         {% set schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
         {%- set temp_metrics_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__metrics') %}
         {{- elementary.debug_log('metrics table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_metrics_table_name) }}
-        {%- set temp_table_exists, temp_table_relation = elementary.get_or_create_relation(database=database_name,
+        {%- set temp_table_exists, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=temp_metrics_table_name,
                                                                                    type='table') -%}
@@ -64,7 +64,7 @@
         {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, all_columns_monitors, columns_only=true) %}
         {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}
-        {%- set anomaly_scores_test_table_exists, anomaly_scores_test_table_relation = elementary.get_or_create_relation(database=database_name,
+        {%- set anomaly_scores_test_table_exists, anomaly_scores_test_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                                    schema=schema_name,
                                                                                    identifier=anomaly_scores_test_table_name,
                                                                                    type='table') -%}

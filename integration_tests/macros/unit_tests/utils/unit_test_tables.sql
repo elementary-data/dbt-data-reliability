@@ -1,5 +1,5 @@
 {% macro get_or_create_unit_test_table_relation(table_name) %}
-    {% set table_exists, table_relation = elementary.get_or_create_relation(database=elementary.target_database(),
+    {% set table_exists, table_relation = dbt.get_or_create_relation(database=elementary.target_database(),
                                                                      schema=target.schema,
                                                                      identifier=table_name,
                                                                      type='table') %}
