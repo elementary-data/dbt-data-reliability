@@ -20,6 +20,7 @@ SELECT
     run_results.status,
     run_results.full_refresh,
     run_results.message,
+    run_results.compiled_sql,
     snapshots.database_name,
     snapshots.schema_name,
     snapshots.materialization,

@@ -20,6 +20,7 @@ SELECT
     run_results.status,
     run_results.full_refresh,
     run_results.message,
+    run_results.compiled_sql,
     models.database_name,
     models.schema_name,
     models.materialization,
