@@ -6,11 +6,12 @@
         {% do drop_schema(database_name, schema_name) %}
 
         {% set tests_schema_name = elementary.get_config_var('tests_schema_name') %}
-        {% if not tests_schema_name %}
-            {{ exceptions.raise_compiler_error('You cannot provide an empty `tests_schema_name` var.') }}
+        {% if tests_schema_name %}
+            {% set schema_name = schema_name ~ tests_schema_name %}
+            {% do drop_schema(database_name, schema_name) %}
+        {% else %}
+            {{ elementary.edr_log("No tests schema to drop") }}
         {% endif %}
-        {% set schema_name = schema_name ~ tests_schema_name %}
-        {% do drop_schema(database_name, schema_name) %}
     {% endif %}
     {{ return('') }}
 {% endmacro %}
