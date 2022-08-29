@@ -19,6 +19,7 @@ SELECT
     run_results.generated_at,
     run_results.status,
     run_results.message,
+    run_results.failures,
     run_results.compiled_sql,
     tests.database_name,
     tests.schema_name,
