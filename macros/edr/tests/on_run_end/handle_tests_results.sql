@@ -5,7 +5,7 @@
         {% set test_columns_snapshot_tables = [] %}
         {% set elementary_test_results = [] %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% set test_relations = list_test_relations(database_name, schema_name) %}
+        {% set test_relations = elementary.list_test_relations(database_name, schema_name) %}
         {% for result in results | selectattr('node.resource_type', '==', 'test') %}
             {% set status = result.status | lower %}
             {% set run_result_dict = result.to_dict() %}
