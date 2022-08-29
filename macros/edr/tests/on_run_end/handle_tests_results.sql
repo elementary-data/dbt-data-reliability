@@ -23,13 +23,11 @@
                                                                                             'anomaly_detection')) %}
                     {%- else -%}
                         {% if flatten_test_node.short_name == 'dimension_anomalies' %}
-                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(database_name,
-                                                                                                             schema_name,
+                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(test_relations,
                                                                                                              run_result_dict,
                                                                                                              flatten_test_node)) %}
                         {% else %}
-                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
-                                                                                                       schema_name,
+                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(test_relations,
                                                                                                        status,
                                                                                                        run_result_dict,
                                                                                                        flatten_test_node)) %}
@@ -45,9 +43,7 @@
                                                                                             flatten_test_node,
                                                                                             'schema_change')) %}
                     {%- else -%} {# warn or fail #}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(database_name,
-                                                                                                          schema_name,
-                                                                                                          run_result_dict,
+                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(run_result_dict,
                                                                                                           flatten_test_node)) %}
                     {%- endif -%}
                 {% endif %}
@@ -70,7 +66,7 @@
     {{ return('') }}
 {% endmacro %}
 
-{%- macro get_test_result_per_metric(database_name, schema_name, status, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_metric(test_relations, status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_relations, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
@@ -87,7 +83,7 @@
     {{- return(anomaly_detection_test_results) -}}
 {%- endmacro -%}
 
-{%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_schema_change(run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
     {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% for test_row_dict in test_row_dicts %}
@@ -184,7 +180,7 @@
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
+{% macro get_dimension_metric_test_result(test_relations, run_result_dict, test_node) %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_relations, test_node.name, '__anomaly_scores') %}
     {% set anomalous_dimensions = [] %}
     {% if run_result_dict.get('status') == 'pass' %}
