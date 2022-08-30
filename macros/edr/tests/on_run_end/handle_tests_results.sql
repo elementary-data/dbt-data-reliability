@@ -1,5 +1,3 @@
--- TODO: When database name is null, it writes schema name to database field, table name to schema field, and empty table name
-
 {% macro handle_tests_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
         {{ elementary.debug_log("Handling test results.") }}
@@ -102,9 +100,16 @@
 {% macro get_metric_test_result(run_result_dict, anomaly_dict, test_node, test_anomaly_scores_table) %}
     {% set full_table_name = elementary.insensitive_get_dict_value(anomaly_dict, 'full_table_name', '') %}
     {% set split_full_table_name = full_table_name.split('.') %}
-    {% set database_name = split_full_table_name[0] %}
-    {% set schema_name = split_full_table_name[1] %}
-    {% set table_name = split_full_table_name[2] %}
+    {# Databricks full name is schema.table, no db #}
+    {%- if split_full_table_name | length == 2 %}
+        {% set database_name = None %}
+        {% set schema_name = split_full_table_name[0] %}
+        {% set table_name = split_full_table_name[1] %}
+    {%- else  %}
+        {% set database_name = split_full_table_name[0] %}
+        {% set schema_name = split_full_table_name[1] %}
+        {% set table_name = split_full_table_name[2] %}
+    {%- endif %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
     {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
@@ -207,9 +212,15 @@
     {% endif %}
     {% set full_table_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'full_table_name', '') %}
     {% set split_full_table_name = full_table_name.split('.') %}
-    {% set database_name = split_full_table_name[0] %}
-    {% set schema_name = split_full_table_name[1] %}
-    {% set table_name = split_full_table_name[2] %}
+    {%- if split_full_table_name | length == 2 %}
+        {% set database_name = None %}
+        {% set schema_name = split_full_table_name[0] %}
+        {% set table_name = split_full_table_name[1] %}
+    {%- else  %}
+        {% set database_name = split_full_table_name[0] %}
+        {% set schema_name = split_full_table_name[1] %}
+        {% set table_name = split_full_table_name[2] %}
+    {%- endif %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
     {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
