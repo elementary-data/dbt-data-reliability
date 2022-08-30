@@ -233,7 +233,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
 
     dbt_runner.run(full_refresh=True)
 
-    if 'table' in test_types and target != 'databricks':
+    if 'table' in test_types:
         dbt_runner.test(select='tag:table_anomalies')
         results = [
             TestResult(type='table_anomalies', message=msg) for msg in

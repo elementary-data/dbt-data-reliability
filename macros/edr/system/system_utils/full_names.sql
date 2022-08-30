@@ -62,7 +62,12 @@
 
 
 {% macro relation_to_full_name(relation) %}
-    {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
+    {%- if relation.database %}
+        {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
+    {%- else %}
+    {# Databricks doesn't always have a database #}
+        {%- set full_table_name = relation.schema | upper ~'.'~ relation.identifier | upper %}
+    {%- endif %}
     {{ return(full_table_name) }}
 {% endmacro %}
 

@@ -1,3 +1,5 @@
+-- TODO: When database name is null, it writes schema name to database field, table name to schema field, and empty table name
+
 {% macro handle_tests_results(results) %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
         {{ elementary.debug_log("Handling test results.") }}
