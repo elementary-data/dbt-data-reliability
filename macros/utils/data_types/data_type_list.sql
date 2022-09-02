@@ -57,3 +57,21 @@
     {%- endif %}
 
 {% endmacro %}
+
+{% macro databricks__data_type_list(data_type) %}
+
+    {% set string_list = ['STRING'] | list %}
+    {% set numeric_list = ['INT','BIGINT','SMALLINT','TINYINT','FLOAT','DOUBLE'] | list %}
+    {% set timestamp_list = ['DATE','TIMESTAMP'] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}
