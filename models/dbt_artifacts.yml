@@ -74,10 +74,8 @@ models:
 
   - name: dbt_models
     description: >
-      Metadata about models in the project, including configuration and properties from the dbt graph.
-      Each row contains information about a single model
-      Data is loaded every time this model is executed.
-      It is recommended to execute the model every time a change is merged to the project.
+      Metadata about models in the project, including configuration and properties from the dbt graph. Each row contains information about a single model.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
     columns:
       - name: unique_id
         data_type: string
@@ -148,23 +146,25 @@ models:
         description: Update time of the table.
 
   - name: dbt_tests
-    description: ""
+    description:  >
+      Metadata about tests in the project, including configuration and properties from the dbt graph. Each row contains information about a single test.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
     columns:
       - name: unique_id
         data_type: string
-        description: ""
+        description: The unique id of the test.
 
       - name: database_name
         data_type: string
-        description: ""
+        description: The tested model database name.
 
       - name: schema_name
         data_type: string
-        description: ""
+        description: The tested model schema name.
 
       - name: name
         data_type: string
-        description: ""
+        description: The test name.
 
       - name: short_name
         data_type: string
@@ -176,7 +176,7 @@ models:
 
       - name: test_column_name
         data_type: string
-        description: ""
+        description: The name of the tested column.
 
       - name: severity
         data_type: string
