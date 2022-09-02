@@ -322,7 +322,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
         print_test_results(results)
         test_results.extend(results)
 
-    if 'dimension' in test_types and target != 'databricks':
+    if 'dimension' in test_types:
         dbt_runner.test(select='tag:dimension_anomalies')
         results = [
             TestResult(type='dimension_anomalies', message=msg) for msg in
