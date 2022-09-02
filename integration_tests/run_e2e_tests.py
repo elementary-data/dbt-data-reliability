@@ -270,7 +270,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
         test_results.extend(results)
 
     # Creates row_count metrics for anomalies detection.
-    if 'no_timestamp' in test_types and target != 'databricks':
+    if 'no_timestamp' in test_types:
         current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
         # So we convert the days_back value into int.
