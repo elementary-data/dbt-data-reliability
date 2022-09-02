@@ -288,7 +288,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
         dbt_runner.test(select='tag:debug')
         return test_results
 
-    if 'no_timestamp' in test_types and target != 'databricks':
+    if 'no_timestamp' in test_types:
         dbt_runner.test(select='tag:no_timestamp')
         results = [
             TestResult(type='no_timestamp_anomalies', message=msg) for msg in
@@ -297,7 +297,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
         print_test_results(results)
         test_results.extend(results)
 
-    if 'column' in test_types and target != 'databricks':
+    if 'column' in test_types:
         dbt_runner.test(select='tag:string_column_anomalies')
         results = [
             TestResult(type='string_column_anomalies', message=msg) for msg in
