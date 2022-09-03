@@ -1,4 +1,4 @@
-{# Same as date trunc, but supports timestamps as well and not just dates #}
+{# Same as date trunc, but casts the time/date expression to timestamp #}
 {% macro time_trunc(date_part, date_expression) -%}
     {{ return(adapter.dispatch('time_trunc', 'elementary') (date_part, date_expression)) }}
 {%- endmacro %}
