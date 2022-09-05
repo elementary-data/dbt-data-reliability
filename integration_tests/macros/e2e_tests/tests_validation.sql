@@ -299,7 +299,7 @@
                                'goals':   'type_changed',
                                'key_crosses': 'column_added',
                                'offsides': 'column_removed'} %}
-    {%- set max_bucket_end = "'"~ modules.datetime.datetime.utcnow().strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_schema_changes') %}
     {% set schema_changes_alerts %}
     select column_name, sub_type
