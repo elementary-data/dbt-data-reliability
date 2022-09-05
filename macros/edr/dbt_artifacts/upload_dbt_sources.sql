@@ -70,7 +70,7 @@
          'path': node_dict.get('path'),
          'source_description': node_dict.get('source_description'),
          'description': node_dict.get('description'),
-         'generated_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S')
+         'generated_at': modules.datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
      }%}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}

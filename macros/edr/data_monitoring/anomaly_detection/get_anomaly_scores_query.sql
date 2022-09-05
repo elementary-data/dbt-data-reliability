@@ -1,7 +1,7 @@
 {% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
 
     {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%dT00:00:00.000000Z") ~"'" %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -108,7 +108,7 @@
                 metric_id,
                 {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
                 {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
-                {{ elementary.current_timestamp_column() }} as detected_at,
+                {{ elementary.current_timestamp_utc_now_column() }} as detected_at,
                 full_table_name,
                 column_name,
                 metric_name,
