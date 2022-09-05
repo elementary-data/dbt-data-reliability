@@ -69,7 +69,7 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.get_run_started_at().strftime('%Y-%m-%d %H:%M:%S')
+        'generated_at': modules.datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     }%}
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}
