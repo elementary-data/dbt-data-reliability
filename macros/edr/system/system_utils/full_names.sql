@@ -26,7 +26,7 @@
         {% set schema_name = split_full_table_name[1] %}
         {% set table_name = split_full_table_name[2] %}
     {%- endif %}
-    {{ return(database_name, schema_name, table_name) }}
+    {{ return((database_name, schema_name, table_name)) }}
 {% endmacro %}
 
 
