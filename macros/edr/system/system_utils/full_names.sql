@@ -14,6 +14,24 @@
 {%- endmacro %}
 
 
+{% macro split_full_table_name_to_vars(full_table_name) %}
+    {% set split_full_table_name = full_table_name.split('.') %}
+    {# Databricks full name sometimes is schema.table, no db #}
+    {%- if split_full_table_name | length == 2 %}
+        {% set database_name = None %}
+        {% set schema_name = split_full_table_name[0] %}
+        {% set table_name = split_full_table_name[1] %}
+    {%- else  %}
+        {% set database_name = split_full_table_name[0] %}
+        {% set schema_name = split_full_table_name[1] %}
+        {% set table_name = split_full_table_name[2] %}
+    {%- endif %}
+    {{ return(database_name, schema_name, table_name) }}
+{% endmacro %}
+
+
+
+
 {% macro full_name_split(part_name) %}
     {{ adapter.dispatch('full_name_split','elementary')(part_name) }}
 {% endmacro %}
