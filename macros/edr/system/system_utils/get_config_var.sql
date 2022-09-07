@@ -26,7 +26,8 @@
       'column_any_type': ['null_count', 'null_percent'],
       'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
-    } 
+    },
+    'time_format': '%Y-%m-%d %H:%M:%S'
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}

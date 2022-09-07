@@ -7,5 +7,5 @@
 {% endmacro %}
 
 {% macro formatted_current_timestamp_column() %}
-    cast ('{{ modules.datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") }}' as {{ elementary.type_timestamp() }})
+    cast ('{{ elementary.current_timestamp_utc_as_string() }}' as {{ elementary.type_timestamp() }})
 {% endmacro %}
