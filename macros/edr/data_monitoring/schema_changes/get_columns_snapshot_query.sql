@@ -29,7 +29,7 @@
             table_name,
             column_name,
             cast(data_type as {{ elementary.type_string() }}) as data_type,
-            {{ elementary.formatted_current_timestamp_column() }} as detected_at,
+            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             case when
                     {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
                     and full_table_name in ({{ known_tables_query }})

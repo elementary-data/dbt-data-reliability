@@ -138,7 +138,7 @@
         'original_path': original_file_path,
         'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.current_timestamp_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string()
     }%}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}

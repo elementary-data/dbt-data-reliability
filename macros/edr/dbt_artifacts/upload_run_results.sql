@@ -58,7 +58,7 @@
         'unique_id': node.get('unique_id'),
         'name': node.get('name'),
         'message': run_result_dict.get('message'),
-        'generated_at': elementary.current_timestamp_utc_as_string(),
+        'generated_at': elementary.datetime_now_utc_as_string(),
         'rows_affected': run_result_dict.get('adapter_response', {}).get('rows_affected'),
         'execution_time': run_result_dict.get('execution_time'),
         'status': run_result_dict.get('status'),
