@@ -99,10 +99,7 @@
 
 {% macro get_metric_test_result(run_result_dict, anomaly_dict, test_node, test_anomaly_scores_table) %}
     {% set full_table_name = elementary.insensitive_get_dict_value(anomaly_dict, 'full_table_name', '') %}
-    {% set split_full_table_name = full_table_name.split('.') %}
-    {% set database_name = split_full_table_name[0] %}
-    {% set schema_name = split_full_table_name[1] %}
-    {% set table_name = split_full_table_name[2] %}
+    {%- set database_name, schema_name, table_name = split_full_table_name_to_vars(full_table_name) %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
     {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
@@ -204,10 +201,7 @@
         {% set test_results_description = none %}
     {% endif %}
     {% set full_table_name = elementary.insensitive_get_dict_value(recent_anomaly_sample, 'full_table_name', '') %}
-    {% set split_full_table_name = full_table_name.split('.') %}
-    {% set database_name = split_full_table_name[0] %}
-    {% set schema_name = split_full_table_name[1] %}
-    {% set table_name = split_full_table_name[2] %}
+    {%- set database_name, schema_name, table_name = split_full_table_name_to_vars(full_table_name) %}
     {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
     {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
     {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}

@@ -1,5 +1,5 @@
 {% macro test_get_relation_max_name_length() %}
-    {% if target.type == 'redshift'%}
+    {% if target.type in ['redshift','databricks'] %}
         {{ assert_value(elementary.get_relation_max_name_length(), 127) }}
     {% elif target.type in ['snowflake', 'bigquery'] %}
         {{ assert_value(elementary.get_relation_max_name_length(), none) }}

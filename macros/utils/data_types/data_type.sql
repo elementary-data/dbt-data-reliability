@@ -41,6 +41,7 @@
 {%- endmacro -%}
 
 {%- macro default__type_long_string() -%}
+    {# Snowflake, Bigquery, Databricks #}
     {{ elementary.type_string() }}
 {%- endmacro -%}
 
