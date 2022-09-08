@@ -6,7 +6,7 @@
 
 {% macro debug_log(msg) %}
     {%- if execute %}
-        {% set debug_logs_enabled = elementary.get_config_var('elementary_debug_logs') %}
+        {% set debug_logs_enabled = elementary.get_config_var('debug_logs') %}
         {% if debug_logs_enabled %}
             {{ elementary.edr_log(msg) }}
         {% endif %}

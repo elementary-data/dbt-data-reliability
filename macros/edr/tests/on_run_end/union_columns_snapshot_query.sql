@@ -3,7 +3,7 @@
         {%- set union_temp_query -%}
             with union_temp_columns_snapshot as (
             {%- for temp_table in temp_columns_snapshot_tables -%}
-                select * from {{- temp_table -}}
+                select * from {{ temp_table }}
                 {%- if not loop.last %} union all {% endif %}
             {%- endfor %}
             ),

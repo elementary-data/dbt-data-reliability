@@ -5,6 +5,7 @@ on:
       warehouse-type:
         type: choice
         required: true
+        description: Type of warehouse platform
         options:
           - snowflake
           - bigquery
@@ -13,9 +14,15 @@ on:
       elementary-ref:
         type: string
         required: false
+        description: Branch or tag to checkout for 'elementary' repository
       dbt-data-reliability-ref:
         type: string
         required: false
+        description: Branch or tag to checkout for 'dbt-data-reliability' repository
+      dbt-version:
+        type: string
+        required: false
+        description: dbt's version to test with
 
   workflow_call:
     inputs:
@@ -23,16 +30,20 @@ on:
         type: string
         required: true
 
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
     concurrency:
-      group: tests-${{ inputs.warehouse-type }}
+      group: tests-${{ inputs.warehouse-type }}-${{ github.head_ref || github.ref_name }}
     steps:
       - name: Write dbt profiles
         run: |
           mkdir -p ~/.dbt
-          echo "${{ secrets.CI_PROFILES_YML }}" | base64 -d > ~/.dbt/profiles.yml
+          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | sed "s/-/_/g")
+          echo "${{ secrets.CI_PROFILES_YML }}" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Checkout Elementary
         uses: actions/checkout@v3
@@ -50,10 +61,14 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.7.5'
 
       - name: Install Elementary
-        run: pip install './elementary[${{ inputs.warehouse-type }}]'
+        run: pip install "./elementary[${{ inputs.warehouse-type }}]"
+
+      - name: Install dbt
+        if: inputs.dbt-version
+        run: pip install dbt-core==${{ inputs.dbt-version }}
 
       - name: Run E2E tests
         run: |

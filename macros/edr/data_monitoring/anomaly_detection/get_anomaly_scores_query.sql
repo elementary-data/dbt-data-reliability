@@ -113,6 +113,7 @@
                 column_name,
                 metric_name,
                 case
+                    when training_stddev is null then null
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
@@ -121,8 +122,14 @@
                 bucket_start,
                 bucket_end,
                 metric_value,
-                (-1) * {{ sensitivity }} * training_stddev + training_avg as min_metric_value,
-                {{ sensitivity }} * training_stddev + training_avg as max_metric_value,
+                case 
+                    when training_stddev is null then null
+                    else (-1) * {{ sensitivity }} * training_stddev + training_avg
+                end as min_metric_value,
+                case 
+                    when training_stddev is null then null
+                    else {{ sensitivity }} * training_stddev + training_avg 
+                end as max_metric_value,
                 training_avg,
                 training_stddev,
                 training_set_size,
@@ -133,8 +140,7 @@
             from time_window_aggregation
             where
                 metric_value is not null
-              and training_avg is not null
-              and training_stddev is not null
+                and training_avg is not null
         )
 
         select * from anomaly_scores

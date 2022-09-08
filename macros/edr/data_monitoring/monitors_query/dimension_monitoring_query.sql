@@ -10,7 +10,7 @@
         with filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
-                   {{ elementary.date_trunc(period, timestamp_column) }} as start_bucket_in_data
+                   {{ elementary.time_trunc(period, timestamp_column) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
@@ -114,7 +114,7 @@
             dimension_value
         from
             row_count
-        where (metric_value is not null and cast(metric_value as {{ dbt_utils.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+        where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
             metric_value is null
         )
 
@@ -254,7 +254,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- dbt_utils.current_timestamp_in_utc() -}} as updated_at,
+        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
         dimension,
         dimension_value
     from metrics_final
