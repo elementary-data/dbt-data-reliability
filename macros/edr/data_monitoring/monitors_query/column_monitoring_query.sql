@@ -1,21 +1,20 @@
-{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
-
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors, period) %}
+    {%- set run_started_at = "'"~elementary.get_run_started_at()~"'" %}
+    {%- set max_bucket_end = date_trunc(period, run_started_at) %}
     {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
-
     with filtered_monitored_table as (
 
         select {{ column_obj.quoted }}
             {% if is_timestamp -%}
-             , {{ elementary.time_trunc('day', timestamp_column) }} as edr_bucket
+             , {{ elementary.time_trunc(period, timestamp_column) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
         from {{ monitored_table_relation }}
         where
         {% if is_timestamp -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ min_bucket_start }}
+            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ max_bucket_end }}
         {%- else %}
             true
         {%- endif %}
@@ -74,8 +73,7 @@
             {{ elementary.null_string() }} as source_value,
             {%- if is_timestamp %}
                 edr_bucket as bucket_start,
-                {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
-                24 as bucket_duration_hours,
+                {{ elementary.timeadd(period,1,'edr_bucket') }} as bucket_end,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
                 {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
@@ -101,8 +99,9 @@
         source_value,
         bucket_start,
         bucket_end,
-        bucket_duration_hours,
+        {{ elementary.timediff('hours', 'bucket_start', 'bucket_end') }} as bucket_duration_hours,
         {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+
         dimension,
         dimension_value
     from metrics_final

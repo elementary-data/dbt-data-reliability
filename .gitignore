@@ -8,3 +8,4 @@ scripts/
 edr.log
 integration_tests/data
 
+models/test_model/

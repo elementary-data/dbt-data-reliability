@@ -1,5 +1,6 @@
-{% macro get_global_min_bucket_start() %}
-    {%- set global_min_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+{% macro get_global_min_bucket_start(period) %}
+    {%- set run_started_at = "'"~elementary.get_run_started_at()~"'" -%}
+    {%- set global_min_bucket_start = timeadd(period, - elementary.get_config_var('days_back'), date_trunc(period, run_started_at)) %}
     {{ return(global_min_bucket_start) }}
 {% endmacro %}
 
@@ -9,27 +10,54 @@
 {% endmacro %}
 
 {# bucket_end represents the end of the bucket, so we need to add extra day to the timedelta #}
-{% macro get_global_min_bucket_end_as_datetime() %}
-    {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') + 1) %}
+{% macro get_global_min_bucket_end_as_datetime(period) %}
+    {# TODO find a more elegant solution #}
+    {% if period == 'hour' %}
+        {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(hours=elementary.get_config_var('days_back') + 1) %}
+    {% elif period == 'day' %}
+        {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back') + 1) %}
+    {% endif %}
     {{ return(global_min_bucket_end) }}
 {% endmacro %}
 
-{% macro get_max_bucket_end() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+{% macro get_max_bucket_start(period) %}
+    {% if period == 'hour' %}
+        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:00:00")~"'" %}
+    {% elif period == 'day' %}
+        {%- set max_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(days=1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% endif %}
     {{ return(max_bucket_end) }}
 {% endmacro %}
 
-{% macro get_backfill_bucket_start(backfill_days) %}
-    {%- set backfill_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+{% macro get_max_bucket_end(period) %}
+    {% if period == 'hour' %}
+        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d %H:00:00")~"'" %}
+    {% elif period == 'day' %}
+        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% endif %}
+    {{ return(max_bucket_end) }}
+{% endmacro %}
+
+{% macro get_min_bucket_end(period) %}
+    {% if period == 'hour' %}
+        {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(hours=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d %H:00:00")~"'" %}
+    {% elif period == 'day' %}
+        {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {% endif %}    
+    {{ return(min_bucket_end) }}
+{% endmacro %}
+
+{% macro get_backfill_bucket_start(backfill_days, period) %}
+    {%- set run_started_at = "'"~elementary.get_run_started_at()~"'" -%}
+    {%- set backfill_bucket_start = timeadd(period, - backfill_days, date_trunc(period, run_started_at)) %}
     {{ return(backfill_bucket_start) }}
 {% endmacro %}
 
 
-{% macro get_min_bucket_start(full_table_name, backfill_days, monitors=none, column_name=none) %}
+{% macro get_min_bucket_start(full_table_name, backfill_days, period, monitors=none, column_name=none) %}
 
-    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start() %}
-    {%- set backfill_bucket_start = elementary.get_backfill_bucket_start(backfill_days) %}
-
+    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start(period) %}
+    {%- set backfill_bucket_start = elementary.get_backfill_bucket_start(backfill_days, period) %}
     {%- if monitors %}
         {%- set monitors_tuple = elementary.strings_list_to_tuple(monitors) %}
     {%- endif %}
@@ -37,8 +65,8 @@
     {%- set min_bucket_start_query %}
         with min_times as (
             select min(last_bucket_end) as last_run,
-                {{ elementary.cast_as_timestamp(global_min_bucket_start) }} as global_min_start,
-                {{ elementary.cast_as_timestamp(backfill_bucket_start) }} as backfill_start
+                {{ global_min_bucket_start }} as global_min_start,
+                {{ backfill_bucket_start }} as backfill_start
             from {{ ref('monitors_runs') }}
             where upper(full_table_name) = upper('{{ full_table_name }}')
             {%- if monitors %}
@@ -56,7 +84,6 @@
             end as min_start
         from min_times
     {%- endset %}
-
     {%- set min_bucket_start_query_result = elementary.result_value(min_bucket_start_query) %}
 
     {%- if min_bucket_start_query_result %}
@@ -65,4 +92,21 @@
         {{ return(global_min_bucket_start) }}
     {%- endif %}
 
+{% endmacro %}
+
+{% macro get_metric_min_time(global_min_bucket_end, backfill_days, period) %}
+    {# TODO find a more elegant solution #}
+    {% if period == 'hour' %}
+        {%- set truncated_global_min_bucket_end = modules.datetime.datetime(year=global_min_bucket_end.year, 
+                                                                            month=global_min_bucket_end.month, 
+                                                                            day=global_min_bucket_end.day,
+                                                                            hour=global_min_bucket_end.hour,) %}
+        {%- set metrics_min_time = truncated_global_min_bucket_end - modules.datetime.timedelta(hours=backfill_days + 1) %}
+    {% elif period == 'day' %}
+        {%- set truncated_global_min_bucket_end = modules.datetime.datetime(year=global_min_bucket_end.year, 
+                                                                            month=global_min_bucket_end.month, 
+                                                                            day=global_min_bucket_end.day,) %}
+        {%- set metrics_min_time = truncated_global_min_bucket_end - modules.datetime.timedelta(days=backfill_days + 1) %}
+    {% endif %}
+    {{ return(metrics_min_time) }}
 {% endmacro %}

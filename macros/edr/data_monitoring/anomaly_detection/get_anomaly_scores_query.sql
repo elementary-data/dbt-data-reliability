@@ -1,7 +1,7 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, period, column_name = none, columns_only = false, dimensions = none) %}
 
-    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime(period) %}
+    {%- set metrics_min_time = "'"~ get_metric_min_time(global_min_bucket_end, backfill_days, period).strftime("%Y-%m-%d %H:00:00") ~"'" %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -64,10 +64,10 @@
             where row_number = 1
 
         ),
+        {# Continue here#}
+        period_buckets as (
 
-        daily_buckets as (
-
-            {{ elementary.daily_buckets_cte() }}
+            {{ elementary.period_buckets_cte(period) }}
 
         ),
 
@@ -86,14 +86,14 @@
                 bucket_end,
                 bucket_duration_hours,
                 updated_at,
-                edr_daily_bucket,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
-            from daily_buckets left join
-                grouped_metrics on (edr_daily_bucket = bucket_end)
+                edr_period_bucket,
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
+            from period_buckets left join
+                grouped_metrics on (edr_period_bucket = bucket_end)
             {{ dbt_utils.group_by(13) }}
 
         ),
@@ -146,6 +146,6 @@
         select * from anomaly_scores
 
     {% endset %}
-
+    
     {{ return(anomaly_scores_query) }}
 {% endmacro %}
