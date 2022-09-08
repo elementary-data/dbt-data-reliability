@@ -1,11 +1,11 @@
 {% macro period_buckets_cte(period) %}
-    {{ adapter.dispatch('period_buckets_cte','elementary')(period) }}
+    {%- set max_bucket_end = elementary.get_max_bucket_end(period) %}
+    {%- set min_bucket_end = elementary.get_min_bucket_end(period) %}
+    {{ adapter.dispatch('period_buckets_cte','elementary')(period, max_bucket_end, min_bucket_end) }}
 {% endmacro %}
 
 
-{% macro default__period_buckets_cte(period) -%}
-    {%- set max_bucket_end = get_max_bucket_end(period) %}
-    {%- set min_bucket_end = get_min_bucket_end(period) %}
+{% macro default__period_buckets_cte(period, max_bucket_end, min_bucket_end) -%}
     {%- set period_buckets_cte %}
         with dates as (
             select {{ elementary.cast_as_timestamp(min_bucket_end) }} as date
@@ -21,10 +21,7 @@
 {% endmacro %}
 
 
-{% macro bigquery__period_buckets_cte(period) %}
-    {%- set max_bucket_end = get_max_bucket_end(period) %}
-    {%- set min_bucket_end = get_min_bucket_end(period) %}
-
+{% macro bigquery__period_buckets_cte(period, max_bucket_end, min_bucket_end) %}
     {%- set period_buckets_cte %}
         select edr_period_bucket
         from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(min_bucket_end) }}, {{ elementary.cast_as_timestamp(max_bucket_end) }}, interval 1 {{ period }})) as edr_period_bucket
@@ -32,9 +29,8 @@
     {{ return(period_buckets_cte) }}
 {% endmacro %}
 
-{% macro redshift__period_buckets_cte(period) %}
+{% macro redshift__period_buckets_cte(period, max_bucket_end, min_bucket_end) %}
     {# TODO redshift implementation of this CTE#}
-    {%- set max_bucket_end = get_max_bucket_end(period) %}
     {%- set days_back = elementary.get_config_var('days_back') %}
 
     {%- set period_buckets_cte %}
@@ -47,10 +43,7 @@
     {{ return(period_buckets_cte) }}
 {% endmacro %}
 
-{% macro databricks__period_buckets_cte(period) %}
-    {%- set max_bucket_end = get_max_bucket_end(period) %}
-    {%- set min_bucket_end = get_min_bucket_end(period) %}
-
+{% macro databricks__period_buckets_cte(period, max_bucket_end, min_bucket_end) %}
     select edr_period_bucket
     from (select explode(sequence({{ elementary.cast_as_timestamp(min_bucket_end) }}, {{ elementary.cast_as_timestamp(max_bucket_end) }}, interval 1 {{ period }})) AS edr_period_bucket)
 {% endmacro %}

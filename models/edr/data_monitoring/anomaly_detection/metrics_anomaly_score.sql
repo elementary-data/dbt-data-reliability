@@ -6,8 +6,9 @@
   )
 }}
 -- #TODO this needs to be changed to get the bucket logic.
--- The bucket_duratio_hours can be a proxy to know the lenght of the buckets
+-- The bucket_duration_hours can be a proxy to know the lenght of the buckets
 -- We can't pass period to the CTE because each column/model can have different periods
+-- MS: This is a bigger problem than just the period.. we don't consider anomaly sensitivity here as well
 
 with data_monitoring_metrics as (
 
@@ -17,7 +18,7 @@ with data_monitoring_metrics as (
 
 daily_buckets as (
 
-   {{ elementary.daily_buckets_cte() }}
+   {{ elementary.period_buckets_cte('day') }}
 
 ),
 
@@ -36,14 +37,14 @@ time_window_aggregation as (
         bucket_end,
         bucket_duration_hours,
         updated_at,
-        edr_daily_bucket,
-        avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
-        stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
-        count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
-        last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-        first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
+        edr_period_bucket,
+        avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
+        stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
+        count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
+        last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
+        first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_period_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
-        data_monitoring_metrics on (edr_daily_bucket = bucket_end)
+        data_monitoring_metrics on (edr_period_bucket = bucket_end)
     {{ dbt_utils.group_by(13) }}
 
 ),

@@ -40,7 +40,7 @@
 
 {% macro get_min_bucket_end(period) %}
     {% if period == 'hour' %}
-        {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(hours=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d %H:00:00")~"'" %}
+        {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d %H:00:00")~"'" %}
     {% elif period == 'day' %}
         {%- set min_bucket_end = "'"~(elementary.get_run_started_at() - modules.datetime.timedelta(days=elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% endif %}    
