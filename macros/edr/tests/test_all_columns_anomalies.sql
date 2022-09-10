@@ -37,7 +37,7 @@
         {{ elementary.debug_log('period - ' ~ period) }}
 
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
-        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
+        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days, model_graph_node) %}
         {#- execute table monitors and write to temp test table -#}
         {%- set monitors = [] %}
         {%- if column_objs_and_monitors | length > 0 %}
@@ -63,7 +63,7 @@
         {%- endif %}
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
-        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity, model_graph_node) %}
         {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, all_columns_monitors, period, columns_only=true) %}
         {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
         {{- elementary.debug_log('anomalies table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ anomaly_scores_test_table_name) }}

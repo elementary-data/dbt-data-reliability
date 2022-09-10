@@ -43,7 +43,7 @@
             where tf.time_frame < {{ max_bucket_end }}
            )
         select time_frame as edr_period_bucket from time_frames
-        order by edr_period_bucket desc;
+        order by edr_period_bucket desc
     {%- endset %}
     {{ return(period_buckets_cte) }}
 {% endmacro %}
@@ -52,4 +52,5 @@
 {% macro databricks__period_buckets_cte(period, max_bucket_end, min_bucket_end) %}
     select edr_period_bucket
     from (select explode(sequence({{ elementary.cast_as_timestamp(min_bucket_end) }}, {{ elementary.cast_as_timestamp(max_bucket_end) }}, interval 1 {{ period }})) AS edr_period_bucket)
+    order by edr_period_bucket desc
 {% endmacro %}

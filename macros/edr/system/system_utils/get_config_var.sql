@@ -4,6 +4,7 @@
    of the package are not accesible at on-run-start and on-run-end #}
 
   {% set default_config = {
+    'period': 'day',
     'days_back': 14,
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
