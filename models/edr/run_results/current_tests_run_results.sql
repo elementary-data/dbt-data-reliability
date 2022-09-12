@@ -43,7 +43,7 @@ SELECT
     test_results.test_params,
     test_results.severity,
     test_results.status,
-    first_occurred.first_time_occurred as test_first_seen
+    first_occurred.first_time_occurred as test_first_seen_at
 FROM elementary_test_results test_results
 JOIN dbt_tests tests ON test_results.test_unique_id = tests.unique_id
 LEFT JOIN firt_time_test_occurred first_occurred ON test_results.test_unique_id = first_occurred.test_unique_id
