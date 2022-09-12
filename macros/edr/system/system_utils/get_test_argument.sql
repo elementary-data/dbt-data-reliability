@@ -1,4 +1,4 @@
-{% macro get_test_argument(argument_name, value=none, model_node) %}
+{% macro get_test_argument(argument_name, value, model_node) %}
     {% if value %}
         {{- elementary.debug_log(argument_name ~ ' config from test: ' ~ value) }}
         {{ return(value) }}

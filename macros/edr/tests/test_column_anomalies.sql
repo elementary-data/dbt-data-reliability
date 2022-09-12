@@ -44,7 +44,7 @@
         {%- set column_monitors = column_obj_and_monitors['monitors'] -%}
         {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
-        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days, model_graph_node) %}
+        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days, model_node=model_graph_node) %}
         {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(full_table_name, backfill_days, period, column_monitors, column_name) ~ "'" %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         
@@ -56,7 +56,7 @@
 
         {#- calculate anomaly scores for metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
-        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity, model_graph_node) %}
+        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity, model_node=model_graph_node) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, full_table_name, sensitivity, backfill_days, column_monitors, period, column_name) %}
         {{ elementary.debug_log('anomaly_score_query - \n' ~ anomaly_scores_query) }}
         {%- set anomaly_scores_test_table_name = elementary.table_name_with_suffix(test_name_in_graph, '__anomaly_scores') %}
