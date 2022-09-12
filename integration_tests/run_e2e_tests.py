@@ -222,7 +222,8 @@ class TestResult:
 def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
     test_results = []
 
-    dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target)
+    dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target,
+                           raise_on_failure=False)
 
     if clear_tests:
         clear_test_logs = dbt_runner.run_operation(macro_name='clear_tests')
