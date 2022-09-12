@@ -6,6 +6,6 @@
     cast ({{elementary.current_timestamp_in_utc()}} as {{ elementary.type_timestamp() }})
 {% endmacro %}
 
-{% macro current_timestamp_utc_now_column() %}
-    cast ('{{ modules.datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ") }}' as {{ elementary.type_timestamp() }})
+{% macro datetime_now_utc_as_timestamp_column() %}
+    cast ('{{ elementary.datetime_now_utc_as_string() }}' as {{ elementary.type_timestamp() }})
 {% endmacro %}

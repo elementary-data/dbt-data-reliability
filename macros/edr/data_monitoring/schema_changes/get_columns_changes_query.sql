@@ -99,7 +99,7 @@
         {# This is the query that is creating the test results table, by formatting a description and adding id + detection time #}
         select
             {{ dbt_utils.surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
-            {{ elementary.current_timestamp_utc_now_column() }} as detected_at,
+            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             {{ elementary.full_name_split('database_name') }},
             {{ elementary.full_name_split('schema_name') }},
             {{ elementary.full_name_split('table_name') }},
