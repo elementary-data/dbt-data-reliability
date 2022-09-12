@@ -13,7 +13,7 @@ dbt_tests as (
     select * from {{ ref('dbt_tests') }}
 ),
 
-firt_time_test_occurred as (
+first_time_test_occurred as (
     select 
         min(detected_at) as first_time_occurred,
         test_unique_id
@@ -46,4 +46,4 @@ SELECT
     first_occurred.first_time_occurred as test_first_seen_at
 FROM elementary_test_results test_results
 JOIN dbt_tests tests ON test_results.test_unique_id = tests.unique_id
-LEFT JOIN firt_time_test_occurred first_occurred ON test_results.test_unique_id = first_occurred.test_unique_id
+LEFT JOIN first_time_test_occurred first_occurred ON test_results.test_unique_id = first_occurred.test_unique_id
