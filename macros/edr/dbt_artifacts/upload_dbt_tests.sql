@@ -36,8 +36,7 @@
                                                                  ('original_path', 'long_string'),
                                                                  ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
-                                                                 ('generated_at', 'string'),
-                                                                 ('custom_name', 'string')]) %}
+                                                                 ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
 
@@ -111,13 +110,11 @@
             {% endif %}
         {% endif %}
     {%- endif -%}
-    {% set alias = node_dict.get('alias') %}
-    {% set test_name = node_dict.get('name') %}
     {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_metadata.get('name'),
-        'alias': alias,
+        'alias': node_dict.get('alias'),
         'test_column_name': node_dict.get('column_name'),
         'severity': config_dict.get('severity'),
         'warn_if': config_dict.get('warn_if'),
@@ -134,14 +131,13 @@
         'depends_on_nodes': depends_on_dict.get('nodes', []),
         'parent_model_unique_id': primary_test_model_id,
         'description': node_dict.get('description'),
-        'name': test_name,
+        'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_type(original_file_path),
         'original_path': original_file_path,
         'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'custom_name': alias if alias == test_name else none
     }%}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
