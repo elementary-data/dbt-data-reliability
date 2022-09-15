@@ -154,6 +154,8 @@
             {{ elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description') }}
         {% endif %}
     {% endset %}
+    {% set alias = elementary.insensitive_get_dict_value(test_node, 'alias') %}
+    {% set test_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
         'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
@@ -175,7 +177,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'custom_name': alias if alias == test_name else none
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -255,6 +258,8 @@
              {%- endif %}
         order by dimension_value, bucket_end
     {%- endset -%}
+    {% set alias = elementary.insensitive_get_dict_value(test_node, 'alias') %}
+    {% set test_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
     {% set test_result_dict = {
         'id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'id'),
         'test_execution_id': elementary.insensitive_get_dict_value(recent_anomaly_sample, 'test_execution_id'),
@@ -275,13 +280,16 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'custom_name': alias if alias == test_name else none
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
 {% macro get_schema_change_test_result(run_result_dict, schema_change_dict, test_node) %}
     {% set test_result_dict = schema_change_dict %}
+    {% set alias = elementary.insensitive_get_dict_value(test_node, 'alias') %}
+    {% set test_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
     {% do test_result_dict.update({
         'other': none,
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
@@ -291,7 +299,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'custom_name': alias if alias == test_name else none
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -308,6 +317,8 @@
     {%- else -%}
         {% set test_name = test_long_name %}
     {%- endif -%}
+    {% set alias = elementary.insensitive_get_dict_value(test_node, 'alias') %}
+    {% set test_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
     {% set test_result_dict = {
         'id': test_execution_id,
         'data_issue_id': none,
@@ -329,7 +340,8 @@
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'custom_name': alias if alias == test_name else none
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
