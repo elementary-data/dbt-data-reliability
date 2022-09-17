@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: metrics_anomaly_score
+    description: >
+
+  - name: anomaly_threshold_sensitivity
+    description: >
+
+  - name: data_monitoring_metrics
+    description: >
+
+  - name: monitors_runs
+    description: >
+
+  - name: schema_columns_snapshot
+    description: >
+
+  - name: filtered_information_schema_columns
+    description: >
