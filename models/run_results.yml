@@ -5,7 +5,7 @@ models:
     description: >
       Run results of dbt invocations, inserted at the end of each invocation.
       Each row is the invocation result of a single resource (model, test, snapshot, etc).
-      New data is loaded to this model on an on-run-end hook named 'elementary.upload_run_results' from each invocation that produces a result object
+      New data is loaded to this model on an on-run-end hook named 'elementary.upload_run_results' from each invocation that produces a result object.
       This is an incremental model.
     columns:
       - name: model_execution_id
@@ -71,3 +71,21 @@ models:
       - name: compiled_sql
         data_type: string
         description: The compiled SQL executed against the database.
+
+  - name: model_run_results
+    description: >
+      Run results of dbt models, enriched with models metadata.
+      Each row is the result of a single model.
+      This is a view that joins data from `dbt_run_results` and `dbt_models`.
+
+  - name: snapshot_run_results
+    description: >
+      Run results of dbt snapshots, enriched with snapshots metadata.
+      Each row is the result of a single snapshot.
+      This is a view that joins data from `dbt_run_results` and `dbt_snapshots`.
+
+  - name: elementary_test_results
+    description: >
+      Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
+      Each row is the result of a single test, including native dbt tests, packages tests and elementary tests.
+      New data is loaded to this model on an on-run-end hook named `elementary.handle_tests_results`.

@@ -3,8 +3,10 @@ version: 2
 models:
   - name: dbt_models
     description: >
-      Metadata about models in the project, including configuration and properties from the dbt graph. Each row contains information about a single model.
-      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
+      Metadata about models in the project, including configuration and properties from the dbt graph.
+      Each row contains information about a single model.
+      Data is loaded every time this model is executed.
+      It is recommended to execute the model every time a change is merged to the project.
     columns:
       - name: unique_id
         data_type: string
