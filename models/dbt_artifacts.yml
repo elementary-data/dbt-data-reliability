@@ -145,6 +145,7 @@ models:
         data_type: string
         description: Update time of the table.
 
+
   - name: dbt_tests
     description:  >
       Metadata about tests in the project, including configuration and properties from the dbt graph. Each row contains information about a single test.
@@ -243,6 +244,317 @@ models:
         description: ""
 
       - name: compiled_sql
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+
+  - name: dbt_sources
+    description: >
+      Metadata about sources in the project, including configuration and properties from the dbt graph. Each row contains information about a single source.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
+    columns:
+      - name: unique_id
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: source_name
+        data_type: string
+        description: ""
+
+      - name: name
+        data_type: string
+        description: ""
+
+      - name: identifier
+        data_type: string
+        description: ""
+
+      - name: loaded_at_field
+        data_type: string
+        description: ""
+
+      - name: freshness_warn_after
+        data_type: string
+        description: ""
+
+      - name: freshness_error_after
+        data_type: string
+        description: ""
+
+      - name: freshness_filter
+        data_type: string
+        description: ""
+
+      - name: relation_name
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: owner
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: original_path
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: source_description
+        data_type: string
+        description: ""
+
+      - name: description
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+
+  - name: dbt_snapshots
+    description: >
+      Metadata about snapshots in the project, including configuration and properties from the dbt graph. Each row contains information about a single snapshot.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
+    columns:
+      - name: unique_id
+        data_type: string
+        description: ""
+
+      - name: alias
+        data_type: string
+        description: ""
+
+      - name: checksum
+        data_type: string
+        description: ""
+
+      - name: materialization
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: owner
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: depends_on_macros
+        data_type: string
+        description: ""
+
+      - name: depends_on_nodes
+        data_type: string
+        description: ""
+
+      - name: description
+        data_type: string
+        description: ""
+
+      - name: name
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: original_path
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+
+  - name: dbt_metrics
+    description: >
+      Metadata about metics in the project, including configuration and properties from the dbt graph. Each row contains information about a single metric.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
+    columns:
+      - name: unique_id
+        data_type: string
+        description: ""
+
+      - name: name
+        data_type: string
+        description: ""
+
+      - name: label
+        data_type: string
+        description: ""
+
+      - name: model
+        data_type: string
+        description: ""
+
+      - name: type
+        data_type: string
+        description: ""
+
+      - name: sql
+        data_type: string
+        description: ""
+
+      - name: timestamp
+        data_type: string
+        description: ""
+
+      - name: filters
+        data_type: string
+        description: ""
+
+      - name: time_grains
+        data_type: string
+        description: ""
+
+      - name: dimensions
+        data_type: string
+        description: ""
+
+      - name: depends_on_macros
+        data_type: string
+        description: ""
+
+      - name: depends_on_nodes
+        data_type: string
+        description: ""
+
+      - name: description
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: original_path
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+  - name: dbt_exposures
+    description: >
+      Metadata about exposures in the project, including configuration and properties from the dbt graph. Each row contains information about a single exposure.
+      Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
+    columns:
+      - name: unique_id
+        data_type: string
+        description: ""
+
+      - name: name
+        data_type: string
+        description: ""
+
+      - name: maturity
+        data_type: string
+        description: ""
+
+      - name: type
+        data_type: string
+        description: ""
+
+      - name: owner_email
+        data_type: string
+        description: ""
+
+      - name: owner_name
+        data_type: string
+        description: ""
+
+      - name: url
+        data_type: string
+        description: ""
+
+      - name: depends_on_macros
+        data_type: string
+        description: ""
+
+      - name: depends_on_nodes
+        data_type: string
+        description: ""
+
+      - name: description
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: original_path
         data_type: string
         description: ""
 
