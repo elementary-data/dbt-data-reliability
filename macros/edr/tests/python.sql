@@ -1,4 +1,4 @@
-{% test python(model, code_macro, packages) %}
+{% test python(model, code_macro, packages, macro_args) %}
   {{ config(fail_calc = 'fail_count') }}
 
   {% if not execute %}
@@ -10,6 +10,9 @@
   {% endif %}
   {% if not packages %}
     {% set packages = [] %}
+  {% endif %}
+  {% if not macro_args %}
+    {% set macro_args = {} %}
   {% endif %}
 
   {% set model_relation = model.quote(false, false, false) %}
@@ -25,7 +28,7 @@
   {% if not user_py_code_macro %}
     {% do exceptions.raise_compiler_error('Unable to find the macro `' ~ code_macro ~ '`.') %}
   {% endif %}
-  {% set user_py_code = user_py_code_macro() %}
+  {% set user_py_code = user_py_code_macro(macro_args) %}
   {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code, output_table) %}
 
   {% do adapter.submit_python_job(model_graph_node, compiled_py_code) %}
