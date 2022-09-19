@@ -23,16 +23,18 @@
     {% do exceptions.raise_compiler_error('Unable to find the macro `' ~ code_macro ~ '`.') %}
   {% endif %}
   {% set user_py_code = user_py_code_macro() %}
-  {% set compiled_py_code = elementary.compile_py_code(model_graph_node, user_py_code) %}
-  {% set write_table_py_code = py_write_table(compiled_py_code, output_table) %}
+  {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model, user_py_code, output_table) %}
 
-  {% do adapter.submit_python_job(model_graph_node, write_table_py_code) %}
+  {% do adapter.submit_python_job(model_graph_node, compiled_py_code) %}
   select * from {{ output_table }}
 {% endtest %}
 
 
-{% macro compile_py_code(model_graph_node, py_code) %}
+{% macro snowflake__compile_py_code(model, py_code, output_table) %}
 {{ py_code }}
-{{ py_script_postfix(model_graph_node) }}
-model = test
+
+def main(session):
+    model_df = session.table('{{ model }}')
+    output_df = test(model_df, session)
+    output_df.write.mode('overwrite').save_as_table('{{ output_table }}')
 {% endmacro %}
