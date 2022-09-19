@@ -1,4 +1,4 @@
-{% test python(model, code_macro, packages, output_table) %}
+{% test python(model, code_macro, packages) %}
   {% if not execute %}
     {% do return(none) %}
   {% endif %}
@@ -9,12 +9,11 @@
   {% if not packages %}
     {% set packages = [] %}
   {% endif %}
-  {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
+
   {% set model_graph_node = context.model %}
-  {% if not output_table %}
-    {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
-      identifier='pytest__' ~ model_graph_node.alias).quote(false, false, false) %}
-  {% endif %}
+  {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
+  {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
+    identifier='pytest_tmp__' ~ model_graph_node.alias).quote(false, false, false) %}
 
   {% do model_graph_node.update({'schema': model.schema}) %}
   {% do model_graph_node['config'].update({'packages': packages}) %}
