@@ -34,6 +34,10 @@
     string
 {% endmacro %}
 
+{% macro spark__type_string() %}
+    string
+{% endmacro %}
+
 
 
 {%- macro type_long_string() -%}
