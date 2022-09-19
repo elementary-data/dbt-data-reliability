@@ -16,7 +16,7 @@
     identifier='pytest_tmp__' ~ model_graph_node.alias).quote(false, false, false) %}
 
   {% do model_graph_node.update({'schema': model.schema}) %}
-  {% do model_graph_node['config'].update({'packages': packages}) %}
+  {% do model_graph_node.config.update({'packages': packages}) %}
 
   {% set user_py_code_macro = context[code_macro] %}
   {% if not user_py_code_macro %}
