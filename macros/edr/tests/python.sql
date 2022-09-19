@@ -27,5 +27,5 @@
   {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code, output_table) %}
 
   {% do adapter.submit_python_job(model_graph_node, compiled_py_code) %}
-  select * from {{ output_table }}
+  select * from {{ output_table }} where test_passed = false
 {% endtest %}
