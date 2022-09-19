@@ -9,6 +9,8 @@ def materialize(session, fail_count, target_relation):
     df.write.mode('overwrite').save_as_table(target_relation, table_type='temporary')
 
 def get_fail_count(test_output):
+    if isinstance(test_output, int):
+        return test_output
     if isinstance(test_output, bool):
         return 0 if test_output else 1
     if isinstance(test_output, snowflake.snowpark.DataFrame):
@@ -36,6 +38,8 @@ def materialize(session, fail_count, target_relation):
     df.write.mode('overwrite').format('bigquery').option('writeMethod', 'direct').option('writeDisposition', 'WRITE_TRUNCATE').save(target_relation)
 
 def get_fail_count(test_output):
+    if isinstance(test_output, int):
+        return test_output
     if isinstance(test_output, bool):
         return 0 if test_output else 1
     if isinstance(test_output, pyspark.sql.DataFrame):
