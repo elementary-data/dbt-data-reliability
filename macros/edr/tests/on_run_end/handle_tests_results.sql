@@ -12,7 +12,7 @@
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' %}
                 {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
-                    {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, flatten_test_node.alias, flatten_test_node.unique_id, '__metrics') %}
+                    {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
                     {% endif %}
@@ -35,7 +35,7 @@
                         {% endif %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
-                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, flatten_test_node.alias, flatten_test_node.unique_id, '__schema_changes') %}
+                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
                     {% if test_columns_snapshot_table %}
                         {% do test_columns_snapshot_tables.append(test_columns_snapshot_table) %}
                     {% endif %}
@@ -71,7 +71,7 @@
 
 {%- macro get_test_result_per_metric(database_name, schema_name, status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, flatten_test_node.alias, flatten_test_node.unique_id, '__anomaly_scores') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
         {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
     {% else %}
@@ -183,7 +183,7 @@
 {% endmacro %}
 
 {% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, test_node.alias, test_node.unique_id, '__anomaly_scores') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, '__anomaly_scores') %}
     {% set anomalous_dimensions = [] %}
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
@@ -366,12 +366,9 @@
     {{ return(most_recent_anomaly_scores) }}
 {% endmacro %}
 
-{% macro get_elementary_test_table(database_name, schema_name, test_name, test_alias, test_unique_id, suffix) %}
+{% macro get_elementary_test_table(database_name, schema_name, test_name, suffix) %}
     {% set tests_schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
-    {# Currently dbt allows multiple tests with the same custom name. #}
-    {# In that case we want to use the unique id of the test instead so we won't use the same tests tables for different tests. #}    
-    {% set table_prefix = test_name if test_alias != test_name else test_unique_id  | replace(".", "_") %}
-    {% set test_table_name = elementary.table_name_with_suffix(table_prefix, suffix) %}
+    {% set test_table_name = elementary.table_name_with_suffix(test_name, suffix) %}
     {% set test_table_relation = adapter.get_relation(database=database_name,
                                                       schema=tests_schema_name,
                                                       identifier=test_table_name) %}
