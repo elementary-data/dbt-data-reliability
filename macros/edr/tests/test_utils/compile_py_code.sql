@@ -5,7 +5,7 @@ import snowflake.snowpark
 {{ py_code }}
 
 def materialize(session, fail_count, target_relation):
-    df = session.create_dataframe([[fail_count]], ['fail_count'])
+    df = session.createDataFrame([[fail_count]], ['fail_count'])
     df.write.mode('overwrite').save_as_table(target_relation, table_type='temporary')
 
 def get_fail_count(test_output):
