@@ -1,4 +1,6 @@
 {% test python(model, code_macro, packages) %}
+  {{ config(fail_calc = 'fail_count') }}
+
   {% if not execute %}
     {% do return(none) %}
   {% endif %}
@@ -27,5 +29,5 @@
   {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code, output_table) %}
 
   {% do adapter.submit_python_job(model_graph_node, compiled_py_code) %}
-  select * from {{ output_table }} where test_passed = false
+  select fail_count from {{ output_table }}
 {% endtest %}
