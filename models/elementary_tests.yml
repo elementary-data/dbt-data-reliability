@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: data_monitoring_metrics
+    description: >
+      Elementary anomaly detection tests monitor metrics such as volume, freshness and data quality metrics.
+      This incremental table is used to store the metrics over time.
+      On each anomaly detection test, the test queries this table for historical metrics, and compares to the latest values.
+      The table is updated with new metrics on the on-run-end named handle_test_results that is executed at the end of dbt test invocations.
+
+  - name: metrics_anomaly_score
+    description: >
+      This is a view on `data_monitoring_metrics` that runs the same query the anomaly detection tests run to calculate anomaly scores.
+      The purpose of this view is to provide visibility to the results of anomaly detection tests.
+
+  - name: anomaly_threshold_sensitivity
+    description: >
+      This is a view on `metrics_anomaly_score` that calculates if values of metrics from latest runs would have been considered anomalies in different anomaly scores.
+      This can help you decide if there is a need to adjust the `anomaly_score_threshold`.
+
+  - name: monitors_runs
+    description: >
+      This is a view on `data_monitoring_metrics` that is used to determine when a specific anomaly detection test was last executed.
+      Each anomaly detection test queries this view to decide on a start time for collecting metrics.
+
+  - name: schema_columns_snapshot
+    description: >
+      Stores the schema details for tables that are monitored with elementary schema changes test.
+      In order to compare current schema to previous state, we must store the previous state.
+      The data is from a view that queries the data warehouse information schema.
+      This is an incremental table.
+
+  - name: filtered_information_schema_columns
+    description: >
+      Queries the columns view from the information schema of the schemas in the project.
+      This view is generated using an adapter specific macro, as information schema is different between platforms.
+      This is a view to make the work with the information schema more convinient.
+
+  - name: filtered_information_schema_tables
+    description: >
+      Queries the tables and schemas views from the information schema of the schemas in the project.
+      This view is generated using an adapter specific macro, as information schema is different between platforms.
+      This is a view to make the work with the information schema more convinient.
