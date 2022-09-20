@@ -2,7 +2,7 @@
   config(
     materialized = 'view',
     bind=False,
-    enabled = target.type != 'databricks' | as_bool()
+    enabled = target.type != 'databricks' and target.type != 'spark' | as_bool()
   )
 }}
 

@@ -2,7 +2,7 @@
     {{ adapter.dispatch('daily_buckets_cte','elementary')() }}
 {% endmacro %}
 
-{# Databricks #}
+{# Databricks and Spark #}
 {% macro default__daily_buckets_cte() %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
     {%- set min_bucket_end = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") ~"'" %}
