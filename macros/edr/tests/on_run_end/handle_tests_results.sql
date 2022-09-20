@@ -175,7 +175,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -275,7 +276,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -291,7 +293,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -329,7 +332,8 @@
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
