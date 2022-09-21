@@ -112,6 +112,7 @@
     {%- endif -%}
 
     {% set original_file_path = node_dict.get('original_file_path') %}
+    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_compiled_sql_from_node #}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_metadata.get('name'),
@@ -136,7 +137,7 @@
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_type(original_file_path),
         'original_path': original_file_path,
-        'compiled_sql': elementary.get_compiled_sql_from_node(node_dict),
+        'compiled_sql': node_dict.get('compiled_sql'),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}

@@ -29,7 +29,8 @@
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
     },
     'time_format': '%Y-%m-%d %H:%M:%S',
-    'long_string_size': 16384
+    'long_string_size': 16384,
+    'collect_compiled_sql': true
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}

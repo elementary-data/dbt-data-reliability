@@ -284,12 +284,14 @@
 
 {% macro get_schema_change_test_result(run_result_dict, schema_change_dict, test_node) %}
     {% set test_result_dict = schema_change_dict %}
+    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_compiled_sql_from_node #}
+    {% set test_results_query = elementary.insensitive_get_dict_value(test_node, 'compiled_sql') %}
     {% do test_result_dict.update({
         'other': none,
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': elementary.get_compiled_sql_from_node(test_node),
+        'test_results_query': test_results_query,
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
@@ -311,6 +313,8 @@
     {%- else -%}
         {% set test_name = test_long_name %}
     {%- endif -%}
+    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_compiled_sql_from_node #}
+    {% set test_results_query = elementary.insensitive_get_dict_value(test_node, 'compiled_sql') %}
     {% set test_result_dict = {
         'id': test_execution_id,
         'data_issue_id': none,
@@ -328,7 +332,7 @@
         'other': none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': elementary.get_compiled_sql_from_node(test_node),
+        'test_results_query': test_results_query,
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
