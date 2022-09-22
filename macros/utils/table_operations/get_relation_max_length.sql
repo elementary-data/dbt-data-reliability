@@ -19,3 +19,7 @@
 {% macro databricks__get_relation_max_name_length(temporary, relation, sql_query) %}
     {{ return(127) }}
 {% endmacro %}
+
+{% macro spark__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {{ return(127) }}
+{% endmacro %}
