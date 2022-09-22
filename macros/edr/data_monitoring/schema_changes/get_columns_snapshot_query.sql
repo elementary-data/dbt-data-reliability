@@ -2,12 +2,14 @@
 
     {%- set known_columns_query %}
         select full_column_name from {{ ref('schema_columns_snapshot') }}
-        where lower(full_table_name) = lower('{{ full_table_name }}')
+        where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
+        and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
     {%- set known_tables_query %}
         select distinct full_table_name from {{ ref('schema_columns_snapshot') }}
-        where lower(full_table_name) = lower('{{ full_table_name }}')
+        where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
+        and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
 
