@@ -284,7 +284,6 @@
 
 {% macro get_schema_change_test_result(run_result_dict, schema_change_dict, test_node) %}
     {% set test_result_dict = schema_change_dict %}
-    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_model_sql_from_node #}
     {% set test_results_query = elementary.insensitive_get_dict_value(test_node, 'compiled_sql') %}
     {% do test_result_dict.update({
         'other': none,
@@ -313,7 +312,6 @@
     {%- else -%}
         {% set test_name = test_long_name %}
     {%- endif -%}
-    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_model_sql_from_node #}
     {% set test_results_query = elementary.insensitive_get_dict_value(test_node, 'compiled_sql') %}
     {% set test_result_dict = {
         'id': test_execution_id,

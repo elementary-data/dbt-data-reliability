@@ -112,7 +112,6 @@
     {%- endif -%}
 
     {% set original_file_path = node_dict.get('original_file_path') %}
-    {# Becasue we use compiled sql for fetching data sampling, we currently not using the macro get_model_sql_from_node #}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_metadata.get('name'),
