@@ -332,7 +332,7 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
         print_test_results(results)
         test_results.extend(results)
 
-    if 'schema' in test_types and target != 'databricks':
+    if 'schema' in test_types and target not in ['databricks','spark']:
         dbt_runner.seed(select='schema_changes_data')
         dbt_runner.test(select='tag:schema_changes')
         dbt_runner.seed(select='schema_changes_validation')
