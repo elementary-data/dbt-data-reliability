@@ -2,7 +2,7 @@
 
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-    {%- set previos_schema_time_query -%}
+    {%- set previous_schema_time_query -%}
         (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
     {%- endset %}
 
@@ -20,7 +20,7 @@
         select full_table_name, column_name, data_type, is_new, detected_at
         from {{ ref('schema_columns_snapshot') }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
-            and detected_at = {{ previos_schema_time_query }}
+            and detected_at = {{ previous_schema_time_query }}
         order by detected_at desc
 
     ),
