@@ -46,11 +46,13 @@
 {%- endmacro -%}
 
 {%- macro redshift__type_long_string() -%}
-    varchar(16384)
+    {% set long_string = 'varchar(' ~ elementary.get_config_var('long_string_size') ~ ')' %}
+    {{ return(long_string) }}
 {%- endmacro -%}
 
 {%- macro postgres__type_long_string() -%}
-    varchar(16384)
+    {% set long_string = 'varchar(' ~ elementary.get_config_var('long_string_size') ~ ')' %}
+    {{ return(long_string) }}
 {%- endmacro -%}
 
 
