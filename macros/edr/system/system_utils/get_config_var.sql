@@ -30,7 +30,8 @@
     },
     'time_format': '%Y-%m-%d %H:%M:%S',
     'long_string_size': 16384,
-    'collect_compiled_sql': true
+    'collect_model_sql': true,
+    'model_sql_max_size': 10240
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}

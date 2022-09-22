@@ -69,7 +69,7 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_sql': elementary.get_compiled_sql_from_node(node),
+        'compiled_sql': elementary.get_model_sql_from_node(node),
         'failures': run_result_dict.get('failures')
     }%}
 
