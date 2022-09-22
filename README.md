@@ -23,7 +23,7 @@ Add to your `packages.yml` according to your dbt version:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.11
+    version: 0.4.12
     ## compatible with Elementary CLI version 0.4.11
     ## see docs: https://docs.elementary-data.com/
 ```
@@ -33,7 +33,7 @@ packages:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.11
+    version: 0.4.12
     ## compatible with Elementary CLI version 0.4.11
     ## see docs: https://docs.elementary-data.com/
 
