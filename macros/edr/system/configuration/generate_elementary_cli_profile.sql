@@ -67,7 +67,7 @@ elementary:
     default:
       type: databricks
       host: {{ target.host }}
-      http_path: {{ target.http_path }}
+      http_path: <HTTP PATH>
       {%- if elementary_database %}
       catalog: {{ elementary_database }}
       {% endif %}
