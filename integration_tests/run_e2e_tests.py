@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List
 
 import click
+
 from elementary.clients.dbt.dbt_runner import DbtRunner
 
 any_type_columns = ['date', 'null_count', 'null_percent']
@@ -166,7 +167,8 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
     def get_training_row(date, row_index, rows_count):
         return {
             'date': date.strftime('%Y-%m-%d %H:%M:%S'),
-            'platform': 'windows' if row_index < (10 / 100 * rows_count) else ('android' if row_index < (55 / 100 * rows_count) else 'ios'),
+            'platform': 'windows' if row_index < (10 / 100 * rows_count) else (
+                'android' if row_index < (55 / 100 * rows_count) else 'ios'),
             'version': random.randint(1, 3),
             'user_id': random.randint(1, rows_count)
         }
@@ -219,8 +221,23 @@ class TestResult:
         return f'{self.type}: {self.message}'
 
 
-def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
-    test_results = []
+class TestResults:
+    def __init__(self):
+        self.results = []
+
+    def extend(self, test_results: List[TestResult]):
+        if not test_results:
+            raise ValueError('Received an empty test results list.')
+        for test_result in test_results:
+            print(test_result)
+        self.results.extend(test_results)
+
+    def get_failed(self):
+        return [result for result in self.results if not result.success]
+
+
+def e2e_tests(target, test_types, clear_tests) -> TestResults:
+    test_results = TestResults()
 
     dbt_runner = DbtRunner(project_dir=FILE_DIR, profiles_dir=os.path.join(expanduser('~'), '.dbt'), target=target,
                            raise_on_failure=False)
@@ -240,7 +257,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='table_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_table_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'error_test' in test_types:
@@ -249,7 +265,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='error_test', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_error_test')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'error_model' in test_types:
@@ -258,7 +273,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='error_model', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_error_model')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'error_snapshot' in test_types:
@@ -267,7 +281,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='error_snapshot', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_error_snapshot')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     # Creates row_count metrics for anomalies detection.
@@ -295,7 +308,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='no_timestamp_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_no_timestamp_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'column' in test_types:
@@ -304,7 +316,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='string_column_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_string_column_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
         dbt_runner.test(select='tag:numeric_column_anomalies')
@@ -312,7 +323,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='numeric_column_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_numeric_column_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
         dbt_runner.test(select='tag:all_any_type_columns_anomalies')
@@ -320,7 +330,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='any_type_column_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_any_type_column_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'dimension' in test_types:
@@ -329,10 +338,9 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='dimension_anomalies', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_dimension_anomalies')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
-    if 'schema' in test_types and target not in ['databricks','spark']:
+    if 'schema' in test_types and target not in ['databricks', 'spark']:
         dbt_runner.seed(select='schema_changes_data')
         dbt_runner.test(select='tag:schema_changes')
         dbt_runner.seed(select='schema_changes_validation')
@@ -344,7 +352,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='schema_changes', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_schema_changes')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'regular' in test_types:
@@ -353,7 +360,6 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='regular_tests', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_regular_tests')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     if 'artifacts' in test_types:
@@ -361,15 +367,9 @@ def e2e_tests(target, test_types, clear_tests) -> List[TestResult]:
             TestResult(type='artifacts', message=msg) for msg in
             dbt_runner.run_operation(macro_name='validate_dbt_artifacts')
         ]
-        print_test_results(results)
         test_results.extend(results)
 
     return test_results
-
-
-def print_test_results(test_results: List[TestResult]):
-    for test_result in test_results:
-        print(test_result)
 
 
 def print_failed_test_results(e2e_target: str, failed_test_results: List[TestResult]):
@@ -427,11 +427,12 @@ def main(target, e2e_type, generate_data, clear_tests):
         all_results[e2e_target] = e2e_test_results
 
     for e2e_target, e2e_test_results in all_results.items():
-        failed_test_results = [test_result for test_result in e2e_test_results if not test_result.success]
+        test_results = e2e_test_results.results
+        failed_test_results = e2e_test_results.get_failed()
         if failed_test_results:
             print_failed_test_results(e2e_target, failed_test_results)
             found_failures = True
-        print(f'[{len(e2e_test_results) - len(failed_test_results)}/{len(e2e_test_results)}] {e2e_target} TESTS PASSED')
+        print(f'[{len(test_results) - len(failed_test_results)}/{len(test_results)}] {e2e_target} TESTS PASSED')
 
     if found_failures:
         print('Some of the tests failed.')
