@@ -61,6 +61,21 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
+{% macro spark__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+elementary:
+  outputs:
+    default:
+      type: databricks
+      host: {{ target.host }}
+      http_path: <HTTP PATH>
+      {%- if elementary_database %}
+      catalog: {{ elementary_database }}
+      {% endif %}
+      schema: {{ elementary_schema }}
+      token: <TOKEN>
+      threads: {{ target.threads }}
+{% endmacro %}
+
 {% macro default__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}
