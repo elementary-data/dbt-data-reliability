@@ -8,10 +8,7 @@
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
     'tests_schema_name': '__tests',
-    'alert_dbt_model_fail': true,
-    'alert_dbt_model_skip': true,
     'debug_logs': false,
-    'refresh_dbt_artifacts': false,
     'disable_warn_alerts': false,
     'disable_model_alerts': false,
     'disable_test_alerts': false,
@@ -20,7 +17,6 @@
     'dbt_artifacts_chunk_size': 50,
     'edr_cli_run': false,
     'max_int': 2147483647,
-    'schemas_to_alert_on_new_tables': [],
     'custom_run_started_at': null,
     'edr_monitors': {
       'table': ['schema_changes', 'row_count', 'freshness'],
