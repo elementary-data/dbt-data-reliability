@@ -36,6 +36,9 @@ on:
       dbt-data-reliability-ref:
         type: string
         required: false
+      clear-tests:
+        type: boolean
+        required: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
