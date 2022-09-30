@@ -8,20 +8,20 @@ jobs:
   get-latest-release-tag:
     runs-on: ubuntu-latest
     outputs:
-      releasetag: ${{ steps.get-tag.outputs.releasetag }}
+      value: ${{ steps.get-tag.outputs.value }}
     steps:
       - name: Get lastest release tag
         id: get-tag
-        run: echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest | jq '.tag_name' | sed 's/\"//g')"
+        run: echo "::set-output name=value::$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest | jq '.tag_name' | sed 's/\"//g')"
       - name: Confirm release tag
-        run: echo ${{ steps.latestrelease.outputs.releasetag }}
+        run: echo ${{ steps.get-tag.outputs.value }}
 
   pre-upgrade-snowflake:
     needs: get-latest-release-tag
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: snowflake
-      dbt-data-reliability-ref: ${{ needs.get-latest-tag.outputs.releasetag }}
+      dbt-data-reliability-ref: ${{ needs.get-latest-release-tag.outputs.value }}
     secrets: inherit
 
   post-upgrade-snowflake:
