@@ -17,7 +17,7 @@ jobs:
         run: echo ${{ steps.latestrelease.outputs.releasetag }}
 
   pre-upgrade-snowflake:
-    needs: get-latest-tag
+    needs: get-latest-release-tag
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: snowflake
