@@ -1,0 +1,33 @@
+name: Test upgrade warehouse platform
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  get-latest-release-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      releasetag: ${{ steps.get-tag.outputs.releasetag }}
+    steps:
+      - name: Get lastest release tag
+        id: get-tag
+        run: echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/"$GITHUB_REPOSITORY"/releases/latest | jq '.tag_name' | sed 's/\"//g')"
+      - name: Confirm release tag
+        run: echo ${{ steps.latestrelease.outputs.releasetag }}
+
+  pre-upgrade-snowflake:
+    needs: get-latest-tag
+    uses: ./.github/workflows/test-warehouse.yml
+    with:
+      warehouse-type: snowflake
+      dbt-data-reliability-ref: ${{ needs.get-latest-tag.outputs.releasetag }}
+    secrets: inherit
+
+  post-upgrade-snowflake:
+    needs: pre-upgrade-snowflake
+    uses: ./.github/workflows/test-warehouse.yml
+    with:
+      warehouse-type: snowflake
+      clear-tests: false
+    secrets: inherit

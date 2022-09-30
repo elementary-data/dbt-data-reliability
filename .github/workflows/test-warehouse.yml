@@ -24,6 +24,9 @@ on:
         type: string
         required: false
         description: dbt's version to test with
+      clear-tests:
+        type: boolean
+        description: Should clear tests
 
   workflow_call:
     inputs:
@@ -80,4 +83,4 @@ jobs:
       - name: Run E2E tests
         run: |
           dbt deps --project-dir ./dbt-data-reliability/integration_tests
-          python ./dbt-data-reliability/integration_tests/run_e2e_tests.py -t "${{ inputs.warehouse-type }}"
+          python ./dbt-data-reliability/integration_tests/run_e2e_tests.py -t "${{ inputs.warehouse-type }}" --clear-tests "${{ inputs.clear-tests }}"
