@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Get lastest release tag
         id: get-tag
-        run: echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/"$GITHUB_REPOSITORY"/releases/latest | jq '.tag_name' | sed 's/\"//g')"
+        run: echo "::set-output name=releasetag::$(curl -s https://api.github.com/repos/$GITHUB_REPOSITORY/releases/latest | jq '.tag_name' | sed 's/\"//g')"
       - name: Confirm release tag
         run: echo ${{ steps.latestrelease.outputs.releasetag }}
 
