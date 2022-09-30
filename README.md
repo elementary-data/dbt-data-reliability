@@ -11,8 +11,6 @@ Elementary enables you to **monitor your data and dbt operation.**
 
 To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
 
-For reporting issues, feature requests and contributions, refer to [issues](https://github.com/elementary-data/elementary/issues) in the main repo. 
-
 
 ## Quick start
 
@@ -23,8 +21,8 @@ Add to your `packages.yml` according to your dbt version:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.12
-    ## compatible with Elementary CLI version 0.4.11
+    version: 0.5.0
+    ## compatible with Elementary CLI version 0.5.0
     ## see docs: https://docs.elementary-data.com/
 ```
 
@@ -33,8 +31,8 @@ packages:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.12
-    ## compatible with Elementary CLI version 0.4.11
+    version: 0.5.0
+    ## compatible with Elementary CLI version 0.5.0
     ## see docs: https://docs.elementary-data.com/
 
    ## !! Important !! For dbt <1.2.0 only
@@ -59,9 +57,23 @@ And run ```dbt run --select elementary```.
 Check out the [full documentation](https://docs.elementary-data.com/) for generating the UI, alerts and adding anomaly detection tests. 
 
 ## Run Results and dbt artifacts
-The package automatically uploads the dbt artifacts and run results to your tables in your data warehouse.
+The package automatically uploads the dbt artifacts and run results to tables in your data warehouse:
 
-Here you can find [additional details](https://docs.elementary-data.com/dbt/dbt-artifacts).
+Run results tables:
+- dbt_run_results
+- model_run_results
+- snapshot_run_results
+- elementary_test_results (all dbt test results)
+
+Metadata tables:
+- dbt_models
+- dbt_tests
+- dbt_sources
+- dbt_exposures
+- dbt_metrics
+- sbt_sbapshots
+
+Here you can find [additional details about the tables](https://docs.elementary-data.com/guides/modules-overview/dbt-package).
 
 
 ## Data anomalies detection as dbt tests 
@@ -105,8 +117,7 @@ models:
 
 
 ## Data warehouse support
-This package has been tested on Snowflake, BigQuery and Redshift.
-Additional integrations coming soon!
+This package has been tested on Snowflake, BigQuery, Redshift and Databricks SQL.
 
 
 ## Community & Support
