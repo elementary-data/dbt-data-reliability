@@ -344,7 +344,7 @@
     {% set test_row_dicts = [] %}
     {% set test_compiled_code = elementary.get_compiled_code(flatten_test_node) %}
     {% if test_compiled_code %}
-        {% if sample_limit and flatten_test_node.language == 'sql' %}
+        {% if sample_limit %}
             {% set test_compiled_code = test_compiled_code ~ ' limit ' ~ sample_limit %}
         {% endif %}
         {% set test_table_agate = run_query(test_compiled_code) %}
