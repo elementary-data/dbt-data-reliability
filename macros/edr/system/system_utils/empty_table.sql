@@ -2,6 +2,10 @@
     {{ elementary.empty_table([('id','long_string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('model_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('test_type','string'),('test_sub_type','string'),('test_results_description','long_string'),('owners','string'),('tags','string'),('test_results_query','long_string'),('other','string'),('test_name','long_string'),('test_params','long_string'),('severity','string'),('status','string'),('failures', 'bigint')]) }}
 {% endmacro %}
 
+{% macro empty_source_freshness_results() %}
+    {{ elementary.empty_table([('unique_id','string'),('max_loaded_at','string'),('snapshotted_at','string'),('max_loaded_at_time_ago_in_s','int'),('status','string')]) }}
+{% endmacro %}
+
 {% macro empty_column_unpivot_cte() %}
     {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
 {% endmacro %}
