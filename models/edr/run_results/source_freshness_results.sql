@@ -1,7 +1,7 @@
 {{
   config(
     materialized = 'incremental',
-    unique_key = 'unique_id',
+    unique_key = 'source_freshness_execution_id',
     on_schema_change = 'append_new_columns'
   )
 }}

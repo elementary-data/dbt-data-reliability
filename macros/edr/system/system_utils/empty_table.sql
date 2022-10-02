@@ -3,7 +3,7 @@
 {% endmacro %}
 
 {% macro empty_source_freshness_results() %}
-    {{ elementary.empty_table([('unique_id','string'),('max_loaded_at','string'),('snapshotted_at','string'),('max_loaded_at_time_ago_in_s','int'),('status','string')]) }}
+    {{ elementary.empty_table([('source_freshness_execution_id','string'),('unique_id','string'),('max_loaded_at','string'),('snapshotted_at','string'),('max_loaded_at_time_ago_in_s','int'),('status','string')]) }}
 {% endmacro %}
 
 {% macro empty_column_unpivot_cte() %}

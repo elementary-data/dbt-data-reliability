@@ -17,6 +17,7 @@
 
 {% macro default__flatten_source_freshness(node_dict) %}
     {% set flatten_source_freshness_dict = {
+         'source_freshness_execution_id': [invocation_id, node_dict.get('unique_id')] | join('.'),
          'unique_id': node_dict.get('unique_id'),
          'max_loaded_at': node_dict.get('max_loaded_at'),
          'snapshotted_at': node_dict.get('snapshotted_at'),
