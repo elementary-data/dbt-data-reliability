@@ -12,6 +12,7 @@
     'disable_warn_alerts': false,
     'disable_model_alerts': false,
     'disable_test_alerts': false,
+    'disable_source_freshness_alerts': false,
     'disable_run_results': false,
     'disable_skipped_model_alerts': true,
     'dbt_artifacts_chunk_size': 50,

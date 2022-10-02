@@ -1,8 +1,8 @@
 {% macro upload_source_freshness_results() %}
   {% set source_freshness_results_relation = ref('elementary', 'source_freshness_results') %}
   {% set sources_json_path = ref.config.target_path ~ '/sources.json' %}
-  {% set source_freshess_results_agate = run_query('SELECT 1').from_json(sources_json_path, key='results') %}
-  {{ debug() }}
+  {% set empty_agate = run_query('SELECT 1') %}
+  {% set source_freshess_results_agate = empty_agate.from_json(sources_json_path, key='results') %}
   {% set source_freshess_results_dicts = elementary.agate_to_dicts(source_freshess_results_agate) %}
   {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.get_flatten_source_freshness_callback()) %}
 {% endmacro %}
