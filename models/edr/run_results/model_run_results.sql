@@ -27,7 +27,7 @@ SELECT
     run_results.execute_completed_at,
     run_results.compile_started_at,
     run_results.compile_completed_at,
-    run_results.compiled_sql,
+    run_results.compiled_code,
     models.database_name,
     models.schema_name,
     models.materialization,

@@ -68,9 +68,9 @@ models:
         data_type: boolean
         description: Was this a full refresh execution.
 
-      - name: compiled_sql
+      - name: compiled_code
         data_type: string
-        description: The compiled SQL executed against the database.
+        description: The compiled code (SQL / Python) executed against the database.
 
   - name: model_run_results
     description: >

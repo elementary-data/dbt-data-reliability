@@ -34,7 +34,6 @@
                                                                  ('package_name', 'string'),
                                                                  ('type', 'string'),
                                                                  ('original_path', 'long_string'),
-                                                                 ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
@@ -136,8 +135,6 @@
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_type(original_file_path),
         'original_path': original_file_path,
-        'compiled_code': elementary.get_compiled_code(node_dict),
-        'language': node_dict.get('language'),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}

@@ -26,7 +26,6 @@
     },
     'time_format': '%Y-%m-%d %H:%M:%S',
     'long_string_size': 16384,
-    'collect_model_sql': true,
     'model_sql_max_size': 10240
   } %}
 
