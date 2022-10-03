@@ -69,7 +69,7 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_code': elementary.get_compiled_code_text(node),
+        'compiled_code': elementary.get_compiled_model_code_text(node),
         'failures': run_result_dict.get('failures')
     }%}
 
