@@ -5,7 +5,8 @@
   )
 }}
 
-select unique_id,
+select source_freshness_execution_id as alert_id,
+       unique_id,
        max_loaded_at
        snapshotted_at as detected_at,
        max_loaded_at_time_ago_in_s,
