@@ -27,7 +27,7 @@ SELECT
     run_results.execute_completed_at,
     run_results.compile_started_at,
     run_results.compile_completed_at,
-    run_results.compiled_sql,
+    run_results.compiled_code,
     snapshots.database_name,
     snapshots.schema_name,
     snapshots.materialization,

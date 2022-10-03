@@ -174,7 +174,7 @@ models:
         data_type: string
         description: ""
 
-      - name: compiled_sql
+      - name: compiled_code
         data_type: string
         description: ""
 
