@@ -32,6 +32,7 @@ SELECT
     snapshots.schema_name,
     snapshots.materialization,
     snapshots.tags,
+    snapshots.package_name,
     snapshots.path,
     snapshots.original_path,
     snapshots.owner,
