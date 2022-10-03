@@ -1,15 +1,19 @@
 <p align="center">
 <img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/header_git.png"/ width="1000">
 </p>
-<p align="center">
-Data Observability for Analytics Engineers
-</p>
 
+<h2 align="center">
+ Data observability for analytics & data engineers
+</h2>
+<h4 align="center">
+Monitor your data quality, operation and performance directly from your dbt project.
+</h4>
 
+<div align="center">
 
-Elementary enables you to **monitor your data and dbt operation.** 
+To learn more, refer to our [main repo »](https://github.com/elementary-data/elementary) | [Demo »](https://bit.ly/3IXKShW)
 
-To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
+</div>
 
 
 ## Quick start
@@ -99,9 +103,10 @@ models:
 
 
 ## Data observability report
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/ui_for_git.png" width="800">
 
-**Checkout the [live demo](https://bit.ly/3IXKShW).**
+<kbd align="center">
+        <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
+</kbd>
 
 
 
@@ -110,14 +115,20 @@ models:
 
 
 
-## High level architecture 
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/High_level_flow.png" width="800">
+## How it works?
 
+Elementary dbt package creates tables of metadata and test results in your data warehouse, as part of your dbt runs. The [CLI tool](https://github.com/elementary-data/elementary) reads the data from these tables, and is used to generate the UI and alerts. 
+
+<img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/how_elementary_works.png">
 
 
 
 ## Data warehouse support
-This package has been tested on Snowflake, BigQuery, Redshift and Databricks SQL.
+
+* [x] **Snowflake** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/snowflake-16.png) 
+* [x] **BigQuery**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/bigquery-16.svg) 
+* [x] **Redshift**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/redshift-16.png)
+* [x] **Databricks SQL**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/databricks-16.png)
 
 
 ## Community & Support
