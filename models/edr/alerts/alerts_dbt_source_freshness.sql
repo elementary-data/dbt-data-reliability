@@ -35,4 +35,4 @@ select
   sources.path
 from results
 join sources on results.unique_id = sources.unique_id
-where {{ not elementary.get_config_var('disable_source_freshness_alerts') }} and lower(status) != 'success'
+where {{ not elementary.get_config_var('disable_source_freshness_alerts') }} and lower(status) != 'pass'
