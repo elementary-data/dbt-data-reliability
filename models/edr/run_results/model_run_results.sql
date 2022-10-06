@@ -32,6 +32,7 @@ SELECT
     models.schema_name,
     models.materialization,
     models.tags,
+    models.package_name,
     models.path,
     models.original_path,
     models.owner,
