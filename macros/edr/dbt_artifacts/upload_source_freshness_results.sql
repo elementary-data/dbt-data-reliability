@@ -1,9 +1,11 @@
 {% macro upload_source_freshness_results() %}
   {% set source_freshness_results_relation = ref('source_freshness_results') %}
-  {% set sources_json_path = ref.config.target_path ~ '/sources.json' %}
-  {% set empty_agate = run_query('SELECT 1') %}
-  {% set source_freshess_results_agate = empty_agate.from_json(sources_json_path, key='results') %}
-  {% set source_freshess_results_dicts = elementary.agate_to_dicts(source_freshess_results_agate) %}
+  {% set sources_json_path = flags.Path(ref.config.target_path ~ '/sources.json') %}
+  {% if not sources_json_path.exists() %}
+    {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
+  {% else %}
+    {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
+  {% endif %}
   {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.get_flatten_source_freshness_callback()) %}
 {% endmacro %}
 
