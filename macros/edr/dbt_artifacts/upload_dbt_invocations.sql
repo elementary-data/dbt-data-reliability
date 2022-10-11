@@ -16,7 +16,7 @@
             'generated_at': elementary.datetime_now_utc_as_string(),
             'dbt_command': flags.WHICH,
             'selected_resources': selected_resources,
-            'project_hash': elementary.hacky_hash(dbt_invocations_relation, tojson(graph))
+            'project_hash': ''
         }%}
 
         {%- if dbt_invocations_relation -%}

@@ -2,7 +2,13 @@
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% do elementary.upload_artifacts_to_table(this, models, elementary.get_flatten_model_callback()) %}
+        {%- if elementary.get_config_var('artifacts_v2') -%}
+            {{ elementary.edr_log("Uploading models using artifacts v2.") }}
+            {% do elementary.upload_artifacts_to_table_v2(this, models, elementary.get_flatten_model_callback(), 'elementary_cached_models.csv') %}
+        {%- else -%}
+            {{ elementary.edr_log("Uploading models using artifacts v1.") }}
+            {% do elementary.upload_artifacts_to_table(this, models, elementary.get_flatten_model_callback()) %}
+        {%- endif -%}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
