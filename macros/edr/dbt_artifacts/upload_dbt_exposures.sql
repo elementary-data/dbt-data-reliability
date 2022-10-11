@@ -2,7 +2,7 @@
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% do elementary.upload_artifacts_to_table(this, exposures, elementary.get_flatten_exposure_callback()) %}
+        {% do elementary.upload_csv_artifacts_to_table(this, exposures, elementary.get_flatten_exposure_callback()) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

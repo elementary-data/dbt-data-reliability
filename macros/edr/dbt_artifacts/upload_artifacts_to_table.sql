@@ -19,3 +19,34 @@
         {% do adapter.commit() %}
     {%- endif -%}
 {% endmacro %}
+
+{% macro upload_csv_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, should_commit=False) %}
+    {% set output_csv_path = elementary.get_target_path(table_relation.identifier ~ '.csv') %}
+    {% set flatten_artifact_dicts = [] %}
+    {% for artifact in artifacts %}
+        {% set flatten_artifact_dict = flatten_artifact_callback(artifact) %}
+        {% set flatten_artifact_rendered_dict = {} %}
+        {% for key in flatten_artifact_dict %}
+          {% set value = flatten_artifact_dict[key] %}
+          {% if value %}
+            {% do flatten_artifact_rendered_dict.update({key: elementary.render_csv_value(value)}) %}
+          {% endif %}
+        {% endfor %}
+        {% do flatten_artifact_dicts.append(flatten_artifact_rendered_dict) %}
+    {% endfor %}
+    {% set flatten_artifacts_agate = elementary.get_agate_table().from_object(flatten_artifact_dicts) %}
+    {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
+    {% do elementary.seed_elementary_model(table_relation, output_csv_path) %}
+{% endmacro %}
+
+{%- macro render_csv_value(value) -%}
+  {% if not value %}
+    {{ return(none) }}
+  {% endif %}
+
+  {% if value is not string and value is not number %}
+    {{ return(tojson(value)) }}
+  {% else %}
+    {{ return(value) }}
+  {% endif %}
+{% endmacro %}
