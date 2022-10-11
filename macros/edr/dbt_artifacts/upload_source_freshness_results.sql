@@ -18,6 +18,15 @@
 {%- endmacro -%}
 
 {% macro default__flatten_source_freshness(node_dict) %}
+  {% set compile_timing = {} %}
+  {% set execute_timing = {} %}
+  {% for timing in node_dict['timing'] %}
+    {% if timing['name'] == 'compile' %}
+      {% do compile_timing.update(timing) %}
+    {% elif timing['name'] == 'execute' %}
+      {% do execute_timing.update(timing) %}
+    {% endif %}
+  {% endfor %}
   {% set flatten_source_freshness_dict = {
        'source_freshness_execution_id': [invocation_id, node_dict.get('unique_id')] | join('.'),
        'unique_id': node_dict.get('unique_id'),
@@ -28,10 +37,10 @@
        'error': node_dict.get('error'),
        'generated_at': elementary.datetime_now_utc_as_string(),
        'invocation_id': invocation_id,
-       'compile_started_at': node_dict.get('timing/0/started_at'),
-       'compile_completed_at': node_dict.get('timing/0/completed_at'),
-       'execute_started_at': node_dict.get('timing/1/started_at'),
-       'execute_completed_at': node_dict.get('timing/1/completed_at')
+       'compile_started_at': compile_timing.get('started_at'),
+       'compile_completed_at': compile_timing.get('completed_at'),
+       'execute_started_at': execute_timing.get('started_at'),
+       'execute_completed_at': execute_timing.get('completed_at'),
    } %}
   {{ return(flatten_source_freshness_dict) }}
 {% endmacro %}
