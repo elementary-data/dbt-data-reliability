@@ -20,6 +20,7 @@ select
   results.generated_at as detected_at,
   results.max_loaded_at_time_ago_in_s,
   results.status,
+  results.error,
   sources.unique_id,
   sources.database_name,
   sources.schema_name,
