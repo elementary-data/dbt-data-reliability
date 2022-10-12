@@ -6,7 +6,7 @@
 }}
 
 with results as (
-  select * from {{ ref('source_freshness_results') }}
+  select * from {{ ref('dbt_source_freshness_results') }}
 ),
 
 sources as (

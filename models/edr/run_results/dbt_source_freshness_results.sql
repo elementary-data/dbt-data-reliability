@@ -6,4 +6,4 @@
   )
 }}
 
-{{ elementary.empty_source_freshness_results() }}
+{{ elementary.empty_dbt_source_freshness_results() }}
