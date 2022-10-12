@@ -7,6 +7,8 @@ models:
       Each row contains information about a single model.
       Data is loaded every time this model is executed.
       It is recommended to execute the model every time a change is merged to the project.
+    tests:
+      - elementary.schema_changes_from_baseline
     columns:
       - name: unique_id
         data_type: string
