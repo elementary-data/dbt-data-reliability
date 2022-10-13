@@ -5,8 +5,10 @@
 {% macro default__seed_elementary_model(relation, csv_path) %}
   {% set table = elementary.get_agate_table().from_csv(csv_path) %}
   {% set model = elementary.get_node('model.elementary.' ~ relation.identifier.lower()) %}
+  {% set original_this = this %}
   {% do context.update({'this': relation}) %}
   {% do dbt.load_csv_rows(model, table) %}
+  {% do context.update({'this': original_this}) %}
 {% endmacro %}
 
 {% macro bigquery__seed_elementary_model(relation, csv_path) %}
