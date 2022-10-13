@@ -1,8 +1,9 @@
 {%- macro upload_dbt_tests() -%}
+    {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_csv_artifacts_to_table(this, tests, elementary.get_flatten_test_callback()) %}
+        {% do elementary.upload_csv_artifacts_to_table(relation, tests, elementary.get_flatten_test_callback()) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

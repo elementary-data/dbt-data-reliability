@@ -1,3 +1,8 @@
-{% macro upload_dbt_artifacts(results) %}
-        {% do elementary.edr_log("Deprecated - Please remove the call to elementary.upload_dbt_artifacts() on your on-run-end hook as it happens automatically now.") %}
+{% macro upload_dbt_artifacts() %}
+  {% do upload_dbt_models() %}
+  {% do upload_dbt_tests() %}
+  {% do upload_dbt_sources() %}
+  {% do upload_dbt_snapshots() %}
+  {% do upload_dbt_metrics() %}
+  {% do upload_dbt_exposures() %}
 {% endmacro %}

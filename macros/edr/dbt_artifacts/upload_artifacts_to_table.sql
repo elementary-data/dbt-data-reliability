@@ -20,7 +20,7 @@
     {%- endif -%}
 {% endmacro %}
 
-{% macro upload_csv_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, should_commit=False) %}
+{% macro upload_csv_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback) %}
     {% set output_csv_path = elementary.get_target_path(table_relation.identifier ~ '.csv') %}
     {% set flatten_artifact_dicts = [] %}
     {% for artifact in artifacts %}
@@ -35,7 +35,15 @@
         {% do flatten_artifact_dicts.append(flatten_artifact_rendered_dict) %}
     {% endfor %}
     {% set flatten_artifacts_agate = elementary.get_agate_table().from_object(flatten_artifact_dicts) %}
+    {% if output_csv_path.exists() %}
+      {% set cached_artifacts_agate = elementary.get_agate_table().from_csv(output_csv_path) %}
+      {% if elementary.are_artifacts_equal(cached_artifacts_agate, flatten_artifacts_agate) %}
+        {% do elementary.debug_log("[%s] Artifacts were not changed. Skipping upload." % table_relation.identifier) %}
+        {% do return(none) %}
+      {% endif %}
+    {% endif %}
     {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
+    {% do elementary.debug_log("[%s] Uploading artifacts." % table_relation.identifier) %}
     {% do elementary.seed_elementary_model(table_relation, output_csv_path) %}
 {% endmacro %}
 
@@ -49,4 +57,9 @@
   {% else %}
     {{ return(value) }}
   {% endif %}
+{% endmacro %}
+
+{% macro are_artifacts_equal(first_artifacts_agate, second_artifacts_agate) %}
+  {% set artifacts_timestamp_column = 'generated_at' %}
+  {{ return(first_artifacts_agate.exclude(artifacts_timestamp_column).rows == second_artifacts_agate.exclude(artifacts_timestamp_column).rows) }}
 {% endmacro %}

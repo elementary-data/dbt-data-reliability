@@ -1,8 +1,9 @@
 {%- macro upload_dbt_sources() -%}
+    {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% do elementary.upload_csv_artifacts_to_table(this, sources, elementary.get_flatten_source_callback()) %}
+        {% do elementary.upload_csv_artifacts_to_table(relation, sources, elementary.get_flatten_source_callback()) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
