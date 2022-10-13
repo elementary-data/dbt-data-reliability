@@ -1,3 +1,8 @@
+{#
+  Note: This model is used in `get_package_database_and_schema`.
+  Do not delete it without updating the macro.
+#}
+
 {{
   config(
     materialized = 'incremental',
