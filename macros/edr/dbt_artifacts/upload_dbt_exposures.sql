@@ -1,5 +1,11 @@
 {%- macro upload_dbt_exposures() -%}
-    {% set relation = elementary.get_elementary_relation('dbt_exposures') %}
+    {% set identifier = 'dbt_exposures' %}
+    {% if results and elementary.get_result_node('model.elementary.%s' % identifier) %}
+      {{ elementary.debug_log('[%s] Artifacts already ran.' % identifier) }}
+      {{ return(none) }}
+    {% endif %}
+
+    {% set relation = elementary.get_elementary_relation(identifier) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}

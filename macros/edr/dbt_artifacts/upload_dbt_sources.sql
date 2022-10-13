@@ -1,5 +1,11 @@
 {%- macro upload_dbt_sources() -%}
-    {% set relation = elementary.get_elementary_relation('dbt_sources') %}
+    {% set identifier = 'dbt_sources' %}
+    {% if results and elementary.get_result_node('model.elementary.%s' % identifier) %}
+      {{ elementary.debug_log('[%s] Artifacts already ran.' % identifier) }}
+      {{ return(none) }}
+    {% endif %}
+
+    {% set relation = elementary.get_elementary_relation(identifier) %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}

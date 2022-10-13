@@ -1,7 +1,8 @@
 {{
   config(
     materialized='table',
-    transient=False
+    transient=False,
+    post_hook='{{ elementary.upload_dbt_snapshots() }}'
   )
 }}
 
