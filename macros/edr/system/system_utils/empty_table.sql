@@ -20,6 +20,10 @@
     ]) }}
 {% endmacro %}
 
+{% macro empty_information_table() %}
+    {{ elementary.empty_table([('key', 'string'), ('value', 'string')]) }}
+{% endmacro %}
+
 {% macro empty_column_unpivot_cte() %}
     {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
 {% endmacro %}
