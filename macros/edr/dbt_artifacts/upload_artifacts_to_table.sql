@@ -35,16 +35,24 @@
         {% do flatten_artifact_dicts.append(flatten_artifact_rendered_dict) %}
     {% endfor %}
     {% set flatten_artifacts_agate = elementary.get_agate_table().from_object(flatten_artifact_dicts) %}
-    {% if output_csv_path.exists() %}
-      {% set cached_artifacts_agate = elementary.get_agate_table().from_csv(output_csv_path) %}
-      {% if elementary.are_artifacts_equal(cached_artifacts_agate, flatten_artifacts_agate) %}
-        {% do elementary.debug_log("[%s] Artifacts were not changed. Skipping upload." % table_relation.identifier) %}
-        {% do return(none) %}
-      {% endif %}
-    {% endif %}
+    {% set cached_artifacts_agate = elementary.get_cached_artifacts_agate(table_relation, output_csv_path) %}
     {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
+    {% if elementary.are_artifacts_equal(cached_artifacts_agate, flatten_artifacts_agate) %}
+      {% do elementary.debug_log("[%s] Artifacts were not changed. Skipping upload." % table_relation.identifier) %}
+      {% do return(none) %}
+    {% endif %}
     {% do elementary.debug_log("[%s] Uploading artifacts." % table_relation.identifier) %}
     {% do elementary.seed_elementary_model(table_relation, output_csv_path) %}
+{% endmacro %}
+
+{% macro get_cached_artifacts_agate(table_relation, cache_csv_path) %}
+  {% if cache_csv_path.exists() %}
+    {% do elementary.debug_log("[%s] Found artifacts cache file." % table_relation.identifier) %}
+    {% do return(elementary.get_agate_table().from_csv(cache_csv_path)) %}
+  {% endif %}
+  {% set cached_artifacts_agate = dbt.run_query('select * from %s' % table_relation) %}
+  {% set lowercased_cached_artifacts_agate = elementary.lowercase_agate_columns(cached_artifacts_agate) %}
+  {% do return(lowercased_cached_artifacts_agate) %}
 {% endmacro %}
 
 {%- macro render_csv_value(value) -%}
@@ -60,6 +68,10 @@
 {% endmacro %}
 
 {% macro are_artifacts_equal(first_artifacts_agate, second_artifacts_agate) %}
-  {% set artifacts_timestamp_column = 'generated_at' %}
-  {{ return(first_artifacts_agate.exclude(artifacts_timestamp_column).rows == second_artifacts_agate.exclude(artifacts_timestamp_column).rows) }}
+  {% set shared_column_names = set(first_artifacts_agate.column_names).intersection(second_artifacts_agate.column_names) %}
+  {% do shared_column_names.discard('generated_at') %}
+  {% set shared_column_names = shared_column_names | list %}
+  {% set first_artifacts_rows = first_artifacts_agate.select(shared_column_names).order_by('unique_id').rows %}
+  {% set second_artifacts_rows = second_artifacts_agate.select(shared_column_names).order_by('unique_id').rows %}
+  {{ return(first_artifacts_rows == second_artifacts_rows) }}
 {% endmacro %}
