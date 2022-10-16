@@ -17,7 +17,7 @@
     'disable_uploading_dbt_artifacts': false,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
-    'dbt_artifacts_chunk_size': 50,
+    'dbt_artifacts_chunk_size': 10000,
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': null,
