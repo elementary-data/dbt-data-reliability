@@ -52,7 +52,7 @@
   {% endif %}
   {% set cached_artifacts_agate = dbt.run_query('select * from %s' % table_relation) %}
   {% set lowercased_cached_artifacts_agate = elementary.lowercase_agate_columns(cached_artifacts_agate) %}
-  {% do lowercased_cached_artifacts_agate.to_csv(output_csv_path) %}
+  {% do lowercased_cached_artifacts_agate.to_csv(cache_csv_path) %}
   {% do return(lowercased_cached_artifacts_agate) %}
 {% endmacro %}
 
