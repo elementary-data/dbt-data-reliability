@@ -36,13 +36,13 @@
     {% endfor %}
     {% set flatten_artifacts_agate = elementary.get_agate_table().from_object(flatten_artifact_dicts) %}
     {% set cached_artifacts_agate = elementary.get_cached_artifacts_agate(table_relation, output_csv_path) %}
-    {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
     {% if elementary.are_artifacts_equal(cached_artifacts_agate, flatten_artifacts_agate) %}
       {% do elementary.debug_log("[%s] Artifacts were not changed. Skipping upload." % table_relation.identifier) %}
       {% do return(none) %}
     {% endif %}
     {% do elementary.debug_log("[%s] Uploading artifacts." % table_relation.identifier) %}
     {% do elementary.seed_elementary_model(table_relation, output_csv_path) %}
+    {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
 {% endmacro %}
 
 {% macro get_cached_artifacts_agate(table_relation, cache_csv_path) %}
@@ -52,6 +52,7 @@
   {% endif %}
   {% set cached_artifacts_agate = dbt.run_query('select * from %s' % table_relation) %}
   {% set lowercased_cached_artifacts_agate = elementary.lowercase_agate_columns(cached_artifacts_agate) %}
+  {% do lowercased_cached_artifacts_agate.to_csv(output_csv_path) %}
   {% do return(lowercased_cached_artifacts_agate) %}
 {% endmacro %}
 
