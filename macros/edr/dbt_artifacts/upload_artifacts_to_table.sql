@@ -41,7 +41,7 @@
       {% do return(none) %}
     {% endif %}
     {% do elementary.debug_log("[%s] Uploading artifacts." % table_relation.identifier) %}
-    {% do elementary.seed_elementary_model(table_relation, output_csv_path) %}
+    {% do elementary.upload_csv_to_relation(table_relation, output_csv_path) %}
     {% do flatten_artifacts_agate.to_csv(output_csv_path) %}
 {% endmacro %}
 
