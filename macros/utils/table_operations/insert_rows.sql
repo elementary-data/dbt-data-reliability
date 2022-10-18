@@ -1,4 +1,4 @@
-{% macro insert_rows(table_relation, rows, chunk_size=10000, should_commit=false) %}
+{% macro insert_rows(table_relation, rows, should_commit=false) %}
     {% if not table_relation %}
         {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
         {{ return(none) }}
@@ -11,30 +11,47 @@
         {{ return(none) }}
     {% endif %}
 
-    {% for rows_chunk in rows | batch(chunk_size) %}
-        {% set insert_rows_query = elementary.get_insert_rows_query(table_relation, columns, rows_chunk) %}
-        {% do dbt.run_query(insert_rows_query) %}
+    {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
+    {% for insert_query in insert_rows_queries %}
+      {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, insert_rows_queries | length)) %}
+      {% do dbt.run_query(insert_query) %}
     {% endfor %}
     {%- if should_commit -%}
         {% do adapter.commit() %}
     {%- endif -%}
 {% endmacro %}
 
-{% macro get_insert_rows_query(table_relation, columns, rows) -%}
-    {% set insert_rows_query %}
-        insert into {{ table_relation }}
-            ({%- for column in columns -%}
-                {{- column.name -}} {{- "," if not loop.last else "" -}}
-            {%- endfor -%}) values
-            {% for row in rows -%}
-                ({%- for column in columns -%}
-                    {%- set column_value = elementary.insensitive_get_dict_value(row, column.name, none) -%}
-                    {{ elementary.render_value(column_value) }}
-                    {{- "," if not loop.last else "" -}}
-                 {%- endfor -%}) {{- "," if not loop.last else "" -}}
-            {%- endfor -%}
+{% macro get_insert_rows_queries(table_relation, columns, rows, max_query_size=1000000) -%}
+    {% set insert_queries = [] %}
+    {% set insert_query %}
+       insert into {{ table_relation }}
+         ({%- for column in columns -%}
+           {{- column.name -}} {{- "," if not loop.last else "" -}}
+         {%- endfor -%}) values
     {% endset %}
-    {{ return(insert_rows_query | trim) }}
+
+    {% set current_query = namespace(data=insert_query) %}
+    {% for row in rows %}
+      {% set rendered_column_values = [] %}
+      {% for column in columns %}
+        {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
+        {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+      {% endfor %}
+      {% set row_sql = "(%s)" % (rendered_column_values | join(",")) %}
+      {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
+
+      {% if query_with_row | length > max_query_size %}
+        {% do insert_queries.append(current_query.data) %}
+        {% set current_query.data = insert_query + row_sql %}
+      {% else %}
+        {% set current_query.data = query_with_row %}
+      {% endif %}
+      {% if loop.last %}
+        {% do insert_queries.append(current_query.data) %}
+      {% endif %}
+    {% endfor %}
+
+    {{ return(insert_queries) }}
 {%- endmacro %}
 
 {%- macro escape_special_chars(string_value) -%}

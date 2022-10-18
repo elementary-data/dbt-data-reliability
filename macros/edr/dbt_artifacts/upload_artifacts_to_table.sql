@@ -16,7 +16,7 @@
     {% if flatten_artifacts_len > 0 %}
         {{ elementary.debug_log('Inserting ' ~ flatten_artifacts_len ~ ' rows to table ' ~ table_relation) }}
         {% do dbt.truncate_relation(table_relation) %}
-        {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, elementary.get_config_var('dbt_artifacts_chunk_size'), should_commit) %}
+        {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit) %}
     {%- else %}
         {{ elementary.debug_log('No artifacts to insert to ' ~ table_relation) }}
     {% endif %}
