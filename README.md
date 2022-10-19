@@ -25,9 +25,7 @@ Add to your `packages.yml` according to your dbt version:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.5.0
-    ## compatible with Elementary CLI version 0.5.0
-    ## see docs: https://docs.elementary-data.com/
+    version: 0.5.1
 ```
 
 #### For dbt >=1.0.0 <1.2.0:
@@ -35,9 +33,7 @@ packages:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.5.0
-    ## compatible with Elementary CLI version 0.5.0
-    ## see docs: https://docs.elementary-data.com/
+    version: 0.5.1
 
    ## !! Important !! For dbt <1.2.0 only
    ## (Prevents dbt_utils versions exceptions) 
