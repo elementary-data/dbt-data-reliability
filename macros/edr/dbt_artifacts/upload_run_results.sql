@@ -36,7 +36,8 @@
                                                                        ('compile_completed_at', 'string'),
                                                                        ('rows_affected', 'bigint'),
                                                                        ('full_refresh', 'boolean'),
-                                                                       ('compiled_sql', 'long_string')
+                                                                       ('compiled_code', 'long_string'),
+                                                                       ('failures', 'bigint')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -68,7 +69,8 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_sql': node.get('compiled_sql')
+        'compiled_code': elementary.get_compiled_model_code_text(node),
+        'failures': run_result_dict.get('failures')
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}

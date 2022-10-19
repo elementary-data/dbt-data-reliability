@@ -175,7 +175,8 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -275,23 +276,26 @@
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
 {% macro get_schema_change_test_result(run_result_dict, schema_change_dict, test_node) %}
     {% set test_result_dict = schema_change_dict %}
+    {% set test_results_query = elementary.get_compiled_code(test_node) %}
     {% do test_result_dict.update({
         'other': none,
         'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
+        'test_results_query': test_results_query,
         'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -308,6 +312,7 @@
     {%- else -%}
         {% set test_name = test_long_name %}
     {%- endif -%}
+    {% set test_results_query = elementary.get_compiled_code(test_node) %}
     {% set test_result_dict = {
         'id': test_execution_id,
         'data_issue_id': none,
@@ -325,23 +330,24 @@
         'other': none,
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': elementary.insensitive_get_dict_value(test_node, 'compiled_sql'),
+        'test_results_query': test_results_query,
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status')
+        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
 {% macro get_test_result_rows_as_dicts(flatten_test_node, sample_limit = none) %}
     {% set test_row_dicts = [] %}
-    {% set test_compiled_sql = flatten_test_node.compiled_sql %}
-    {% if test_compiled_sql %}
+    {% set test_compiled_code = elementary.get_compiled_code(flatten_test_node) %}
+    {% if test_compiled_code %}
         {% if sample_limit %}
-            {% set test_compiled_sql = test_compiled_sql ~ ' limit ' ~ sample_limit %}
+            {% set test_compiled_code = test_compiled_code ~ ' limit ' ~ sample_limit %}
         {% endif %}
-        {% set test_table_agate = run_query(test_compiled_sql) %}
+        {% set test_table_agate = run_query(test_compiled_code) %}
         {% set test_row_dicts = elementary.agate_to_dicts(test_table_agate) %}
     {% endif %}
     {{ return(test_row_dicts) }}

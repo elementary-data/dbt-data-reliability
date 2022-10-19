@@ -1,17 +1,19 @@
 <p align="center">
 <img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/header_git.png"/ width="1000">
 </p>
-<p align="center">
-Data Observability for Analytics Engineers
-</p>
 
+<h2 align="center">
+ Data observability for analytics & data engineers
+</h2>
+<h4 align="center">
+Monitor your data quality, operation and performance directly from your dbt project.
+</h4>
 
+<div align="center">
 
-Elementary enables you to **monitor your data and dbt operation.** 
+To learn more, refer to our [main repo »](https://github.com/elementary-data/elementary) | [Demo »](https://bit.ly/3IXKShW)
 
-To learn more, refer to our [main repo](https://github.com/elementary-data/elementary), and [live demo](https://bit.ly/3IXKShW).
-
-For reporting issues, feature requests and contributions, refer to [issues](https://github.com/elementary-data/elementary/issues) in the main repo. 
+</div>
 
 
 ## Quick start
@@ -23,9 +25,8 @@ Add to your `packages.yml` according to your dbt version:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.11
-    ## compatible with Elementary CLI version 0.4.11
-    ## see docs: https://docs.elementary-data.com/
+    version: 0.5.1
+    ## Docs: https://docs.elementary-data.com
 ```
 
 #### For dbt >=1.0.0 <1.2.0:
@@ -33,9 +34,8 @@ packages:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.4.11
-    ## compatible with Elementary CLI version 0.4.11
-    ## see docs: https://docs.elementary-data.com/
+    version: 0.5.1
+    ## Docs: https://docs.elementary-data.com
 
    ## !! Important !! For dbt <1.2.0 only
    ## (Prevents dbt_utils versions exceptions) 
@@ -59,9 +59,23 @@ And run ```dbt run --select elementary```.
 Check out the [full documentation](https://docs.elementary-data.com/) for generating the UI, alerts and adding anomaly detection tests. 
 
 ## Run Results and dbt artifacts
-The package automatically uploads the dbt artifacts and run results to your tables in your data warehouse.
+The package automatically uploads the dbt artifacts and run results to tables in your data warehouse:
 
-Here you can find [additional details](https://docs.elementary-data.com/dbt/dbt-artifacts).
+Run results tables:
+- dbt_run_results
+- model_run_results
+- snapshot_run_results
+- elementary_test_results (all dbt test results)
+
+Metadata tables:
+- dbt_models
+- dbt_tests
+- dbt_sources
+- dbt_exposures
+- dbt_metrics
+- sbt_sbapshots
+
+Here you can find [additional details about the tables](https://docs.elementary-data.com/guides/modules-overview/dbt-package).
 
 
 ## Data anomalies detection as dbt tests 
@@ -87,9 +101,10 @@ models:
 
 
 ## Data observability report
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/ui_for_git.png" width="800">
 
-**Checkout the [live demo](https://bit.ly/3IXKShW).**
+<kbd align="center">
+        <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
+</kbd>
 
 
 
@@ -98,15 +113,20 @@ models:
 
 
 
-## High level architecture 
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/High_level_flow.png" width="800">
+## How it works?
 
+Elementary dbt package creates tables of metadata and test results in your data warehouse, as part of your dbt runs. The [CLI tool](https://github.com/elementary-data/elementary) reads the data from these tables, and is used to generate the UI and alerts. 
+
+<img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/how_elementary_works.png">
 
 
 
 ## Data warehouse support
-This package has been tested on Snowflake, BigQuery and Redshift.
-Additional integrations coming soon!
+
+* [x] **Snowflake** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/snowflake-16.png) 
+* [x] **BigQuery**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/bigquery-16.svg) 
+* [x] **Redshift**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/redshift-16.png)
+* [x] **Databricks SQL**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/databricks-16.png)
 
 
 ## Community & Support
