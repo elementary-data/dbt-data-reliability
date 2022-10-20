@@ -21,7 +21,11 @@
     {%- endif -%}
 {% endmacro %}
 
-{% macro get_insert_rows_queries(table_relation, columns, rows, max_query_size=1000000) -%}
+{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none) -%}
+    {% if not query_max_size %}
+      {% set query_max_size = elementary.get_config_var('query_max_size') %}
+    {% endif %}
+
     {% set insert_queries = [] %}
     {% set insert_query %}
        insert into {{ table_relation }}
@@ -40,7 +44,7 @@
       {% set row_sql = "(%s)" % (rendered_column_values | join(",")) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
-      {% if query_with_row | length > max_query_size %}
+      {% if query_with_row | length > query_max_size %}
         {% do insert_queries.append(current_query.data) %}
         {% set current_query.data = insert_query + row_sql %}
       {% else %}
