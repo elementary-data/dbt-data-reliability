@@ -3,6 +3,7 @@
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and not edr_cli_run %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
+        {% do dbt.truncate_relation(relation) %}
         {% do elementary.upload_artifacts_to_table(relation, exposures, elementary.get_flatten_exposure_callback()) %}
     {%- endif -%}
     {{- return('') -}}
