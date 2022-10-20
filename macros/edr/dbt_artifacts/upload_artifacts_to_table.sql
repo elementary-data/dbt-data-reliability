@@ -1,10 +1,4 @@
 {% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, should_commit=False) %}
-    {% set artifact_identifier = table_relation.identifier | lower %}
-    {% if results and elementary.get_result_node(artifact_identifier) %}
-      {{ elementary.debug_log('[%s] Artifacts already ran.' % artifact_identifier) }}
-      {{ return(none) }}
-    {% endif %}
-
     {% set flatten_artifact_dicts = [] %}
     {% for artifact in artifacts %}
         {% set flatten_artifact_dict = flatten_artifact_callback(artifact) %}

@@ -1,11 +1,20 @@
 {% macro upload_dbt_artifacts() %}
-  {% if execute %}
-    {% do elementary.edr_log("Uploading dbt artifacts.") %}
-    {% do upload_dbt_models() %}
-    {% do upload_dbt_tests() %}
-    {% do upload_dbt_sources() %}
-    {% do upload_dbt_snapshots() %}
-    {% do upload_dbt_metrics() %}
-    {% do upload_dbt_exposures() %}
+  {% if execute and results %}
+    {% set model_upload_func_map = {
+      "dbt_models": elementary.upload_dbt_models,
+      "dbt_tests": elementary.upload_dbt_tests,
+      "dbt_sources": elementary.upload_dbt_sources,
+      "dbt_snapshots": elementary.upload_dbt_snapshots,
+      "dbt_metrics": elementary.upload_dbt_metrics,
+      "dbt_exposures": elementary.upload_dbt_exposures,
+      }
+    %}
+    {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
+      {% if not elementary.get_result_node(artifacts_model) %}
+        {% do upload_artifacts_func() %}
+      {% else %}
+        {% do elementary.debug_log('[%s] Artifacts already ran.' % artifacts_model) %}
+      {% endif %}
+    {% endfor %}
   {% endif %}
 {% endmacro %}
