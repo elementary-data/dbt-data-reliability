@@ -63,3 +63,7 @@ def main():
 
 main()
 {% endmacro %}
+
+{% macro default__compile_py_code(model, py_code, output_table) %}
+  {{ exceptions.raise_compiler_error("Python tests are not yet supported on %s." % target.type) }}
+{% endmacro %}
