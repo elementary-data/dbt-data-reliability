@@ -1,7 +1,7 @@
 {%- macro upload_dbt_models() -%}
     {% set relation = elementary.get_elementary_relation('dbt_models') %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run %}
+    {% if execute and relation and not edr_cli_run %}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% do dbt.truncate_relation(relation) %}
         {% do elementary.upload_artifacts_to_table(relation, models, elementary.get_flatten_model_callback()) %}
