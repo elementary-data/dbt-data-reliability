@@ -54,6 +54,9 @@
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
       {% if query_with_row | length > query_max_size %}
+        {% if loop.first %}
+          {% do exceptions.raise_compiler_error("First row to be inserted exceeds the 'query_max_size'.") %}
+        {% endif %}
         {% do insert_queries.append(current_query.data) %}
         {% set current_query.data = insert_query + row_sql %}
       {% else %}
