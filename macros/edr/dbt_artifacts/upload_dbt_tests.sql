@@ -1,8 +1,9 @@
-{%- macro upload_dbt_tests() -%}
+{%- macro upload_dbt_tests(should_commit=false) -%}
+    {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run %}
+    {% if execute and relation and not edr_cli_run %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(this, tests, elementary.get_flatten_test_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -39,15 +40,7 @@
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
 
-{%- macro get_flatten_test_callback() -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_test(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_test(node_dict) %}
+{% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
 

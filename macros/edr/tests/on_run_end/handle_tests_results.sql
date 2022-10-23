@@ -62,7 +62,7 @@
             {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
                                                                             schema=schema_name,
                                                                             identifier='elementary_test_results') -%}
-            {%- do elementary.insert_dicts(elementary_test_results_relation, elementary_test_results, should_commit=True) -%}
+            {%- do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) -%}
         {% endif %}
     {% endif %}
     {{ elementary.edr_log("Handled test results successfully.") }}
