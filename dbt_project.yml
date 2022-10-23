@@ -24,4 +24,4 @@ on-run-start:
 on-run-end:
   - "{{ elementary.handle_tests_results(results) if flags.WHICH in ['test', 'build'] }}"
   - "{{ elementary.upload_run_results(results) if not elementary.get_config_var('disable_run_results') }}"
-  - "{{ elementary.upload_dbt_artifacts() if not elementary.get_config_var('disable_uploading_dbt_artifacts') }}"
+  - "{{ elementary.upload_dbt_artifacts() if not elementary.get_config_var('disable_autoupload_dbt_artifacts') }}"
