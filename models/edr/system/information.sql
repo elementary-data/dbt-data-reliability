@@ -1,7 +1,8 @@
 {{
   config(
-    materialized = 'incremental',
-    bind=False
+    materialized = 'table',
+    bind=False,
+    post_hook='{{ elementary.upload_information() }}'
   )
 }}
 
