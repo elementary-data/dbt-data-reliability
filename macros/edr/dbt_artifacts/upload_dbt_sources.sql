@@ -4,7 +4,7 @@
     {% if execute and relation and not edr_cli_run %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
         {% do dbt.truncate_relation(relation) %}
-        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.get_flatten_source_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -35,15 +35,7 @@
     {{ return(dbt_sources_empty_table_query) }}
 {% endmacro %}
 
-{%- macro get_flatten_source_callback() -%}
-    {{- return(adapter.dispatch('flatten_source', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_source(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_source', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_source(node_dict) %}
+{% macro flatten_source(node_dict) %}
     {% set freshness_dict = elementary.safe_get_with_default(node_dict, 'freshness', {}) %}
     {% set source_meta_dict = elementary.safe_get_with_default(node_dict, 'source_meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}

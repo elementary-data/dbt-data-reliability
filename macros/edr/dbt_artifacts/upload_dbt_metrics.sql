@@ -4,7 +4,7 @@
     {% if execute and relation and not edr_cli_run %}
         {% set metrics = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
         {% do dbt.truncate_relation(relation) %}
-        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.get_flatten_metric_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.flatten_metric) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -34,15 +34,7 @@
     {{ return(dbt_metrics_empty_table_query) }}
 {% endmacro %}
 
-{%- macro get_flatten_metric_callback() -%}
-    {{- return(adapter.dispatch('flatten_metric', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_metric(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_metric', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_metric(node_dict) %}
+{% macro flatten_metric(node_dict) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}

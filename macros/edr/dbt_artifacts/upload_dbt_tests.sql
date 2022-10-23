@@ -4,7 +4,7 @@
     {% if execute and relation and not edr_cli_run %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
         {% do dbt.truncate_relation(relation) %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.get_flatten_test_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -41,15 +41,7 @@
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
 
-{%- macro get_flatten_test_callback() -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_test(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_test(node_dict) %}
+{% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
 

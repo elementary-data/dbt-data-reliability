@@ -4,7 +4,7 @@
     {% if execute and relation and not edr_cli_run %}
         {% set snapshots = graph.nodes.values() | selectattr('resource_type', '==', 'snapshot') %}
         {% do dbt.truncate_relation(relation) %}
-        {% do elementary.upload_artifacts_to_table(relation, snapshots, elementary.get_flatten_model_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, snapshots, elementary.flatten_model) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
