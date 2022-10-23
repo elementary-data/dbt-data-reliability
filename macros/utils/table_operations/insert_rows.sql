@@ -1,4 +1,4 @@
-{% macro insert_rows(table_relation, rows, should_commit=false) %}
+{% macro insert_rows(table_relation, rows, should_commit=false, chunk_size=5000) %}
     {% if not table_relation %}
         {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
         {{ return(none) }}
@@ -19,10 +19,10 @@
         {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, queries_len)) %}
         {% do dbt.run_query(insert_query) %}
       {% endfor %}
-    {% elif insert_rows_method == 'batch' %}
-      {% set chunk_size = elementary.get_config_var('insert_rows_batch_size') %}
-      {% for rows_chunk in rows | batch(chunk_size) %}
-        {% set insert_rows_query = elementary.get_batch_insert_query(table_relation, columns, rows_chunk) %}
+    {% elif insert_rows_method == 'chunk' %}
+      {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
+      {% for rows_chunk in rows_chunks %}
+        {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
         {% do run_query(insert_rows_query) %}
       {% endfor %}
     {% else %}
@@ -70,7 +70,7 @@
     {{ return(insert_queries) }}
 {%- endmacro %}
 
-{% macro get_batch_insert_query(table_relation, columns, rows) -%}
+{% macro get_chunk_insert_query(table_relation, columns, rows) -%}
     {% set insert_rows_query %}
         insert into {{ table_relation }}
             ({%- for column in columns -%}
