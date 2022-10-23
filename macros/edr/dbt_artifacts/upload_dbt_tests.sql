@@ -3,7 +3,7 @@
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and relation and not edr_cli_run %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=true) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
