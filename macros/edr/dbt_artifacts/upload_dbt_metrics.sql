@@ -1,9 +1,9 @@
-{%- macro upload_dbt_metrics() -%}
+{%- macro upload_dbt_metrics(should_commit=false) -%}
     {% set relation = elementary.get_elementary_relation('dbt_metrics') %}
     {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
     {% if execute and relation and not edr_cli_run %}
         {% set metrics = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
-        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.flatten_metric, should_commit=true) %}
+        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.flatten_metric, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

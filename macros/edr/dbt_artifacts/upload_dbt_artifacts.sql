@@ -13,7 +13,7 @@
       {% if not elementary.get_result_node(artifacts_model) %}
         {% set relation = elementary.get_elementary_relation(artifacts_model) %}
         {% do dbt.truncate_relation(relation) %}
-        {% do upload_artifacts_func() %}
+        {% do upload_artifacts_func(should_commit=true) %}
       {% else %}
         {% do elementary.debug_log('[%s] Artifacts already ran.' % artifacts_model) %}
       {% endif %}
