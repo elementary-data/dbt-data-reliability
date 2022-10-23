@@ -11,14 +11,27 @@
         {{ return(none) }}
     {% endif %}
 
-    {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
-    {% for insert_query in insert_rows_queries %}
-      {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, insert_rows_queries | length)) %}
-      {% do dbt.run_query(insert_query) %}
-    {% endfor %}
-    {%- if should_commit -%}
-        {% do adapter.commit() %}
-    {%- endif -%}
+    {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
+    {% if insert_rows_method == 'max_query_size' %}
+      {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
+      {% set queries_len = insert_rows_queries | length %}
+      {% for insert_query in insert_rows_queries %}
+        {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, queries_len)) %}
+        {% do dbt.run_query(insert_query) %}
+      {% endfor %}
+    {% elif insert_rows_method == 'batch' %}
+      {% set chunk_size = elementary.get_config_var('insert_rows_batch_size') %}
+      {% for rows_chunk in rows | batch(chunk_size) %}
+        {% set insert_rows_query = elementary.get_batch_insert_query(table_relation, columns, rows_chunk) %}
+        {% do run_query(insert_rows_query) %}
+      {% endfor %}
+    {% else %}
+      {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
+    {% endif %}
+
+    {% if should_commit %}
+      {% do adapter.commit() %}
+    {% endif %}
 {% endmacro %}
 
 {% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size')) -%}
@@ -52,6 +65,23 @@
     {% endfor %}
 
     {{ return(insert_queries) }}
+{%- endmacro %}
+
+{% macro get_batch_insert_query(table_relation, columns, rows) -%}
+    {% set insert_rows_query %}
+        insert into {{ table_relation }}
+            ({%- for column in columns -%}
+                {{- column.name -}} {{- "," if not loop.last else "" -}}
+            {%- endfor -%}) values
+            {% for row in rows -%}
+                ({%- for column in columns -%}
+                    {%- set column_value = elementary.insensitive_get_dict_value(row, column.name, none) -%}
+                    {{ elementary.render_value(column_value) }}
+                    {{- "," if not loop.last else "" -}}
+                 {%- endfor -%}) {{- "," if not loop.last else "" -}}
+            {%- endfor -%}
+    {% endset %}
+    {{ return(insert_rows_query) }}
 {%- endmacro %}
 
 {%- macro escape_special_chars(string_value) -%}
