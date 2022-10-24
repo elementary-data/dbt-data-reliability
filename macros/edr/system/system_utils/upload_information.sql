@@ -1,4 +1,8 @@
 {% macro upload_information() %}
+  {% if not execute or not edr_cli_run %}
+    {{ return('') }}
+  {% endif %}
+
   {% set identifier = 'information' %}
   {% set relation = elementary.get_elementary_relation(identifier) %}
   {% if not relation %}
