@@ -1,5 +1,5 @@
 {% macro upload_information() %}
-  {% if not execute or not edr_cli_run %}
+  {% if not execute or edr_cli_run %}
     {{ return('') }}
   {% endif %}
 
