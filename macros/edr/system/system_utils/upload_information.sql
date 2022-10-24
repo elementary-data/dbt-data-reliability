@@ -1,4 +1,5 @@
 {% macro upload_information() %}
+  {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
   {% if not execute or edr_cli_run %}
     {{ return('') }}
   {% endif %}
