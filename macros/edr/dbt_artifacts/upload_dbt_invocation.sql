@@ -10,6 +10,7 @@
   {% endif %}
 
   {% set now_str = elementary.datetime_now_utc_as_string() %}
+  {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
@@ -17,7 +18,7 @@
       'generated_at': now_str,
       'command': flags.WHICH,
       'selected_resources': selected_resources,
-      'vars': ref.config.vars.to_dict()
+      'vars': invocation_vars
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
