@@ -10,6 +10,7 @@
       {{ return('') }}
     {% else %}
       {% do dbt.truncate_relation(relation) %}
+    {% endif %}
   {% endif %}
 
   {% set data = [
