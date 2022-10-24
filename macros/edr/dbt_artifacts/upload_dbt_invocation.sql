@@ -4,9 +4,8 @@
     {{ return('') }}
   {% endif %}
 
-  {% set identifier = 'dbt_invocations' %}
-  {% set relation = elementary.get_elementary_relation(identifier) %}
-  {% if not relation or (results and elementary.get_result_node(identifier)) %}
+  {% set relation = elementary.get_elementary_relation('dbt_invocations') %}
+  {% if not relation %}
     {{ return('') }}
   {% endif %}
 

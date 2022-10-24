@@ -3,8 +3,7 @@
     materialized = 'incremental',
     transient=False,
     unique_key = 'invocation_id',
-    on_schema_change = 'append_new_columns',
-    post_hook='{{ elementary.upload_dbt_invocation() }}'
+    on_schema_change = 'append_new_columns'
   )
 }}
 
