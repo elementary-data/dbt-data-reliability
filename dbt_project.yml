@@ -22,7 +22,7 @@ clean-targets: # directories to be removed by `dbt clean`
 on-run-start:
   - "{{ elementary.create_elementary_tests_schema() if flags.WHICH in ['test', 'build'] }}"
 on-run-end:
-  - "{{ elementary.upload_dbt_invocation() if not elementary.get_config_var('disable_autoupload_dbt_invocation') }}"
-  - "{{ elementary.upload_dbt_artifacts() if not elementary.get_config_var('disable_autoupload_dbt_artifacts') }}"
+  - "{{ elementary.upload_dbt_invocation() if not elementary.get_config_var('disable_dbt_invocation_autoupload') }}"
+  - "{{ elementary.upload_dbt_artifacts() if not elementary.get_config_var('disable_dbt_artifacts_autoupload') }}"
   - "{{ elementary.upload_run_results(results) if not elementary.get_config_var('disable_run_results') }}"
   - "{{ elementary.handle_tests_results(results) if flags.WHICH in ['test', 'build'] }}"
