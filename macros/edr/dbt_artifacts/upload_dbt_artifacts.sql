@@ -17,7 +17,7 @@
           {% do upload_artifacts_func(should_commit=true) %}
         {% endif %}
       {% else %}
-        {% do elementary.debug_log('[%s] Artifacts already ran.' % artifacts_model) %}
+        {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
   {% endif %}
