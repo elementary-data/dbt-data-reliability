@@ -34,7 +34,7 @@
       ('generated_at', 'string'),
       ('command', 'string'),
       ('dbt_version', 'string'),
-      ('full_refresh', 'string'),
+	  ('full_refresh', 'boolean'),
       ('vars', 'long_string'),
       ('selected_resources', 'long_string'),
     ])) }}
