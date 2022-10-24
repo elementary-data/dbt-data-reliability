@@ -11,6 +11,7 @@
         {{ return(none) }}
     {% endif %}
 
+    {{ elementary.debug_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
     {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
     {% if insert_rows_method == 'max_query_size' %}
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
