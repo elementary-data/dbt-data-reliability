@@ -6,7 +6,7 @@
     {% set monitors_inputs_table_relation = create_unit_test_table(table_name=table_name,
                                                              table_schema=table_schema,
                                                              temp=False) %}
-    {% do elementary.insert_dicts(monitors_inputs_table_relation, dicts) %}
+    {% do elementary.insert_rows(monitors_inputs_table_relation, dicts) %}
 
     {%- set column_object = adapter.get_columns_in_relation(monitors_inputs_table_relation)[0] -%}
     {%- set default_all_types = elementary.get_config_var('edr_monitors')['column_any_type'] | list %}

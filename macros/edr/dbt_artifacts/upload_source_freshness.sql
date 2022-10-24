@@ -6,18 +6,10 @@
   {% else %}
     {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
   {% endif %}
-  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.get_flatten_source_freshness_callback()) %}
+  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness) %}
 {% endmacro %}
 
-{%- macro get_flatten_source_freshness_callback() -%}
-    {{- return(adapter.dispatch('flatten_source_freshness', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_source_freshness(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_source_freshness', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_source_freshness(node_dict) %}
+{% macro flatten_source_freshness(node_dict) %}
   {% set compile_timing = {} %}
   {% set execute_timing = {} %}
   {% for timing in node_dict['timing'] %}

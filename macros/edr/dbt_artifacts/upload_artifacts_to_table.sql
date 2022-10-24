@@ -8,8 +8,7 @@
     {% endfor %}
     {%- set flatten_artifacts_len = flatten_artifact_dicts | length %}
     {% if flatten_artifacts_len > 0 %}
-        {{ elementary.debug_log('Inserting ' ~ flatten_artifacts_len ~ ' rows to table ' ~ table_relation) }}
-        {% do elementary.insert_dicts(table_relation, flatten_artifact_dicts, elementary.get_config_var('dbt_artifacts_chunk_size'), should_commit) %}
+        {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {%- else %}
         {{ elementary.debug_log('No artifacts to insert to ' ~ table_relation) }}
     {% endif %}

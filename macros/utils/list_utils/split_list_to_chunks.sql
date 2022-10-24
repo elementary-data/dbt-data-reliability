@@ -1,4 +1,4 @@
-{% macro split_list_to_chunks(item_list, chunk_size = 50) %}
+{% macro split_list_to_chunks(item_list, chunk_size=50) %}
     {% set chunks = [] %}
     {% set current_chunk = [] %}
     {% for item in item_list %}
@@ -14,4 +14,3 @@
     {% endif %}
     {{ return(chunks) }}
 {% endmacro %}
-

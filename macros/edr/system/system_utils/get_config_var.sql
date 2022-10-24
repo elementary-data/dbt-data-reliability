@@ -14,9 +14,10 @@
     'disable_test_alerts': false,
     'disable_source_freshness_alerts': false,
     'disable_run_results': false,
+    'disable_autoupload_dbt_artifacts': false,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
-    'dbt_artifacts_chunk_size': 50,
+    'dbt_artifacts_chunk_size': 5000,
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': null,
@@ -29,7 +30,9 @@
     'time_format': '%Y-%m-%d %H:%M:%S',
     'long_string_size': 16384,
     'collect_model_sql': true,
-    'model_sql_max_size': 10240
+    'model_sql_max_size': 10240,
+    'query_max_size': 1000000,
+    'insert_rows_method': 'max_query_size'
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}
