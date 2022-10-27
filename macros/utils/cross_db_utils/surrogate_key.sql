@@ -17,14 +17,14 @@
 
 {% macro surrogate_key_backcompat(fields) %}
   {% set default_null_value = "" %}
-  {%- set field_queries = [] -%}
+  {%- set field_sqls = [] -%}
   {%- for field in fields -%}
-    {%- do field_queries.append(
+    {%- do field_sqls.append(
         "coalesce(cast(" ~ field ~ " as " ~ type_string() ~ "), '" ~ default_null_value  ~"')"
     ) -%}
     {%- if not loop.last %}
-        {%- do field_queries.append("'-'") -%}
+        {%- do field_sqls.append("'-'") -%}
     {%- endif -%}
   {%- endfor -%}
-  {{ hash(concat(field_queries)) }}
+  {{ hash(concat(field_sqls)) }}
 {% endmacro %}
