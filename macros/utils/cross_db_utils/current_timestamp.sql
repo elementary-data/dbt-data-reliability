@@ -1,11 +1,11 @@
-{% macro current_timestamp() -%}
-  {% if dbt_version >= '1.2.0' %}
-        {# This macro is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
-        {# Should be replaced to the equivalent macro once it released #}
-        {{ return(dbt_utils.current_timestamp()) }}
-    {% else %}
-        {{ return(dbt_utils.current_timestamp()) }}
-    {% endif %}
+{% macro current_timestamp() -%}c
+  {% if dbt.current_timestamp_backcompat %}
+    {{ return(dbt.current_timestamp_backcompat()) }}
+  {% elif dbt_utils.current_timestamp %}
+    {{ return(dbt_utils.current_timestamp()) }}
+  {% else %}
+    {{ exceptions.raise_compiler_error("Did not find a current_timestamp macro.") }}
+  {% endif %}
 {%- endmacro %}
 
 
