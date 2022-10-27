@@ -1,4 +1,4 @@
-{% macro current_timestamp() -%}c
+{% macro current_timestamp() -%}
   {% if dbt.current_timestamp_backcompat %}
     {{ return(dbt.current_timestamp_backcompat()) }}
   {% elif dbt_utils.current_timestamp %}
