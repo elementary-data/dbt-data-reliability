@@ -15,7 +15,7 @@
 #}
 
 
-{% macro surrogate_key_backcompat(fields) %}
+{%- macro generate_surrogate_key(field_list) -%}
   {% set default_null_value = "" %}
   {%- set field_sqls = [] -%}
   {%- for field in fields -%}
