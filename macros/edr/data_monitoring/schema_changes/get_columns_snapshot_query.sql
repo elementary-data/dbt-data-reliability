@@ -43,7 +43,7 @@
     columns_snapshot_with_id as (
 
         select
-            {{ elementary.surrogate_key([
+            {{ elementary.surrogate_key_backcompat([
               'full_table_name',
               'column_name',
               'data_type'
