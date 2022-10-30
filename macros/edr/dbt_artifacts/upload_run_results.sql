@@ -1,6 +1,5 @@
 {% macro upload_run_results(results) %}
-    {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run and results %}
+    {% if execute and relation and results %}
         {{ elementary.debug_log("Uploading run results.") }}
         {%- set dbt_run_results_relation = elementary.get_elementary_relation('dbt_run_results') -%}
         {%- if dbt_run_results_relation -%}

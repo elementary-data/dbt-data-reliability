@@ -1,11 +1,6 @@
 {% macro upload_dbt_invocation() %}
-  {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-  {% if not execute or edr_cli_run %}
-    {{ return('') }}
-  {% endif %}
-
   {% set relation = elementary.get_elementary_relation('dbt_invocations') %}
-  {% if not relation %}
+  {% if not execute or not relation %}
     {{ return('') }}
   {% endif %}
 
