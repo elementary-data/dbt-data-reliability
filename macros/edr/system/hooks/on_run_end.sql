@@ -16,7 +16,7 @@
     {{ elementary.upload_run_results(results) }}
   {% endif %}
 
-  {% if flags.WHICH in ['test', 'build'] %}
+  {% if flags.WHICH in ['test', 'build'] and not elementary.get_config_var('disable_tests_results') %}
     {{ elementary.handle_tests_results(results) }}
   {% endif %}
 {% endmacro %}
