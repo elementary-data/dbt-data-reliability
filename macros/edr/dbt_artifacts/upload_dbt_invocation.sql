@@ -1,14 +1,10 @@
 {% macro upload_dbt_invocation() %}
-  {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-  {% if not execute or edr_cli_run %}
-    {{ return('') }}
-  {% endif %}
-
   {% set relation = elementary.get_elementary_relation('dbt_invocations') %}
-  {% if not relation %}
+  {% if not execute or not relation %}
     {{ return('') }}
   {% endif %}
 
+  {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
   {% set dbt_invocation = {
@@ -18,12 +14,14 @@
       'generated_at': now_str,
       'command': flags.WHICH,
       'dbt_version': dbt_version,
+      'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
       'vars': invocation_vars,
       'selected_resources': selected_resources
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
+  {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
@@ -34,6 +32,7 @@
       ('generated_at', 'string'),
       ('command', 'string'),
       ('dbt_version', 'string'),
+      ('elementary_version', 'string'),
 	  ('full_refresh', 'boolean'),
       ('vars', 'long_string'),
       ('selected_resources', 'long_string'),

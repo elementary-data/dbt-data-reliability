@@ -1,12 +1,8 @@
-{% macro upload_run_results(results) %}
-    {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run and results %}
+{% macro upload_run_results() %}
+    {% set relation = elementary.get_elementary_relation('dbt_run_results') %}
+    {% if execute and relation %}
         {{ elementary.debug_log("Uploading run results.") }}
-        {%- set dbt_run_results_relation = elementary.get_elementary_relation('dbt_run_results') -%}
-        {%- if dbt_run_results_relation -%}
-            {% do elementary.upload_artifacts_to_table(dbt_run_results_relation, results, elementary.flatten_run_result,
-                                                       should_commit=True) %}
-        {%- endif -%}
+        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, should_commit=True) %}
     {% endif %}
     {{ elementary.edr_log("Uploaded run results successfully.") }}
     {{ return ('') }}
