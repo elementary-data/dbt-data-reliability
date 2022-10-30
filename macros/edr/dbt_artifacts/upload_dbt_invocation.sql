@@ -4,6 +4,7 @@
     {{ return('') }}
   {% endif %}
 
+  {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
   {% set dbt_invocation = {
@@ -20,6 +21,7 @@
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
+  {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
