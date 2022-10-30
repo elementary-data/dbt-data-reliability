@@ -18,6 +18,7 @@
       'generated_at': now_str,
       'command': flags.WHICH,
       'dbt_version': dbt_version,
+      'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
       'vars': invocation_vars,
       'selected_resources': selected_resources
