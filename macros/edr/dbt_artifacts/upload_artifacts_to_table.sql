@@ -31,7 +31,7 @@
 
 
 {% macro get_cached_artifacts(table_relation) %}
-  {% set cached_artifacts_path = elementary.get_target_path(table_relation) %}
+  {% set cached_artifacts_path = elementary.get_target_path(table_relation.identifier | lower) %}
   {% if cached_artifacts_path.exists() %}
     {{ return(fromjson(cached_artifacts_path.read_text())) }}
   {% endif %}
@@ -39,7 +39,7 @@
 {% endmacro %}
 
 {% macro cache_artifacts(table_relation, time_excluded_artifacts) %}
-  {% set cached_artifacts_path = elementary.get_target_path(table_relation) %}
+  {% set cached_artifacts_path = elementary.get_target_path(table_relation.identifier | lower) %}
   {% do cached_artifacts_path.write_text(tojson(time_excluded_artifacts)) %}
 {% endmacro %}
 
