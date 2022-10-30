@@ -7,4 +7,6 @@
   {% if flags.WHICH in ['test', 'build'] %}
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
+
+  {% do elementary.get_target_path().mkdir(parents=true, exist_ok=true) %}
 {% endmacro %}
