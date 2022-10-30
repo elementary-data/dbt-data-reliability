@@ -13,10 +13,10 @@
   {% endif %}
 
   {% if not elementary.get_config_var('disable_run_results') %}
-    {{ elementary.upload_run_results(results) }}
+    {{ elementary.upload_run_results() }}
   {% endif %}
 
   {% if flags.WHICH in ['test', 'build'] and not elementary.get_config_var('disable_tests_results') %}
-    {{ elementary.handle_tests_results(results) }}
+    {{ elementary.handle_tests_results() }}
   {% endif %}
 {% endmacro %}
