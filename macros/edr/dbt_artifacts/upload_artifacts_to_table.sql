@@ -6,14 +6,17 @@
             {% do flatten_artifact_dicts.append(flatten_artifact_dict) %}
         {% endif %}
     {% endfor %}
-    {% set cached_artifacts = elementary.get_cached_artifacts(table_relation) %}
     {% set time_excluded_artifacts = elementary.get_time_excluded_artifacts(flatten_artifact_dicts) %}
-    {% if cached_artifacts == time_excluded_artifacts %}
-      {{ elementary.debug_log("[{}] Artifacts were not changed. Skipping upload.".format(table_relation.identifier)) }}
-      {{ return(none) }}
+    {% if elementary.is_on_run_end() %}
+      {% set cached_artifacts = elementary.get_cached_artifacts(table_relation) %}
+      {% if cached_artifacts == time_excluded_artifacts %}
+        {{ elementary.debug_log("[{}] Artifacts were not changed. Skipping upload.".format(table_relation.identifier)) }}
+        {{ return(none) }}
+      {% endif %}
     {% endif %}
     {%- set flatten_artifacts_len = flatten_artifact_dicts | length %}
     {% if flatten_artifacts_len > 0 %}
+        {% do dbt.truncate_relation(table_relation) %}
         {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {%- else %}
         {{ elementary.debug_log('No artifacts to insert to ' ~ table_relation) }}

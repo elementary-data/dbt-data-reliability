@@ -14,7 +14,6 @@
       {% if not elementary.get_result_node(artifacts_model) %}
         {% set relation = elementary.get_elementary_relation(artifacts_model) %}
         {% if relation %}
-          {% do dbt.truncate_relation(relation) %}
           {% do upload_artifacts_func(should_commit=true) %}
         {% endif %}
       {% else %}
