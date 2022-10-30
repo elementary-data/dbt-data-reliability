@@ -1,7 +1,7 @@
 {{
   config(
-    materialized = 'table',
-    bind=False,
+    materialized='table',
+    transient=False,
     post_hook='{{ elementary.upload_information() }}'
   )
 }}
