@@ -1,5 +1,5 @@
 name: "elementary"
-version: "0.5.3"
+version: "0.5.4"
 
 require-dbt-version: [ ">=1.0.0", "<2.0.0" ]
 
