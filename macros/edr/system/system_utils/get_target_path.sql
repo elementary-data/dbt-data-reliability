@@ -1,7 +1,7 @@
 {% macro get_target_path(identifier=none) %}
   {% set elementary_target_path = flags.Path(ref.config.target_path) / 'elementary' %}
   {% if identifier %}
-    {{ return(elementary_target_path / (identifier | string)) }}
+    {{ return(elementary_target_path / identifier) }}
   {% else %}
     {{ return(elementary_target_path) }}
   {% endif %}
