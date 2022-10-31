@@ -18,7 +18,7 @@ clean-targets: # directories to be removed by `dbt clean`
 
 vars:
   days_back: 30
-  debug_logs: true
+  debug_logs: false
 
 models:
   elementary:
