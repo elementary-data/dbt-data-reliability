@@ -16,8 +16,7 @@
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
-      'vars': invocation_vars,
-      'selected_resources': selected_resources
+      'vars': invocation_vars
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -34,7 +33,6 @@
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
 	  ('full_refresh', 'boolean'),
-      ('vars', 'long_string'),
-      ('selected_resources', 'long_string'),
+      ('vars', 'long_string')
     ])) }}
 {% endmacro %}
