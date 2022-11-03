@@ -6,8 +6,6 @@
 
   {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
-  {% set selected_nodes = invocation_args_dict and invocation_args_dict.select %}
-  {% set selector = invocation_args_dict and invocation_args_dict.selector_name %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
@@ -24,13 +22,33 @@
       'target_schema': target.schema,
       'target_profile_name': target.profile_name,
       'threads': target.threads,
-      'selected': selected_nodes,
-      'yaml_selector': selector
+      'selected': elementary.get_invocation_select_filter(),
+      'yaml_selector': elementary.get_invocation_yaml_selector()
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
+
+{%- macro get_invocation_select_filter() -%}
+    {%- if invocation_args_dict and invocation_args_dict.select -%}
+        {{- return(invocation_args_dict.select) -}}
+    {%- elif ref.config and ref.config.args and ref.config.args.select -%}
+        {{- return(ref.config.args.select) -}}
+    {%- else -%}
+        {{- return([]) -}}
+    {%- endif -%})
+{%- endmacro -%}
+
+{%- macro get_invocation_yaml_selector() -%}
+    {%- if invocation_args_dict and invocation_args_dict.select_name -%}
+        {{- return(invocation_args_dict.select_name) -}}
+    {%- elif ref.config and ref.config.args and ref.config.args.select_name -%}
+        {{- return(ref.config.args.select_name) -}}
+    {%- else -%}
+        {{- return([]) -}}
+    {%- endif -%})
+{%- endmacro -%}
 
 {%- macro get_invocation_vars() -%}
     {%- if invocation_args_dict and invocation_args_dict.vars -%}
