@@ -6,4 +6,5 @@
   )
 }}
 
+{{ debug() }}
 {{ elementary.get_dbt_models_empty_table_query() }}

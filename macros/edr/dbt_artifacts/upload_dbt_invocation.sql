@@ -7,6 +7,8 @@
   {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
+  {% set select = ref.config and ref.config.args and ref.config.args.select %}
+  {% set selector = ref.config and ref.config.args and ref.config.args.selector_name %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
@@ -16,7 +18,9 @@
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
-      'vars': invocation_vars
+      'vars': invocation_vars,
+      'select': select,
+      'selector': selector
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -33,6 +37,8 @@
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
 	  ('full_refresh', 'boolean'),
-      ('vars', 'long_string')
+      ('vars', 'long_string'),
+      ('select', 'long_string'),
+      ('selector', 'long_string')
     ])) }}
 {% endmacro %}
