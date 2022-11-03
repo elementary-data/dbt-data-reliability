@@ -6,7 +6,6 @@
 
   {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
-  {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
   {% set selected_nodes = invocation_args_dict and invocation_args_dict.select %}
   {% set selector = invocation_args_dict and invocation_args_dict.selector_name %}
   {% set dbt_invocation = {
@@ -18,14 +17,39 @@
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
-      'vars': invocation_vars,
-      'selected_nodes': selected_nodes,
-      'selector': selector
+      'cli_vars': elementary.get_cli_vars(),
+      'vars': elementary.get_all_invocation_vars(),
+      'target_name': target.name,
+      'target_database': elementary.target_database(),
+      'target_schema': target.schema,
+      'target_profile_name': target.profile_name,
+      'threads': target.threads,
+      'selected': selected_nodes,
+      'yaml_selector': selector
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
+
+{%- macro get_cli_vars() -%}
+    {%- if invocation_args_dict and invocation_args_dict.vars -%}
+        {{- return(fromjson(invocation_args_dict.vars)) -}}
+    {%- elif ref.config and ref.config.vars -%}
+        {{- return(ref.config.cli_vars) -}}
+    {%- else -%}
+        {{- return({}) -}}
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro get_all_invocation_vars() -%}
+    {% set all_vars = {} %}
+    {%- if ref.config and ref.config.vars -%}
+        {% do all_vars.update(ref.config.vars.to_dict()) %}
+    {%- endif -%}
+    {% do all_vars.update(elementary.get_cli_vars()) %}
+    {{- return(all_vars) -}}
+{%- endmacro -%}
 
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
@@ -37,8 +61,14 @@
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
 	  ('full_refresh', 'boolean'),
+      ('cli_vars', 'long_string'),
       ('vars', 'long_string'),
-      ('selected_nodes', 'long_string'),
-      ('selector', 'long_string')
+      ('target_name', 'string'),
+      ('target_database', 'string'),
+      ('target_schema', 'string'),
+      ('target_profile_name', 'string'),
+      ('threads', 'int'),
+      ('selected', 'long_string'),
+      ('yaml_selector', 'long_string')
     ])) }}
 {% endmacro %}
