@@ -8,7 +8,7 @@
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set invocation_vars = ref.config and ref.config.vars and ref.config.vars.to_dict() %}
   {% set selected_nodes = invocation_args_dict.select %}
-  {% set selector = ref.config and ref.config.args and ref.config.args.selector_name %}
+  {% set selector = invocation_args_dict.selector_name %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
