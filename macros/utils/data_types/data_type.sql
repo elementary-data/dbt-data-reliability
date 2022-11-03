@@ -94,3 +94,11 @@
         {{ return(dbt_utils.type_timestamp()) }}
     {% endif %}
 {% endmacro %}
+
+{% macro type_numeric() %}
+    {% if dbt_version >= '1.2.0' %}
+        {{ return(dbt.type_numeric()) }}
+    {% else %}
+        {{ return(dbt_utils.type_numeric()) }}
+    {% endif %}
+{% endmacro %}

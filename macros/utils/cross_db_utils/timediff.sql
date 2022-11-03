@@ -3,11 +3,19 @@
     {{ return(adapter.dispatch('timediff', 'elementary')(timepart, first_timestamp, second_timestamp)) }}
 {%- endmacro %}
 
-{# Snowflake and Redshift #}
+{# Snowflake #}
 {% macro default__timediff(timepart, first_timestamp, second_timestamp) %}
     datediff({{ timepart }}, {{ first_timestamp }}, {{ second_timestamp }})
 {% endmacro %}
 
 {% macro bigquery__timediff(timepart, first_timestamp, second_timestamp) %}
     timestamp_diff({{ first_timestamp }}, {{ second_timestamp }}, {{ timepart }})
+{% endmacro %}
+
+{% macro redshift__timediff(timepart, first_timestamp, second_timestamp) %}
+    datediff({{ timepart }}, {{ first_timestamp }}, {{ second_timestamp }})
+{% endmacro %}
+
+{% macro postgres__timediff(timepart, first_timestamp, second_timestamp) %}
+    date_part('{{ timepart }}', ({{ second_timestamp }})::timestamp) - date_part('{{ timepart }}', ({{ first_timestamp }})::timestamp)
 {% endmacro %}
