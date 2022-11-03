@@ -41,10 +41,10 @@
 {%- endmacro -%}
 
 {%- macro get_invocation_yaml_selector() -%}
-    {%- if invocation_args_dict and invocation_args_dict.select_name -%}
-        {{- return(invocation_args_dict.select_name) -}}
-    {%- elif ref.config and ref.config.args and ref.config.args.select_name -%}
-        {{- return(ref.config.args.select_name) -}}
+    {%- if invocation_args_dict and invocation_args_dict.selector_name -%}
+        {{- return(invocation_args_dict.selector_name) -}}
+    {%- elif ref.config and ref.config.args and ref.config.args.selector_name -%}
+        {{- return(ref.config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
     {%- endif -%})
