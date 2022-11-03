@@ -17,8 +17,8 @@
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
       'full_refresh': flags.FULL_REFRESH,
-      'cli_vars': elementary.get_cli_vars(),
-      'vars': elementary.get_all_invocation_vars(),
+      'invocation_vars': elementary.get_invocation_vars(),
+      'vars': elementary.get_all_vars(),
       'target_name': target.name,
       'target_database': elementary.target_database(),
       'target_schema': target.schema,
@@ -32,7 +32,7 @@
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
-{%- macro get_cli_vars() -%}
+{%- macro get_invocation_vars() -%}
     {%- if invocation_args_dict and invocation_args_dict.vars -%}
         {{- return(fromjson(invocation_args_dict.vars)) -}}
     {%- elif ref.config and ref.config.vars -%}
@@ -42,12 +42,12 @@
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro get_all_invocation_vars() -%}
+{%- macro get_all_vars() -%}
     {% set all_vars = {} %}
     {%- if ref.config and ref.config.vars -%}
         {% do all_vars.update(ref.config.vars.to_dict()) %}
     {%- endif -%}
-    {% do all_vars.update(elementary.get_cli_vars()) %}
+    {% do all_vars.update(elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}
 {%- endmacro -%}
 
@@ -61,7 +61,7 @@
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
 	  ('full_refresh', 'boolean'),
-      ('cli_vars', 'long_string'),
+      ('invocation_vars', 'long_string'),
       ('vars', 'long_string'),
       ('target_name', 'string'),
       ('target_database', 'string'),
