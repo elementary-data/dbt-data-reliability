@@ -1,17 +1,15 @@
 {{
   config(
     materialized = 'view',
-    bind=False,
-    enabled = target.type != 'databricks' | as_bool()
+    bind =False
   )
 }}
-
 
 with elementary_test_results as (
     select * from {{ ref('elementary_test_results') }}
 ),
 
-alerts_schema_changes as (
+alerts_anomaly_detection as (
     select id as alert_id,
            data_issue_id,
            test_execution_id,
@@ -34,7 +32,7 @@ alerts_schema_changes as (
            severity,
            status
         from elementary_test_results
-        where {{ not elementary.get_config_var('disable_test_alerts') }} and lower(status) != 'pass' {%- if elementary.get_config_var('disable_warn_alerts') -%} and lower(status) != 'warn' {%- endif -%} and test_type = 'schema_change'
+        where {{ not elementary.get_config_var('disable_test_alerts') }} and lower(status) != 'pass' {%- if elementary.get_config_var('disable_warn_alerts') -%} and lower(status) != 'warn' {%- endif -%} {%- if elementary.get_config_var('disable_skipped_test_alerts') -%} and lower(status) != 'skipped' {%- endif -%} and test_type = 'anomaly_detection'
 )
 
-select * from alerts_schema_changes
+select * from alerts_anomaly_detection

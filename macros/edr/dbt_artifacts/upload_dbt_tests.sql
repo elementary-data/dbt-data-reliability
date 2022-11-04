@@ -1,8 +1,8 @@
-{%- macro upload_dbt_tests() -%}
-    {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-    {% if execute and not edr_cli_run %}
+{%- macro upload_dbt_tests(should_commit=false) -%}
+    {% set relation = elementary.get_elementary_relation('dbt_tests') %}
+    {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(this, tests, elementary.get_flatten_test_callback()) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -34,21 +34,12 @@
                                                                  ('package_name', 'string'),
                                                                  ('type', 'string'),
                                                                  ('original_path', 'long_string'),
-                                                                 ('compiled_sql', 'long_string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string')]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
 
-{%- macro get_flatten_test_callback() -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')) -}}
-{%- endmacro -%}
-
-{%- macro flatten_test(node_dict) -%}
-    {{- return(adapter.dispatch('flatten_test', 'elementary')(node_dict)) -}}
-{%- endmacro -%}
-
-{% macro default__flatten_test(node_dict) %}
+{% macro flatten_test(node_dict) %}
     {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
 
@@ -135,7 +126,7 @@
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_type(original_file_path),
         'original_path': original_file_path,
-        'compiled_sql': node_dict.get('compiled_sql'),
+        'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
