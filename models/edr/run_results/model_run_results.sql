@@ -36,6 +36,10 @@ SELECT
     models.path,
     models.original_path,
     models.owner,
-    models.alias
+    models.alias,
+    ROW_NUMBER() OVER (PARTITION BY unique_id ORDER BY generated_at DESC, execute_started_at DESC, execute_completed_at DESC ) AS model_invocation_index,
+    CASE WHEN DENSE_RANK() OVER (ORDER BY generated_at DESC) = 1 THEN TRUE ELSE FALSE END AS is_latest_invocation, 
+    CASE WHEN DENSE_RANK() OVER (PARTITION BY generated_at::date ORDER BY generated_at ASC) = 1 THEN TRUE ELSE FALSE END AS is_the_first_invocation_of_the_day
+    
 FROM dbt_run_results run_results
 JOIN dbt_models models ON run_results.unique_id = models.unique_id
