@@ -177,7 +177,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
+        'test_results_sample': elementary.render_test_samples(elementary.get_test_samples(test_node))
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -279,7 +279,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
+        'test_results_sample': elementary.render_test_samples(elementary.get_test_samples(test_node))
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -298,7 +298,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
+        'test_results_sample': elementary.render_test_samples(elementary.get_test_samples(test_node))
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -339,7 +339,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
+        'test_results_sample': elementary.render_test_samples(elementary.get_test_samples(test_node))
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -347,7 +347,7 @@
 {% macro get_test_samples(flatten_test_node) %}
     {% set test_samples = graph["elementary"]["test_samples"].get(flatten_test_node.unique_id) %}
     {% if not test_samples %}
-      {{ return(none) }}
+      {{ return([]) }}
     {% endif %}
     {{ return(elementary.agate_to_dicts(test_samples)) }}
 {% endmacro %}
