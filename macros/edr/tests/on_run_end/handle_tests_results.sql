@@ -354,7 +354,7 @@
 
 {% macro render_test_sample(test_sample) %}
   {% set rendered_test_sample = [] %}
-  {% for test_row in test_sample %}
+  {% for test_row in test_sample[:elementary.get_config_var('test_sample_row_count')] %}
     {% set rendered_test_row = test_row %}
     {% if (tojson(rendered_test_row) | length) > elementary.get_column_size() %}
       {% for test_row_col in rendered_test_row %}
