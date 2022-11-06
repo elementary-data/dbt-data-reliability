@@ -1,7 +1,7 @@
 {% macro store_test_sample() %}
     {% set test_sample_sql %}
         select * from ({{ sql }})
-        {% if not model.package_name == 'elementary' %}
+        {% if not model.get('test_metadata', {}).get('namespace') == 'elementary' %}
           limit {{ elementary.get_config_var('test_sample_row_count') }}
         {% endif %}
     {% endset %}
