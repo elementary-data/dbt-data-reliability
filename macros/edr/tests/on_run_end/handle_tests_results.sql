@@ -352,18 +352,18 @@
     {{ return(elementary.agate_to_dicts(test_samples)) }}
 {% endmacro %}
 
-{% macro render_test_sample(test_samples) %}
-  {% set rendered_test_samples = [] %}
-  {% for test_sample in test_samples %}
-    {% set rendered_test_sample = test_sample %}
-    {% if (tojson(rendered_test_sample) | length) > elementary.get_column_size() %}
-      {% for test_sample_col in rendered_test_sample %}
-        {% do rendered_test_sample.update({test_sample_col: "Sample row is too long."}) %}
+{% macro render_test_sample(test_sample) %}
+  {% set rendered_test_sample = [] %}
+  {% for test_row in test_sample %}
+    {% set rendered_test_row = test_row %}
+    {% if (tojson(rendered_test_row) | length) > elementary.get_column_size() %}
+      {% for test_row_col in rendered_test_row %}
+        {% do rendered_test_row.update({test_row_col: "Sample row is too long."}) %}
       {% endfor %}
     {% endif %}
-    {% do rendered_test_samples.append(rendered_test_sample) %}
+    {% do rendered_test_sample.append(rendered_test_row) %}
   {% endfor %}
-  {% do return(rendered_test_samples) %}
+  {% do return(rendered_test_sample) %}
 {% endmacro %}
 
 {% macro get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
