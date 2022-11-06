@@ -73,13 +73,13 @@
     {% set anomaly_detection_test_results = [] %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
-        {% set test_row_dicts = elementary.get_test_sample(flatten_test_node) %}
+        {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
     {% else %}
-        {% set test_row_dicts = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
+        {% set test_sample_rows = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% endif %}
-    {% for test_row_dict in test_row_dicts %}
+    {% for test_sample_row in test_sample_rows %}
         {% do anomaly_detection_test_results.append(elementary.get_metric_test_result(run_result_dict,
-                                                                                      test_row_dict,
+                                                                                      test_sample_row,
                                                                                       flatten_test_node,
                                                                                       test_anomaly_scores_table)) %}
     {% endfor %}
@@ -88,10 +88,10 @@
 
 {%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
-    {% set test_row_dicts = elementary.get_test_sample(flatten_test_node) %}
-    {% for test_row_dict in test_row_dicts %}
+    {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
+    {% for test_sample_row in test_sample_rows %}
         {% do schema_change_test_results.append(elementary.get_schema_change_test_result(run_result_dict,
-                                                                                         test_row_dict,
+                                                                                         test_sample_row,
                                                                                          flatten_test_node)) %}
     {% endfor %}
     {{- return(schema_change_test_results) -}}
@@ -345,11 +345,11 @@
 {% endmacro %}
 
 {% macro get_test_sample(flatten_test_node) %}
-    {% set test_samples = graph["elementary"]["test_samples"].get(flatten_test_node.unique_id) %}
-    {% if not test_samples %}
+    {% set test_sample = graph["elementary"]["test_samples"].get(flatten_test_node.unique_id) %}
+    {% if not test_sample %}
       {{ return([]) }}
     {% endif %}
-    {{ return(elementary.agate_to_dicts(test_samples)) }}
+    {{ return(elementary.agate_to_dicts(test_sample)) }}
 {% endmacro %}
 
 {% macro render_test_sample(test_sample) %}
