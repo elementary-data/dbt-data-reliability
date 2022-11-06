@@ -176,7 +176,8 @@
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'samples': elementary.get_test_result_rows_as_dicts(test_node)
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -277,7 +278,8 @@
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'samples': elementary.get_test_result_rows_as_dicts(test_node)
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -295,7 +297,8 @@
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'samples': elementary.get_test_result_rows_as_dicts(test_node)
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -335,13 +338,18 @@
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'samples': elementary.get_test_result_rows_as_dicts(test_node)
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
 {% macro get_test_result_rows_as_dicts(flatten_test_node) %}
-    {{ return(elementary.agate_to_dicts(graph["elementary"]["test_results"][flatten_test_node.unique_id])) }}
+    {% set test_result = graph["elementary"]["test_results"].get(flatten_test_node.unique_id) %}
+    {% if not test_result %}
+      {{ return(none) }}
+    {% endif %}
+    {{ return(elementary.agate_to_dicts(test_result)) }}
 {% endmacro %}
 
 {% macro get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
