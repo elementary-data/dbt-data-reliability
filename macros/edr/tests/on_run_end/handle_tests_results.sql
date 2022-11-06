@@ -73,7 +73,7 @@
     {% set anomaly_detection_test_results = [] %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
-        {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
+        {% set test_row_dicts = elementary.get_test_samples(flatten_test_node) %}
     {% else %}
         {% set test_row_dicts = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% endif %}
@@ -88,7 +88,7 @@
 
 {%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
-    {% set test_row_dicts = elementary.get_test_result_rows_as_dicts(flatten_test_node) %}
+    {% set test_row_dicts = elementary.get_test_samples(flatten_test_node) %}
     {% for test_row_dict in test_row_dicts %}
         {% do schema_change_test_results.append(elementary.get_schema_change_test_result(run_result_dict,
                                                                                          test_row_dict,
@@ -177,7 +177,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.get_test_result_rows_as_dicts(test_node)
+        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -188,7 +188,7 @@
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% else %}
-        {% set most_recent_anomalies_scores = elementary.get_test_result_rows_as_dicts(test_node) %}
+        {% set most_recent_anomalies_scores = elementary.get_test_samples(test_node) %}
         {% for anomaly in most_recent_anomalies_scores %}
             {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
             {% if anomaly_dimension %}
@@ -279,7 +279,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.get_test_result_rows_as_dicts(test_node)
+        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -298,7 +298,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.get_test_result_rows_as_dicts(test_node)
+        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -339,17 +339,35 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'samples': elementary.get_test_result_rows_as_dicts(test_node)
+        'samples': elementary.render_test_samples(elementary.get_test_samples(test_node))
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_test_result_rows_as_dicts(flatten_test_node) %}
-    {% set test_result = graph["elementary"]["test_results"].get(flatten_test_node.unique_id) %}
-    {% if not test_result %}
+{% macro get_test_samples(flatten_test_node) %}
+    {% set test_samples = graph["elementary"]["test_samples"].get(flatten_test_node.unique_id) %}
+    {% if not test_samples %}
       {{ return(none) }}
     {% endif %}
-    {{ return(elementary.agate_to_dicts(test_result)) }}
+    {{ return(elementary.agate_to_dicts(test_samples)) }}
+{% endmacro %}
+
+{% macro render_test_samples(test_samples) %}
+  {% if not test_samples %}
+    {{ return(none) }}
+  {% endif %}
+
+  {% set rendered_test_samples = [] %}
+  {% for test_sample in test_samples %}
+    {% set rendered_test_sample = test_sample %}
+    {% if (tojson(rendered_test_sample) | length) > elementary.get_column_size() %}
+      {% for test_sample_col in rendered_test_sample %}
+        {% do rendered_test_sample.update({test_sample_col: "Sample row is too long."}) %}
+      {% endfor %}
+    {% endif %}
+    {% do rendered_test_samples.append(rendered_test_sample) %}
+  {% endfor %}
+  {% do return(rendered_test_samples) %}
 {% endmacro %}
 
 {% macro get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
