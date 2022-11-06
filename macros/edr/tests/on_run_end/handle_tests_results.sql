@@ -340,17 +340,8 @@
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_test_result_rows_as_dicts(flatten_test_node, sample_limit = none) %}
-    {% set test_row_dicts = [] %}
-    {% set test_compiled_code = elementary.get_compiled_code(flatten_test_node) %}
-    {% if test_compiled_code %}
-        {% if sample_limit %}
-            {% set test_compiled_code = test_compiled_code ~ ' limit ' ~ sample_limit %}
-        {% endif %}
-        {% set test_table_agate = run_query(test_compiled_code) %}
-        {% set test_row_dicts = elementary.agate_to_dicts(test_table_agate) %}
-    {% endif %}
-    {{ return(test_row_dicts) }}
+{% macro get_test_result_rows_as_dicts(flatten_test_node) %}
+    {{ return(elementary.agate_to_dicts(graph["elementary"]["test_results"][flatten_test_node.unique_id])) }}
 {% endmacro %}
 
 {% macro get_most_recent_anomaly_scores(test_anomaly_scores_table) %}

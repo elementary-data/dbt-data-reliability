@@ -4,6 +4,8 @@
     {{ return('') }}
   {% endif %}
 
+  {% do elementary.init_elementary_graph() %}
+
   {% if flags.WHICH in ['test', 'build'] %}
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
