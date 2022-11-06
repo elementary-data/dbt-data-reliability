@@ -353,10 +353,6 @@
 {% endmacro %}
 
 {% macro render_test_samples(test_samples) %}
-  {% if not test_samples %}
-    {{ return(none) }}
-  {% endif %}
-
   {% set rendered_test_samples = [] %}
   {% for test_sample in test_samples %}
     {% set rendered_test_sample = test_sample %}
