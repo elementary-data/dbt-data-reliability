@@ -20,6 +20,7 @@
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
     'dbt_artifacts_chunk_size': 5000,
+    'test_sample_row_count': 5,
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': null,
