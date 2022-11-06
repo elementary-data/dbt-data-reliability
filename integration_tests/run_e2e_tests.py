@@ -285,7 +285,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             "platform": "windows"
             if row_index < (10 / 100 * rows_count)
             else ("android" if row_index < (55 / 100 * rows_count) else "ios"),
-            "version": random.randint(1, 3),
+            "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
         }
 
@@ -295,7 +295,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
             "platform": "windows"
             if row_index < (99 / 100 * rows_count)
             else random.choice(["android", "ios"]),
-            "version": random.randint(1, 3),
+            "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
         }
 
