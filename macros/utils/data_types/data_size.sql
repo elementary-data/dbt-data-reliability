@@ -3,7 +3,7 @@
 {% endmacro %}
 
 {% macro default__get_column_size() %}
-  {{ return(65535) }}
+  {{ return(elementary.get_config_var('long_string_size')) }}
 {% endmacro %}
 
 {% macro snowflake__get_column_size() %}
