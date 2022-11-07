@@ -26,7 +26,8 @@
                                                                        ('rows_affected', 'bigint'),
                                                                        ('full_refresh', 'boolean'),
                                                                        ('compiled_code', 'long_string'),
-                                                                       ('failures', 'bigint')
+                                                                       ('failures', 'bigint'),
+                                                                       ('query_id', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -51,7 +52,8 @@
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
         'compiled_code': elementary.get_compiled_model_code_text(node),
-        'failures': run_result_dict.get('failures')
+        'failures': run_result_dict.get('failures'),
+        'query_id': run_result_dict.get('adapter_response', {}).get('query_id')
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}
