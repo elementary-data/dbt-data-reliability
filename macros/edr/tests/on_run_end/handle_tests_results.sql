@@ -353,6 +353,7 @@
 {% endmacro %}
 
 {% macro render_test_sample(test_sample) %}
+  {% set test_sample = test_sample[:elementary.get_config_var('test_sample_row_count')] %}
   {% if (tojson(test_sample) | length) < elementary.get_column_size() %}
     {{ return(test_sample) }}
   {% endif %}
