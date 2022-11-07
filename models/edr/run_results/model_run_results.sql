@@ -17,6 +17,7 @@ SELECT
     run_results.model_execution_id,
     run_results.unique_id,
     run_results.invocation_id,
+    run_results.query_id,
     run_results.name,
     run_results.generated_at,
     run_results.status,
