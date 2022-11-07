@@ -37,7 +37,7 @@ SELECT
     models.original_path,
     models.owner,
     models.alias,
-    ROW_NUMBER() OVER (PARTITION BY run_results.unique_id ORDER BY run_results.generated_at DESC, run_results.execute_started_at DESC, run_results.execute_completed_at DESC ) AS model_invocation_index,
+    ROW_NUMBER() OVER (PARTITION BY run_results.unique_id ORDER BY run_results.generated_at DESC) AS model_invocation_reverse_index,
     CASE WHEN DENSE_RANK() OVER (ORDER BY run_results.generated_at DESC) = 1 THEN TRUE ELSE FALSE END AS is_latest_invocation, 
     CASE WHEN DENSE_RANK() OVER (PARTITION BY {{ elementary.time_trunc('day', 'run_results.generated_at') }} ORDER BY run_results.generated_at ASC) = 1 THEN TRUE ELSE FALSE END AS is_the_first_invocation_of_the_day
     
