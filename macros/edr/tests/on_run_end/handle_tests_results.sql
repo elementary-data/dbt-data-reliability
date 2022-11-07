@@ -353,17 +353,15 @@
 {% endmacro %}
 
 {% macro render_test_sample(test_sample) %}
-  {% set rendered_test_sample = [] %}
-  {% for test_row in test_sample[:elementary.get_config_var('test_sample_row_count')] %}
-    {% set rendered_test_row = test_row %}
-    {% if (tojson(rendered_test_row) | length) > elementary.get_column_size() %}
-      {% for test_row_col in rendered_test_row %}
-        {% do rendered_test_row.update({test_row_col: "Sample row is too long."}) %}
-      {% endfor %}
-    {% endif %}
-    {% do rendered_test_sample.append(rendered_test_row) %}
+  {% if (tojson(test_sample) | length) < elementary.get_column_size() %}
+    {{ return(test_sample) }}
+  {% endif %}
+
+  {% set rendered_sample_row = test_sample[0].copy() %}
+  {% for sample_row_col in rendered_sample_row %}
+    {% do rendered_sample_row.update({sample_row_col: "Sample row is too long."}) %}
   {% endfor %}
-  {% do return(rendered_test_sample) %}
+  {{ return([rendered_sample_row]) }}
 {% endmacro %}
 
 {% macro get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
