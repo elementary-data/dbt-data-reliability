@@ -6,9 +6,58 @@
 }}
 
 with error_models as (
-    select * from {{ ref('model_run_results') }}
+  
+    select  model_execution_id,
+            unique_id,
+            invocation_id,
+            name,
+            generated_at,
+            status,
+            full_refresh,
+            message,
+            execution_time,
+            execute_started_at,
+            execute_completed_at,
+            compile_started_at,
+            compile_completed_at,
+            compiled_code,
+            database_name,
+            schema_name,
+            materialization,
+            tags,
+            package_name,
+            path,
+            original_path,
+            owner,
+            alias 
+    from {{ ref('model_run_results') }}
+  
     union all
-    select * from {{ ref('snapshot_run_results') }}
+  
+    select  model_execution_id,
+            unique_id,
+            invocation_id,
+            name,
+            generated_at,
+            status,
+            full_refresh,
+            message,
+            execution_time,
+            execute_started_at,
+            execute_completed_at,
+            compile_started_at,
+            compile_completed_at,
+            compiled_code,
+            database_name,
+            schema_name,
+            materialization,
+            tags,
+            package_name,
+            path,
+            original_path,
+            owner,
+            alias  
+  from {{ ref('snapshot_run_results') }}
 )
 
 
