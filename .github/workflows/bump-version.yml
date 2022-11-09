@@ -26,7 +26,7 @@ jobs:
         run: |
           echo "dbt package version: ${{ steps.validate-dbt-package-input.outputs.dbt-package-validation }}"
       - name: fail on invalid input
-        if: ${{ steps.validate-cli-input.outputs.dbt-package-validation == '' }}
+        if: ${{ steps.validate-dbt-package-input.outputs.dbt-package-validation == '' }}
         uses: actions/github-script@v6
         with:
           script: |
