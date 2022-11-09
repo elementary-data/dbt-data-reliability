@@ -1,7 +1,7 @@
 {% macro get_elementary_tests_schema(elementary_database, elementary_schema) %}
     {% set LEGACY_TESTS_SCHEMA_SUFFIX = "__tests" %}
 
-    {% set cached_tests_schema_name = elementary.get_cache_entry("tests_schema_name") %}
+    {% set cached_tests_schema_name = elementary.get_cache("tests_schema_name") %}
     {% if cached_tests_schema_name is not none %}
         {{ return(cached_tests_schema_name) }}
     {% endif %}
@@ -18,7 +18,7 @@
         {% endif %}
     {% endif %}
 
-    {% do elementary.set_cache_entry("tests_schema_name", tests_schema_name) %}
+    {% do elementary.set_cache("tests_schema_name", tests_schema_name) %}
 
     {{ return(tests_schema_name) }}
 {% endmacro %}

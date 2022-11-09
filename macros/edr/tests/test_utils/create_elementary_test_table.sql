@@ -8,9 +8,9 @@
                                                                    identifier=temp_table_name,
                                                                    type='table') -%}
 
-        {# Save the test table to the graph for easy access later #}
-        {% do graph.setdefault("elementary_test_tables", {}) %}
-        {% do graph["elementary_test_tables"].update({(test_name, table_type): temp_table_relation}) %}
+        {# Cache the test table for easy access later #}
+        {% set cache_key = "elementary_test_table|" ~ test_name ~ "|" ~ table_type %}
+        {% do elementary.set_cache(cache_key, temp_table_relation) %}
 
         {# Create the table if it doesn't exist #}
         {%- do elementary.create_or_replace(False, temp_table_relation, sql_query) %}
