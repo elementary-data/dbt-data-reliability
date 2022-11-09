@@ -9,7 +9,7 @@
         {% if tests_schema_name != schema_name %}
             {% do drop_schema(database_name, tests_schema_name) %}
         {% else %}
-            {{ elementary.edr_log("Tests schema is the same as the main schema, nothing to drop.") }}
+            {{ elementary.edr_log("Tests schema is the same as the main elementary schema, nothing to drop.") }}
         {% endif %}
     {% endif %}
     {{ return('') }}
