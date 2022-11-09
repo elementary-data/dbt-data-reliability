@@ -7,7 +7,7 @@
     'days_back': 14,
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
-    'tests_schema_name': '__tests',
+    'tests_schema_name': '',
     'debug_logs': false,
     'disable_warn_alerts': false,
     'disable_model_alerts': false,
