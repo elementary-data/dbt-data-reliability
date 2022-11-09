@@ -4,9 +4,9 @@
         {{ elementary.debug_log(table_type ~ ' table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_table_name) }}
 
         {% set _, temp_table_relation = dbt.get_or_create_relation(database=database_name,
-                                                                                   schema=schema_name,
-                                                                                   identifier=temp_table_name,
-                                                                                   type='table') -%}
+                                                                   schema=schema_name,
+                                                                   identifier=temp_table_name,
+                                                                   type='table') -%}
 
         {# Save the test table to the graph for easy access later #}
         {% do graph.setdefault("elementary_test_tables", {}) %}
