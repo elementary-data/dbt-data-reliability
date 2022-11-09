@@ -17,5 +17,5 @@
     {% set tests_schema_name = elementary_schema ~ tests_schema_suffix %}
     {% do elementary.set_cache_entry("tests_schema_name", tests_schema_name) %}
 
-    {{ return(elementary_main_schema ~ tests_schema_suffix) }}
+    {{ return(tests_schema_name) }}
 {% endmacro %}
