@@ -35,7 +35,13 @@ on:
       warehouse-type:
         type: string
         required: true
+      elementary-ref:
+        type: string
+        required: false
       dbt-data-reliability-ref:
+        type: string
+        required: false
+      dbt-version:
         type: string
         required: false
       clear-tests:
