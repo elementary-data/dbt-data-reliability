@@ -31,30 +31,33 @@
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
+    {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.select -%}
         {{- return(invocation_args_dict.select) -}}
-    {%- elif ref.config and ref.config.args and ref.config.args.select -%}
-        {{- return(ref.config.args.select) -}}
+    {%- elif config.args and config.args.select -%}
+        {{- return(config.args.select) -}}
     {%- else -%}
         {{- return([]) -}}
     {%- endif -%})
 {%- endmacro -%}
 
 {%- macro get_invocation_yaml_selector() -%}
+    {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.selector_name -%}
         {{- return(invocation_args_dict.selector_name) -}}
-    {%- elif ref.config and ref.config.args and ref.config.args.selector_name -%}
-        {{- return(ref.config.args.selector_name) -}}
+    {%- elif config.args and config.args.selector_name -%}
+        {{- return(config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
     {%- endif -%})
 {%- endmacro -%}
 
 {%- macro get_invocation_vars() -%}
+    {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.vars -%}
         {{- return(fromjson(invocation_args_dict.vars)) -}}
-    {%- elif ref.config and ref.config.vars -%}
-        {{- return(ref.config.cli_vars) -}}
+    {%- elif config.cli_vars -%}
+        {{- return(config.cli_vars) -}}
     {%- else -%}
         {{- return({}) -}}
     {%- endif -%}
@@ -62,8 +65,9 @@
 
 {%- macro get_all_vars() -%}
     {% set all_vars = {} %}
-    {%- if ref.config and ref.config.vars -%}
-        {% do all_vars.update(ref.config.vars.to_dict()) %}
+    {% set config = elementary.get_runtime_config() %}
+    {%- if config.vars -%}
+        {% do all_vars.update(config.vars.to_dict()) %}
     {%- endif -%}
     {% do all_vars.update(elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}
