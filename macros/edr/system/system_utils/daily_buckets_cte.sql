@@ -21,7 +21,7 @@
         union all
         select {{ elementary.timeadd('day', '1', 'date') }}
         from dates
-        where {{ elementary.timeadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+        where {{ elementary.timeadd('day', '1', 'date') }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
             )
         select date as edr_daily_bucket
         from dates

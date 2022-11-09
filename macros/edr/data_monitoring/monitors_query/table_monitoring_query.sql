@@ -11,7 +11,7 @@
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-                and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+                and {{ elementary.cast_as_timestamp(timestamp_column) }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         ),
 
         daily_buckets as (
@@ -60,7 +60,7 @@
                 {{ elementary.cast_as_string('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
             from daily_buckets, {{ monitored_table_relation }}
-            where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
+            where {{ elementary.cast_as_timestamp(timestamp_column) }} < {{ elementary.timeadd('day','1','edr_daily_bucket') }}
             group by 1,2
         {%- else %}
             {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}

@@ -14,7 +14,7 @@
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-                and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+                and {{ elementary.cast_as_timestamp(timestamp_column) }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
             {% if where_expression %}
                 and {{ where_expression }}
             {% endif %}

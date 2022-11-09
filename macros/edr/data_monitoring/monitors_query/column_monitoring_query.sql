@@ -15,7 +15,7 @@
         where
         {% if is_timestamp -%}
             {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+            and {{ elementary.cast_as_timestamp(timestamp_column) }} < {{ elementary.cast_as_timestamp(max_bucket_end) }}
         {%- else %}
             true
         {%- endif %}
