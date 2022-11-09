@@ -8,10 +8,7 @@
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
         {# creates temp relation for schema columns info #}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% set tests_schema_suffix = elementary.get_config_var('tests_schema_name') %}
-        {% if tests_schema_suffix %}
-            {% set schema_name = schema_name ~  tests_schema_suffix %}
-        {% endif %}
+        {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
 
         {# get table configuration #}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
@@ -25,11 +22,11 @@
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
         {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, schema_name, test_name_in_graph, 'schema_changes', column_snapshot_query) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'schema_changes', column_snapshot_query) %}
 
         {# query if there were schema changes since last execution #}
         {% set schema_changes_alert_query = elementary.get_columns_changes_query(full_table_name, temp_table_relation) %}
-        {% set alerts_temp_table_relation = elementary.create_elementary_test_table(database_name, schema_name, test_name_in_graph, 'schema_changes_alerts', schema_changes_alert_query) %}
+        {% set alerts_temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'schema_changes_alerts', schema_changes_alert_query) %}
         {# return schema changes query as standard test query #}
         select * from {{ alerts_temp_table_relation }}
 
