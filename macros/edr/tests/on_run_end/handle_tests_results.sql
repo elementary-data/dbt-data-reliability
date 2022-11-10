@@ -12,7 +12,7 @@
             {% set flatten_test_node = elementary.flatten_test(test_node) %}
             {% if flatten_test_node.test_namespace == 'elementary' %}
                 {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
-                    {% set test_metrics_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__metrics') %}
+                    {% set test_metrics_table = elementary.get_elementary_test_table(flatten_test_node.name, 'metrics') %}
                     {% if test_metrics_table %}
                         {% do test_metrics_tables.append(test_metrics_table) %}
                     {% endif %}
@@ -22,20 +22,16 @@
                                                                                             'anomaly_detection')) %}
                     {%- else -%}
                         {% if flatten_test_node.short_name == 'dimension_anomalies' %}
-                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(database_name,
-                                                                                                             schema_name,
-                                                                                                             run_result_dict,
+                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(run_result_dict,
                                                                                                              flatten_test_node)) %}
                         {% else %}
-                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(database_name,
-                                                                                                       schema_name,
-                                                                                                       status,
+                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(status,
                                                                                                        run_result_dict,
                                                                                                        flatten_test_node)) %}
                         {% endif %}
                     {%- endif -%}
                 {% elif flatten_test_node.short_name == 'schema_changes' %}
-                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__schema_changes') %}
+                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(flatten_test_node.name, 'schema_changes') %}
                     {% if test_columns_snapshot_table %}
                         {% do test_columns_snapshot_tables.append(test_columns_snapshot_table) %}
                     {% endif %}
@@ -44,9 +40,7 @@
                                                                                             flatten_test_node,
                                                                                             'schema_change')) %}
                     {%- else -%} {# warn or fail #}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(database_name,
-                                                                                                          schema_name,
-                                                                                                          run_result_dict,
+                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(run_result_dict,
                                                                                                           flatten_test_node)) %}
                     {%- endif -%}
                 {% endif %}
@@ -69,9 +63,9 @@
     {{ return('') }}
 {% endmacro %}
 
-{%- macro get_test_result_per_metric(database_name, schema_name, status, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_metric(status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, flatten_test_node.name, '__anomaly_scores') %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(flatten_test_node.name, 'anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
         {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
     {% else %}
@@ -86,7 +80,7 @@
     {{- return(anomaly_detection_test_results) -}}
 {%- endmacro -%}
 
-{%- macro get_test_result_per_schema_change(database_name, schema_name, run_result_dict, flatten_test_node) -%}
+{%- macro get_test_result_per_schema_change(run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
     {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
     {% for test_sample_row in test_sample_rows %}
@@ -182,8 +176,8 @@
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_dimension_metric_test_result(database_name, schema_name, run_result_dict, test_node) %}
-    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(database_name, schema_name, test_node.name, '__anomaly_scores') %}
+{% macro get_dimension_metric_test_result(run_result_dict, test_node) %}
+    {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_node.name, 'anomaly_scores') %}
     {% set anomalous_dimensions = [] %}
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
@@ -377,14 +371,6 @@
     {{ return(most_recent_anomaly_scores) }}
 {% endmacro %}
 
-{% macro get_elementary_test_table(database_name, schema_name, test_name, suffix) %}
-    {% set tests_schema_name = schema_name ~ elementary.get_config_var('tests_schema_name') %}
-    {% set test_table_name = elementary.table_name_with_suffix(test_name, suffix) %}
-    {% set test_table_relation = adapter.get_relation(database=database_name,
-                                                      schema=tests_schema_name,
-                                                      identifier=test_table_name) %}
-    {{ return(test_table_relation) }}
-{% endmacro %}
 
 
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
