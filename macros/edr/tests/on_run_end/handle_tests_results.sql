@@ -339,7 +339,7 @@
 {% endmacro %}
 
 {% macro get_test_sample(flatten_test_node) %}
-    {% set test_sample = graph["elementary"]["test_samples"].get(flatten_test_node.unique_id) %}
+    {% set test_sample = elementary.get_cache("test_samples").get(flatten_test_node.unique_id) %}
     {% if not test_sample %}
       {{ return([]) }}
     {% endif %}

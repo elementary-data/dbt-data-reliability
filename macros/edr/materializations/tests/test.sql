@@ -6,7 +6,8 @@
         {% endif %}
     {% endset %}
     {% set test_sample = dbt.run_query(test_sample_sql) %}
-    {% do graph["elementary"]["test_samples"].update({model.unique_id: test_sample}) %}
+    {% set test_samples_cache = elementary.get_cache("test_samples") %}
+    {% do test_samples_cache.update({model.unique_id: test_sample}) %}
 {% endmacro %}
 
 {% materialization test, default %}
