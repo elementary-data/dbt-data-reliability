@@ -1,79 +1,45 @@
 {% macro handle_tests_results() %}
     {% if execute and flags.WHICH in ['test', 'build'] %}
-        {{ elementary.debug_log("Handling test results.") }}
-        {% set test_metrics_tables = [] %}
-        {% set test_columns_snapshot_tables = [] %}
-        {% set elementary_test_results = [] %}
+        {{ elementary.edr_log("Handling test results.") }}
+        {% set test_results = elementary.get_cache("test_results") %}
+        {% do elementary.enrich_test_results(test_results) %}
+        {% set test_metrics_tables = elementary.get_cache("tables").get("metrics") %}
+        {% set test_columns_snapshot_tables = elementary.get_cache("tables").get("schema_snapshots") %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% for result in results | selectattr('node.resource_type', '==', 'test') %}
-            {% set status = result.status | lower %}
-            {% set run_result_dict = result.to_dict() %}
-            {% set test_node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
-            {% set flatten_test_node = elementary.flatten_test(test_node) %}
-            {% if flatten_test_node.test_namespace == 'elementary' %}
-                {% if flatten_test_node.short_name in ['table_anomalies', 'column_anomalies', 'all_columns_anomalies', 'dimension_anomalies'] %}
-                    {% set test_metrics_table = elementary.get_elementary_test_table(flatten_test_node.name, 'metrics') %}
-                    {% if test_metrics_table %}
-                        {% do test_metrics_tables.append(test_metrics_table) %}
-                    {% endif %}
-                    {%- if status == 'error' -%}
-                        {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
-                                                                                            flatten_test_node,
-                                                                                            'anomaly_detection')) %}
-                    {%- else -%}
-                        {% if flatten_test_node.short_name == 'dimension_anomalies' %}
-                            {% do elementary_test_results.append(elementary.get_dimension_metric_test_result(run_result_dict,
-                                                                                                             flatten_test_node)) %}
-                        {% else %}
-                            {% do elementary_test_results.extend(elementary.get_test_result_per_metric(status,
-                                                                                                       run_result_dict,
-                                                                                                       flatten_test_node)) %}
-                        {% endif %}
-                    {%- endif -%}
-                {% elif flatten_test_node.short_name == 'schema_changes' %}
-                    {% set test_columns_snapshot_table = elementary.get_elementary_test_table(flatten_test_node.name, 'schema_changes') %}
-                    {% if test_columns_snapshot_table %}
-                        {% do test_columns_snapshot_tables.append(test_columns_snapshot_table) %}
-                    {% endif %}
-                    {% if status == 'error' or status == 'pass' %}
-                        {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
-                                                                                            flatten_test_node,
-                                                                                            'schema_change')) %}
-                    {%- else -%} {# warn or fail #}
-                        {% do elementary_test_results.extend(elementary.get_test_result_per_schema_change(run_result_dict,
-                                                                                                          flatten_test_node)) %}
-                    {%- endif -%}
-                {% endif %}
-            {% else %}
-                {% do elementary_test_results.append(elementary.get_dbt_test_result(run_result_dict,
-                                                                                    flatten_test_node,
-                                                                                    'dbt_test')) %}
-            {% endif %}
-        {% endfor %}
         {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
         {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
-        {% if elementary_test_results %}
+        {% if test_results %}
             {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
                                                                             schema=schema_name,
                                                                             identifier='elementary_test_results') -%}
-            {%- do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) -%}
+            {{ debug() }}
+            {%- do elementary.insert_rows(elementary_test_results_relation, test_results.values(), should_commit=True) -%}
         {% endif %}
     {% endif %}
-    {{ elementary.edr_log("Handled test results successfully.") }}
+    {{ elementary.debug_log("Handled test results successfully.") }}
     {{ return('') }}
+{% endmacro %}
+
+{% macro enrich_test_results(test_results) %}
+  {% for result in results %}
+    {% for result_row in test_results.get(result.node.unique_id) %}
+      {% do result_row.update({'status': result.status, 'failures': result.failures}) %}
+      {% do result_row.setdefault('test_results_description', result.message) %}
+    {% endfor %}
+  {% endfor %}
 {% endmacro %}
 
 {%- macro get_test_result_per_metric(status, run_result_dict, flatten_test_node) -%}
     {% set anomaly_detection_test_results = [] %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(flatten_test_node.name, 'anomaly_scores') %}
     {%- if status != 'pass' -%} {# warn or fail #}
-        {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
+        {% set test_result_rows = elementary.get_cached_test_result_rows(flatten_test_node) %}
     {% else %}
-        {% set test_sample_rows = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
+        {% set test_result_rows = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% endif %}
-    {% for test_sample_row in test_sample_rows %}
+    {% for test_result_row in test_result_rows %}
         {% do anomaly_detection_test_results.append(elementary.get_metric_test_result(run_result_dict,
-                                                                                      test_sample_row,
+                                                                                      test_result_row,
                                                                                       flatten_test_node,
                                                                                       test_anomaly_scores_table)) %}
     {% endfor %}
@@ -82,99 +48,14 @@
 
 {%- macro get_test_result_per_schema_change(run_result_dict, flatten_test_node) -%}
     {% set schema_change_test_results = [] %}
-    {% set test_sample_rows = elementary.get_test_sample(flatten_test_node) %}
-    {% for test_sample_row in test_sample_rows %}
+    {% set test_result_rows = elementary.get_cached_test_result_rows(flatten_test_node) %}
+    {% for test_result_row in test_result_rows %}
         {% do schema_change_test_results.append(elementary.get_schema_change_test_result(run_result_dict,
-                                                                                         test_sample_row,
+                                                                                         test_result_row,
                                                                                          flatten_test_node)) %}
     {% endfor %}
     {{- return(schema_change_test_results) -}}
 {%- endmacro -%}
-
-{% macro get_metric_test_result(run_result_dict, anomaly_dict, test_node, test_anomaly_scores_table) %}
-    {% set full_table_name = elementary.insensitive_get_dict_value(anomaly_dict, 'full_table_name', '') %}
-    {%- set database_name, schema_name, table_name = split_full_table_name_to_vars(full_table_name) %}
-    {% set test_params = elementary.insensitive_get_dict_value(test_node, 'test_params', {}) %}
-    {% set test_param_sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') %}
-    {% set test_param_timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
-    {% set test_param_backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') %}
-    {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
-    {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
-    {% set timestamp_column = elementary.get_timestamp_column(test_param_timestamp_column, parent_model_node) %}
-    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=test_param_sensitivity) %}
-    {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=test_param_backfill_days) %}
-    {% do test_params.update({'sensitivity': sensitivity}) %}
-    {% do test_params.update({'timestamp_column': timestamp_column}) %}
-    {% do test_params.update({'backfill_days': backfill_days}) %}
-    {% set column_name = elementary.insensitive_get_dict_value(anomaly_dict, 'column_name') %}
-    {% set metric_name = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_name') %}
-    {% set metric_id = elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id') %}
-    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
-    {% set test_results_query %}
-        with anomaly_scores as (
-            select * from {{ test_anomaly_scores_table }}
-        ),
-        anomaly_scores_with_is_anomalous as (
-        select  *,
-                case when abs(anomaly_score) > {{ sensitivity }}
-                and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
-                and training_set_size >= {{ elementary.get_config_var('days_back') -1 }} then TRUE else FALSE end as is_anomalous
-            from anomaly_scores
-            where anomaly_score is not null
-        )
-        select metric_value as value,
-               training_avg as average, 
-               case when is_anomalous = TRUE then
-                lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
-               else min_metric_value end as min_value,
-               case when is_anomalous = TRUE then
-                lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
-                else max_metric_value end as max_value,
-               bucket_start as start_time,
-               bucket_end as end_time,
-               metric_id
-        from anomaly_scores_with_is_anomalous
-        where upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
-              and metric_name = {{ elementary.const_as_string(metric_name) }}
-             {%- if column_name %}
-                and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
-             {%- endif %}
-        order by bucket_end
-    {%- endset -%}
-    {% set test_results_description %}
-        {% if elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_score') is none %}
-            Not enough data to calculate anomaly score.
-        {% else %}
-            {{ elementary.insensitive_get_dict_value(anomaly_dict, 'anomaly_description') }}
-        {% endif %}
-    {% endset %}
-    {% set test_result_dict = {
-        'id': elementary.insensitive_get_dict_value(anomaly_dict, 'id'),
-        'data_issue_id': elementary.insensitive_get_dict_value(anomaly_dict, 'metric_id'),
-        'test_execution_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_execution_id'),
-        'test_unique_id': elementary.insensitive_get_dict_value(anomaly_dict, 'test_unique_id'),
-        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
-        'detected_at': elementary.insensitive_get_dict_value(anomaly_dict, 'detected_at'),
-        'database_name': database_name,
-        'schema_name': schema_name,
-        'table_name': table_name,
-        'column_name': column_name,
-        'test_type': 'anomaly_detection',
-        'test_sub_type': metric_name,
-        'test_results_description': test_results_description,
-        'other': elementary.insensitive_get_dict_value(anomaly_dict, 'anomalous_value'),
-        'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
-        'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': test_results_query,
-        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
-        'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
-        'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'test_results_sample': elementary.render_test_sample(elementary.get_test_sample(test_node))
-    } %}
-    {{ return(test_result_dict) }}
-{% endmacro %}
 
 {% macro get_dimension_metric_test_result(run_result_dict, test_node) %}
     {% set test_anomaly_scores_table = elementary.get_elementary_test_table(test_node.name, 'anomaly_scores') %}
@@ -182,7 +63,7 @@
     {% if run_result_dict.get('status') == 'pass' %}
         {% set most_recent_anomalies_scores = elementary.get_most_recent_anomaly_scores(test_anomaly_scores_table) %}
     {% else %}
-        {% set most_recent_anomalies_scores = elementary.get_test_sample(test_node) %}
+        {% set most_recent_anomalies_scores = elementary.get_cached_test_result_rows(test_node) %}
         {% for anomaly in most_recent_anomalies_scores %}
             {% set anomaly_dimension = elementary.insensitive_get_dict_value(anomaly, 'dimension_value') %}
             {% if anomaly_dimension %}
@@ -273,7 +154,7 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'test_results_sample': elementary.render_test_sample(elementary.get_test_sample(test_node))
+        'result_rows': elementary.render_test_result_rows(elementary.get_cached_test_result_rows(test_node))
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -292,63 +173,22 @@
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
         'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'test_results_sample': elementary.render_test_sample(elementary.get_test_sample(test_node))
+        'result_rows': elementary.render_test_result_rows(elementary.get_cached_test_result_rows(test_node))
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_dbt_test_result(run_result_dict, test_node, test_type) %}
-    {% set test_execution_id = elementary.get_node_execution_id(test_node) %}
-    {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
-    {% set parent_model = elementary.get_node(parent_model_unique_id) %}
-    {% set parent_model_name = elementary.get_table_name_from_node(parent_model) %}
-    {% set test_short_name = elementary.insensitive_get_dict_value(test_node, 'short_name') %}
-    {% set test_long_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
-    {%- if test_short_name -%}
-        {% set test_name = test_short_name %}
-    {%- else -%}
-        {% set test_name = test_long_name %}
-    {%- endif -%}
-    {% set test_results_query = elementary.get_compiled_code(test_node) %}
-    {% set test_result_dict = {
-        'id': test_execution_id,
-        'data_issue_id': none,
-        'test_execution_id': test_execution_id,
-        'test_unique_id': elementary.insensitive_get_dict_value(test_node, 'unique_id'),
-        'model_unique_id': elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id'),
-        'detected_at': elementary.insensitive_get_dict_value(test_node, 'generated_at'),
-        'database_name': elementary.insensitive_get_dict_value(test_node, 'database_name'),
-        'schema_name': elementary.insensitive_get_dict_value(test_node, 'schema_name'),
-        'table_name': parent_model_name,
-        'column_name': elementary.insensitive_get_dict_value(test_node, 'test_column_name'),
-        'test_type': test_type,
-        'test_sub_type': elementary.insensitive_get_dict_value(test_node, 'type'),
-        'test_results_description': elementary.insensitive_get_dict_value(run_result_dict, 'message'),
-        'other': none,
-        'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
-        'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
-        'test_results_query': test_results_query,
-        'test_name': test_name,
-        'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
-        'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'test_results_sample': elementary.render_test_sample(elementary.get_test_sample(test_node))
-    }%}
-    {{ return(test_result_dict) }}
-{% endmacro %}
-
-{% macro get_test_sample(flatten_test_node) %}
-    {% set test_sample = elementary.get_cache("test_samples").get(flatten_test_node.unique_id) %}
-    {% if not test_sample %}
+{% macro get_cached_test_result_rows(flatten_test_node) %}
+    {% set test_result_rows = elementary.get_cache("test_results").get(flatten_test_node.unique_id) %}
+    {% if not test_result_rows %}
       {{ return([]) }}
     {% endif %}
-    {{ return(elementary.agate_to_dicts(test_sample)) }}
+    {{ return(elementary.agate_to_dicts(test_result_rows)) }}
 {% endmacro %}
 
-{% macro render_test_sample(test_sample) %}
-  {% if (tojson(test_sample) | length) < elementary.get_column_size() %}
-    {{ return(test_sample) }}
+{% macro render_test_result_rows(test_result_rows) %}
+  {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
+    {{ return(test_result_rows) }}
   {% endif %}
   {{ return(none) }}
 {% endmacro %}

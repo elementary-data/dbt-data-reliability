@@ -53,8 +53,8 @@
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
         {# return anomalies query as standart test query #}
-        {{ elementary.get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) }}
-    
+        select * from {{ anomaly_scores_test_table_relation }}
+
     {%- else %}
 
         {#- test must run an sql query -#}

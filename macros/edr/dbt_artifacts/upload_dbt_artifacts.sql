@@ -9,7 +9,7 @@
       "dbt_exposures": elementary.upload_dbt_exposures,
       }
     %}
-    {% do elementary.debug_log("Uploading dbt artifacts.") %}
+    {% do elementary.edr_log("Uploading dbt artifacts.") %}
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% set relation = elementary.get_elementary_relation(artifacts_model) %}
@@ -21,6 +21,6 @@
         {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
-    {% do elementary.edr_log("Uploaded dbt artifacts successfully.") %}
+    {% do elementary.debug_log("Uploaded dbt artifacts successfully.") %}
   {% endif %}
 {% endmacro %}

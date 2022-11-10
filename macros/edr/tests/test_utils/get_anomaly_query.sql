@@ -1,10 +1,12 @@
-{%- macro get_anomaly_query(anomaly_scores_test_table_relation, sensitivity, backfill_days) -%}
-    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+{%- macro get_anomaly_query(flattened_test) -%}
+    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
+    {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
+    {% set backfill_period = "'" ~ backfill_days ~ "'" %}
     {%- set anomaly_query -%}
         select
             *,
             {{ elementary.anomaly_detection_description() }}
-        from {{ anomaly_scores_test_table_relation }}
+        from {{ elementary.get_elementary_test_table(flattened_test.name, 'anomaly_scores') }}
         where abs(anomaly_score) > {{ sensitivity }}
             {# get anomalies only for a limited period called the backfill period #}
             and bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }}
