@@ -53,11 +53,7 @@
         'full_refresh': flags.FULL_REFRESH,
         'compiled_code': elementary.get_compiled_model_code_text(node),
         'failures': run_result_dict.get('failures'),
-        {% if run_result_dict.get('adapter_response', {}).get('query_id') == [] %}
-          'query_id': none
-        {% else %}  
-          'query_id': run_result_dict.get('adapter_response', {}).get('query_id')
-        {% endif %}  
+        'query_id': run_result_dict.get('adapter_response', {}).get('query_id') or none  
         
     }%}
 
