@@ -3,8 +3,9 @@
         {{ elementary.edr_log("Handling test results.") }}
         {% set test_results = elementary.get_cache("test_results") %}
         {% do elementary.enrich_test_results(test_results) %}
-        {% set test_metrics_tables = elementary.get_cache("tables").get("metrics") %}
-        {% set test_columns_snapshot_tables = elementary.get_cache("tables").get("schema_snapshots") %}
+        {% set tables_cache = elementary.get_cache("tables") %}
+        {% set test_metrics_tables = tables_cache.get("metrics") %}
+        {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
         {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
@@ -12,7 +13,6 @@
             {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
                                                                             schema=schema_name,
                                                                             identifier='elementary_test_results') -%}
-            {{ debug() }}
             {%- do elementary.insert_rows(elementary_test_results_relation, test_results.values(), should_commit=True) -%}
         {% endif %}
     {% endif %}
@@ -21,12 +21,14 @@
 {% endmacro %}
 
 {% macro enrich_test_results(test_results) %}
+{#
   {% for result in results %}
     {% for result_row in test_results.get(result.node.unique_id) %}
       {% do result_row.update({'status': result.status, 'failures': result.failures}) %}
       {% do result_row.setdefault('test_results_description', result.message) %}
     {% endfor %}
   {% endfor %}
+#}
 {% endmacro %}
 
 {% macro get_cached_test_result_rows(flatten_test_node) %}

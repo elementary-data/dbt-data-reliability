@@ -1,8 +1,12 @@
-{% macro query_test_result_rows(sample_limit=none) %}
-  {%- set test_result_rows_sql -%}
-      select * from ({{ sql }}) {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
+{% macro query_test_result_rows(query=none, sample_limit=none) %}
+  {% if not query %}
+    {% set query = sql %}
+  {% endif %}
+
+  {%- set query -%}
+      select * from ({{ query }}) {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
   {%- endset -%}
-  {% do return(dbt.run_query(test_result_rows_sql)) %}
+  {% do return(dbt.run_query(query)) %}
 {% endmacro %}
 
 {% macro cache_test_result_rows(test_result_rows) %}
@@ -18,7 +22,7 @@
   {% endif %}
 
   {% set test_result_rows = [] %}
-  {% for test_result_row in elementary.query_test_result_rows() %}
+  {% for test_result_row in elementary.query_test_result_rows(query=elementary.get_read_anomaly_scores_query(flattened_test)) %}
     {% do test_result_rows.append(elementary.get_anomaly_test_result_row(flattened_test, test_result_row)) %}
   {% endfor %}
   {% do elementary.cache_test_result_rows(test_result_rows) %}
@@ -42,7 +46,7 @@
 
 {% macro handle_dbt_test(flattened_test) %}
   {% set test_result_rows = [] %}
-  {% for test_result_row in elementary.query_test_result_rows(elementary.get_config_var('test_sample_row_count')) %}
+  {% for test_result_row in elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count')) %}
     {% do test_result_rows.append(elementary.get_dbt_test_result_row(flattened_test, test_result_row, 'dbt_test')) %}
   {% endfor %}
   {% do elementary.cache_test_result_rows(test_result_rows) %}
