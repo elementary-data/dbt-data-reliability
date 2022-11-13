@@ -13,7 +13,11 @@
             {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
                                                                             schema=schema_name,
                                                                             identifier='elementary_test_results') -%}
-            {%- do elementary.insert_rows(elementary_test_results_relation, test_results.values(), should_commit=True) -%}
+            {% set aggregated_test_results = [] %}
+            {% for test_result_rows in test_results.values() %}
+              {% do aggregated_test_results.extend(test_result_rows) %}
+            {% endfor %}
+            {%- do elementary.insert_rows(elementary_test_results_relation, aggregated_test_results, should_commit=True) -%}
         {% endif %}
     {% endif %}
     {{ elementary.debug_log("Handled test results successfully.") }}
@@ -37,13 +41,6 @@
       {{ return([]) }}
     {% endif %}
     {{ return(elementary.agate_to_dicts(test_result_rows)) }}
-{% endmacro %}
-
-{% macro render_test_result_rows(test_result_rows) %}
-  {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
-    {{ return(test_result_rows) }}
-  {% endif %}
-  {{ return(none) }}
 {% endmacro %}
 
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}

@@ -60,8 +60,7 @@
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
 
-        {# return anomalies query as standard test query #}
-        select * from {{ anomaly_scores_test_table_relation }}
+        {{ elementary.get_read_anomaly_scores_query() }}
 
     {%- else %}
 

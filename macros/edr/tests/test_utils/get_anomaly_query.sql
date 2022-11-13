@@ -1,13 +1,21 @@
-{%- macro get_anomaly_query(flattened_test) -%}
+{%- macro get_anomaly_query(flattened_test=none) -%}
+  {% if not flattened_test %}
+    {% set flattened_test = elementary.flatten_test(model) %}
+  {% endif %}
+
+  {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
   {%- set query -%}
-    select * from ({{ elementary.get_anomaly_scores_query(flattened_test) }})
+    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }})
     where abs(anomaly_score) > {{ sensitivity }}
   {%- endset -%}
   {{- return(query) -}}
 {%- endmacro -%}
 
-{% macro get_read_anomaly_scores_query(flattened_test) %}
-    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
+{% macro get_read_anomaly_scores_query(flattened_test=none) %}
+    {% if not flattened_test %}
+      {% set flattened_test = elementary.flatten_test(model) %}
+    {% endif %}
+
     {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
     {%- set anomaly_query -%}
