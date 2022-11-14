@@ -133,6 +133,9 @@
               else max_metric_value end as max_value,
              bucket_start as start_time,
              bucket_end as end_time,
+             is_anomalous,
+             dimension,
+             dimension_value,
              metric_id
       from anomaly_scores_with_is_anomalous
       where upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
@@ -140,7 +143,7 @@
            {%- if column_name %}
               and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
            {%- endif %}
-      order by bucket_end
+      order by bucket_end, dimension_value
   {%- endset -%}
   {% set test_results_description %}
       {% if elementary.insensitive_get_dict_value(elementary_test_row, 'anomaly_score') is none %}
