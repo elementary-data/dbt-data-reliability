@@ -41,24 +41,34 @@
   {% endif %}
 
   {% set result_rows = elementary.query_test_result_rows() %}
-  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, 'schema_change', result_rows) %}
+  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
 {% macro handle_dbt_test(flattened_test) %}
   {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count')) %}
-  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, 'dbt_test', result_rows) %}
+  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
+{% endmacro %}
+
+{% macro get_elementary_test_type(flattened_test) %}
+  {% if flattened_test.test_namespace == "elementary" %}
+    {% if flattened_test.short_name.endswith("anomalies") %}
+      {% do return("anomaly_detection") %}
+    {% elif flattened_test.short_name == 'schema_changes' %}
+      {% do return("schema_change") %}
+    {% endif %}
+  {% endif %}
+  {% do return("dbt_test") %}
 {% endmacro %}
 
 {% macro materialize_test() %}
   {% set flattened_test = elementary.flatten_test(model) %}
-  {% if flattened_test.test_namespace == "elementary" %}
-    {% if flattened_test.short_name.endswith("anomalies") %}
-      {% do return(elementary.handle_anomaly_test(flattened_test)) %}
-    {% elif flattened_test.short_name == 'schema_changes' %}
-      {% do return(elementary.handle_schema_changes_test(flattened_test)) %}
-    {% endif %}
+  {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
+  {% if test_type == "anomaly_detection" %}
+    {% do return(elementary.handle_anomaly_test(flattened_test)) %}
+  {% elif test_type == "schema_change" %}
+    {% do return(elementary.handle_schema_changes_test(flattened_test)) %}
   {% endif %}
   {% do return(elementary.handle_dbt_test(flattened_test)) %}
 {% endmacro %}
@@ -150,12 +160,12 @@
       'test_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
       'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
       'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-      'result_rows': anomaly_score_rows
+      'result_rows': elementary.render_result_rows(anomaly_score_rows)
   } %}
   {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_dbt_test_result_row(flattened_test, test_type=none, result_rows=none) %}
+{% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
     {% set test_execution_id = elementary.get_node_execution_id(flattened_test) %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
@@ -179,7 +189,7 @@
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(flattened_test, 'test_column_name'),
-        'test_type': test_type,
+        'test_type': elementary.get_elementary_test_type(flattened_test),
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
@@ -188,12 +198,12 @@
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-        'result_rows': result_rows
+        'result_rows': elementary.render_result_rows(result_rows)
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro render_test_result_rows(test_result_rows) %}
+{% macro render_result_rows(test_result_rows) %}
   {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
     {{ return(test_result_rows) }}
   {% endif %}
