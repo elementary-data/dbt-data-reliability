@@ -170,8 +170,7 @@
 {% endmacro %}
 
 {% macro get_schema_changes_test_result_row(flattened_test, elementary_test_row) %}
-  {% set result_row = elementary_test_row %}
-  {% do result_row.update({
+  {% do elementary_test_row.update({
     'other': none,
     'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
     'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
@@ -182,7 +181,7 @@
     'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
     'test_type': "schema_change"
   }) %}
-  {{ return(result_row) }}
+  {{ return(elementary_test_row) }}
 {% endmacro %}
 
 {% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
