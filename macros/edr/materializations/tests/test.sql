@@ -17,19 +17,26 @@
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
 
-  {% set test_result_metrics_rows = {} %}
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
-  {% for anomaly_score_row in anomaly_scores_rows %}
-    {% do test_result_metrics_rows.setdefault(anomaly_score_row.metric_name, []) %}
-    {% do test_result_metrics_rows[anomaly_score_row.metric_name].append(anomaly_score_row) %}
-  {% endfor %}
+  {% if anomaly_scores_rows and flattened_test.short_name == "dimension_anomalies" %}
+    {% set sample_row = anomaly_scores_rows[0] %}
+    {% do elementary.cache_elementary_test_results_rows([elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)]) %}
+  {% else %}
+    {% set test_result_metrics_rows = {} %}
+    {% for anomaly_score_row in anomaly_scores_rows %}
+      {% do test_result_metrics_rows.setdefault(anomaly_score_row.metric_name, []) %}
+      {% do test_result_metrics_rows[anomaly_score_row.metric_name].append(anomaly_score_row) %}
+    {% endfor %}
 
-  {% set elementary_test_results_rows = [] %}
-  {% for metric_rows in test_result_metrics_rows.values() %}
-    {% set sample_row = metric_rows[0] %}
-    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, metric_rows)) %}
-  {% endfor %}
-  {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
+    {% set elementary_test_results_rows = [] %}
+    {% for metric_rows in test_result_metrics_rows.values() %}
+      {% for metric_row in metric_rows %}
+        {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, metric_row, metric_rows)) %}
+      {% endfor %}
+    {% endfor %}
+    {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
+  {% endif %}
+
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
 {% endmacro %}
 
