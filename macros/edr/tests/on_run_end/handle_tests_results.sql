@@ -30,10 +30,9 @@
     {% endif %}
 
     {% for elementary_test_results_row in elementary_test_results_rows %}
-      {% set copied_elementary_test_results_row = elementary_test_results_row.copy() %}
-      {% do copied_elementary_test_results_row.update({'status': result.status, 'failures': result.failures}) %}
-      {% do copied_elementary_test_results_row.setdefault('test_results_description', result.message) %}
-      {% do elementary_test_results.append(copied_elementary_test_results_row) %}
+      {% do elementary_test_results_row.update({'status': result.status, 'failures': result.failures}) %}
+      {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
+      {% do elementary_test_results.append(elementary_test_results_row) %}
     {% endfor %}
   {% endfor %}
 

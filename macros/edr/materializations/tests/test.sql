@@ -40,9 +40,12 @@
     {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
   {% endif %}
 
-  {% set result_rows = elementary.query_test_result_rows() %}
-  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
-  {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
+  {% set elementary_test_results_rows = [] %}
+  {% set schema_changes_rows = elementary.query_test_result_rows() %}
+  {% for schema_changes_row in schema_changes_rows %}
+    {% do elementary_test_results_rows.append(elementary.get_schema_changes_test_result_row(flattened_test, schema_changes_row)) %}
+  {% endfor %}
+  {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 {% endmacro %}
 
 {% macro handle_dbt_test(flattened_test) %}
@@ -165,6 +168,22 @@
   {{ return(test_result_dict) }}
 {% endmacro %}
 
+{% macro get_schema_changes_test_result_row(flattened_test, elementary_test_row) %}
+  {% set result_row = elementary_test_row %}
+  {% do result_row.update({
+    'other': none,
+    'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
+    'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
+    'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
+    'test_results_query': test_results_query,
+    'test_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
+    'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
+    'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
+    'test_type': "schema_change"
+  }) %}
+  {{ return(result_row) }}
+{% endmacro %}
+
 {% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
     {% set test_execution_id = elementary.get_node_execution_id(flattened_test) %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
@@ -177,7 +196,6 @@
     {%- else -%}
         {% set test_name = test_long_name %}
     {%- endif -%}
-    {% set test_results_query = elementary.get_compiled_code(flattened_test) %}
     {% set test_result_dict = {
         'id': test_execution_id,
         'data_issue_id': none,
@@ -194,7 +212,7 @@
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
-        'test_results_query': test_results_query,
+        'test_results_query': elementary.get_compiled_code(flattened_test),
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
