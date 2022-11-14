@@ -1,6 +1,56 @@
 version: 2
 
 models:
+  - name: dbt_invocations
+    description: >
+      Attributes associated with each dbt invocation. Inserted at the end of each invocation. Each row is the execution of one invocation.
+
+    columns:
+      - name: invocation_id
+        data_type: string
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              field: invocation_id
+              to: ref('dbt_run_results')
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
+      - name:
+        data_type:
+        description:
+
   - name: dbt_run_results
     description: >
       Run results of dbt invocations, inserted at the end of each invocation.
@@ -72,6 +122,12 @@ models:
         data_type: string
         description: The compiled code (SQL / Python) executed against the database.
 
+  - name: elementary_test_results
+    description: >
+      Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
+      Each row is the result of a single test, including native dbt tests, packages tests and elementary tests.
+      New data is loaded to this model on an on-run-end hook named `elementary.handle_tests_results`.
+
   - name: model_run_results
     description: >
       Run results of dbt models, enriched with models metadata.
@@ -84,8 +140,3 @@ models:
       Each row is the result of a single snapshot.
       This is a view that joins data from `dbt_run_results` and `dbt_snapshots`.
 
-  - name: elementary_test_results
-    description: >
-      Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
-      Each row is the result of a single test, including native dbt tests, packages tests and elementary tests.
-      New data is loaded to this model on an on-run-end hook named `elementary.handle_tests_results`.
