@@ -26,8 +26,9 @@
 
   {% set elementary_test_results_rows = [] %}
   {% for metric_rows in test_result_metrics_rows.values() %}
-    {% set sample_row = metric_rows[0] %}
-    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, metric_rows)) %}
+    {% for metric_row in metric_rows %}
+      {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, metric_row, metric_rows)) %}
+    {% endfor %}
   {% endfor %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
