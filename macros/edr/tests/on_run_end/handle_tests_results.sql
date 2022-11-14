@@ -21,20 +21,20 @@
 
   {% for result in results %}
     {% set result = result.to_dict() %}
-    {% set cached_elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
+    {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
 
     {# Materializing the test failed and therefore was not added to the cache. #}
-    {% if not cached_elementary_test_results_rows %}
+    {% if not elementary_test_results_rows %}
       {% set flattened_test = elementary.flatten_test(result.node) %}
-      {% do elementary_test_results.append(elementary.get_dbt_test_result_row(flattened_test)) %}
-    {% else %}
-    {% for cached_elementary_test_result_row in cached_elementary_test_results_rows %}
-      {% set copied_elementary_test_result_row = cached_elementary_test_result_row.copy() %}
-      {% do copied_elementary_test_result_row.update({'status': result.status, 'failures': result.failures}) %}
-      {% do copied_elementary_test_result_row.setdefault('test_results_description', result.message) %}
-      {% do elementary_test_results.append(copied_elementary_test_result_row) %}
-    {% endfor %}
+      {% set elementary_test_results_rows = [elementary.get_dbt_test_result_row(flattened_test)] %}
     {% endif %}
+
+    {% for elementary_test_results_row in elementary_test_results_rows %}
+      {% set copied_elementary_test_results_row = elementary_test_results_row.copy() %}
+      {% do copied_elementary_test_results_row.update({'status': result.status, 'failures': result.failures}) %}
+      {% do copied_elementary_test_results_row.setdefault('test_results_description', result.message) %}
+      {% do elementary_test_results.append(copied_elementary_test_results_row) %}
+    {% endfor %}
   {% endfor %}
 
   {% do return(elementary_test_results) %}
