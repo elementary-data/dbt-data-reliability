@@ -16,24 +16,24 @@ models:
               to: ref('dbt_run_results')
 
       - name: run_started_at
-        data_type:
-        description:
+        data_type: timestamp
+        description: Timestamp the invocation was started.
 
       - name: run_completed_at
-        data_type:
-        description:
+        data_type: timestamp
+        description: Timestamp the invocation was completed
 
       - name: generated_at
-        data_type:
-        description:
+        data_type: timestamp
+        description: Timestamp the invocation was completed and generated.
 
       - name: command
-        data_type:
-        description:
+        data_type: string
+        description: dbt command that was used. For example, run.
 
       - name: dbt_version
-        data_type:
-        description:
+        data_type: string
+        description: Version of dbt that was used in this invocation.
 
       - name: elementary_version
         data_type:
@@ -44,16 +44,16 @@ models:
         description: Whether or not this invocation was executed with a full-refresh flag
 
       - name: cli_vars
-        data_type:
-        description:
+        data_type: string
+        description: Dictionary of the variables (and values) that were declared in the invocation.
 
       - name: vars
-        data_type:
-        description:
+        data_type: string
+        description: Dictionary of all variables (and values) in the dbt project. If none were declared at runtime, these are the variables declared in dbt_project yml
 
       - name: target_name
-        data_type:
-        description:
+        data_type: string
+        description: Name of the target used in this invocation.
 
       - name: target_database
         data_type: string
