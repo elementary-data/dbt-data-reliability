@@ -1,46 +1,43 @@
 {% macro handle_tests_results() %}
-    {% if execute and flags.WHICH in ['test', 'build'] %}
-        {{ elementary.edr_log("Handling test results.") }}
-        {% set test_results = elementary.get_cache("test_results") %}
-        {% do elementary.enrich_test_results(test_results) %}
-        {% set tables_cache = elementary.get_cache("tables") %}
-        {% set test_metrics_tables = tables_cache.get("metrics") %}
-        {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
-        {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
-        {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
-        {% if test_results %}
-            {%- set elementary_test_results_relation = adapter.get_relation(database=database_name,
-                                                                            schema=schema_name,
-                                                                            identifier='elementary_test_results') -%}
-            {% set aggregated_test_results = [] %}
-            {% for test_result_rows in test_results.values() %}
-              {% do aggregated_test_results.extend(test_result_rows) %}
-            {% endfor %}
-            {%- do elementary.insert_rows(elementary_test_results_relation, aggregated_test_results, should_commit=True) -%}
-        {% endif %}
+    {{ elementary.edr_log("Handling test results.") }}
+    {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
+    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
+    {% set tables_cache = elementary.get_cache("tables") %}
+    {% set test_metrics_tables = tables_cache.get("metrics") %}
+    {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
+    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+    {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
+    {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
+    {% if elementary_test_results %}
+      {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
+      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
     {% endif %}
     {{ elementary.debug_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
 
-{% macro enrich_test_results(test_results) %}
-{#
-  {% for result in results %}
-    {% for result_row in test_results.get(result.node.unique_id) %}
-      {% do result_row.update({'status': result.status, 'failures': result.failures}) %}
-      {% do result_row.setdefault('test_results_description', result.message) %}
-    {% endfor %}
-  {% endfor %}
-#}
-{% endmacro %}
+{% macro get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
+  {% set elementary_test_results = [] %}
 
-{% macro get_cached_test_result_rows(flatten_test_node) %}
-    {% set test_result_rows = elementary.get_cache("test_results").get(flatten_test_node.unique_id) %}
-    {% if not test_result_rows %}
-      {{ return([]) }}
+  {% for result in results %}
+    {% set result = result.to_dict() %}
+    {% set cached_elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
+
+    {# Materializing the test failed and therefore was not added to the cache. #}
+    {% if not cached_elementary_test_results_rows %}
+      {% set flattened_test = elementary.flatten_test(result.node) %}
+      {% do elementary_test_results.append(elementary.get_dbt_test_result_row(flattened_test)) %}
+    {% else %}
+    {% for cached_elementary_test_result_row in cached_elementary_test_results_rows %}
+      {% set copied_elementary_test_result_row = cached_elementary_test_result_row.copy() %}
+      {% do copied_elementary_test_result_row.update({'status': result.status, 'failures': result.failures}) %}
+      {% do copied_elementary_test_result_row.setdefault('test_results_description', result.message) %}
+      {% do elementary_test_results.append(copied_elementary_test_result_row) %}
+    {% endfor %}
     {% endif %}
-    {{ return(elementary.agate_to_dicts(test_result_rows)) }}
+  {% endfor %}
+
+  {% do return(elementary_test_results) %}
 {% endmacro %}
 
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}

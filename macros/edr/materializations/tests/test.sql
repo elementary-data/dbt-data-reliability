@@ -2,11 +2,11 @@
   {%- set query -%}
       select * from ({{ sql }}) {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
   {%- endset -%}
-  {% do return(dbt.run_query(query)) %}
+  {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
 {% endmacro %}
 
-{% macro cache_test_result_rows(test_result_rows) %}
-  {% do elementary.get_cache("test_results").update({model.unique_id: test_result_rows}) %}
+{% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
+  {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}
 {% endmacro %}
 
 
@@ -17,13 +17,19 @@
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
 
-  {% set test_result_rows = [] %}
+  {% set test_result_metrics_rows = {} %}
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
-  {% for test_result_row in anomaly_scores_rows %}
-    {% do test_result_rows.append(elementary.get_anomaly_test_result_row(flattened_test, test_result_row)) %}
+  {% for anomaly_score_row in anomaly_scores_rows %}
+    {% do test_result_metrics_rows.setdefault(anomaly_score_row.metric_name, []) %}
+    {% do test_result_metrics_rows[anomaly_score_row.metric_name].append(anomaly_score_row) %}
   {% endfor %}
-  {% do elementary.cache_test_result_rows(test_result_rows) %}
 
+  {% set elementary_test_results_rows = [] %}
+  {% for metric_rows in test_result_metrics_rows.values() %}
+    {% set sample_row = metric_rows[0] %}
+    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, metric_rows)) %}
+  {% endfor %}
+  {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
 {% endmacro %}
 
@@ -34,19 +40,15 @@
     {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
   {% endif %}
 
-  {% set test_result_rows = [] %}
-  {% for test_result_row in elementary.query_test_result_rows() %}
-    {% do test_result_rows.append(elementary.get_dbt_test_result_row(flattened_test, test_result_row, 'schema_change')) %}
-  {% endfor %}
-  {% do elementary.cache_test_result_rows(test_result_rows) %}
+  {% set result_rows = elementary.query_test_result_rows() %}
+  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, 'schema_change', result_rows) %}
+  {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
 {% macro handle_dbt_test(flattened_test) %}
-  {% set test_result_rows = [] %}
-  {% for test_result_row in elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count')) %}
-    {% do test_result_rows.append(elementary.get_dbt_test_result_row(flattened_test, test_result_row, 'dbt_test')) %}
-  {% endfor %}
-  {% do elementary.cache_test_result_rows(test_result_rows) %}
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count')) %}
+  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, 'dbt_test', result_rows) %}
+  {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
 {% macro materialize_test() %}
@@ -72,7 +74,7 @@
 {% endmaterialization %}
 
 
-{% macro get_anomaly_test_result_row(flattened_test, elementary_test_row) %}
+{% macro get_anomaly_test_result_row(flattened_test, elementary_test_row, anomaly_score_rows) %}
   {% set full_table_name = elementary.insensitive_get_dict_value(elementary_test_row, 'full_table_name') %}
   {% set database_name, schema_name, table_name = elementary.split_full_table_name_to_vars(full_table_name) %}
   {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params', {}) %}
@@ -148,12 +150,12 @@
       'test_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
       'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
       'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-      'result_rows': elementary.render_test_result_rows(elementary.get_cached_test_result_rows(flattened_test))
+      'result_rows': anomaly_score_rows
   } %}
   {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_dbt_test_result_row(flattened_test, test_result_row, test_type) %}
+{% macro get_dbt_test_result_row(flattened_test, test_type=none, result_rows=none) %}
     {% set test_execution_id = elementary.get_node_execution_id(flattened_test) %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
@@ -186,9 +188,7 @@
         'test_name': test_name,
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-        'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
-        'result_rows': elementary.render_test_result_rows(elementary.get_cached_test_result_rows(flattened_test))
+        'result_rows': result_rows
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
