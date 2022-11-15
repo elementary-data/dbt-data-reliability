@@ -70,6 +70,10 @@ models:
         data_type: string
         description: The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
 
+      - name: selected_resources
+        data_type: string
+        description: Deprecated and replaced with Selected. Run a full-refresh to remove this column (history will be lost). The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
+
       - name: yaml_selector
         data_type: string
         description: The yaml selector that was passed in this invocation.
