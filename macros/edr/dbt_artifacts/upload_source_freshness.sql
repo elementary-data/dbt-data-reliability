@@ -1,6 +1,10 @@
 {% macro upload_source_freshness() %}
+  {% set runtime_conf = elementary.get_runtime_config() %}
+  {% if not runtime_conf %}
+    {% do exceptions.raise_compiler_error('Unable to get the runtime configuration.') %}
+  {% endif %}
   {% set source_freshness_results_relation = ref('dbt_source_freshness_results') %}
-  {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
+  {% set sources_json_path = flags.Path(runtime_conf.target_path).joinpath('sources.json') %}
   {% if not sources_json_path.exists() %}
     {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
   {% else %}

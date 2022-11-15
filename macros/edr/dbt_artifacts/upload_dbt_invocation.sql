@@ -34,7 +34,7 @@
     {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.select -%}
         {{- return(invocation_args_dict.select) -}}
-    {%- elif config.args and config.args.select -%}
+    {%- elif config and config.args and config.args.select -%}
         {{- return(config.args.select) -}}
     {%- else -%}
         {{- return([]) -}}
@@ -45,7 +45,7 @@
     {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.selector_name -%}
         {{- return(invocation_args_dict.selector_name) -}}
-    {%- elif config.args and config.args.selector_name -%}
+    {%- elif config and config.args and config.args.selector_name -%}
         {{- return(config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
@@ -54,9 +54,7 @@
 
 {%- macro get_invocation_vars() -%}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.vars -%}
-        {{- return(fromjson(invocation_args_dict.vars)) -}}
-    {%- elif config.cli_vars -%}
+    {%- if config and config.cli_vars -%}
         {{- return(config.cli_vars) -}}
     {%- else -%}
         {{- return({}) -}}
@@ -66,7 +64,7 @@
 {%- macro get_all_vars() -%}
     {% set all_vars = {} %}
     {% set config = elementary.get_runtime_config() %}
-    {%- if config.vars -%}
+    {%- if config and config.vars -%}
         {% do all_vars.update(config.vars.to_dict()) %}
     {%- endif -%}
     {% do all_vars.update(elementary.get_invocation_vars()) %}

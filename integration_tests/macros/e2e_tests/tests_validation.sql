@@ -410,4 +410,11 @@
     {% do all_executable_nodes.extend(models) %}
     {% do all_executable_nodes.extend(tests) %}
     {{ assert_list1_in_list2(run_results, all_executable_nodes, context='dbt_run_results') }}
+
+    {% set dbt_invocations = get_artifacts_table_relation('dbt_invocations') %}
+    {% set dbt_invocations_query %}
+        select invocation_vars from {{ dbt_invocations }} where invocation_vars is null
+    {% endset %}
+    {% set results = elementary.result_column_to_list(dbt_invocations_query) %}
+    {{ assert_lists_contain_same_items(results, []) }}
 {% endmacro %}
