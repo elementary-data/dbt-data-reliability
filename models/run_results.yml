@@ -8,24 +8,19 @@ models:
     columns:
       - name: invocation_id
         data_type: string
-        tests:
-          - not_null
-          - unique
-          - relationships:
-              field: invocation_id
-              to: ref('dbt_run_results')
+        description: Primary key of this table.
 
       - name: run_started_at
-        data_type: timestamp
+        data_type: string
         description: Timestamp the invocation was started.
 
       - name: run_completed_at
-        data_type: timestamp
+        data_type: string
         description: Timestamp the invocation was completed
 
       - name: generated_at
-        data_type: timestamp
-        description: Timestamp the invocation was completed and generated.
+        data_type: string
+        description: The time this invocation was uploaded to the database.
 
       - name: command
         data_type: string
@@ -36,8 +31,8 @@ models:
         description: Version of dbt that was used in this invocation.
 
       - name: elementary_version
-        data_type:
-        description:
+        data_type: string
+        description: Version of the elementary package that was used in this invocation.
 
       - name: full_refresh
         data_type: boolean
@@ -57,7 +52,7 @@ models:
 
       - name: target_database
         data_type: string
-        description: Name of the target schema that was used in this invocation.
+        description: Name of the target database that was used in this invocation.
 
       - name: target_schema
         data_type: string
@@ -69,11 +64,11 @@ models:
 
       - name: threads
         data_type: integer
-        description: ""
+        description: Number of threads that were used to run this dbt invocation. (This number could impact the performance of a dbt invocation).
 
       - name: selected
         data_type: string
-        description: While this is a string in the database, this can easily be converted to an array.
+        description: The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
 
       - name: yaml_selector
         data_type: string
@@ -97,7 +92,7 @@ models:
 
       - name: invocation_id
         data_type: string
-        description: The unique id of the invocation (would be similar for all resources executed on the same invocation).
+        description: The unique id of the invocation (would be similar for all resources executed on the same invocation). FK to dbt_invocations.
 
       - name: generated_at
         data_type: string
