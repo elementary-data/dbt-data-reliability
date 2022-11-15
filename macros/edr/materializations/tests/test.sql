@@ -75,12 +75,12 @@
 {% macro materialize_test() %}
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
-  {% if test_type == "anomaly_detection" %}
-    {% do return(elementary.handle_anomaly_test(flattened_test)) %}
-  {% elif test_type == "schema_change" %}
-    {% do return(elementary.handle_schema_changes_test(flattened_test)) %}
-  {% endif %}
-  {% do return(elementary.handle_dbt_test(flattened_test)) %}
+  {% set test_type_handler_map = {
+    "anomaly_detection": elementary.handle_anomaly_test,
+    "schema_change": elementary.handle_schema_changes_test
+  } %}
+  {% set test_type_handler = test_type_handler_map.get(test_type, elementary.handle_dbt_test) %}
+  {% do test_type_handler(flattened_test) %}
 {% endmacro %}
 
 {% materialization test, default %}
