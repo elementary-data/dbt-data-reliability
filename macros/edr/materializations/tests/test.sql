@@ -101,8 +101,8 @@
   {% set sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') or elementary.get_config_var('anomaly_sensitivity') %}
   {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') or elementary.get_config_var('backfill_days') %}
   {% set timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
+  {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
   {% if not timestamp_column %}
-    {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
     {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
     {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, parent_model_node) %}
   {% endif %}
@@ -157,7 +157,7 @@
       'data_issue_id': elementary.insensitive_get_dict_value(elementary_test_row, 'metric_id'),
       'test_execution_id': elementary.insensitive_get_dict_value(elementary_test_row, 'test_execution_id'),
       'test_unique_id': elementary.insensitive_get_dict_value(elementary_test_row, 'test_unique_id'),
-      'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
+      'model_unique_id': parent_model_unique_id,
       'detected_at': elementary.insensitive_get_dict_value(elementary_test_row, 'detected_at'),
       'database_name': database_name,
       'schema_name': schema_name,
