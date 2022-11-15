@@ -166,11 +166,13 @@
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
-        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_name': elementary.insensitive_get_dict_value(test_node, 'name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'test_short_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_alias': elementary.insensitive_get_dict_value(test_node, 'alias')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -267,11 +269,13 @@
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
-        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_name': elementary.insensitive_get_dict_value(test_node, 'name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'test_short_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_alias': elementary.insensitive_get_dict_value(test_node, 'alias')
     } %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -285,11 +289,13 @@
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
-        'test_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_name': elementary.insensitive_get_dict_value(test_node, 'name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'test_short_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_alias': elementary.insensitive_get_dict_value(test_node, 'alias')
     }) %}
     {{ return(test_result_dict) }}
 {% endmacro %}
@@ -299,13 +305,6 @@
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(test_node, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
     {% set parent_model_name = elementary.get_table_name_from_node(parent_model) %}
-    {% set test_short_name = elementary.insensitive_get_dict_value(test_node, 'short_name') %}
-    {% set test_long_name = elementary.insensitive_get_dict_value(test_node, 'name') %}
-    {%- if test_short_name -%}
-        {% set test_name = test_short_name %}
-    {%- else -%}
-        {% set test_name = test_long_name %}
-    {%- endif -%}
     {% set test_results_query = elementary.get_compiled_code(test_node) %}
     {% set test_result_dict = {
         'id': test_execution_id,
@@ -325,11 +324,13 @@
         'owners': elementary.insensitive_get_dict_value(test_node, 'model_owners'),
         'tags': elementary.insensitive_get_dict_value(test_node, 'model_tags'),
         'test_results_query': test_results_query,
-        'test_name': test_name,
+        'test_name': elementary.insensitive_get_dict_value(test_node, 'name'),
         'test_params': elementary.insensitive_get_dict_value(test_node, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(test_node, 'severity'),
         'status': elementary.insensitive_get_dict_value(run_result_dict, 'status'),
-        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures')
+        'failures': elementary.insensitive_get_dict_value(run_result_dict, 'failures'),
+        'test_short_name': elementary.insensitive_get_dict_value(test_node, 'short_name'),
+        'test_alias': elementary.insensitive_get_dict_value(test_node, 'alias')
     }%}
     {{ return(test_result_dict) }}
 {% endmacro %}
