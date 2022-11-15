@@ -36,9 +36,9 @@ models:
 
       - name: full_refresh
         data_type: boolean
-        description: Whether or not this invocation was executed with a full-refresh flag
+        description: Whether or not this invocation was executed as a full-refresh.
 
-      - name: cli_vars
+      - name: invocation_vars
         data_type: string
         description: Dictionary of the variables (and values) that were declared in the invocation.
 
