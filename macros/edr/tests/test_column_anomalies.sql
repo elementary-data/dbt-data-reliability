@@ -14,8 +14,7 @@
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {% if not model_relation %}
-            {{ elementary.test_log('monitored_table_not_found', full_table_name) }}
-            {{ return(elementary.no_results_query()) }}
+            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
         {% endif %}
 
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
@@ -29,8 +28,7 @@
 
         {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model, column_name, column_anomalies) -%}
         {%- if not column_obj_and_monitors -%}
-            {{ elementary.edr_log('column ' ~ column_name ~ ' object was not found') }}
-            {{ return(elementary.no_results_query()) }}
+            {{ exceptions.raise_compiler_error("Unable to find column `{}` in `{}`".format(column_name, full_table_name)) }}
         {%- endif -%}
         {%- set column_monitors = column_obj_and_monitors['monitors'] -%}
         {%- set column_obj = column_obj_and_monitors['column'] -%}

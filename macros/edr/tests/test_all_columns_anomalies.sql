@@ -16,8 +16,7 @@
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {%- if not model_relation %}
-            {{- elementary.test_log('monitored_table_not_found', full_table_name) }}
-            {{- return(elementary.no_results_query()) }}
+            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
         {%- endif %}
 
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
