@@ -27,7 +27,7 @@
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
-  {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
+  {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}

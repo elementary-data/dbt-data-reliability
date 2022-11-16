@@ -4,7 +4,7 @@
         {{ elementary.edr_log("Uploading run results.") }}
         {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, should_commit=True) %}
     {% endif %}
-    {{ elementary.debug_log("Uploaded run results successfully.") }}
+    {{ elementary.edr_log("Uploaded run results successfully.") }}
     {{ return ('') }}
 {% endmacro %}
 

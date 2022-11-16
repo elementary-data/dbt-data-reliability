@@ -21,6 +21,6 @@
         {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
-    {% do elementary.debug_log("Uploaded dbt artifacts successfully.") %}
+    {% do elementary.edr_log("Uploaded dbt artifacts successfully.") %}
   {% endif %}
 {% endmacro %}
