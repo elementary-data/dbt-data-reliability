@@ -55,7 +55,7 @@
 {%- macro get_invocation_vars() -%}
     {% set config = elementary.get_runtime_config() %}
     {%- if invocation_args_dict and invocation_args_dict.vars -%}
-        {{- return(fromjson(invocation_args_dict.vars)) -}}
+        {{- return(fromyaml(invocation_args_dict.vars)) -}}
     {%- elif config.cli_vars -%}
         {{- return(config.cli_vars) -}}
     {%- else -%}
