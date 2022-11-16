@@ -111,6 +111,11 @@
   {% set metric_name = elementary.insensitive_get_dict_value(elementary_test_row, 'metric_name') %}
   {% set metric_id = elementary.insensitive_get_dict_value(elementary_test_row, 'metric_id') %}
   {% set backfill_period = "'-" ~ backfill_days ~ "'" %}
+  {% set test_unique_id = elementary.insensitive_get_dict_value(elementary_test_row, 'test_unique_id') %}
+  {% set has_anomaly_score = elementary.insensitive_get_dict_value(elementary_test_row, 'anomaly_score') is not none %}
+  {% if not has_anomaly_score %}
+    {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
+  {% endif %}
   {% set test_results_query %}
       with anomaly_scores as (
           select * from {{ elementary.get_elementary_test_table(flattened_test.name, 'anomaly_scores') }}
@@ -146,17 +151,17 @@
       order by bucket_end, dimension_value
   {%- endset -%}
   {% set test_results_description %}
-      {% if elementary.insensitive_get_dict_value(elementary_test_row, 'anomaly_score') is none %}
-          Not enough data to calculate anomaly score.
-      {% else %}
+      {% if has_anomaly_score %}
           {{ elementary.insensitive_get_dict_value(elementary_test_row, 'anomaly_description') }}
+      {% else %}
+          Not enough data to calculate anomaly score.
       {% endif %}
   {% endset %}
   {% set test_result_dict = {
       'id': elementary.insensitive_get_dict_value(elementary_test_row, 'id'),
       'data_issue_id': elementary.insensitive_get_dict_value(elementary_test_row, 'metric_id'),
       'test_execution_id': elementary.insensitive_get_dict_value(elementary_test_row, 'test_execution_id'),
-      'test_unique_id': elementary.insensitive_get_dict_value(elementary_test_row, 'test_unique_id'),
+      'test_unique_id': test_unique_id,
       'model_unique_id': parent_model_unique_id,
       'detected_at': elementary.insensitive_get_dict_value(elementary_test_row, 'detected_at'),
       'database_name': database_name,
