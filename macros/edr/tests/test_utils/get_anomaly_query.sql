@@ -51,12 +51,12 @@
         training_end,
         dimension,
         dimension_value,
+        is_anomalous,
+        {{ elementary.anomaly_detection_description() }},
         metric_value as value,
         training_avg as average,
         bucket_start as start_time,
         bucket_end as end_time,
-        is_anomalous,
-        {{ elementary.anomaly_detection_description() }},
         case when is_anomalous = TRUE then
          lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
         else min_metric_value end as min_value,
