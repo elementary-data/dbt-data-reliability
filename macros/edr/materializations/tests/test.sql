@@ -22,14 +22,14 @@
     {% set sample_row = anomaly_scores_rows[0] %}
     {% do elementary.cache_elementary_test_results_rows([elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)]) %}
   {% else %}
-    {% set test_result_metrics_rows = {} %}
+    {% set anomaly_scores_metrics_rows = {} %}
     {% for anomaly_score_row in anomaly_scores_rows %}
-      {% do test_result_metrics_rows.setdefault(anomaly_score_row.metric_name, []) %}
-      {% do test_result_metrics_rows[anomaly_score_row.metric_name].append(anomaly_score_row) %}
+      {% do anomaly_scores_metrics_rows.setdefault(anomaly_score_row.metric_name, []) %}
+      {% do anomaly_scores_metrics_rows[anomaly_score_row.metric_name].append(anomaly_score_row) %}
     {% endfor %}
 
     {% set elementary_test_results_rows = [] %}
-    {% for metric_rows in test_result_metrics_rows.values() %}
+    {% for metric_rows in anomaly_scores_metrics_rows.values() %}
       {% for metric_row in metric_rows %}
         {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, metric_row, metric_rows)) %}
       {% endfor %}
@@ -77,9 +77,13 @@
   {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
-    "schema_change": elementary.handle_schema_changes_test
+    "schema_change": elementary.handle_schema_changes_test,
+    "dbt_test": elementary.handle_dbt_test
   } %}
-  {% set test_type_handler = test_type_handler_map.get(test_type, elementary.handle_dbt_test) %}
+  {% set test_type_handler = test_type_handler_map.get(test_type) %}
+  {% if not test_type_handler %}
+    {% do exceptions.raise_compiler_error("Unknown test type: {}".format(test_type)) %}
+  {% endif %}
   {% do test_type_handler(flattened_test) %}
 {% endmacro %}
 
