@@ -34,7 +34,24 @@
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
-    'insert_rows_method': 'max_query_size'
+    'insert_rows_method': 'max_query_size',
+    'alert_fields': [
+      'table_name',
+      'deteceted_at',
+      'status'
+      'name',
+      'type',
+      'description',
+      'owners',
+      'tags',
+      'subscribers',
+      'error_message',
+      'test_column',
+      'anomalous values',
+      'test_params',
+      'test_query',
+      'results_sample'
+    ] 
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}
