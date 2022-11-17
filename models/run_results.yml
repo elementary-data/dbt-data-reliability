@@ -150,6 +150,15 @@ models:
         data_type: string
         description: The compiled code (SQL / Python) executed against the database.
 
+      - name: failures
+        data_type: int
+        description: Number of failures in this run.
+
+      - name: query_id
+        data_type: string
+        description: Query ID in the data warehouse, if returned by the adapter (currently only supported in Snowflake, is null for any other adapter).
+
+
   - name: elementary_test_results
     description: >
       Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
