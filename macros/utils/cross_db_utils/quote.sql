@@ -11,3 +11,7 @@
     {% endif %}
 {%- endmacro -%}
 
+
+{% macro quote(data) %}
+  {% do return("'{}'".format(data)) %}
+{% endmacro %}
