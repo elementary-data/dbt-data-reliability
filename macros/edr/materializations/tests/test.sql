@@ -133,10 +133,14 @@
           Not enough data to calculate anomaly score.
       {% endif %}
   {% endset %}
+  {% set failures = namespace(data=0) %}
   {% set filtered_anomaly_scores_rows = [] %}
   {% for row in anomaly_scores_rows %}
     {% if row.anomaly_score is not none %}
       {% do filtered_anomaly_scores_rows.append(row) %}
+      {% if row.is_anomalous %}
+        {% set failures.data = failures.data + 1 %}
+      {% endif %}
     {% endif %}
   {% endfor %}
   {% set test_result_dict = {
@@ -162,7 +166,8 @@
       'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
       'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
       'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
-      'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows)
+      'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows),
+      'failures': failures.data
   } %}
   {{ return(test_result_dict) }}
 {% endmacro %}
