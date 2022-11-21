@@ -10,7 +10,7 @@
   {{- return(query) -}}
 {%- endmacro -%}
 
-{% macro get_read_anomaly_scores_query(flattened_test=none) %}
+{% macro get_read_anomaly_scores_query(flattened_test=none, only_most_recent=false) %}
     {% if not flattened_test %}
       {% set flattened_test = elementary.flatten_test(model) %}
     {% endif %}
@@ -23,6 +23,9 @@
         select
           *,
           {{ elementary.anomaly_detection_description() }}
+          {% if only_most_recent %}
+            ,row_number() over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end desc) as row_number
+          {% endif %}
         from {{ elementary.get_elementary_test_table(flattened_test.name, 'anomaly_scores') }}
       ),
       anomaly_scores_with_is_anomalous as (
@@ -50,6 +53,9 @@
         bucket_end as end_time,
         *
       from anomaly_scores_with_is_anomalous
+      {% if only_most_recent %}
+        where row_number = 1
+      {% endif %}
       order by bucket_end, dimension_value
     {%- endset -%}
     {{- return(anomaly_query) -}}

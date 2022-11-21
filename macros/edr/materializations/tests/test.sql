@@ -17,26 +17,21 @@
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
 
+  {% set anomaly_scores_groups_rows = {} %}
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
-  {% if anomaly_scores_rows and flattened_test.short_name == "dimension_anomalies" %}
-    {% set latest_row = anomaly_scores_rows[-1] %}
-    {% do elementary.cache_elementary_test_results_rows([elementary.get_anomaly_test_result_row(flattened_test, latest_row, anomaly_scores_rows)]) %}
-  {% else %}
-    {% set anomaly_scores_groups_rows = {} %}
-    {% for anomaly_scores_row in anomaly_scores_rows %}
-      {% set anomaly_scores_group = (anomaly_scores_row.full_table_name, anomaly_scores_row.column_name, anomaly_scores_row.metric_name) %}
-      {% do anomaly_scores_groups_rows.setdefault(anomaly_scores_group, []) %}
-      {% do anomaly_scores_groups_rows[anomaly_scores_group].append(anomaly_scores_row) %}
-    {% endfor %}
+  {% for anomaly_scores_row in anomaly_scores_rows %}
+    {% set anomaly_scores_group = (anomaly_scores_row.full_table_name, anomaly_scores_row.column_name, anomaly_scores_row.metric_name) %}
+    {% do anomaly_scores_groups_rows.setdefault(anomaly_scores_group, []) %}
+    {% do anomaly_scores_groups_rows[anomaly_scores_group].append(anomaly_scores_row) %}
+  {% endfor %}
 
-    {% set elementary_test_results_rows = [] %}
-    {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
-      {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
-      {% set latest_row = anomaly_scores_rows[-1] %}
-      {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, latest_row, anomaly_scores_rows)) %}
-    {% endfor %}
-    {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
-  {% endif %}
+  {% set elementary_test_results_rows = [] %}
+  {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
+    {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
+    {% set latest_row = anomaly_scores_rows[-1] %}
+    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, latest_row, anomaly_scores_rows)) %}
+  {% endfor %}
+  {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
 {% endmacro %}
