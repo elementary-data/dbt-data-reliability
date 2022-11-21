@@ -96,8 +96,7 @@
 {% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
   {% set latest_row = anomaly_scores_rows[-1] %}
   {% set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
-  {% set database_name, schema_name, table_name = elementary.split_full_table_name_to_vars(full_table_name) %}
-  {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params', {}) %}
+  {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params') %}
   {% set sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') or elementary.get_config_var('anomaly_sensitivity') %}
   {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') or elementary.get_config_var('backfill_days') %}
   {% set timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
@@ -109,7 +108,7 @@
   {% do test_params.update({'sensitivity': sensitivity, 'timestamp_column': timestamp_column, 'backfill_days': backfill_days}) %}
   {% set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
   {% set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
-  {% set metric_id = elementary.insensitive_get_dict_value(latest_row, 'metric_id') %}
+  {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') %}
   {% set backfill_period = "'-" ~ backfill_days ~ "'" %}
   {% set test_unique_id = elementary.insensitive_get_dict_value(latest_row, 'test_unique_id') %}
   {% set has_anomaly_score = elementary.insensitive_get_dict_value(latest_row, 'anomaly_score') is not none %}
@@ -146,30 +145,20 @@
   {% set test_result_dict = {
       'id': elementary.insensitive_get_dict_value(latest_row, 'id'),
       'data_issue_id': elementary.insensitive_get_dict_value(latest_row, 'metric_id'),
-      'test_execution_id': elementary.insensitive_get_dict_value(latest_row, 'test_execution_id'),
-      'test_unique_id': test_unique_id,
       'model_unique_id': parent_model_unique_id,
-      'detected_at': elementary.insensitive_get_dict_value(latest_row, 'detected_at'),
-      'database_name': database_name,
-      'schema_name': schema_name,
-      'table_name': table_name,
       'column_name': column_name,
       'test_type': 'anomaly_detection',
       'test_sub_type': metric_name,
       'test_results_description': test_results_description,
       'other': elementary.insensitive_get_dict_value(latest_row, 'anomalous_value'),
-      'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
-      'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
       'test_results_query': test_results_query,
-      'test_name': elementary.insensitive_get_dict_value(flattened_test, 'name'),
-      'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
-      'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-      'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
-      'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
+      'test_params': test_params,
       'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows),
       'failures': failures.data
   } %}
-  {{ return(test_result_dict) }}
+  {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
+  {% do elementary_test_row.update(test_result_dict) %}
+  {% do return(elementary_test_row) %}
 {% endmacro %}
 
 {% macro get_schema_changes_test_result_row(flattened_test, schema_changes_row) %}
@@ -207,12 +196,12 @@
         'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
         'result_rows': elementary.render_result_rows(result_rows)
     }%}
-    {{ return(test_result_dict) }}
+    {% do return(test_result_dict) %}
 {% endmacro %}
 
 {% macro render_result_rows(test_result_rows) %}
   {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
-    {{ return(test_result_rows) }}
+    {% do return(test_result_rows) %}
   {% endif %}
-  {{ return(none) }}
+  {% do return(none) %}
 {% endmacro %}
