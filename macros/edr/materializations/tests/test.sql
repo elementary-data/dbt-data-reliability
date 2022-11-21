@@ -22,18 +22,18 @@
     {% set sample_row = anomaly_scores_rows[0] %}
     {% do elementary.cache_elementary_test_results_rows([elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)]) %}
   {% else %}
-    {% set anomaly_scores_metrics_rows = {} %}
+    {% set anomaly_scores_groups_rows = {} %}
     {% for anomaly_scores_row in anomaly_scores_rows %}
-      {% set anomaly_score_id = (anomaly_scores_row.full_table_name, anomaly_scores_row.column_name, anomaly_scores_row.metric_name) %}
-      {% do anomaly_scores_metrics_rows.setdefault(anomaly_score_id, []) %}
-      {% do anomaly_scores_metrics_rows[anomaly_score_id].append(anomaly_scores_row) %}
+      {% set anomaly_scores_group = (anomaly_scores_row.full_table_name, anomaly_scores_row.column_name, anomaly_scores_row.metric_name) %}
+      {% do anomaly_scores_groups_rows.setdefault(anomaly_scores_group, []) %}
+      {% do anomaly_scores_groups_rows[anomaly_scores_group].append(anomaly_scores_row) %}
     {% endfor %}
 
     {% set elementary_test_results_rows = [] %}
-    {% for metric_id, metric_rows in anomaly_scores_metrics_rows.items() %}
-      {% do elementary.debug_log("Found {} anomaly scores for metric {}.".format(metric_rows | length, metric_id)) %}
-      {% set sample_row = metric_rows[0] %}
-      {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, metric_rows)) %}
+    {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
+      {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
+      {% set sample_row = anomaly_scores_rows[0] %}
+      {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)) %}
     {% endfor %}
     {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
   {% endif %}
