@@ -172,21 +172,10 @@
   {{ return(test_result_dict) }}
 {% endmacro %}
 
-{% macro get_schema_changes_test_result_row(flattened_test, elementary_test_row) %}
-  {% do elementary_test_row.update({
-    'other': none,
-    'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
-    'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
-    'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
-    'test_results_query': test_results_query,
-    'test_name': elementary.insensitive_get_dict_value(flattened_test, 'name'),
-    'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
-    'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
-    'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
-    'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
-    'test_type': "schema_change"
-  }) %}
-  {{ return(elementary_test_row) }}
+{% macro get_schema_changes_test_result_row(flattened_test, schema_changes_row) %}
+  {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
+  {% do elementary_test_row.update(schema_changes_row) %}
+  {% do return(elementary_test_row) %}
 {% endmacro %}
 
 {% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
