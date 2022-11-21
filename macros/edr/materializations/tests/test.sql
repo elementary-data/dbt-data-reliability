@@ -19,7 +19,7 @@
 
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
   {% if anomaly_scores_rows and flattened_test.short_name == "dimension_anomalies" %}
-    {% set sample_row = anomaly_scores_rows[0] %}
+    {% set sample_row = anomaly_scores_rows[-1] %}
     {% do elementary.cache_elementary_test_results_rows([elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)]) %}
   {% else %}
     {% set anomaly_scores_groups_rows = {} %}
@@ -32,7 +32,7 @@
     {% set elementary_test_results_rows = [] %}
     {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
       {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
-      {% set sample_row = anomaly_scores_rows[0] %}
+      {% set sample_row = anomaly_scores_rows[-1] %}
       {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, sample_row, anomaly_scores_rows)) %}
     {% endfor %}
     {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
@@ -124,6 +124,7 @@
   {%- set test_results_query -%}
       select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }})
       where
+        anomaly_score is not null and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and
         metric_name = {{ elementary.const_as_string(metric_name) }}
         {%- if column_name %}
@@ -137,6 +138,12 @@
           Not enough data to calculate anomaly score.
       {% endif %}
   {% endset %}
+  {% set filtered_anomaly_scores_rows = [] %}
+  {% for row in anomaly_scores_rows %}
+    {% if row.anomaly_score is not none %}
+      {% do filtered_anomaly_scores_rows.append(row) %}
+    {% endif %}
+  {% endfor %}
   {% set test_result_dict = {
       'id': elementary.insensitive_get_dict_value(anomaly_scores_row, 'id'),
       'data_issue_id': elementary.insensitive_get_dict_value(anomaly_scores_row, 'metric_id'),
@@ -160,7 +167,7 @@
       'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
       'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
       'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
-      'result_rows': elementary.render_result_rows(anomaly_scores_rows)
+      'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows)
   } %}
   {{ return(test_result_dict) }}
 {% endmacro %}

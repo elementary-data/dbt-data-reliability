@@ -45,7 +45,7 @@
         else min_metric_value end as min_value,
         case when is_anomalous = TRUE then
          lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
-         else max_metric_value end as max_value,
+        else max_metric_value end as max_value,
         bucket_start as start_time,
         bucket_end as end_time,
         *
