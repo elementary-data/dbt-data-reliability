@@ -1,0 +1,7 @@
+repos:
+  - repo: local
+    hooks:
+      - id: no_commit
+        name: Check for NO_COMMIT marker
+        entry: bash -c "git diff --cached -U0 | (! grep NO_COMMIT)"
+        language: system
