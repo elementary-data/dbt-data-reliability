@@ -28,8 +28,7 @@
   {% set elementary_test_results_rows = [] %}
   {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
     {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
-    {% set latest_row = anomaly_scores_rows[-1] %}
-    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, latest_row, anomaly_scores_rows)) %}
+    {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, anomaly_scores_rows)) %}
   {% endfor %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 
@@ -94,8 +93,9 @@
 {% endmaterialization %}
 
 
-{% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_row, anomaly_scores_rows) %}
-  {% set full_table_name = elementary.insensitive_get_dict_value(anomaly_scores_row, 'full_table_name') %}
+{% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
+  {% set latest_row = anomaly_scores_rows[-1] %}
+  {% set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
   {% set database_name, schema_name, table_name = elementary.split_full_table_name_to_vars(full_table_name) %}
   {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params', {}) %}
   {% set sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') or elementary.get_config_var('anomaly_sensitivity') %}
@@ -107,12 +107,12 @@
     {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, parent_model_node) %}
   {% endif %}
   {% do test_params.update({'sensitivity': sensitivity, 'timestamp_column': timestamp_column, 'backfill_days': backfill_days}) %}
-  {% set column_name = elementary.insensitive_get_dict_value(anomaly_scores_row, 'column_name') %}
-  {% set metric_name = elementary.insensitive_get_dict_value(anomaly_scores_row, 'metric_name') %}
-  {% set metric_id = elementary.insensitive_get_dict_value(anomaly_scores_row, 'metric_id') %}
+  {% set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
+  {% set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
+  {% set metric_id = elementary.insensitive_get_dict_value(latest_row, 'metric_id') %}
   {% set backfill_period = "'-" ~ backfill_days ~ "'" %}
-  {% set test_unique_id = elementary.insensitive_get_dict_value(anomaly_scores_row, 'test_unique_id') %}
-  {% set has_anomaly_score = elementary.insensitive_get_dict_value(anomaly_scores_row, 'anomaly_score') is not none %}
+  {% set test_unique_id = elementary.insensitive_get_dict_value(latest_row, 'test_unique_id') %}
+  {% set has_anomaly_score = elementary.insensitive_get_dict_value(latest_row, 'anomaly_score') is not none %}
   {% if not has_anomaly_score %}
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
@@ -128,7 +128,7 @@
   {%- endset -%}
   {% set test_results_description %}
       {% if has_anomaly_score %}
-          {{ elementary.insensitive_get_dict_value(anomaly_scores_row, 'anomaly_description') }}
+          {{ elementary.insensitive_get_dict_value(latest_row, 'anomaly_description') }}
       {% else %}
           Not enough data to calculate anomaly score.
       {% endif %}
@@ -144,12 +144,12 @@
     {% endif %}
   {% endfor %}
   {% set test_result_dict = {
-      'id': elementary.insensitive_get_dict_value(anomaly_scores_row, 'id'),
-      'data_issue_id': elementary.insensitive_get_dict_value(anomaly_scores_row, 'metric_id'),
-      'test_execution_id': elementary.insensitive_get_dict_value(anomaly_scores_row, 'test_execution_id'),
+      'id': elementary.insensitive_get_dict_value(latest_row, 'id'),
+      'data_issue_id': elementary.insensitive_get_dict_value(latest_row, 'metric_id'),
+      'test_execution_id': elementary.insensitive_get_dict_value(latest_row, 'test_execution_id'),
       'test_unique_id': test_unique_id,
       'model_unique_id': parent_model_unique_id,
-      'detected_at': elementary.insensitive_get_dict_value(anomaly_scores_row, 'detected_at'),
+      'detected_at': elementary.insensitive_get_dict_value(latest_row, 'detected_at'),
       'database_name': database_name,
       'schema_name': schema_name,
       'table_name': table_name,
@@ -157,7 +157,7 @@
       'test_type': 'anomaly_detection',
       'test_sub_type': metric_name,
       'test_results_description': test_results_description,
-      'other': elementary.insensitive_get_dict_value(anomaly_scores_row, 'anomalous_value'),
+      'other': elementary.insensitive_get_dict_value(latest_row, 'anomalous_value'),
       'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
       'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
       'test_results_query': test_results_query,
