@@ -174,10 +174,6 @@ models:
         data_type: string
         description: ""
 
-      - name: compiled_code
-        data_type: string
-        description: ""
-
       - name: path
         data_type: string
         description: ""

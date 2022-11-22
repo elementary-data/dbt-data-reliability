@@ -17,6 +17,7 @@ SELECT
     run_results.model_execution_id,
     run_results.unique_id,
     run_results.invocation_id,
+    run_results.query_id,
     run_results.name,
     run_results.generated_at,
     run_results.status,
@@ -36,6 +37,16 @@ SELECT
     models.path,
     models.original_path,
     models.owner,
-    models.alias
+    models.alias,
+    ROW_NUMBER() OVER (PARTITION BY run_results.unique_id ORDER BY run_results.generated_at DESC) AS model_invocation_reverse_index,
+    CASE WHEN FIRST_VALUE(invocation_id) OVER (PARTITION BY {{ elementary.time_trunc('day', 'run_results.generated_at') }} ORDER BY run_results.generated_at ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING ) = invocation_id
+              THEN TRUE
+              ELSE FALSE 
+         END                                                               AS is_the_first_invocation_of_the_day,
+    CASE WHEN LAST_VALUE(invocation_id) OVER (PARTITION BY {{ elementary.time_trunc('day', 'run_results.generated_at') }} ORDER BY run_results.generated_at ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING ) = invocation_id
+              THEN TRUE
+              ELSE FALSE 
+         END                                                               AS is_the_last_invocation_of_the_day
+    
 FROM dbt_run_results run_results
 JOIN dbt_models models ON run_results.unique_id = models.unique_id

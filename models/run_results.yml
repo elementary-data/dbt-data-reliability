@@ -1,6 +1,84 @@
 version: 2
 
 models:
+  - name: dbt_invocations
+    description: >
+      Attributes associated with each dbt invocation. Inserted at the end of each invocation.
+
+    columns:
+      - name: invocation_id
+        data_type: string
+        description: Primary key of this table.
+
+      - name: run_started_at
+        data_type: string
+        description: Timestamp the invocation was started.
+
+      - name: run_completed_at
+        data_type: string
+        description: Timestamp the invocation was completed
+
+      - name: generated_at
+        data_type: string
+        description: The time this invocation was uploaded to the database.
+
+      - name: command
+        data_type: string
+        description: dbt command that was used. For example, run.
+
+      - name: dbt_version
+        data_type: string
+        description: Version of dbt that was used in this invocation.
+
+      - name: elementary_version
+        data_type: string
+        description: Version of the elementary package that was used in this invocation.
+
+      - name: full_refresh
+        data_type: boolean
+        description: Whether or not this invocation was executed as a full-refresh.
+
+      - name: invocation_vars
+        data_type: string
+        description: Dictionary of the variables (and values) that were declared in the invocation.
+
+      - name: vars
+        data_type: string
+        description: Dictionary of all variables (and values) in the dbt project. If none were declared at runtime, these are the variables declared in dbt_project yml
+
+      - name: target_name
+        data_type: string
+        description: Name of the target used in this invocation.
+
+      - name: target_database
+        data_type: string
+        description: Name of the target database that was used in this invocation.
+
+      - name: target_schema
+        data_type: string
+        description: Name of the target schema that was used in this invocation.
+
+      - name: target_profile_name
+        data_type: string
+        description: Name of the dbt profile that was used in this invocation.
+
+      - name: threads
+        data_type: integer
+        description: Number of threads that were used to run this dbt invocation. (This number could impact the performance of a dbt invocation).
+
+      - name: selected
+        data_type: string
+        description: The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
+
+      - name: selected_resources
+        data_type: string
+        description: Deprecated and replaced with Selected. Run a full-refresh to remove this column (history will be lost). The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
+
+      - name: yaml_selector
+        data_type: string
+        description: The yaml selector that was passed in this invocation.
+
+
   - name: dbt_run_results
     description: >
       Run results of dbt invocations, inserted at the end of each invocation.
@@ -18,7 +96,7 @@ models:
 
       - name: invocation_id
         data_type: string
-        description: The unique id of the invocation (would be similar for all resources executed on the same invocation).
+        description: The unique id of the invocation (would be similar for all resources executed on the same invocation). FK to dbt_invocations.
 
       - name: generated_at
         data_type: string
@@ -72,6 +150,21 @@ models:
         data_type: string
         description: The compiled code (SQL / Python) executed against the database.
 
+      - name: failures
+        data_type: int
+        description: Number of failures in this run.
+
+      - name: query_id
+        data_type: string
+        description: Query ID in the data warehouse, if returned by the adapter (currently only supported in Snowflake, is null for any other adapter).
+
+
+  - name: elementary_test_results
+    description: >
+      Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
+      Each row is the result of a single test, including native dbt tests, packages tests and elementary tests.
+      New data is loaded to this model on an on-run-end hook named `elementary.handle_tests_results`.
+
   - name: model_run_results
     description: >
       Run results of dbt models, enriched with models metadata.
@@ -84,8 +177,3 @@ models:
       Each row is the result of a single snapshot.
       This is a view that joins data from `dbt_run_results` and `dbt_snapshots`.
 
-  - name: elementary_test_results
-    description: >
-      Run results of all dbt tests, with fields and metadata needed to produce the Elementary report UI.
-      Each row is the result of a single test, including native dbt tests, packages tests and elementary tests.
-      New data is loaded to this model on an on-run-end hook named `elementary.handle_tests_results`.

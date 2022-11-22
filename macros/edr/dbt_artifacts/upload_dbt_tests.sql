@@ -101,7 +101,6 @@
             {% endif %}
         {% endif %}
     {%- endif -%}
-
     {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
