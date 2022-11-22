@@ -1,4 +1,8 @@
 {% macro insert_rows(table_relation, rows, should_commit=false, chunk_size=5000) %}
+    {% if not rows %}
+      {{ return(none) }}
+    {% endif %}
+
     {% if not table_relation %}
         {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
         {{ return(none) }}

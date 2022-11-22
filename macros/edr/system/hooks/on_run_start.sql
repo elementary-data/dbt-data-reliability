@@ -9,4 +9,6 @@
   {% if flags.WHICH in ['test', 'build'] %}
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
+
+  {% do elementary.create_target_dir() %}
 {% endmacro %}
