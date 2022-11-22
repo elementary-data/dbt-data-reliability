@@ -3,10 +3,19 @@
 {%- endmacro -%}
 
 {% macro default__get_config_var(var_name) %}
+  {% set default_config = elementary.get_default_config() %}
+  {{ return(var(var_name, default_config.get(var_name))) }}
+{% endmacro %}
 
+{% macro bigquery__get_config_var(var_name) %}
+    {% set default_config = elementary.get_default_config() %}
+    {% do default_config.update({'dbt_artifacts_chunk_size': 500, 'insert_rows_method': 'chunk'})%}
+    {{ return(var(var_name, default_config.get(var_name))) }}
+{% endmacro %}
+
+{%- macro get_default_config() -%}
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
    of the package are not accesible at on-run-start and on-run-end #}
-
   {% set default_config = {
     'days_back': 14,
     'anomaly_sensitivity': 3,
@@ -41,12 +50,5 @@
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size'
   } %}
-
-  {{ return(var(var_name, default_config.get(var_name))) }}
-{% endmacro %}
-
-{% macro bigquery__get_config_var(var_name) %}
-    {% set default_config = elementary.default__get_config_var(var_name) %}
-    {% do default_config.update({'dbt_artifacts_chunk_size': 500, 'insert_rows_method': 'chunk'})%}
-    {{- return(default_config) -}}
-{% endmacro %}
+  {{- return(default_config) -}}
+{%- endmacro -%}
