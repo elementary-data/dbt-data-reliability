@@ -1,4 +1,8 @@
 {% macro get_config_var(var_name) %}
+    {{ return(adapter.dispatch('get_config_var', 'elementary')()) }}
+{%- endmacro -%}
+
+{% macro default__get_config_var(var_name) %}
 
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
    of the package are not accesible at on-run-start and on-run-end #}
@@ -20,6 +24,7 @@
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
     'dbt_artifacts_chunk_size': 5000,
+    'test_sample_row_count': 5,
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': null,
@@ -30,7 +35,7 @@
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
     },
     'time_format': '%Y-%m-%d %H:%M:%S',
-    'long_string_size': 16384,
+    'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
@@ -38,4 +43,10 @@
   } %}
 
   {{ return(var(var_name, default_config.get(var_name))) }}
+{% endmacro %}
+
+{% macro bigquery__get_config_var(var_name) %}
+    {% set default_config = elementary.default__get_config_var(var_name) %}
+    {% do default_config.update({'dbt_artifacts_chunk_size': 500, 'insert_rows_method': 'chunk'})%}
+    {{- return(default_config) -}}
 {% endmacro %}
