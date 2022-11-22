@@ -17,7 +17,6 @@
       {% endif %}
     {% endif %}
     {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
-    {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_relation) %}
     {%- if should_commit -%}
