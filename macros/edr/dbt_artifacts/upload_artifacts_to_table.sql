@@ -12,14 +12,11 @@
       {% if cached_artifacts == time_excluded_artifacts %}
         {{ elementary.debug_log("[{}] Artifacts were not changed. Skipping upload.".format(table_relation.identifier)) }}
         {{ return(none) }}
+      {% else %}
+        {% do dbt.truncate_relation(table_relation) %}
       {% endif %}
     {% endif %}
-    {%- set flatten_artifacts_len = flatten_artifact_dicts | length %}
-    {% if flatten_artifacts_len > 0 %}
-        {% do dbt.truncate_relation(table_relation) %}
-        {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
-    {%- else %}
-        {{ elementary.debug_log('No artifacts to insert to ' ~ table_relation) }}
+    {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% endif %}
     -- remove empty rows
     {% do elementary.remove_empty_rows(table_relation) %}
