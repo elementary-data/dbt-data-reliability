@@ -47,6 +47,12 @@
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
 
+    {# If alerts field is provided using global var, we want to add it to the test meta #}
+    {% set alert_fields = elementary.get_alert_fields(meta_dict) %}
+    {% if alert_fields %}
+        {% do  meta_dict.update({'alert_fields': alert_fields}) %}
+    {% endif %}
+
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
