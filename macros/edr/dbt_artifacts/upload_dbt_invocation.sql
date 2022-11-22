@@ -4,7 +4,7 @@
     {{ return('') }}
   {% endif %}
 
-  {% do elementary.debug_log("Uploading dbt invocation.") %}
+  {% do elementary.edr_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,

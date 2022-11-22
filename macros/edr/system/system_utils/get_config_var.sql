@@ -20,6 +20,7 @@
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
     'dbt_artifacts_chunk_size': 5000,
+    'test_sample_row_count': 5,
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': null,
@@ -30,7 +31,7 @@
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
     },
     'time_format': '%Y-%m-%d %H:%M:%S',
-    'long_string_size': 16384,
+    'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
