@@ -45,7 +45,7 @@
   {% set elementary_test_results_rows = [] %}
   {% set schema_changes_rows = elementary.query_test_result_rows() %}
   {% for schema_changes_row in schema_changes_rows %}
-    {% do elementary_test_results_rows.append(elementary.get_schema_changes_test_result_row(flattened_test, schema_changes_row)) %}
+    {% do elementary_test_results_rows.append(elementary.get_schema_changes_test_result_row(flattened_test, schema_changes_row, schema_changes_rows)) %}
   {% endfor %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 {% endmacro %}
@@ -161,8 +161,8 @@
   {% do return(elementary_test_row) %}
 {% endmacro %}
 
-{% macro get_schema_changes_test_result_row(flattened_test, schema_changes_row) %}
-  {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
+{% macro get_schema_changes_test_result_row(flattened_test, schema_changes_row, schema_changes_rows) %}
+  {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test, schema_changes_rows) %}
   {% do elementary_test_row.update(schema_changes_row) %}
   {% do return(elementary_test_row) %}
 {% endmacro %}
