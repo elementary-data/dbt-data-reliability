@@ -168,6 +168,10 @@
 {% endmacro %}
 
 {% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
+    {% if not result_rows %}
+      {% set result_rows = [] %}
+    {% endif %}
+
     {% set test_execution_id = elementary.get_node_execution_id(flattened_test) %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
