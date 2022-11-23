@@ -1,8 +1,8 @@
-{%- macro upload_dbt_exposures(should_commit=false) -%}
+{%- macro upload_dbt_exposures(should_commit=false, cache=true) -%}
     {% set relation = elementary.get_elementary_relation('dbt_exposures') %}
     {% if execute and relation %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% do elementary.upload_artifacts_to_table(relation, exposures, elementary.flatten_exposure, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, exposures, elementary.flatten_exposure, should_commit=should_commit, cache=cache) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
