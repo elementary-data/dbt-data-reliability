@@ -1,8 +1,8 @@
-{%- macro upload_dbt_models(should_commit=false) -%}
+{%- macro upload_dbt_models(should_commit=false, cache=true) -%}
     {% set relation = elementary.get_elementary_relation('dbt_models') %}
     {% if execute and relation %}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, should_commit=should_commit, cache=cache) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
