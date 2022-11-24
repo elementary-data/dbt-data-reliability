@@ -90,7 +90,11 @@
 
 {% materialization test, adapter="snowflake" %}
   {% do elementary.materialize_test() %}
-  {{ return(dbt.materialization_test_snowflake()) }}
+  {%- if dbt.materialization_test_snowflake -%}
+    {{ return(dbt.materialization_test_snowflake()) }}
+  {%- else -%}
+    {{ return(dbt.materialization_test_default()) }}
+  {%- endif -%}
 {% endmaterialization %}
 
 
