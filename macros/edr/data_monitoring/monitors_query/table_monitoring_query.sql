@@ -1,10 +1,10 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column=none) %}
+{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column=none) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
 
-    {% if is_timestamp %}
+    {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
                    {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data

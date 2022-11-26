@@ -25,6 +25,10 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
+        {% if timestamp_column and not is_timestamp %}
+          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(timestamp_column)) %}
+        {% endif %}
+
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
@@ -32,7 +36,7 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column) %}
+        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'metrics', table_monitoring_query) %}
 
