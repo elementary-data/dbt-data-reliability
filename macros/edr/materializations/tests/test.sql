@@ -58,8 +58,8 @@
 
 {% macro get_elementary_test_type(flattened_test) %}
   {% if flattened_test.test_namespace == "elementary" %}
-    {# NO_COMMIT #}
-    {% if flattened_test.short_name.endswith("anomalies") or flattened_test.short_name in ["volume", "freshness"] %}
+    {% set anomalies_tests_short_names = ["volume", "freshness"] %}
+    {% if flattened_test.short_name.endswith("anomalies") or flattened_test.short_name in anomalies_tests_short_names %}
       {% do return("anomaly_detection") %}
     {% elif flattened_test.short_name == 'schema_changes' %}
       {% do return("schema_change") %}
