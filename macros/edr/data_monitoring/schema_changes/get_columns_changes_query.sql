@@ -1,28 +1,69 @@
-{% macro get_columns_changes_query(full_table_name, temp_columns_snapshot_relation) %}
-
-    {%- set test_execution_id = elementary.get_test_execution_id() %}
-    {%- set test_unique_id = elementary.get_test_unique_id() %}
+{% macro get_columns_changes_from_last_run_query(full_table_name, temp_columns_snapshot_relation) %}
     {%- set previous_schema_time_query -%}
         (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
     {%- endset %}
 
-    with cur as (
-
+    {% set cur %}
         {# This is the current snapshot of the columns. #}
         select full_table_name, column_name, data_type, is_new, detected_at
         from {{ temp_columns_snapshot_relation }}
+    {% endset %}
 
-    ),
-
-    pre as (
-
+    {% set pre %}
         {# This is the previous snapshot of the columns. #}
-        select full_table_name, column_name, data_type, is_new, detected_at
+        select full_table_name, column_name, data_type, detected_at
         from {{ ref('schema_columns_snapshot') }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
             and detected_at = {{ previous_schema_time_query }}
         order by detected_at desc
+    {% endset %}
 
+    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
+{% endmacro %}
+
+{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation) %}
+    {% set cur %}
+        with baseline as (
+            select lower(column_name) as column_name, data_type
+            from {{ model_baseline_relation }}
+        )
+
+        select
+            info_schema.full_table_name,
+            lower(info_schema.column_name) as column_name,
+            info_schema.data_type,
+            (baseline.column_name IS NULL) as is_new,
+            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
+        from {{ ref('filtered_information_schema_columns') }} info_schema
+        left join baseline on (
+            lower(info_schema.column_name) = lower(baseline.column_name)
+        )
+        where lower(info_schema.full_table_name) = lower('{{ full_table_name }}')
+    {% endset %}
+
+    {% set pre %}
+        select
+            '{{ full_table_name }}' as full_table_name,
+            column_name,
+            data_type,
+            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
+        from {{ model_baseline_relation }}
+    {% endset %}
+
+    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre, include_added=False) }}
+{% endmacro %}
+
+
+{% macro get_columns_changes_query_generic(full_table_name, cur, pre, include_added=True) %}
+    {%- set test_execution_id = elementary.get_test_execution_id() %}
+    {%- set test_unique_id = elementary.get_test_unique_id() %}
+
+    with cur as (
+        {{ cur }}
+    ),
+
+    pre as (
+        {{ pre }}
     ),
 
     type_changes as (
@@ -41,6 +82,7 @@
 
     ),
 
+    {% if include_added %}
     columns_added as (
 
         {# This is the columns that have been added. #}
@@ -55,6 +97,7 @@
         where is_new = true
 
     ),
+    {% endif %}
 
     columns_removed as (
 
@@ -93,9 +136,10 @@
         select * from type_changes
         union all
         select * from columns_removed_filter_deleted_tables
+        {% if include_added %}
         union all
         select * from columns_added
-
+        {% endif %}
     ),
 
     column_changes_test_results as (

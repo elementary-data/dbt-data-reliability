@@ -60,7 +60,7 @@
   {% if flattened_test.test_namespace == "elementary" %}
     {% if flattened_test.short_name.endswith("anomalies") %}
       {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name == 'schema_changes' %}
+    {% elif flattened_test.short_name.startswith('schema_changes') %}
       {% do return("schema_change") %}
     {% endif %}
   {% endif %}
