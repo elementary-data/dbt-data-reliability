@@ -30,7 +30,7 @@
     'test_sample_row_count': 5,
     'edr_cli_run': false,
     'max_int': 2147483647,
-    'custom_run_started_at': null,
+    'custom_run_started_at': none,
     'edr_monitors': {
       'table': ['schema_changes', 'row_count', 'freshness'],
       'column_any_type': ['null_count', 'null_percent'],
@@ -43,7 +43,8 @@
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
-    'cache_artifacts': true
+    'cache_artifacts': true,
+    'job_id': none
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

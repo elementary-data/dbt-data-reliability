@@ -8,6 +8,7 @@
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
+      'job_id': elementary.get_job_id(),
       'run_started_at': elementary.run_started_at_as_string(),
       'run_completed_at': now_str,
       'generated_at': now_str,
@@ -29,6 +30,25 @@
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
+{% endmacro %}
+
+{% macro get_job_id() %}
+    {% set job_id = elementary.get_config_var("job_id") %}
+    {% if job_id %}
+        {{ return(job_id) }}
+    {% endif %}
+
+    {% set job_id = env_var("DBT_CLOUD_JOB_ID", "") %}
+    {% if job_id %}
+        {{ return(job_id) }}
+    {% endif %}
+
+    {% set job_id = env_var("GITHUB_RUN_ID", "") %}
+    {% if job_id %}
+        {{ return(job_id) }}
+    {% endif %}
+
+    {{ return(none) }}
 {% endmacro %}
 
 {% macro get_project_name() %}
@@ -82,6 +102,7 @@
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
+      ('job_id', 'long_string'),
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
       ('generated_at', 'string'),
