@@ -13,4 +13,4 @@ jobs:
             👋 @{{ author }}
             Thank you for raising your pull request.
             Please make sure you have documented all user-facing changes in the docs.
-            You can do this by editing the `docs` files in this pull request.
+            You can do this by editing the `docs` files in the [`elementary`](https://github.com/elementary-data/elementary) repository.
