@@ -52,6 +52,11 @@
 {% endmacro %}
 
 {% macro get_project_name() %}
+    {% set project_name = elementary.get_config_var("project_name") %}
+    {% if project_name %}
+        {{ return(project_name) }}
+    {% endif %}
+
     {% set config = elementary.get_runtime_config() %}
     {% do return(config.project_name) %}
 {% endmacro %}

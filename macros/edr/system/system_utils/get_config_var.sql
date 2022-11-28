@@ -44,7 +44,8 @@
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
     'cache_artifacts': true,
-    'job_id': none
+    'job_id': none,
+    'project_name': none,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
