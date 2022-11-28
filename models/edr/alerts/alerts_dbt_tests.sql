@@ -28,6 +28,7 @@ alerts_dbt_tests as (
            test_results_query as alert_results_query,
            other,
            test_name,
+           test_short_name,
            test_params,
            severity,
            status,
