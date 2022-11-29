@@ -23,11 +23,22 @@
       'target_profile_name': target.profile_name,
       'threads': target.threads,
       'selected': elementary.get_invocation_select_filter(),
-      'yaml_selector': elementary.get_invocation_yaml_selector()
+      'yaml_selector': elementary.get_invocation_yaml_selector(),
+      'project_name': elementary.get_project_name(),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
+{% endmacro %}
+
+{% macro get_project_name() %}
+    {% set project_name = elementary.get_config_var("project_name") %}
+    {% if project_name %}
+        {{ return(project_name) }}
+    {% endif %}
+
+    {% set config = elementary.get_runtime_config() %}
+    {% do return(config.project_name) %}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
@@ -91,6 +102,7 @@
       ('target_profile_name', 'string'),
       ('threads', 'int'),
       ('selected', 'long_string'),
-      ('yaml_selector', 'long_string')
+      ('yaml_selector', 'long_string'),
+      ('project_name', 'string'),
     ])) }}
 {% endmacro %}
