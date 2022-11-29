@@ -27,6 +27,7 @@
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
       'env': elementary.get_env(),
+      'project_id': elementary.get_project_id(),
       'run_reason_category': elementary.get_run_reason_category(),
       'run_reason': elementary.get_run_reason(),
       'pull_request_id': elementary.get_pr_id(),
@@ -53,6 +54,14 @@
         {{ return(env) }}
     {% endif %}
     {{ return(elementary.get_first_not_none_env_var(["DBT_ENV"])) }}
+{% endmacro %}
+
+{% macro get_project_id() %}
+    {% set project_id = elementary.get_config_var("project_id") %}
+    {% if project_id %}
+        {{ return(project_id) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"])) }}
 {% endmacro %}
 
 {% macro get_job_id() %}
@@ -158,6 +167,7 @@
       ('threads', 'int'),
       ('selected', 'long_string'),
       ('yaml_selector', 'long_string'),
+      ('project_id', 'string'),
       ('project_name', 'string'),
       ('env', 'string'),
       ('run_reason_category', 'string'),
