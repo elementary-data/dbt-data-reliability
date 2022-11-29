@@ -98,14 +98,12 @@
 
 {%- macro render_value(value) -%}
     {%- if value is defined and value is not none -%}
-        {%- if value is number -%}
-            {{- value -}}
-        {%- elif value is string -%}
+        {%- if value is string -%}
             '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}
             '{{- elementary.escape_special_chars(tojson(value)) -}}'
         {%- else -%}
-            NULL
+            {{- value -}}
         {%- endif -%}
     {%- else -%}
         NULL
