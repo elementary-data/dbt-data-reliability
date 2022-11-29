@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       should-bump-on-success:
+        description: 'Should the version be bumped on success'
         type: boolean
         required: false
         default: false
@@ -51,7 +52,7 @@ jobs:
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
       elementary-ref: ${{ needs.get-latest-release-tags.outputs.py }}
-      dbt-version: '1.0.0'
+      dbt-version: '1.2.0'
     secrets: inherit
 
   recommendation:
