@@ -26,29 +26,15 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
+      'env': elementary.get_env(),
+      'run_reason_category': elementary.get_run_reason_category(),
+      'run_reason': elementary.get_run_reason(),
+      'pull_request_id': elementary.get_pr_id(),
+      'git_sha': elementary.get_git_sha(),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
-{% endmacro %}
-
-{% macro get_job_id() %}
-    {% set job_id = elementary.get_config_var("job_id") %}
-    {% if job_id %}
-        {{ return(job_id) }}
-    {% endif %}
-
-    {% set job_id = env_var("DBT_CLOUD_JOB_ID", "") %}
-    {% if job_id %}
-        {{ return(job_id) }}
-    {% endif %}
-
-    {% set job_id = env_var("GITHUB_RUN_ID", "") %}
-    {% if job_id %}
-        {{ return(job_id) }}
-    {% endif %}
-
-    {{ return(none) }}
 {% endmacro %}
 
 {% macro get_project_name() %}
@@ -59,6 +45,54 @@
 
     {% set config = elementary.get_runtime_config() %}
     {% do return(config.project_name) %}
+{% endmacro %}
+
+{% macro get_env() %}
+    {% set env = elementary.get_config_var("env") %}
+    {% if env %}
+        {{ return(env) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_ENV"])) }}
+{% endmacro %}
+
+{% macro get_job_id() %}
+    {% set job_id = elementary.get_config_var("job_id") %}
+    {% if job_id %}
+        {{ return(job_id) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_JOB_ID", "GITHUB_RUN_ID"])) }}
+{% endmacro %}
+
+{% macro get_run_reason_category() %}
+    {% set run_reason_category = elementary.get_config_var("run_reason_category") %}
+    {% if run_reason_category %}
+        {{ return(run_reason_category) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"])) }}
+{% endmacro %}
+
+{% macro get_run_reason() %}
+    {% set run_reason = elementary.get_config_var("run_reason") %}
+    {% if run_reason %}
+        {{ return(run_reason) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_RUN_REASON"])) }}
+{% endmacro %}
+
+{% macro get_pr_id() %}
+    {% set pull_request_id = elementary.get_config_var("pull_request_id") %}
+    {% if pull_request_id %}
+        {{ return(pull_request_id) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"])) }}
+{% endmacro %}
+
+{% macro get_git_sha() %}
+    {% set git_sha = elementary.get_config_var("git_sha") %}
+    {% if git_sha %}
+        {{ return(git_sha) }}
+    {% endif %}
+    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_GIT_SHA", "GITHUB_SHA"])) }}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
@@ -125,5 +159,10 @@
       ('selected', 'long_string'),
       ('yaml_selector', 'long_string'),
       ('project_name', 'string'),
+      ('env', 'string'),
+      ('run_reason_category', 'string'),
+      ('run_reason', 'long_string'),
+      ('pull_request_id', 'string'),
+      ('git_sha', 'string'),
     ])) }}
 {% endmacro %}
