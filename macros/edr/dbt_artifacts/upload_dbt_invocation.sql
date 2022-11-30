@@ -8,6 +8,7 @@
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
+      'job_name': elementary.get_job_name(),
       'job_id': elementary.get_job_id(),
       'job_run_id': elementary.get_job_run_id(),
       'run_started_at': elementary.run_started_at_as_string(),
@@ -64,6 +65,10 @@
 
 {% macro get_job_id() %}
     {{ return(elementary.get_first_not_none_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"])) }}
+{% endmacro %}
+
+{% macro get_job_name() %}
+    {{ return(elementary.get_first_not_none_env_var(["JOB_NAME"])) }}
 {% endmacro %}
 
 {% macro get_job_run_id() %}
@@ -133,6 +138,7 @@
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
       ('job_id', 'long_string'),
+      ('job_name', 'long_string'),
       ('job_run_id', 'long_string'),
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
