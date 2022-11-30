@@ -55,7 +55,7 @@
 {% endmacro %}
 
 {% macro get_env_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["ENV_ID", "DBT_CLOUD_ENVIRONMENT_ID"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["ENV_ID"])) }}
 {% endmacro %}
 
 {% macro get_project_id() %}
