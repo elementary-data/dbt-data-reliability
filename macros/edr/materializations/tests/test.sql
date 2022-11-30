@@ -11,12 +11,6 @@
 
 
 {% macro handle_anomaly_test(flattened_test) %}
-  {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics") %}
-  {% set metrics_table = elementary.get_elementary_test_table(flattened_test.name, 'metrics') %}
-  {% if metrics_table %}
-    {% do metrics_tables_cache.append(metrics_table) %}
-  {% endif %}
-
   {% set anomaly_scores_groups_rows = {} %}
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
   {% for anomaly_scores_row in anomaly_scores_rows %}

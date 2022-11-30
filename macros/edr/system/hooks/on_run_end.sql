@@ -16,6 +16,10 @@
     {{ elementary.handle_tests_results() }}
   {% endif %}
 
+  {% if flags.WHICH in ['run', 'build'] and flags.FULL_REFRESH and not elementary.get_config_var('disable_non_incremental_metrics_deletion') %}
+    {{ elementary.delete_refreshed_incremental_metrics() }}
+  {% endif %}
+
   {% if not elementary.get_config_var('disable_dbt_invocation_autoupload') %}
     {{ elementary.upload_dbt_invocation() }}
   {% endif %}
