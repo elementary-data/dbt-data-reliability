@@ -67,7 +67,7 @@
 {% endmacro %}
 
 {% macro get_job_run_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"])) }}
 {% endmacro %}
 
 {% macro get_cause_category() %}
