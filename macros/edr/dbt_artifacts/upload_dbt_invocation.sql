@@ -9,6 +9,7 @@
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'job_id': elementary.get_job_id(),
+      'job_run_id': elementary.get_job_run_id(),
       'run_started_at': elementary.run_started_at_as_string(),
       'run_completed_at': now_str,
       'generated_at': now_str,
@@ -27,9 +28,10 @@
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
       'env': elementary.get_env(),
+      'env_id': elementary.get_env_id(),
       'project_id': elementary.get_project_id(),
-      'run_reason_category': elementary.get_run_reason_category(),
-      'run_reason': elementary.get_run_reason(),
+      'cause_category': elementary.get_cause_category(),
+      'cause': elementary.get_cause(),
       'pull_request_id': elementary.get_pr_id(),
       'git_sha': elementary.get_git_sha(),
   } %}
@@ -49,59 +51,39 @@
 {% endmacro %}
 
 {% macro get_env() %}
-    {% set env = elementary.get_config_var("env") %}
-    {% if env %}
-        {{ return(env) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_ENV"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["ENV", "DBT_ENV"])) }}
+{% endmacro %}
+
+{% macro get_env_id() %}
+    {{ return(elementary.get_first_not_none_env_var(["ENV_ID", "DBT_CLOUD_ENVIRONMENT_ID"])) }}
 {% endmacro %}
 
 {% macro get_project_id() %}
-    {% set project_id = elementary.get_config_var("project_id") %}
-    {% if project_id %}
-        {{ return(project_id) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"])) }}
 {% endmacro %}
 
 {% macro get_job_id() %}
-    {% set job_id = elementary.get_config_var("job_id") %}
-    {% if job_id %}
-        {{ return(job_id) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_JOB_ID", "GITHUB_RUN_ID"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"])) }}
 {% endmacro %}
 
-{% macro get_run_reason_category() %}
-    {% set run_reason_category = elementary.get_config_var("run_reason_category") %}
-    {% if run_reason_category %}
-        {{ return(run_reason_category) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"])) }}
+{% macro get_job_run_id() %}
+    {{ return(elementary.get_first_not_none_env_var(["RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"])) }}
 {% endmacro %}
 
-{% macro get_run_reason() %}
-    {% set run_reason = elementary.get_config_var("run_reason") %}
-    {% if run_reason %}
-        {{ return(run_reason) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_RUN_REASON"])) }}
+{% macro get_cause_category() %}
+    {{ return(elementary.get_first_not_none_env_var(["CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"])) }}
+{% endmacro %}
+
+{% macro get_cause() %}
+    {{ return(elementary.get_first_not_none_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"])) }}
 {% endmacro %}
 
 {% macro get_pr_id() %}
-    {% set pull_request_id = elementary.get_config_var("pull_request_id") %}
-    {% if pull_request_id %}
-        {{ return(pull_request_id) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"])) }}
 {% endmacro %}
 
 {% macro get_git_sha() %}
-    {% set git_sha = elementary.get_config_var("git_sha") %}
-    {% if git_sha %}
-        {{ return(git_sha) }}
-    {% endif %}
-    {{ return(elementary.get_first_not_none_env_var(["DBT_CLOUD_GIT_SHA", "GITHUB_SHA"])) }}
+    {{ return(elementary.get_first_not_none_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"])) }}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
@@ -151,6 +133,7 @@
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
       ('job_id', 'long_string'),
+      ('job_run_id', 'long_string'),
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
       ('generated_at', 'string'),
@@ -170,8 +153,9 @@
       ('project_id', 'string'),
       ('project_name', 'string'),
       ('env', 'string'),
-      ('run_reason_category', 'string'),
-      ('run_reason', 'long_string'),
+      ('env_id', 'string'),
+      ('cause_category', 'string'),
+      ('cause', 'long_string'),
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
     ])) }}
