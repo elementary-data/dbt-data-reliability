@@ -35,7 +35,6 @@
       'cause': elementary.get_cause(),
       'pull_request_id': elementary.get_pr_id(),
       'git_sha': elementary.get_git_sha(),
-      'success': elementary.get_success(),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -90,15 +89,6 @@
 
 {% macro get_git_sha() %}
     {{ return(elementary.get_first_not_none_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"])) }}
-{% endmacro %}
-
-{% macro get_success() %}
-  {% for result in results %}
-    {% if result.status in ["error", "fail"] %}
-      {{ return(false) }}
-    {% endif %}
-  {% endfor %}
-  {{ return(true) }}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
@@ -174,6 +164,5 @@
       ('cause', 'long_string'),
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
-	  ('success', 'boolean'),
     ])) }}
 {% endmacro %}
