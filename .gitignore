@@ -8,3 +8,5 @@ scripts/
 edr.log
 integration_tests/data
 
+elementary*.html
+elementary*.json
