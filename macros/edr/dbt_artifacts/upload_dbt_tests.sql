@@ -144,7 +144,7 @@
 {% macro get_test_type(test_path, test_namespace = none) %}
     {% set test_type = 'generic' %}
     {%- if test_namespace == 'dbt_expectations' -%}
-        {% set test_type = 'dbt_expectations' %}
+        {% set test_type = 'expectation' %}
     {%- elif 'tests/generic' in test_path or 'macros/' in test_path -%}
         {% set test_type = 'generic' %}
     {%- elif 'tests/' in test_path -%}
