@@ -1,4 +1,4 @@
-{% macro get_first_not_none_env_var(var_names) %}
+{% macro get_first_env_var(var_names) %}
     {% for var_name in var_names %}
         {% set value = env_var(var_name, "") %}
         {% if value %}

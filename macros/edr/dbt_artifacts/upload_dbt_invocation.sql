@@ -8,9 +8,6 @@
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
-      'job_name': elementary.get_job_name(),
-      'job_id': elementary.get_job_id(),
-      'job_run_id': elementary.get_job_run_id(),
       'run_started_at': elementary.run_started_at_as_string(),
       'run_completed_at': now_str,
       'generated_at': now_str,
@@ -28,13 +25,16 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
-      'env': elementary.get_env(),
-      'env_id': elementary.get_env_id(),
-      'project_id': elementary.get_project_id(),
-      'cause_category': elementary.get_cause_category(),
-      'cause': elementary.get_cause(),
-      'pull_request_id': elementary.get_pr_id(),
-      'git_sha': elementary.get_git_sha(),
+      'job_id': elementary.get_first_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"]),
+      'job_run_id': elementary.get_first_env_var(["JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
+      'job_name': elementary.get_first_env_var(["JOB_NAME"]),
+      'env': elementary.get_first_env_var(["ENV", "DBT_ENV"]),
+      'env_id': elementary.get_first_env_var(["ENV_ID"]),
+      'project_id': elementary.get_first_env_var(["PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
+      'cause_category': elementary.get_first_env_var(["CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"]),
+      'cause': elementary.get_first_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"]),
+      'pull_request_id': elementary.get_first_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
+      'git_sha': elementary.get_first_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -49,46 +49,6 @@
 
     {% set config = elementary.get_runtime_config() %}
     {% do return(config.project_name) %}
-{% endmacro %}
-
-{% macro get_env() %}
-    {{ return(elementary.get_first_not_none_env_var(["ENV", "DBT_ENV"])) }}
-{% endmacro %}
-
-{% macro get_env_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["ENV_ID"])) }}
-{% endmacro %}
-
-{% macro get_project_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"])) }}
-{% endmacro %}
-
-{% macro get_job_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"])) }}
-{% endmacro %}
-
-{% macro get_job_name() %}
-    {{ return(elementary.get_first_not_none_env_var(["JOB_NAME"])) }}
-{% endmacro %}
-
-{% macro get_job_run_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"])) }}
-{% endmacro %}
-
-{% macro get_cause_category() %}
-    {{ return(elementary.get_first_not_none_env_var(["CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"])) }}
-{% endmacro %}
-
-{% macro get_cause() %}
-    {{ return(elementary.get_first_not_none_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"])) }}
-{% endmacro %}
-
-{% macro get_pr_id() %}
-    {{ return(elementary.get_first_not_none_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"])) }}
-{% endmacro %}
-
-{% macro get_git_sha() %}
-    {{ return(elementary.get_first_not_none_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"])) }}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
