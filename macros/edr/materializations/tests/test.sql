@@ -1,6 +1,6 @@
 {% macro query_test_result_rows(sample_limit=none) %}
   {%- set query -%}
-      select * from ({{ sql }}) {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
+      select * from ({{ sql }}) rs/**/ {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
   {%- endset -%}
   {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
 {% endmacro %}
@@ -120,7 +120,7 @@
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
-      select * from ({{ sql }})
+      select * from ({{ sql }}) rs
       where
         anomaly_score is not null and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and
