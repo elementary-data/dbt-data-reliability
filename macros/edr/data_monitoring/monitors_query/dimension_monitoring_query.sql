@@ -46,7 +46,7 @@
                     dimension_value,
                     1 as joiner
                 from filtered_monitored_table
-            )
+            ) rs
         ),
 
         daily_buckets as (
@@ -58,7 +58,7 @@
                 where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and
                       edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }} and
                       edr_daily_bucket >= (select min(start_bucket_in_data) from filtered_monitored_table)
-            )
+            ) rs
         ),
 
         {# Created daily buckets for each dimension value #}
