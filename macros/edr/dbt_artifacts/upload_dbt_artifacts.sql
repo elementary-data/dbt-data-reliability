@@ -9,13 +9,12 @@
       "dbt_exposures": elementary.upload_dbt_exposures,
       }
     %}
-    {% do elementary.debug_log("Uploading dbt artifacts.") %}
+    {% do elementary.edr_log("Uploading dbt artifacts.") %}
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% set relation = elementary.get_elementary_relation(artifacts_model) %}
         {% if relation %}
-          {% do dbt.truncate_relation(relation) %}
-          {% do upload_artifacts_func(should_commit=true) %}
+          {% do upload_artifacts_func(should_commit=true, cache=elementary.get_config_var('cache_artifacts')) %}
         {% endif %}
       {% else %}
         {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}

@@ -9,3 +9,5 @@ edr.log
 integration_tests/data
 
 venv/
+elementary*.html
+elementary*.json

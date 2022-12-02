@@ -1,5 +1,31 @@
 {% macro empty_elementary_test_results() %}
-    {{ elementary.empty_table([('id','long_string'),('data_issue_id','string'),('test_execution_id','long_string'),('test_unique_id','long_string'),('model_unique_id','long_string'),('detected_at','timestamp'),('database_name','string'),('schema_name','string'),('table_name','string'),('column_name','string'),('test_type','string'),('test_sub_type','string'),('test_results_description','long_string'),('owners','string'),('tags','string'),('test_results_query','long_string'),('other','string'),('test_name','long_string'),('test_params','long_string'),('severity','string'),('status','string'),('failures', 'bigint')]) }}
+    {{ elementary.empty_table([
+    ('id','long_string'),
+    ('data_issue_id','string'),
+    ('test_execution_id','long_string'),
+    ('test_unique_id','long_string'),
+    ('model_unique_id','long_string'),
+    ('detected_at','timestamp'),
+    ('database_name','string'),
+    ('schema_name','string'),
+    ('table_name','string'),
+    ('column_name','string'),
+    ('test_type','string'),
+    ('test_sub_type','string'),
+    ('test_results_description','long_string'),
+    ('owners','string'),
+    ('tags','string'),
+    ('test_results_query','long_string'),
+    ('other','string'),
+    ('test_name','long_string'),
+    ('test_params','long_string'),
+    ('severity','string'),
+    ('status','string'),
+    ('failures', 'bigint'),
+    ('test_short_name', 'string'),
+    ('test_alias', 'string'),
+    ('result_rows', 'long_string')
+    ]) }}
 {% endmacro %}
 
 {% macro empty_dbt_source_freshness_results() %}
