@@ -1,12 +1,14 @@
 {% macro get_config_var(var_name) %}
-  {% set eval_map = {
-    "True": true,
-    "False": false
-  } %}
   {% set default_config = elementary.get_default_config() %}
   {% set var_value = var(var_name, default_config.get(var_name)) %}
-  {% set eval_value = eval_map.get(var_value, var_value) %}
-  {% do return(eval_value) %}
+  {% if var_value is string %}
+    {% if var_value.lower() == "true" %}
+      {% do return(true) %}
+    {% elif var_value.lower() == "false" %}
+      {% do return(false) %}
+    {% endif %}
+  {% endif %}
+  {% do return(var_value) %}
 {% endmacro %}
 
 {% macro get_default_config(var_name) %}
