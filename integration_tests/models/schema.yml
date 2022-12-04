@@ -236,7 +236,7 @@ sources:
       - name: groups
         columns:
           - name: group_a
-            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'TEXT' }}"
+            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
           - name: group_b
             data_type: DOUBLE
           - name: group_c
@@ -249,7 +249,7 @@ sources:
       - name: stats_players
         columns:
           - name: player
-            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'TEXT' }}"
+            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
           - name: goals
             data_type: BOOLEAN
           - name: coffee_cups_consumed

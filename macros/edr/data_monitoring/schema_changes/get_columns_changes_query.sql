@@ -43,7 +43,7 @@
 
     {% set pre %}
         select
-            '{{ full_table_name }}' as full_table_name,
+            {{ elementary.const_as_string(full_table_name) }} as full_table_name,
             column_name,
             data_type,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
