@@ -21,7 +21,7 @@
     {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
 {% endmacro %}
 
-{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation, strict=False) %}
+{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation, include_added=False) %}
     {% set cur %}
         with baseline as (
             select lower(column_name) as column_name, data_type
@@ -50,7 +50,7 @@
         from {{ model_baseline_relation }}
     {% endset %}
 
-    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre, include_added=strict) }}
+    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre, include_added=include_added) }}
 {% endmacro %}
 
 
@@ -78,7 +78,7 @@
             pre.detected_at
         from cur inner join pre
             on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
-        where cur.data_type != pre.data_type
+        where pre.data_type IS NOT NULL AND cur.data_type != pre.data_type
 
     ),
 
