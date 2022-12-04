@@ -7,6 +7,12 @@
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
 
+    {% if elementary.is_incremental_model(model_graph_node) %}
+      {% set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
+    {% else %}
+      {% set latest_full_refresh = none %}
+    {% endif %}
+
     {% set anomaly_scores_query %}
 
         with data_monitoring_metrics as (
@@ -15,12 +21,9 @@
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
                 bucket_end > {{ elementary.cast_as_timestamp(metrics_min_time) }}
-                and bucket_end > (
-                    select generated_at from {{ ref('dbt_run_results') }}
-                    where unique_id = '{{ model_graph_node.unique_id }}' and full_refresh = true
-                    order by generated_at desc
-                    limit 1
-                )
+                {%- if latest_full_refresh -%}
+                    and updated_at > {{ latest_full_refresh }}
+                {%- endif -%}
                 and upper(full_table_name) = upper('{{ full_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
