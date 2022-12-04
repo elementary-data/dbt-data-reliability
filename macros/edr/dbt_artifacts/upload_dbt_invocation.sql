@@ -23,11 +23,32 @@
       'target_profile_name': target.profile_name,
       'threads': target.threads,
       'selected': elementary.get_invocation_select_filter(),
-      'yaml_selector': elementary.get_invocation_yaml_selector()
+      'yaml_selector': elementary.get_invocation_yaml_selector(),
+      'project_name': elementary.get_project_name(),
+      'job_id': elementary.get_first_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"]),
+      'job_run_id': elementary.get_first_env_var(["JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
+      'job_name': elementary.get_first_env_var(["JOB_NAME"]),
+      'env': elementary.get_first_env_var(["ENV", "DBT_ENV"]),
+      'env_id': elementary.get_first_env_var(["ENV_ID"]),
+      'project_id': elementary.get_first_env_var(["PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
+      'cause_category': elementary.get_first_env_var(["CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"]),
+      'cause': elementary.get_first_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"]),
+      'pull_request_id': elementary.get_first_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
+      'git_sha': elementary.get_first_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
+{% endmacro %}
+
+{% macro get_project_name() %}
+    {% set project_name = elementary.get_config_var("project_name") %}
+    {% if project_name %}
+        {{ return(project_name) }}
+    {% endif %}
+
+    {% set config = elementary.get_runtime_config() %}
+    {% do return(config.project_name) %}
 {% endmacro %}
 
 {%- macro get_invocation_select_filter() -%}
@@ -76,6 +97,9 @@
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
+      ('job_id', 'long_string'),
+      ('job_name', 'long_string'),
+      ('job_run_id', 'long_string'),
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
       ('generated_at', 'string'),
@@ -91,6 +115,14 @@
       ('target_profile_name', 'string'),
       ('threads', 'int'),
       ('selected', 'long_string'),
-      ('yaml_selector', 'long_string')
+      ('yaml_selector', 'long_string'),
+      ('project_id', 'string'),
+      ('project_name', 'string'),
+      ('env', 'string'),
+      ('env_id', 'string'),
+      ('cause_category', 'string'),
+      ('cause', 'long_string'),
+      ('pull_request_id', 'string'),
+      ('git_sha', 'string'),
     ])) }}
 {% endmacro %}

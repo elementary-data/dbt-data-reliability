@@ -1,6 +1,14 @@
 {% macro get_config_var(var_name) %}
   {% set default_config = elementary.get_default_config() %}
-  {{ return(var(var_name, default_config.get(var_name))) }}
+  {% set var_value = var(var_name, default_config.get(var_name)) %}
+  {% if var_value is string %}
+    {% if var_value.lower() == "true" %}
+      {% do return(true) %}
+    {% elif var_value.lower() == "false" %}
+      {% do return(false) %}
+    {% endif %}
+  {% endif %}
+  {% do return(var_value) %}
 {% endmacro %}
 
 {% macro get_default_config(var_name) %}
@@ -30,7 +38,7 @@
     'test_sample_row_count': 5,
     'edr_cli_run': false,
     'max_int': 2147483647,
-    'custom_run_started_at': null,
+    'custom_run_started_at': none,
     'edr_monitors': {
       'table': ['row_count', 'freshness'],
       'column_any_type': ['null_count', 'null_percent'],
@@ -43,7 +51,8 @@
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
-    'cache_artifacts': true
+    'cache_artifacts': true,
+    'project_name': none,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

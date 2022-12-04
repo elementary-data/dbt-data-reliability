@@ -19,7 +19,7 @@
 {% macro get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
   {% set elementary_test_results = [] %}
 
-  {% for result in results %}
+  {% for result in results | selectattr('node.resource_type', '==', 'test') %}
     {% set result = result.to_dict() %}
     {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
 
