@@ -325,7 +325,7 @@
             {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - for column " ~ column_name ~ " expected alert type " ~ expected_changes[(test_short_name, column_name)] ~ " but got " ~ alert) %}
             {{ return(1) }}
         {% endif %}
-        {% do found_schema_changes.update({(test_short_name | lower, column_name | lower): alert}) %}
+        {% do found_schema_changes.update({(test_short_name, column_name): alert}) %}
 
     {% endfor %}
     {% if found_schema_changes %}
