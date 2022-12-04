@@ -30,6 +30,10 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
+        {% if timestamp_column and not is_timestamp %}
+          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(timestamp_column)) %}
+        {% endif %}
+
         {% set dimensions_str = elementary.join_list(dimensions, ', ') %}
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
         {{ elementary.debug_log('where_expression - ' ~ where_expression) }}
@@ -38,7 +42,7 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, min_bucket_start) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'metrics', dimension_monitoring_query) %}
 

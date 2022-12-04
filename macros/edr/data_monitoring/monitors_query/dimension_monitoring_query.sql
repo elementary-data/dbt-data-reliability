@@ -1,4 +1,4 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, is_timestamp, min_bucket_start) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, min_bucket_start) %}
     {% set metric_name = 'dimension' %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
@@ -6,7 +6,7 @@
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
     
-    {% if is_timestamp %}
+    {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
