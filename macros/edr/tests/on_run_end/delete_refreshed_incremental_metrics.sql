@@ -13,7 +13,7 @@
 
     {% set refreshed_tables = [] %}
     {% for result in results %}
-      {% do refreshed_tables.append(elementary.relation_to_full_name(result.node)) %}
+      {% do refreshed_tables.append(elementary.model_node_to_full_name(result.node)) %}
     {% endfor %}
 
     {% set stored_metric_tables_to_delete = elementary.lists_intersection(stored_metric_tables, refreshed_tables) %}
