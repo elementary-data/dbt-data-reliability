@@ -21,7 +21,7 @@
     {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
 {% endmacro %}
 
-{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation) %}
+{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation, strict=False) %}
     {% set cur %}
         with baseline as (
             select lower(column_name) as column_name, data_type
@@ -50,7 +50,7 @@
         from {{ model_baseline_relation }}
     {% endset %}
 
-    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre, include_added=False) }}
+    {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre, include_added=strict) }}
 {% endmacro %}
 
 

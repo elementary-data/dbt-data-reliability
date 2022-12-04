@@ -1,4 +1,4 @@
-{% test schema_changes_from_baseline(model, baseline) %}
+{% test schema_changes_from_baseline(model, strict=False) %}
     -- depends_on: {{ ref('schema_columns_snapshot') }}
     -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
@@ -12,7 +12,7 @@
         {% set baseline_table_relation = elementary.create_model_baseline_table(baseline_columns, database_name, schema_name, test_name_in_graph) %}
 
         {% set full_table_name = elementary.relation_to_full_name(model) %}
-        {% set changes_from_baseline_query = elementary.get_column_changes_from_baseline_query(full_table_name, baseline_table_relation) %}
+        {% set changes_from_baseline_query = elementary.get_column_changes_from_baseline_query(full_table_name, baseline_table_relation, strict=strict) %}
         {{ changes_from_baseline_query }}
     {% else %}
         {# test must run an sql query #}
