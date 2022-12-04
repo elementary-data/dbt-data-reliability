@@ -294,38 +294,44 @@
 {% endmacro %}
 
 {% macro validate_schema_changes() %}
-    {% set expected_changes = {'red_cards': 'column_added',
-                               'group_a':   'column_removed',
-                               'goals':   'type_changed',
-                               'key_crosses': 'column_added',
-                               'offsides': 'column_removed'} %}
+    {% set expected_changes = {('schema_changes', 'red_cards'): 'column_added',
+                               ('schema_changes', 'group_a'):   'column_removed',
+                               ('schema_changes', 'goals'):   'type_changed',
+                               ('schema_changes', 'key_crosses'): 'column_added',
+                               ('schema_changes', 'offsides'): 'column_removed',
+                               ('schema_changes_from_baseline', 'group_b'): 'type_changed',
+                               ('schema_changes_from_baseline', 'group_d'): 'column_added',
+                               ('schema_changes_from_baseline', 'goals'): 'type_changed',
+                               ('schema_changes_from_baseline', 'coffee_cups_consumed'): 'column_removed'
+                               } %}
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set alerts_relation = get_alerts_table_relation('alerts_schema_changes') %}
     {% set schema_changes_alerts %}
-    select column_name, sub_type
+    select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
         where detected_at >= {{ max_bucket_end }} and column_name is not NULL
-    group by 1,2
+    group by 1,2,3
     {% endset %}
     {% set alert_rows = run_query(schema_changes_alerts) %}
     {% set found_schema_changes = {} %}
     {% for row in alert_rows %}
-        {% set column_name = row[0] | lower %}
-        {% set alert = row[1] | lower %}
-        {% if column_name not in expected_changes %}
-            {% do elementary.edr_log("FAILED: could not find expected alert for " ~ column_name ~ ", " ~ alert) %}
+        {% set test_short_name = row[0] | lower %}
+        {% set column_name = row[1] | lower %}
+        {% set alert = row[2] | lower %}
+        {% if (test_short_name, column_name) not in expected_changes %}
+            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - could not find expected alert for " ~ column_name ~ ", " ~ alert) %}
+        {% endif %}
+        {% if expected_changes[(test_short_name, column_name)] != alert %}
+            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - for column " ~ column_name ~ " expected alert type " ~ expected_changes[(test_short_name, column_name)] ~ " but got " ~ alert) %}
             {{ return(1) }}
         {% endif %}
-        {% if expected_changes[column_name] != alert %}
-            {% do elementary.edr_log("FAILED: for column " ~ column_name ~ " expected alert type " ~ expected_changes[column_name] ~ " but got " ~ alert) %}
-            {{ return(1) }}
-        {% endif %}
-        {% do found_schema_changes.update({column_name: alert}) %}
+        {% do found_schema_changes.update({(test_short_name | lower, column_name | lower): alert}) %}
+
     {% endfor %}
     {% if found_schema_changes %}
         {%- set missing_changes = [] %}
         {%- for expected_change in expected_changes %}
-            {%- if expected_change | lower not in found_schema_changes %}
+            {%- if expected_change not in found_schema_changes %}
                 {% do elementary.edr_log("FAILED: for column " ~ expected_change ~ " expected alert " ~ expected_changes[expected_change] ~ " but alert is missing") %}
                 {%- do missing_changes.append(expected_change) -%}
             {%- endif %}
