@@ -68,6 +68,10 @@
 {% endmacro %}
 
 {% macro materialize_test() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(none) %}
+  {% endif %}
+
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
   {% set test_type_handler_map = {
