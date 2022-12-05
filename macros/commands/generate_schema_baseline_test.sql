@@ -13,7 +13,7 @@
     {% if node.package_name != 'elementary' and
           ((include_sources and node.resource_type == 'source') or
            (include_models and node.resource_type == 'model')) %}
-      {% do print("Generating schema changes from baseline test for " ~ node.resource_type ~ " '" ~ node.name ~ "':") %}
+      {% do print("Generating schema changes from baseline test for {} '{}':".format(node.resource_type, node.name)) %}
       {{ generate_schema_baseline_test_for_node(node, fail_on_added=fail_on_added, enforce_types=enforce_types) }}
       {% do print('----------------------------------') %}
     {% endif %}
@@ -26,13 +26,13 @@
     {% set node = elementary.get_node_by_name(node_name) %}
 
     {% if not node %}
-      {% do print("Could not find any model or source by the name '" ~ model_name ~ "'!") %}
+      {% do print("Could not find any model or source by the name '{}'!".format(node_name)) %}
       {% do return(none) %}
     {% endif %}
   {% endif %}
 
   {% if node.resource_type not in ["source", "model"] %}
-    {% do print("Only sources and models are supported for this macro, supplied node type: '" ~ node.resource_type ~ "'") %}
+    {% do print("Only sources and models are supported for this macro, supplied node type: '{}'".format(node.resource_type)) %}
     {% do return(none) %}
   {% endif %}
 
