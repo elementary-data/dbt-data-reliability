@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none, backfill_days=none, where=none) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column=none, sensitivity=none, backfill_days=none, where_expression=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}

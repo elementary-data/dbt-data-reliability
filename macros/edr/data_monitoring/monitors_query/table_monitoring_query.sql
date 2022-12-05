@@ -1,4 +1,4 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column=none, where=none) %}
+{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column=none, where_expression=none) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
@@ -12,7 +12,7 @@
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
-                {% if where %} and {{ where }} {% endif %}
+                {% if where_expression %} and {{ where_expression }} {% endif %}
         ),
 
         daily_buckets as (
