@@ -78,6 +78,50 @@ models:
         data_type: string
         description: The yaml selector that was passed in this invocation.
 
+      - name: job_id
+        data_type: string
+        description: The ID of a job, defined in the `JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: job_name
+        data_type: string
+        description: The name of a job, defined in the `JOB_NAME` env var.
+
+      - name: job_run_id
+        data_type: string
+        description: The run ID of a job, defined in the `JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: env
+        data_type: string
+        description: The environment's name, defined in the `ENV` env var.
+
+      - name: env_id
+        data_type: string
+        description: The ID of an environment, defined in the `ENV_ID` env var.
+
+      - name: project_id
+        data_type: string
+        description: The ID of a project, defined in the `PROJECT_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: cause_category
+        data_type: string
+        description: |
+          The category of the cause of the invocation. For example, if the invocation was triggered by a schedule, the cause category would be schedule.
+          Defined in the `CAUSE_CATEGORY` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: cause
+        data_type: string
+        description: |
+          The cause of the invocation. For example, if the invocation was triggered by a manual run, the cause would be _"Kicked off by Joe."_.
+          Defined in the `CAUSE` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: pull_request_id
+        data_type: string
+        description: The ID of a pull request, defined in the `PULL_REQUEST_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: git_sha
+        data_type: string
+        description: The git SHA of the commit that was used in this invocation, defined in the `GIT_SHA` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
 
   - name: dbt_run_results
     description: >
@@ -176,4 +220,10 @@ models:
       Run results of dbt snapshots, enriched with snapshots metadata.
       Each row is the result of a single snapshot.
       This is a view that joins data from `dbt_run_results` and `dbt_snapshots`.
+
+  - name: job_run_results
+    description: >
+        Run results of dbt invocations, enriched with jobs metadata.
+        Each row is the result of a single job.
+        This is a view on `dbt_invocations`.
 
