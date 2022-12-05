@@ -23,7 +23,7 @@
 {% macro generate_schema_baseline_test_for_node(node, fail_on_added=False, enforce_types=False) %}
   {% if node is string %}
     {% set node_name = node %}
-    {% set node = get_node_by_name(node_name) %}
+    {% set node = elementary.get_node_by_name(node_name) %}
 
     {% if not node %}
       {% do print("Could not find any model or source by the name '" ~ model_name ~ "'!") %}
