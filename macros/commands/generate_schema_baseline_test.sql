@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro generate_schema_baseline_test_for_all_nodes(include_sources=True, include_models=True, fail_on_added=False, enforce_types=False) %}
-  {% set nodes = get_nodes_from_graph() %}
+  {% set nodes = elementary.get_nodes_from_graph() %}
   {% for node in nodes %}
     {% if node.package_name != 'elementary' and
           ((include_sources and node.resource_type == 'source') or
