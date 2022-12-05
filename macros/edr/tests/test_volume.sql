@@ -6,7 +6,7 @@
       timestamp_column=timestamp_column,
       sensitivity=sensitivity,
       backfill_days=backfill_days,
-      where=where
+      where_expression=where_expression
     )
   }}
 {% endtest %}
