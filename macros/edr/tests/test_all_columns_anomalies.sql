@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies = none, exclude_prefix = none, exclude_regexp = none, timestamp_column = none, sensitivity = none, backfill_days=none) %}
+{% test all_columns_anomalies(model, column_anomalies=none, exclude_prefix=none, exclude_regexp=none, timestamp_column=none, sensitivity=none, backfill_days=none, where=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -49,7 +49,7 @@
                     {%- set min_bucket_start = "'" ~ elementary.get_min_bucket_start(model_graph_node, backfill_days, column_monitors, column_name) ~ "'" %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, min_bucket_start, column_obj, column_monitors) %}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}

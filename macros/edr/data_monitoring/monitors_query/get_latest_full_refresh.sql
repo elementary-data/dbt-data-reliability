@@ -7,6 +7,5 @@
         order by generated_at desc
         limit 1
     {% endset %}
-    {% set result = elementary.result_value(query) %}
-    {% do return(result) %}
+    {% do return(elementary.result_value(query)) %}
 {% endmacro %}
