@@ -43,7 +43,7 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
-        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where_expression %}
+        {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'metrics', column_monitoring_query) %}
 
