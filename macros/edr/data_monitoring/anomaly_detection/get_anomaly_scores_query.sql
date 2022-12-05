@@ -2,8 +2,7 @@
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+    {%- set metrics_min_time = (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
 
@@ -20,10 +19,10 @@
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end > {{ elementary.cast_as_timestamp(metrics_min_time) }}
-                {%- if latest_full_refresh -%}
-                    and updated_at > {{ latest_full_refresh }}
-                {%- endif -%}
+                bucket_end > {{ elementary.cast_as_timestamp(elementary.quote(metrics_min_time)) }}
+                {% if latest_full_refresh %}
+                    and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
+                {% endif %}
                 and upper(full_table_name) = upper('{{ full_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
