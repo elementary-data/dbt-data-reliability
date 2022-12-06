@@ -2,9 +2,9 @@
   {% if dbt_version >= '1.3.0' %}
         {# This macro is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
         {# Should be replaced to the equivalent macro once it released #}
-        {{ return(dbt.current_timestamp()) }}
+        {{ return(dbt.current_timestamp_backcompat()) }}
     {% else %}
-        {{ return(dbt.current_timestamp()) }}
+        {{ return(dbt.current_timestamp_backcompat()) }}
     {% endif %}
 {%- endmacro %}
 
