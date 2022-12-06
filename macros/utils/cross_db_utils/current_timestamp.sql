@@ -4,7 +4,7 @@
         {# Should be replaced to the equivalent macro once it released #}
         {{ return(dbt.current_timestamp_backcompat()) }}
     {% else %}
-        {{ return(dbt.current_timestamp_backcompat()) }}
+        {{ return(dbt_utils.current_timestamp()) }}
     {% endif %}
 {%- endmacro %}
 
