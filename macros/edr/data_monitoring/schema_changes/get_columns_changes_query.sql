@@ -125,7 +125,7 @@
     )
 
         {# Creating a unique id for each row in the table, and adding execution id #}
-    select {{ dbt_utils.generate_surrogate_key([
+    select {{ generate_surrogate_key([
                      'data_issue_id',
                      elementary.const_as_string(test_execution_id)
                 ]) }} as id,
