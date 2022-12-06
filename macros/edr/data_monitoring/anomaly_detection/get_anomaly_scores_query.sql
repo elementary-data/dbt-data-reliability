@@ -111,7 +111,7 @@
         anomaly_scores as (
 
             select
-                {{ dbt_utils.generate_surrogate_key([
+                {{ generate_surrogate_key([
                  'metric_id',
                  elementary.const_as_string(test_execution_id)
                 ]) }} as id,
