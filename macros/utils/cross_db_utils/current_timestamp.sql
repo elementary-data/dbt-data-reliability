@@ -1,5 +1,5 @@
 {% macro current_timestamp() -%}
-  {% if dbt_version >= '1.2.0' %}
+  {% if dbt_version >= '1.3.0' %}
         {# This macro is depricated from dbt_utils version 0.9.0, but still hasn't got an equivalent macro at dbt-core #}
         {# Should be replaced to the equivalent macro once it released #}
         {{ return(dbt.current_timestamp()) }}
