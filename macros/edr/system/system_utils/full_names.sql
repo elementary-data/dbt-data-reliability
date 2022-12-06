@@ -89,6 +89,16 @@
     {{ return(full_table_name) }}
 {% endmacro %}
 
+{% macro model_node_to_full_name(model_node) %}
+    {%- if model_node.database %}
+        {%- set full_table_name = model_node.database | upper ~'.'~ model_node.schema | upper ~'.'~ model_node.alias | upper %}
+    {%- else %}
+    {# Databricks doesn't always have a database #}
+        {%- set full_table_name = model_node.schema | upper ~'.'~ model_node.alias | upper %}
+    {%- endif %}
+    {{ return(full_table_name) }}
+{% endmacro %}
+
 
 {% macro configured_schemas_from_graph_as_tuple() %}
 

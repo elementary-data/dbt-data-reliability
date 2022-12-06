@@ -79,28 +79,9 @@
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
     {% set test_model_jinja = test_kwargs.get('model') %}
-    {%- if test_model_unique_ids | length == 1 -%}
-        {# if only one parent model for this test, simply use this model #}
-        {% set primary_test_model_id = test_model_unique_ids[0] %}
-    {%- else -%}
-        {# if there are multiple parent models for a test, try finding it using the model jinja in the test graph node #}
-        {% set primary_test_model_id = none %}
-        {% if test_model_jinja %}
-            {% set primary_test_model_candidates = [] %}
-            {% for test_model_unique_id in test_model_unique_ids %}
-                {% set split_test_model_unique_id = test_model_unique_id.split('.') %}
-                {% if split_test_model_unique_id and split_test_model_unique_id | length > 0 %}
-                    {% set test_model_name = split_test_model_unique_id[-1] %}
-                    {% if test_model_name and test_model_name in test_model_jinja %}
-                        {% do primary_test_model_candidates.append(test_model_unique_id) %}
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-            {% if primary_test_model_candidates | length == 1 %}
-                {% set primary_test_model_id = primary_test_model_candidates[0] %}
-            {% endif %}
-        {% endif %}
-    {%- endif -%}
+    {% set test_model_relation = render(test_model_jinja) %}
+    {% set test_parent_model = elementary.get_node_from_relation_str(test_model_relation) %}
+    {% set parent_model_unique_id = test_parent_model.get('unique_id') %}
     {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -120,7 +101,7 @@
         'schema_name': primary_test_model_schema,
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
-        'parent_model_unique_id': primary_test_model_id,
+        'parent_model_unique_id': parent_model_unique_id,
         'description': node_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
