@@ -1,12 +1,6 @@
-{% macro get_global_min_bucket_start() %}
-    {%- set global_min_bucket_start = (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") %}
+{% macro get_global_min_bucket_start(backfill_days) %}
+    {%- set global_min_bucket_start = (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back')) - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") %}
     {{ return(global_min_bucket_start) }}
-{% endmacro %}
-
-{# bucket_end represents the end of the bucket, so we need to add extra day to the timedelta #}
-{% macro get_global_min_bucket_end_as_datetime() %}
-    {%- set global_min_bucket_end = elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') + 1) %}
-    {{ return(global_min_bucket_end) }}
 {% endmacro %}
 
 {% macro get_max_bucket_end() %}
@@ -21,8 +15,7 @@
 
 
 {% macro get_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none) %}
-
-    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start() %}
+    {%- set global_min_bucket_start = elementary.get_global_min_bucket_start(backfill_days) %}
     {% if not elementary.is_incremental_model(model_graph_node) %}
         {% do return(global_min_bucket_start) %}
     {% endif %}
