@@ -22,7 +22,6 @@
     'days_back': 14,
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
-    'training_set_size': 14,
     'tests_schema_name': '',
     'debug_logs': false,
     'disable_warn_alerts': false,
