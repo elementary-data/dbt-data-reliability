@@ -61,36 +61,36 @@
 
 
 {% macro type_bigint() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_bigint()) }}
-    {% else %}
-        {{ return(dbt_utils.type_bigint()) }}
+    {% set macro = dbt.type_bigint or dbt_utils.type_bigint %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_bigint` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_float() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_float()) }}
-    {% else %}
-        {{ return(dbt_utils.type_float()) }}
+    {% set macro = dbt.type_float or dbt_utils.type_float %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_float` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_int() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_int()) }}
-    {% else %}
-        {{ return(dbt_utils.type_int()) }}
+    {% set macro = dbt.type_int or dbt_utils.type_int %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_int` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_timestamp() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_timestamp()) }}
-    {% else %}
-        {{ return(dbt_utils.type_timestamp()) }}
+    {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}

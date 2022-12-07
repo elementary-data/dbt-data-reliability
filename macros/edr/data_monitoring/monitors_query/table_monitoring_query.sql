@@ -125,7 +125,7 @@
     {% endif %}
 
     select
-        {{ generate_surrogate_key([
+        {{ elementary.generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
