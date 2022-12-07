@@ -1,8 +1,6 @@
 {% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
-    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
 
@@ -19,7 +17,7 @@
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end > {{ elementary.cast_as_timestamp(elementary.quote(metrics_min_time)) }}
+                bucket_start > {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_global_min_bucket_start())) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
                 {% endif %}
