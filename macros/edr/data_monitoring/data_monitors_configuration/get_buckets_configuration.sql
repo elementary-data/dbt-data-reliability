@@ -15,7 +15,7 @@
 {% endmacro %}
 
 
-{% macro get_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none) %}
+{% macro get_test_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none) %}
     {%- set min_bucket_start = elementary.get_min_bucket_start() %}
     {% if not elementary.is_incremental_model(model_graph_node) %}
         {% do return(min_bucket_start) %}
