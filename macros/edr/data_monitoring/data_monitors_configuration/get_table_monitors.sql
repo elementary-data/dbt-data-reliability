@@ -7,10 +7,6 @@
     {%- else %}
         {%- set final_table_monitors = default_table_monitors %}
     {%- endif %}
-    {# schema_changes is a different flow #}
-    {% if 'schema_changes' in final_table_monitors %}
-        {%- do final_table_monitors.remove('schema_changes') %}
-    {% endif %}
     {{ return(final_table_monitors) }}
 {% endmacro %}
 
