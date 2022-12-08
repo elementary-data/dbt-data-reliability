@@ -1,21 +1,21 @@
 {% macro get_global_min_bucket_start() %}
-    {%- set global_min_bucket_start = (elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00") %}
-    {{ return(global_min_bucket_start) }}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")) %}
+{% endmacro %}
+
+{% macro get_min_bucket_end() %}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
 {% macro get_max_bucket_end() %}
-    {%- set max_bucket_end = elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") %}
-    {{ return(max_bucket_end) }}
+    {% do return(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
 {% macro get_backfill_bucket_start(backfill_days) %}
-    {%- set backfill_bucket_start = (elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") %}
-    {{ return(backfill_bucket_start) }}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
 
 {% macro get_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none) %}
-
     {%- set global_min_bucket_start = elementary.get_global_min_bucket_start() %}
     {% if not elementary.is_incremental_model(model_graph_node) %}
         {% do return(global_min_bucket_start) %}
