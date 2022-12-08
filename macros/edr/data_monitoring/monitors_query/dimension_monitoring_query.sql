@@ -238,7 +238,7 @@
     {% endif %}
 
     select
-        {{ generate_surrogate_key([
+        {{ elementary.generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -254,7 +254,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final
