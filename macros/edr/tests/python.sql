@@ -23,7 +23,12 @@
   {% do test_node.update({'schema': model_relation.schema}) %}
   {% do test_node.config.update(test_args) %}
 
-  {% set user_py_code_macro = context[code_macro] %}
+  {% if code_macro is string %}
+    {% set user_py_code_macro = context[code_macro] %}
+  {% else %}
+    {% set user_py_code_macro = code_macro %}
+  {% endif %}
+
   {% if not user_py_code_macro %}
     {% do exceptions.raise_compiler_error('Unable to find the macro `' ~ code_macro ~ '`.') %}
   {% endif %}
