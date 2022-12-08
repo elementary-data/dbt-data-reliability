@@ -1,4 +1,4 @@
-{% macro generate_schema_baseline_test(name=none, include_sources=True, include_models=True, fail_on_added=False, enforce_types=False) %}
+{% macro generate_schema_baseline_test(name=none, include_sources=True, include_models=False, fail_on_added=False, enforce_types=False) %}
   {% if name %}
     {{ generate_schema_baseline_test_for_node(name, fail_on_added=fail_on_added, enforce_types=enforce_types) }}
   {% else %}
@@ -7,7 +7,7 @@
   {% endif %}
 {% endmacro %}
 
-{% macro generate_schema_baseline_test_for_all_nodes(include_sources=True, include_models=True, fail_on_added=False, enforce_types=False) %}
+{% macro generate_schema_baseline_test_for_all_nodes(include_sources=True, include_models=False, fail_on_added=False, enforce_types=False) %}
   {% set nodes = elementary.get_nodes_from_graph() %}
   {% for node in nodes %}
     {% if node.package_name != 'elementary' and
