@@ -1,10 +1,10 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column=none) %}
+{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column=none, where_expression=none) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
 
-    {% if is_timestamp %}
+    {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
                    {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data
@@ -12,6 +12,7 @@
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+                {% if where_expression %} and {{ where_expression }} {% endif %}
         ),
 
         daily_buckets as (
@@ -125,7 +126,7 @@
     {% endif %}
 
     select
-        {{ dbt_utils.surrogate_key([
+        {{ elementary.generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -139,7 +140,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final

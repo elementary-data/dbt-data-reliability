@@ -1,4 +1,4 @@
-{% macro column_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, column_obj, column_monitors) %}
+{% macro column_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where_expression=none) %}
 
     {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
@@ -6,20 +6,20 @@
     with filtered_monitored_table as (
 
         select {{ column_obj.quoted }}
-            {% if is_timestamp -%}
+            {% if timestamp_column -%}
              , {{ elementary.time_trunc('day', timestamp_column) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
         from {{ monitored_table_relation }}
         where
-        {% if is_timestamp -%}
+        {% if timestamp_column -%}
             {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
             and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
         {%- else %}
             true
         {%- endif %}
-
+        {% if where_expression %} and {{ where_expression }} {% endif %}
     ),
 
     column_monitors as (
@@ -72,7 +72,7 @@
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
-            {%- if is_timestamp %}
+            {%- if timestamp_column %}
                 edr_bucket as bucket_start,
                 {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
                 24 as bucket_duration_hours,
@@ -88,7 +88,7 @@
     )
 
     select
-        {{ dbt_utils.surrogate_key([
+        {{ elementary.generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -102,7 +102,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final
