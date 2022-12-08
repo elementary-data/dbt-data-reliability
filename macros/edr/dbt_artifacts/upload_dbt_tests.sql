@@ -219,9 +219,18 @@
         "expect_row_values_to_have_data_for_every_n_datepart": "Expects model to have values for every grouped `date_part`."
     } %}
 
+    {% set dbt_tests_descriptions_map = {
+        "not_null": "This test validates that there are no `null` values present in a column.",
+        "unique": "This test validates that there are no duplicate values present in a field.",
+        "accepted_values": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail.",
+        "relationships": 'This test validates that all of the records in a child table have a corresponding record in a parent table. This property is referred to as "referential integrity".'
+    } %}
+
     {% set default_description = none %}
     {% if test_namespace == 'dbt_expectations' %}
         {% set default_description = dbt_expectations_descriptions_map.get(short_name) %}
+    {% elif test_namespace is none %}
+        {% set default_description = dbt_tests_descriptions_map.get(short_name) %}
     {% endif %}
 
     {{ return(default_description) }}
