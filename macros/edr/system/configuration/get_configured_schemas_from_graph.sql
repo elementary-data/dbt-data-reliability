@@ -5,7 +5,7 @@
             {% set test_metadata = test_node.get('test_metadata') %}
             {% if test_metadata %}
                 {% set test_name = test_metadata.get('name') %}
-                {% if test_name == 'schema_changes' %}
+                {% if test_name.startswith('schema_changes') %}
                     {% set test_depends_on_unique_ids = test_node.depends_on.nodes %}
                     {% set depends_on_nodes = elementary.get_nodes_by_unique_ids(test_depends_on_unique_ids) %}
                     {% for node in depends_on_nodes %}

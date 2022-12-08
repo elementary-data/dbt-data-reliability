@@ -234,13 +234,31 @@ sources:
     schema: "{{ target.schema }}"
     tables:
       - name: groups
+        columns:
+          - name: group_a
+            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+          - name: group_b
+            data_type: DOUBLE
+          - name: group_c
         tests:
           - elementary.schema_changes:
               tags: [ "schema_changes" ]
+          - elementary.schema_changes_from_baseline:
+              fail_on_added: true
+              tags: [ "schema_changes_from_baseline" ]
       - name: stats_players
+        columns:
+          - name: player
+            data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+          - name: goals
+            data_type: BOOLEAN
+          - name: coffee_cups_consumed
+            data_type: INTEGER
         tests:
           - elementary.schema_changes:
               tags: [ "schema_changes" ]
+          - elementary.schema_changes_from_baseline:
+              tags: [ "schema_changes_from_baseline" ]
       - name: stats_team
         tests:
           - elementary.schema_changes:
