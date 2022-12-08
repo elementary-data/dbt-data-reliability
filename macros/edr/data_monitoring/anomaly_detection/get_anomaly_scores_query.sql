@@ -17,7 +17,7 @@
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_start > {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_global_min_bucket_start())) }}
+                bucket_end >= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
                 {% endif %}

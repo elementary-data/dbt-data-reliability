@@ -5,17 +5,17 @@
 {# Databricks and Spark #}
 {% macro default__daily_buckets_cte() %}
     select edr_daily_bucket
-    from (select explode(sequence({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval 1 day)) AS edr_daily_bucket)
+    from (select explode(sequence({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_start())) }}, interval 1 day)) AS edr_daily_bucket)
 {% endmacro %}
 
 {% macro snowflake__daily_buckets_cte() -%}
     {%- set daily_buckets_cte %}
         with dates as (
-            select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }} as date
+            select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} as date
         union all
         select {{ elementary.timeadd('day', '1', 'date') }}
         from dates
-        where {{ elementary.timeadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+        where {{ elementary.timeadd('day', '1', 'date') }} <= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_start())) }}
             )
         select date as edr_daily_bucket
         from dates
@@ -27,7 +27,7 @@
 {% macro bigquery__daily_buckets_cte() %}
     {%- set daily_buckets_cte %}
         select edr_daily_bucket
-        from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval 1 day)) as edr_daily_bucket
+        from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_start())) }}, interval 1 day)) as edr_daily_bucket
     {%- endset %}
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
