@@ -3,10 +3,10 @@
 {% endmacro %}
 
 {% macro get_min_bucket_end() %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') + 1)).strftime("%Y-%m-%d 00:00:00")) %}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') - 1)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
-{% macro get_max_bucket_start() %}
+{% macro get_max_bucket_end() %}
     {% do return(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
