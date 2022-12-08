@@ -102,7 +102,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final
