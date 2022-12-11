@@ -17,7 +17,7 @@
             {% do artifact.handler(should_commit=true, cache=elementary.get_config_var('cache_artifacts')) %}
           {% endif %}
         {% else %}
-          {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
+          {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifact.model)) %}
         {% endif %}
       {% endif %}
     {% endfor %}
