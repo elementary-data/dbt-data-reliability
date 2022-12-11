@@ -1,5 +1,5 @@
 {% macro handle_tests_results() %}
-    {{ elementary.edr_log("Handling test results.") }}
+    {{ elementary.debug_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
     {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
     {% set tables_cache = elementary.get_cache("tables") %}
@@ -12,7 +12,7 @@
       {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
       {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
     {% endif %}
-    {{ elementary.edr_log("Handled test results successfully.") }}
+    {{ elementary.debug_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
 
