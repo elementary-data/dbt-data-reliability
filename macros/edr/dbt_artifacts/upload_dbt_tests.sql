@@ -229,7 +229,7 @@
     {% set default_description = none %}
     {% if test_namespace == 'dbt_expectations' %}
         {% set default_description = dbt_expectations_descriptions_map.get(short_name) %}
-    {% elif test_namespace is none %}
+    {% elif test_namespace == 'dbt' or test_namespace is none %}
         {% set default_description = dbt_tests_descriptions_map.get(short_name) %}
     {% endif %}
 
