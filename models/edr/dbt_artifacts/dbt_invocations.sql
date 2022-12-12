@@ -7,6 +7,5 @@
     full_refresh=elementary.get_config_var('elementary_full_refresh')
   )
 }}
-{% do print(is_incremental()) %}
 
 {{ elementary.get_dbt_invocations_empty_table_query() }}
