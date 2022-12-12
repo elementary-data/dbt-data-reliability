@@ -190,7 +190,7 @@
         'data_issue_id': none,
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'unique_id'),
-        'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
+        'model_unique_id': parent_model_unique_id,
         'detected_at': elementary.insensitive_get_dict_value(flattened_test, 'generated_at'),
         'database_name': elementary.insensitive_get_dict_value(flattened_test, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
