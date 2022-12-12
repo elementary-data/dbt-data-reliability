@@ -2,11 +2,11 @@
   {% if execute and results %}
     {% set artifacts = [
       {"model": "dbt_models", "which": "run", "handler": elementary.upload_dbt_models},
-      {"model": "dbt_sources", "which": "run", "handler": elementary.upload_dbt_sources},
-      {"model": "dbt_metrics", "which": "run", "handler": elementary.upload_dbt_metrics},
-      {"model": "dbt_exposures", "which": "run", "handler": elementary.upload_dbt_exposures},
       {"model": "dbt_tests", "which": "test", "handler": elementary.upload_dbt_tests},
       {"model": "dbt_snapshots", "which": "snapshot", "handler": elementary.upload_dbt_snapshots},
+      {"model": "dbt_sources", "which": none, "handler": elementary.upload_dbt_sources},
+      {"model": "dbt_metrics", "which": none, "handler": elementary.upload_dbt_metrics},
+      {"model": "dbt_exposures", "which": none, "handler": elementary.upload_dbt_exposures},
     ] %}
     {% do elementary.debug_log("Uploading dbt artifacts.") %}
     {% for artifact in artifacts %}
