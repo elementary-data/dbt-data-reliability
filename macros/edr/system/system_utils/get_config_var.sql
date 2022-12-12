@@ -53,6 +53,7 @@
     'insert_rows_method': 'max_query_size',
     'cache_artifacts': true,
     'project_name': none,
+    'elementary_full_refresh': false
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
