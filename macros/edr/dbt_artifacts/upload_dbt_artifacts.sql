@@ -12,8 +12,7 @@
     {% for artifact in artifacts %}
       {% if flags.WHICH == "build" or flags.WHICH == artifact.which %}
         {% if not elementary.get_result_node(artifact.model) %}
-          {% set relation = elementary.get_elementary_relation(artifact.model) %}
-          {% if relation %}
+          {% if elementary.get_elementary_relation(artifact.model) %}
             {% do artifact.handler(should_commit=true, cache=elementary.get_config_var('cache_artifacts')) %}
           {% endif %}
         {% else %}
