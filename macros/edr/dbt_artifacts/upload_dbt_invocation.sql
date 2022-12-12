@@ -4,7 +4,7 @@
     {{ return('') }}
   {% endif %}
 
-  {% do elementary.edr_log("Uploading dbt invocation.") %}
+  {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
@@ -38,7 +38,7 @@
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
-  {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
+  {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {% macro get_project_name() %}

@@ -24,7 +24,7 @@
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'schema_changes', column_snapshot_query) %}
 
         {# query if there were schema changes since last execution #}
-        {% set schema_changes_alert_query = elementary.get_columns_changes_query(full_table_name, temp_table_relation) %}
+        {% set schema_changes_alert_query = elementary.get_columns_changes_from_last_run_query(full_table_name, temp_table_relation) %}
         {% set alerts_temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'schema_changes_alerts', schema_changes_alert_query) %}
         {# return schema changes query as standard test query #}
         select * from {{ alerts_temp_table_relation }}

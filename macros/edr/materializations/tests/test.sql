@@ -61,7 +61,7 @@
     {% set anomalies_tests_short_names = ["volume", "freshness"] %}
     {% if flattened_test.short_name.endswith("anomalies") or flattened_test.short_name in anomalies_tests_short_names %}
       {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name == 'schema_changes' %}
+    {% elif flattened_test.short_name.startswith('schema_changes') %}
       {% do return("schema_change") %}
     {% endif %}
   {% endif %}
