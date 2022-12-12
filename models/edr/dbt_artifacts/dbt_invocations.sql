@@ -4,8 +4,9 @@
     transient=False,
     unique_key = 'invocation_id',
     on_schema_change = 'append_new_columns',
-    full_refresh=var('elementary_full_refresh', false)
+    full_refresh=elementary.get_config_var('elementary_full_refresh')
   )
 }}
+{% do print(is_incremental()) %}
 
 {{ elementary.get_dbt_invocations_empty_table_query() }}
