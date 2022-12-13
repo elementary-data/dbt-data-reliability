@@ -2,6 +2,9 @@ version: 2
 
 models:
   - name: any_type_column_anomalies
+    meta:
+      owner: "@egk"
+      subscribers: "@egk"
     description: >
       This is a very weird description
       with breaklines
@@ -24,6 +27,9 @@ models:
           tags: [ "regular_tests" ]
 
   - name: no_timestamp_anomalies
+    meta:
+      owner: "@egk"
+      subscribers: ["@elon@gmail.com", "elon@gmail.com"]
     description: We use this model to test anomalies when there is no timestamp column
     tests:
       - elementary.volume:
@@ -37,6 +43,10 @@ models:
                 - null_count
 
   - name: dimension_anomalies
+  - name: no_timestamp_anomalies
+    meta:
+      owner: "@egk.com"
+      subscribers: ["elon@egk"]
     description: We use this model to test dimension anomalies
     config:
       elementary:
