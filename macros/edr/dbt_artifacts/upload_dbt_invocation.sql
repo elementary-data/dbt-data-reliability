@@ -35,6 +35,7 @@
       'cause': elementary.get_first_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"]),
       'pull_request_id': elementary.get_first_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
       'git_sha': elementary.get_first_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
+      'orchestrator': elementary.get_orchestrator(),
   } %}
 
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -94,6 +95,20 @@
     {{- return(all_vars) -}}
 {%- endmacro -%}
 
+{% macro get_orchestrator() %}
+  {% set orchestrator_env_map = {
+    "airflow": ["AIRFLOW_HOME"],
+    "dbt_cloud": ["DBT_CLOUD_PROJECT_ID"],
+    "github_actions": ["GITHUB_ACTIONS"],
+  } %}
+  {% for orchestrator, env_vars in orchestrator_env_map.items() %}
+    {% if elementary.get_first_env_var(env_vars) %}
+      {% do return(orchestrator) %}
+    {% endif %}
+  {% endfor %}
+  {% do return(none) %}
+{% endmacro %}
+
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
@@ -124,5 +139,6 @@
       ('cause', 'long_string'),
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
+      ('orchestrator', 'string'),
     ])) }}
 {% endmacro %}
