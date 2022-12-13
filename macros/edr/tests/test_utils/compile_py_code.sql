@@ -44,7 +44,7 @@ import pyspark.sql
 {{ py_code }}
 
 def write_output_table(session, output_df, target_relation):
-    df.write.mode('overwrite').format('bigquery').option('writeMethod', 'direct').option('writeDisposition', 'WRITE_TRUNCATE').save(target_relation)
+    output_df.write.mode('overwrite').format('bigquery').option('writeMethod', 'direct').option('writeDisposition', 'WRITE_TRUNCATE').save(target_relation)
 
 def get_fail_count(test_output):
     if isinstance(test_output, int):
