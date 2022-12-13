@@ -24,7 +24,6 @@ def get_column_name_in_df(df, column):
 
     return matching[0]
 
-
 def test(model_df, ref, session):
     raw_json_schema = r"""{{ args.json_schema if args.json_schema is string else tojson(args.json_schema) }}"""
     json_schema = json.loads(raw_json_schema)
