@@ -122,6 +122,10 @@ models:
         data_type: string
         description: The git SHA of the commit that was used in this invocation, defined in the `GIT_SHA` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
 
+      - name: orchestrator
+        data_type: string
+        description: The orchestrator that was used to run this invocation. For example, dbt Cloud, GitHub Actions, etc.
+
 
   - name: dbt_run_results
     description: >
