@@ -11,10 +11,19 @@
     {% endif %}
 
     {% set node_relation = get_relation_from_node(node) %}
-
-    {% do node.config.update({"packages": ["genson"]}) %}
+    {% if not elementary.column_exists_in_relation(node_relation, column_name) %}
+      {% do print("Column '{}' does not exist in {} '{}'!".format(column_name, node.resource_type, node_name)) %}
+      {% do return(none) %}
+    {% endif %}
 
     {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
+
+    {% do node.config.update({"packages": ["genson"]}) %}
+    {% do node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
+    {% if node.resource_type == 'source' %}
+        {% do node.update({'alias': "{}_{}".format(node.source_name, node.name)}) %}
+    {% endif %}
+
     {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
         identifier='json_schema_tmp__' ~ node.alias).quote(false, false, false) %}
 
