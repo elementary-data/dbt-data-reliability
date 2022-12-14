@@ -1,5 +1,15 @@
 {% macro generate_json_schema_test(node_name, column_name) %}
+    {% if target.type != 'snowflake' %}
+      {% do print("JSON schema test generation is currently only supported for Snowflake (the test itself is also supported on BigQuery)") %}
+      {% do return(none) %}
+    {% endif %}
+
     {% set node = elementary.get_node_by_name(node_name) %}
+    {% if node.resource_type not in ["source", "model"] %}
+      {% do print("Only sources and models are supported for this macro, supplied node type: '{}'".format(node.resource_type)) %}
+      {% do return(none) %}
+    {% endif %}
+
     {% set node_relation = get_relation_from_node(node) %}
 
     {% do node.config.update({"packages": ["genson"]}) %}
@@ -30,8 +40,7 @@ tests:
         {{ toyaml(json_schema) | indent(8) }}
     {% endset %}
 
-    {% do print("Please add the following test to your model:") %}
-    {% do print("--------------------------------------------") %}
+    {% do print("Please add the following test to your {} configuration:".format(node.resource_type)) %}
     {% do print(testyaml) %}
 {% endmacro %}
 
