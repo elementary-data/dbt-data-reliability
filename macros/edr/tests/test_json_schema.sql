@@ -1,4 +1,11 @@
 {% test test_json_schema(model, column, json_schema) %}
+    {% if not execute %}
+        {% do return(none) %}
+    {% endif %}
+    {% if not elementary.column_exists_in_relation(model, column) %}
+        {% do exceptions.raise_compiler_error("Column '{}' does not exist in node '{}'!".format(column, model.name)) %}
+    {% endif %}
+
     {{ elementary.test_python(model, elementary.json_schema_python_test, {'column': column, 'json_schema': json_schema},
                               packages=['jsonschema']) }}
 {% endtest %}

@@ -21,7 +21,8 @@
     {% do node.config.update({"packages": ["genson"]}) %}
     {% do node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
     {% if node.resource_type == 'source' %}
-        {% do node.update({'alias': "{}_{}".format(node.source_name, node.name)}) %}
+      {# Source nodes don't have alias, and submit_python_job expects it #}
+      {% do node.update({'alias': "jsonschemagen_{}_{}".format(node.source_name, node.name)}) %}
     {% endif %}
 
     {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
