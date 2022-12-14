@@ -30,8 +30,8 @@ tests:
         {{ toyaml(json_schema) | indent(8) }}
     {% endset %}
 
-    {% do print("Please add the following test to your model/source:") %}
-    {% do print("---------------------------------------------------") %}
+    {% do print("Please add the following test to your model:") %}
+    {% do print("--------------------------------------------") %}
     {% do print(testyaml) %}
 {% endmacro %}
 
