@@ -392,6 +392,11 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
         ]
         test_results.extend(results)
 
+    if "create_table" in test_types:
+        # If there is a problem with create_or_replace macro, it will crash the test.
+        dbt_runner.test(select="tag:table_anomalies")
+        dbt_runner.test(select="tag:table_anomalies")
+
     if "error_test" in test_types:
         dbt_runner.test(select="tag:error_test")
         results = [
@@ -545,7 +550,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "-e",
     type=str,
     default="all",
-    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / dimension / no_timestamp / debug / all (default = all)",
+    help="table / column / schema / regular / artifacts / error_test / error_model / error_snapshot / dimension / create_table / no_timestamp / debug / all (default = all)",
 )
 @click.option(
     "--generate-data",
@@ -580,6 +585,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_model",
             "error_snapshot",
             "dimension",
+            "create_table",
         ]
     else:
         e2e_types = [e2e_type]
