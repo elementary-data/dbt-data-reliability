@@ -1,6 +1,6 @@
 {% macro generate_json_schema_test(node_name, column_name) %}
-    {% if target.type != 'snowflake' %}
-      {% do print("JSON schema test generation is currently only supported for Snowflake (the test itself is also supported on BigQuery)") %}
+    {% if target.type not in ['snowflake', 'bigquery'] %}
+      {% do print("JSON schema test generation is not supported for target: {}".format(target.type)) %}
       {% do return(none) %}
     {% endif %}
 
@@ -29,11 +29,21 @@
         identifier='json_schema_tmp__' ~ node.alias).quote(false, false, false) %}
 
     {% set gen_json_schema_func = elementary.generate_json_schema_py_func(column_name) %}
+    {% set node_relation = node_relation.quote(false, false, false) %}
     {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(node_relation, gen_json_schema_func,
                                                                                 output_table, code_type='function') %}
 
     {% do elementary.run_python(node, compiled_py_code) %}
     {% set json_schema = elementary.result_value('select result from {}'.format(output_table)) %}
+    {% if json_schema == 'genson_not_installed' %}
+      {% do print("ERROR - the 'genson' python library is missing from your warehouse.") %}
+      {% do print("") %}
+      {% do print("This macro relies on the 'genson' python library for generating JSON schemas. Please follow dbt's instructions here: ") %}
+      {% do print("https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models#specific-data-warehouses") %}
+      {% do print("regarding how to install python packages for a {} warehouse.".format(target.type)) %}
+      {% do return(none) %}
+    {% endif %}
+
     {% if not json_schema %}
         {% do print("Not a valid JSON column: {}".format(column_name)) %}
         {% do return(none) %}
@@ -56,7 +66,10 @@ tests:
 
 {% macro generate_json_schema_py_func(column_name) %}
 import json
-import genson
+try:
+    import genson
+except ImportError:
+    genson = None
 
 def get_column_name_in_df(df, column):
     matching = [col for col in df.columns if col.lower() == column.lower()]
@@ -69,6 +82,9 @@ def get_column_name_in_df(df, column):
     return matching[0]
 
 def func(model_df, ref, session):
+    if genson is None:
+        return "genson_not_installed"
+
     model_df = model_df.toPandas()
     builder = genson.SchemaBuilder()
     column_name = get_column_name_in_df(model_df, "{{ column_name }}")
