@@ -1,4 +1,6 @@
 {% test json_schema(model, column, json_schema) %}
+    {{ config(fail_calc = 'fail_count') }}
+
     {% if not execute %}
         {% do return(none) %}
     {% endif %}
