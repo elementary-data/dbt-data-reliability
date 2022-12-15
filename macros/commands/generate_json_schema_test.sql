@@ -1,19 +1,16 @@
 {% macro generate_json_schema_test(node_name, column_name) %}
     {% if target.type not in ['snowflake', 'bigquery'] %}
-      {% do print("JSON schema test generation is not supported for target: {}".format(target.type)) %}
-      {% do return(none) %}
+      {% do exceptions.raise_compiler_error("JSON schema test generation is not supported for target: {}".format(target.type)) %}
     {% endif %}
 
     {% set node = elementary.get_node_by_name(node_name) %}
     {% if node.resource_type not in ["source", "model"] %}
-      {% do print("Only sources and models are supported for this macro, supplied node type: '{}'".format(node.resource_type)) %}
-      {% do return(none) %}
+      {% do exceptions.raise_compiler_error("Only sources and models are supported for this macro, supplied node type: '{}'".format(node.resource_type)) %}
     {% endif %}
 
     {% set node_relation = get_relation_from_node(node) %}
     {% if not elementary.column_exists_in_relation(node_relation, column_name) %}
-      {% do print("Column '{}' does not exist in {} '{}'!".format(column_name, node.resource_type, node_name)) %}
-      {% do return(none) %}
+      {% do exceptions.raise_compiler_error("Column '{}' does not exist in {} '{}'!".format(column_name, node.resource_type, node_name)) %}
     {% endif %}
 
     {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
@@ -36,17 +33,15 @@
     {% do elementary.run_python(node, compiled_py_code) %}
     {% set json_schema = elementary.result_value('select result from {}'.format(output_table)) %}
     {% if json_schema == 'genson_not_installed' %}
-      {% do print("ERROR - the 'genson' python library is missing from your warehouse.") %}
-      {% do print("") %}
-      {% do print("This macro relies on the 'genson' python library for generating JSON schemas. Please follow dbt's instructions here: ") %}
-      {% do print("https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models#specific-data-warehouses") %}
-      {% do print("regarding how to install python packages for a {} warehouse.".format(target.type)) %}
-      {% do return(none) %}
+      {% do exceptions.raise_compiler_error("The 'genson' python library is missing from your warehouse.\n\n"
+         "This macro relies on the 'genson' python library for generating JSON schemas. Please follow dbt's instructions here: \n"
+         "https://docs.getdbt.com/docs/building-a-dbt-project/building-models/python-models#specific-data-warehouses\n"
+         "regarding how to install python packages for a {} warehouse.".format(target.type)
+      ) %}
     {% endif %}
 
     {% if not json_schema %}
-        {% do print("Not a valid JSON column: {}".format(column_name)) %}
-        {% do return(none) %}
+        {% do exceptions.raise_compiler_error("Not a valid JSON column: {}".format(column_name)) %}
     {% endif %}
 
     {% set json_schema = fromjson(json_schema) %}
