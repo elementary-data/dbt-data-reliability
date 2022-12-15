@@ -3,7 +3,7 @@ version: 2
 models:
   - name: any_type_column_anomalies
     meta:
-      owner: "@egk"
+      owner: [ '@edr', 'ele@data.com, another@mail.com' ]
       subscribers: "@egk"
     description: >
       This is a very weird description
@@ -35,7 +35,7 @@ models:
 
   - name: no_timestamp_anomalies
     meta:
-      owner: "@egk"
+      owner: "ele@data.com, another@mail.com"
       subscribers: [ "@elon@gmail.com", "elon@gmail.com" ]
       description: This is a description.
     description: We use this model to test anomalies when there is no timestamp column
