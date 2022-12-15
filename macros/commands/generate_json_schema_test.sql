@@ -53,14 +53,14 @@
     {% do json_schema.pop('$schema', None) %}
 
     {% set testyaml %}
-tests:
-  - elementary.test_json_schema:
-      column: {{ column_name }}
-      json_schema:
-        {{ toyaml(json_schema) | indent(8) }}
+columns:
+  - name: {{ column_name }}
+    tests:
+      - elementary.json_schema:
+          {{ toyaml(json_schema) | indent(10) }}
     {% endset %}
 
-    {% do print("Please add the following test to your {} configuration:".format(node.resource_type)) %}
+    {% do print("Please add the following test to your {} configuration for the column {}:".format(node.resource_type, column_name)) %}
     {% do print(testyaml) %}
 {% endmacro %}
 
