@@ -1,4 +1,4 @@
-{% test test_json_schema(model, column, json_schema) %}
+{% test json_schema(model, column, json_schema) %}
     {% if not execute %}
         {% do return(none) %}
     {% endif %}
