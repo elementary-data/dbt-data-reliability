@@ -44,7 +44,7 @@
             {% do formatted_owner.append(owner | trim) %}  
         {% endfor %}
     {% elif raw_owner is iterable %}
-        {% do formatted_owner.extend(raw_owner | trim) %}
+        {% do formatted_owner.extend(raw_owner) %}
     {% endif %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
