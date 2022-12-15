@@ -233,7 +233,8 @@
         "schema_changes": "Executes schema changes monitor that alerts on deleted table, deleted or added columns, or change of data type of a column.",
         "dimension_anomalies": "This test monitors the frequency of values in the configured dimension over time, and alerts on unexpected changes in the distribution. It is best to configure it on low-cardinality fields. The test counts rows grouped by given columns/expressions, and can be configured using the `dimensions` and `where_expression` keys.",
         "volume": "Monitors the row count of your table.",
-        "freshness": "Monitors the freshness of your table."
+        "freshness": "Monitors the freshness of your table.",
+        "schema_changes_from_baseline": "Checks for schema changes against baseline columns defined in a source's or model's configuration."
     } %}
 
     {% set default_description = none %}
