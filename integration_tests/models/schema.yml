@@ -16,6 +16,13 @@ models:
         timestamp_column: "updated_at"
     tests:
       - elementary.volume:
+          meta:
+            description: >
+              This is a very weird description
+              with breaklines
+              and comma,
+              and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
+              WDYT?
           config:
             severity: warn
           tags: [ "table_anomalies" ]
@@ -29,7 +36,8 @@ models:
   - name: no_timestamp_anomalies
     meta:
       owner: "@egk"
-      subscribers: ["@elon@gmail.com", "elon@gmail.com"]
+      subscribers: [ "@elon@gmail.com", "elon@gmail.com" ]
+      description: This is a description.
     description: We use this model to test anomalies when there is no timestamp column
     tests:
       - elementary.volume:
@@ -46,7 +54,7 @@ models:
   - name: no_timestamp_anomalies
     meta:
       owner: "@egk.com"
-      subscribers: ["elon@egk"]
+      subscribers: [ "elon@egk" ]
     description: We use this model to test dimension anomalies
     config:
       elementary:
