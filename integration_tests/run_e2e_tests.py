@@ -278,13 +278,11 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
     )
 
 
-def generate_dimension_anomalies_training_and_validation_files(rows_count_per_day=300):
+def generate_dimension_anomalies_training_and_validation_files():
     def get_training_row(date, row_index, rows_count):
         return {
             "date": date.strftime("%Y-%m-%d %H:%M:%S"),
-            "platform": "windows"
-            if row_index < (10 / 100 * rows_count)
-            else ("android" if row_index < (55 / 100 * rows_count) else "ios"),
+            "platform": "android" if row_index < (rows_count - 20) else "ios",
             "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
         }
@@ -292,9 +290,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
     def get_validation_row(date, row_index, rows_count):
         return {
             "date": date.strftime("%Y-%m-%d %H:%M:%S"),
-            "platform": "windows"
-            if row_index < (99 / 100 * rows_count)
-            else random.choice(["android", "ios"]),
+            "platform": "android" if row_index < (rows_count - 1) else "ios",
             "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
         }
@@ -303,7 +299,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
     dates = generate_date_range(
         base_date=datetime.today() - timedelta(days=2), numdays=30
     )
-    training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
+    training_rows = generate_rows(1020, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(FILE_DIR, "data", "training", "dimension_anomalies_training.csv"),
         training_rows,
@@ -311,9 +307,7 @@ def generate_dimension_anomalies_training_and_validation_files(rows_count_per_da
     )
 
     validation_date = datetime.today() - timedelta(days=1)
-    validation_rows = generate_rows(
-        rows_count_per_day, [validation_date], get_validation_row
-    )
+    validation_rows = generate_rows(1001, [validation_date], get_validation_row)
     write_rows_to_csv(
         os.path.join(
             FILE_DIR, "data", "validation", "dimension_anomalies_validation.csv"

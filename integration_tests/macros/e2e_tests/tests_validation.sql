@@ -115,13 +115,7 @@
         {% set where_expression = test_params.get('where_expression') %}
         {% set dimensions = test_params.get('dimensions') %}
         {% if where_expression %}
-            {% if where_expression != "platform != 'windows'" %}
-                {% do dimensions_with_problems.append[dimensions] %}
-            {% endif %}
-        {% else %}
-            {% if dimensions | length != 1 or dimensions[0] != 'platform' %}
-                {% do dimensions_with_problems.append(dimensions) %}
-            {% endif %}
+            {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
 
