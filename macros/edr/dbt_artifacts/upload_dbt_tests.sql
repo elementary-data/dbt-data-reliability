@@ -226,9 +226,22 @@
         "relationships": 'This test validates that all of the records in a child table have a corresponding record in a parent table. This property is referred to as "referential integrity".'
     } %}
 
+    {% set elementary_tests_descriptions_map = {
+        "table_anomalies": "Executes table level monitors and anomaly detection.",
+        "all_columns_anomalies": "Executes column level monitors and anomaly detection.",
+        "column_anomalies": "Executes column level monitors and anomaly detection.",
+        "schema_changes": "Executes schema changes monitor that alerts on deleted table, deleted or added columns, or change of data type of a column.",
+        "dimension_anomalies": "This test monitors the frequency of values in the configured dimension over time, and alerts on unexpected changes in the distribution. It is best to configure it on low-cardinality fields. The test counts rows grouped by given columns/expressions, and can be configured using the `dimensions` and `where_expression` keys.",
+        "volume": "Monitors the row count of your table.",
+        "freshness": "Monitors the freshness of your table.",
+        "schema_changes_from_baseline": "Checks for schema changes against baseline columns defined in a source's or model's configuration."
+    } %}
+
     {% set default_description = none %}
     {% if test_namespace == 'dbt_expectations' %}
         {% set default_description = dbt_expectations_descriptions_map.get(short_name) %}
+    {% elif test_namespace == 'elementary' %}
+        {% set default_description = elementary_tests_descriptions_map.get(short_name) %}
     {% elif test_namespace == 'dbt' or test_namespace is none %}
         {% set default_description = dbt_tests_descriptions_map.get(short_name) %}
     {% endif %}
