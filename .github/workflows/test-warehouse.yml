@@ -12,6 +12,10 @@ on:
           - redshift
           - databricks
           - spark
+      elementary-ref:
+        type: string
+        required: false
+        description: Branch or tag to checkout for 'elementary' repository
       dbt-data-reliability-ref:
         type: string
         required: false
@@ -32,6 +36,9 @@ on:
       warehouse-type:
         type: string
         required: true
+      elementary-ref:
+        type: string
+        required: false
       dbt-data-reliability-ref:
         type: string
         required: false
@@ -62,6 +69,13 @@ jobs:
           UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | sed "s/-/_/g")
           echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
+      - name: Checkout Elementary
+        uses: actions/checkout@v3
+        with:
+          repository: elementary-data/elementary
+          path: elementary
+          ref: ${{ inputs.elementary-ref }}
+
       - name: Checkout dbt package
         uses: actions/checkout@v3
         with:
@@ -78,8 +92,10 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        if: inputs.dbt-version
         run: pip install dbt-core==${{ inputs.dbt-version }} dbt-${{ inputs.warehouse-type }}==${{ inputs.dbt-version }}
+
+      - name: Install Elementary
+        run: pip install "./elementary[${{ inputs.warehouse-type }}]"
 
       - name: Run E2E tests
         run: |
