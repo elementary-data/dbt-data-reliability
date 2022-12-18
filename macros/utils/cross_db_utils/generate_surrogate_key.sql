@@ -20,7 +20,7 @@
   {%- set field_sqls = [] -%}
   {%- for field in fields -%}
     {%- do field_sqls.append(
-        "coalesce(cast(" ~ field ~ " as " ~ dbt.type_string() ~ "), '" ~ default_null_value  ~"')"
+        "coalesce(cast(" ~ field ~ " as " ~ elementary.type_string() ~ "), '" ~ default_null_value  ~"')"
     ) -%}
     {%- if not loop.last %}
         {%- do field_sqls.append("'-'") -%}
