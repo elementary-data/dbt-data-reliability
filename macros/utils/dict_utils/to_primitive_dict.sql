@@ -3,10 +3,11 @@
     {% do return(val) %}
 
   {% elif val is mapping %}
+    {% set new_dict = {} %}
     {% for k, v in val.items() %}
-      {% do val.update({k: elementary.to_primitive_dict(v)}) %}
+      {% do new_dict.update({k: elementary.to_primitive_dict(v)}) %}
     {% endfor %}
-    {% do return(val) %}
+    {% do return(new_dict) %}
 
   {% elif val is iterable %}
     {% set new_list = [] %}
