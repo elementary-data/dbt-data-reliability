@@ -20,27 +20,11 @@ To learn more, refer to our [main repo »](https://github.com/elementary-data/el
 
 Add to your `packages.yml` according to your dbt version:
 
-#### For dbt 1.2.0 and above:
-
 ```yml
 packages:
   - package: elementary-data/elementary
     version: 0.6.5
     ## Docs: https://docs.elementary-data.com
-```
-
-#### For dbt >=1.0.0 <1.2.0:
-
-```yml
-packages:
-  - package: elementary-data/elementary
-    version: 0.6.5
-    ## Docs: https://docs.elementary-data.com
-
-   ## !! Important !! For dbt <1.2.0 only
-   ## (Prevents dbt_utils versions exceptions) 
-  - package: dbt-labs/dbt_utils
-    version: [">=0.8.0", "<0.9.0"]
 ```
 
 After adding to `packages.yml` and running `dbt deps`, add to your ```dbt_project.yml```:
