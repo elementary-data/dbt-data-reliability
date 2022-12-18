@@ -68,10 +68,3 @@ jobs:
           pr_title: "release/${{ inputs.dbt-package-version }}"
           pr_body: "Open automatically using bump version workflow"
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  draft-release:
-    needs: [create-pr]
-    uses: ./.github/workflows/draft-release.yml
-    with:
-      release-version: ${{ inputs.dbt-package-version }}
-    secrets: inherit
