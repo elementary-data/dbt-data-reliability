@@ -16,6 +16,9 @@
 
 
 {%- macro generate_surrogate_key(fields) -%}
+  {% set concat_macro = dbt.concat or dbt_utils.concat %}
+  {% set hash_macro = dbt.hash or dbt_utils.hash %}
+
   {% set default_null_value = "" %}
   {%- set field_sqls = [] -%}
   {%- for field in fields -%}
@@ -26,5 +29,5 @@
         {%- do field_sqls.append("'-'") -%}
     {%- endif -%}
   {%- endfor -%}
-  {{ dbt.hash(dbt.concat(field_sqls)) }}
+  {{ hash_macro(concat_macro(field_sqls)) }}
 {% endmacro %}
