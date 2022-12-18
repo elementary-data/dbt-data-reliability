@@ -1,3 +1,12 @@
+{% macro is_primitive(val) %}
+  {% do return (
+    val is none or
+    val is boolean or
+    val is number or
+    val is string
+  ) %}
+{% endmacro %}
+
 {%- macro type_bool() -%}
     {{ return(adapter.dispatch('type_bool', 'elementary')()) }}
 {%- endmacro -%}
