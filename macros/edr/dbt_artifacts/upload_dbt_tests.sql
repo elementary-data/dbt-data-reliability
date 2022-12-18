@@ -71,7 +71,10 @@
         {% set test_model_owner = flatten_test_model_node.get('owner') %}
         {% if test_model_owner %}
             {% if test_model_owner is string %}
-                {% do test_models_owners.append(test_model_owner) %}
+                {% set owners = test_model_owner.split(',') %}
+                {% for owner in owners %}
+                    {% do test_models_owners.append(owner | trim) %}  
+                {% endfor %}
             {% elif test_model_owner is iterable %}
                 {% do test_models_owners.extend(test_model_owner) %}
             {% endif %}
