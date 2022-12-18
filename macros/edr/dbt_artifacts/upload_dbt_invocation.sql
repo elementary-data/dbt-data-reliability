@@ -37,7 +37,6 @@
       'git_sha': elementary.get_first_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
       'orchestrator': elementary.get_orchestrator(),
   } %}
-
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
@@ -74,16 +73,16 @@
     {%- endif -%})
 {%- endmacro -%}
 
-{%- macro get_invocation_vars() -%}
+{% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.vars -%}
-        {{- return(fromyaml(invocation_args_dict.vars)) -}}
-    {%- elif config.cli_vars -%}
-        {{- return(config.cli_vars) -}}
-    {%- else -%}
-        {{- return({}) -}}
-    {%- endif -%}
-{%- endmacro -%}
+    {% set invocation_vars = {} %}
+    {% if invocation_args_dict and invocation_args_dict.vars %}
+        {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+    {% elif config.cli_vars %}
+        {% set invocation_vars = config.cli_vars %}
+    {% endif %}
+    {{ return(elementary.type_safe_tojson(invocation_vars)) }}
+{% endmacro %}
 
 {%- macro get_all_vars() -%}
     {% set all_vars = {} %}
