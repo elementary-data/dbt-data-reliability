@@ -3,7 +3,7 @@ version: 2
 models:
   - name: any_type_column_anomalies
     meta:
-      owner: ["@edr", "ele@data.com", "another@mail.com"]
+      owner: ['@edr', 'ele@data.com', 'another@mail.com']
       subscribers: "@egk"
     description: >
       This is a very weird description
