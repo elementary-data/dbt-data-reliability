@@ -20,6 +20,7 @@ on:
         type: string
         required: false
         description: dbt's version to test with
+        default: '1.1.0'
       clear-tests:
         type: boolean
         required: false
@@ -37,6 +38,7 @@ on:
       dbt-version:
         type: string
         required: false
+        default: '1.1.0'
       clear-tests:
         type: boolean
         required: false
