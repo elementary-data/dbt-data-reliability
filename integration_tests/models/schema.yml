@@ -15,7 +15,7 @@ models:
       elementary:
         timestamp_column: "updated_at"
     tests:
-      - elementary.volume:
+      - elementary.volume_anomalies:
           meta:
             description: >
               This is a very weird description
@@ -40,7 +40,7 @@ models:
       description: This is a description.
     description: We use this model to test anomalies when there is no timestamp column
     tests:
-      - elementary.volume:
+      - elementary.volume_anomalies:
           tags: ["no_timestamp"]
     columns:
       - name: "null_count_str"
@@ -92,7 +92,7 @@ models:
       elementary:
         timestamp_column: "updated_at"
     tests:
-      - elementary.freshness:
+      - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.all_columns_anomalies:
           tags: ["all_string_column_anomalies"]
@@ -140,9 +140,9 @@ models:
       elementary:
         timestamp_column: "updated_at"
     tests:
-      - elementary.volume:
+      - elementary.volume_anomalies:
           tags: ["table_anomalies"]
-      - elementary.freshness:
+      - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.schema_changes:
           tags: ["schema_changes"]
@@ -221,18 +221,18 @@ sources:
     tables:
       - name: any_type_column_anomalies_training
         tests:
-          - elementary.volume:
+          - elementary.volume_anomalies:
               tags: ["table_anomalies"]
-          - elementary.freshness:
+          - elementary.freshness_anomalies:
               tags: ["table_anomalies"]
       - name: string_column_anomalies_training
         meta:
           elementary:
             timestamp_column: "date"
         tests:
-          - elementary.volume:
+          - elementary.volume_anomalies:
               tags: ["table_anomalies"]
-          - elementary.freshness:
+          - elementary.freshness_anomalies:
               tags: ["table_anomalies"]
       - name: numeric_column_anomalies_training
   - name: validation

@@ -1,7 +1,7 @@
-{% test volume(model, timestamp_column=none, sensitivity=none, backfill_days=none, where_expression=none) %}
+{% test freshness_anomalies(model, timestamp_column=none, sensitivity=none, backfill_days=none, where_expression=none) %}
   {{ elementary.test_table_anomalies(
       model=model,
-      table_anomalies=["row_count"],
+      table_anomalies=["freshness"],
       freshness_column=none,
       timestamp_column=timestamp_column,
       sensitivity=sensitivity,
