@@ -66,14 +66,14 @@ try:
 except ImportError:
     genson = None
 
-def get_column_name_in_df(df, column):
-    matching = [col for col in df.columns if col.lower() == column.lower()]
+def get_column_name_in_df(df, column_name):
+    matching = [col for col in df.columns if col.lower() == column_name.lower()]
+    if len(matching) > 1:
+        # Case matters, switch to case-sensitive match
+        matching = [col for col in df.columns if col == column_name]
+
     if len(matching) == 0:
         raise Exception("No column with the name: {}".format(col))
-    elif len(matching) > 1:
-        # If there's more than one match, then case matters, so return as-is
-        return column
-
     return matching[0]
 
 def func(model_df, ref, session):
