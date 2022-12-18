@@ -12,11 +12,11 @@
 {%- endmacro -%}
 
 {% macro default__type_bool() %}
-    boolean
+    {% do return("boolean") %}
 {% endmacro %}
 
 {% macro bigquery__type_bool() %}
-    BOOL
+    {% do return("BOOL") %}
 {% endmacro %}
 
 
@@ -26,25 +26,21 @@
 
 {% macro default__type_string() %}
     {# Redshift and Postgres #}
-    varchar(4096)
+    {% do return("varchar(4096)") %}
 {% endmacro %}
 
 {% macro snowflake__type_string() %}
     {# Default max varchar size in Snowflake is 16MB #}
-    varchar
+    {% do return("varchar") %}
 {% endmacro %}
 
 {% macro bigquery__type_string() %}
     {# Default max string size in Bigquery is 65K #}
-    string
-{% endmacro %}
-
-{% macro databricks__type_string() %}
-    string
+    {% do return("string") %}
 {% endmacro %}
 
 {% macro spark__type_string() %}
-    string
+    {% do return("string") %}
 {% endmacro %}
 
 
@@ -55,7 +51,7 @@
 
 {%- macro default__type_long_string() -%}
     {# Snowflake, Bigquery, Databricks #}
-    {{ elementary.type_string() }}
+    {% do return(elementary.type_string()) %}
 {%- endmacro -%}
 
 {%- macro redshift__type_long_string() -%}
