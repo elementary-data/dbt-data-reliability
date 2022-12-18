@@ -20,6 +20,7 @@ on:
         type: string
         required: false
         description: dbt's version to test with
+        default: '1.1.0'
       clear-tests:
         type: boolean
         required: false
@@ -37,6 +38,7 @@ on:
       dbt-version:
         type: string
         required: false
+        default: '1.1.0'
       clear-tests:
         type: boolean
         required: false
@@ -76,7 +78,6 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        if: inputs.dbt-version
         run: pip install dbt-core==${{ inputs.dbt-version }} dbt-${{ inputs.warehouse-type }}==${{ inputs.dbt-version }}
 
       - name: Run E2E tests
