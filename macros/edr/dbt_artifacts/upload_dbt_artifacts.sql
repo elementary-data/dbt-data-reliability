@@ -4,6 +4,9 @@
       "dbt_models": elementary.upload_dbt_models,
       "dbt_tests": elementary.upload_dbt_tests,
       "dbt_sources": elementary.upload_dbt_sources,
+      "dbt_snapshots": elementary.upload_dbt_snapshots,
+      "dbt_metrics": elementary.upload_dbt_metrics,
+      "dbt_exposures": elementary.upload_dbt_exposures,
       }
     %}
     {% do elementary.debug_log("Uploading dbt artifacts.") %}
