@@ -81,7 +81,7 @@
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
-    {{ return(elementary.to_primitive_dict(invocation_vars)) }}
+    {{ return(elementary.to_primitive(invocation_vars)) }}
 {% endmacro %}
 
 {%- macro get_all_vars() -%}
