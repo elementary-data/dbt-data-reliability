@@ -374,8 +374,6 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
         for clear_test_log in clear_test_logs:
             print(clear_test_log)
 
-    dbt_runner.seed(select="training")
-
     dbt_runner.run(full_refresh=True)
 
     if "table" in test_types:
@@ -435,7 +433,6 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
                 vars={"custom_run_started_at": custom_run_time},
             )
 
-    dbt_runner.seed(select="validation")
     dbt_runner.run()
 
     if "debug" in test_types:
@@ -491,10 +488,8 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
         test_results.extend(results)
 
     if "schema" in test_types and target not in ["databricks", "spark"]:
-        dbt_runner.seed(select="schema_changes_data")
         dbt_runner.test(select="tag:schema_changes")
         dbt_runner.test(select="tag:schema_changes_from_baseline")
-        dbt_runner.seed(select="schema_changes_validation")
         schema_changes_logs = dbt_runner.run_operation(
             macro_name="do_schema_changes", log_errors=True
         )
