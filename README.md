@@ -20,7 +20,7 @@ To learn more, refer to our [main repo »](https://github.com/elementary-data/el
 
 Add to your `packages.yml` according to your dbt version:
 
-**For dbt 1.3.0 and above:**
+**For dbt >1.3.0:**
 
 ```yml packages.yml
 packages:
@@ -29,7 +29,7 @@ packages:
     ## Docs: https://docs.elementary-data.com
 ```
 
-**For dbt >=1.2.0 \<1.3.0:**
+**For dbt >=1.2.0, <1.3.0:**
 
 ```yml packages.yml
 packages:
@@ -43,7 +43,7 @@ packages:
     version: [">=0.8.0", "<1.0.0"]
 ```
 
-**For dbt >=1.0.0 \<1.2.0:**
+**For dbt >=1.0.0, <1.2.0:**
 
 ```yml packages.yml
 packages:
