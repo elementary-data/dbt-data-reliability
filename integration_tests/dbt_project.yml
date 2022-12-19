@@ -16,12 +16,13 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
-seeds:
-  +schema: test_seeds
 
 vars:
   days_back: 30
   debug_logs: false
+
+seeds:
+  +schema: test_seeds
 
 models:
   elementary:
