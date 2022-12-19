@@ -23,7 +23,7 @@ Add to your `packages.yml` according to your dbt version:
 ```yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.5
+    version: 0.6.6
     ## Docs: https://docs.elementary-data.com
 ```
 
