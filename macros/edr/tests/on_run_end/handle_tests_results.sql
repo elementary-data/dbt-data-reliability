@@ -34,6 +34,7 @@
       {% set status = "pass" if failures == 0 else result.status %}
       {% do elementary_test_results_row.update({'status': status, 'failures': failures}) %}
       {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
+      {% do elementary_test_results_row.setdefault('invocation_id', invocation_id) %}
       {% do elementary_test_results.append(elementary_test_results_row) %}
     {% endfor %}
   {% endfor %}
