@@ -191,3 +191,18 @@
     {% do return(none) %}
 {% endif %}
 {% endmacro %}
+
+{% macro sla_metric_query(metric_args, timestamp_column) %}
+{% set data_time_column = metric_args.data_time_column %}
+{% set insertion_time_column = metric_args.insertion_time_column %}
+
+{% if timestamp_column %}
+{% else %}
+
+    select
+        {{ elementary.const_as_string('sla') }} as metric_name,
+        {{ elementary.timediff('second', elementary.cast_as_timestamp("max('{}')".format(metric_args.data)), elementary.current_timestamp_column()) }} as metric_value
+    from monitored_table
+    group by 1
+{% endif %}
+{% endmacro %}
