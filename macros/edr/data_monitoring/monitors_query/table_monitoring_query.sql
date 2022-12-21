@@ -1,10 +1,6 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column, where_expression, time_bucket) %}
+{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, where_expression, time_bucket, metric_args) %}
 
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
-
-    {% set metric_args = {
-        "freshness_column": freshness_column
-    } %}
 
     with monitored_table as (
         select * from {{ monitored_table_relation }}
