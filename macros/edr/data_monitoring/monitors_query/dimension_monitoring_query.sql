@@ -1,16 +1,20 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, min_bucket_start) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, min_bucket_start, time_bucket) %}
     {% set metric_name = 'dimension' %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {%- set max_bucket_start = elementary.quote((elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")) %}
+    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
-    
+
+    {% set bucket_start_datediff_expr %}
+      floor({{ elementary.datediff(min_bucket_start, elementary.cast_as_timestamp(timestamp_column), time_bucket.period) }} / {{ time_bucket.count }}) * {{ time_bucket.count }}
+    {% endset %}
+
     {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
-                   {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data
+                   {{ elementary.dateadd(time_bucket.period, bucket_start_datediff_expr, min_bucket_start) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
@@ -49,26 +53,26 @@
             )
         ),
 
-        daily_buckets as (
+        buckets as (
         select 
-            edr_daily_bucket,
+            edr_bucket,
             1 as joiner
             from (
-                {{ elementary.daily_buckets_cte() }}
-                where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and
-                      edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }} and
-                      edr_daily_bucket >= (select min(start_bucket_in_data) from filtered_monitored_table)
+                {{ elementary.buckets_cte(time_bucket) }}
+                where edr_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and
+                      edr_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }} and
+                      edr_bucket >= (select min(start_bucket_in_data) from filtered_monitored_table)
             )
         ),
 
-        {# Created daily buckets for each dimension value #}
-        dimensions_daily_buckets as (
-            select edr_daily_bucket, dimension_value
-            from daily_buckets left join dimension_values_union on daily_buckets.joiner = dimension_values_union.joiner
+        {# Created buckets for each dimension value #}
+        dimensions_buckets as (
+            select edr_bucket, dimension_value
+            from buckets left join dimension_values_union on buckets.joiner = dimension_values_union.joiner
         ),
 
         {# Calculating the row count for each dimension value's #}
-        daily_row_count as (
+        row_count_values as (
             select 
                 start_bucket_in_data,
                 {{ concat_dimensions_sql_expression }} as dimension_value, 
@@ -77,26 +81,26 @@
             {{ dbt_utils.group_by(2) }}
         ),
 
-        {# Merging between the daily row count and the dimensions daily buckets #}
+        {# Merging between the row count and the dimensions buckets #}
         {# This way we make sure that if a dimension has no rows in a day, it will get a metric with value 0 #}
-        full_daily_row_count as (
-            select edr_daily_bucket,
+        row_count_values as (
+            select edr_bucket,
                    start_bucket_in_data,
-                   dimensions_daily_buckets.dimension_value,
+                   dimensions_buckets.dimension_value,
                    case when start_bucket_in_data is null then
                        0
                    else row_count_value end as row_count_value
-            from dimensions_daily_buckets left join daily_row_count on (edr_daily_bucket = start_bucket_in_data and dimensions_daily_buckets.dimension_value = daily_row_count.dimension_value)
+            from dimensions_buckets left join row_count_values on (edr_bucket = start_bucket_in_data and dimensions_buckets.dimension_value = row_count_values.dimension_value)
         ),
 
         row_count as (
-            select edr_daily_bucket as edr_bucket,
+            select edr_bucket as edr_bucket,
                    {{ elementary.const_as_string(metric_name) }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
                    {{ elementary.const_as_string(dimensions_string) }} as dimension,
                    dimension_value
-            from full_daily_row_count
+            from row_count_values
         ),
 
         metrics_final as (
@@ -108,8 +112,8 @@
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             source_value,
             edr_bucket as bucket_start,
-            {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
-            24 as bucket_duration_hours,
+            {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket') }} as bucket_end,
+            {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket'), "hour") }} as bucket_duration_hours,
             dimension,
             dimension_value
         from
@@ -179,15 +183,15 @@
         ),
 
         {# Create buckets for each day from max(fisrt metric time, min bucket end) until max bucket end #}
-        daily_buckets as (
+        buckets as (
         select 
-            edr_daily_bucket,
+            edr_bucket,
             1 as joiner
             from (
-                {{ elementary.daily_buckets_cte() }}
-                where edr_daily_bucket >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }} and
-                      edr_daily_bucket < {{ elementary.cast_as_timestamp(max_bucket_end) }} and
-                      edr_daily_bucket >= (select min(bucket_end) from dimension_values_without_outdated)
+                {{ elementary.buckets_cte(time_bucket) }}
+                where edr_bucket >= {{ elementary.timeadd('day', 1, elementary.cast_as_timestamp(min_bucket_start)) }} and
+                      edr_bucket < {{ elementary.cast_as_timestamp(max_bucket_end) }} and
+                      edr_bucket >= (select min(bucket_end) from dimension_values_without_outdated)
             )
         ),
 
@@ -195,11 +199,11 @@
         {# "hydrated" with metrics with value 0 for dimensions with no row count in the given time range. #}
         hydrated_last_dimension_metrics as (
             select 
-                edr_daily_bucket as bucket_end,
+                edr_bucket as bucket_end,
                 dimension_values_union.dimension_value as dimension_value,
                 case when metric_value is not null then metric_value else 0 end as metric_value
-            from daily_buckets left join dimension_values_union on daily_buckets.joiner = dimension_values_union.joiner
-                left outer join dimension_values_without_outdated on (daily_buckets.edr_daily_bucket = dimension_values_without_outdated.bucket_end and dimension_values_union.dimension_value = dimension_values_without_outdated.dimension_value)
+            from buckets left join dimension_values_union on buckets.joiner = dimension_values_union.joiner
+                left outer join dimension_values_without_outdated on (buckets.edr_bucket = dimension_values_without_outdated.bucket_end and dimension_values_union.dimension_value = dimension_values_without_outdated.dimension_value)
         ),
 
         {# Union between current row count for each dimension, and the "hydrated" metrics of the test until this run #}
