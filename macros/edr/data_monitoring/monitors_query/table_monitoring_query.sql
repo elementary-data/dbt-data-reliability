@@ -90,7 +90,7 @@
             source_value,
             edr_bucket as bucket_start,
             {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket') }} as bucket_end,
-            {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket'), "hour") }} as bucket_duration_hours,
+            {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, "edr_bucket"), "hour") }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value
         from

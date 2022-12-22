@@ -94,7 +94,7 @@
         ),
 
         row_count as (
-            select edr_bucket as edr_bucket,
+            select edr_bucket,
                    {{ elementary.const_as_string(metric_name) }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
@@ -113,7 +113,7 @@
             source_value,
             edr_bucket as bucket_start,
             {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket') }} as bucket_end,
-            {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket'), "hour") }} as bucket_duration_hours,
+            {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, "edr_bucket"), "hour") }} as bucket_duration_hours,
             dimension,
             dimension_value
         from
