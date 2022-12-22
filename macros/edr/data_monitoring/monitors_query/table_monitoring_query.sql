@@ -4,10 +4,14 @@
     {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
     {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
 
+    {% set bucket_start_datediff_expr %}
+      floor({{ elementary.datediff(min_bucket_start, timestamp_column, time_bucket.period) }} / {{ time_bucket.count }}) * {{ time_bucket.count }}
+    {% endset %}
+
     {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
-                   {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data
+                   {{ elementary.dateadd(time_bucket.period, bucket_start_datediff_expr, min_bucket_start) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
