@@ -1,4 +1,4 @@
-{% test all_columns_anomalies(model, column_anomalies=none, exclude_prefix=none, exclude_regexp=none, timestamp_column=none, sensitivity=none, backfill_days=none, where_expression=none) %}
+{% test all_columns_anomalies(model, column_anomalies, exclude_prefix, exclude_regexp, timestamp_column, sensitivity, backfill_days, where_expression) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}

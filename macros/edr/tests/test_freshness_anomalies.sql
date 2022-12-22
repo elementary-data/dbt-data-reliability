@@ -1,4 +1,4 @@
-{% test freshness_anomalies(model, timestamp_column=none, sensitivity=none, backfill_days=none, where_expression=none) %}
+{% test freshness_anomalies(model, timestamp_column, sensitivity, backfill_days, where_expression) %}
   {{ elementary.test_table_anomalies(
       model=model,
       table_anomalies=["freshness"],
