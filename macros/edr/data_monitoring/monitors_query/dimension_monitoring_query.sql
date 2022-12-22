@@ -72,7 +72,7 @@
         ),
 
         {# Calculating the row count for each dimension value's #}
-        row_count_values as (
+        filtered_row_count_values as (
             select 
                 start_bucket_in_data,
                 {{ concat_dimensions_sql_expression }} as dimension_value, 
@@ -90,7 +90,7 @@
                    case when start_bucket_in_data is null then
                        0
                    else row_count_value end as row_count_value
-            from dimensions_buckets left join row_count_values on (edr_bucket = start_bucket_in_data and dimensions_buckets.dimension_value = row_count_values.dimension_value)
+            from dimensions_buckets left join filtered_row_count_values on (edr_bucket = start_bucket_in_data and dimensions_buckets.dimension_value = filtered_row_count_values.dimension_value)
         ),
 
         row_count as (
