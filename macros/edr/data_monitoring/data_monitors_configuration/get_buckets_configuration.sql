@@ -7,7 +7,7 @@
 {% endmacro %}
 
 {% macro get_max_bucket_end() %}
-    {% do return(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% do return(elementary.run_started_at_as_string()) %}
 {% endmacro %}
 
 {% macro get_backfill_bucket_start(backfill_days) %}
