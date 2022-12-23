@@ -11,7 +11,7 @@
     {% if timestamp_column %}
         with filtered_monitored_table as (
             select *,
-                   {{ elementary.dateadd(time_bucket.period, bucket_start_datediff_expr, min_bucket_start) }} as start_bucket_in_data
+                   {{ elementary.cast_as_timestamp(elementary.dateadd(time_bucket.period, elementary.cast_as_int(bucket_start_datediff_expr), min_bucket_start)) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}

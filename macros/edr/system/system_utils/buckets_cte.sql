@@ -34,8 +34,13 @@
 
 {% macro redshift__buckets_cte(time_bucket) %}
     {%- set buckets_cte %}
-        select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (i * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket
-        from generate_series(0, {{ elementary.datediff(elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())), time_bucket.period) }} / {{ time_bucket.count }}) i
+      with integers as (
+        select (row_number() over (order by 1)) - 1 as num
+        from pg_catalog.pg_class
+        limit {{ elementary.datediff(elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())), time_bucket.period) }} / {{ time_bucket.count }} + 1
+      )
+      select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket
+      from integers
     {%- endset %}
     {{ return(buckets_cte) }}
 {% endmacro %}

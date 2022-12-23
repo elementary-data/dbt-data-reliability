@@ -11,7 +11,7 @@
 
         select {{ column_obj.quoted }}
             {% if timestamp_column -%}
-             , {{ elementary.dateadd(time_bucket.period, bucket_start_datediff_expr, min_bucket_start) }} as edr_bucket
+             , {{ elementary.cast_as_timestamp(elementary.dateadd(time_bucket.period, elementary.cast_as_int(bucket_start_datediff_expr), min_bucket_start)) }} as edr_bucket
             {%- else %}
             , {{ elementary.null_timestamp() }} as edr_bucket
             {%- endif %}
