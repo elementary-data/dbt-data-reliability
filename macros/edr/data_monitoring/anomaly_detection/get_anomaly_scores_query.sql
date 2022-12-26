@@ -85,7 +85,7 @@
 
         buckets as (
 
-            {{ elementary.buckets_cte(time_bucket) }}
+            {{ elementary.complete_buckets_cte(time_bucket) }}
 
         ),
 

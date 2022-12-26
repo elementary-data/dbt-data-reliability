@@ -1,14 +1,19 @@
 {% macro column_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where_expression=none, time_bucket=none) %}
 
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {%- set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" -%}
+    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     {% set bucket_start_datediff_expr %}
       floor({{ elementary.datediff(min_bucket_start, elementary.cast_as_timestamp(timestamp_column), time_bucket.period) }} / {{ time_bucket.count }}) * {{ time_bucket.count }}
     {% endset %}
 
-    with filtered_monitored_table as (
+    with buckets as (
+        {{ elementary.complete_buckets_cte(time_bucket) }}
+        {% if min_bucket_start -%}
+          where edr_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+        {%- endif %}
+    ),
 
+    filtered_monitored_table as (
         select {{ column_obj.quoted }}
             {% if timestamp_column -%}
              , {{ elementary.cast_as_timestamp(elementary.dateadd(time_bucket.period, elementary.cast_as_int(bucket_start_datediff_expr), min_bucket_start)) }} as edr_bucket
@@ -18,8 +23,8 @@
         from {{ monitored_table_relation }}
         where
         {% if timestamp_column -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+            {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket) from buckets)
+            and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket) from buckets)
         {%- else %}
             true
         {%- endif %}
@@ -82,7 +87,7 @@
                 {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, "edr_bucket"), "hour") }} as bucket_duration_hours,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
-                {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
+                {{ elementary.cast_as_timestamp(elementary.get_max_bucket_end()) }} as bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,

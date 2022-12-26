@@ -1,15 +1,15 @@
-{% macro buckets_cte(time_bucket) %}
-    {{ adapter.dispatch('buckets_cte','elementary')(time_bucket) }}
+{% macro complete_buckets_cte(time_bucket) %}
+    {{ adapter.dispatch('complete_buckets_cte','elementary')(time_bucket) }}
 {% endmacro %}
 
 {# Databricks and Spark #}
-{% macro default__buckets_cte(time_bucket) %}
+{% macro default__complete_buckets_cte(time_bucket) %}
     select edr_bucket
     from (select explode(sequence({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) AS edr_bucket)
 {% endmacro %}
 
-{% macro snowflake__buckets_cte(time_bucket) -%}
-    {%- set buckets_cte %}
+{% macro snowflake__complete_buckets_cte(time_bucket) -%}
+    {%- set complete_buckets_cte %}
         with dates as (
             select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} as date
         union all
@@ -20,20 +20,20 @@
         select date as edr_bucket
         from dates
     {%- endset %}
-    {{ return(buckets_cte) }}
+    {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
 
-{% macro bigquery__buckets_cte(time_bucket) %}
-    {%- set buckets_cte %}
+{% macro bigquery__complete_buckets_cte(time_bucket) %}
+    {%- set complete_buckets_cte %}
         select edr_bucket
         from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket
     {%- endset %}
-    {{ return(buckets_cte) }}
+    {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
-{% macro redshift__buckets_cte(time_bucket) %}
-    {%- set buckets_cte %}
+{% macro redshift__complete_buckets_cte(time_bucket) %}
+    {%- set complete_buckets_cte %}
       with integers as (
         select (row_number() over (order by 1)) - 1 as num
         from pg_catalog.pg_class
@@ -42,5 +42,5 @@
       select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket
       from integers
     {%- endset %}
-    {{ return(buckets_cte) }}
+    {{ return(complete_buckets_cte) }}
 {% endmacro %}
