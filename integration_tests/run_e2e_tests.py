@@ -256,7 +256,9 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
         "null_count_bool",
         "null_percent_bool",
     ]
-    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(
+        base_date=datetime.today() - timedelta(days=2), period="hours", count=4
+    )
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
