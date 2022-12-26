@@ -208,7 +208,7 @@
             from hydrated_last_dimension_metrics
             union all
             select
-                {{ elementary.cast_as_timestamp(elementary.get_max_bucket_end()) }} as bucket_end,
+                {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value
             from {{ monitored_table_relation }}

@@ -116,7 +116,7 @@
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
             {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.cast_as_timestamp(elementary.get_max_bucket_end()) }} as bucket_end,
+            {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
             {{ elementary.null_int() }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value

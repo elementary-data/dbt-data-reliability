@@ -87,7 +87,7 @@
                 {{ elementary.datediff("edr_bucket", elementary.timeadd(time_bucket.period, time_bucket.count, "edr_bucket"), "hour") }} as bucket_duration_hours,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
-                {{ elementary.cast_as_timestamp(elementary.get_max_bucket_end()) }} as bucket_end,
+                {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,
