@@ -18,8 +18,15 @@ any_type_columns = ["date", "null_count", "null_percent"]
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-def generate_date_range(base_date, period="days", count=30):
-    return [base_date - timedelta(**{period: i}) for i in range(0, count)]
+def generate_rows_timestamps(base_date, period="days", count=1, days_back=30):
+    min_date = base_date - timedelta(days=days_back)
+    dates = []
+    while True:
+        base_date = base_date - timedelta(**{period: count})
+        if base_date < min_date:
+            break
+        dates.append(base_date)
+    return dates
 
 
 def write_rows_to_csv(csv_path, rows, header):
@@ -89,7 +96,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
         "missing_count",
         "missing_percent",
     ]
-    dates = generate_date_range(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
@@ -156,7 +163,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         "standard_deviation",
         "variance",
     ]
-    dates = generate_date_range(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
@@ -249,7 +256,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
         "null_count_bool",
         "null_percent_bool",
     ]
-    dates = generate_date_range(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
@@ -290,7 +297,7 @@ def generate_dimension_anomalies_training_and_validation_files():
         }
 
     dimension_columns = ["date", "platform", "version", "user_id"]
-    dates = generate_date_range(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
     training_rows = generate_rows(1020, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(FILE_DIR, "data", "training", "dimension_anomalies_training.csv"),
