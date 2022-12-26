@@ -126,7 +126,8 @@
 {% macro get_metric_query(metric_name, metric_args, timestamp_column) %}
     {%- set metrics_macro_mapping = {
         "row_count": elementary.row_count_metric_query,
-        "freshness": elementary.freshness_metric_query
+        "freshness": elementary.freshness_metric_query,
+        "freshness_v2": elementary.freshness_v2_metric_query
     } %}
 
     {%- set metric_macro = metrics_macro_mapping.get(metric_name) %}
@@ -192,16 +193,22 @@
 {% endif %}
 {% endmacro %}
 
-{% macro sla_metric_query(metric_args, timestamp_column) %}
-{% set data_time_column = metric_args.data_time_column %}
-{% set insertion_time_column = metric_args.insertion_time_column %}
+{% macro freshness_v2_metric_query(metric_args, timestamp_column) %}
+{% set data_timestamp_column = metric_args.data_timestamp_column %}
+{% set insertion_timestamp_column = timestamp_column %}
 
-{% if timestamp_column %}
-{% else %}
-
+{% if insertion_timestamp_column %}
     select
-        {{ elementary.const_as_string('sla') }} as metric_name,
-        {{ elementary.timediff('second', elementary.cast_as_timestamp("max('{}')".format(metric_args.data)), elementary.current_timestamp_column()) }} as metric_value
+        edr_daily_bucket as edr_bucket,
+        {{ elementary.const_as_string('freshness_v2') }} as metric_name,
+        {{ elementary.cast_as_string('max('~data_timestamp_column~')') }} as source_value,
+        {{ 'max({})'.format(elementary.timediff('second', elementary.cast_as_timestamp(data_timestamp_column), elementary.cast_as_timestamp(insertion_timestamp_column))) }} as metric_value
+    from daily_buckets left join time_filtered_monitored_table on (edr_daily_bucket = start_bucket_in_data)
+    group by 1,2
+{% else %}
+    select
+        {{ elementary.const_as_string('freshness_v2') }} as metric_name,
+        {{ elementary.timediff('second', elementary.cast_as_timestamp("max({})".format(data_timestamp_column)), elementary.current_timestamp_column()) }} as metric_value
     from monitored_table
     group by 1
 {% endif %}
