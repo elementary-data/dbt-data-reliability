@@ -151,7 +151,7 @@
                case when start_bucket_in_data is null then
                    0
                else {{ elementary.cast_as_float(elementary.row_count()) }} end as row_count_value
-        from buckets left join filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
+        from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
         group by 1,2,3
     ),
 
