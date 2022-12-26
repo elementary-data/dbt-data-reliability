@@ -64,7 +64,7 @@
 
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
-                select edr_column_name, edr_bucket, {{ elementary.cast_as_string("'"~ monitor ~"'") }} as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                select edr_column_name, edr_bucket, {{ elementary.cast_as_string(elementary.quote(monitor)) }} as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}

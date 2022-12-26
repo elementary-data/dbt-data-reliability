@@ -30,7 +30,7 @@
                     and column_name is not null
                 {%- endif %}
                 {% if dimensions %}
-                    and dimension = {{ "'" ~ elementary.join_list(dimensions, '; ') ~ "'" }}
+                    and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
                 {% endif %}
 
         ),
