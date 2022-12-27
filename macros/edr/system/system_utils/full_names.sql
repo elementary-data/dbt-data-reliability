@@ -90,11 +90,12 @@
 {% endmacro %}
 
 {% macro model_node_to_full_name(model_node) %}
+    {% set identifier = model_node.identifier or model_node.alias %}
     {%- if model_node.database %}
-        {%- set full_table_name = model_node.database | upper ~'.'~ model_node.schema | upper ~'.'~ model_node.alias | upper %}
+        {%- set full_table_name = model_node.database | upper ~'.'~ model_node.schema | upper ~'.'~ identifier | upper %}
     {%- else %}
     {# Databricks doesn't always have a database #}
-        {%- set full_table_name = model_node.schema | upper ~'.'~ model_node.alias | upper %}
+        {%- set full_table_name = model_node.schema | upper ~'.'~ identifier | upper %}
     {%- endif %}
     {{ return(full_table_name) }}
 {% endmacro %}
