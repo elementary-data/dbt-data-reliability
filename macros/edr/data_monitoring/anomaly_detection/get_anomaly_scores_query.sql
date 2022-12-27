@@ -126,7 +126,7 @@
                 metric_id,
                 {{ elementary.const_as_string(test_execution_id) }} as test_execution_id,
                 {{ elementary.const_as_string(test_unique_id) }} as test_unique_id,
-                {{ elementary.elementary_current_timestamp_column() }} as detected_at,
+                {{ elementary.current_timestamp_column() }} as detected_at,
                 full_table_name,
                 column_name,
                 metric_name,
