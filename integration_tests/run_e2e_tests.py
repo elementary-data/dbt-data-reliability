@@ -21,10 +21,8 @@ FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 def generate_rows_timestamps(base_date, period="days", count=1, days_back=30):
     min_date = base_date - timedelta(days=days_back)
     dates = []
-    while True:
+    while base_date > min_date:
         base_date = base_date - timedelta(**{period: count})
-        if base_date < min_date:
-            break
         dates.append(base_date)
     return dates
 
@@ -360,7 +358,9 @@ class TestResults:
         return [result for result in self.results if not result.success]
 
 
-def e2e_tests(target, test_types, clear_tests) -> TestResults:
+def e2e_tests(
+    target: str, test_types: List[str], clear_tests: bool, generate_data: bool
+) -> TestResults:
     test_results = TestResults()
 
     dbt_runner = DbtRunner(
@@ -375,7 +375,8 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
         for clear_test_log in clear_test_logs:
             print(clear_test_log)
 
-    dbt_runner.seed(select="training")
+    if generate_data:
+        dbt_runner.seed(select="training")
 
     dbt_runner.run(full_refresh=True)
 
@@ -436,7 +437,8 @@ def e2e_tests(target, test_types, clear_tests) -> TestResults:
                 vars={"custom_run_started_at": custom_run_time},
             )
 
-    dbt_runner.seed(select="validation")
+    if generate_data:
+        dbt_runner.seed(select="validation")
     dbt_runner.run()
 
     if "debug" in test_types:
@@ -589,7 +591,7 @@ def main(target, e2e_type, generate_data, clear_tests):
     found_failures = False
     for e2e_target in e2e_targets:
         print(f"Starting {e2e_target} tests\n")
-        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data)
         print(f"\n{e2e_target} results")
         all_results[e2e_target] = e2e_test_results
 
