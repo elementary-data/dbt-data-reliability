@@ -50,9 +50,9 @@
       )
       select
         {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket_start,
-        {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}')  + interval '{{ time_bucket.count }} {{ time_bucket.period }}' as edr_bucket_end
+        {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count + 1 }} {{ time_bucket.period }}') as edr_bucket_end
       from integers
-      where {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+      where edr_bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
