@@ -36,7 +36,7 @@
           edr_bucket_start,
           {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as edr_bucket_end
         from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start
-        where edr_bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+        where {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
