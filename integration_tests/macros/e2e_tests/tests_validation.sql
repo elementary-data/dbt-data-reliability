@@ -120,7 +120,7 @@
     {% endfor %}
 
     {% if results | length != 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has to many fail/error tests') %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
