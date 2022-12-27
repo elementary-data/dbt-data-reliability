@@ -7,7 +7,7 @@
 }}
 
 
-with elementary_test_results_cte as (
+with elementary_test_results_ as (
     select * from {{ ref('elementary_test_results') }}
 ),
 
@@ -35,7 +35,7 @@ alerts_schema_changes as (
            severity,
            status,
            result_rows
-        from elementary_test_results_cte
+        from elementary_test_results_
         where {{ not elementary.get_config_var('disable_test_alerts') }} and lower(status) != 'pass' {%- if elementary.get_config_var('disable_warn_alerts') -%} and lower(status) != 'warn' {%- endif -%} {%- if elementary.get_config_var('disable_skipped_test_alerts') -%} and lower(status) != 'skipped' {%- endif -%} and test_type = 'schema_change'
 )
 

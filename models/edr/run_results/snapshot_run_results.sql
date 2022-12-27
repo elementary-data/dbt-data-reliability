@@ -5,11 +5,11 @@
   )
 }}
 
-with dbt_run_results_cte as (
+with dbt_run_results_ as (
     select * from {{ ref('dbt_run_results') }}
 ),
 
-dbt_snapshots_cte as (
+dbt_snapshots_ as (
     select * from {{ ref('dbt_snapshots') }}
 )
 
@@ -38,5 +38,5 @@ SELECT
     snapshots.original_path,
     snapshots.owner,
     snapshots.alias
-FROM dbt_run_results_cte run_results
-JOIN dbt_snapshots_cte snapshots ON run_results.unique_id = snapshots.unique_id
+FROM dbt_run_results_ run_results
+JOIN dbt_snapshots_ snapshots ON run_results.unique_id = snapshots.unique_id

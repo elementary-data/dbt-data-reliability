@@ -5,7 +5,7 @@
   )
 }}
 
-with metrics_anomaly_score_cte as (
+with metrics_anomaly_score_ as (
 
     select * from {{ ref('metrics_anomaly_score') }}
 
@@ -28,7 +28,7 @@ score_sensitivity as (
         case when abs(anomaly_score) >= 3.5 then true else false end as {{ elementary.quote_column('is_anomaly_3_5') }},
         case when abs(anomaly_score) >= 4 then true else false end as {{ elementary.quote_column('is_anomaly_4') }},
         case when abs(anomaly_score) >= 4.5 then true else false end as {{ elementary.quote_column('is_anomaly_4_5') }}
-    from metrics_anomaly_score_cte
+    from metrics_anomaly_score_
     where abs(anomaly_score) >= 1.5
 
 )

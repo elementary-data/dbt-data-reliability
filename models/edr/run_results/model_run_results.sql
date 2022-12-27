@@ -5,11 +5,11 @@
   )
 }}
 
-with dbt_run_results_cte as (
+with dbt_run_results_ as (
     select * from {{ ref('dbt_run_results') }}
 ),
 
-dbt_models_cte as (
+dbt_models_ as (
     select * from {{ ref('dbt_models') }}
 )
 
@@ -48,5 +48,5 @@ SELECT
               ELSE FALSE 
          END                                                               AS is_the_last_invocation_of_the_day
     
-FROM dbt_run_results_cte run_results
-JOIN dbt_models_cte models ON run_results.unique_id = models.unique_id
+FROM dbt_run_results_ run_results
+JOIN dbt_models_ models ON run_results.unique_id = models.unique_id

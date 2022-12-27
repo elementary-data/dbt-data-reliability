@@ -5,7 +5,7 @@
   )
 }}
 
-with data_monitoring_metrics_cte as (
+with data_monitoring_metrics_ as (
 
     select * from {{ ref('data_monitoring_metrics') }}
 
@@ -39,7 +39,7 @@ time_window_aggregation as (
         last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
         first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
     from daily_buckets left join
-        data_monitoring_metrics_cte on (edr_daily_bucket = bucket_end)
+        data_monitoring_metrics_ on (edr_daily_bucket = bucket_end)
     {{ dbt_utils.group_by(13) }}
 
 ),

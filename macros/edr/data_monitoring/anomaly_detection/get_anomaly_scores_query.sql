@@ -12,7 +12,7 @@
 
     {% set anomaly_scores_query %}
 
-        with data_monitoring_metrics_cte as (
+        with data_monitoring_metrics_ as (
 
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
@@ -37,7 +37,7 @@
 
         union_metrics as (
 
-            select * from data_monitoring_metrics_cte
+            select * from data_monitoring_metrics_
             union all
             select * from {{ test_metrics_table_relation }}
 
