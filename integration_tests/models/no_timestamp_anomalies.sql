@@ -21,6 +21,7 @@ with training as (
  final as (
      select
          updated_at,
+         occurred_at,
          null_count_str,
          null_percent_str,
          null_count_float,

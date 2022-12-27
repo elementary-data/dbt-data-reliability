@@ -59,7 +59,7 @@
     {% set freshness_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-        where status in ('fail', 'warn') and sub_type = 'freshness'
+        where status in ('fail', 'warn') and sub_type = 'freshness_v2'
     {% endset %}
     {% set results = elementary.result_column_to_list(freshness_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['string_column_anomalies',

@@ -50,6 +50,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
     def get_training_row(date, row_index, rows_count):
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(5, 10))
             ),
@@ -68,6 +69,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
     def get_validation_row(date, row_index, rows_count):
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S"),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(1, 10))
             ),
@@ -120,6 +122,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
     def get_training_row(date, row_index, rows_count):
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
             "min": random.randint(100, 200),
             "max": random.randint(100, 200),
             "zero_count": 0
@@ -137,6 +140,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         row_index += -(rows_count / 2)
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S"),
             "min": random.randint(10, 200),
             "max": random.randint(100, 300),
             "zero_count": 0
@@ -187,6 +191,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
     def get_training_row(date, row_index, rows_count):
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
             "null_count_str": None
             if row_index < (3 / 100 * rows_count)
             else "".join(random.choices(string.ascii_lowercase, k=5)),
@@ -216,6 +221,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
     def get_validation_row(date, row_index, rows_count):
         return {
             "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "occurred_at": (date - timedelta(hours=7)).strftime("%Y-%m-%d %H:%M:%S"),
             "null_count_str": None
             if row_index < (80 / 100 * rows_count)
             else "".join(random.choices(string.ascii_lowercase, k=5)),
