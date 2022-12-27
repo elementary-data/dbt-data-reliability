@@ -177,11 +177,11 @@
 
         {# Create buckets for each day from max(first metric time, min bucket end) until max bucket end #}
         buckets as (
-        select
+          select
             edr_bucket,
             1 as joiner
-            from ({{ elementary.complete_buckets_cte(time_bucket) }})
-            where edr_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+          from ({{ elementary.complete_buckets_cte(time_bucket) }})
+          where edr_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
         {# Get all of the metrics for all of the dimensions that were create for the test until this run, #}
