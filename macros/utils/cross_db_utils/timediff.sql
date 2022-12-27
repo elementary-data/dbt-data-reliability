@@ -5,7 +5,7 @@
 
 {# Snowflake and Redshift #}
 {% macro default__timediff(timepart, first_timestamp, second_timestamp) %}
-    elementary.elementary_datediff({{ timepart }}, {{ first_timestamp }}, {{ second_timestamp }})
+    datediff({{ timepart }}, {{ first_timestamp }}, {{ second_timestamp }})
 {% endmacro %}
 
 {% macro bigquery__timediff(timepart, first_timestamp, second_timestamp) %}
