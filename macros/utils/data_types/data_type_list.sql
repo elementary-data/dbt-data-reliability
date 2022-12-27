@@ -76,3 +76,24 @@
     {%- endif %}
 
 {% endmacro %}
+
+{% macro duckdb__data_type_list(data_type) %}
+
+    {% set string_list = ['VARCHAR', 'CHAR', 'BPCHAR', 'TEXT', 'STRING'] | list %}
+    {% set numeric_list = ['BIGINT', 'INT8', 'LONG', 'DOUBLE', 'FLOAT8', 'NUMERIC', 'DECIMAL', 'HUGEINT', 'INTEGER',
+                           'INT4', 'INT', 'SIGNED', 'REAL', 'FLOAT4', 'FLOAT', 'SMALLINT', 'INT2', 'SHORT', 'TINYINT',
+                           'INT1', 'UBIGINT', 'UINTEGER', 'USMALLINT', 'UTINYINT'] | list %}
+    {% set timestamp_list = ['DATE', 'TIME', 'TIMESTAMP', 'DATETIME',
+                             'TIMESTAMP WITH TIME ZONE', 'TIMESTAMPTZ'] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}

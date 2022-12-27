@@ -5,7 +5,7 @@
   )
 }}
 
-with data_monitoring_metrics as (
+with data_monitoring_metrics_cte as (
 
     select * from {{ ref('data_monitoring_metrics') }}
 
@@ -17,7 +17,7 @@ max_bucket_end as (
            column_name,
            metric_name,
            max(bucket_end) as last_bucket_end
-    from data_monitoring_metrics
+    from data_monitoring_metrics_cte
     group by 1,2,3
 
 )

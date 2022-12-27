@@ -13,7 +13,7 @@
 
     {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
     {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
-    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+    {%- set backfill_period = -1 * backfill_days %}
     {%- set anomaly_query -%}
       with anomaly_scores as (
         select

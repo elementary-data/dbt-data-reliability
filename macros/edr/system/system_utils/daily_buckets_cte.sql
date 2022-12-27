@@ -32,6 +32,14 @@
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
 
+{% macro duckdb__daily_buckets_cte() %}
+    {%- set daily_buckets_cte %}
+select edr_daily_bucket
+from range({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval 1 day) as tbl(edr_daily_bucket)
+    {%- endset %}
+    {{ return(daily_buckets_cte) }}
+{% endmacro %}
+
 {% macro redshift__daily_buckets_cte() %}
     {%- set days_back = elementary.get_config_var('days_back') %}
     {%- set daily_buckets_cte %}

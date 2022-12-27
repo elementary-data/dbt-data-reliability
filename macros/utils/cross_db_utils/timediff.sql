@@ -8,6 +8,10 @@
     datediff({{ timepart }}, {{ first_timestamp }}, {{ second_timestamp }})
 {% endmacro %}
 
+{% macro duckdb__timediff(timepart, first_timestamp, second_timestamp) %}
+    datediff('{{ timepart }}', {{ first_timestamp }}, {{ second_timestamp }})
+{% endmacro %}
+
 {% macro bigquery__timediff(timepart, first_timestamp, second_timestamp) %}
     timestamp_diff({{ first_timestamp }}, {{ second_timestamp }}, {{ timepart }})
 {% endmacro %}

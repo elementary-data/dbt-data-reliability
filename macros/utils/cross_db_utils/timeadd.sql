@@ -11,3 +11,7 @@
 {% macro bigquery__timeadd(date_part, number, timestamp_expression) %}
     timestamp_add({{ elementary.cast_as_timestamp(timestamp_expression) }}, INTERVAL {{ number }} {{ date_part }})
 {% endmacro %}
+
+{% macro duckdb__timeadd(date_part, number, timestamp_expression) %}
+    {{ elementary.cast_as_timestamp(timestamp_expression) }} + ((interval '1 {{ date_part }}') * ({{ number }}))
+{% endmacro %}
