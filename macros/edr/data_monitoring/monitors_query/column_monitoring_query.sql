@@ -7,7 +7,7 @@
     {% endset %}
 
     with buckets as (
-        {{ elementary.complete_buckets_cte(time_bucket) }}
+        select edr_bucket from ({{ elementary.complete_buckets_cte(time_bucket) }})
         {% if min_bucket_start -%}
           where edr_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         {%- endif %}
