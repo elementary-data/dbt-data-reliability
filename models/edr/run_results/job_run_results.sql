@@ -1,6 +1,6 @@
 {{
   config(
-    materialized = 'view',
+    materialized = 'view' if target.type != 'duckdb' else 'table',
     bind=False
   )
 }}

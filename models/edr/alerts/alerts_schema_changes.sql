@@ -1,6 +1,6 @@
 {{
   config(
-    materialized = 'view',
+    materialized = 'view' if target.type != 'duckdb' else 'table',
     bind=False,
     enabled = target.type != 'databricks' and target.type != 'spark' | as_bool()
   )
