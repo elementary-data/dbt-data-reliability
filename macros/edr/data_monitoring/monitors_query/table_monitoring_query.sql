@@ -64,7 +64,7 @@
                 {{ elementary.cast_as_string('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), "edr_bucket_end") }} as metric_value
             from buckets, {{ monitored_table_relation }}
-            where {{ elementary.cast_as_timestamp(timestamp_column) }} <= edr_bucket_end
+            where {{ elementary.cast_as_timestamp(timestamp_column) }} < edr_bucket_end
             group by 1,2,3
         {%- else %}
             {{ elementary.empty_table([('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
