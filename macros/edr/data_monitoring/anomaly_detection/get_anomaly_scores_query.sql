@@ -104,14 +104,14 @@
                 bucket_end,
                 bucket_duration_hours,
                 updated_at,
-                edr_bucket,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
+                edr_bucket_end,
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
             from buckets left join
-                grouped_metrics on (edr_bucket = bucket_end)
+                grouped_metrics on (edr_bucket_end = bucket_end)
             {{ dbt_utils.group_by(13) }}
 
         ),
