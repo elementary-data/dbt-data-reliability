@@ -13,17 +13,17 @@
 
 {% macro snowflake__complete_buckets_cte(time_bucket) -%}
     {%- set complete_buckets_cte %}
-        with dates as (
+        with timestamps as (
           select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} as edr_bucket_start
           union all
           select {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as bucket_end
-          from dates
+          from timestamps
           where bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
         )
         select
           edr_bucket_start,
           {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as edr_bucket_end
-        from dates
+        from timestamps
         where edr_bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
