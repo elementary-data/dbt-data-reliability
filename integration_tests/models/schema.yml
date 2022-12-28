@@ -16,6 +16,9 @@ models:
         timestamp_column: "updated_at"
     tests:
       - elementary.volume_anomalies:
+          time_bucket:
+            period: hour
+            count: 4
           meta:
             description: >
               This is a very weird description

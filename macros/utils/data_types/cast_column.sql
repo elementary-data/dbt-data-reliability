@@ -1,23 +1,27 @@
 {%- macro cast_as_timestamp(timestamp_field) -%}
-    cast({{ timestamp_field }} as {{ elementary.elementary_type_timestamp() }})
+    cast({{ timestamp_field }} as {{ elementary.type_timestamp() }})
 {%- endmacro -%}
 
 {%- macro cast_as_float(column) -%}
-    cast({{ column }} as {{ elementary.elementary_type_float() }})
+    cast({{ column }} as {{ elementary.type_float() }})
+{%- endmacro -%}
+
+{%- macro cast_as_int(column) -%}
+    cast({{ column }} as {{ elementary.type_int() }})
 {%- endmacro -%}
 
 {%- macro cast_as_string(column) -%}
-    cast({{ column }} as {{ elementary.elementary_type_string() }})
+    cast({{ column }} as {{ elementary.type_string() }})
 {%- endmacro -%}
 
 {%- macro cast_as_long_string(column) -%}
-    cast({{ column }} as {{ elementary.elementary_type_long_string() }})
+    cast({{ column }} as {{ elementary.type_long_string() }})
 {%- endmacro -%}
 
 {%- macro cast_as_bool(column) -%}
-    cast({{ column }} as {{ elementary.elementary_type_bool() }})
+    cast({{ column }} as {{ elementary.type_bool() }})
 {%- endmacro -%}
 
 {%- macro const_as_string(string) -%}
-    cast('{{ string }}' as {{ elementary.elementary_type_string() }})
+    cast('{{ string }}' as {{ elementary.type_string() }})
 {%- endmacro -%}

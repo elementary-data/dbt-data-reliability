@@ -146,7 +146,7 @@
 
         {# This is the query that is creating the test results table, by formatting a description and adding id + detection time #}
         select
-            {{ elementary.elementary_generate_surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
+            {{ elementary.generate_surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             {{ elementary.full_name_split('database_name') }},
             {{ elementary.full_name_split('schema_name') }},
@@ -169,7 +169,7 @@
     )
 
         {# Creating a unique id for each row in the table, and adding execution id #}
-    select {{ elementary.elementary_generate_surrogate_key([
+    select {{ elementary.generate_surrogate_key([
                      'data_issue_id',
                      elementary.const_as_string(test_execution_id)
                 ]) }} as id,

@@ -4,7 +4,7 @@
 {%- endmacro %}
 
 {% macro default__time_trunc(date_part, date_expression) %}
-    date_trunc('{{date_part}}', cast({{ date_expression }} as {{ elementary.elementary_type_timestamp() }}))
+    date_trunc('{{date_part}}', cast({{ date_expression }} as {{ elementary.type_timestamp() }}))
 {% endmacro %}
 
 {% macro bigquery__time_trunc(date_part, date_expression) %}

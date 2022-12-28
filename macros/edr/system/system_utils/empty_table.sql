@@ -47,10 +47,6 @@
     ]) }}
 {% endmacro %}
 
-{% macro empty_column_unpivot_cte() %}
-    {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
-{% endmacro %}
-
 {# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}
 {# Therefore we added "dimension" and "dimension_value" at the end of the table. #}
 {% macro empty_data_monitoring_metrics() %}
@@ -95,19 +91,19 @@
     {%- set dummy_values = elementary.dummy_values() %}
 
     {%- if data_type == 'boolean' %}
-        cast ({{ dummy_values['boolean'] }} as {{ elementary.elementary_type_bool()}}) as {{ column_name }}
+        cast ({{ dummy_values['boolean'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.elementary_type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
-        cast({{ dummy_values['int'] }} as {{ elementary.elementary_type_int() }}) as {{ column_name }}
+        cast({{ dummy_values['int'] }} as {{ elementary.type_int() }}) as {{ column_name }}
     {%- elif data_type == 'bigint' %}
-        cast({{ dummy_values['bigint'] }} as {{ elementary.elementary_type_bigint() }}) as {{ column_name }}
+        cast({{ dummy_values['bigint'] }} as {{ elementary.type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
-        cast({{ dummy_values['float'] }} as {{ elementary.elementary_type_float() }}) as {{ column_name }}
+        cast({{ dummy_values['float'] }} as {{ elementary.type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
-        cast('{{ dummy_values['long_string'] }}' as {{ elementary.elementary_type_long_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast('{{ dummy_values['string'] }}' as {{ elementary.elementary_type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}
