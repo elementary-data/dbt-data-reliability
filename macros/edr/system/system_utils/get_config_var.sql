@@ -53,7 +53,7 @@
     'cache_artifacts': true,
     'project_name': none,
     'elementary_full_refresh': false,
-    'training_set_size': 14
+    'min_training_set_size': 14
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
