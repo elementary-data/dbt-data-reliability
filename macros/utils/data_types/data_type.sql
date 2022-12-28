@@ -93,7 +93,7 @@
 
 
 {% macro elementary_type_timestamp() %}
-    {% set macro = dbt.type_timestamp %}
+    {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
     {% endif %}
