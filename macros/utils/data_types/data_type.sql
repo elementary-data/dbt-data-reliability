@@ -66,9 +66,6 @@
 
 
 {% macro type_bigint() %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.type_bigint or dbt_utils.type_bigint %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_bigint` macro.") }}
@@ -78,9 +75,6 @@
 
 
 {% macro type_float() %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.type_float or dbt_utils.type_float %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_float` macro.") }}
@@ -90,9 +84,6 @@
 
 
 {% macro type_int() %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.type_int or dbt_utils.type_int %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_int` macro.") }}
@@ -102,9 +93,6 @@
 
 
 {% macro type_timestamp() %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}

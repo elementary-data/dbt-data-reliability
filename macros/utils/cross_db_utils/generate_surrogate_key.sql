@@ -16,9 +16,6 @@
 
 
 {%- macro generate_surrogate_key(fields) -%}
-  {% if not execute %}
-    {% do return(none) %}
-  {% endif %}
   {% set concat_macro = dbt.concat or dbt_utils.concat %}
   {% set hash_macro = dbt.hash or dbt_utils.hash %}
 

@@ -1,7 +1,4 @@
 {% macro date_trunc(datepart, date) %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.date_trunc or dbt_utils.date_trunc %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `date_trunc` macro.") }}

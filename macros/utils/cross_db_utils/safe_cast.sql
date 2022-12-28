@@ -3,9 +3,6 @@
 {% endmacro %}
 
 {% macro default__safe_cast(field, type) %}
-    {% if not execute %}
-        {% do return(none) %}
-    {% endif %}
     {% set macro = dbt.safe_cast or dbt_utils.safe_cast %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `safe_cast` macro.") }}
