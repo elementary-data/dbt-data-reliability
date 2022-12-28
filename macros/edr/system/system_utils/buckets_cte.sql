@@ -2,41 +2,46 @@
     {{ adapter.dispatch('complete_buckets_cte','elementary')(time_bucket) }}
 {% endmacro %}
 
-{# Databricks and Spark #}
-{% macro default__complete_buckets_cte(time_bucket) %}
-    select
-      edr_bucket_start,
-      {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as edr_bucket_end
-    from (select explode(sequence({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start)
-    where edr_bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+{% macro spark__complete_buckets_cte(time_bucket) %}
+    {% set edr_bucket_end_expr = elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') %}
+    {%- set complete_buckets_cte %}
+        select
+          edr_bucket_start,
+          {{ edr_bucket_end_expr }} as edr_bucket_end
+        from (select explode(sequence({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start)
+        where {{ edr_bucket_end }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
 {% macro snowflake__complete_buckets_cte(time_bucket) -%}
+    {% set edr_bucket_end_expr = elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') %}
     {%- set complete_buckets_cte %}
         with timestamps as (
           select {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} as edr_bucket_start
           union all
-          select {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as bucket_end
+          select {{ edr_bucket_end_expr }} as next_bucket
           from timestamps
-          where bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+          where next_bucket < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
         )
         select
           edr_bucket_start,
-          {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as edr_bucket_end
+          {{ edr_bucket_end }} as edr_bucket_end
         from timestamps
-        where edr_bucket_end < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+        where {{ edr_bucket_end }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
 
 {% macro bigquery__complete_buckets_cte(time_bucket) %}
+    {% set edr_bucket_end_expr = elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') %}
     {%- set complete_buckets_cte %}
         select
           edr_bucket_start,
-          {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} as edr_bucket_end
+          {{ edr_bucket_end_expr }} as edr_bucket_end
         from unnest(generate_timestamp_array({{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }}, {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start
-        where {{ elementary.timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
+        where {{ edr_bucket_end }} < {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
