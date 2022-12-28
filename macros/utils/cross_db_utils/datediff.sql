@@ -1,4 +1,4 @@
-{% macro datediff(first_date, second_date, datepart) %}
+{% macro elementary_datediff(first_date, second_date, datepart) %}
     {% set macro = dbt.datediff or dbt_utils.datediff %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}

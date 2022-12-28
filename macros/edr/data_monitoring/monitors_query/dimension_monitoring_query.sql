@@ -114,7 +114,7 @@
             dimension_value
         from
             row_count
-        where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+        where (metric_value is not null and cast(metric_value as {{ elementary.elementary_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
             metric_value is null
         )
 
@@ -238,7 +238,7 @@
     {% endif %}
 
     select
-        {{ elementary.generate_surrogate_key([
+        {{ elementary.elementary_generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -254,7 +254,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{ elementary.current_timestamp_in_utc() }} as updated_at,
+        {{ elementary.elementary_current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final
