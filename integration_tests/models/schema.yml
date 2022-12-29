@@ -223,12 +223,23 @@ sources:
     schema: "{{ target.schema }}"
     tables:
       - name: any_type_column_anomalies_training
+        freshness:
+          error_after:
+            count: 1
+            period: minute
+        loaded_at_field: date
         tests:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
           - elementary.freshness_anomalies:
               tags: ["table_anomalies"]
+
       - name: string_column_anomalies_training
+        freshness:
+          error_after:
+            count: 1
+            period: minute
+        loaded_at_field: no_such_column
         meta:
           elementary:
             timestamp_column: "date"
@@ -242,6 +253,11 @@ sources:
     schema: "{{ target.schema }}"
     tables:
       - name: any_type_column_anomalies_validation
+        freshness:
+          warn_after:
+            count: 1
+            period: minute
+        loaded_at_field: date
         tests:
           - elementary.all_columns_anomalies:
               tags: ["elementary_source"]
