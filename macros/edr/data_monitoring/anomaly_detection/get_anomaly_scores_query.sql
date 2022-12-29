@@ -104,7 +104,7 @@
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            {{ dbt_utils.group_by(13) }}
+            {{ dbt_utils.group_by(12) }}
         ),
 
         anomaly_scores as (
