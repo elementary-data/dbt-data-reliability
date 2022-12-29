@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, time_bucket=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -83,12 +83,6 @@
 
         ),
 
-        buckets as (
-
-            {{ elementary.complete_buckets_cte(time_bucket) }}
-
-        ),
-
         time_window_aggregation as (
 
             select
@@ -104,16 +98,13 @@
                 bucket_end,
                 bucket_duration_hours,
                 updated_at,
-                edr_bucket_end,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by edr_bucket_end asc rows between unbounded preceding and current row) as training_start
-            from buckets left join
-                grouped_metrics on (edr_bucket_end = bucket_end)
-            {{ dbt_utils.group_by(13) }}
-
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_start
+            from grouped_metrics
+            {{ dbt_utils.group_by(12) }}
         ),
 
         anomaly_scores as (

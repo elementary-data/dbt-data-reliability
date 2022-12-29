@@ -47,7 +47,7 @@
 
         {#- calculate anomaly scores for metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
-        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, model_graph_node, sensitivity, backfill_days, table_monitors, time_bucket=time_bucket) %}
+        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, model_graph_node, sensitivity, backfill_days, table_monitors) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
