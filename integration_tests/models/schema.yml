@@ -225,7 +225,7 @@ sources:
       - name: any_type_column_anomalies_training
         freshness:
           error_after:
-            count: 15
+            count: 1
             period: minute
         loaded_at_field: date
         tests:
@@ -237,7 +237,7 @@ sources:
       - name: string_column_anomalies_training
         freshness:
           error_after:
-            count: 15
+            count: 1
             period: minute
         loaded_at_field: no_such_column
         meta:
@@ -255,7 +255,7 @@ sources:
       - name: any_type_column_anomalies_validation
         freshness:
           warn_after:
-            count: 15
+            count: 1
             period: minute
         loaded_at_field: date
         tests:
