@@ -199,7 +199,7 @@
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
-        'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
+        'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags') + elementary.insensitive_get_dict_value(flattened_test, 'tags'),
         'test_results_query': elementary.get_compiled_code(flattened_test),
         'test_name': elementary.insensitive_get_dict_value(flattened_test, 'name'),
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
