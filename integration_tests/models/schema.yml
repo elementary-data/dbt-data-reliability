@@ -146,8 +146,6 @@ models:
       - elementary.volume_anomalies:
           tags: [ "table_anomalies" ]
       - elementary.freshness_anomalies:
-          data_timestamp_column: "occurred_at"
-          insertion_timestamp_column: "updated_at"
           tags: [ "table_anomalies" ]
       - elementary.schema_changes:
           tags: [ "schema_changes" ]
@@ -288,7 +286,6 @@ sources:
           - elementary.volume_anomalies:
               tags: [ "table_anomalies" ]
           - elementary.freshness_anomalies:
-              data_timestamp_column: "date"
               tags: [ "table_anomalies" ]
       - name: numeric_column_anomalies_training
   - name: validation
