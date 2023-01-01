@@ -251,7 +251,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-data",
     "-g",
     type=bool,
-    default=True,
+    default=False,
     help="Set to true if you want to re-generate fake data (default = True)",
 )
 @click.option(
