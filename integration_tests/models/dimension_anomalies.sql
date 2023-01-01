@@ -4,7 +4,7 @@ with training as (
     select * from {{ ref('dimension_anomalies_training') }}
 ),
 
-{% if elementary.table_exists_in_target('dimension_anomalies_validation') %}
+{% if var("stage") == "validation" %}
  validation as (
      select * from {{ ref('dimension_anomalies_validation') }}
  ),
