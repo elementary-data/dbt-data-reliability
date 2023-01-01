@@ -437,8 +437,12 @@ def e2e_tests(
         )
         # No need to create today's metric because the validation run does it.
         for run_index in range(1, days_back_project_var):
+            custom_run_time = (
+                EPOCH - timedelta(days_back_project_var - run_index)
+            ).isoformat()
             dbt_runner.test(
                 select="tag:no_timestamp",
+                vars={"custom_run_started_at": custom_run_time},
             )
 
     dbt_runner.seed(select="validation")
