@@ -529,7 +529,7 @@ def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResu
         ]
         test_results.extend(results)
 
-    if "source_freshness" in test_types and target != "redshift":
+    if "source_freshness" in test_types:
         dbt_runner.source_freshness()
         dbt_runner.upload_source_freshness()
         results = [
