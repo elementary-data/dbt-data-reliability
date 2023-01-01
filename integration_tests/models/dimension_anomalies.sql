@@ -22,7 +22,7 @@ with training as (
 
  final as (
      select
-         date as updated_at,
+         updated_at,
          platform,
          version,
          user_id

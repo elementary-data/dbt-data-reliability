@@ -22,7 +22,7 @@ with training as (
 
  final as (
      select
-         date as updated_at,
+         updated_at,
          null_count_str,
          null_percent_str,
          null_count_float,

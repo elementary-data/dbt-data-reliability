@@ -22,7 +22,7 @@ source as (
 
 final as (
      select
-        date as updated_at,
+        updated_at,
         min_length,
         max_length,
         average_length,

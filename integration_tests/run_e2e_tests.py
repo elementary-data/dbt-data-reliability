@@ -13,8 +13,6 @@ import click
 
 from elementary.clients.dbt.dbt_runner import DbtRunner
 
-any_type_columns = ["date", "null_count", "null_percent"]
-
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 EPOCH = datetime.utcfromtimestamp(0)
@@ -52,7 +50,7 @@ def generate_rows(rows_count_per_day, dates, get_row_callback):
 def generate_string_anomalies_training_and_validation_files(rows_count_per_day=100):
     def get_training_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(5, 10))
             ),
@@ -70,7 +68,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
 
     def get_validation_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(1, 10))
             ),
@@ -89,7 +87,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
         }
 
     string_columns = [
-        "date",
+        "updated_at",
         "min_length",
         "max_length",
         "average_length",
@@ -122,7 +120,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
 def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=200):
     def get_training_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "min": random.randint(100, 200),
             "max": random.randint(100, 200),
             "zero_count": 0
@@ -139,7 +137,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
     def get_validation_row(date, row_index, rows_count):
         row_index += -(rows_count / 2)
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "min": random.randint(10, 200),
             "max": random.randint(100, 300),
             "zero_count": 0
@@ -154,7 +152,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         }
 
     numeric_columns = [
-        "date",
+        "updated_at",
         "min",
         "max",
         "zero_count",
@@ -189,7 +187,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
 def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day=300):
     def get_training_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "null_count_str": None
             if row_index < (3 / 100 * rows_count)
             else "".join(random.choices(string.ascii_lowercase, k=5)),
@@ -218,7 +216,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
 
     def get_validation_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "null_count_str": None
             if row_index < (80 / 100 * rows_count)
             else "".join(random.choices(string.ascii_lowercase, k=5)),
@@ -246,7 +244,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
         }
 
     any_type_columns = [
-        "date",
+        "updated_at",
         "null_count_str",
         "null_percent_str",
         "null_count_float",
@@ -284,7 +282,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
 def generate_dimension_anomalies_training_and_validation_files():
     def get_training_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "platform": "android" if row_index < (rows_count - 20) else "ios",
             "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
@@ -292,13 +290,13 @@ def generate_dimension_anomalies_training_and_validation_files():
 
     def get_validation_row(date, row_index, rows_count):
         return {
-            "date": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": date.strftime("%Y-%m-%d %H:%M:%S"),
             "platform": "android" if row_index < (rows_count - 1) else "ios",
             "version": row_index % 3,
             "user_id": random.randint(1, rows_count),
         }
 
-    dimension_columns = ["date", "platform", "version", "user_id"]
+    dimension_columns = ["updated_at", "platform", "version", "user_id"]
     dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=2))
     training_rows = generate_rows(1020, dates, get_training_row)
     write_rows_to_csv(
