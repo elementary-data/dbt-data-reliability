@@ -6,7 +6,7 @@
   {% else %}
     {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
   {% endif %}
-  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness) %}
+  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness, should_commit=true) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}
