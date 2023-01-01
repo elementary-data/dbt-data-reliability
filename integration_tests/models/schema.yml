@@ -13,7 +13,7 @@ models:
       WDYT?
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
       - elementary.volume_anomalies:
           time_bucket:
@@ -60,7 +60,7 @@ models:
     description: We use this model to test dimension anomalies
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
@@ -93,7 +93,7 @@ models:
       tags: ["marketing"]
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
@@ -141,7 +141,7 @@ models:
   - name: numeric_column_anomalies
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
       - elementary.volume_anomalies:
           tags: ["table_anomalies"]
@@ -227,7 +227,7 @@ sources:
           error_after:
             count: 1
             period: minute
-        loaded_at_field: date
+        loaded_at_field: updated_at
         tests:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
@@ -242,7 +242,7 @@ sources:
         loaded_at_field: no_such_column
         meta:
           elementary:
-            timestamp_column: "date"
+            timestamp_column: updated_at
         tests:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
@@ -257,7 +257,7 @@ sources:
           warn_after:
             count: 1
             period: minute
-        loaded_at_field: date
+        loaded_at_field: updated_at
         tests:
           - elementary.all_columns_anomalies:
               tags: ["elementary_source"]
