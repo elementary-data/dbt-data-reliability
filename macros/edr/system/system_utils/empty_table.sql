@@ -5,6 +5,7 @@
     ('test_execution_id','long_string'),
     ('test_unique_id','long_string'),
     ('model_unique_id','long_string'),
+    ('invocation_id', 'string'),
     ('detected_at','timestamp'),
     ('database_name','string'),
     ('schema_name','string'),
@@ -44,10 +45,6 @@
     ('execute_completed_at', 'string'),
     ('invocation_id', 'string')
     ]) }}
-{% endmacro %}
-
-{% macro empty_column_unpivot_cte() %}
-    {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket','timestamp'),('metric_name','string'),('metric_value','float')]) }}
 {% endmacro %}
 
 {# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}

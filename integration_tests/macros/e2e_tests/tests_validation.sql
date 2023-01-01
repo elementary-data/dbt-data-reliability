@@ -1,6 +1,6 @@
 {% macro tests_validation() %}
     {% if execute %}
-        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+        {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
         -- no validation data which means table freshness and volume should alert
         {% if not elementary.table_exists_in_target('any_type_column_anomalies_validation') %}
             {{ validate_table_anomalies() }}
@@ -68,16 +68,10 @@
 {% endmacro %}
 
 
-{% macro get_alerts_table_relation(table_name) %}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {%- set alerts_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=table_name) %}
-    {{ return(alerts_relation) }}
-{% endmacro %}
-
 {% macro validate_table_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
     -- no validation data which means table freshness and volume should alert
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set freshness_validation_query %}
         select distinct table_name
             from {{ alerts_relation }}
@@ -100,8 +94,8 @@
 {% endmacro %}
 
 {% macro validate_dimension_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set dimension_validation_query %}
         select *
             from {{ alerts_relation }}
@@ -120,7 +114,7 @@
     {% endfor %}
 
     {% if results | length != 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has to many fail/error tests') %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
@@ -132,8 +126,8 @@
 {% endmacro %}
 
 {% macro validate_string_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set string_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
@@ -146,8 +140,8 @@
 {% endmacro %}
 
 {% macro validate_numeric_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set numeric_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
@@ -161,8 +155,8 @@
 
 
 {% macro validate_any_type_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set any_type_column_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
@@ -200,8 +194,8 @@
 {% endmacro %}
 
 {% macro validate_no_timestamp_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
 
     {# Validating row count for no timestamp table anomaly #}
     {% set no_timestamp_row_count_validation_query %}
@@ -245,8 +239,8 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_dbt_tests') %}
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
@@ -260,8 +254,8 @@
 {% endmacro %}
 
 {% macro validate_error_model() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_dbt_models') %}
 
     {% set error_model_validation_query %}
         select distinct status
@@ -274,8 +268,8 @@
 {% endmacro %}
 
 {% macro validate_error_snapshot() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_dbt_models') %}
 
     {% set error_snapshot_validation_query %}
         select distinct status
@@ -298,8 +292,8 @@
                                ('schema_changes_from_baseline', 'goals'): 'type_changed',
                                ('schema_changes_from_baseline', 'coffee_cups_consumed'): 'column_removed'
                                } %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_schema_changes') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_schema_changes') %}
     {% set schema_changes_alerts %}
     select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
@@ -339,8 +333,8 @@
 {% endmacro %}
 
 {% macro validate_regular_tests() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+    {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
+    {% set alerts_relation = ref('alerts_dbt_tests') %}
     {% set dbt_test_alerts %}
         select table_name, column_name, test_name
         from {{ alerts_relation }}
@@ -368,16 +362,8 @@
 
 {% endmacro %}
 
-{% macro get_artifacts_table_relation(table_name) %}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {%- set artifacts_relation = adapter.get_relation(database=database_name,
-                                                      schema=schema_name,
-                                                      identifier=table_name) %}
-    {{ return(artifacts_relation) }}
-{% endmacro %}
-
 {% macro validate_dbt_artifacts() %}
-    {% set dbt_models_relation = get_artifacts_table_relation('dbt_models') %}
+    {% set dbt_models_relation = ref('dbt_models') %}
     {% set dbt_models_query %}
         select distinct name from {{ dbt_models_relation }}
     {% endset %}
@@ -386,7 +372,7 @@
     {{ assert_value_in_list('numeric_column_anomalies', models, context='dbt_models') }}
     {{ assert_value_in_list('string_column_anomalies', models, context='dbt_models') }}
 
-    {% set dbt_sources_relation = get_artifacts_table_relation('dbt_sources') %}
+    {% set dbt_sources_relation = ref('dbt_sources') %}
     {% set dbt_sources_query %}
         select distinct name from {{ dbt_sources_relation }}
     {% endset %}
@@ -395,13 +381,13 @@
     {{ assert_value_in_list('string_column_anomalies_training', sources, context='dbt_sources') }}
     {{ assert_value_in_list('any_type_column_anomalies_validation', sources, context='dbt_sources') }}
 
-    {% set dbt_tests_relation = get_artifacts_table_relation('dbt_tests') %}
+    {% set dbt_tests_relation = ref('dbt_tests') %}
     {% set dbt_tests_query %}
         select distinct name from {{ dbt_tests_relation }}
     {% endset %}
     {% set tests = elementary.result_column_to_list(dbt_tests_query) %}
 
-    {% set dbt_run_results = get_artifacts_table_relation('dbt_run_results') %}
+    {% set dbt_run_results = ref('dbt_run_results') %}
     {% set dbt_run_results_query %}
         select distinct name from {{ dbt_run_results }} where resource_type in ('model', 'test')
     {% endset %}
@@ -410,4 +396,12 @@
     {% do all_executable_nodes.extend(models) %}
     {% do all_executable_nodes.extend(tests) %}
     {{ assert_list1_in_list2(run_results, all_executable_nodes, context='dbt_run_results') }}
+{% endmacro %}
+
+{% macro validate_source_freshness() %}
+    {% set query %}
+      select status from {{ ref('dbt_source_freshness_results') }}
+    {% endset %}
+    {% set results = elementary.result_column_to_list(query) %}
+    {{ assert_lists_contain_same_items(results, ['warn', 'error', 'runtime error']) }}
 {% endmacro %}

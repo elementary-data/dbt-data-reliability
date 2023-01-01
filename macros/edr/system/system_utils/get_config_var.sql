@@ -30,7 +30,7 @@
     'disable_source_freshness_alerts': false,
     'disable_run_results': false,
     'disable_tests_results': false,
-    'disable_dbt_artifacts_autoupload': false,
+    'disable_dbt_artifacts_autoupload': true,
     'disable_dbt_invocation_autoupload': false,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
@@ -45,7 +45,6 @@
       'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
     },
-    'time_format': '%Y-%m-%d %H:%M:%S',
     'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
@@ -53,7 +52,8 @@
     'insert_rows_method': 'max_query_size',
     'cache_artifacts': true,
     'project_name': none,
-    'elementary_full_refresh': false
+    'elementary_full_refresh': false,
+    'min_training_set_size': 14
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
