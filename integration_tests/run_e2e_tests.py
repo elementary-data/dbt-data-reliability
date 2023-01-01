@@ -17,6 +17,8 @@ any_type_columns = ["date", "null_count", "null_percent"]
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
+EPOCH = datetime.utcfromtimestamp(0)
+
 
 def generate_rows_timestamps(base_date, period="days", count=1, days_back=30):
     min_date = base_date - timedelta(days=days_back)
@@ -94,7 +96,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
         "missing_count",
         "missing_percent",
     ]
-    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
@@ -104,7 +106,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
         string_columns,
     )
 
-    validation_date = datetime.today() - timedelta(days=1)
+    validation_date = EPOCH - timedelta(days=1)
     validation_rows = generate_rows(
         rows_count_per_day, [validation_date], get_validation_row
     )
@@ -161,7 +163,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         "standard_deviation",
         "variance",
     ]
-    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(
@@ -171,7 +173,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         numeric_columns,
     )
 
-    validation_date = datetime.today() - timedelta(days=1)
+    validation_date = EPOCH - timedelta(days=1)
     validation_rows = generate_rows(
         rows_count_per_day, [validation_date], get_validation_row
     )
@@ -255,7 +257,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
         "null_percent_bool",
     ]
     dates = generate_rows_timestamps(
-        base_date=datetime.today() - timedelta(days=2), period="hours", count=4
+        base_date=EPOCH - timedelta(days=2), period="hours", count=4
     )
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
@@ -266,7 +268,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
         any_type_columns,
     )
 
-    validation_date = datetime.today() - timedelta(days=1)
+    validation_date = EPOCH - timedelta(days=1)
     validation_rows = generate_rows(
         rows_count_per_day, [validation_date], get_validation_row
     )
@@ -297,7 +299,7 @@ def generate_dimension_anomalies_training_and_validation_files():
         }
 
     dimension_columns = ["date", "platform", "version", "user_id"]
-    dates = generate_rows_timestamps(base_date=datetime.today() - timedelta(days=2))
+    dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=2))
     training_rows = generate_rows(1020, dates, get_training_row)
     write_rows_to_csv(
         os.path.join(FILE_DIR, "data", "training", "dimension_anomalies_training.csv"),
@@ -305,7 +307,7 @@ def generate_dimension_anomalies_training_and_validation_files():
         dimension_columns,
     )
 
-    validation_date = datetime.today() - timedelta(days=1)
+    validation_date = EPOCH - timedelta(days=1)
     validation_rows = generate_rows(1001, [validation_date], get_validation_row)
     write_rows_to_csv(
         os.path.join(
@@ -366,7 +368,9 @@ class TestDbtRunner(DbtRunner):
         self.run_operation("elementary.upload_source_freshness")
 
 
-def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResults:
+def e2e_tests(
+    target: str, test_types: List[str], clear_tests: bool, generate_data: bool
+) -> TestResults:
     test_results = TestResults()
 
     dbt_runner = TestDbtRunner(
@@ -381,6 +385,8 @@ def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResu
         for clear_test_log in clear_test_logs:
             print(clear_test_log)
 
+    if generate_data:
+        dbt_runner.seed(select="training")
     dbt_runner.run(full_refresh=True)
 
     if "table" in test_types:
@@ -422,7 +428,6 @@ def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResu
 
     # Creates row_count metrics for anomalies detection.
     if "no_timestamp" in test_types:
-        current_time = datetime.now()
         # Run operation returns the operation value as a list of strings.
         # So we convert the days_back value into int.
         days_back_project_var = int(
@@ -430,16 +435,13 @@ def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResu
                 macro_name="return_config_var", macro_args={"var_name": "days_back"}
             )[0]
         )
-        # No need to create todays metric because the validation run does it.
+        # No need to create today's metric because the validation run does it.
         for run_index in range(1, days_back_project_var):
-            custom_run_time = (
-                current_time - timedelta(days_back_project_var - run_index)
-            ).isoformat()
             dbt_runner.test(
                 select="tag:no_timestamp",
-                vars={"custom_run_started_at": custom_run_time},
             )
 
+    dbt_runner.seed(select="validation")
     dbt_runner.run()
 
     if "debug" in test_types:
@@ -495,6 +497,9 @@ def e2e_tests(target: str, test_types: List[str], clear_tests: bool) -> TestResu
         test_results.extend(results)
 
     if "schema" in test_types and target not in ["databricks", "spark"]:
+        if generate_data:
+            dbt_runner.seed(select="schema_changes_data")
+            dbt_runner.seed(select="schema_changes_validation")
         dbt_runner.test(select="tag:schema_changes")
         dbt_runner.test(select="tag:schema_changes_from_baseline")
         schema_changes_logs = dbt_runner.run_operation(
@@ -600,7 +605,7 @@ def main(target, e2e_type, generate_data, clear_tests):
     found_failures = False
     for e2e_target in e2e_targets:
         print(f"Starting {e2e_target} tests\n")
-        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests)
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data)
         print(f"\n{e2e_target} results")
         all_results[e2e_target] = e2e_test_results
 
