@@ -18,5 +18,5 @@
 
 
 {% macro get_allowed_table_monitors() %}
-    {% do return(["row_count", "freshness", "freshness_v2"]) %}
+    {% do return(["row_count", "freshness", "event_freshness"]) %}
 {% endmacro %}

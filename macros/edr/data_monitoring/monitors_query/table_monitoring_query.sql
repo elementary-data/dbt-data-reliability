@@ -178,8 +178,6 @@
         {%- set freshness_column = timestamp_column %}
     {%- endif %}
 
-    {% set run_start_timestamp = elementary.cast_as_timestamp(elementary.quote(elementary.run_started_at_as_string())) %}
-
     -- get ordered consecutive update timestamps in the source data
     with unique_timestamps as (
         select distinct {{ elementary.cast_as_timestamp(freshness_column) }} as timestamp_val
@@ -212,7 +210,7 @@
             edr_bucket_start,
             edr_bucket_end,
             max(timestamp_val) as update_timestamp,
-            {{ elementary.timediff('second', elementary.cast_as_timestamp('max(timestamp_val)'), "least(edr_bucket_end, {})".format(run_start_timestamp)) }} as freshness
+            {{ elementary.timediff('second', elementary.cast_as_timestamp('max(timestamp_val)'), "least(edr_bucket_end, {})".format(elementary.current_timestamp_column())) }} as freshness
         from buckets, unique_timestamps
         where timestamp_val < edr_bucket_end
         group by 1,2
@@ -255,15 +253,19 @@
 
 {% if update_timestamp_column %}
     select
-        edr_daily_bucket as edr_bucket,
+        edr_bucket_start,
+        edr_bucket_end,
         {{ elementary.const_as_string('event_freshness') }} as metric_name,
         {{ elementary.cast_as_string('max({})'.format(event_timestamp_column)) }} as source_value,
-        {{ 'max({})'.format(elementary.timediff('second', elementary.cast_as_timestamp(event_timestamp_column), elementary.cast_as_timestamp(update_timestamp_column))) }} as metric_value
-    from daily_buckets left join time_filtered_monitored_table on (edr_daily_bucket = start_bucket_in_data)
+        {{ 'coalesce(max({}), {})'.format(
+                elementary.timediff('second', elementary.cast_as_timestamp(event_timestamp_column), elementary.cast_as_timestamp(update_timestamp_column)),
+                elementary.timediff('second', 'edr_bucket_start', 'edr_bucket_end')
+            ) }} as metric_value
+    from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
     group by 1,2
 {% else %}
     select
-        {{ elementary.const_as_string('freshness_v2') }} as metric_name,
+        {{ elementary.const_as_string('event_freshness') }} as metric_name,
         {{ elementary.timediff('second', elementary.cast_as_timestamp("max({})".format(event_timestamp_column)), elementary.current_timestamp_column()) }} as metric_value
     from monitored_table
     group by 1
