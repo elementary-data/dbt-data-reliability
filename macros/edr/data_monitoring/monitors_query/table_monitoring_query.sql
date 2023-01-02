@@ -242,7 +242,7 @@
     where row_number = 1
 {% else %}
     {# Update freshness test not supported when timestamp column is not provided #}
-    {# TODO: Maybe it makes sense to use model_run_results to know update times in this case? #}
+    {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
     {% do return(none) %}
 {% endif %}
 {% endmacro %}
