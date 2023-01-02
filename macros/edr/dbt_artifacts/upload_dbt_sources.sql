@@ -35,13 +35,25 @@
 
 {% macro flatten_source(node_dict) %}
     {% set freshness_dict = elementary.safe_get_with_default(node_dict, 'freshness', {}) %}
+    {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set source_meta_dict = elementary.safe_get_with_default(node_dict, 'source_meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(source_meta_dict) %}
-    {% set owner = meta_dict.get('owner') %}
-    {% set node_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
+    {% set formatted_owner = [] %}
+    {% set raw_owner = meta_dict.get('owner') %}
+    {% if raw_owner is string %}
+        {% set owners = raw_owner.split(',') %}
+        {% for owner in owners %}
+            {% do formatted_owner.append(owner | trim) %}  
+        {% endfor %}
+    {% elif raw_owner is iterable %}
+        {% do formatted_owner.extend(raw_owner) %}
+    {% endif %}
+    {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
+    {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
-    {% set tags = elementary.union_lists(node_tags, meta_tags) %}
+    {% set tags = elementary.union_lists(config_tags, global_tags) %}
+    {% set tags = elementary.union_lists(tags, meta_tags) %}
     {% set flatten_source_metadata_dict = {
          'unique_id': node_dict.get('unique_id'),
          'database_name': node_dict.get('database'),
@@ -56,7 +68,7 @@
          'relation_name': node_dict.get('relation_name'),
          'tags': tags,
          'meta': meta_dict,
-         'owner': owner,
+         'owner': formatted_owner,
          'package_name': node_dict.get('package_name'),
          'original_path': node_dict.get('original_file_path'),
          'path': node_dict.get('path'),
