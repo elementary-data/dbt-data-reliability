@@ -26,7 +26,7 @@
           *,
           case when
             anomaly_score is not null and
-            abs(anomaly_score) > {{ sensitivity }} and
+            {{ elementary.is_score_anomalous_condition(sensitivity) }} and
             bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.quote(elementary.get_max_bucket_end())) }} and
             training_set_size >= {{ elementary.get_config_var('min_training_set_size') }}
           then TRUE else FALSE end as is_anomalous
@@ -50,3 +50,13 @@
     {%- endset -%}
     {{- return(anomaly_query) -}}
 {% endmacro %}
+
+{%- macro is_score_anomalous_condition(sensitivity) -%}
+    {%- set spikes_only_metrics = ['freshness', 'event_freshness'] -%}
+
+    case when metric_name IN {{ elementary.strings_list_to_tuple(spikes_only_metrics) }} then
+            anomaly_score > {{ sensitivity }}
+         else
+            abs(anomaly_score) > {{ sensitivity }}
+         end
+{%- endmacro -%}
