@@ -1,5 +1,3 @@
--- depends_on: {{ ref('dimension_anomalies_validation') }}
-
 with training as (
     select * from {{ ref('dimension_anomalies_training') }}
 ),

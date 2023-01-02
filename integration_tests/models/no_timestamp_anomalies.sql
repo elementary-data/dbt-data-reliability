@@ -1,5 +1,3 @@
--- depends_on: {{ ref('any_type_column_anomalies_validation') }}
-
 with training as (
     select * from {{ ref('any_type_column_anomalies_training') }}
 ),
