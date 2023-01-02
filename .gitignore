@@ -4,9 +4,11 @@ logs/
 scripts/
 
 .idea
+.DS_Store
 
 edr.log
 integration_tests/data
+
 
 elementary*.html
 elementary*.json

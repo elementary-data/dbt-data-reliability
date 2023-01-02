@@ -1,18 +1,3 @@
-{% macro tests_validation() %}
-    {% if execute %}
-        {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
-        -- no validation data which means table freshness and volume should alert
-        {% if not elementary.table_exists_in_target('any_type_column_anomalies_validation') %}
-            {{ validate_table_anomalies() }}
-        {% else %}
-            {{ validate_string_column_anomalies() }}
-            {{ validate_numeric_column_anomalies() }}
-        {% endif %}
-    {% endif %}
-    {{ return('') }}
-{% endmacro %}
-
-
 {% macro assert_value_in_list(value, list, context='') %}
     {% set upper_value = value | upper %}
     {% set lower_value = value | lower %}
