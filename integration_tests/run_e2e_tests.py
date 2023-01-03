@@ -65,7 +65,7 @@ def e2e_tests(
     )
 
     if generate_data:
-        dbt_runner.seed()
+        dbt_runner.seed(full_refresh=True)
 
     if clear_tests:
         clear_test_logs = dbt_runner.run_operation(macro_name="clear_tests")
