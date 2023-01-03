@@ -49,9 +49,6 @@ class TestResults:
 
 
 class TestDbtRunner(DbtRunner):
-    def source_freshness(self):
-        self._run_command(command_args=["source", "freshness"])
-
     def upload_source_freshness(self):
         self.run_operation("elementary.upload_source_freshness")
 
