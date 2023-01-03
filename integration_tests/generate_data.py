@@ -89,6 +89,7 @@ def generate_string_anomalies_training_and_validation_files(rows_count_per_day=1
 
     string_columns = [
         "updated_at",
+        "occurred_at",
         "min_length",
         "max_length",
         "average_length",
@@ -156,6 +157,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
 
     numeric_columns = [
         "updated_at",
+        "occurred_at",
         "min",
         "max",
         "zero_count",
@@ -250,6 +252,7 @@ def generate_any_type_anomalies_training_and_validation_files(rows_count_per_day
 
     any_type_columns = [
         "updated_at",
+        "occurred_at",
         "null_count_str",
         "null_percent_str",
         "null_count_float",
