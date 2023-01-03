@@ -57,7 +57,7 @@
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
-        {{ elementary.get_anomaly_query() }}
+        {{ elementary.get_read_anomaly_scores_query() }}
 
     {% else %}
 
