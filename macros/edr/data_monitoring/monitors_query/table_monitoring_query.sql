@@ -10,7 +10,7 @@
     ),
 
     {% if timestamp_column %}
-        with buckets as (
+        buckets as (
             select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }})
             where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
@@ -100,7 +100,7 @@
             metric_value is null
         )
     {% else %}
-        with row_count as (
+        row_count as (
             {%- if 'row_count' in table_monitors %}
                 select
                     {{ elementary.const_as_string('row_count') }} as metric_name,
