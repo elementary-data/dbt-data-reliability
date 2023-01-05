@@ -382,11 +382,3 @@
     {% do all_executable_nodes.extend(tests) %}
     {{ assert_list1_in_list2(run_results, all_executable_nodes, context='dbt_run_results') }}
 {% endmacro %}
-
-{% macro validate_source_freshness() %}
-    {% set query %}
-      select status from {{ ref('dbt_source_freshness_results') }}
-    {% endset %}
-    {% set results = elementary.result_column_to_list(query) %}
-    {{ assert_lists_contain_same_items(results, ['warn', 'error', 'runtime error']) }}
-{% endmacro %}

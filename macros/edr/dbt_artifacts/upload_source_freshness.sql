@@ -1,4 +1,8 @@
 {% macro upload_source_freshness() %}
+  {% if not flags.Path %}
+    {% do exceptions.raise_compiler_error("Unable to upload source freshness using this operation on dbt 1.3.2 onwards.") %}
+  {% endif %}
+
   {% set source_freshness_results_relation = ref('dbt_source_freshness_results') %}
   {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
   {% if not sources_json_path.exists() %}
@@ -6,7 +10,7 @@
   {% else %}
     {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
   {% endif %}
-  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness, should_commit=true) %}
+  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness, truncate_if_on_run_end=false, should_commit=true) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}
