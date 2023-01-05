@@ -59,8 +59,8 @@
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set freshness_validation_query %}
         select distinct table_name
-            from {{ alerts_relation }}
-            where sub_type = 'freshness' and detected_at >= {{ max_bucket_end }}
+        from {{ alerts_relation }}
+        where status = "fail" and sub_type = 'freshness' and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(freshness_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['string_column_anomalies',
@@ -69,7 +69,7 @@
     {% set row_count_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-            where sub_type = 'row_count' and detected_at >= {{ max_bucket_end }}
+        where status = "fail" and sub_type = 'row_count' and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(row_count_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['any_type_column_anomalies',
@@ -83,8 +83,8 @@
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set dimension_validation_query %}
         select *
-            from {{ alerts_relation }}
-            where sub_type = 'dimension' and detected_at >= {{ max_bucket_end }} and status = 'fail'
+        from {{ alerts_relation }}
+        where status = "fail" and sub_type = 'dimension' and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
     {% set dimensions_with_problems = [] %}
@@ -116,8 +116,8 @@
     {% set string_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
-        where lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
-                        and upper(table_name) = 'STRING_COLUMN_ANOMALIES'
+    where status = "fail" and lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
+      and upper(table_name) = 'STRING_COLUMN_ANOMALIES'
     {% endset %}
     {% set results = elementary.result_column_to_list(string_column_alerts) %}
     {{ assert_lists_contain_same_items(results, ['min_length', 'max_length', 'average_length', 'missing_count',
@@ -130,8 +130,8 @@
     {% set numeric_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
-        where lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
-                                and upper(table_name) = 'NUMERIC_COLUMN_ANOMALIES'
+    where status = "fail" and lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
+      and upper(table_name) = 'NUMERIC_COLUMN_ANOMALIES'
     {% endset %}
     {% set results = elementary.result_column_to_list(numeric_column_alerts) %}
     {{ assert_lists_contain_same_items(results, ['min', 'max', 'zero_count', 'zero_percent', 'average',
@@ -145,9 +145,9 @@
     {% set any_type_column_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }} and upper(table_name) = 'ANY_TYPE_COLUMN_ANOMALIES'
-                  and column_name is not NULL
-            group by 1,2
+        where status = "fail" and detected_at >= {{ max_bucket_end }} and upper(table_name) = 'ANY_TYPE_COLUMN_ANOMALIES'
+          and column_name is not NULL
+        group by 1,2
     {% endset %}
     {% set alert_rows = run_query(any_type_column_alerts) %}
     {% set indexed_columns = {} %}
@@ -186,7 +186,7 @@
     {% set no_timestamp_row_count_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-        where sub_type = 'row_count'
+        where status = "fail" and sub_type = 'row_count'
         and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
         and detected_at >= {{ max_bucket_end }}
     {% endset %}
@@ -197,9 +197,9 @@
     {% set no_timestamp_column_validation_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }} and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
-                  and column_name is not NULL
-            group by 1,2
+        where status = "fail" and detected_at >= {{ max_bucket_end }} and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
+          and column_name is not NULL
+        group by 1,2
     {% endset %}
     {% set alert_rows = run_query(no_timestamp_column_validation_alerts) %}
     {% set indexed_columns = {} %}
@@ -282,13 +282,13 @@
     {% set failed_schema_changes_alerts %}
     select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
-        where detected_at >= {{ max_bucket_end }} and status = 'fail'
+    where status = "fail" and detected_at >= {{ max_bucket_end }}
     group by 1,2,3
     {% endset %}
     {% set error_schema_changes_alerts %}
     select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
-        where detected_at >= {{ max_bucket_end }} and status = 'error'
+    where status = 'error' and detected_at >= {{ max_bucket_end }}
     group by 1,2,3
     {% endset %}
     {% set error_alert_rows = run_query(error_schema_changes_alerts) %}
@@ -334,7 +334,7 @@
     {% set dbt_test_alerts %}
         select table_name, column_name, test_name
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }}
+        where status = "fail" and detected_at >= {{ max_bucket_end }}
         group by 1, 2, 3
     {% endset %}
     {% set alert_rows = run_query(dbt_test_alerts) %}
