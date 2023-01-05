@@ -4,6 +4,8 @@
     {{ return('') }}
   {% endif %}
 
+  {% do elementary.warn_artifacts_autoupload_deprecation() %}
+
   {% do elementary.init_elementary_graph() %}
 
   {% if flags.WHICH in ['test', 'build'] %}
