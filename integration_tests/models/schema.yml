@@ -231,6 +231,9 @@ models:
       - elementary.schema_changes_from_baseline:
           fail_on_added: true
           tags: [ "schema_changes_from_baseline" ]
+      - elementary.schema_changes_from_baseline:
+          tags: [ "schema_changes_from_baseline" ]
+          enforce_types: true
 
   - name: stats_players
     columns:
@@ -245,6 +248,9 @@ models:
           tags: [ "schema_changes" ]
       - elementary.schema_changes_from_baseline:
           tags: [ "schema_changes_from_baseline" ]
+      - elementary.schema_changes_from_baseline:
+          tags: [ "schema_changes_from_baseline" ]
+          enforce_types: true
 
   - name: stats_team
     tests:
