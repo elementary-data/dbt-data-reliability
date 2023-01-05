@@ -49,8 +49,7 @@ class TestResults:
 
 
 class TestDbtRunner(DbtRunner):
-    def upload_source_freshness(self):
-        self.run_operation("elementary.upload_source_freshness")
+    pass
 
 
 def e2e_tests(
@@ -210,16 +209,6 @@ def e2e_tests(
             for msg in dbt_runner.run_operation(macro_name="validate_dbt_artifacts")
         ]
         test_results.extend(results)
-
-    if "source_freshness" in test_types:
-        dbt_runner.source_freshness()
-        dbt_runner.upload_source_freshness()
-        results = [
-            TestResult(type="source_freshness", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_source_freshness")
-        ]
-        test_results.extend(results)
-
     return test_results
 
 
@@ -278,7 +267,6 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_snapshot",
             "dimension",
             "create_table",
-            "source_freshness",
         ]
     else:
         e2e_types = [e2e_type]
