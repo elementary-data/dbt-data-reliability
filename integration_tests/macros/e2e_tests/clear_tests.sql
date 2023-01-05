@@ -21,4 +21,3 @@
     {% do adapter.commit() %}
     {% do elementary.edr_log("dropped schema " ~ database_name  ~ "." ~ schema_name) %}
 {% endmacro %}
-
