@@ -12,11 +12,13 @@
         {% endif %}
         {% do baseline.append(column_info) %}
     {% endfor %}
-
-    {% if enforce_types %}
-        {% do exceptions.raise_compiler_error("Data type not defined for columns `{}`".format(columns_without_types)) %}
-    {% else %}
-        {% do elementary.edr_log("Warning - missing data types for columns: " ~ columns_without_types) %}
+    
+    {% if columns_without_types %}
+        {% if enforce_types %}
+            {% do exceptions.raise_compiler_error("Data type not defined for columns `{}` on model `{}` for schema change from baseline test".format(columns_without_types, model)) %}
+        {% else %}
+            {% do elementary.edr_log("Warning - missing data types for columns: " ~ columns_without_types) %}
+        {% endif %}
     {% endif %}
 
     {% do return(baseline) %}
