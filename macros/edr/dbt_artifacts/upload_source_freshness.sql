@@ -1,4 +1,8 @@
 {% macro upload_source_freshness() %}
+  {% if not flags.Path %}
+    {% do exceptions.raise_compiler_error("Unable to upload source freshness using this operation on dbt 1.3.2 onwards.") %}
+  {% endif %}
+
   {% set source_freshness_results_relation = ref('dbt_source_freshness_results') %}
   {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
   {% if not sources_json_path.exists() %}
