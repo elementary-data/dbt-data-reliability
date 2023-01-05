@@ -6,24 +6,6 @@ on:
     branches: [ "master" ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      elementary-ref:
-        type: string
-        required: false
-        description: Branch or tag to checkout for 'elementary' repository
-      dbt-data-reliability-ref:
-        type: string
-        required: false
-        description: Branch or tag to checkout for 'dbt-data-reliability' repository
-      dbt-version:
-        type: string
-        required: false
-        description: dbt's version to test with
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-        description: Whether to clean test environment
 
 jobs:
   test:
@@ -34,8 +16,4 @@ jobs:
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
-      elementary-ref: ${{ inputs.elementary-ref }}
-      dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
-      dbt-version: ${{ inputs.dbt-version }}
-      clear-tests: ${{ inputs.clear-tests }}
     secrets: inherit
