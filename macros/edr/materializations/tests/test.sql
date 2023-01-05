@@ -1,10 +1,10 @@
 {% macro query_test_result_rows(sample_limit=none) %}
-  {%- set query -%}
+  {% set query %}
     with test_results as (
       {{ sql }}
     )
-    select * from test_results {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
-  {%- endset -%}
+    select * from test_results {% if sample_limit %} limit {{ sample_limit }} {% endif %}
+  {% endset %}
   {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
 {% endmacro %}
 
