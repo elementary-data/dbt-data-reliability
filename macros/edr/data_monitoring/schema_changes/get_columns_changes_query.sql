@@ -78,7 +78,7 @@
             pre.detected_at
         from cur inner join pre
             on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
-        where pre.data_type IS NOT NULL AND cur.data_type != pre.data_type
+        where pre.data_type IS NOT NULL AND lower(cur.data_type) != lower(pre.data_type)
 
     ),
 
@@ -110,7 +110,7 @@
             pre.data_type as pre_data_type,
             pre.detected_at as detected_at
         from pre left join cur
-            on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
+            on (cur.full_table_name = pre.full_table_name and lower(cur.column_name) = lower(pre.column_name))
         where cur.full_table_name is null and cur.column_name is null
 
     ),
