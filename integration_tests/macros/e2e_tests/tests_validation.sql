@@ -279,15 +279,27 @@
                                } %}
     {%- set max_bucket_end = elementary.quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
     {% set alerts_relation = ref('alerts_schema_changes') %}
-    {% set schema_changes_alerts %}
+    {% set failed_schema_changes_alerts %}
     select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
-        where detected_at >= {{ max_bucket_end }} and column_name is not NULL
+        where detected_at >= {{ max_bucket_end }} and status = 'fail'
     group by 1,2,3
     {% endset %}
-    {% set alert_rows = run_query(schema_changes_alerts) %}
+    {% set error_schema_changes_alerts %}
+    select test_short_name, column_name, sub_type
+    from {{ alerts_relation }}
+        where detected_at >= {{ max_bucket_end }} and status = 'error'
+    group by 1,2,3
+    {% endset %}
+    {% set error_alert_rows = run_query(error_schema_changes_alerts) %}
+    {# We should have one error test from schema_changes_from_baseline with enforce_types true #}
+    {% if error_alert_rows | length != 1 %}
+        {% do elementary.edr_log("FAILED: for schema_changes_from_baseline with enforce_types true - no error eccured") %}
+        {{ return(1) }}
+    {% endif %}
+    {% set failure_alert_rows = run_query(failed_schema_changes_alerts) %}
     {% set found_schema_changes = {} %}
-    {% for row in alert_rows %}
+    {% for row in failure_alert_rows %}
         {% set test_short_name = row[0] | lower %}
         {% set column_name = row[1] | lower %}
         {% set alert = row[2] | lower %}
@@ -299,7 +311,6 @@
             {{ return(1) }}
         {% endif %}
         {% do found_schema_changes.update({(test_short_name, column_name): alert}) %}
-
     {% endfor %}
     {% if found_schema_changes %}
         {%- set missing_changes = [] %}
