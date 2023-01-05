@@ -19,5 +19,5 @@
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
     {% do dbt.drop_schema(schema_relation) %}
     {% do adapter.commit() %}
-    {% do elementary.edr_log("dropped schema " ~ database_name  ~ "." ~ schema_name) %}
+    {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
 {% endmacro %}
