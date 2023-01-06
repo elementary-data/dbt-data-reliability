@@ -221,9 +221,9 @@ models:
   - name: groups
     columns:
       - name: group_a
-        data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+        data_type: "{{ 'strIng' if target.type == 'bigquery' else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
       - name: group_b
-        data_type: DOUBLE
+        data_type: double
       - name: group_c
     tests:
       - elementary.schema_changes:
