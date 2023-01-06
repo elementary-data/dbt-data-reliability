@@ -106,7 +106,7 @@
             source_value,
             edr_bucket_start as bucket_start,
             edr_bucket_end as bucket_end,
-            {{ elementary.datediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
+            {{ elementary.timediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
             dimension,
             dimension_value
         from

@@ -81,7 +81,7 @@
             {%- if timestamp_column %}
                 edr_bucket_start as bucket_start,
                 edr_bucket_end as bucket_end,
-                {{ elementary.datediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
+                {{ elementary.timediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
                 {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
