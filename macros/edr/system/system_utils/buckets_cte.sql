@@ -51,7 +51,7 @@
       with integers as (
         select (row_number() over (order by 1)) - 1 as num
         from pg_catalog.pg_class
-        limit {{ elementary.timediff(elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())), time_bucket.period) }} / {{ time_bucket.count }} + 1
+        limit {{ elementary.timediff(time_bucket.period, elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end()))) }} / {{ time_bucket.count }} + 1
       )
       select
         {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket_start,
