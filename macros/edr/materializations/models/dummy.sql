@@ -1,10 +1,6 @@
 {% materialization dummy %}
   {% do elementary.debug_log("Dummy materialization invoked for model {}, doing nothing!".format(model.name)) %}
-
-  {% set identifier = model['alias'] %}
-  {%- set target_relation = api.Relation.create(
-      identifier=identifier, schema=schema, database=database,
-      type='table') -%}
+  {% set target_relation = this.incorporate(type='table') %}
 
   {{ run_hooks(pre_hooks, inside_transaction=False) }}
   {{ run_hooks(pre_hooks, inside_transaction=True) }}
