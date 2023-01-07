@@ -2,7 +2,7 @@
   config(
     materialized='incremental',
     transient=False,
-    post_hook=after_commit('{{ elementary.upload_dbt_models() }}')
+    post_hook='{{ elementary.upload_dbt_models() }}'
   )
 }}
 
