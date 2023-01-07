@@ -21,7 +21,6 @@
       {% do elementary.create_table_like(temp_table_relation, table_relation, temporary=True) %}
       {% do elementary.insert_rows(temp_table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
       {% do elementary.remove_empty_rows(temp_table_relation) %}
-      {% do adapter.commit() %}     {# we definitely want to commit the temp table, regardless of should_commit #}
 
       {# Now atomically replace the data #}
       {% do elementary.replace_data_with_table_contents(table_relation, temp_table_relation) %}
