@@ -2,7 +2,7 @@
     {% set relation = elementary.get_elementary_relation('dbt_exposures') %}
     {% if execute and relation %}
         {% set exposures = graph.exposures.values() | selectattr('resource_type', '==', 'exposure') %}
-        {% do elementary.upload_artifacts_to_table(relation, exposures, elementary.flatten_exposure, truncate_if_on_run_end=true, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, exposures, elementary.flatten_exposure, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

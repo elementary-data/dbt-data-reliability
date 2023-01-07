@@ -1,8 +1,8 @@
 {{
   config(
-    materialized='table',
+    materialized='incremental',
     transient=False,
-    post_hook='{{ elementary.upload_dbt_tests() }}'
+    post_hook=after_commit('{{ elementary.upload_dbt_tests() }}')
   )
 }}
 
