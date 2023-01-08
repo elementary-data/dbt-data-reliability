@@ -185,20 +185,13 @@
         order by 1
     ),
 
-    consecutive_updates as (
-        select
-            timestamp_val as update_timestamp,
-            lag(timestamp_val) over (order by timestamp_val) as prev_timestamp,
-        from unique_timestamps
-        where timestamp_val >= (select min(edr_bucket_start) from buckets)
-    ),
-
     -- compute freshness for every update as the time difference from the previous update
     consecutive_updates_freshness as (
         select
-            update_timestamp,
-            {{ elementary.timediff('second', 'prev_timestamp', 'update_timestamp') }} as freshness
-        from consecutive_updates
+            timestamp_val as update_timestamp,
+            {{ elementary.timediff('second', 'lag(timestamp_val) over (order by timestamp_val)', 'timestamp_val') }} as freshness
+        from unique_timestamps
+        where timestamp_val >= (select min(edr_bucket_start) from buckets)
     ),
 
     -- divide the freshness metrics above to buckets
