@@ -7,7 +7,7 @@
 {% endmacro %}
 
 {# Databricks / Spark (non-atomic implementation) #}
-{% macro default__replace_data(temporary, relation, sql_query) %}
+{% macro default__replace_data(relation, sql_query) %}
     {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_as_select(relation, sql_query) %}
 {% endmacro %}
