@@ -267,7 +267,7 @@ models:
 
 sources:
   - name: training
-    schema: test_seeds
+    schema: test_seeds_freshness_v2
     tables:
       - name: any_type_column_anomalies_training
         freshness:
