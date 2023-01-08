@@ -13,10 +13,6 @@
     {% else %}
         {% do elementary.overwrite_artifacts_table(table_relation, flatten_artifact_dicts, should_commit) %}
     {% endif %}
-
-    {%- if should_commit -%}
-        {% do adapter.commit() %}
-    {%- endif -%}
 {% endmacro %}
 
 {% macro overwrite_artifacts_table(table_relation, flatten_artifact_dicts, should_commit) %}
