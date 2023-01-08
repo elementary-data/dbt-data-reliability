@@ -38,7 +38,7 @@
 
 {% macro spark__overwrite_artifacts_table(table_relation, flatten_artifact_dicts, should_commit) %}
     {# Databricks does not support temp tables well enough, and does not have transactions, so we provide
-       a more straightforward implementation here #}
+       a more straightforward (non-atomic) implementation here #}
 
     {% do dbt.truncate_relation(table_relation) %}
     {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
