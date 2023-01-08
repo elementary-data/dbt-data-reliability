@@ -190,7 +190,7 @@
         select
             timestamp_val as update_timestamp,
             lag(timestamp_val) over (order by timestamp_val) as prev_timestamp,
-            {{ elementary.timediff('second', 'prev_timestamp', 'update_timestamp') }} as freshness
+            {{ elementary.timediff('second', 'lag(timestamp_val)', 'timestamp_val') }} as freshness
         from unique_timestamps
         where timestamp_val >= (select min(edr_bucket_start) from buckets)
     ),
