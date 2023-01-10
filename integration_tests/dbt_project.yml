@@ -24,7 +24,7 @@ vars:
   disable_dbt_artifacts_autoupload: true
 
 seeds:
-  +schema: test_seeds_freshness_v2
+  +schema: test_seeds_v2
 
 models:
   elementary:
