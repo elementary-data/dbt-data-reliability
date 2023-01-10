@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro spark__target_database() %}
-    {% do return(target.catalog) %}
+    {% do return(target.catalog or none) %}
 {% endmacro %}
 
 {% macro snowflake__target_database() %}
