@@ -7,9 +7,8 @@
   {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
   {% if not sources_json_path.exists() %}
     {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
-  {% else %}
-    {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
   {% endif %}
+  {% set source_freshess_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
   {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshess_results_dicts, elementary.flatten_source_freshness, truncate_if_on_run_end=false, should_commit=true) %}
 {% endmacro %}
 
