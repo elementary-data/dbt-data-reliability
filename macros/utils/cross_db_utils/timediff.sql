@@ -9,5 +9,5 @@
 {% endmacro %}
 
 {% macro bigquery__timediff(timepart, first_timestamp, second_timestamp) %}
-    timestamp_diff({{ first_timestamp }}, {{ second_timestamp }}, {{ timepart }})
+    timestamp_diff({{ second_timestamp }}, {{ first_timestamp }}, {{ timepart }})
 {% endmacro %}
