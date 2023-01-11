@@ -114,8 +114,8 @@
 
     {% set primary_test_model_database = none %}
     {% set primary_test_model_schema = none %}
-    {%- if primary_test_model_id -%}
-        {% set tested_model_node = elementary.get_node(primary_test_model_id) %}
+    {%- if primary_test_model_id.data is not none -%}
+        {% set tested_model_node = elementary.get_node(primary_test_model_id.data) %}
         {% set primary_test_model_database = tested_model_node.get('database') %}
         {% set primary_test_model_schema = tested_model_node.get('schema') %}
     {%- endif -%}
