@@ -4,7 +4,7 @@
     {% endif %}
 
     {% if not table_relation %}
-        {{ elementary.edr_log('Recieved table relation is not valid (make sure elementary models were executed successfully first)') }}
+        {{ elementary.edr_log('Unable to insert rows to non-existent table. Please run "dbt run -s elementary".') }}
         {{ return(none) }}
     {% endif %}
 

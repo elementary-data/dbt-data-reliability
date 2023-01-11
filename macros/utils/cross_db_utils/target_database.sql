@@ -4,16 +4,17 @@
 
 -- Postgres and Redshift
 {% macro default__target_database() %}
-    {% set database = target.dbname %}
-    {{ return(database) }}
+    {% do return(target.dbname) %}
+{% endmacro %}
+
+{% macro spark__target_database() %}
+    {% do return(target.catalog or none) %}
 {% endmacro %}
 
 {% macro snowflake__target_database() %}
-    {% set database = target.database %}
-    {{ return(database) }}
+    {% do return(target.database) %}
 {% endmacro %}
 
 {% macro bigquery__target_database() %}
-    {% set database = target.project %}
-    {{ return(database) }}
+    {% do return(target.project) %}
 {% endmacro %}

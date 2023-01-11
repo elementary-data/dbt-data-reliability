@@ -59,25 +59,6 @@
 {% endmacro %}
 
 
-{% macro databricks__data_type_list(data_type) %}
-
-    {% set string_list = ['string'] | list %}
-    {% set numeric_list = ['int','bigint','smallint','tinyint','float','double','long','short'] | list %}
-    {% set timestamp_list = ['timestamp','date'] | list %}
-
-    {%- if data_type == 'string' %}
-        {{ return(string_list) }}
-    {%- elif data_type == 'numeric' %}
-        {{ return(numeric_list) }}
-    {%- elif data_type == 'timestamp' %}
-        {{ return(timestamp_list) }}
-    {%- else %}
-        {{ return([]) }}
-    {%- endif %}
-
-{% endmacro %}
-
-
 {% macro spark__data_type_list(data_type) %}
 
     {% set string_list = ['string'] | list %}

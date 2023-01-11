@@ -7,7 +7,7 @@
         {% endif %}
         {% do new_list.append(new_item) %}
         {% if not loop.last %}
-            {% do new_list.append("'" ~ separator ~ "'") %}
+            {% do new_list.append(elementary.quote(separator)) %}
         {% endif %}
     {% endfor %}
     {{ return(elementary.join_list(new_list, " || ")) }}

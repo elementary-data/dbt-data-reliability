@@ -1,18 +1,3 @@
-{% macro tests_validation() %}
-    {% if execute %}
-        {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-        -- no validation data which means table freshness and volume should alert
-        {% if not elementary.table_exists_in_target('any_type_column_anomalies_validation') %}
-            {{ validate_table_anomalies() }}
-        {% else %}
-            {{ validate_string_column_anomalies() }}
-            {{ validate_numeric_column_anomalies() }}
-        {% endif %}
-    {% endif %}
-    {{ return('') }}
-{% endmacro %}
-
-
 {% macro assert_value_in_list(value, list, context='') %}
     {% set upper_value = value | upper %}
     {% set lower_value = value | lower %}
@@ -68,20 +53,13 @@
 {% endmacro %}
 
 
-{% macro get_alerts_table_relation(table_name) %}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {%- set alerts_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=table_name) %}
-    {{ return(alerts_relation) }}
-{% endmacro %}
-
 {% macro validate_table_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
     -- no validation data which means table freshness and volume should alert
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set freshness_validation_query %}
         select distinct table_name
-            from {{ alerts_relation }}
-            where sub_type = 'freshness' and detected_at >= {{ max_bucket_end }}
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and sub_type = 'freshness'
     {% endset %}
     {% set results = elementary.result_column_to_list(freshness_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['string_column_anomalies',
@@ -90,7 +68,7 @@
     {% set row_count_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-            where sub_type = 'row_count' and detected_at >= {{ max_bucket_end }}
+        where status in ('fail', 'warn') and sub_type = 'row_count'
     {% endset %}
     {% set results = elementary.result_column_to_list(row_count_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['any_type_column_anomalies',
@@ -100,12 +78,11 @@
 {% endmacro %}
 
 {% macro validate_dimension_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set dimension_validation_query %}
         select *
-            from {{ alerts_relation }}
-            where sub_type = 'dimension' and detected_at >= {{ max_bucket_end }} and status = 'fail'
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and sub_type = 'dimension'
     {% endset %}
     {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
     {% set dimensions_with_problems = [] %}
@@ -115,18 +92,12 @@
         {% set where_expression = test_params.get('where_expression') %}
         {% set dimensions = test_params.get('dimensions') %}
         {% if where_expression %}
-            {% if where_expression != "platform != 'windows'" %}
-                {% do dimensions_with_problems.append[dimensions] %}
-            {% endif %}
-        {% else %}
-            {% if dimensions | length != 1 or dimensions[0] != 'platform' %}
-                {% do dimensions_with_problems.append(dimensions) %}
-            {% endif %}
+            {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
 
     {% if results | length != 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has to many fail/error tests') %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
@@ -138,13 +109,11 @@
 {% endmacro %}
 
 {% macro validate_string_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set string_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
-        where lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
-                        and upper(table_name) = 'STRING_COLUMN_ANOMALIES'
+    where status in ('fail', 'warn') and lower(sub_type) = lower(column_name) and upper(table_name) = 'STRING_COLUMN_ANOMALIES'
     {% endset %}
     {% set results = elementary.result_column_to_list(string_column_alerts) %}
     {{ assert_lists_contain_same_items(results, ['min_length', 'max_length', 'average_length', 'missing_count',
@@ -152,13 +121,12 @@
 {% endmacro %}
 
 {% macro validate_numeric_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set numeric_column_alerts %}
     select distinct column_name
     from {{ alerts_relation }}
-        where lower(sub_type) = lower(column_name) and detected_at >= {{ max_bucket_end }}
-                                and upper(table_name) = 'NUMERIC_COLUMN_ANOMALIES'
+    where status in ('fail', 'warn') and lower(sub_type) = lower(column_name)
+      and upper(table_name) = 'NUMERIC_COLUMN_ANOMALIES'
     {% endset %}
     {% set results = elementary.result_column_to_list(numeric_column_alerts) %}
     {{ assert_lists_contain_same_items(results, ['min', 'max', 'zero_count', 'zero_percent', 'average',
@@ -167,14 +135,13 @@
 
 
 {% macro validate_any_type_column_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set any_type_column_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }} and upper(table_name) = 'ANY_TYPE_COLUMN_ANOMALIES'
-                  and column_name is not NULL
-            group by 1,2
+        where status in ('fail', 'warn') and upper(table_name) = 'ANY_TYPE_COLUMN_ANOMALIES'
+          and column_name is not NULL
+        group by 1,2
     {% endset %}
     {% set alert_rows = run_query(any_type_column_alerts) %}
     {% set indexed_columns = {} %}
@@ -206,16 +173,14 @@
 {% endmacro %}
 
 {% macro validate_no_timestamp_anomalies() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_anomaly_detection') %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
 
     {# Validating row count for no timestamp table anomaly #}
     {% set no_timestamp_row_count_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-        where sub_type = 'row_count'
+        where status in ('fail', 'warn') and sub_type = 'row_count'
         and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
-        and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(no_timestamp_row_count_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['no_timestamp_anomalies']) }}
@@ -224,9 +189,9 @@
     {% set no_timestamp_column_validation_alerts %}
         select column_name, sub_type
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }} and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
-                  and column_name is not NULL
-            group by 1,2
+        where status in ('fail', 'warn') and upper(table_name) = 'NO_TIMESTAMP_ANOMALIES'
+          and column_name is not NULL
+        group by 1,2
     {% endset %}
     {% set alert_rows = run_query(no_timestamp_column_validation_alerts) %}
     {% set indexed_columns = {} %}
@@ -251,81 +216,91 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+    {% set alerts_relation = ref('alerts_dbt_tests') %}
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
         select distinct status
         from {{ alerts_relation }}
         where status = 'error'
-        and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_test_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 
 {% macro validate_error_model() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+    {% set alerts_relation = ref('alerts_dbt_models') %}
 
     {% set error_model_validation_query %}
         select distinct status
         from {{ alerts_relation }}
         where status = 'error' and materialization != 'snapshot'
-        and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_model_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 
 {% macro validate_error_snapshot() %}
-    {%- set max_bucket_end = "'" ~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~ "'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_models') %}
+    {% set alerts_relation = ref('alerts_dbt_models') %}
 
     {% set error_snapshot_validation_query %}
         select distinct status
         from {{ alerts_relation }}
         where status = 'error' and materialization = 'snapshot'
-        and detected_at >= {{ max_bucket_end }}
     {% endset %}
     {% set results = elementary.result_column_to_list(error_snapshot_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 
 {% macro validate_schema_changes() %}
-    {% set expected_changes = {'red_cards': 'column_added',
-                               'group_a':   'column_removed',
-                               'goals':   'type_changed',
-                               'key_crosses': 'column_added',
-                               'offsides': 'column_removed'} %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_schema_changes') %}
-    {% set schema_changes_alerts %}
-    select column_name, sub_type
+    {% set expected_changes = {('schema_changes', 'red_cards'): 'column_added',
+                               ('schema_changes', 'group_a'):   'column_removed',
+                               ('schema_changes', 'goals'):   'type_changed',
+                               ('schema_changes', 'key_crosses'): 'column_added',
+                               ('schema_changes', 'offsides'): 'column_removed',
+                               ('schema_changes_from_baseline', 'group_b'): 'type_changed',
+                               ('schema_changes_from_baseline', 'group_d'): 'column_added',
+                               ('schema_changes_from_baseline', 'goals'): 'type_changed',
+                               ('schema_changes_from_baseline', 'coffee_cups_consumed'): 'column_removed'
+                               } %}
+    {% set alerts_relation = ref('alerts_schema_changes') %}
+    {% set failed_schema_changes_alerts %}
+    select test_short_name, column_name, sub_type
     from {{ alerts_relation }}
-        where detected_at >= {{ max_bucket_end }} and column_name is not NULL
-    group by 1,2
+    where status in ('fail', 'warn')
+    group by 1,2,3
     {% endset %}
-    {% set alert_rows = run_query(schema_changes_alerts) %}
+    {% set error_schema_changes_alerts %}
+    select test_short_name, column_name, sub_type
+    from {{ alerts_relation }}
+    where status = 'error'
+    group by 1,2,3
+    {% endset %}
+    {% set error_alert_rows = run_query(error_schema_changes_alerts) %}
+    {# We should have one error test from schema_changes_from_baseline with enforce_types true #}
+    {% if error_alert_rows | length != 1 %}
+        {% do elementary.edr_log("FAILED: for schema_changes_from_baseline with enforce_types true - no error eccured") %}
+        {{ return(1) }}
+    {% endif %}
+    {% set failure_alert_rows = run_query(failed_schema_changes_alerts) %}
     {% set found_schema_changes = {} %}
-    {% for row in alert_rows %}
-        {% set column_name = row[0] | lower %}
-        {% set alert = row[1] | lower %}
-        {% if column_name not in expected_changes %}
-            {% do elementary.edr_log("FAILED: could not find expected alert for " ~ column_name ~ ", " ~ alert) %}
+    {% for row in failure_alert_rows %}
+        {% set test_short_name = row[0] | lower %}
+        {% set column_name = row[1] | lower %}
+        {% set alert = row[2] | lower %}
+        {% if (test_short_name, column_name) not in expected_changes %}
+            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - could not find expected alert for " ~ column_name ~ ", " ~ alert) %}
+        {% endif %}
+        {% if expected_changes[(test_short_name, column_name)] != alert %}
+            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - for column " ~ column_name ~ " expected alert type " ~ expected_changes[(test_short_name, column_name)] ~ " but got " ~ alert) %}
             {{ return(1) }}
         {% endif %}
-        {% if expected_changes[column_name] != alert %}
-            {% do elementary.edr_log("FAILED: for column " ~ column_name ~ " expected alert type " ~ expected_changes[column_name] ~ " but got " ~ alert) %}
-            {{ return(1) }}
-        {% endif %}
-        {% do found_schema_changes.update({column_name: alert}) %}
+        {% do found_schema_changes.update({(test_short_name, column_name): alert}) %}
     {% endfor %}
     {% if found_schema_changes %}
         {%- set missing_changes = [] %}
         {%- for expected_change in expected_changes %}
-            {%- if expected_change | lower not in found_schema_changes %}
+            {%- if expected_change not in found_schema_changes %}
                 {% do elementary.edr_log("FAILED: for column " ~ expected_change ~ " expected alert " ~ expected_changes[expected_change] ~ " but alert is missing") %}
                 {%- do missing_changes.append(expected_change) -%}
             {%- endif %}
@@ -339,12 +314,11 @@
 {% endmacro %}
 
 {% macro validate_regular_tests() %}
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set alerts_relation = get_alerts_table_relation('alerts_dbt_tests') %}
+    {% set alerts_relation = ref('alerts_dbt_tests') %}
     {% set dbt_test_alerts %}
         select table_name, column_name, test_name
         from {{ alerts_relation }}
-            where detected_at >= {{ max_bucket_end }}
+        where status in ('fail', 'warn')
         group by 1, 2, 3
     {% endset %}
     {% set alert_rows = run_query(dbt_test_alerts) %}
@@ -362,22 +336,14 @@
             {% do found_tests.append(row[2]) %}
         {%- endif -%}
     {% endfor %}
-    {{ assert_list1_in_list2(['error_model', 'string_column_anomalies', 'numeric_column_anomalies', 'any_type_column_anomalies', 'any_type_column_anomalies_validation', 'numeric_column_anomalies_training'], found_tables) }}
-    {{ assert_list1_in_list2(['missing_column', 'min_length', 'null_count_int'], found_columns) }}
-    {{ assert_list1_in_list2(['uniques', 'relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs', 'singular_test_with_source_ref', 'generic_test_on_model', 'generic_test_on_column'], found_tests) }}
+    {{ assert_list1_in_list2(['string_column_anomalies', 'numeric_column_anomalies', 'any_type_column_anomalies', 'any_type_column_anomalies_validation', 'numeric_column_anomalies_training'], found_tables) }}
+    {{ assert_list1_in_list2(['min_length', 'null_count_int'], found_columns) }}
+    {{ assert_list1_in_list2(['relationships', 'singular_test_with_no_ref', 'singular_test_with_one_ref', 'singular_test_with_two_refs', 'singular_test_with_source_ref', 'generic_test_on_model', 'generic_test_on_column'], found_tests) }}
 
-{% endmacro %}
-
-{% macro get_artifacts_table_relation(table_name) %}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {%- set artifacts_relation = adapter.get_relation(database=database_name,
-                                                      schema=schema_name,
-                                                      identifier=table_name) %}
-    {{ return(artifacts_relation) }}
 {% endmacro %}
 
 {% macro validate_dbt_artifacts() %}
-    {% set dbt_models_relation = get_artifacts_table_relation('dbt_models') %}
+    {% set dbt_models_relation = ref('dbt_models') %}
     {% set dbt_models_query %}
         select distinct name from {{ dbt_models_relation }}
     {% endset %}
@@ -386,7 +352,7 @@
     {{ assert_value_in_list('numeric_column_anomalies', models, context='dbt_models') }}
     {{ assert_value_in_list('string_column_anomalies', models, context='dbt_models') }}
 
-    {% set dbt_sources_relation = get_artifacts_table_relation('dbt_sources') %}
+    {% set dbt_sources_relation = ref('dbt_sources') %}
     {% set dbt_sources_query %}
         select distinct name from {{ dbt_sources_relation }}
     {% endset %}
@@ -395,13 +361,13 @@
     {{ assert_value_in_list('string_column_anomalies_training', sources, context='dbt_sources') }}
     {{ assert_value_in_list('any_type_column_anomalies_validation', sources, context='dbt_sources') }}
 
-    {% set dbt_tests_relation = get_artifacts_table_relation('dbt_tests') %}
+    {% set dbt_tests_relation = ref('dbt_tests') %}
     {% set dbt_tests_query %}
         select distinct name from {{ dbt_tests_relation }}
     {% endset %}
     {% set tests = elementary.result_column_to_list(dbt_tests_query) %}
 
-    {% set dbt_run_results = get_artifacts_table_relation('dbt_run_results') %}
+    {% set dbt_run_results = ref('dbt_run_results') %}
     {% set dbt_run_results_query %}
         select distinct name from {{ dbt_run_results }} where resource_type in ('model', 'test')
     {% endset %}

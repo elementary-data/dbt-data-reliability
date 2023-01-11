@@ -1,5 +1,5 @@
 {% macro set_cache(entry, val) %}
     {% if execute %}
-        {% do graph["elementary"].update({entry: val}) %}
+        {% do graph.get("elementary", {}).update({entry: val}) %}
     {% endif %}
 {% endmacro %}

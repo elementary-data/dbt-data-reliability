@@ -1,7 +1,10 @@
 {% macro query_test_result_rows(sample_limit=none) %}
-  {%- set query -%}
-      select * from ({{ sql }}) rs/**/ {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
-  {%- endset -%}
+  {% set query %}
+    with test_results as (
+      {{ sql }}
+    )
+    select * from test_results {% if sample_limit %} limit {{ sample_limit }} {% endif %}
+  {% endset %}
   {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
 {% endmacro %}
 
@@ -60,7 +63,7 @@
   {% if flattened_test.test_namespace == "elementary" %}
     {% if flattened_test.short_name.endswith("anomalies") %}
       {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name == 'schema_changes' %}
+    {% elif flattened_test.short_name.startswith('schema_changes') %}
       {% do return("schema_change") %}
     {% endif %}
   {% endif %}
@@ -68,6 +71,10 @@
 {% endmacro %}
 
 {% macro materialize_test() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(none) %}
+  {% endif %}
+
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
   {% set test_type_handler_map = {
@@ -185,7 +192,7 @@
         'data_issue_id': none,
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'unique_id'),
-        'model_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id'),
+        'model_unique_id': parent_model_unique_id,
         'detected_at': elementary.insensitive_get_dict_value(flattened_test, 'generated_at'),
         'database_name': elementary.insensitive_get_dict_value(flattened_test, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
@@ -195,7 +202,7 @@
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
-        'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags'),
+        'tags': elementary.insensitive_get_dict_value(flattened_test, 'model_tags') + elementary.insensitive_get_dict_value(flattened_test, 'tags'),
         'test_results_query': elementary.get_compiled_code(flattened_test),
         'test_name': elementary.insensitive_get_dict_value(flattened_test, 'name'),
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),

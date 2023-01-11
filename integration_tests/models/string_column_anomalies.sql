@@ -1,10 +1,8 @@
--- depends_on: {{ ref('string_column_anomalies_validation') }}
-
 with training as (
     select * from {{ ref('string_column_anomalies_training') }}
 ),
 
-{% if elementary.table_exists_in_target('string_column_anomalies_validation') %}
+{% if var("stage") == "validation" %}
 validation as (
     select * from {{ ref('string_column_anomalies_validation') }}
 ),
@@ -22,7 +20,7 @@ source as (
 
 final as (
      select
-        date as updated_at,
+        updated_at,
         min_length,
         max_length,
         average_length,

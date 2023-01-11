@@ -1,7 +1,7 @@
 {% macro dateadd(datepart, interval, from_date_or_timestamp) %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.dateadd(datepart, interval, from_date_or_timestamp)) }}
-    {% else %}
-        {{ return(dbt_utils.dateadd(datepart, interval, from_date_or_timestamp)) }}
+    {% set macro = dbt.dateadd or dbt_utils.dateadd %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `dateadd` macro.") }}
     {% endif %}
+    {{ return(macro(datepart, interval, from_date_or_timestamp)) }}
 {% endmacro %}

@@ -1,3 +1,7 @@
+{% macro quote(str) %}
+    {% do return("'{}'".format(str)) %}
+{% endmacro %}
+
 {% macro quote_column(column_name) %}
     {{ adapter.dispatch('quote_column','elementary')(column_name) }}
 {% endmacro %}

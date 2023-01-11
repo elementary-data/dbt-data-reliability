@@ -12,8 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        warehouse-type: [ snowflake, bigquery, redshift ]
+        warehouse-type: [ snowflake, bigquery, redshift, databricks ]
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
+      dbt-version: 1.0.2
     secrets: inherit

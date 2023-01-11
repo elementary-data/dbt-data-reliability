@@ -1,10 +1,14 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, full_monitored_table_name, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
 
-    {%- set global_min_bucket_end = elementary.get_global_min_bucket_end_as_datetime() %}
-    {%- set metrics_min_time = "'"~ (global_min_bucket_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
-    {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+    {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
+
+    {% if elementary.is_incremental_model(model_graph_node) %}
+      {% set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
+    {% else %}
+      {% set latest_full_refresh = none %}
+    {% endif %}
 
     {% set anomaly_scores_query %}
 
@@ -12,8 +16,12 @@
 
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
-            where bucket_end > {{ elementary.cast_as_timestamp(metrics_min_time) }}
-                and upper(full_table_name) = upper('{{ full_monitored_table_name }}')
+            where
+                bucket_end >= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}
+                {% if latest_full_refresh %}
+                    and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
+                {% endif %}
+                and upper(full_table_name) = upper('{{ full_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
                 {%- if column_name %}
                     and upper(column_name) = upper('{{ column_name }}')
@@ -22,7 +30,7 @@
                     and column_name is not null
                 {%- endif %}
                 {% if dimensions %}
-                    and dimension = {{ "'" ~ elementary.join_list(dimensions, '; ') ~ "'" }}
+                    and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
                 {% endif %}
 
         ),
@@ -75,12 +83,6 @@
 
         ),
 
-        daily_buckets as (
-
-            {{ elementary.daily_buckets_cte() }}
-
-        ),
-
         time_window_aggregation as (
 
             select
@@ -96,22 +98,19 @@
                 bucket_end,
                 bucket_duration_hours,
                 updated_at,
-                edr_daily_bucket,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by edr_daily_bucket asc rows between {{ elementary.get_config_var('days_back') }} preceding and current row) as training_start
-            from daily_buckets left join
-                grouped_metrics on (edr_daily_bucket = bucket_end)
-            {{ dbt_utils.group_by(13) }}
-
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_start
+            from grouped_metrics
+            {{ dbt_utils.group_by(12) }}
         ),
 
         anomaly_scores as (
 
             select
-                {{ dbt_utils.surrogate_key([
+                {{ elementary.generate_surrogate_key([
                  'metric_id',
                  elementary.const_as_string(test_execution_id)
                 ]) }} as id,
@@ -156,6 +155,5 @@
         select * from anomaly_scores
 
     {% endset %}
-
     {{ return(anomaly_scores_query) }}
 {% endmacro %}

@@ -1,6 +1,14 @@
 {% macro get_config_var(var_name) %}
   {% set default_config = elementary.get_default_config() %}
-  {{ return(var(var_name, default_config.get(var_name))) }}
+  {% set var_value = var(var_name, default_config.get(var_name)) %}
+  {% if var_value is string %}
+    {% if var_value.lower() == "true" %}
+      {% do return(true) %}
+    {% elif var_value.lower() == "false" %}
+      {% do return(false) %}
+    {% endif %}
+  {% endif %}
+  {% do return(var_value) %}
 {% endmacro %}
 
 {% macro get_default_config(var_name) %}
@@ -32,19 +40,19 @@
     'max_int': 2147483647,
     'custom_run_started_at': none,
     'edr_monitors': {
-      'table': ['schema_changes', 'row_count', 'freshness'],
+      'table': ['row_count', 'freshness'],
       'column_any_type': ['null_count', 'null_percent'],
       'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
       'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
     },
-    'time_format': '%Y-%m-%d %H:%M:%S',
     'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
-    'cache_artifacts': true,
     'project_name': none,
+    'elementary_full_refresh': false,
+    'min_training_set_size': 14
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

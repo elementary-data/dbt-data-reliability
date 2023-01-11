@@ -2,6 +2,9 @@ version: 2
 
 models:
   - name: any_type_column_anomalies
+    meta:
+      owner: [ '@edr', 'ele@data.com', 'another@mail.com' ]
+      subscribers: "@egk"
     description: >
       This is a very weird description
       with breaklines
@@ -10,14 +13,22 @@ models:
       WDYT?
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
-      - elementary.table_anomalies:
+      - elementary.volume_anomalies:
+          time_bucket:
+            period: hour
+            count: 4
+          meta:
+            description: >
+              This is a very weird description
+              with breaklines
+              and comma,
+              and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
+              WDYT?
           config:
             severity: warn
           tags: [ "table_anomalies" ]
-          table_anomalies:
-            - row_count
       - elementary.all_columns_anomalies:
           tags: [ "all_any_type_columns_anomalies" ]
           #This here is to simulate a long test name as test params are part of the test name
@@ -26,12 +37,14 @@ models:
           tags: [ "regular_tests" ]
 
   - name: no_timestamp_anomalies
+    meta:
+      owner: "ele@data.com, another@mail.com"
+      subscribers: [ "@elon@gmail.com", "elon@gmail.com" ]
+      description: This is a description.
     description: We use this model to test anomalies when there is no timestamp column
     tests:
-      - elementary.table_anomalies:
+      - elementary.volume_anomalies:
           tags: [ "no_timestamp" ]
-          table_anomalies:
-            - row_count
     columns:
       - name: "null_count_str"
         tests:
@@ -41,10 +54,13 @@ models:
                 - null_count
 
   - name: dimension_anomalies
+    meta:
+      owner: "@egk.com"
+      subscribers: [ "elon@egk" ]
     description: We use this model to test dimension anomalies
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
       - elementary.dimension_anomalies:
           tags: [ "dimension_anomalies" ]
@@ -53,13 +69,13 @@ models:
       - elementary.dimension_anomalies:
           tags: [ "dimension_anomalies" ]
           dimensions:
-            - version
+            - platform
+          where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
           tags: [ "dimension_anomalies" ]
           dimensions:
             - platform
             - version
-          where_expression: "platform != 'windows'"
 
   - name: error_model
     description: We use this model to create error runs and tests
@@ -77,12 +93,10 @@ models:
       tags: [ "marketing" ]
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
-      - elementary.table_anomalies:
+      - elementary.freshness_anomalies:
           tags: [ "table_anomalies" ]
-          table_anomalies:
-            - freshness
       - elementary.all_columns_anomalies:
           tags: [ "all_string_column_anomalies" ]
       - elementary.schema_changes:
@@ -127,9 +141,11 @@ models:
   - name: numeric_column_anomalies
     config:
       elementary:
-        timestamp_column: "updated_at"
+        timestamp_column: updated_at
     tests:
-      - elementary.table_anomalies:
+      - elementary.volume_anomalies:
+          tags: [ "table_anomalies" ]
+      - elementary.freshness_anomalies:
           tags: [ "table_anomalies" ]
       - elementary.schema_changes:
           tags: [ "schema_changes" ]
@@ -202,26 +218,85 @@ models:
           - elementary.column_anomalies:
               tags: [ "numeric_column_anomalies" ]
 
+  - name: groups
+    columns:
+      - name: group_a
+        data_type: "{{ 'strIng' if target.type == 'bigquery' else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
+      - name: group_b
+        data_type: double
+      - name: group_c
+    tests:
+      - elementary.schema_changes:
+          tags: [ "schema_changes" ]
+      - elementary.schema_changes_from_baseline:
+          fail_on_added: true
+          tags: [ "schema_changes_from_baseline" ]
+      - elementary.schema_changes_from_baseline:
+          tags: [ "schema_changes_from_baseline" ]
+          enforce_types: true
+
+  - name: stats_players
+    columns:
+      - name: player
+        data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+      - name: goals
+        data_type: BOOLEAN
+      - name: coffee_cups_consumed
+        data_type: INTEGER
+    tests:
+      - elementary.schema_changes:
+          tags: [ "schema_changes" ]
+      - elementary.schema_changes_from_baseline:
+          tags: [ "schema_changes_from_baseline" ]
+      - elementary.schema_changes_from_baseline:
+          tags: [ "schema_changes_from_baseline" ]
+          enforce_types: true
+
+  - name: stats_team
+    tests:
+      - elementary.schema_changes:
+          tags: [ "schema_changes" ]
+
 sources:
   - name: training
-    schema: "{{ target.schema }}"
+    schema: test_seeds
     tables:
       - name: any_type_column_anomalies_training
+        freshness:
+          error_after:
+            count: 1
+            period: minute
+        loaded_at_field: updated_at
         tests:
-          - elementary.table_anomalies:
+          - elementary.volume_anomalies:
               tags: [ "table_anomalies" ]
+          - elementary.freshness_anomalies:
+              tags: [ "table_anomalies" ]
+
       - name: string_column_anomalies_training
+        freshness:
+          error_after:
+            count: 1
+            period: minute
+        loaded_at_field: no_such_column
         meta:
           elementary:
-            timestamp_column: "date"
+            timestamp_column: updated_at
         tests:
-          - elementary.table_anomalies:
+          - elementary.volume_anomalies:
+              tags: [ "table_anomalies" ]
+          - elementary.freshness_anomalies:
               tags: [ "table_anomalies" ]
       - name: numeric_column_anomalies_training
   - name: validation
-    schema: "{{ target.schema }}"
+    schema: test_seeds
     tables:
       - name: any_type_column_anomalies_validation
+        freshness:
+          warn_after:
+            count: 1
+            period: minute
+        loaded_at_field: updated_at
         tests:
           - elementary.all_columns_anomalies:
               tags: [ "elementary_source" ]
@@ -230,21 +305,6 @@ sources:
             tests:
               - generic_test_on_column:
                   tags: [ "regular_tests" ]
-  - name: schema_changes_data
-    schema: "{{ target.schema }}"
-    tables:
-      - name: groups
-        tests:
-          - elementary.schema_changes:
-              tags: [ "schema_changes" ]
-      - name: stats_players
-        tests:
-          - elementary.schema_changes:
-              tags: [ "schema_changes" ]
-      - name: stats_team
-        tests:
-          - elementary.schema_changes:
-              tags: [ "schema_changes" ]
 
 exposures:
   - name: elementary_exposure

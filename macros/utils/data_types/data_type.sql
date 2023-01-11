@@ -1,13 +1,22 @@
+{% macro is_primitive(val) %}
+  {% do return (
+    val is none or
+    val is boolean or
+    val is number or
+    val is string
+  ) %}
+{% endmacro %}
+
 {%- macro type_bool() -%}
     {{ return(adapter.dispatch('type_bool', 'elementary')()) }}
 {%- endmacro -%}
 
 {% macro default__type_bool() %}
-    boolean
+    {% do return("boolean") %}
 {% endmacro %}
 
 {% macro bigquery__type_bool() %}
-    BOOL
+    {% do return("BOOL") %}
 {% endmacro %}
 
 
@@ -17,25 +26,21 @@
 
 {% macro default__type_string() %}
     {# Redshift and Postgres #}
-    varchar(4096)
+    {% do return("varchar(4096)") %}
 {% endmacro %}
 
 {% macro snowflake__type_string() %}
     {# Default max varchar size in Snowflake is 16MB #}
-    varchar
+    {% do return("varchar") %}
 {% endmacro %}
 
 {% macro bigquery__type_string() %}
     {# Default max string size in Bigquery is 65K #}
-    string
-{% endmacro %}
-
-{% macro databricks__type_string() %}
-    string
+    {% do return("string") %}
 {% endmacro %}
 
 {% macro spark__type_string() %}
-    string
+    {% do return("string") %}
 {% endmacro %}
 
 
@@ -46,7 +51,7 @@
 
 {%- macro default__type_long_string() -%}
     {# Snowflake, Bigquery, Databricks #}
-    {{ elementary.type_string() }}
+    {% do return(elementary.type_string()) %}
 {%- endmacro -%}
 
 {%- macro redshift__type_long_string() -%}
@@ -61,38 +66,38 @@
 
 
 {% macro type_bigint() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_bigint()) }}
-    {% else %}
-        {{ return(dbt_utils.type_bigint()) }}
+    {% set macro = dbt.type_bigint or dbt_utils.type_bigint %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_bigint` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_float() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_float()) }}
-    {% else %}
-        {{ return(dbt_utils.type_float()) }}
+    {% set macro = dbt.type_float or dbt_utils.type_float %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_float` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_int() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_int()) }}
-    {% else %}
-        {{ return(dbt_utils.type_int()) }}
+    {% set macro = dbt.type_int or dbt_utils.type_int %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_int` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 
 {% macro type_timestamp() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_timestamp()) }}
-    {% else %}
-        {{ return(dbt_utils.type_timestamp()) }}
+    {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
 
 {% macro type_numeric() %}

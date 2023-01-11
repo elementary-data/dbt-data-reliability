@@ -3,15 +3,11 @@
 {% endmacro %}
 
 {% macro default__safe_cast(field, type) %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.safe_cast(field, type)) }}
-    {% else %}
-        {{ return(dbt_utils.safe_cast(field, type)) }}
+    {% set macro = dbt.safe_cast or dbt_utils.safe_cast %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `safe_cast` macro.") }}
     {% endif %}
-{% endmacro %}
-
-{% macro databricks__safe_cast(field, type) %}
-    try_cast({{field}} as {{type}})
+    {{ return(macro(field, type)) }}
 {% endmacro %}
 
 {% macro spark__safe_cast(field, type) %}

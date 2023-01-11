@@ -4,7 +4,7 @@
     {{ return('') }}
   {% endif %}
 
-  {% do elementary.edr_log("Uploading dbt invocation.") %}
+  {% do elementary.debug_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
@@ -25,20 +25,20 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
-      'job_id': elementary.get_first_env_var(["JOB_ID", "DBT_CLOUD_JOB_ID"]),
-      'job_run_id': elementary.get_first_env_var(["JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
-      'job_name': elementary.get_first_env_var(["JOB_NAME"]),
-      'env': elementary.get_first_env_var(["ENV", "DBT_ENV"]),
-      'env_id': elementary.get_first_env_var(["ENV_ID"]),
-      'project_id': elementary.get_first_env_var(["PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
-      'cause_category': elementary.get_first_env_var(["CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"]),
-      'cause': elementary.get_first_env_var(["CAUSE", "DBT_CLOUD_RUN_REASON"]),
-      'pull_request_id': elementary.get_first_env_var(["PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
-      'git_sha': elementary.get_first_env_var(["GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
+      'job_id': elementary.get_first_env_var(["DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
+      'job_run_id': elementary.get_first_env_var(["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
+      'job_name': elementary.get_first_env_var(["DBT_JOB_NAME"]),
+      'env': elementary.get_first_env_var(["DBT_ENV"]),
+      'env_id': elementary.get_first_env_var(["DBT_ENV_ID"]),
+      'project_id': elementary.get_first_env_var(["DBT_PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
+      'cause_category': elementary.get_first_env_var(["DBT_CAUSE_CATEGORY", "DBT_CLOUD_RUN_REASON_CATEGORY", "GITHUB_EVENT_NAME"]),
+      'cause': elementary.get_first_env_var(["DBT_CAUSE", "DBT_CLOUD_RUN_REASON"]),
+      'pull_request_id': elementary.get_first_env_var(["DBT_PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
+      'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
+      'orchestrator': elementary.get_orchestrator(),
   } %}
-
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
-  {% do elementary.edr_log("Uploaded dbt invocation successfully.") %}
+  {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {% macro get_project_name() %}
@@ -73,16 +73,16 @@
     {%- endif -%})
 {%- endmacro -%}
 
-{%- macro get_invocation_vars() -%}
+{% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.vars -%}
-        {{- return(fromyaml(invocation_args_dict.vars)) -}}
-    {%- elif config.cli_vars -%}
-        {{- return(config.cli_vars) -}}
-    {%- else -%}
-        {{- return({}) -}}
-    {%- endif -%}
-{%- endmacro -%}
+    {% set invocation_vars = {} %}
+    {% if invocation_args_dict and invocation_args_dict.vars %}
+        {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+    {% elif config.cli_vars %}
+        {% set invocation_vars = config.cli_vars %}
+    {% endif %}
+    {{ return(elementary.to_primitive(invocation_vars)) }}
+{% endmacro %}
 
 {%- macro get_all_vars() -%}
     {% set all_vars = {} %}
@@ -93,6 +93,20 @@
     {% do all_vars.update(elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}
 {%- endmacro -%}
+
+{% macro get_orchestrator() %}
+  {% set orchestrator_env_map = {
+    "airflow": ["AIRFLOW_HOME"],
+    "dbt_cloud": ["DBT_CLOUD_PROJECT_ID"],
+    "github_actions": ["GITHUB_ACTIONS"],
+  } %}
+  {% for orchestrator, env_vars in orchestrator_env_map.items() %}
+    {% if elementary.get_first_env_var(env_vars) %}
+      {% do return(orchestrator) %}
+    {% endif %}
+  {% endfor %}
+  {% do return(none) %}
+{% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
@@ -124,5 +138,6 @@
       ('cause', 'long_string'),
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
+      ('orchestrator', 'string'),
     ])) }}
 {% endmacro %}

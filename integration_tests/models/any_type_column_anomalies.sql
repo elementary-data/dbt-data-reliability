@@ -1,10 +1,8 @@
--- depends_on: {{ ref('any_type_column_anomalies_validation') }}
-
 with training as (
     select * from {{ ref('any_type_column_anomalies_training') }}
 ),
 
-{% if elementary.table_exists_in_target('any_type_column_anomalies_validation') %}
+{% if var("stage") == "validation" %}
  validation as (
      select * from {{ ref('any_type_column_anomalies_validation') }}
  ),
@@ -22,7 +20,7 @@ with training as (
 
  final as (
      select
-         date as updated_at,
+         updated_at,
          null_count_str,
          null_percent_str,
          null_count_float,

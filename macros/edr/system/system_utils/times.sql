@@ -1,8 +1,11 @@
-{% macro run_started_at_as_string(time_format=elementary.get_config_var('time_format')) %}
-    {{ return(run_started_at.strftime(time_format)) }}
+{% macro get_time_format() %}
+  {% do return("%Y-%m-%d %H:%M:%S") %}
 {% endmacro %}
 
-{% macro datetime_now_utc_as_string(time_format=elementary.get_config_var('time_format')) %}
-    {% set current_timestamp_as_string = modules.datetime.datetime.utcnow().strftime(time_format) %}
-    {{ return(current_timestamp_as_string) }}
+{% macro run_started_at_as_string() %}
+    {% do return(elementary.get_run_started_at().strftime(elementary.get_time_format())) %}
+{% endmacro %}
+
+{% macro datetime_now_utc_as_string() %}
+    {% do return(modules.datetime.datetime.utcnow().strftime(elementary.get_time_format())) %}
 {% endmacro %}

@@ -70,13 +70,57 @@ models:
         data_type: string
         description: The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
 
-      - name: selected_resources
-        data_type: string
-        description: Deprecated and replaced with Selected. Run a full-refresh to remove this column (history will be lost). The selected resources in the dbt command. While this is a string in the database, this can easily be converted to an array.
-
       - name: yaml_selector
         data_type: string
         description: The yaml selector that was passed in this invocation.
+
+      - name: job_id
+        data_type: string
+        description: The ID of a job, defined in the `DBT_JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: job_name
+        data_type: string
+        description: The name of a job, defined in the `DBT_JOB_NAME` env var.
+
+      - name: job_run_id
+        data_type: string
+        description: The run ID of a job, defined in the `DBT_JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: env
+        data_type: string
+        description: The environment's name, defined in the `DBT_ENV` env var.
+
+      - name: env_id
+        data_type: string
+        description: The ID of an environment, defined in the `DBT_ENV_ID` env var.
+
+      - name: project_id
+        data_type: string
+        description: The ID of a project, defined in the `DBT_PROJECT_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: cause_category
+        data_type: string
+        description: |
+          The category of the cause of the invocation. For example, if the invocation was triggered by a schedule, the cause category would be schedule.
+          Defined in the `DBT_CAUSE_CATEGORY` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: cause
+        data_type: string
+        description: |
+          The cause of the invocation. For example, if the invocation was triggered by a manual run, the cause would be _"Kicked off by Joe."_.
+          Defined in the `DBT_CAUSE` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: pull_request_id
+        data_type: string
+        description: The ID of a pull request, defined in the `DBT_PULL_REQUEST_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: git_sha
+        data_type: string
+        description: The git SHA of the commit that was used in this invocation, defined in the `DBT_GIT_SHA` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+
+      - name: orchestrator
+        data_type: string
+        description: The orchestrator that was used to run this invocation. For example, dbt Cloud, GitHub Actions, etc.
 
 
   - name: dbt_run_results
@@ -176,4 +220,10 @@ models:
       Run results of dbt snapshots, enriched with snapshots metadata.
       Each row is the result of a single snapshot.
       This is a view that joins data from `dbt_run_results` and `dbt_snapshots`.
+
+  - name: job_run_results
+    description: >
+        Run results of dbt invocations, enriched with jobs metadata.
+        Each row is the result of a single job.
+        This is a view on `dbt_invocations`.
 

@@ -1,8 +1,8 @@
-{%- macro upload_dbt_models(should_commit=false, cache=true) -%}
+{%- macro upload_dbt_models(should_commit=false) -%}
     {% set relation = elementary.get_elementary_relation('dbt_models') %}
     {% if execute and relation %}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, should_commit=should_commit, cache=cache) %}
+        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, truncate_if_on_run_end=true, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -36,8 +36,16 @@
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
-    {% set owner = meta_dict.get('owner') %}
-
+    {% set formatted_owner = [] %}
+    {% set raw_owner = meta_dict.get('owner') %}
+    {% if raw_owner is string %}
+        {% set owners = raw_owner.split(',') %}
+        {% for owner in owners %}
+            {% do formatted_owner.append(owner | trim) %}  
+        {% endfor %}
+    {% elif raw_owner is iterable %}
+        {% do formatted_owner.extend(raw_owner) %}
+    {% endif %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
@@ -51,7 +59,7 @@
         'materialization': config_dict.get('materialized'),
         'tags': tags,
         'meta': meta_dict,
-        'owner': owner,
+        'owner': formatted_owner,
         'database_name': node_dict.get('database'),
         'schema_name': node_dict.get('schema'),
         'depends_on_macros': depends_on_dict.get('macros', []),

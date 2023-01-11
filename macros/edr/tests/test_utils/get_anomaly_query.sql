@@ -27,8 +27,8 @@
           case when
             anomaly_score is not null and
             abs(anomaly_score) > {{ sensitivity }} and
-            bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.get_max_bucket_end()) }} and
-            training_set_size >= {{ elementary.get_config_var('days_back') -1 }}
+            bucket_end >= {{ elementary.timeadd('day', backfill_period, elementary.quote(elementary.get_max_bucket_end())) }} and
+            training_set_size >= {{ elementary.get_config_var('min_training_set_size') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
       )

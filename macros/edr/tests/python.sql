@@ -19,16 +19,27 @@
   {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
     identifier='pytest_tmp__' ~ test_node.alias).quote(false, false, false) %}
 
-  {# Test nodes schemas are overwritten with __test_audit. #}
-  {% do test_node.update({'schema': model_relation.schema}) %}
+  {# This affects where resources needed for python execution (e.g. stored procedures) are created.
+     By default, dbt uses the audit schema (adds _dbt__test_audit to the model's schema).
+     We prefer to change this behavior and use Elementary's database and schema instead (this also guarantees the test
+     will work for sources).
+     #}
+  {% do test_node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
+
   {% do test_node.config.update(test_args) %}
 
-  {% set user_py_code_macro = context[code_macro] %}
+  {% if code_macro is string %}
+    {% set user_py_code_macro = context[code_macro] %}
+  {% else %}
+    {% set user_py_code_macro = code_macro %}
+  {% endif %}
+
   {% if not user_py_code_macro %}
     {% do exceptions.raise_compiler_error('Unable to find the macro `' ~ code_macro ~ '`.') %}
   {% endif %}
   {% set user_py_code = user_py_code_macro(macro_args) %}
-  {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code, output_table) %}
+  {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code,
+                                                                              output_table, code_type='test') %}
 
   {% do elementary.run_python(test_node, compiled_py_code) %}
   select fail_count from {{ output_table }}

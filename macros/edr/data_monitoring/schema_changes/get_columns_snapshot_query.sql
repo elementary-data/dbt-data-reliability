@@ -43,7 +43,7 @@
     columns_snapshot_with_id as (
 
         select
-            {{ dbt_utils.surrogate_key([
+            {{ elementary.generate_surrogate_key([
               'full_table_name',
               'column_name',
               'data_type'

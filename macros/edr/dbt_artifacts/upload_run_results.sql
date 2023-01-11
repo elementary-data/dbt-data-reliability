@@ -1,9 +1,9 @@
 {% macro upload_run_results() %}
     {% set relation = elementary.get_elementary_relation('dbt_run_results') %}
     {% if execute and relation %}
-        {{ elementary.edr_log("Uploading run results.") }}
-        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, should_commit=True) %}
-        {{ elementary.edr_log("Uploaded run results successfully.") }}
+        {{ elementary.debug_log("Uploading run results.") }}
+        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, truncate_if_on_run_end=false, should_commit=True) %}
+        {{ elementary.debug_log("Uploaded run results successfully.") }}
     {% endif %}
     {{ return ('') }}
 {% endmacro %}
@@ -53,7 +53,7 @@
         'full_refresh': flags.FULL_REFRESH,
         'compiled_code': elementary.get_compiled_model_code_text(node),
         'failures': run_result_dict.get('failures'),
-        'query_id': run_result_dict.get('adapter_response', {}).get('query_id') or none  
+        'query_id': run_result_dict.get('adapter_response', {}).get('query_id')
         
     }%}
 

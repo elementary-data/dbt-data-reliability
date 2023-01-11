@@ -1,13 +1,9 @@
 {% macro lists_intersection(list_a, list_b) %}
-
-    {%- set new_list = [] %}
-
-    {% for i in list_a %}
-        {% if i in list_b %}
-            {{ new_list.append(i) }}
-        {% endif %}
-    {% endfor %}
-
-    {{ return(new_list) }}
-
+  {% set new_list = [] %}
+  {% for item in list_a %}
+    {% if item in list_b %}
+      {% do new_list.append(item) %}
+    {% endif %}
+  {% endfor %}
+  {% do return(new_list) %}
 {% endmacro %}

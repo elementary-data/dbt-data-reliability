@@ -1,50 +1,55 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, is_timestamp, min_bucket_start, table_monitors, freshness_column=none) %}
+{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column, where_expression, time_bucket) %}
 
-    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {%- set max_bucket_start = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(1)).strftime("%Y-%m-%d 00:00:00")~"'" %}
-    {% set full_table_name_str = "'"~ elementary.relation_to_full_name(monitored_table_relation) ~"'" %}
+    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
-    {% if is_timestamp %}
-        with filtered_monitored_table as (
-            select *,
-                   {{ elementary.time_trunc('day', timestamp_column) }} as start_bucket_in_data
-            from {{ monitored_table_relation }}
-            where
-                {{ elementary.cast_as_timestamp(timestamp_column) }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
-                and {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.cast_as_timestamp(max_bucket_end) }}
+    with monitored_table as (
+        select * from {{ monitored_table_relation }}
+        {% if where_expression %}
+        where {{ where_expression }}
+        {% endif %}
+    ),
+
+    {% if timestamp_column %}
+        buckets as (
+            select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }})
+            where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
-        daily_buckets as (
-            {{ elementary.daily_buckets_cte() }}
-            where edr_daily_bucket >= {{ elementary.cast_as_timestamp(min_bucket_start) }} and
-                  edr_daily_bucket <= {{ elementary.cast_as_timestamp(max_bucket_start) }} and
-                  edr_daily_bucket >= (select min(start_bucket_in_data) from filtered_monitored_table)
+        time_filtered_monitored_table as (
+            select *,
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, time_bucket) }} as start_bucket_in_data
+            from monitored_table
+            where
+                {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
+                and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
         ),
 
         {%- if 'row_count' in table_monitors %}
 
-        daily_row_count as (
-            select edr_daily_bucket,
+        row_count_values as (
+            select edr_bucket_start,
+                   edr_bucket_end,
                    start_bucket_in_data,
                    case when start_bucket_in_data is null then
                        0
                    else {{ elementary.cast_as_float(elementary.row_count()) }} end as row_count_value
-            from daily_buckets left join filtered_monitored_table on (edr_daily_bucket = start_bucket_in_data)
-            group by 1,2
+            from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
+            group by 1,2,3
         ),
 
         row_count as (
-            select edr_daily_bucket as edr_bucket,
+            select edr_bucket_start,
+                   edr_bucket_end,
                    {{ elementary.const_as_string('row_count') }} as metric_name,
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value
-            from daily_row_count
+            from row_count_values
         ),
 
         {%- else %}
 
         row_count as (
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         ),
 
         {%- endif %}
@@ -55,15 +60,16 @@
                 {%- set freshness_column = timestamp_column %}
             {%- endif %}
             select
-                edr_daily_bucket as edr_bucket,
+                edr_bucket_start,
+                edr_bucket_end,
                 {{ elementary.const_as_string('freshness') }} as metric_name,
                 {{ elementary.cast_as_string('max('~freshness_column~')') }} as source_value,
-                {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), elementary.timeadd('day','1','edr_daily_bucket')) }} as metric_value
-            from daily_buckets, {{ monitored_table_relation }}
-            where {{ elementary.cast_as_timestamp(timestamp_column) }} <= {{ elementary.timeadd('day','1','edr_daily_bucket') }}
-            group by 1,2
+                {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), "edr_bucket_end") }} as metric_value
+            from buckets, monitored_table
+            where {{ elementary.cast_as_timestamp(timestamp_column) }} < edr_bucket_end
+            group by 1,2,3
         {%- else %}
-            {{ elementary.empty_table([('edr_bucket','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
+            {{ elementary.empty_table([('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')]) }}
         {%- endif %}
         ),
 
@@ -83,9 +89,9 @@
             metric_name,
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             source_value,
-            edr_bucket as bucket_start,
-            {{ elementary.timeadd('day',1,'edr_bucket') }} as bucket_end,
-            24 as bucket_duration_hours,
+            edr_bucket_start as bucket_start,
+            edr_bucket_end as bucket_end,
+            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value
         from
@@ -94,12 +100,12 @@
             metric_value is null
         )
     {% else %}
-        with row_count as (
+        row_count as (
             {%- if 'row_count' in table_monitors %}
                 select
                     {{ elementary.const_as_string('row_count') }} as metric_name,
                     {{ elementary.row_count() }} as metric_value
-                from {{ monitored_table_relation }}
+                from monitored_table
                 group by 1
             {%- else %}
                 {{ elementary.empty_table([('metric_name','string'),('metric_value','int')]) }}
@@ -115,7 +121,7 @@
             {{ elementary.cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
             {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.cast_as_timestamp(max_bucket_end) }} as bucket_end,
+            {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
             {{ elementary.null_int() }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value
@@ -125,7 +131,7 @@
     {% endif %}
 
     select
-        {{ dbt_utils.surrogate_key([
+        {{ elementary.generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -139,7 +145,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{- elementary.current_timestamp_in_utc() -}} as updated_at,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final
