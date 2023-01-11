@@ -123,6 +123,7 @@
     {%- endif -%}
 
     {%- if primary_test_model_database is none or primary_test_model_schema is none -%}
+        {# This is mainly here to support Singular test cases with multiple referred models, in this case the tested node is being use to extract the db and schema #}
         {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
     {%- endif -%}
 
