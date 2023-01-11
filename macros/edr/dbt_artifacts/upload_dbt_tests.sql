@@ -88,7 +88,6 @@
     {% set test_models_tags = test_models_tags | unique | list %}
 
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
-    {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
 
     {% set primary_test_model_id = namespace(data=none) %}
     {% if test_model_unique_ids | length == 1 %}
@@ -112,6 +111,22 @@
         {% endif %}
       {% endif %}
     {% endif %}
+
+    {% set primary_test_model_database = none %}
+    {% set primary_test_model_schema = none %}
+    {%- if primary_test_model_id.data is not none -%}
+        {% set tested_model_node = elementary.get_node(primary_test_model_id.data) %}
+        {%- if tested_model_node -%}
+            {% set primary_test_model_database = tested_model_node.get('database') %}
+            {% set primary_test_model_schema = tested_model_node.get('schema') %}
+        {%- endif -%}
+    {%- endif -%}
+
+    {%- if primary_test_model_database is none or primary_test_model_schema is none -%}
+        {# This is mainly here to support singular test cases with multiple referred models, in this case the tested node is being used to extract the db and schema #}
+        {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
+    {%- endif -%}
+
     {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
