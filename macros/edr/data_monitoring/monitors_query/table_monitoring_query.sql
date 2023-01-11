@@ -2,20 +2,26 @@
 
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
+    with monitored_table as (
+        select * from {{ monitored_table_relation }}
+        {% if where_expression %}
+        where {{ where_expression }}
+        {% endif %}
+    ),
+
     {% if timestamp_column %}
-        with buckets as (
+        buckets as (
             select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }})
             where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
-        filtered_monitored_table as (
+        time_filtered_monitored_table as (
             select *,
                    {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, time_bucket) }} as start_bucket_in_data
-            from {{ monitored_table_relation }}
+            from monitored_table
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
-                {% if where_expression %} and {{ where_expression }} {% endif %}
         ),
 
         {%- if 'row_count' in table_monitors %}
@@ -27,7 +33,7 @@
                    case when start_bucket_in_data is null then
                        0
                    else {{ elementary.cast_as_float(elementary.row_count()) }} end as row_count_value
-            from buckets left join filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
+            from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
             group by 1,2,3
         ),
 
@@ -59,7 +65,7 @@
                 {{ elementary.const_as_string('freshness') }} as metric_name,
                 {{ elementary.cast_as_string('max('~freshness_column~')') }} as source_value,
                 {{ elementary.timediff('second', elementary.cast_as_timestamp('max('~freshness_column~')'), "edr_bucket_end") }} as metric_value
-            from buckets, {{ monitored_table_relation }}
+            from buckets, monitored_table
             where {{ elementary.cast_as_timestamp(timestamp_column) }} < edr_bucket_end
             group by 1,2,3
         {%- else %}
@@ -85,7 +91,7 @@
             source_value,
             edr_bucket_start as bucket_start,
             edr_bucket_end as bucket_end,
-            {{ elementary.datediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
+            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value
         from
@@ -94,12 +100,12 @@
             metric_value is null
         )
     {% else %}
-        with row_count as (
+        row_count as (
             {%- if 'row_count' in table_monitors %}
                 select
                     {{ elementary.const_as_string('row_count') }} as metric_name,
                     {{ elementary.row_count() }} as metric_value
-                from {{ monitored_table_relation }}
+                from monitored_table
                 group by 1
             {%- else %}
                 {{ elementary.empty_table([('metric_name','string'),('metric_value','int')]) }}
