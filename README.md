@@ -80,6 +80,7 @@ Run results tables:
 - dbt_run_results
 - model_run_results
 - snapshot_run_results
+- dbt_invocations
 - elementary_test_results (all dbt test results)
 
 Metadata tables:
@@ -88,7 +89,7 @@ Metadata tables:
 - dbt_sources
 - dbt_exposures
 - dbt_metrics
-- sbt_sbapshots
+- dbt_snapshots
 
 Here you can find [additional details about the tables](https://docs.elementary-data.com/guides/modules-overview/dbt-package).
 
