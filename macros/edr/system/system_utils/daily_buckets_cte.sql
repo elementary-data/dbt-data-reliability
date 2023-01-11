@@ -54,3 +54,19 @@
     {%- endset %}
     {{ return(daily_buckets_cte) }}
 {% endmacro %}
+
+{% macro postgres__daily_buckets_cte() %}
+    {%- set max_bucket_end = "'"~ elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00") ~"'" %}
+    {%- set days_back = elementary.get_config_var('days_back') %}
+
+    {%- set daily_buckets_cte %}
+        select * from (
+        {%- for i in range(0, days_back+1) %}
+            {%- set daily_bucket = "'"~ (elementary.get_run_started_at() - modules.datetime.timedelta(i)).strftime("%Y-%m-%d 00:00:00") ~"'" %}
+            select {{ elementary.cast_as_timestamp(daily_bucket) }} as edr_daily_bucket
+            {%- if not loop.last %} union all {%- endif %}
+        {%- endfor %}
+        ) rs
+    {%- endset %}
+    {{ return(daily_buckets_cte) }}
+{% endmacro %}

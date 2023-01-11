@@ -19,6 +19,6 @@
 
 {% endmacro %}
 
-{% macro redshift__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
+{% macro postgres__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {{ return(false) }}
 {% endmacro %}

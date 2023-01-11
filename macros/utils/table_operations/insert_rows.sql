@@ -92,8 +92,20 @@
     {{ return(insert_rows_query) }}
 {%- endmacro %}
 
-{%- macro escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{% macro escape_special_chars(string_value) %}
+    {{ return(adapter.dispatch('escape_special_chars', 'elementary')(string_value)) }}
+{% endmacro %}
+
+{%- macro default__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{%- endmacro -%}
+
+{%- macro redshift__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{%- endmacro -%}
+
+{%- macro postgres__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
 {%- macro render_value(value) -%}

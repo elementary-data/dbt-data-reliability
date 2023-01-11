@@ -32,7 +32,7 @@ elementary:
       threads: {{ target.threads }}
 {% endmacro %}
 
-{% macro redshift__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+{% macro postgres__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
 elementary:
   outputs:
     default:
