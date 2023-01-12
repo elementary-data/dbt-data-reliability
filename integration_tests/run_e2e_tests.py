@@ -53,7 +53,7 @@ class TestDbtRunner(DbtRunner):
 
 
 def e2e_tests(
-    target: str, test_types: List[str], clear_tests: bool, generate_data: bool
+    target: str, test_types: List[str], clear_tests: bool, generate_data: bool, generate_only: bool,
 ) -> TestResults:
     test_results = TestResults()
 
@@ -63,8 +63,10 @@ def e2e_tests(
         raise_on_failure=False,
     )
 
-    if generate_data:
+    if generate_data or generate_only:
         dbt_runner.seed(full_refresh=True)
+    if generate_only:
+        return
 
     if clear_tests:
         clear_test_logs = dbt_runner.run_operation(macro_name="clear_tests")
@@ -237,8 +239,17 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-data",
     "-g",
     type=bool,
+    is_flag=True,
     default=False,
-    help="Set to true if you want to re-generate fake data (default = True)",
+    help="Specify this flag if you want to re-generate fake data (default = False)",
+)
+@click.option(
+    "--generate-only",
+    "-go",
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Specify this flag if you want to only generate data, without actually running tests"
 )
 @click.option(
     "--clear-tests",
@@ -246,8 +257,8 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     default=True,
     help="Set to true if you want to clear the tests (default = True)",
 )
-def main(target, e2e_type, generate_data, clear_tests):
-    if generate_data:
+def main(target, e2e_type, generate_data, generate_only, clear_tests):
+    if generate_data or generate_only:
         generate_fake_data()
 
     if target == "all":
@@ -275,7 +286,7 @@ def main(target, e2e_type, generate_data, clear_tests):
     found_failures = False
     for e2e_target in e2e_targets:
         print(f"Starting {e2e_target} tests\n")
-        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data)
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data, generate_only)
         print(f"\n{e2e_target} results")
         all_results[e2e_target] = e2e_test_results
 
