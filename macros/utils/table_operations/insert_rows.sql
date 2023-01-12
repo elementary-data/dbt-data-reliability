@@ -21,7 +21,7 @@
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
-        {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, queries_len)) %}
+        {% do elementary.debug_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
         {% do dbt.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
@@ -55,7 +55,7 @@
         {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
         {% do rendered_column_values.append(elementary.render_value(column_value)) %}
       {% endfor %}
-      {% set row_sql = "(%s)" % (rendered_column_values | join(",")) %}
+      {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
       {% if query_with_row | length > query_max_size %}
@@ -100,12 +100,8 @@
     {{- return(string_value | replace("\\", "\\\\") | replace("'", "\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
 {%- endmacro -%}
 
-{%- macro redshift__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
-{%- endmacro -%}
-
 {%- macro postgres__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("'", "''")) -}}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "''") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
 {%- endmacro -%}
 
 {%- macro render_value(value) -%}

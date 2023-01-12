@@ -15,7 +15,7 @@
 
 {% macro handle_anomaly_test(flattened_test) %}
   {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics") %}
-  {% set metrics_table = elementary.get_elementary_test_table(flattened_test.name, 'metrics') %}
+  {% set metrics_table = elementary.get_elementary_test_table(elementary.get_compiled_test_id(), 'metrics') %}
   {% if metrics_table %}
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
@@ -40,7 +40,7 @@
 
 {% macro handle_schema_changes_test(flattened_test) %}
   {% set schema_snapshots_tables_cache = elementary.get_cache("tables").get("schema_snapshots") %}
-  {% set schema_snapshots_table = elementary.get_elementary_test_table(flattened_test.name, 'schema_changes') %}
+  {% set schema_snapshots_table = elementary.get_elementary_test_table(elementary.get_compiled_test_id(), 'schema_changes') %}
   {% if schema_snapshots_table %}
     {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
   {% endif %}
