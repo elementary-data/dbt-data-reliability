@@ -19,7 +19,7 @@
         select
           *,
           {{ elementary.anomaly_detection_description() }}
-        from {{ elementary.get_elementary_test_table(flattened_test.name, 'anomaly_scores') }}
+        from {{ elementary.get_elementary_test_table(elementary.get_compiled_test_id(), 'anomaly_scores') }}
       ),
       anomaly_scores_with_is_anomalous as (
         select
