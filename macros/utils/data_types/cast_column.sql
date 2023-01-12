@@ -6,6 +6,10 @@
     cast({{ column }} as {{ elementary.type_float() }})
 {%- endmacro -%}
 
+{%- macro cast_as_numeric(column) -%}
+    cast({{ column }} as {{ elementary.type_numeric() }})
+{%- endmacro -%}
+
 {%- macro cast_as_int(column) -%}
     cast({{ column }} as {{ elementary.type_int() }})
 {%- endmacro -%}

@@ -101,9 +101,9 @@
 {% endmacro %}
 
 {% macro type_numeric() %}
-    {% if dbt_version >= '1.2.0' %}
-        {{ return(dbt.type_numeric()) }}
-    {% else %}
-        {{ return(dbt_utils.type_numeric()) }}
+    {% set macro = dbt.type_numeric or dbt_utils.type_numeric %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `type_numeric` macro.") }}
     {% endif %}
+    {{ return(macro()) }}
 {% endmacro %}
