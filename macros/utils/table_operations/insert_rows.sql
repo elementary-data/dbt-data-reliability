@@ -21,6 +21,7 @@
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
+        {% do elementary.debug_log("QUERY: {}".format(insert_query)) %}
         {% do elementary.debug_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
         {% do dbt.run_query(insert_query) %}
       {% endfor %}
@@ -97,7 +98,7 @@
 {% endmacro %}
 
 {%- macro default__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
 {%- endmacro -%}
 
 {%- macro postgres__escape_special_chars(string_value) -%}
