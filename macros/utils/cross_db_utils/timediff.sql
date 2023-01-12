@@ -17,5 +17,5 @@
 {% endmacro %}
 
 {% macro postgres__timediff(timepart, first_timestamp, second_timestamp) %}
-    date_part('{{ timepart }}', ({{ second_timestamp }})::timestamp) - date_part('{{ timepart }}', ({{ first_timestamp }})::timestamp)
+    extract(epoch from {{ second_timestamp }} - {{ first_timestamp }}) / extract(epoch from interval '1 {{ timepart }}')
 {% endmacro %}
