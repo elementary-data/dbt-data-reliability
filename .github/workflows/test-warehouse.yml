@@ -7,6 +7,7 @@ on:
         required: true
         description: Type of warehouse platform
         options:
+          - postgres
           - snowflake
           - bigquery
           - redshift
