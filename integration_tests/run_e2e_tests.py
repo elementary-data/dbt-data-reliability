@@ -53,7 +53,11 @@ class TestDbtRunner(DbtRunner):
 
 
 def e2e_tests(
-    target: str, test_types: List[str], clear_tests: bool, generate_data: bool, generate_only: bool,
+    target: str,
+    test_types: List[str],
+    clear_tests: bool,
+    generate_data: bool,
+    generate_only: bool,
 ) -> TestResults:
     test_results = TestResults()
 
@@ -239,7 +243,6 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-data",
     "-g",
     type=bool,
-    is_flag=True,
     default=False,
     help="Specify this flag if you want to re-generate fake data (default = False)",
 )
@@ -247,9 +250,8 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-only",
     "-go",
     type=bool,
-    is_flag=True,
     default=False,
-    help="Specify this flag if you want to only generate data, without actually running tests"
+    help="Specify this flag if you want to only generate data, without actually running tests",
 )
 @click.option(
     "--clear-tests",
@@ -286,7 +288,9 @@ def main(target, e2e_type, generate_data, generate_only, clear_tests):
     found_failures = False
     for e2e_target in e2e_targets:
         print(f"Starting {e2e_target} tests\n")
-        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data, generate_only)
+        e2e_test_results = e2e_tests(
+            e2e_target, e2e_types, clear_tests, generate_data, generate_only
+        )
         print(f"\n{e2e_target} results")
         all_results[e2e_target] = e2e_test_results
 
