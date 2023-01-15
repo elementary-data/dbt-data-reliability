@@ -7,7 +7,7 @@
     {%- set database_name, schema_name = schema_tuple %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
-    (with information_schema_tables as (
+    with information_schema_tables as (
 
         select
             upper(table_catalog) as database_name,
@@ -39,14 +39,12 @@
     from information_schema_tables as tables
     full outer join information_schema_schemata as schemas
     on (tables.database_name = schemas.database_name and tables.schema_name = schemas.schema_name)
-    )
-
 {% endmacro %}
 
 {% macro redshift__get_tables_from_information_schema(schema_tuple) %}
     {%- set database_name, schema_name = schema_tuple %}
 
-    (with information_schema_tables as (
+    with information_schema_tables as (
 
         select
             upper(table_catalog) as database_name,
@@ -64,14 +62,12 @@
         schema_name,
         table_name
     from information_schema_tables
-    )
-
 {% endmacro %}
 
 {% macro postgres__get_tables_from_information_schema(schema_tuple) %}
     {%- set database_name, schema_name = schema_tuple %}
 
-    (with information_schema_tables as (
+    with information_schema_tables as (
 
         select
             upper(table_catalog) as database_name,
@@ -89,6 +85,4 @@
         schema_name,
         table_name
     from information_schema_tables
-    )
-
 {% endmacro %}
