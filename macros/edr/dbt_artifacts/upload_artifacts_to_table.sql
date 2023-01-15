@@ -2,7 +2,7 @@
     {% set flatten_artifact_dicts = [] %}
     {% for artifact in artifacts %}
         {% set flatten_artifact_dict = flatten_artifact_callback(artifact) %}
-        {% if flatten_artifact_dict is not none and elementary.dict_has_nonempty_values(flatten_artifact_dict) %}
+        {% if flatten_artifact_dict is not none %}
             {% do flatten_artifact_dicts.append(flatten_artifact_dict) %}
         {% endif %}
     {% endfor %}
