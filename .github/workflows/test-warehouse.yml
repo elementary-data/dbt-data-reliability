@@ -102,7 +102,7 @@ jobs:
 
       - name: Start Postgres
         if: inputs.warehouse-type == 'postgres'
-        working-directory: ${{ env.DBT_PKG_INTEG_TESTS_DIR }}
+        working-directory: ${{ env.TESTS_DIR }}
         run: docker-compose up -d postgres
 
       - name: Install dbt
