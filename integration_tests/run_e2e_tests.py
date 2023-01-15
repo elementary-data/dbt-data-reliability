@@ -226,7 +226,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--target",
     "-t",
     type=str,
-    default="postgres",
+    default="snowflake",
     help="The dbt target to run the tests against.",
 )
 @click.option(
@@ -240,7 +240,6 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-data",
     "-g",
     type=bool,
-    is_flag=True,
     default=False,
     help="Set to true if you want to re-generate fake data.",
 )
