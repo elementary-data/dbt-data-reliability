@@ -4,18 +4,18 @@
 
 {# Snowflake, Bigquery and Databricks #}
 {% macro default__merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates) %}
-    {% set args = dbt.get_merge_sql.get_macro().arguments %}
-    {% if "incremental_predicates" in args %}
-      {% do return(dbt.get_merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates)) %}
+    {% set macro = dbt.get_merge_sql %}
+    {% if "incremental_predicates" in macro.get_macro().arguments %}
+      {% do return(macro(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates)) %}
     {% endif %}
-    {% do return(dbt.get_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
+    {% do return(macro(target_relation, tmp_relation, unique_key, dest_columns)) %}
 {% endmacro %}
 
 {% macro postgres__merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates) %}
-    {% set args = dbt.get_merge_sql.get_macro().arguments %}
-    {% if "incremental_predicates" in args %}
-      {% do return(dbt.get_delete_insert_merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates)) %}
+    {% set macro = dbt.get_merge_sql %}
+    {% if "incremental_predicates" in macro.get_macro().arguments %}
+      {% do return(macro(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates)) %}
     {% endif %}
-    {% do return(dbt.get_delete_insert_merge_sql(target_relation, tmp_relation, unique_key, dest_columns)) %}
+    {% do return(macro(target_relation, tmp_relation, unique_key, dest_columns)) %}
     {{ return(merge_sql) }}
 {% endmacro %}
