@@ -29,6 +29,11 @@ on:
         required: false
         default: true
         description: Whether to clean test environment
+      generate-data:
+        type: boolean
+        required: false
+        default: false
+        description: Whether to generate new data
 
   workflow_call:
     inputs:
@@ -48,6 +53,10 @@ on:
         type: boolean
         required: false
         default: true
+      generate-data:
+        type: boolean
+        required: false
+        default: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -101,4 +110,4 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: |
           dbt deps
-          python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" --clear-tests "${{ inputs.clear-tests }}"
+          python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"
