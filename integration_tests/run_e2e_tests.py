@@ -53,7 +53,10 @@ class TestDbtRunner(DbtRunner):
 
 
 def e2e_tests(
-    target: str, test_types: List[str], clear_tests: bool, generate_data: bool
+    target: str,
+    test_types: List[str],
+    clear_tests: bool,
+    generate_data: bool,
 ) -> TestResults:
     test_results = TestResults()
 
@@ -237,6 +240,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--generate-data",
     "-g",
     type=bool,
+    is_flag=True,
     default=False,
     help="Set to true if you want to re-generate fake data.",
 )
