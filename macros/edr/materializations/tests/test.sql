@@ -3,7 +3,7 @@
     with test_results as (
       {{ sql }}
     )
-    select * from test_results {% if sample_limit %} limit {{ sample_limit }} {% endif %}
+    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
   {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
 {% endmacro %}
