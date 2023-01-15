@@ -172,7 +172,7 @@
 {%- endmacro -%}
 
 {% macro get_default_description(short_name, test_namespace = none) %}
-    {# Relevant for dbt_expectatiopns 0.8.0 #}
+    {# Relevant for dbt_expectations 0.8.0 #}
     {% set dbt_expectations_descriptions_map = {
         "expect_column_to_exist": "Expect the specified column to exist.",
         "expect_row_values_to_have_recent_data": "Expect the model to have rows that are at least as recent as the defined interval prior to the current timestamp. Optionally gives the possibility to apply filters on the results.",
