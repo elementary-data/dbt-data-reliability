@@ -127,7 +127,7 @@
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
-      select * from ({{ sql }}) rs
+      select * from ({{ sql }}) results
       where
         anomaly_score is not null and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and

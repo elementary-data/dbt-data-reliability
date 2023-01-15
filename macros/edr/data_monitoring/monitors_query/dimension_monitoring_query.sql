@@ -10,7 +10,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(time_bucket) }}) rs
+          from ({{ elementary.complete_buckets_cte(time_bucket) }}) results
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
@@ -53,7 +53,7 @@
                     dimension_value,
                     1 as joiner
                 from filtered_monitored_table
-            ) rs
+            ) results
         ),
 
         {# Created buckets for each dimension value #}
@@ -154,7 +154,7 @@
                     from last_dimension_metrics
                     group by 1
                     having sum(metric_value) > 0
-                ) rs
+                ) results
             )
         ),
         
@@ -171,7 +171,7 @@
                     dimension_value,
                     1 as joiner
                 from filtered_monitored_table
-            ) rs
+            ) results
         ),
 
         {# Create buckets for each day from max(first metric time, min bucket end) until max bucket end #}
@@ -180,7 +180,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(time_bucket) }}) rs
+          from ({{ elementary.complete_buckets_cte(time_bucket) }}) results
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
