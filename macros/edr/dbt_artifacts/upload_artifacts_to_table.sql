@@ -21,8 +21,7 @@
 
 {% macro default__overwrite_artifacts_table(table_relation, flatten_artifact_dicts, should_commit) %}
     {# First upload everything to a temp table #}
-    {% set temp_table_suffix = modules.datetime.datetime.utcnow().strftime('__tmp_%y%m%d%H%M%S%f') %}
-    {% set temp_table_relation = dbt.make_temp_relation(table_relation, temp_table_suffix) %}
+    {% set temp_table_relation = dbt.make_temp_relation(table_relation) %}
     {% do elementary.create_table_like(temp_table_relation, table_relation, temporary=True) %}
     {% do elementary.insert_rows(temp_table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 
