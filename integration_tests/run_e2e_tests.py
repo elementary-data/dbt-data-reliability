@@ -226,7 +226,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--target",
     "-t",
     type=str,
-    default="snowflake",
+    default="postgres",
     help="The dbt target to run the tests against.",
 )
 @click.option(
