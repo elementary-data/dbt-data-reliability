@@ -12,7 +12,7 @@
 {% endmacro %}
 
 {% macro postgres__merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates) %}
-    {% set macro = dbt.get_merge_sql %}
+    {% set macro = dbt.get_delete_insert_merge_sql %}
     {% if "incremental_predicates" in macro.get_macro().arguments %}
       {% do return(macro(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates)) %}
     {% endif %}
