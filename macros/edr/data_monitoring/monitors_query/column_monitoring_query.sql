@@ -3,7 +3,7 @@
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     with buckets as (
-        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }})
+        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }}) results
         {% if min_bucket_start -%}
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         {%- endif %}

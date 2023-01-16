@@ -12,8 +12,8 @@
           {% set time_bucket = elementary.get_default_time_bucket() %}
         {% endif %}
 
-        {% set test_name_in_graph = elementary.get_test_name_in_graph() %}
-        {{ elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
+        {% set test_table_name = elementary.get_elementary_test_table_name() %}
+        {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
         {#- creates temp relation for test metrics -#}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
@@ -47,14 +47,14 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, min_bucket_start, time_bucket) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'metrics', dimension_monitoring_query) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
 
 
         {#- calculate anomaly scores for metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, model_graph_node, sensitivity, backfill_days, ['dimension'], dimensions=dimensions) %}
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
-        {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'anomaly_scores', anomaly_scores_query) %}
+        {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
         {{ elementary.get_anomaly_query() }}

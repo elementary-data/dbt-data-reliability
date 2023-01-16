@@ -1,6 +1,6 @@
 {%- macro get_anomaly_query(flattened_test=none) -%}
   {%- set query -%}
-    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }})
+    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
   {%- endset -%}
   {{- return(query) -}}
@@ -19,7 +19,7 @@
         select
           *,
           {{ elementary.anomaly_detection_description() }}
-        from {{ elementary.get_elementary_test_table(flattened_test.name, 'anomaly_scores') }}
+        from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
       ),
       anomaly_scores_with_is_anomalous as (
         select

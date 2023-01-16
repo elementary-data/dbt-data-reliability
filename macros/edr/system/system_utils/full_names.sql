@@ -65,7 +65,7 @@
 {% endmacro %}
 
 
-{% macro redshift__full_name_split(part_name) %}
+{% macro postgres__full_name_split(part_name) %}
     {%- if part_name == 'database_name' -%}
         {%- set part_index = 1 -%}
     {%- elif part_name == 'schema_name' -%}

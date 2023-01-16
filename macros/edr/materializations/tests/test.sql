@@ -15,7 +15,7 @@
 
 {% macro handle_anomaly_test(flattened_test) %}
   {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics") %}
-  {% set metrics_table = elementary.get_elementary_test_table(flattened_test.name, 'metrics') %}
+  {% set metrics_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'metrics') %}
   {% if metrics_table %}
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
@@ -40,7 +40,7 @@
 
 {% macro handle_schema_changes_test(flattened_test) %}
   {% set schema_snapshots_tables_cache = elementary.get_cache("tables").get("schema_snapshots") %}
-  {% set schema_snapshots_table = elementary.get_elementary_test_table(flattened_test.name, 'schema_changes') %}
+  {% set schema_snapshots_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'schema_changes') %}
   {% if schema_snapshots_table %}
     {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
   {% endif %}
@@ -127,7 +127,7 @@
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
-      select * from ({{ sql }})
+      select * from ({{ sql }}) results
       where
         anomaly_score is not null and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and

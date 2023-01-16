@@ -2,7 +2,7 @@
     {{ return(adapter.dispatch('to_char', 'elementary')(column, format)) }}
 {%- endmacro %}
 
-{# Snowflake and Redshift #}
+{# Snowflake and Redshift/Postgres #}
 {% macro default__to_char(column, format) %}
     to_char({{ column }} {%- if format %}, '{{ format }}'){%- else %}, 'YYYY-MM-DD HH:MI:SS'){%- endif %}
 {% endmacro %}

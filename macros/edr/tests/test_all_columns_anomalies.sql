@@ -9,13 +9,13 @@
           {% set time_bucket = elementary.get_default_time_bucket() %}
         {% endif %}
 
-        {%- set test_name_in_graph = elementary.get_test_name_in_graph() %}
-        {{- elementary.debug_log('collecting metrics for test: ' ~ test_name_in_graph) }}
+        {%- set test_table_name = elementary.get_elementary_test_table_name() %}
+        {{- elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
         {#- creates temp relation for test metrics -#}
         {%- set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'metrics', empty_table_query) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', empty_table_query) %}
 
         {#- get all columns configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
@@ -64,7 +64,7 @@
         {#- query if there is an anomaly in recent metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
         {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, model_graph_node, sensitivity, backfill_days, all_columns_monitors, columns_only=true) %}
-        {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_name_in_graph, 'anomaly_scores', anomaly_scores_query) %}
+        {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
 

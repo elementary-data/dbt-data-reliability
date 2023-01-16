@@ -3,11 +3,19 @@
     {{ return(adapter.dispatch('timeadd', 'elementary')(date_part, number, timestamp_expression)) }}
 {%- endmacro %}
 
-{# Snowflake and Redshift #}
+{# Snowflake #}
 {% macro default__timeadd(date_part, number, timestamp_expression) %}
     dateadd({{ date_part }}, {{ number }}, {{ elementary.cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
 
 {% macro bigquery__timeadd(date_part, number, timestamp_expression) %}
     timestamp_add({{ elementary.cast_as_timestamp(timestamp_expression) }}, INTERVAL {{ number }} {{ date_part }})
+{% endmacro %}
+
+{% macro postgres__timeadd(date_part, number, timestamp_expression) %}
+    {{ elementary.cast_as_timestamp(timestamp_expression) }} + {{ number }} * INTERVAL '1 {{ date_part }}'
+{% endmacro %}
+
+{% macro redshift__timeadd(date_part, number, timestamp_expression) %}
+    dateadd({{ date_part }}, {{ number }}, {{ elementary.cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}

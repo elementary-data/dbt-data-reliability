@@ -9,21 +9,21 @@
 {% endmacro %}
 
 {% macro freshness_description() %}
-    'Last update was at ' || anomalous_value || ', ' || abs(round(metric_value/3600,2)) || ' hours ago. Usually the table is updated within ' || abs(round(training_avg/3600,2)) || ' hours.'
+    'Last update was at ' || anomalous_value || ', ' || abs(round({{ elementary.cast_as_numeric('metric_value/3600') }}, 2)) || ' hours ago. Usually the table is updated within ' || abs(round({{ elementary.cast_as_numeric('training_avg/3600') }}, 2)) || ' hours.'
 {% endmacro %}
 
 {% macro table_metric_description() %}
-    'The last ' || metric_name || ' value is ' || round(metric_value,3) ||
-    '. The average for this metric is ' || round(training_avg,3) || '.'
+    'The last ' || metric_name || ' value is ' || round({{ elementary.cast_as_numeric('metric_value') }}, 3) ||
+    '. The average for this metric is ' || round({{ elementary.cast_as_numeric('training_avg') }}, 3) || '.'
 {% endmacro %}
 
 {% macro column_metric_description() %}
-    'In column ' || column_name || ', the last ' || metric_name || ' value is ' || round(metric_value,3) ||
-    '. The average for this metric is ' || round(training_avg,3) || '.'
+    'In column ' || column_name || ', the last ' || metric_name || ' value is ' || round({{ elementary.cast_as_numeric('metric_value') }}, 3) ||
+    '. The average for this metric is ' || round({{ elementary.cast_as_numeric('training_avg') }}, 3) || '.'
 {% endmacro %}
 
 {% macro dimension_metric_description() %}
     'The last ' || metric_name || ' value for dimension ' || dimension || ' - ' ||
-    case when dimension_value is null then 'NULL' else dimension_value end || ' is ' || round(metric_value,3) ||
-    '. The average for this metric is ' || round(training_avg,3) || '.'
+    case when dimension_value is null then 'NULL' else dimension_value end || ' is ' || round({{ elementary.cast_as_numeric('metric_value') }}, 3) ||
+    '. The average for this metric is ' || round({{ elementary.cast_as_numeric('training_avg') }}, 3) || '.'
 {% endmacro %}
