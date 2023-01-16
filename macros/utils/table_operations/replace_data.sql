@@ -6,32 +6,13 @@
     {% do return(elementary.replace_data(relation, 'select * from {}'.format(replacing_relation))) %}
 {% endmacro %}
 
-{# Databricks / Spark (non-atomic implementation) #}
+{# Default - simply replace the table #}
 {% macro default__replace_data(relation, sql_query) %}
-    {% do dbt.truncate_relation(relation) %}
-    {% do dbt.run_query(elementary.insert_as_select(relation, sql_query)) %}
+    {% do dbt.run_query(dbt.create_table_as(False, relation, sql_query)) %}
 {% endmacro %}
 
-{% macro snowflake__replace_data(relation, sql_query) %}
-    {% set query %}
-        begin transaction;
-        truncate table {{ relation }};
-        insert into {{ relation }} {{ sql_query }};
-        commit;
-    {% endset %}
-    {% do dbt.run_query(query) %}
-{% endmacro %}
-
-{% macro bigquery__replace_data(relation, sql_query) %}
-    {% set query %}
-        begin transaction;
-        delete from {{ relation }} where true;   -- truncate not supported in BigQuery transactions
-        insert into {{ relation }} {{ sql_query }};
-        commit transaction;
-    {% endset %}
-    {% do dbt.run_query(query) %}
-{% endmacro %}
-
+{# In redshift we do not want to replace the table, because that will cause views without
+   late binding to be deleted. So atomically replace the data in a transaction #}
 {% macro redshift__replace_data(relation, sql_query) %}
     {% set query %}
         begin transaction;
