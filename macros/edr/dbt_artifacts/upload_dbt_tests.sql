@@ -147,7 +147,7 @@
         'depends_on_macros': depends_on_dict.get('macros', []),
         'depends_on_nodes': depends_on_dict.get('nodes', []),
         'parent_model_unique_id': primary_test_model_id.data,
-        'description': node_dict.get('description'),
+        'description': meta_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_type(original_file_path, test_namespace),
