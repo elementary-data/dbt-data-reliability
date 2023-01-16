@@ -12,7 +12,7 @@
 {% endmacro %}
 
 {# In postgres/redshift we do not want to replace the table, because that will cause views without
-   late binding to be deleted. So atomically replace the data in a transaction #}
+   late binding to be deleted. So instead we atomically replace the data in a transaction #}
 {% macro postgres__replace_data(relation, sql_query) %}
     {% set query %}
         begin transaction;
