@@ -29,6 +29,7 @@
     {# First upload everything to an intermediate table (temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
 
+    {# Now delete and insert in a transaction #}
     {% set query %}
         begin transaction;
         delete from {{ relation }};   -- truncate supported in Redshift transactions, but causes an immediate commit
