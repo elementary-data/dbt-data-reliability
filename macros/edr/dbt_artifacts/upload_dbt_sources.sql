@@ -2,7 +2,7 @@
     {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% if execute and relation %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, truncate_if_on_run_end=true, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
