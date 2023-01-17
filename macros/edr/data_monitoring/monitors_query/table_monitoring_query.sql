@@ -23,13 +23,15 @@
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
         ),
+    {% endif %}
 
-        metrics as (
-            {{ elementary.get_unified_metrics_query(metrics=table_monitors,
-                                                    metric_args=metric_args,
-                                                    timestamp_column=timestamp_column) }}
-        ),
+    metrics as (
+        {{ elementary.get_unified_metrics_query(metrics=table_monitors,
+                                                metric_args=metric_args,
+                                                timestamp_column=timestamp_column) }}
+    ),
 
+    {% if timestamp_column %}
         metrics_final as (
 
         select
@@ -49,10 +51,6 @@
             metric_value is null
         )
     {% else %}
-        metrics as (
-            {{ elementary.get_unified_metrics_query(metrics=table_monitors, metric_args=metric_args) }}
-        ),
-
         metrics_final as (
 
         select
