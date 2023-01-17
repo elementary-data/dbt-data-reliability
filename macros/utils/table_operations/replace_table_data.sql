@@ -15,7 +15,7 @@
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
-{# In Snowflake we can atomically swap two tables atomically, so we can provide a faster implementation #}
+{# In Snowflake we can swap two tables atomically, so we can provide a faster implementation #}
 {% macro snowflake__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=False) %}
     {% do dbt.run_query("alter table {} swap with {}".format(relation, intermediate_relation)) %}
