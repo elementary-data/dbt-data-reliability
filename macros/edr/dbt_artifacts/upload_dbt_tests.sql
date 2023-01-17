@@ -2,7 +2,7 @@
     {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, truncate_if_on_run_end=true, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
