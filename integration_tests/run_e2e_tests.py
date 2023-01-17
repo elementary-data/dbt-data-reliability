@@ -152,6 +152,16 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "table" in test_types:
+        dbt_runner.test(select="tag:event_freshness_anomalies")
+        results = [
+            TestResult(type="event_freshness_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_event_freshness_anomalies"
+            )
+        ]
+        test_results.extend(results)
+
     if "column" in test_types:
         dbt_runner.test(select="tag:string_column_anomalies")
         results = [

@@ -21,6 +21,7 @@ source as (
 final as (
      select
         updated_at,
+        occurred_at,
         min_length,
         max_length,
         average_length,

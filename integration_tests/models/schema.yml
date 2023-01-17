@@ -97,6 +97,10 @@ models:
     tests:
       - elementary.freshness_anomalies:
           tags: [ "table_anomalies" ]
+      - elementary.event_freshness_anomalies:
+          tags: [ "event_freshness_anomalies" ]
+          event_timestamp_column: occurred_at
+          update_timestamp_column: updated_at
       - elementary.all_columns_anomalies:
           tags: [ "all_string_column_anomalies" ]
       - elementary.schema_changes:
@@ -147,6 +151,10 @@ models:
           tags: [ "table_anomalies" ]
       - elementary.freshness_anomalies:
           tags: [ "table_anomalies" ]
+      - elementary.event_freshness_anomalies:
+          tags: [ "event_freshness_anomalies" ]
+          event_timestamp_column: occurred_at
+          update_timestamp_column: updated_at
       - elementary.schema_changes:
           tags: [ "schema_changes" ]
       - elementary.all_columns_anomalies:
@@ -259,7 +267,7 @@ models:
 
 sources:
   - name: training
-    schema: test_seeds
+    schema: test_seeds_v2
     tables:
       - name: any_type_column_anomalies_training
         freshness:
@@ -272,7 +280,9 @@ sources:
               tags: [ "table_anomalies" ]
           - elementary.freshness_anomalies:
               tags: [ "table_anomalies" ]
-
+          - elementary.event_freshness_anomalies:
+              tags: [ "event_freshness_anomalies" ]
+              event_timestamp_column: occurred_at
       - name: string_column_anomalies_training
         freshness:
           error_after:
@@ -287,9 +297,13 @@ sources:
               tags: [ "table_anomalies" ]
           - elementary.freshness_anomalies:
               tags: [ "table_anomalies" ]
+          - elementary.event_freshness_anomalies:
+              tags: [ "event_freshness_anomalies" ]
+              event_timestamp_column: occurred_at
+              update_timestamp_column: updated_at
       - name: numeric_column_anomalies_training
   - name: validation
-    schema: test_seeds
+    schema: test_seeds_v2
     tables:
       - name: any_type_column_anomalies_validation
         freshness:

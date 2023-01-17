@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, freshness_column, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -41,7 +41,7 @@
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, min_bucket_start, table_monitors, freshness_column, where_expression, time_bucket) %}
+        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, min_bucket_start, table_monitors, where_expression, time_bucket, metric_args=kwargs) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
 
