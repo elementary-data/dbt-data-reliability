@@ -2,7 +2,7 @@
     {{ return(adapter.dispatch('replace_table_data', 'elementary')(relation, rows)) }}
 {% endmacro %}
 
-{# Default (bigquery) - upload data to a temp table, and then atomically replace the table with a new one #}
+{# Default (Bigquery) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
     {# First upload everything to an intermediate table (temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
@@ -35,7 +35,7 @@
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
-{# In postgres/redshift we do not want to replace the table, because that will cause views without
+{# In Postgres / Redshift we do not want to replace the table, because that will cause views without
    late binding to be deleted. So instead we atomically replace the data in a transaction #}
 {% macro postgres__replace_table_data(relation, rows) %}
     {# First upload everything to an intermediate table (temporary) #}
