@@ -267,7 +267,7 @@ models:
 
 sources:
   - name: training
-    schema: test_seeds_v2
+    schema: test_seeds
     tables:
       - name: any_type_column_anomalies_training
         freshness:
@@ -303,7 +303,7 @@ sources:
               update_timestamp_column: updated_at
       - name: numeric_column_anomalies_training
   - name: validation
-    schema: test_seeds_v2
+    schema: test_seeds
     tables:
       - name: any_type_column_anomalies_validation
         freshness:
