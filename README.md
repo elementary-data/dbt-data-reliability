@@ -143,6 +143,7 @@ Elementary dbt package creates tables of metadata and test results in your data 
 * [x] **BigQuery**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/bigquery-16.svg) 
 * [x] **Redshift**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/redshift-16.png)
 * [x] **Databricks SQL**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/databricks-16.png)
+* [x] **Postgres**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/postgres-16.png)
 
 
 ## Community & Support
