@@ -174,7 +174,7 @@
 {% macro freshness_metric_query(metric_args, timestamp_column=none) %}
 {% if timestamp_column %}
     {%- set freshness_column = metric_args.freshness_column %}
-    {%- if freshness_column is undefined or freshness_column is none %}
+    {%- if not freshness_column %}
         {%- set freshness_column = timestamp_column %}
     {%- endif %}
 
