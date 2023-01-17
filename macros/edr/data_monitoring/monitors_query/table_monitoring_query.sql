@@ -196,7 +196,7 @@
     bucketed_consecutive_updates_freshness as (
         select
             edr_bucket_start, edr_bucket_end, update_timestamp, freshness
-        from buckets, consecutive_updates_freshness
+        from buckets cross join consecutive_updates_freshness
         where update_timestamp >= edr_bucket_start AND update_timestamp < edr_bucket_end
     ),
 
