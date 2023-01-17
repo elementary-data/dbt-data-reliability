@@ -4,44 +4,29 @@
 
 {# Default (Bigquery) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
-    {# First upload everything to an intermediate table (temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-
-    {# Now atomically replace the table with data from the temp table #}
     {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
 {% endmacro %}
 
 {# Spark / Databricks - like BQ but without a temp table because they do not seem to work well #}
 {% macro spark__replace_table_data(relation, rows) %}
-    {# First upload everything to an intermediate table (non-temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=False) %}
-
-    {# Now atomically replace the table with data from the temp table #}
     {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
-
-    {# Drop the intermediate relation #}
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
 {# In Snowflake we can atomically swap two tables atomically, so we can provide a faster implementation #}
 {% macro snowflake__replace_table_data(relation, rows) %}
-    {# First upload everything to an intermediate table (non-temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=False) %}
-
-    {# Atomically swap the tables #}
     {% do dbt.run_query("alter table {} swap with {}".format(relation, intermediate_relation)) %}
-
-    {# Drop the old (swapped) relation #}
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
 {# In Postgres / Redshift we do not want to replace the table, because that will cause views without
    late binding to be deleted. So instead we atomically replace the data in a transaction #}
 {% macro postgres__replace_table_data(relation, rows) %}
-    {# First upload everything to an intermediate table (temporary) #}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
 
-    {# Now delete and insert in a transaction #}
     {% set query %}
         begin transaction;
         delete from {{ relation }};   -- truncate supported in Redshift transactions, but causes an immediate commit
