@@ -200,15 +200,15 @@
         where update_timestamp >= edr_bucket_start AND update_timestamp < edr_bucket_end
     ),
 
-    -- we also want to record the freshness at the end of each bucket as an additional point (as it might be larger,
-    -- or even the only point if no data was updated at all in a particular bucket)
+    -- we also want to record the freshness at the end of each bucket as an additional point. By this we mean
+    -- the time that passed since the last update in the bucket and the end of the bucket.
     bucket_end_freshness as (
         select
             edr_bucket_start,
             edr_bucket_end,
             max(timestamp_val) as update_timestamp,
             {{ elementary.timediff('second', elementary.cast_as_timestamp('max(timestamp_val)'), "least(edr_bucket_end, {})".format(elementary.current_timestamp_column())) }} as freshness
-        from buckets, unique_timestamps
+        from buckets cross join unique_timestamps
         where timestamp_val < edr_bucket_end
         group by 1,2
     ),
@@ -225,7 +225,7 @@
     bucket_freshness_ranked as (
         select
             *,
-            rank () over (partition by edr_bucket_end order by freshness desc) as row_number
+            rank () over (partition by edr_bucket_end order by freshness desc) as rank
         from bucket_all_freshness_metrics
     )
 
@@ -236,7 +236,7 @@
         {{ elementary.cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
-    where row_number = 1
+    where rank = 1
 {% else %}
     {# Update freshness test not supported when timestamp column is not provided #}
     {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
