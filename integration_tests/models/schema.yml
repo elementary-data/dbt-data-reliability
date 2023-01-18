@@ -225,6 +225,10 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: [ "numeric_column_anomalies" ]
+      - name: sum
+        tests:
+          - elementary.column_anomalies:
+              tags: [ "numeric_column_anomalies" ]
 
   - name: groups
     columns:

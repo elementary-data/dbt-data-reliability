@@ -145,7 +145,7 @@
     {% endset %}
     {% set results = elementary.result_column_to_list(numeric_column_alerts) %}
     {{ assert_lists_contain_same_items(results, ['min', 'max', 'zero_count', 'zero_percent', 'average',
-                                                 'standard_deviation', 'variance']) }}
+                                                 'standard_deviation', 'variance', 'sum']) }}
 {% endmacro %}
 
 
