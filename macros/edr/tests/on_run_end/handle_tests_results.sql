@@ -45,6 +45,9 @@
     {%- if test_metrics_tables %}
         {%- set test_tables_union_query = elementary.union_metrics_query(test_metrics_tables) -%}
         {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
+        {% if not target_relation %}
+          {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+        {% endif %}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
@@ -67,6 +70,9 @@
     {%- if test_columns_snapshot_tables %}
         {%- set test_tables_union_query = elementary.union_columns_snapshot_query(test_columns_snapshot_tables) -%}
         {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
+        {% if not target_relation %}
+          {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+        {% endif %}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
