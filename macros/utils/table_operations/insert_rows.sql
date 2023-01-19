@@ -60,6 +60,7 @@
 
       {% if query_with_row | length > query_max_size %}
         {% if loop.first %}
+          {% do elementary.edr_log("Oversized row for insert_rows: {}".format(query_with_row), info=False) %}
           {% do exceptions.raise_compiler_error("First row to be inserted exceeds 'query_max_size'. Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
