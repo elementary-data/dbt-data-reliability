@@ -7,6 +7,7 @@
       "dbt_snapshots": elementary.upload_dbt_snapshots,
       "dbt_metrics": elementary.upload_dbt_metrics,
       "dbt_exposures": elementary.upload_dbt_exposures,
+      "dbt_seeds": elementary.upload_dbt_seeds,
       }
     %}
     {% do elementary.debug_log("Uploading dbt artifacts.") %}
