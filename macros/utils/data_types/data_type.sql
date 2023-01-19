@@ -60,7 +60,7 @@
 {%- endmacro -%}
 
 {%- macro postgres__type_long_string() -%}
-    {% set long_string = 'varchar(' ~ elementary.get_config_var('long_string_size') ~ ')' %}
+    {% set long_string = 'text' %}
     {{ return(long_string) }}
 {%- endmacro -%}
 
