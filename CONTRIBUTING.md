@@ -2,7 +2,7 @@
 
 _Note_: This document is for the dbt package.
 For the Python package (`edr`), refer to
-the [Python package contributing guidelines](https://github.com/elementary-data/elementary/blob/master/CONTRIBUTING.md)
+the [Python package contributing guidelines](https://github.com/elementary-data/elementary/blob/master/CONTRIBUTING.md).
 
 ## Getting started with development
 
@@ -16,8 +16,6 @@ cd dbt-data-reliability
 ```
 
 #### (2) Edit `packages.yml` in your dbt project
-
-```
 
 ```yaml
 packages:
