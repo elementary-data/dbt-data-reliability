@@ -38,7 +38,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
         {"name": "Luke Cage", "updated_at": "2022-01-02 17:48:28"}
     ],
     expected_metrics={
-        datetime(2022, 1, 4, 0, 0, 0): 4
+        datetime(2022, 1, 4, 0, 13, 42): 4
     }
 )
 @Parametrization.case(
@@ -87,7 +87,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
         {"name": "Hulk", "occurred_at": "2022-01-02 19:20:00"}
     ],
     expected_metrics={
-        datetime(2022, 1, 4, 0, 0, 0): 103200
+        datetime(2022, 1, 4, 0, 13, 42): 104022
     },
     metric_args={"event_timestamp_column": "occurred_at"}
 )
@@ -114,7 +114,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
     }
 )
 def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, expected_metrics, time_bucket, timestamp_column, metric_args):
-    update_var(dbt_project, "custom_run_started_at", "2022-01-04 00:00:00")
+    update_var(dbt_project, "custom_run_started_at", "2022-01-04 00:13:42")
 
     relation = create_test_table(dbt_project, "my_test_table", {"name": "string",
                                                                 "updated_at": "timestamp",
