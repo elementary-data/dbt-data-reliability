@@ -132,6 +132,7 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                       })
     res = dbt_project.execute_sql(query)
     res_table = lowercase_column_names(res.table)
+    assert len(res_table) == len(expected_metrics)      # Ensure there are no duplicates
 
     result_metrics = {row["bucket_end"]: row["metric_value"] for row in res_table}
     assert result_metrics == expected_metrics
