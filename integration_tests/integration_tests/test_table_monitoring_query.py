@@ -121,18 +121,12 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
 
-    timestamp_column = timestamp_column
-    min_bucket_start = "'2022-01-01 00:00:00'"
-    table_monitors = [metric]
-    time_bucket = time_bucket
-    metric_args = metric_args
-
     query = dbt_project.execute_macro("table_monitoring_query",
                                       kwargs={
                                           "monitored_table_relation": relation,
                                           "timestamp_column": timestamp_column,
-                                          "min_bucket_start": min_bucket_start,
-                                          "table_monitors": table_monitors,
+                                          "min_bucket_start": "'2022-01-01 00:00:00'",
+                                          "table_monitors": [metric],
                                           "time_bucket": time_bucket,
                                           "metric_args": metric_args
                                       })
