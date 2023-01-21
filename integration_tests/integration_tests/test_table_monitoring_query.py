@@ -3,7 +3,7 @@ from dbt_osmosis.core.osmosis import DbtProject
 from parametrization import Parametrization
 
 
-from .utils import create_test_table, insert_rows, update_var
+from .utils import create_test_table, insert_rows, update_var, lowercase_column_names
 
 
 @Parametrization.autodetect_parameters()
@@ -137,6 +137,7 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                           "metric_args": metric_args
                                       })
     res = dbt_project.execute_sql(query)
+    res_table = lowercase_column_names(res.table)
 
-    result_metrics = {row["bucket_end"]: row["metric_value"] for row in res.table}
+    result_metrics = {row["bucket_end"]: row["metric_value"] for row in res_table}
     assert result_metrics == expected_metrics

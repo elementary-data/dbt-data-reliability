@@ -1,8 +1,7 @@
-import random
 import uuid
-from datetime import date, timedelta
 from typing import Dict, List, Any
 
+import agate
 from dbt.adapters.base import BaseRelation
 from dbt_osmosis.core.osmosis import DbtProject
 
@@ -40,3 +39,7 @@ def render_jinja(dbt_project: DbtProject, jinja_str: str):
 
 def update_var(dbt_project: DbtProject, var_name: str, var_value: Any):
     dbt_project.config.vars.vars[var_name] = var_value
+
+
+def lowercase_column_names(table: agate.table.Table):
+    return table.rename(column_names={col: col.lower() for col in table.column_names})
