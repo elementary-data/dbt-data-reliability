@@ -1,8 +1,8 @@
-{%- macro upload_dbt_tests(should_commit=false) -%}
+{%- macro upload_dbt_tests(should_commit=false, state_hash=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, state_hash=state_hash) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -158,7 +158,9 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
-    {% do flatten_test_metadata_dict.update({"hash": local_md5(flatten_test_metadata_dict | string) if local_md5 else none}) %}
+    {% set time_excluded_dict = flatten_test_metadata_dict.copy() %}
+    {% do time_excluded_dict.pop("generated_at") %}
+    {% do flatten_test_metadata_dict.update({"hash": local_md5(time_excluded_dict | string) if local_md5 else none}) %}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 

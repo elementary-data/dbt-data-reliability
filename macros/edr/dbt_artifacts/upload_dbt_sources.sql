@@ -1,8 +1,8 @@
-{%- macro upload_dbt_sources(should_commit=false) -%}
+{%- macro upload_dbt_sources(should_commit=false, state_hash=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% if execute and relation %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit, state_hash=state_hash) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -66,6 +66,8 @@
          'description': node_dict.get('description'),
          'generated_at': elementary.datetime_now_utc_as_string()
      }%}
-    {% do flatten_source_metadata_dict.update({"hash": local_md5(flatten_source_metadata_dict | string) if local_md5 else none}) %}
+    {% set time_excluded_dict = flatten_source_metadata_dict.copy() %}
+    {% do time_excluded_dict.pop("generated_at") %}
+    {% do flatten_source_metadata_dict.update({"hash": local_md5(time_excluded_dict | string) if local_md5 else none}) %}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}
