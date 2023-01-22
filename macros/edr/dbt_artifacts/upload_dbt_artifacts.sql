@@ -16,7 +16,7 @@
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% if elementary.get_elementary_relation(artifacts_model) %}
-          {% do upload_artifacts_func(should_commit=true, state_hash=artifacts_state[artifacts_model]) %}
+          {% do upload_artifacts_func(should_commit=true, state_hash=artifacts_state.get(artifacts_model)) %}
         {% endif %}
       {% else %}
         {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
@@ -27,6 +27,11 @@
 {% endmacro %}
 
 {% macro get_artifacts_state() %}
+    {# The stored state is only needed if it can be compared later to the local state. #}
+    {% if not local_md5 %}
+        {% do return({}) %}
+    {% endif %}
+
     {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
     {% set artifacts_state_relation = adapter.get_relation(database_name, schema_name, "dbt_artifacts_state") %}
     {% set stored_artifacts_query %}
