@@ -1,9 +1,14 @@
 from datetime import datetime
+
 from dbt_osmosis.core.osmosis import DbtProject
 from parametrization import Parametrization
 
 
 from .utils import create_test_table, insert_rows, update_var, lowercase_column_names
+
+
+MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
+RUN_STARTED_AT = datetime(2022, 1, 4, 0, 13, 42)
 
 
 @Parametrization.autodetect_parameters()
@@ -38,7 +43,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
         {"name": "Luke Cage", "updated_at": "2022-01-02 17:48:28"}
     ],
     expected_metrics={
-        datetime(2022, 1, 4, 0, 13, 42): 4
+        RUN_STARTED_AT: 4
     }
 )
 @Parametrization.case(
@@ -87,7 +92,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
         {"name": "Hulk", "occurred_at": "2022-01-02 19:20:00"}
     ],
     expected_metrics={
-        datetime(2022, 1, 4, 0, 13, 42): 104022
+        RUN_STARTED_AT: 104022
     },
     metric_args={"event_timestamp_column": "occurred_at"}
 )
@@ -114,7 +119,7 @@ from .utils import create_test_table, insert_rows, update_var, lowercase_column_
     }
 )
 def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, expected_metrics, time_bucket, timestamp_column, metric_args):
-    update_var(dbt_project, "custom_run_started_at", "2022-01-04 00:13:42")
+    update_var(dbt_project, "custom_run_started_at", RUN_STARTED_AT.strftime("%Y-%m-%d %H:%M:%S"))
 
     relation = create_test_table(dbt_project, "my_test_table", {"name": "string",
                                                                 "updated_at": "timestamp",
@@ -125,7 +130,7 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                       kwargs={
                                           "monitored_table_relation": relation,
                                           "timestamp_column": timestamp_column,
-                                          "min_bucket_start": "'2022-01-01 00:00:00'",
+                                          "min_bucket_start": MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
                                           "table_monitors": [metric],
                                           "time_bucket": time_bucket,
                                           "metric_args": metric_args
