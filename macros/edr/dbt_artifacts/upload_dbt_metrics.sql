@@ -28,7 +28,9 @@
                                                                    ('package_name', 'string'),
                                                                    ('original_path', 'long_string'),
                                                                    ('path', 'string'),
-                                                                   ('generated_at', 'string')]) %}
+                                                                   ('generated_at', 'string'),
+                                                                   ('hash', 'string'),
+                                                                   ]) %}
     {{ return(dbt_metrics_empty_table_query) }}
 {% endmacro %}
 
@@ -36,7 +38,7 @@
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
-    {% set flatten_metrics_metadata_dict = {
+    {% set flatten_metric_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
         'label': node_dict.get('label'),
@@ -57,5 +59,6 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
-    {{ return(flatten_metrics_metadata_dict) }}
+    {% do flatten_metric_metadata_dict.update({"hash": local_md5(flatten_metric_metadata_dict | string) if local_md5 else none}) %}
+    {{ return(flatten_metric_metadata_dict) }}
 {% endmacro %}

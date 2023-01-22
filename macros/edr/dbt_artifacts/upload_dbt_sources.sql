@@ -29,7 +29,9 @@
                                                                    ('path', 'string'),
                                                                    ('source_description', 'long_string'),
                                                                    ('description', 'long_string'),
-                                                                   ('generated_at', 'string')]) %}
+                                                                   ('generated_at', 'string'),
+                                                                   ('hash', 'string'),
+                                                                   ]) %}
     {{ return(dbt_sources_empty_table_query) }}
 {% endmacro %}
 
@@ -64,5 +66,6 @@
          'description': node_dict.get('description'),
          'generated_at': elementary.datetime_now_utc_as_string()
      }%}
+    {% do flatten_source_metadata_dict.update({"hash": local_md5(flatten_source_metadata_dict | string) if local_md5 else none}) %}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}

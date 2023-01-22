@@ -25,7 +25,9 @@
                                                                      ('package_name', 'string'),
                                                                      ('original_path', 'long_string'),
                                                                      ('path', 'string'),
-                                                                     ('generated_at', 'string')]) %}
+                                                                     ('generated_at', 'string'),
+                                                                     ('hash', 'string'),
+                                                                     ]) %}
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
 
@@ -52,5 +54,6 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
       }%}
+    {% do flatten_exposure_metadata_dict.update({"hash": local_md5(flatten_exposure_metadata_dict | string) if local_md5 else none}) %}
     {{ return(flatten_exposure_metadata_dict) }}
 {% endmacro %}
