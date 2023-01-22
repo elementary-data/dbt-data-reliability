@@ -8,7 +8,7 @@
     {% endfor %}
 
     {% if local_md5 and state_hash %}
-        {% set artifacts_hash = local_md5(flatten_artifact_dicts | map(attribute="hash") | sort | join(",")) %}
+        {% set artifacts_hash = local_md5(flatten_artifact_dicts | map(attribute="artifact_hash") | sort | join(",")) %}
         {% if artifacts_hash == state_hash %}
             {% do elementary.debug_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
             {% do return(none) %}

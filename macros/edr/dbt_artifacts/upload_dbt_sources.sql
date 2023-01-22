@@ -30,7 +30,7 @@
                                                                    ('source_description', 'long_string'),
                                                                    ('description', 'long_string'),
                                                                    ('generated_at', 'string'),
-                                                                   ('hash', 'string'),
+                                                                   ('artifact_hash', 'string'),
                                                                    ]) %}
     {{ return(dbt_sources_empty_table_query) }}
 {% endmacro %}
@@ -68,6 +68,6 @@
      }%}
     {% set time_excluded_dict = flatten_source_metadata_dict.copy() %}
     {% do time_excluded_dict.pop("generated_at") %}
-    {% do flatten_source_metadata_dict.update({"hash": local_md5(time_excluded_dict | string) if local_md5 else none}) %}
+    {% do flatten_source_metadata_dict.update({"artifact_hash": local_md5(time_excluded_dict | string) if local_md5 else none}) %}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}
