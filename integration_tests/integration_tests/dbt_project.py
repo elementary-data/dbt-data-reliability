@@ -48,6 +48,8 @@ class DbtProject:
 
         self.sql_parser = SqlBlockParser(self.config, self.manifest, self.config)
 
+        self.relations_to_cleanup = []
+
     def execute_macro(self, macro_name, **kwargs):
         if "." in macro_name:
             package_name, actual_macro_name = macro_name.split(".", 1)
@@ -75,8 +77,31 @@ class DbtProject:
         finally:
             self.clear_node(temp_node.name)
 
-    def create_relation(self, database: Optional[str], schema: Optional[str], name: str) -> BaseRelation:
-        return self.adapter.Relation.create(database, schema, name)
+    def create_relation(self, database: Optional[str], schema: Optional[str], name: str,
+                        relation_type: str = "table") -> BaseRelation:
+        return self.adapter.Relation.create(database, schema, name, type=relation_type)
+
+    def create_table_as(self, relation, sql, temporary):
+        if temporary and self.adapter_name in ["spark", "databricks"]:
+            temporary = False
+            self.relations_to_cleanup.append(relation)
+
+        create_table_kwargs = {
+            "temporary": temporary,
+            "relation": relation
+        }
+        if dbt_version >= version.parse("1.3.0"):
+            create_table_kwargs["compiled_code"] = sql
+        else:
+            create_table_kwargs["sql"] = sql
+
+        create_table_query = self.execute_macro("dbt.create_table_as", **create_table_kwargs)
+        self.execute_sql(create_table_query)
+
+    def cleanup(self):
+        for relation in self.relations_to_cleanup:
+            print("Dropping relation: %s" % relation)
+            self.execute_macro("dbt.drop_relation_if_exists", relation=relation)
 
     def _create_temp_node(self, sql: str):
         """Get a node for SQL execution against adapter"""

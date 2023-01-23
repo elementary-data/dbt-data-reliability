@@ -27,7 +27,9 @@ def dbt_project_dir(request):
 
 @pytest.fixture
 def dbt_project(dbt_project_dir, dbt_target):
-    return DbtProject(
+    project = DbtProject(
         project_dir=dbt_project_dir,
         target=dbt_target
     )
+    yield project
+    project.cleanup()

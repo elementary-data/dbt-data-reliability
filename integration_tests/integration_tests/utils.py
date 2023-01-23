@@ -1,7 +1,6 @@
 import uuid
 from functools import lru_cache
 from typing import Dict, List, Any
-from packaging import version
 
 import agate
 from dbt.adapters.base import BaseRelation
@@ -12,7 +11,6 @@ from .dbt_project import DbtProject, dbt_version
 def create_test_table(dbt_project: DbtProject, name: str, columns: Dict[str, str]) -> BaseRelation:
     identifier = f"{name}_{uuid.uuid4().hex[:5]}"
 
-    temporary = (dbt_project.adapter_name != "databricks")
     if dbt_project.adapter_name not in ["postgres", "redshift"]:
         database, schema = get_package_database_and_schema(dbt_project)
     else:
@@ -25,18 +23,7 @@ def create_test_table(dbt_project: DbtProject, name: str, columns: Dict[str, str
         column_name_and_type_list=list(columns.items())
     )
 
-    create_table_kwargs = {
-        "temporary": temporary,
-        "relation": relation
-    }
-    if dbt_version >= version.parse("1.3.0"):
-        create_table_kwargs["compiled_code"] = empty_table_query
-    else:
-        create_table_kwargs["sql"] = empty_table_query
-
-    create_table_query = dbt_project.execute_macro("dbt.create_table_as", **create_table_kwargs)
-
-    dbt_project.execute_sql(create_table_query)
+    dbt_project.create_table_as(relation, empty_table_query, temporary=True)
 
     return relation
 
