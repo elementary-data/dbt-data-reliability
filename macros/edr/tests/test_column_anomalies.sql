@@ -34,9 +34,6 @@
         {% if timestamp_column and not is_timestamp %}
           {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(timestamp_column)) %}
         {% endif %}
-        {% if timestamp_column and is_timestamp %}
-            {% set timestamp_column = elementary.quote_column(timestamp_column) %}
-        {% endif %}
 
         {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model, column_name, column_anomalies) -%}
         {%- if not column_obj_and_monitors -%}
