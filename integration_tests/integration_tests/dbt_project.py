@@ -1,6 +1,4 @@
 import dbt.adapters.factory
-from dbt.flags import set_from_args
-
 dbt.adapters.factory.get_adapter = lambda config: config.adapter
 
 import uuid
@@ -9,10 +7,12 @@ from typing import Optional
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.factory import get_adapter_class_by_name, register_adapter
 from dbt.config import RuntimeConfig
+from dbt.flags import set_from_args
 from dbt.node_types import NodeType
 from dbt.parser.manifest import ManifestLoader, process_node
 from dbt.parser.sql import SqlBlockParser
 from dbt.task.sql import SqlCompileRunner
+from dbt.tracking import disable_tracking
 from dbt.version import __version__ as dbt_version
 from pydantic import BaseModel
 
@@ -20,6 +20,9 @@ from pydantic import BaseModel
 DBT_MAJOR_VER, DBT_MINOR_VER, DBT_PATCH_VER = (int(v) for v in dbt_version.split("."))
 RAW_CODE = "raw_code" if DBT_MAJOR_VER >= 1 and DBT_MINOR_VER >= 3 else "raw_sql"
 COMPILED_CODE = "compiled_code" if DBT_MAJOR_VER >= 1 and DBT_MINOR_VER >= 3 else "compiled_sql"
+
+# Disable dbt tracking
+disable_tracking()
 
 
 class DbtProject:
