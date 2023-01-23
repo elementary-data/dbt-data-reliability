@@ -87,6 +87,7 @@ def e2e_tests(
     if "create_table" in test_types:
         # If there is a problem with create_or_replace macro, it will crash the test.
         dbt_runner.test(select="tag:table_anomalies")
+        dbt_runner.test(select="tag:table_anomalies")
 
     if "error_test" in test_types:
         dbt_runner.test(select="tag:error_test")
