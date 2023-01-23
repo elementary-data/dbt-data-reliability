@@ -80,3 +80,28 @@
  {%- endif%}
 {% endmacro %}
 
+
+{% macro postgres__get_data_type_synonyms(exact_data_type) %}
+{# understanding Postgres data type synonyms:
+ https://www.postgresql.org/docs/current/datatype.html #}
+ {% set exact_data_type_to_data_type_returned_by_the_info_schema =  {'BIGINT': 'INT8',
+                                                                    'BIGSERIAL': 'SERIAL8',
+                                                                    'BIT VARYING': 'VARBIT',
+                                                                    'BOOLEAN': 'BOOL',
+                                                                    'CHARACTER': 'CHAR',
+                                                                    'CHARACTER VARYING': 'VARCHAR',
+                                                                    'DOUBLE PRECISION': 'FLOAT8',
+                                                                    'INTEGER': 'INT, INT4',
+                                                                    'NUMERIC': 'DECIMAL',
+                                                                    'REAL': 'FLOAT4',
+                                                                    'SMALLINT': 'INT2',
+                                                                    'SMALLSERIAL': 'SERIAL2',
+                                                                    'SERIAL': 'SERIAL4',
+                                                                    'TIME WITH TIME ZONE': 'TIMETZ',
+                                                                    'TIMESTAMP WITH TIME ZONE': 'TIMESTAMPTZ'} %}
+ {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema%}
+   {{ return (exact_data_type_to_data_type_returned_by_the_info_schema[exact_data_type])}}
+ {%- else %}
+   {{return (exact_data_type) }}
+ {%- endif%}
+{% endmacro %}
