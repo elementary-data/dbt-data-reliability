@@ -59,12 +59,14 @@
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
       {% if query_with_row | length > query_max_size %}
-        {% if loop.first %}
+        {% set new_insert_query = insert_query + row_sql %}
+        {# Check if row is too large to fit into an insert query. #}
+        {% if new_insert_query | length > query_max_size %}
           {% do elementary.edr_log("Oversized row for insert_rows: {}".format(query_with_row), info=False) %}
-          {% do exceptions.raise_compiler_error("First row to be inserted exceeds 'query_max_size'. Consider increasing its value.") %}
+          {% do exceptions.raise_compiler_error("First row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
-        {% set current_query.data = insert_query + row_sql %}
+        {% set current_query.data = new_insert_query %}
       {% else %}
         {% set current_query.data = query_with_row %}
       {% endif %}
