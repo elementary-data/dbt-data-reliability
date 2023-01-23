@@ -1,7 +1,7 @@
 import pathlib
-
 import pytest
-from dbt_osmosis.core.osmosis import DbtProject
+
+from .dbt_project import DbtProject
 
 DBT_PROJECT_DIR = pathlib.Path(__file__).parent.parent
 

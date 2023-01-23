@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from dbt_osmosis.core.osmosis import DbtProject
 from parametrization import Parametrization
 
 
+from .dbt_project import DbtProject
 from .utils import create_test_table, insert_rows, update_var, lowercase_column_names
 
 
@@ -126,17 +126,15 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
 
-    query = dbt_project.execute_macro("table_monitoring_query",
-                                      kwargs={
-                                          "monitored_table_relation": relation,
-                                          "timestamp_column": timestamp_column,
-                                          "min_bucket_start": MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
-                                          "table_monitors": [metric],
-                                          "time_bucket": time_bucket,
-                                          "metric_args": metric_args
-                                      })
-    res = dbt_project.execute_sql(query)
-    res_table = lowercase_column_names(res.table)
+    query = dbt_project.execute_macro("elementary.table_monitoring_query",
+                                      monitored_table_relation=relation,
+                                      timestamp_column=timestamp_column,
+                                      min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
+                                      table_monitors=[metric],
+                                      time_bucket=time_bucket,
+                                      metric_args=metric_args)
+    res_table = dbt_project.execute_sql(query)
+    res_table = lowercase_column_names(res_table)
     assert len(res_table) == len(expected_metrics)      # Ensure there are no duplicates
 
     result_metrics = {row["bucket_end"]: row["metric_value"] for row in res_table}
