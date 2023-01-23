@@ -47,3 +47,36 @@
    see https://spark.apache.org/docs/latest/sql-ref-datatypes.html #}
    {{return (exact_data_type) }}
 {% endmacro %}
+
+
+{% macro redshift__get_data_type_synonyms(exact_data_type) %}
+{# understanding Redshift data type synonyms:
+ https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html #}
+ {% set exact_data_type_to_data_type_returned_by_the_info_schema = {'INT2':	'SMALLINT',
+                                                                   'INT':	'INTEGER',
+                                                                   'INT4':	'INTEGER',
+                                                                   'INT8':	'BIGINT',
+                                                                   'NUMERIC':	'DECIMAL',
+                                                                   'FLOAT4':	'REAL',
+                                                                   'FLOAT8':	'DOUBLE PRECISION',
+                                                                   'FLOAT':	'DOUBLE PRECISION',
+                                                                   'BOOL':	'BOOLEAN',
+                                                                   'CHARACTER':	'CHAR',
+                                                                   'NCHAR':	'CHAR',
+                                                                   'BPCHAR':	'CHAR',
+                                                                   'CHARACTER VARYING':	'VARCHAR',
+                                                                   'NVARCHAR':	'VARCHAR',
+                                                                   'TEXT':	'VARCHAR',
+                                                                   'TIMESTAMP WITHOUT TIME ZONE':	'TIMESTAMP',
+                                                                   'TIMESTAMP WITH TIME ZONE':	'TIMESTAMPTZ',
+                                                                   'TIME WITHOUT TIME ZONE':	'TIME',
+                                                                   'TIME WITH TIME ZONE':	'TIMETZ',
+                                                                   'VARBINARY':	'VARBYTE',
+                                                                   'BINARY VARYING':	'VARBYTE'} %}
+ {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema%}
+   {{ return (exact_data_type_to_data_type_returned_by_the_info_schema[exact_data_type])}}
+ {%- else %}
+   {{return (exact_data_type) }}
+ {%- endif%}
+{% endmacro %}
+
