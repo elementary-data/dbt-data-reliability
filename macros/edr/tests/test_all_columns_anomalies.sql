@@ -36,6 +36,9 @@
         {% if timestamp_column and not is_timestamp %}
           {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(timestamp_column)) %}
         {% endif %}
+        {% if timestamp_column and is_timestamp %}
+            {% set timestamp_column = elementary.quote_column(timestamp_column) %}
+        {% endif %}
 
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
