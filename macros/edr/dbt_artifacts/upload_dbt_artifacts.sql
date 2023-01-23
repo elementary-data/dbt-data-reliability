@@ -34,6 +34,10 @@
 
     {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
     {% set artifacts_state_relation = adapter.get_relation(database_name, schema_name, "dbt_artifacts_state") %}
+    {% if not artifacts_state_relation %}
+        {% do return({}) %}
+    {% endif %}
+
     {% set stored_artifacts_query %}
     select * from {{ artifacts_state_relation }}
     {% endset %}
