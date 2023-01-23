@@ -63,7 +63,7 @@
         {# Check if row is too large to fit into an insert query. #}
         {% if new_insert_query | length > query_max_size %}
           {% do elementary.edr_log("Oversized row for insert_rows: {}".format(query_with_row), info=False) %}
-          {% do exceptions.raise_compiler_error("First row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
+          {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
         {% set current_query.data = new_insert_query %}
