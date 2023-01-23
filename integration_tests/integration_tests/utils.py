@@ -58,7 +58,7 @@ def lowercase_column_names(table: agate.table.Table):
     return table.rename(column_names={col: col.lower() for col in table.column_names})
 
 
-@lru_cache
+@lru_cache()
 def get_package_database_and_schema(dbt_project):
     return dbt_project.execute_macro("elementary.get_package_database_and_schema")
 
