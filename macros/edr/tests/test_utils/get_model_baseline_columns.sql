@@ -7,7 +7,7 @@
     {% set columns_without_types = [] %}
     {% for column in model_graph_node["columns"].values() %}
         {% if "data_type" in column %}
-            {% set info_schema_data_type = exact_data_type_equivalent_list(column["data_type"]) %}
+            {% set info_schema_data_type = elementary.exact_data_type_equivalent_list(column["data_type"]) %}
         {% else %}
             {% set info_schema_data_type = none %}
         {% endif %}
