@@ -33,6 +33,9 @@
         {% if timestamp_column and not is_timestamp %}
           {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(timestamp_column)) %}
         {% endif %}
+        {% if timestamp_column and is_timestamp %}
+            {% set timestamp_column = elementary.quote_column(timestamp_column) %}
+        {% endif %}
 
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
