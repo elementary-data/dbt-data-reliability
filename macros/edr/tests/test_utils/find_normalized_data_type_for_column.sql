@@ -3,7 +3,7 @@
 {% set columns_from_relation = adapter.get_columns_in_relation(model_relation) %}
 {% if columns_from_relation and columns_from_relation is iterable %}
     {% for column_obj in columns_from_relation %}
-        {% if column_obj.column | lower == column_name | lower %}
+        {% if column_obj.column | lower == column_name | lower or column_obj.column | lower == column_name[1:-1] | lower %}
             {{ return(elementary.normalize_data_type(column_obj.dtype)) }}
         {% endif %}
     {% endfor %}
