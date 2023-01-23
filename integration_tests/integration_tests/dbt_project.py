@@ -34,8 +34,8 @@ class DbtProject:
 
         register_adapter(self.config)
 
-        adapter_name = self.config.credentials.type
-        self.adapter = get_adapter_class_by_name(adapter_name)(self.config)
+        self.adapter_name = self.config.credentials.type
+        self.adapter = get_adapter_class_by_name(self.adapter_name)(self.config)
         self.adapter.connections.set_connection_name()
         self.config.adapter = self.adapter
 

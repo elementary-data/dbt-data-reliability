@@ -137,5 +137,5 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
     res_table = lowercase_column_names(res_table)
     assert len(res_table) == len(expected_metrics)      # Ensure there are no duplicates
 
-    result_metrics = {row["bucket_end"]: row["metric_value"] for row in res_table}
+    result_metrics = {row["bucket_end"].replace(tzinfo=None): row["metric_value"] for row in res_table}
     assert result_metrics == expected_metrics
