@@ -215,7 +215,8 @@
 {% endmacro %}
 
 {% macro render_result_rows(test_result_rows) %}
-  {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
+  {% set long_string_size = elementary.long_string_size() %}
+  {% if not long_string_size or (tojson(test_result_rows) | length) < long_string_size %}
     {% do return(test_result_rows) %}
   {% endif %}
   {% do return(none) %}
