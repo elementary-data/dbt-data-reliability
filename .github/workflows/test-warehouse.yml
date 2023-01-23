@@ -106,8 +106,10 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        if: inputs.dbt-version
-        run: pip install "dbt-core==${{ inputs.dbt-version }}" "dbt-${{ inputs.warehouse-type }}<=${{ inputs.dbt-version }}"
+        run:
+          pip install --pre
+          "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
+          "dbt-${{ inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ inputs.warehouse-type }}]"
