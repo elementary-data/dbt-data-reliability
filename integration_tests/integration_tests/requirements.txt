@@ -1,0 +1,4 @@
+pytest>=7.2.0
+pytest-parametrization>==2022.2.1
+pydantic
+packaging

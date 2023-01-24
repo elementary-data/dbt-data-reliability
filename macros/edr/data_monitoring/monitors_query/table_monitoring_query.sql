@@ -225,7 +225,7 @@
     bucket_freshness_ranked as (
         select
             *,
-            rank () over (partition by edr_bucket_end order by freshness desc) as rank
+            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_number
         from bucket_all_freshness_metrics
     )
 
@@ -236,7 +236,7 @@
         {{ elementary.cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
-    where rank = 1
+    where row_number = 1
 {% else %}
     {# Update freshness test not supported when timestamp column is not provided #}
     {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
@@ -263,7 +263,7 @@
 {% else %}
     select
         {{ elementary.const_as_string('event_freshness') }} as metric_name,
-        {{ elementary.timediff('second', elementary.cast_as_timestamp("max({})".format(event_timestamp_column)), elementary.current_timestamp_column()) }} as metric_value
+        {{ elementary.timediff('second', elementary.cast_as_timestamp("max({})".format(event_timestamp_column)), elementary.quote(elementary.get_run_started_at())) }} as metric_value
     from monitored_table
     group by 1
 {% endif %}
