@@ -122,7 +122,7 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}/integration_tests
         run: |
           pip install -r requirements.txt
-          py.test -v --target "${{ inputs.warehouse-type }}"
+          pytest -vv --target "${{ inputs.warehouse-type }}"
 
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
