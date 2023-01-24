@@ -2,7 +2,7 @@
   config(
     materialized = 'view',
     bind=False,
-    enabled =(target.type != 'databricks' and target.type != 'spark')
+    enabled=(target.type not in ['databricks', 'spark'])
   )
 }}
 
