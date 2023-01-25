@@ -42,10 +42,10 @@
     order by artifact_hash
     {% endset %}
     {% set artifacts_state_results = dbt.run_query(stored_artifacts_query) %}
-    {% set artifact_agate_hashes = artifacts_state_results.group_by("artifacts_model").select("artifact_hash").dict() %}
+    {% set artifact_agate_hashes = artifacts_state_results.group_by("artifacts_model").select("artifact_hash") %}
     {% set artifacts_hashes = {} %}
     {% for artifacts_model, artifact_hashes in artifact_agate_hashes.items() %}
-        {% do artifacts_hashes.update({artifacts_model: artifact_hashes.columns[0].values() | list}) %}
+        {% do artifacts_hashes.update({artifacts_model: artifact_hashes.columns[0]}) %}
     {% endfor %}
     {% do return(artifacts_hashes) %}
 {% endmacro %}
