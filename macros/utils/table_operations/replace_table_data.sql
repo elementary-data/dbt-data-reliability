@@ -45,7 +45,7 @@
     {% endif %}
 
     {% do elementary.create_table_like(int_relation, base_relation, temporary=temporary) %}
-    {% do elementary.insert_rows(int_relation, rows, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
+    {% do elementary.insert_rows(int_relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 
     {% do return(int_relation) %}
 {% endmacro %}
