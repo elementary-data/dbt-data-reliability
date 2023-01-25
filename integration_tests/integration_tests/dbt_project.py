@@ -1,4 +1,5 @@
 import dbt.adapters.factory
+
 dbt.adapters.factory.get_adapter = lambda config: config.adapter
 
 import uuid
@@ -17,10 +18,10 @@ from dbt.tracking import disable_tracking
 from dbt.version import __version__
 from pydantic import BaseModel
 
-
 dbt_version = version.parse(__version__)
-COMPILED_CODE = "compiled_code" if dbt_version >= version.parse("1.3.0") else "compiled_sql"
-
+COMPILED_CODE = (
+    "compiled_code" if dbt_version >= version.parse("1.3.0") else "compiled_sql"
+)
 
 # Disable dbt tracking
 disable_tracking()
@@ -40,7 +41,9 @@ class DbtProject:
         self.config.adapter = self.adapter
 
         project_parser = ManifestLoader(
-            self.config, self.config.load_dependencies(), self.adapter.connections.set_query_header
+            self.config,
+            self.config.load_dependencies(),
+            self.adapter.connections.set_query_header,
         )
         self.manifest = project_parser.load()
         self.manifest.build_flat_graph()
@@ -61,7 +64,7 @@ class DbtProject:
             macro_name=actual_macro_name,
             project=package_name,
             kwargs=kwargs,
-            manifest=self.manifest
+            manifest=self.manifest,
         )
 
     def execute_sql(self, sql: str):
@@ -77,8 +80,13 @@ class DbtProject:
         finally:
             self.clear_node(temp_node.name)
 
-    def create_relation(self, database: Optional[str], schema: Optional[str], name: str,
-                        relation_type: str = "table") -> BaseRelation:
+    def create_relation(
+        self,
+        database: Optional[str],
+        schema: Optional[str],
+        name: str,
+        relation_type: str = "table",
+    ) -> BaseRelation:
         return self.adapter.Relation.create(database, schema, name, type=relation_type)
 
     def create_table_as(self, relation, sql, temporary):
@@ -86,22 +94,24 @@ class DbtProject:
             temporary = False
             self.relations_to_cleanup.append(relation)
 
-        create_table_kwargs = {
-            "temporary": temporary,
-            "relation": relation
-        }
+        create_table_kwargs = {"temporary": temporary, "relation": relation}
         if dbt_version >= version.parse("1.3.0"):
             create_table_kwargs["compiled_code"] = sql
         else:
             create_table_kwargs["sql"] = sql
 
-        create_table_query = self.execute_macro("dbt.create_table_as", **create_table_kwargs)
+        create_table_query = self.execute_macro(
+            "dbt.create_table_as", **create_table_kwargs
+        )
         self.execute_sql(create_table_query)
 
     def cleanup(self):
         for relation in self.relations_to_cleanup:
             print("Dropping relation: %s" % relation)
             self.execute_macro("dbt.drop_relation_if_exists", relation=relation)
+
+    def clear_test_env(self):
+        self.execute_macro("clear_tests")
 
     def _create_temp_node(self, sql: str):
         """Get a node for SQL execution against adapter"""
@@ -113,13 +123,16 @@ class DbtProject:
 
     def clear_node(self, name: str):
         """Removes the statically named node created by `execute_sql` and `compile_sql` in `dbt.lib`"""
-        self.manifest.nodes.pop(f"{NodeType.SqlOperation}.{self.config.project_name}.{name}", None)
+        self.manifest.nodes.pop(
+            f"{NodeType.SqlOperation}.{self.config.project_name}.{name}", None
+        )
 
 
 class Args(BaseModel):
     """
     Minimal mock to dbt config arguments
     """
+
     project_dir: str
     target: Optional[str] = None
     threads: Optional[int] = 1
