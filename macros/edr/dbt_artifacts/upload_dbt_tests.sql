@@ -1,8 +1,8 @@
-{%- macro upload_dbt_tests(should_commit=false, state_hash=none) -%}
+{%- macro upload_dbt_tests(should_commit=false, state_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, state_hash=state_hash) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, state_hashes=state_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

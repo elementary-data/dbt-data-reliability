@@ -1,4 +1,4 @@
-{% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, state_hash=None) %}
+{% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, state_hashes=None) %}
     {% set flatten_artifact_dicts = [] %}
     {% for artifact in artifacts %}
         {% set flatten_artifact_dict = flatten_artifact_callback(artifact) %}
@@ -7,9 +7,9 @@
         {% endif %}
     {% endfor %}
 
-    {% if local_md5 and state_hash and elementary.get_config_var("cache_artifacts") %}
-        {% set artifacts_hash = local_md5(flatten_artifact_dicts | map(attribute="artifact_hash") | sort | join(",")) %}
-        {% if artifacts_hash == state_hash %}
+    {% if local_md5 and state_hashes and elementary.get_config_var("cache_artifacts") %}
+        {% set artifacts_hashes = flatten_artifact_dicts | map(attribute="artifact_hash") | sort %}
+        {% if artifacts_hashes == state_hashes %}
             {% do elementary.debug_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
             {% do return(none) %}
         {% endif %}

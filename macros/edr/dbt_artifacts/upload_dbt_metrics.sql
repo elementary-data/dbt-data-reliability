@@ -1,8 +1,8 @@
-{%- macro upload_dbt_metrics(should_commit=false, state_hash=none) -%}
+{%- macro upload_dbt_metrics(should_commit=false, state_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_metrics') %}
     {% if execute and relation %}
         {% set metrics = graph.metrics.values() | selectattr('resource_type', '==', 'metric') %}
-        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.flatten_metric, should_commit=should_commit, state_hash=state_hash) %}
+        {% do elementary.upload_artifacts_to_table(relation, metrics, elementary.flatten_metric, should_commit=should_commit, state_hashes=state_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}

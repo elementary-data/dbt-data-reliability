@@ -16,7 +16,7 @@
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% if elementary.get_elementary_relation(artifacts_model) %}
-          {% do upload_artifacts_func(should_commit=true, state_hash=elementary.insensitive_get_dict_value(artifacts_state, artifacts_model)) %}
+          {% do upload_artifacts_func(should_commit=true, state_hashes=elementary.insensitive_get_dict_value(artifacts_state, artifacts_model)) %}
         {% endif %}
       {% else %}
         {% do elementary.debug_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
@@ -38,7 +38,14 @@
     {% endif %}
 
     {% set stored_artifacts_query %}
-    select * from {{ artifacts_state_relation }}
+    select artifacts_model, artifact_hash from {{ artifacts_state_relation }}
+    order by artifact_hash
     {% endset %}
-    {% do return(dbt.run_query(stored_artifacts_query)[0]) %}
+    {% set artifacts_state_results = dbt.run_query(stored_artifacts_query) %}
+    {% set artifact_agate_hashes = artifacts_state_results.group_by("artifacts_model").select("artifact_hash").dict() %}
+    {% set artifacts_hashes = {} %}
+    {% for artifacts_model, artifact_hashes in artifact_agate_hashes.items() %}
+        {% do artifacts_hashes.update({artifacts_model: artifact_hashes.columns[0].values() | list}) %}
+    {% endfor %}
+    {% do return(artifacts_hashes) %}
 {% endmacro %}
