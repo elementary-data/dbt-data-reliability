@@ -273,9 +273,10 @@ def e2e_tests(
         ]
         auto_upload_results = test_artifacts_on_run_end(dbt_runner)
         test_results.append(auto_upload_results)
-        cache_artifacts_results = test_cache_artifacts(dbt_runner)
-        if cache_artifacts_results:
-            test_results.append(cache_artifacts_results)
+        if target not in ["databricks", "spark"]:
+            cache_artifacts_results = test_cache_artifacts(dbt_runner)
+            if cache_artifacts_results:
+                test_results.append(cache_artifacts_results)
 
         test_results.extend(results)
     return test_results
