@@ -2,7 +2,7 @@
     {{ elementary.debug_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
     {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
-    {% set test_result_rows = elementary.get_test_result_rows(elementary_test_results) %}
+    {% set test_result_rows = elementary.get_result_rows(elementary_test_results) %}
     {% set tables_cache = elementary.get_cache("tables") %}
     {% set test_metrics_tables = tables_cache.get("metrics") %}
     {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
@@ -97,13 +97,12 @@
     {%- endif %}
 {% endmacro %}
 
-{% macro get_test_result_rows(elementary_test_results) %}
+{% macro get_result_rows(elementary_test_results) %}
   {% set result_rows = [] %}
   {% for test_result in elementary_test_results %}
     {% for result_row in test_result.get('result_rows', []) %}
       {% do result_rows.append({
         "test_execution_id": test_result.test_execution_id,
-        "detected_at": test_result.detected_at,
         "result_row": result_row
       }) %}
     {% endfor %}
