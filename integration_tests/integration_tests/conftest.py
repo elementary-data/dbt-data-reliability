@@ -21,17 +21,17 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def dbt_version():
     return version.parse(__version__)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def dbt_target(request):
     return request.config.getoption("--target")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def dbt_project_dir(request):
     return request.config.getoption("--project-dir")
 
