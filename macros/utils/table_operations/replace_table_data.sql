@@ -8,11 +8,10 @@
     {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
 {% endmacro %}
 
-{# Spark / Databricks - like BQ but without a temp table because they do not seem to work well #}
+{# Spark / Databricks - truncate and insert (non-atomic) #}
 {% macro spark__replace_table_data(relation, rows) %}
-    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=False) %}
-    {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
-    {% do adapter.drop_relation(intermediate_relation) %}
+    {% do dbt.truncate_relation(relation) %}
+    {% do elementary.insert_rows(relation, rows, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
 
 {# In Snowflake we can swap two tables atomically, so we can provide a faster implementation #}
@@ -46,7 +45,7 @@
     {% endif %}
 
     {% do elementary.create_table_like(int_relation, base_relation, temporary=temporary) %}
-    {% do elementary.insert_rows(int_relation, rows, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
+    {% do elementary.insert_rows(int_relation, rows, should_commit=True, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 
     {% do return(int_relation) %}
 {% endmacro %}
