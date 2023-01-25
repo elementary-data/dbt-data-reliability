@@ -84,9 +84,6 @@ def test_artifacts_on_run_end(dbt_runner: TestDbtRunner) -> TestResult:
 
 
 def test_cache_artifacts(dbt_runner: TestDbtRunner) -> Optional[TestResult]:
-    if DBT_VERSION < version.parse("1.4.0"):
-        print("Cached artifacts are only supported from dbt v1.4.0+.")
-        return
     test_model = "one"
     dbt_runner.run(test_model)
     first_generated_at = get_generated_at(test_model, dbt_runner)
@@ -274,7 +271,10 @@ def e2e_tests(
         test_results.extend(results)
         auto_upload_results = test_artifacts_on_run_end(dbt_runner)
         test_results.append(auto_upload_results)
-        if target not in ["databricks", "spark"]:
+        if DBT_VERSION < version.parse("1.4.0") and target not in [
+            "databricks",
+            "spark",
+        ]:
             cache_artifacts_results = test_cache_artifacts(dbt_runner)
             if cache_artifacts_results:
                 test_results.append(cache_artifacts_results)
