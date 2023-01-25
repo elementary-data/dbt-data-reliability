@@ -2,7 +2,7 @@
     {{ return(adapter.dispatch('replace_table_data', 'elementary')(relation, rows)) }}
 {% endmacro %}
 
-{# Default (Bigquery) - upload data to a temp table, and then atomically replace the table with a new one #}
+{# Default (Bigquery & Snowflake) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
     {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
@@ -12,13 +12,6 @@
 {% macro spark__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
-{% endmacro %}
-
-{# In Snowflake we can swap two tables atomically, so we can provide a faster implementation #}
-{% macro snowflake__replace_table_data(relation, rows) %}
-    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=False) %}
-    {% do dbt.run_query("alter table {} swap with {}".format(relation, intermediate_relation)) %}
-    {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
 {# In Postgres / Redshift we do not want to replace the table, because that will cause views without
