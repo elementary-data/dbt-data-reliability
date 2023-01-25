@@ -19,7 +19,7 @@ clean-targets: # directories to be removed by `dbt clean`
 
 vars:
   days_back: 30
-  debug_logs: false
+  debug_logs: "{{ env_var('DEBUG', False) }}"
   custom_run_started_at: "{{ modules.datetime.datetime.utcfromtimestamp(0) }}"
   disable_dbt_artifacts_autoupload: true
 
