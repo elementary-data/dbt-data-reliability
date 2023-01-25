@@ -84,7 +84,7 @@ class DbtProject:
         self,
         database: Optional[str],
         schema: Optional[str],
-        name: str,
+        name: Optional[str],
         relation_type: str = "table",
     ) -> BaseRelation:
         return self.adapter.Relation.create(database, schema, name, type=relation_type)
