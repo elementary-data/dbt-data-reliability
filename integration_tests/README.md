@@ -25,13 +25,20 @@ elementary_tests:
       threads: 32
 ```
 
-3. Run the tests.
+3. Load data into the database:
+
+```shell
+python generate_data.py
+dbt seed
+```
+
+4. Run the tests.
 
 ```shell
 python run_e2e_tests.py
 ```
 
-### Extras
+### Web Interface
 
 You can browse the database by visiting http://localhost:5050 in your browser.
 The credentials are:
