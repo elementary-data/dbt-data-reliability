@@ -77,7 +77,7 @@ class DbtProject:
         finally:
             self.clear_node(temp_node.name)
 
-    def create_relation(self, database: Optional[str], schema: Optional[str], name: str,
+    def create_relation(self, database: Optional[str], schema: Optional[str], name: Optional[str],
                         relation_type: str = "table") -> BaseRelation:
         return self.adapter.Relation.create(database, schema, name, type=relation_type)
 
