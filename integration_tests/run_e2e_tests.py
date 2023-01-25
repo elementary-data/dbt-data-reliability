@@ -13,7 +13,7 @@ from elementary.clients.dbt.dbt_runner import DbtRunner
 from generate_data import generate_fake_data
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-DBT_VERSION = version.parse(__version__)
+DBT_VERSION = version.parse(version.parse(__version__).base_version)
 EPOCH = datetime.utcfromtimestamp(0)
 
 
