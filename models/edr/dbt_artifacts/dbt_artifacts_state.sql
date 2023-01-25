@@ -20,6 +20,6 @@ select
   '{{ artifact_model }}' as artifacts_model,
    artifact_hash
 from {{ ref(artifact_model) }}
-order by artifact_hash
 {% if not loop.last %} union all {% endif %}
 {% endfor %}
+order by artifact_hash
