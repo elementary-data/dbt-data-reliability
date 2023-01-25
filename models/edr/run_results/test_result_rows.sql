@@ -8,7 +8,7 @@
 }}
 
 {{ elementary.empty_table([
-    ('test_execution_id','long_string'),
+    ('elementary_test_results_id', 'long_string'),
     ('result_row', 'long_string'),
     ('detected_at','timestamp'),
 ]) }}

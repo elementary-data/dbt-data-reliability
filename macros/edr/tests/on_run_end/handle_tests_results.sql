@@ -102,7 +102,7 @@
   {% for test_result in elementary_test_results %}
     {% for result_row in test_result.get('result_rows', []) %}
       {% do result_rows.append({
-        "test_execution_id": test_result.test_execution_id,
+        "elementary_test_results_id": test_result.id,
         "detected_at": test_result.detected_at,
         "result_row": result_row
       }) %}
