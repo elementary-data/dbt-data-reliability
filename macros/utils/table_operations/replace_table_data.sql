@@ -11,7 +11,7 @@
 {# Spark / Databricks - truncate and insert (non-atomic) #}
 {% macro spark__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
-    {% do elementary.insert_rows(relation, rows, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
+    {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
 
 {# In Snowflake we can swap two tables atomically, so we can provide a faster implementation #}
