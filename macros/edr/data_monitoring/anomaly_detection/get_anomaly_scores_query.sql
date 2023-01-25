@@ -3,7 +3,6 @@
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-
     {% if elementary.is_incremental_model(model_graph_node) %}
       {% set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
     {% else %}

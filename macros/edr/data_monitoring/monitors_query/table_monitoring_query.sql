@@ -86,7 +86,16 @@
         bucket_duration_hours,
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
-        dimension_value
+        dimension_value,
+        {{ elementary.generate_surrogate_key([
+            'full_table_name',
+            'column_name',
+            'metric_name',
+            '{{ timestamp_column }}'
+            'bucket_duration_hours',
+            'dimension',
+            '{{ where_expression }}',
+            ]) }} as metric_id_respecting_config
     from metrics_final
 
 {% endmacro %}
