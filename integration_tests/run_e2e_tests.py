@@ -1,16 +1,19 @@
+import json
 import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 import click
+from dbt.version import __version__
+from packaging import version
 
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from generate_data import generate_fake_data
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-
+DBT_VERSION = version.parse(__version__)
 EPOCH = datetime.utcfromtimestamp(0)
 
 
@@ -37,6 +40,9 @@ class TestResults:
     def __init__(self):
         self.results = []
 
+    def append(self, test_result: TestResult):
+        self.extend([test_result])
+
     def extend(self, test_results: List[TestResult]):
         if not test_results:
             raise ValueError("Received an empty test results list.")
@@ -50,6 +56,50 @@ class TestResults:
 
 class TestDbtRunner(DbtRunner):
     pass
+
+
+def get_generated_at(alias: str, dbt_runner: DbtRunner) -> str:
+    return json.loads(
+        dbt_runner.run_operation(
+            "read_table",
+            macro_args={"table": "dbt_models", "where": f"alias = '{alias}'"},
+        )[0]
+    )
+
+
+def test_artifacts_on_run_end(dbt_runner: TestDbtRunner) -> TestResult:
+    test_model = "one"
+    dbt_runner.run(test_model)
+    first_generated_at = get_generated_at(test_model, dbt_runner)
+    dbt_runner.run(test_model, vars={"one_owner": "ele"})
+    second_generated_at = get_generated_at(test_model, dbt_runner)
+    return TestResult(
+        type="test_artifacts_on_run_end",
+        message=(
+            "SUCCESS: Artifacts are updated on run end."
+            if first_generated_at != second_generated_at
+            else "FAILED: Artifacts are not updated on run end."
+        ),
+    )
+
+
+def test_cache_artifacts(dbt_runner: TestDbtRunner) -> Optional[TestResult]:
+    if DBT_VERSION < version.parse("1.4.0"):
+        print("Cached artifacts are only supported from dbt v1.4.0+.")
+        return
+    test_model = "one"
+    dbt_runner.run(test_model)
+    first_generated_at = get_generated_at(test_model, dbt_runner)
+    dbt_runner.run(test_model)
+    second_generated_at = get_generated_at(test_model, dbt_runner)
+    return TestResult(
+        type="test_cache_artifacts",
+        message=(
+            "SUCCESS: Artifacts are cached."
+            if first_generated_at == second_generated_at
+            else "FAILED: Artifacts are not cached."
+        ),
+    )
 
 
 def e2e_tests(
@@ -221,6 +271,12 @@ def e2e_tests(
             TestResult(type="artifacts", message=msg)
             for msg in dbt_runner.run_operation(macro_name="validate_dbt_artifacts")
         ]
+        auto_upload_results = test_artifacts_on_run_end(dbt_runner)
+        test_results.append(auto_upload_results)
+        cache_artifacts_results = test_cache_artifacts(dbt_runner)
+        if cache_artifacts_results:
+            test_results.append(cache_artifacts_results)
+
         test_results.extend(results)
     return test_results
 
