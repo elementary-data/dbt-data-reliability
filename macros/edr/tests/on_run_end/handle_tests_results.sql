@@ -17,7 +17,6 @@
       {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
       {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
     {% endif %}
-    {{ elementary.debug_log("Finished handling test results.") }}
     {{ elementary.debug_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
