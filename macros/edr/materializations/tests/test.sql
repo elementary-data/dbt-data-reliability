@@ -164,7 +164,7 @@
       'other': elementary.insensitive_get_dict_value(latest_row, 'anomalous_value'),
       'test_results_query': test_results_query,
       'test_params': test_params,
-      'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows),
+      'result_rows': filtered_anomaly_scores_rows,
       'failures': failures.data
   } %}
   {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
@@ -209,15 +209,7 @@
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
         'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
         'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
-        'result_rows': elementary.render_result_rows(result_rows)
+        'result_rows': result_rows
     }%}
     {% do return(test_result_dict) %}
-{% endmacro %}
-
-{% macro render_result_rows(test_result_rows) %}
-  {% set long_string_size = elementary.long_string_size() %}
-  {% if not long_string_size or (tojson(test_result_rows) | length) < long_string_size %}
-    {% do return(test_result_rows) %}
-  {% endif %}
-  {% do return(none) %}
 {% endmacro %}
