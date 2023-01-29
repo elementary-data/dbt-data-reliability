@@ -95,8 +95,8 @@ models:
       elementary:
         timestamp_column: updated_at
     tests:
-      - elementary.freshness_anomalies:
-          tags: [ "table_anomalies" ]
+#      - elementary.freshness_anomalies:
+#          tags: [ "table_anomalies" ]
       - elementary.event_freshness_anomalies:
           tags: [ "event_freshness_anomalies" ]
           event_timestamp_column: occurred_at
@@ -149,8 +149,8 @@ models:
     tests:
       - elementary.volume_anomalies:
           tags: [ "table_anomalies" ]
-      - elementary.freshness_anomalies:
-          tags: [ "table_anomalies" ]
+#      - elementary.freshness_anomalies:
+#          tags: [ "table_anomalies" ]
       - elementary.event_freshness_anomalies:
           tags: [ "event_freshness_anomalies" ]
           event_timestamp_column: occurred_at
@@ -278,8 +278,8 @@ sources:
         tests:
           - elementary.volume_anomalies:
               tags: [ "table_anomalies" ]
-          - elementary.freshness_anomalies:
-              tags: [ "table_anomalies" ]
+#          - elementary.freshness_anomalies:
+#              tags: [ "table_anomalies" ]
           - elementary.event_freshness_anomalies:
               tags: [ "event_freshness_anomalies" ]
               event_timestamp_column: occurred_at
@@ -295,8 +295,8 @@ sources:
         tests:
           - elementary.volume_anomalies:
               tags: [ "table_anomalies" ]
-          - elementary.freshness_anomalies:
-              tags: [ "table_anomalies" ]
+#          - elementary.freshness_anomalies:
+#              tags: [ "table_anomalies" ]
           - elementary.event_freshness_anomalies:
               tags: [ "event_freshness_anomalies" ]
               event_timestamp_column: occurred_at

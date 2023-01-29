@@ -68,7 +68,6 @@
             {{ elementary.null_string() }} as dimension_value,
             {{ elementary.null_string() }} as config__timestamp_column,
             {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression
-            --{{ elementary.null_string()}} as config__where_expression
         from metrics
 
         )
@@ -98,9 +97,9 @@
            'full_table_name',
            'column_name',
            'metric_name',
-           'config__timestamp_column',
            'bucket_duration_hours',
            'dimension',
+           'config__timestamp_column',
            'config__where_expression'
            ]) }} as metric_id_respecting_config
     from metrics_final
