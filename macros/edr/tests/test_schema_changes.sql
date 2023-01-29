@@ -21,6 +21,9 @@
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
         {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
+
+        -- call new macro
+
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'schema_changes', column_snapshot_query) %}
 
         {# query if there were schema changes since last execution #}

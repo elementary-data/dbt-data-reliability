@@ -44,7 +44,9 @@
             edr_bucket_end as bucket_end,
             {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value
+            {{ elementary.null_string() }} as dimension_value,
+            {{ elementary.quote(timestamp_column) }} as config__timestamp_column,
+            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression
         from
             metrics
         where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
@@ -63,7 +65,10 @@
             {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
             {{ elementary.null_int() }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value
+            {{ elementary.null_string() }} as dimension_value,
+            {{ elementary.null_string() }} as config__timestamp_column,
+            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression
+            --{{ elementary.null_string()}} as config__where_expression
         from metrics
 
         )
@@ -87,15 +92,17 @@
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value,
-        {{ elementary.generate_surrogate_key([
-            'full_table_name',
-            'column_name',
-            'metric_name',
-            '{{ timestamp_column }}'
-            'bucket_duration_hours',
-            'dimension',
-            '{{ where_expression }}',
-            ]) }} as metric_id_respecting_config
+        config__timestamp_column,
+        config__where_expression,
+       {{ elementary.generate_surrogate_key([
+           'full_table_name',
+           'column_name',
+           'metric_name',
+           'config__timestamp_column',
+           'bucket_duration_hours',
+           'dimension',
+           'config__where_expression'
+           ]) }} as metric_id_respecting_config
     from metrics_final
 
 {% endmacro %}

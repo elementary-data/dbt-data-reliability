@@ -47,6 +47,9 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, where_expression, timestamp_column, min_bucket_start, time_bucket) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
+
+        -- call new macro
+
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
 
 
