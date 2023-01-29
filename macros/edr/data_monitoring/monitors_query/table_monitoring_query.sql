@@ -74,12 +74,15 @@
     {% endif %}
 
     select
-        {{ elementary.generate_surrogate_key([
-            'full_table_name',
-            'column_name',
-            'metric_name',
-            'bucket_end'
-        ]) }} as id,
+       {{ elementary.generate_surrogate_key([
+                  'full_table_name',
+                  'column_name',
+                  'metric_name',
+                  'bucket_duration_hours',
+                  'dimension',
+                  'config__timestamp_column',
+                  'config__where_expression'
+                  ]) }}  as id,
         full_table_name,
         column_name,
         metric_name,
@@ -92,16 +95,7 @@
         dimension,
         dimension_value,
         config__timestamp_column,
-        config__where_expression,
-       {{ elementary.generate_surrogate_key([
-           'full_table_name',
-           'column_name',
-           'metric_name',
-           'bucket_duration_hours',
-           'dimension',
-           'config__timestamp_column',
-           'config__where_expression'
-           ]) }} as metric_id_respecting_config
+        config__where_expression
     from metrics_final
 
 {% endmacro %}
