@@ -59,6 +59,6 @@
 
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 100000}) %}
+    {% do default_config.update({'query_max_size': 500000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
