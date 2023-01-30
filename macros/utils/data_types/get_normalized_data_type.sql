@@ -1,5 +1,6 @@
 {% macro get_normalized_data_type(exact_data_type) %}
-    {% set result = adapter.dispatch('get_normalized_data_type','elementary')(exact_data_type) %}
+    {% set exact_data_type_uppercase = exact_data_type | upper %}
+    {% set result = adapter.dispatch('get_normalized_data_type','elementary')(exact_data_type_uppercase) %}
     {{ return(result) }}
 {% endmacro %}
 
