@@ -1,8 +1,8 @@
-{%- macro upload_dbt_tests(should_commit=false, state_hashes=none) -%}
+{%- macro upload_dbt_tests(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, state_hashes=state_hashes) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -36,7 +36,7 @@
                                                                  ('original_path', 'long_string'),
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string'),
-                                                                 ('artifact_hash', 'string'),
+                                                                 ('metadata_hash', 'string'),
                                                                  ]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
@@ -158,7 +158,7 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
-    {% do flatten_test_metadata_dict.update({"artifact_hash": elementary.get_artifact_hash(flatten_test_metadata_dict)}) %}
+    {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 

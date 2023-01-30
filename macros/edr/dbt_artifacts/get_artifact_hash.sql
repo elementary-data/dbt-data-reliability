@@ -1,4 +1,4 @@
-{% macro get_artifact_hash(artifact) %}
+{% macro get_artifact_metadata_hash(artifact) %}
   {% if not local_md5 %}
     {% do return(none) %}
   {% endif %}

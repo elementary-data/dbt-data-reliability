@@ -18,8 +18,8 @@
 {% for artifact_model in artifact_models %}
 select
   '{{ artifact_model }}' as artifacts_model,
-   artifact_hash
+   metadata_hash
 from {{ ref(artifact_model) }}
 {% if not loop.last %} union all {% endif %}
 {% endfor %}
-order by artifact_hash
+order by metadata_hash
