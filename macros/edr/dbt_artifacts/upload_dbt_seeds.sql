@@ -67,8 +67,6 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
-    {% set time_excluded_dict = flatten_seed_metadata_dict.copy() %}
-    {% do time_excluded_dict.pop("generated_at") %}
-    {% do flatten_seed_metadata_dict.update({"artifact_hash": local_md5(time_excluded_dict | string) if local_md5 else none}) %}
+    {% do flatten_seed_metadata_dict.update({"artifact_hash": elementary.get_artifact_hash(flatten_seed_metadata_dict)}) %}
     {{ return(flatten_seed_metadata_dict) }}
 {% endmacro %}
