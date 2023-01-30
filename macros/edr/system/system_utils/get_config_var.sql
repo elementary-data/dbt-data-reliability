@@ -52,7 +52,8 @@
     'insert_rows_method': 'max_query_size',
     'project_name': none,
     'elementary_full_refresh': false,
-    'min_training_set_size': 14
+    'min_training_set_size': 14,
+    'cache_artifacts': true,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
