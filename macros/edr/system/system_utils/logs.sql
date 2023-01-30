@@ -9,8 +9,6 @@
         {% set debug_logs_enabled = elementary.get_config_var('debug_logs') %}
         {% if debug_logs_enabled %}
             {{ elementary.edr_log(msg) }}
-        {% else %}
-            {{ elementary.edr_log(msg, info=False) }}
         {% endif %}
     {%- endif %}
 {% endmacro %}
