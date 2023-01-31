@@ -68,15 +68,15 @@
                                                                    'CHARACTER':	'CHAR',
                                                                    'NCHAR':	'CHAR',
                                                                    'BPCHAR':	'CHAR',
-                                                                   'CHARACTER VARYING':	'VARCHAR',
-                                                                   'NVARCHAR':	'VARCHAR',
-                                                                   'TEXT':	'VARCHAR',
-                                                                   'TIMESTAMP WITHOUT TIME ZONE':	'TIMESTAMP',
-                                                                   'TIMESTAMP WITH TIME ZONE':	'TIMESTAMPTZ',
-                                                                   'TIME WITHOUT TIME ZONE':	'TIME',
+                                                                   'VARCHAR': 'CHARACTER VARYING',
+                                                                   'NVARCHAR':	'CHARACTER VARYING',
+                                                                   'TEXT':	'CHARACTER VARYING',
+                                                                   'TIMESTAMP': 'TIMESTAMP WITHOUT TIME ZONE',
+                                                                   'TIMESTAMPTZ': 'TIMESTAMP WITH TIME ZONE',
+                                                                   'TIME': 'TIME WITHOUT TIME ZONE',
                                                                    'TIME WITH TIME ZONE':	'TIMETZ',
-                                                                   'VARBINARY':	'VARBYTE',
-                                                                   'BINARY VARYING':	'VARBYTE'} %}
+                                                                   'VARBINARY': 'BINARY VARYING',
+                                                                   'VARBYTE': 'BINARY VARYING'} %}
  {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema%}
    {{ return (exact_data_type_to_data_type_returned_by_the_info_schema[exact_data_type])}}
  {%- else %}
