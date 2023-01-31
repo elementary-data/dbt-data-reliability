@@ -7,5 +7,11 @@
 {% endmacro %}
 
 {% macro datetime_now_utc_as_string() %}
-    {% do return(modules.datetime.datetime.utcnow().strftime(elementary.get_time_format())) %}
+    {% set now = modules.datetime.datetime.utcnow() %}
+    {% if elementary.get_config_var('custom_run_started_at') %}
+      {% set custom_run_started_at = elementary.get_run_started_at() %}
+      {% set timediff = custom_run_started_at - run_started_at.replace(tzinfo=None) %}
+      {% set now = now + timediff %}
+    {% endif %}
+    {% do return(now.strftime(elementary.get_time_format())) %}
 {% endmacro %}
