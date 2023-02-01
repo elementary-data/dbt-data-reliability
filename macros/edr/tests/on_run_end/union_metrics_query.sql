@@ -24,7 +24,9 @@
                 bucket_duration_hours,
                 updated_at,
                 dimension,
-                dimension_value
+                dimension_value,
+                config__timestamp_column,
+                config__where_expression
             from metrics_with_duplicates
             where row_number = 1
         {%- endset %}

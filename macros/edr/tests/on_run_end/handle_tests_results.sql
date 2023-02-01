@@ -54,7 +54,6 @@
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
             {{ elementary.debug_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
-            {%- do debug() -%}
             {%- if target_relation and temp_relation and dest_columns %}
                 {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'id', dest_columns) %}
                 {%- do run_query(merge_sql) %}
