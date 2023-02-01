@@ -1,6 +1,10 @@
 version: 2
 
 models:
+  - name: one
+    meta:
+      owner: "{{ var('one_owner', none) }}"
+
   - name: any_type_column_anomalies
     meta:
       owner: [ '@edr', 'ele@data.com', 'another@mail.com' ]
