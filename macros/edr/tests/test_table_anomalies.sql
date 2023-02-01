@@ -43,9 +43,6 @@
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation, timestamp_column, min_bucket_start, table_monitors, where_expression, time_bucket, metric_args=kwargs) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
-
-        -- call new macro
-
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
