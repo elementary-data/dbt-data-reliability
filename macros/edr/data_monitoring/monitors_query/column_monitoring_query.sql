@@ -88,7 +88,9 @@
                 {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value
+            {{ elementary.null_string() }} as dimension_value,
+            {{elementary.quote(timestamp_column) if timestamp_column else elementary.null_string() }} as config__timestamp_column,
+            {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
         from column_monitors_unpivot
 
     )
@@ -98,7 +100,10 @@
             'full_table_name',
             'column_name',
             'metric_name',
-            'bucket_end'
+            'bucket_end',
+          'bucket_duration_hours',
+          'config__timestamp_column',
+          'config__where_expression'
         ]) }} as id,
         full_table_name,
         column_name,
@@ -110,7 +115,9 @@
         bucket_duration_hours,
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
-        dimension_value
+        dimension_value,
+        config__timestamp_column,
+        config__where_expression
     from metrics_final
 
 {% endmacro %}

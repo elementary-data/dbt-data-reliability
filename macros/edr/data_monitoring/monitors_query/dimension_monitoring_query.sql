@@ -92,7 +92,9 @@
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
                    {{ elementary.const_as_string(dimensions_string) }} as dimension,
-                   dimension_value
+                   dimension_value,
+                   {{elementary.quote(timestamp_column) }} as config__timestamp_column,
+                   {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
             from row_count_values
         ),
 
@@ -108,7 +110,9 @@
             edr_bucket_end as bucket_end,
             {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             dimension,
-            dimension_value
+            dimension_value,
+            config__timestamp_column,
+            config__where_expression
         from
             row_count
         where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
@@ -206,7 +210,9 @@
             select
                 {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
-                {{ elementary.row_count() }} as metric_value
+                {{ elementary.row_count() }} as metric_value,
+                {{ elementary.null_string() }} as config__timestamp_column,
+                {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
             from {{ monitored_table_relation }}
             {% if where_expression %}
                 where {{ where_expression }}
@@ -225,7 +231,9 @@
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
-                dimension_value
+                dimension_value,
+                config__timestamp_column,
+                config__where_expression
             from row_count
         )
     {% endif %}
@@ -237,7 +245,10 @@
             'metric_name',
             'dimension',
             'dimension_value',
-            'bucket_end'
+            'bucket_end',
+            'bucket_duration_hours',
+            'config__timestamp_column',
+            'config__where_expression'
         ]) }} as id,
         full_table_name,
         column_name,
@@ -249,7 +260,9 @@
         bucket_duration_hours,
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
-        dimension_value
+        dimension_value,
+        config__timestamp_column,
+        config__where_expression
     from metrics_final
 
 {% endmacro %}
