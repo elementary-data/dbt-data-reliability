@@ -84,7 +84,7 @@ models:
   - name: error_model
     description: We use this model to create error runs and tests
     meta:
-      owner: "elon@elementary-data.com @elon egk"
+      owner: ["elon@elementary-data.com", "@elon", "egk"]
     config:
       tags: ["error_model"]
     columns:
