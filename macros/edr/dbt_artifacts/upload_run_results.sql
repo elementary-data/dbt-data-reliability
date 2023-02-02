@@ -28,7 +28,7 @@
                                                                        ('compiled_code', 'long_string'),
                                                                        ('failures', 'bigint'),
                                                                        ('query_id', 'string'),
-                                                                       ('thread_id', 'bigint')
+                                                                       ('thread_id', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
