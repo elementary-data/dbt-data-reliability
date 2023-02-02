@@ -202,6 +202,9 @@ models:
         data_type: string
         description: Query ID in the data warehouse, if returned by the adapter (currently only supported in Snowflake, is null for any other adapter).
 
+      - name: thread_id
+        data_type: int
+        description: Id of the thread of this resource run.
 
   - name: elementary_test_results
     description: >
