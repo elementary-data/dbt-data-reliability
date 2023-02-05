@@ -271,6 +271,23 @@ models:
       - elementary.schema_changes:
           tags: ["schema_changes"]
 
+  - name: config_change_consistency_volume_anomalies
+    description: >
+      This table has 300 events per 4 hours upto [Epoch - 2 days]; then it has  300 events once per day for 2 days.
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+      - elementary.volume_anomalies:
+          where_expression: " user_name = 'UNIQUE_STRING_USER_NAME' "
+          time_bucket:
+            period: hour
+            count: 4
+          sensitivity: 1
+          config:
+            severity: warn
+          tags: ["config_change_consistency_volume_anomalies"]
+
 sources:
   - name: training
     schema: test_seeds
