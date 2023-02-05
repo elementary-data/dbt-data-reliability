@@ -106,8 +106,10 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        if: inputs.dbt-version
-        run: pip install "dbt-core==${{ inputs.dbt-version }}" "dbt-${{ inputs.warehouse-type }}<=${{ inputs.dbt-version }}"
+        run:
+          pip install --pre
+          "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
+          "dbt-${{ inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ inputs.warehouse-type }}]"
@@ -120,7 +122,7 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}/integration_tests
         run: |
           pip install -r requirements.txt
-          py.test -v --target "${{ inputs.warehouse-type }}"
+          pytest -vv --target "${{ inputs.warehouse-type }}"
 
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
