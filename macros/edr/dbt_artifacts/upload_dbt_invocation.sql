@@ -36,7 +36,7 @@
       'pull_request_id': elementary.get_first_env_var(["DBT_PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
       'orchestrator': elementary.get_orchestrator(),
-      'dbt_user': elementary.dbt_user(["DBT_USER"]),
+      'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
