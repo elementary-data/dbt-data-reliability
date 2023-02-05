@@ -80,7 +80,7 @@
                   'full_table_name',
                   'column_name',
                   'metric_name',
-                  'dimension',
+                  'bucket_end',
                   'config__timestamp_column',
                   'config__where_expression',
                   'config__time_bucket'
