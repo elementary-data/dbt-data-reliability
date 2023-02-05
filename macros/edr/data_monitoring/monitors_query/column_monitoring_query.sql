@@ -90,7 +90,8 @@
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
             {{elementary.quote(timestamp_column) if timestamp_column else elementary.null_string() }} as config__timestamp_column,
-            {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
+            {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression,
+            {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
         from column_monitors_unpivot
 
     )
@@ -101,9 +102,9 @@
             'column_name',
             'metric_name',
             'bucket_end',
-          'bucket_duration_hours',
           'config__timestamp_column',
-          'config__where_expression'
+          'config__where_expression',
+          'config__time_bucket'
         ]) }} as id,
         full_table_name,
         column_name,
@@ -117,7 +118,8 @@
         dimension,
         dimension_value,
         config__timestamp_column,
-        config__where_expression
+        config__where_expression,
+        config__time_bucket
     from metrics_final
 
 {% endmacro %}

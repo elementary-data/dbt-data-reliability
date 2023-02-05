@@ -94,7 +94,8 @@
                    {{ elementary.const_as_string(dimensions_string) }} as dimension,
                    dimension_value,
                    {{elementary.quote(timestamp_column) }} as config__timestamp_column,
-                   {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
+                   {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression,
+                   {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
             from row_count_values
         ),
 
@@ -112,7 +113,8 @@
             dimension,
             dimension_value,
             config__timestamp_column,
-            config__where_expression
+            config__where_expression,
+            config__time_bucket
         from
             row_count
         where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
@@ -212,7 +214,8 @@
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value,
                 {{ elementary.null_string() }} as config__timestamp_column,
-                {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression
+                {{elementary.quote(where_expression) if where_expression else elementary.null_string() }} as config__where_expression,
+                {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
             from {{ monitored_table_relation }}
             {% if where_expression %}
                 where {{ where_expression }}
@@ -233,7 +236,8 @@
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value,
                 config__timestamp_column,
-                config__where_expression
+                config__where_expression,
+                config__time_bucket
             from row_count
         )
     {% endif %}
@@ -246,9 +250,9 @@
             'dimension',
             'dimension_value',
             'bucket_end',
-            'bucket_duration_hours',
             'config__timestamp_column',
-            'config__where_expression'
+            'config__where_expression',
+            'config__time_bucket'
         ]) }} as id,
         full_table_name,
         column_name,
@@ -262,7 +266,8 @@
         dimension,
         dimension_value,
         config__timestamp_column,
-        config__where_expression
+        config__where_expression,
+        config__time_bucket
     from metrics_final
 
 {% endmacro %}

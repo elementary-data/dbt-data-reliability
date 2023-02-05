@@ -63,7 +63,15 @@
         {%- set all_columns_monitors = monitors | unique | list %}
         {#- query if there is an anomaly in recent metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
-        {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation, model_graph_node, sensitivity, backfill_days, all_columns_monitors, columns_only=true) %}
+        {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
+                                                                           model_graph_node,
+                                                                           sensitivity,
+                                                                           backfill_days,
+                                                                           all_columns_monitors,
+                                                                           columns_only=true,
+                                                                           timestamp_column=timestamp_column,
+                                                                           where_expression=where_expression,
+                                                                           time_bucket=time_bucket) %}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}

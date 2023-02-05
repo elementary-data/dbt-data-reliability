@@ -1,5 +1,10 @@
+
 {% macro quote(str) %}
-    {% do return("'{}'".format(str)) %}
+    {% do return("'{}'".format(str.replace("'","\\'"))) %}
+{% endmacro %}
+
+{% macro dict_to_quoted_json(d) %}
+    {% do return(elementary.quote(tojson(d))) %}
 {% endmacro %}
 
 {% macro quote_column(column_name) %}

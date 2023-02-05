@@ -46,7 +46,8 @@
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
             {{ elementary.quote(timestamp_column) }} as config__timestamp_column,
-            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression
+            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression,
+            {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
         from
             metrics
         where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
@@ -67,7 +68,8 @@
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
             {{ elementary.null_string() }} as config__timestamp_column,
-            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression
+            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression,
+            {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
         from metrics
 
         )
@@ -78,10 +80,10 @@
                   'full_table_name',
                   'column_name',
                   'metric_name',
-                  'bucket_duration_hours',
                   'dimension',
                   'config__timestamp_column',
-                  'config__where_expression'
+                  'config__where_expression',
+                  'config__time_bucket'
                   ]) }}  as id,
         full_table_name,
         column_name,
@@ -95,7 +97,8 @@
         dimension,
         dimension_value,
         config__timestamp_column,
-        config__where_expression
+        config__where_expression,
+        config__time_bucket
     from metrics_final
 
 {% endmacro %}
