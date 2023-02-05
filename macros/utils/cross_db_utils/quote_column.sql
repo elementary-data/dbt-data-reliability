@@ -1,7 +1,7 @@
 
 {% macro quote(str) %}
     {% set escaped_str = str | replace("'","\\'") %}
-    {% do return("'{}'".format(escaped_str) %}
+    {% do return("'{}'".format(escaped_str)) %}
 {% endmacro %}
 
 {% macro dict_to_quoted_json(d) %}
