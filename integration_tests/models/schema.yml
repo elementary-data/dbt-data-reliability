@@ -276,6 +276,8 @@ sources:
     schema: test_seeds
     tables:
       - name: any_type_column_anomalies_training
+        meta:
+          owner: ["@edr", "egk"]
         freshness:
           error_after:
             count: 1
@@ -290,14 +292,15 @@ sources:
               tags: ["event_freshness_anomalies"]
               event_timestamp_column: occurred_at
       - name: string_column_anomalies_training
+        meta:
+          owner: "@edr"
+          elementary:
+            timestamp_column: updated_at
         freshness:
           error_after:
             count: 1
             period: minute
         loaded_at_field: no_such_column
-        meta:
-          elementary:
-            timestamp_column: updated_at
         tests:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
@@ -312,6 +315,8 @@ sources:
     schema: test_seeds
     tables:
       - name: any_type_column_anomalies_validation
+        meta:
+          owner: "hello, world"
         freshness:
           warn_after:
             count: 1
