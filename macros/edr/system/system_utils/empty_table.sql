@@ -62,9 +62,7 @@
                                ('updated_at','timestamp'),
                                ('dimension','string'),
                                ('dimension_value','string'),
-                               ('config__timestamp_column','string'),
-                               ('config__where_expression','string'),
-                               ('config__time_bucket', 'string')]) }}
+                               ('metric_properties','string')]) }}
 {% endmacro %}
 
 {% macro empty_schema_columns_snapshot() %}

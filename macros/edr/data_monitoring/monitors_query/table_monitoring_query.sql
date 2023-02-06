@@ -1,6 +1,7 @@
-{% macro table_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, table_monitors, where_expression, time_bucket, metric_args) %}
+{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties, metric_args) %}
 
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {% set timestamp_colum = metric_properties['timestamp_column'] %}
 
     with monitored_table as (
         select * from {{ monitored_table_relation }}
@@ -45,9 +46,7 @@
             {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
-            {{ elementary.quote(timestamp_column) }} as config__timestamp_column,
-            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression,
-            {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
+            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
         from
             metrics
         where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
@@ -67,9 +66,7 @@
             {{ elementary.null_int() }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
-            {{ elementary.null_string() }} as config__timestamp_column,
-            {{ elementary.quote(where_expression) if where_expression else elementary.null_string()}} as config__where_expression,
-            {{elementary.dict_to_quoted_json(time_bucket) if time_bucket else elementary.null_string()}} as config__time_bucket
+            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
         from metrics
 
         )
@@ -81,9 +78,7 @@
                   'column_name',
                   'metric_name',
                   'bucket_end',
-                  'config__timestamp_column',
-                  'config__where_expression',
-                  'config__time_bucket'
+                  'metric_properties'
                   ]) }}  as id,
         full_table_name,
         column_name,
@@ -96,9 +91,7 @@
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value,
-        config__timestamp_column,
-        config__where_expression,
-        config__time_bucket
+        metric_properties
     from metrics_final
 
 {% endmacro %}

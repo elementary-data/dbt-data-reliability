@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, time_bucket = none, timestamp_column = none, where_expression = none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -31,16 +31,9 @@
                 {% if dimensions %}
                     and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
                 {% endif %}
-                {% if time_bucket %}
-                    and config__time_bucket = {{ elementary.dict_to_quoted_json(time_bucket) }}
+                {% if metric_properties %}
+                    and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% endif %}
-                {% if where_expression %}
-                    and config__where_expression = {{elementary.quote(where_expression) }}
-                {% endif %}
-                {% if timestamp_column %}
-                    and config__timestamp_column = {{ elementary.quote(timestamp_column) }}
-                {% endif %}
-
         ),
 
         union_metrics as (

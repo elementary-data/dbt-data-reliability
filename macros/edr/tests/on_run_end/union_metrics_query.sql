@@ -25,9 +25,7 @@
                 updated_at,
                 dimension,
                 dimension_value,
-                config__timestamp_column,
-                config__where_expression,
-                config__time_bucket
+                metric_properties
             from metrics_with_duplicates
             where row_number = 1
         {%- endset %}
