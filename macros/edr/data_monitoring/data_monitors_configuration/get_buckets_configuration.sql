@@ -44,6 +44,7 @@
         select
             case
                 when last_run is null then min_start
+                when last_run < min_start then min_start
                 when last_run < backfill_start then last_run
                 else backfill_start
             end as min_start
