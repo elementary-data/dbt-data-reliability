@@ -24,7 +24,7 @@
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
-            {% if metric_properties['where_expression'] %}
+            {% if metric_properties['where_expression'] != "Null" %}
                 and {{ metric_properties['where_expression'] }}
             {% endif %}
         ),
@@ -124,7 +124,7 @@
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
-        {% if metric_properties['where_expression'] %}
+        {% if metric_properties['where_expression'] != "Null" %}
             and {{ metric_properties['where_expression'] }}
         {% endif %}
         ),
@@ -215,7 +215,7 @@
                 {{ elementary.row_count() }} as metric_value,
                 {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from {{ monitored_table_relation }}
-            {% if metric_properties['where_expression'] %}
+            {% if metric_properties['where_expression'] != "Null" %}
                 and {{ metric_properties['where_expression'] }}
             {% endif %}
             {{ dbt_utils.group_by(2) }}
