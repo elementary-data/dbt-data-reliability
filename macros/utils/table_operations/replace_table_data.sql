@@ -5,7 +5,7 @@
 {# Default (Bigquery & Snowflake) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
+    {% do elementary.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
 {% endmacro %}
 
 {# Spark / Databricks - truncate and insert (non-atomic) #}
@@ -25,7 +25,7 @@
         insert into {{ relation }} select * from {{ intermediate_relation }};
         commit;
     {% endset %}
-    {% do dbt.run_query(query) %}
+    {% do elementary.run_query(query) %}
 {% endmacro %}
 
 {% macro create_intermediate_relation(base_relation, rows, temporary) %}

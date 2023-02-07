@@ -22,7 +22,7 @@
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.debug_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% do dbt.run_query(insert_query) %}
+        {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
