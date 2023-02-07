@@ -5,7 +5,7 @@
     )
     select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
-  {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
+  {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
 {% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
