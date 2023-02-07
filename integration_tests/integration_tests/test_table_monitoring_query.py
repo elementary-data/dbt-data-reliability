@@ -125,14 +125,14 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                                                 "updated_at": "timestamp",
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
-
+    metric_properties = {'time_bucket': time_bucket, 'timestamp_column': timestamp_column, 'where_expression': "Null"}
     query = dbt_project.execute_macro("elementary.table_monitoring_query",
                                       monitored_table_relation=relation,
-                                      timestamp_column=timestamp_column,
                                       min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
                                       table_monitors=[metric],
-                                      time_bucket=time_bucket,
-                                      metric_args=metric_args)
+                                      metric_args=metric_args,
+                                      metric_properties=metric_properties)
+
     res_table = dbt_project.execute_sql(query)
     res_table = lowercase_column_names(res_table)
     assert len(res_table) == len(expected_metrics)      # Ensure there are no duplicates
