@@ -1,5 +1,4 @@
 {% macro column_monitoring_query(monitored_table_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}
-
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     with buckets as (
