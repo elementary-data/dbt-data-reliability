@@ -15,7 +15,7 @@
 {% endmacro %}
 
 
-{% macro get_test_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none) %}
+{% macro get_test_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none,metric_properties=none) %}
     {%- set min_bucket_start = elementary.get_min_bucket_start() %}
     {% if not elementary.is_incremental_model(model_graph_node) %}
         {% do return(min_bucket_start) %}
@@ -40,6 +40,10 @@
             {%- if column_name %}
                 and upper(column_name) = upper('{{ column_name }}')
             {%- endif %}
+            {%- if metric_properties %}
+                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
+            {%- endif %}
+
             )
         select
             case

@@ -57,8 +57,11 @@
                 {%- set ignore_column = elementary.should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
-                    {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node, backfill_days, column_monitors, column_name)) %}
-                    {# todo :aup: fix function and use metric_properties#}
+                    {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node,
+                                                                                                     backfill_days,
+                                                                                                     column_monitors,
+                                                                                                     column_name,
+                                                                                                     metric_properties=metric_properties)) %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
                     {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}

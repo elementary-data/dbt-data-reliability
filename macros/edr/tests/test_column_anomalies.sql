@@ -47,8 +47,11 @@
         {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node, backfill_days, column_monitors, column_name)) %}
-        {# todo :aup: pass metric properties to function and use it #}
+        {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node,
+                                                                                         backfill_days,
+                                                                                         column_monitors,
+                                                                                         column_name,
+                                                                                         metric_properties=metric_properties)) %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
