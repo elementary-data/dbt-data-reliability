@@ -125,7 +125,7 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                                                 "updated_at": "timestamp",
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
-    metric_properties = {'time_bucket': time_bucket, 'timestamp_column': timestamp_column, 'where_expression': "Null"}
+    metric_properties = {'time_bucket': time_bucket, 'timestamp_column': timestamp_column, 'where_expression': None}
     query = dbt_project.execute_macro("elementary.table_monitoring_query",
                                       monitored_table_relation=relation,
                                       min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
