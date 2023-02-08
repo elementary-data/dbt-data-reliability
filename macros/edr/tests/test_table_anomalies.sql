@@ -47,7 +47,6 @@
                                                                                          backfill_days,
                                                                                          table_monitors,
                                                                                          metric_properties=metric_properties)) %}
-        {# todo :aup: fix function #}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
