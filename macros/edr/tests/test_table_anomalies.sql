@@ -4,7 +4,7 @@
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
-    {% do debug() %}
+
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% if not time_bucket %}
           {% set time_bucket = elementary.get_default_time_bucket() %}
