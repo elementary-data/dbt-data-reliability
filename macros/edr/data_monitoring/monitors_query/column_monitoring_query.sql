@@ -23,7 +23,7 @@
         {%- else %}
             true
         {%- endif %}
-        {% if metric_properties.where_expression != "Null" %} and {{ metric_properties.where_expression }} {% endif %}
+        {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
     ),
 
     column_monitors as (

@@ -47,8 +47,6 @@
     ]) }}
 {% endmacro %}
 
-{# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}
-{# Therefore we added "dimension" and "dimension_value" , "config__timestamp_column", "config__where_expression" and "config__time_bucket" at the end of the table. #}
 {% macro empty_data_monitoring_metrics() %}
     {{ elementary.empty_table([('id','string'),
                                ('full_table_name','string'),
