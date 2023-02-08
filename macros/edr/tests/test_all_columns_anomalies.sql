@@ -40,7 +40,7 @@
         {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties['timestamp_column'], timestamp_column_data_type) %}
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
-        {% if metric_properties['timestamp_column']!= "Null" and not is_timestamp %}
+        {% if metric_properties['timestamp_column'] and not is_timestamp %}
           {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties['timestamp_column'])) %}
         {% endif %}
 
