@@ -5,7 +5,7 @@
 {% endmacro %}
 
 {% macro dict_to_quoted_json(d) %}
-    {% do return(elementary.quote(tojson(d, sort_keys=true))) %}
+    {% do return(elementary.cast_as_string(elementary.quote(tojson(d, sort_keys=true)))) %}
 {% endmacro %}
 
 {% macro quote_column(column_name) %}
