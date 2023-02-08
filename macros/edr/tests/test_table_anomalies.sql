@@ -4,6 +4,7 @@
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
+    {% do debug() %}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% if not time_bucket %}
           {% set time_bucket = elementary.get_default_time_bucket() %}
@@ -29,14 +30,14 @@
                                                                                time_bucket=time_bucket) %}
 
 
-        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties['timestamp_column']) %}
-        {{ elementary.debug_log('timestamp_column - ' ~ metric_properties['timestamp_column']) }}
+        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
+        {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
-        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties['timestamp_column'], timestamp_column_data_type) %}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties.timestamp_column, timestamp_column_data_type) %}
         {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
         {% if timestamp_column and not is_timestamp %}
-          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties['timestamp_column'])) %}
+          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties.timestamp_column)) %}
         {% endif %}
 
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
@@ -56,6 +57,7 @@
                                                                            metric_properties=metric_properties,
                                                                            metric_args=kwargs) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
+
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}

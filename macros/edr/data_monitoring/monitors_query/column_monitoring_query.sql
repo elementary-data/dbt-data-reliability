@@ -2,16 +2,16 @@
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     with buckets as (
-        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(metric_properties['time_bucket']) }}) results
+        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
         {% if min_bucket_start -%}
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         {%- endif %}
     ),
-    {% set timestamp_column = metric_properties['timestamp_column'] %}
+    {% set timestamp_column = metric_properties.timestamp_column %}
     filtered_monitored_table as (
         select {{ column_obj.quoted }}
             {% if timestamp_column -%}
-             , {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties['time_bucket']) }} as start_bucket_in_data
+             , {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             {%- else %}
             , {{ elementary.null_timestamp() }} as start_bucket_in_data
             {%- endif %}
@@ -23,7 +23,7 @@
         {%- else %}
             true
         {%- endif %}
-        {% if metric_properties['where_expression'] %} and {{ metric_properties['where_expression'] }} {% endif %}
+        {% if metric_properties.where_expression != "Null" %} and {{ metric_properties.where_expression }} {% endif %}
     ),
 
     column_monitors as (

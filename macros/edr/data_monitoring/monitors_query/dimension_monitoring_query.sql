@@ -4,7 +4,7 @@
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
 
-    {% set timestamp_column = metric_properties['timestamp_column'] %}
+    {% set timestamp_column = metric_properties.timestamp_column %}
 
     {% if timestamp_column %}
         with buckets as (
@@ -12,20 +12,20 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties['time_bucket']) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
         filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
-                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties['time_bucket']) }} as start_bucket_in_data
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
                 {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
                 and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
-            {% if metric_properties['where_expression'] %}
-                and {{ metric_properties['where_expression'] }}
+            {% if metric_properties.where_expression %}
+                and {{ metric_properties.where_expression }}
             {% endif %}
         ),
 
@@ -124,8 +124,8 @@
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
-        {% if metric_properties['where_expression'] %}
-            and {{ metric_properties['where_expression'] }}
+        {% if metric_properties.where_expression != "Null" %}
+            and {{ metric_properties.where_expression }}
         {% endif %}
         ),
         
@@ -139,8 +139,8 @@
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.quote(metric_name) }}
                 and dimension = {{ elementary.quote(dimensions_string) }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd(metric_properties['time_bucket'].period,
-                                                                                              metric_properties['time_bucket'].count,
+                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd(metric_properties.time_bucket.period,
+                                                                                              metric_properties.time_bucket.count,
                                                                                               elementary.cast_as_timestamp(min_bucket_start)) }}
         ),
 
@@ -186,7 +186,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties['time_bucket']) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         ),
 
@@ -215,8 +215,8 @@
                 {{ elementary.row_count() }} as metric_value,
                 {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from {{ monitored_table_relation }}
-            {% if metric_properties['where_expression'] %}
-                and {{ metric_properties['where_expression'] }}
+            {% if metric_properties.where_expression != "Null" %}
+                and {{ metric_properties.where_expression }}
             {% endif %}
             {{ dbt_utils.group_by(2) }}
         ),

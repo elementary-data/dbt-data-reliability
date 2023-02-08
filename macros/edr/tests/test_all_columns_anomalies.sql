@@ -34,14 +34,14 @@
 
 
 
-        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties['timestamp_column']) %}
-        {{ elementary.debug_log('timestamp_column - ' ~ metric_properties['timestamp_column']) }}
+        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
+        {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}
         {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
-        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties['timestamp_column'], timestamp_column_data_type) %}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties.timestamp_column, timestamp_column_data_type) %}
         {{- elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
 
-        {% if metric_properties['timestamp_column'] and not is_timestamp %}
-          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties['timestamp_column'])) %}
+        {% if metric_properties.timestamp_column!= "Null" and not is_timestamp %}
+          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties.timestamp_column)) %}
         {% endif %}
 
         {%- set column_objs_and_monitors = elementary.get_all_column_obj_and_monitors(model_relation, column_anomalies) -%}
