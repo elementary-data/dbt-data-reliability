@@ -14,7 +14,6 @@
     {% set numeric_monitors = [] %}
 
 
-    {# todo in here: ask someone who understands these unit tests to make sure if they are ran and how #}
     {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
                                                                            where_expression=none,
                                                                            time_bucket=none)%}
