@@ -124,12 +124,17 @@ def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, exp
                                                                 "updated_at": "timestamp",
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
-    metric_properties = {'time_bucket': time_bucket, 'timestamp_column': timestamp_column, 'where_expression': None}
+    metric_properties = {'time_bucket': time_bucket,
+                         'timestamp_column': timestamp_column,
+                         'where_expression': None,
+                         # dict.get(x) defaults to dict.get(x, None) so this
+                         'freshness_column': metric_args.get('freshness_column'),
+                         'event_timestamp_column': metric_args.get('event_timestamp_column')
+                         }
     query = dbt_project.execute_macro("elementary.table_monitoring_query",
                                       monitored_table_relation=relation,
                                       min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
                                       table_monitors=[metric],
-                                      metric_args=metric_args,
                                       metric_properties=metric_properties)
 
     res_table = dbt_project.execute_sql(query)
