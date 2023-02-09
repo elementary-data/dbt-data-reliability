@@ -34,14 +34,12 @@
                 {{ elementary.cast_as_timestamp(elementary.quote(backfill_bucket_start)) }} as backfill_start
             from {{ ref('monitors_runs') }}
             where upper(full_table_name) = upper('{{ full_table_name }}')
+              and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
             {%- if monitors %}
                 and metric_name in {{ monitors_tuple }}
             {%- endif %}
             {%- if column_name %}
                 and upper(column_name) = upper('{{ column_name }}')
-            {%- endif %}
-            {%- if metric_properties %}
-                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
             {%- endif %}
 
             )

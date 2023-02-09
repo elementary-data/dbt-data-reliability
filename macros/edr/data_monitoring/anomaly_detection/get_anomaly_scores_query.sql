@@ -25,6 +25,7 @@
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
                 bucket_end >= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}
+                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
                 {% endif %}
@@ -38,9 +39,6 @@
                 {%- endif %}
                 {% if dimensions %}
                     and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
-                {% endif %}
-                {% if metric_properties %}
-                    and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% endif %}
         ),
 
