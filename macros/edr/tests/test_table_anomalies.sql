@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket, event_timestamp_column=none,freshness_column=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -27,7 +27,9 @@
 
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
-                                                                               time_bucket=time_bucket) %}
+                                                                               time_bucket=time_bucket,
+                                                                               event_timestamp_column=event_timestamp_column,
+                                                                               freshness_column=freshness_column) %}
 
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
@@ -53,8 +55,7 @@
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation,
                                                                            min_bucket_start,
                                                                            table_monitors,
-                                                                           metric_properties=metric_properties,
-                                                                           metric_args=kwargs) %}
+                                                                           metric_properties=metric_properties) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
