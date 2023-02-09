@@ -1,6 +1,6 @@
 
 {% macro quote(str) %}
-    {% set escaped_str = str | replace("'","\\'") %}
+    {% set escaped_str = elementary.escape_special_chars(str) %}
     {% do return("'{}'".format(escaped_str)) %}
 {% endmacro %}
 
