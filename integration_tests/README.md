@@ -45,3 +45,6 @@ The credentials are:
 
 - **Email**: admin@admin.com
 - **Password**: admin
+
+It is also recommended to set the search path to your Elementary schema by running: `SET search_path = edr_elementary`.  
+That will allow you to do `SELECT * FROM dbt_models` rather than `SELECT * FROM edr_elementary.dbt_models`.

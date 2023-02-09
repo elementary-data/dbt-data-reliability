@@ -2,6 +2,7 @@
     {{ elementary.debug_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
     {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
+    {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
     {% set tables_cache = elementary.get_cache("tables") %}
     {% set test_metrics_tables = tables_cache.get("metrics") %}
     {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
@@ -11,6 +12,10 @@
     {% if elementary_test_results %}
       {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
       {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
+    {% endif %}
+    {% if test_result_rows %}
+      {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
+      {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
     {% endif %}
     {{ elementary.debug_log("Handled test results successfully.") }}
     {{ return('') }}
@@ -89,4 +94,18 @@
             {%- endif %}
         {%- endif %}
     {%- endif %}
+{% endmacro %}
+
+{% macro pop_test_result_rows(elementary_test_results) %}
+  {% set result_rows = [] %}
+  {% for test_result in elementary_test_results %}
+    {% for result_row in test_result.pop('result_rows', []) %}
+      {% do result_rows.append({
+        "elementary_test_results_id": test_result.id,
+        "detected_at": test_result.detected_at,
+        "result_row": result_row
+      }) %}
+    {% endfor %}
+  {% endfor %}
+  {% do return(result_rows) %}
 {% endmacro %}
