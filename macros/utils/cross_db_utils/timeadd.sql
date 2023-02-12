@@ -1,6 +1,6 @@
 {# Same as dateadd, but supports timestamps as well and not just dates #}
 {% macro edr_timeadd(date_part, number, timestamp_expression) -%}
-    {{ return(adapter.dispatch('timeadd', 'elementary')(date_part, number, timestamp_expression)) }}
+    {{ return(adapter.dispatch('edr_timeadd', 'elementary')(date_part, number, timestamp_expression)) }}
 {%- endmacro %}
 
 {# Snowflake #}

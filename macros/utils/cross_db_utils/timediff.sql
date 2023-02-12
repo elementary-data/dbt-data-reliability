@@ -1,6 +1,6 @@
 {# Same as datediff, but supports timestamps as well and not just dates #}
 {% macro edr_timediff(timepart, first_timestamp, second_timestamp) -%}
-    {{ return(adapter.dispatch('timediff', 'elementary')(timepart, first_timestamp, second_timestamp)) }}
+    {{ return(adapter.dispatch('edr_timediff', 'elementary')(timepart, first_timestamp, second_timestamp)) }}
 {%- endmacro %}
 
 {# Snowflake #}

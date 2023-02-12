@@ -1,6 +1,6 @@
 {# Same as date trunc, but casts the time/date expression to timestamp #}
 {% macro edr_time_trunc(date_part, date_expression) -%}
-    {{ return(adapter.dispatch('time_trunc', 'elementary') (date_part, date_expression)) }}
+    {{ return(adapter.dispatch('edr_time_trunc', 'elementary') (date_part, date_expression)) }}
 {%- endmacro %}
 
 {% macro default__edr_time_trunc(date_part, date_expression) %}

@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {%- macro edr_type_bool() -%}
-    {{ return(adapter.dispatch('type_bool', 'elementary')()) }}
+    {{ return(adapter.dispatch('edr_type_bool', 'elementary')()) }}
 {%- endmacro -%}
 
 {% macro default__edr_type_bool() %}
@@ -21,7 +21,7 @@
 
 
 {%- macro edr_type_string() -%}
-    {{ return(adapter.dispatch('type_string', 'elementary')()) }}
+    {{ return(adapter.dispatch('edr_type_string', 'elementary')()) }}
 {%- endmacro -%}
 
 {% macro default__edr_type_string() %}
@@ -46,7 +46,7 @@
 
 
 {%- macro edr_type_long_string() -%}
-    {{ return(adapter.dispatch('type_long_string', 'elementary')()) }}
+    {{ return(adapter.dispatch('edr_type_long_string', 'elementary')()) }}
 {%- endmacro -%}
 
 {%- macro default__edr_type_long_string() -%}

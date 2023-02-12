@@ -1,5 +1,5 @@
 {% macro edr_to_char(column, format) -%}
-    {{ return(adapter.dispatch('to_char', 'elementary')(column, format)) }}
+    {{ return(adapter.dispatch('edr_to_char', 'elementary')(column, format)) }}
 {%- endmacro %}
 
 {# Snowflake and Redshift/Postgres #}

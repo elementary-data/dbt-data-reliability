@@ -1,5 +1,5 @@
 {% macro edr_safe_cast(field, type) %}
-    {{ return(adapter.dispatch('safe_cast', 'elementary') (field, type)) }}
+    {{ return(adapter.dispatch('edr_safe_cast', 'elementary') (field, type)) }}
 {% endmacro %}
 
 {% macro default__edr_safe_cast(field, type) %}

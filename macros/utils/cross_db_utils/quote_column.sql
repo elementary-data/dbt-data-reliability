@@ -3,7 +3,7 @@
 {% endmacro %}
 
 {% macro edr_quote_column(column_name) %}
-    {{ adapter.dispatch('quote_column','elementary')(column_name) }}
+    {{ adapter.dispatch('edr_quote_column','elementary')(column_name) }}
 {% endmacro %}
 
 {%- macro default__edr_quote_column(column_name) -%}
