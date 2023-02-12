@@ -42,9 +42,13 @@ def insert_rows_from_csv(dbt_project: DbtProject, relation: BaseRelation, rows_p
     def fillna(row):
         d = {k: (None if v == '' else v) for (k, v) in row.items()}
         return d
+    def convert_numeric_columns(row, numeric_columns = ['metric_value','bucket_duration_hours']):
+        d = {k: eval(v) if k in numeric_columns else v for (k,v) in row.items()}
+        return d
+
     with open(rows_path) as rows_csv:
         reader = csv.DictReader(rows_csv)
-        rows = [fillna(row) for row in reader]
+        rows = [convert_numeric_columns(fillna(row)) for row in reader]
         insert_rows_from_list_of_dicts(dbt_project, relation, rows)
 
 def insert_rows(dbt_project: DbtProject, relation: BaseRelation, rows: Union[str, List[Dict]]):
