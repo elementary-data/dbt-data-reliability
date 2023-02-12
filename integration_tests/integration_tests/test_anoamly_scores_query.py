@@ -38,6 +38,31 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'anomaly_sc
     expected_output=os.path.join(BASE_DIR, '8564_after.csv'),
     alias_table_name='numeric_column_anomalies'
 )
+@Parametrization.case(
+    name="row_count_1_day_1_row_no_anomalies",
+    metric_name="row_count",
+    input_rows=os.path.join(BASE_DIR, '9378_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, '9378_history.csv'),
+    expected_output=os.path.join(BASE_DIR, '9378_after.csv'),
+    alias_table_name='any_type_column_anomalies_training'
+)
+@Parametrization.case(
+    name="row_count_1_day_mostly_non_anomalous",
+    metric_name="row_count",
+    input_rows=os.path.join(BASE_DIR, '3620_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, '3620_history.csv'),
+    expected_output=os.path.join(BASE_DIR, '3620_after.csv'),
+    alias_table_name='string_column_anomalies_training'
+)
+@Parametrization.case(
+    name="row_count_4_hour_non_empty_history_with_anomalies_in_the_end",
+    metric_name="row_count",
+    input_rows=os.path.join(BASE_DIR, '808_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, '808_history.csv'),
+    expected_output=os.path.join(BASE_DIR, '808_after.csv'),
+    alias_table_name='any_type_column_anomalies',
+    time_bucket={"period": "hour", "count": 4},
+)
 def test_anomaly_scores_query(dbt_project: DbtProject,
                               input_rows,
                               input_rows_history,
@@ -104,10 +129,10 @@ def test_anomaly_scores_query(dbt_project: DbtProject,
 
     query = dbt_project.execute_macro("elementary.get_anomaly_scores_query",
                                       test_metrics_table_relation=my_test_metrics_relation,
-                                      model_graph_node=None,  # the table the test has ran on / is monitoring.
+                                      model_graph_node=node,  # the table the test has ran on / is monitoring.
                                       sensitivity=3,  # for z-score (3 sigmas is the default)
                                       backfill_days=2,  # should be removed from the macro since it's not used TODO
-                                      monitors= [metric_name],  # a list of strings that should include "metric_name" as well.
+                                      monitors=[metric_name],  # a list of strings that should include "metric_name" as well.
                                                       # in code it's used to calc a bunch of metrics "all at once" on 1
                                                       # table, but in tests I think it makes sense to have 1 at a time.
                                       column_name=column_name,  # should be the same as in the input
@@ -124,18 +149,9 @@ def test_anomaly_scores_query(dbt_project: DbtProject,
         expected_res_df = pd.read_csv(expected_output)
     expected_res_df = expected_res_df.fillna("")
     res_df = res_df.fillna("")
-    #import pdb; pdb.set_trace()
     assert_dfs_equal(expected_res_df,
                      res_df,
                      columns_to_ignore=['detected_at','id','test_execution_id','test_unique_id'],
                      column_to_index_by='bucket_start',
                      datetime_columns=['bucket_start','bucket_end','detected_at','training_start','training_end'],
                      numeric_columns = ['anomaly_score', 'anomaly_score_threshold','metric_value','min_metric_value','max_metric_value', 'training_avg','training_stddev','training_set_size'])
-# @dataclass
-# class Node:
-#     database: str
-#     schema: str
-#     identifier: str
-#     alias: Optional[str]
-#     name: Optional[str]
-#

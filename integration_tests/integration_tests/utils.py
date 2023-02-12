@@ -39,9 +39,12 @@ def insert_rows_from_list_of_dicts(dbt_project: DbtProject, relation: BaseRelati
     )
 
 def insert_rows_from_csv(dbt_project: DbtProject, relation: BaseRelation, rows_path: str):
+    def fillna(row):
+        d = {k: (None if v == '' else v) for (k, v) in row.items()}
+        return d
     with open(rows_path) as rows_csv:
         reader = csv.DictReader(rows_csv)
-        rows = [row for row in reader]
+        rows = [fillna(row) for row in reader]
         insert_rows_from_list_of_dicts(dbt_project, relation, rows)
 
 def insert_rows(dbt_project: DbtProject, relation: BaseRelation, rows: Union[str, List[Dict]]):
