@@ -43,7 +43,7 @@ def insert_rows_from_csv(dbt_project: DbtProject, relation: BaseRelation, rows_p
         d = {k: (None if v == '' else v) for (k, v) in row.items()}
         return d
     def convert_numeric_columns(row, numeric_columns = ['metric_value','bucket_duration_hours']):
-        d = {k: eval(v) if k in numeric_columns else v for (k,v) in row.items()}
+        d = {k: eval(v) if (v and (k in numeric_columns)) else v for (k, v) in row.items()}
         return d
 
     with open(rows_path) as rows_csv:
