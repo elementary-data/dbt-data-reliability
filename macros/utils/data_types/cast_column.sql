@@ -26,6 +26,6 @@
     cast({{ column }} as {{ elementary.edr_type_bool() }})
 {%- endmacro -%}
 
-{%- macro edr_const_as_string(string) -%}
+{%- macro const_as_string(string) -%}
     cast('{{ string }}' as {{ elementary.edr_type_string() }})
 {%- endmacro -%}
