@@ -1,11 +1,11 @@
 {% macro column_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where_expression=none, time_bucket=none) %}
 
-    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     with buckets as (
         select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }}) results
         {% if min_bucket_start -%}
-          where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+          where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         {%- endif %}
     ),
 
@@ -19,8 +19,8 @@
         from {{ monitored_table_relation }}
         where
         {% if timestamp_column -%}
-            {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
-            and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
+            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
+            and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
         {%- else %}
             true
         {%- endif %}
@@ -61,7 +61,7 @@
 
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
-                select edr_column_name, edr_bucket_start, edr_bucket_end, {{ elementary.cast_as_string(elementary.quote(monitor)) }} as metric_name, {{ elementary.cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                select edr_column_name, edr_bucket_start, edr_bucket_end, {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name, {{ elementary.edr_cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
@@ -73,18 +73,18 @@
     metrics_final as (
 
         select
-            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
             edr_column_name as column_name,
             metric_name,
-            {{ elementary.cast_as_float('metric_value') }} as metric_value,
+            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
             {%- if timestamp_column %}
                 edr_bucket_start as bucket_start,
                 edr_bucket_end as bucket_end,
-                {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
+                {{ elementary.edr_timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             {%- else %}
                 {{ elementary.null_timestamp() }} as bucket_start,
-                {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,
@@ -94,7 +94,7 @@
     )
 
     select
-        {{ elementary.generate_surrogate_key([
+        {{ elementary.edr_generate_surrogate_key([
             'full_table_name',
             'column_name',
             'metric_name',
@@ -108,7 +108,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{ elementary.current_timestamp_in_utc() }} as updated_at,
+        {{ elementary.edr_current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value
     from metrics_final

@@ -17,9 +17,9 @@
             select * from {{ ref('data_monitoring_metrics') }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end >= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}
+                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end())) }}
                 {% if latest_full_refresh %}
-                    and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
+                    and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
                 {% endif %}
                 and upper(full_table_name) = upper('{{ full_table_name }}')
                 and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
@@ -30,7 +30,7 @@
                     and column_name is not null
                 {%- endif %}
                 {% if dimensions %}
-                    and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
+                    and dimension = {{ elementary.edr_quote(elementary.join_list(dimensions, '; ')) }}
                 {% endif %}
 
         ),
@@ -110,7 +110,7 @@
         anomaly_scores as (
 
             select
-                {{ elementary.generate_surrogate_key([
+                {{ elementary.edr_generate_surrogate_key([
                  'metric_id',
                  elementary.const_as_string(test_execution_id)
                 ]) }} as id,
