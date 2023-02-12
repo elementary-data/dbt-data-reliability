@@ -33,33 +33,33 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'anomaly_sc
 @Parametrization.case(
     name="freshness_1_day_mostly_non_anomalous",
     metric_name="freshness",
-    input_rows=os.path.join(BASE_DIR, '8564_test.csv'),
-    input_rows_history=os.path.join(BASE_DIR, '8564_history.csv'),
-    expected_output=os.path.join(BASE_DIR, '8564_after.csv'),
+    input_rows=os.path.join(BASE_DIR, 'freshness_1_day_mostly_non_anomalous_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, 'freshness_1_day_mostly_non_anomalous_history.csv'),
+    expected_output=os.path.join(BASE_DIR, 'freshness_1_day_mostly_non_anomalous_after.csv'),
     alias_table_name='numeric_column_anomalies'
 )
 @Parametrization.case(
     name="row_count_1_day_1_row_no_anomalies",
     metric_name="row_count",
-    input_rows=os.path.join(BASE_DIR, '9378_test.csv'),
-    input_rows_history=os.path.join(BASE_DIR, '9378_history.csv'),
-    expected_output=os.path.join(BASE_DIR, '9378_after.csv'),
+    input_rows=os.path.join(BASE_DIR, 'row_count_1_day_1_row_no_anomalies_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, 'row_count_1_day_1_row_no_anomalies_history.csv'),
+    expected_output=os.path.join(BASE_DIR, 'row_count_1_day_1_row_no_anomalies_after.csv'),
     alias_table_name='any_type_column_anomalies_training'
 )
 @Parametrization.case(
     name="row_count_1_day_mostly_non_anomalous",
     metric_name="row_count",
-    input_rows=os.path.join(BASE_DIR, '3620_test.csv'),
-    input_rows_history=os.path.join(BASE_DIR, '3620_history.csv'),
-    expected_output=os.path.join(BASE_DIR, '3620_after.csv'),
+    input_rows=os.path.join(BASE_DIR, 'row_count_1_day_mostly_non_anomalous_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, 'row_count_1_day_mostly_non_anomalous_history.csv'),
+    expected_output=os.path.join(BASE_DIR, 'row_count_1_day_mostly_non_anomalous_after.csv'),
     alias_table_name='string_column_anomalies_training'
 )
 @Parametrization.case(
     name="row_count_4_hour_non_empty_history_with_anomalies_in_the_end",
     metric_name="row_count",
-    input_rows=os.path.join(BASE_DIR, '808_test.csv'),
-    input_rows_history=os.path.join(BASE_DIR, '808_history.csv'),
-    expected_output=os.path.join(BASE_DIR, '808_after.csv'),
+    input_rows=os.path.join(BASE_DIR, 'row_count_4_hour_non_empty_history_with_anomalies_in_the_end_test.csv'),
+    input_rows_history=os.path.join(BASE_DIR, 'row_count_4_hour_non_empty_history_with_anomalies_in_the_end_history.csv'),
+    expected_output=os.path.join(BASE_DIR, 'row_count_4_hour_non_empty_history_with_anomalies_in_the_end_after.csv'),
     alias_table_name='any_type_column_anomalies',
     time_bucket={"period": "hour", "count": 4},
 )
