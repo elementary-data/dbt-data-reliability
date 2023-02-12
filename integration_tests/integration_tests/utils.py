@@ -79,8 +79,8 @@ def agate_table_to_pandas_dataframe(table):
 
 def assert_dfs_equal(df, df2, columns_to_ignore, column_to_index_by, datetime_columns,numeric_columns):
     for col in datetime_columns:
-        df[col] = pd.to_datetime(df[col],format='%Y-%m-%dT%H:%M:%S')
-        df2[col] = pd.to_datetime(df2[col], format='%Y-%m-%dT%H:%M:%S')
+        df[col] = pd.to_datetime(df[col], format='%Y-%m-%dT%H:%M:%S').dt.tz_localize(None)
+        df2[col] = pd.to_datetime(df2[col], format='%Y-%m-%dT%H:%M:%S').dt.tz_localize(None)
     for col in numeric_columns:
         df[col] = pd.to_numeric(df[col]).astype('float64')
         df2[col] = pd.to_numeric(df2[col]).astype('float64')
