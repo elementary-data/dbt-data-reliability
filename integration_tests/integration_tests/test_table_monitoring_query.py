@@ -120,22 +120,37 @@ RUN_STARTED_AT = datetime(2022, 1, 4, 0, 13, 42)
 )
 def test_table_monitoring_query(dbt_project: DbtProject, metric, input_rows, expected_metrics, time_bucket, timestamp_column, metric_args):
     update_var(dbt_project, "custom_run_started_at", RUN_STARTED_AT.strftime("%Y-%m-%d %H:%M:%S"))
-
     relation = create_test_table(dbt_project, "my_test_table", {"name": "string",
                                                                 "updated_at": "timestamp",
                                                                 "occurred_at": "timestamp"})
     insert_rows(dbt_project, relation, input_rows)
-
+    metric_properties = {'time_bucket': time_bucket,
+                         'timestamp_column': timestamp_column,
+                         'where_expression': None,
+                         # dict.get(x) defaults to dict.get(x, None) so this
+                         'freshness_column': metric_args.get('freshness_column'),
+                         'event_timestamp_column': metric_args.get('event_timestamp_column')
+                         }
     query = dbt_project.execute_macro("elementary.table_monitoring_query",
                                       monitored_table_relation=relation,
-                                      timestamp_column=timestamp_column,
                                       min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
                                       table_monitors=[metric],
-                                      time_bucket=time_bucket,
-                                      metric_args=metric_args)
+                                      metric_properties=metric_properties)
+
     res_table = dbt_project.execute_sql(query)
+
     res_table = lowercase_column_names(res_table)
     assert len(res_table) == len(expected_metrics)      # Ensure there are no duplicates
 
     result_metrics = {row["bucket_end"].replace(tzinfo=None): row["metric_value"] for row in res_table}
     assert result_metrics == expected_metrics
+
+
+# @dataclass
+# class Node:
+#     database: str
+#     schema: str
+#     identifier: str
+#     alias: Optional[str]
+#     name: Optional[str]
+#

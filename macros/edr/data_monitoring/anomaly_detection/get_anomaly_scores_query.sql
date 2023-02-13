@@ -1,8 +1,15 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
+
+    {% if not data_monitoring_metrics_table %}
+        {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
+          and in which case it holds mock history metrics #}
+          {% set data_monitoring_metrics_table = ref('data_monitoring_metrics') %}
+        {% endif %}
+
 
     {% if elementary.is_incremental_model(model_graph_node) %}
       {% set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
@@ -14,10 +21,11 @@
 
         with data_monitoring_metrics as (
 
-            select * from {{ ref('data_monitoring_metrics') }}
+            select * from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
                 bucket_end >= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_end())) }}
+                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.cast_as_timestamp(elementary.quote(latest_full_refresh)) }}
                 {% endif %}
@@ -32,7 +40,6 @@
                 {% if dimensions %}
                     and dimension = {{ elementary.quote(elementary.join_list(dimensions, '; ')) }}
                 {% endif %}
-
         ),
 
         union_metrics as (

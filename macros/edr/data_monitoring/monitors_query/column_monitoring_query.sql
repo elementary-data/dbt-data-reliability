@@ -1,18 +1,17 @@
-{% macro column_monitoring_query(monitored_table_relation, timestamp_column, min_bucket_start, column_obj, column_monitors, where_expression=none, time_bucket=none) %}
-
+{% macro column_monitoring_query(monitored_table_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
 
     with buckets as (
-        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(time_bucket) }}) results
+        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
         {% if min_bucket_start -%}
           where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
         {%- endif %}
     ),
-
+    {% set timestamp_column = metric_properties.timestamp_column %}
     filtered_monitored_table as (
         select {{ column_obj.quoted }}
             {% if timestamp_column -%}
-             , {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, time_bucket) }} as start_bucket_in_data
+             , {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             {%- else %}
             , {{ elementary.null_timestamp() }} as start_bucket_in_data
             {%- endif %}
@@ -24,7 +23,7 @@
         {%- else %}
             true
         {%- endif %}
-        {% if where_expression %} and {{ where_expression }} {% endif %}
+        {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
     ),
 
     column_monitors as (
@@ -88,7 +87,8 @@
                 {{ elementary.null_int() }} as bucket_duration_hours,
             {%- endif %}
             {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value
+            {{ elementary.null_string() }} as dimension_value,
+            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
         from column_monitors_unpivot
 
     )
@@ -98,7 +98,8 @@
             'full_table_name',
             'column_name',
             'metric_name',
-            'bucket_end'
+            'bucket_end',
+            'metric_properties'
         ]) }} as id,
         full_table_name,
         column_name,
@@ -110,7 +111,8 @@
         bucket_duration_hours,
         {{ elementary.current_timestamp_in_utc() }} as updated_at,
         dimension,
-        dimension_value
+        dimension_value,
+        metric_properties
     from metrics_final
 
 {% endmacro %}
