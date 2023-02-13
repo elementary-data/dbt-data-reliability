@@ -25,6 +25,7 @@
     ('failures', 'bigint'),
     ('test_short_name', 'string'),
     ('test_alias', 'string'),
+    ('result_rows', 'long_string')
     ]) }}
 {% endmacro %}
 
