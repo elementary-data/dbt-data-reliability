@@ -4,6 +4,13 @@ models:
   - name: one
     meta:
       owner: "{{ var('one_owner', none) }}"
+    columns:
+      - name: one
+        tests:
+          - accepted_values:
+              meta:
+                owner: "@elon"
+              values: [2, 3]
 
   - name: any_type_column_anomalies
     meta:

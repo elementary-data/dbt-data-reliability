@@ -42,10 +42,10 @@
     order by metadata_hash
     {% endset %}
     {% set artifacts_hashes_results = elementary.run_query(stored_artifacts_query) %}
-    {% set artifact_agate_hashes = artifacts_hashes_results.group_by("artifacts_model").select("metadata_hash") %}
+    {% set artifact_agate_hashes = artifacts_hashes_results.group_by("artifacts_model") %}
     {% set artifacts_hashes = {} %}
     {% for artifacts_model, metadata_hashes in artifact_agate_hashes.items() %}
-        {% do artifacts_hashes.update({artifacts_model: metadata_hashes.columns[0]}) %}
+        {% do artifacts_hashes.update({artifacts_model: metadata_hashes.columns["metadata_hash"]}) %}
     {% endfor %}
     {% do return(artifacts_hashes) %}
 {% endmacro %}

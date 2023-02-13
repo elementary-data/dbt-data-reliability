@@ -1,5 +1,11 @@
+
 {% macro quote(str) %}
-    {% do return("'{}'".format(str)) %}
+    {% set escaped_str = elementary.escape_special_chars(str) %}
+    {% do return("'{}'".format(escaped_str)) %}
+{% endmacro %}
+
+{% macro dict_to_quoted_json(d) %}
+    {% do return(elementary.cast_as_string(elementary.quote(tojson(d, sort_keys=true)))) %}
 {% endmacro %}
 
 {% macro quote_column(column_name) %}
