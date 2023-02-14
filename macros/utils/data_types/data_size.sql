@@ -17,3 +17,7 @@
 {% macro bigquery__get_column_size() %}
   {{ return(10485760) }}
 {% endmacro %}
+
+{% macro redshift__get_column_size() %}
+  {{ return(elementary.get_config_var('long_string_size')) }}
+{% endmacro %}
