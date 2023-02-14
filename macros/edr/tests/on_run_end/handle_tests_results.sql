@@ -1,8 +1,11 @@
 {% macro handle_tests_results() %}
     {{ elementary.debug_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
-    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
-    {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
+    {% set store_result_rows_in_own_table = elementary.get_config_var("store_result_rows_in_own_table") %}
+    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, render_result_rows=(not store_result_rows_in_own_table)) %}
+    {% if store_result_rows_in_own_table %}
+      {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
+    {% endif %}
     {% set tables_cache = elementary.get_cache("tables") %}
     {% set test_metrics_tables = tables_cache.get("metrics") %}
     {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
@@ -21,7 +24,7 @@
     {{ return('') }}
 {% endmacro %}
 
-{% macro get_result_enriched_elementary_test_results(cached_elementary_test_results) %}
+{% macro get_result_enriched_elementary_test_results(cached_elementary_test_results, render_result_rows=false) %}
   {% set elementary_test_results = [] %}
 
   {% for result in results | selectattr('node.resource_type', '==', 'test') %}
@@ -39,6 +42,9 @@
       {% set status = "pass" if failures == 0 else result.status %}
       {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id}) %}
       {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
+      {% if render_result_rows %}
+        {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
+      {% endif %}
       {% do elementary_test_results.append(elementary_test_results_row) %}
     {% endfor %}
   {% endfor %}
@@ -108,4 +114,12 @@
     {% endfor %}
   {% endfor %}
   {% do return(result_rows) %}
+{% endmacro %}
+
+{% macro render_result_rows(test_result_rows) %}
+  {% set column_size = elementary.get_column_size() %}
+  {% if not column_size or (tojson(test_result_rows) | length) < column_size %}
+    {% do return(test_result_rows) %}
+  {% endif %}
+  {% do return(none) %}
 {% endmacro %}

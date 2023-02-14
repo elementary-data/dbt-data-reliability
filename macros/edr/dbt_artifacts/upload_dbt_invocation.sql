@@ -106,7 +106,7 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(none) %}
+  {% do return(elementary.get_first_env_var(["DBT_ORCHESTRATOR"])) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
