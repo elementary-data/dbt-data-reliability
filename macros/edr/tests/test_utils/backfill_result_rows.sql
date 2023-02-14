@@ -16,7 +16,7 @@
         detected_at,
         result_rows
         from {{ ref("elementary", "elementary_test_results") }}
-        where {{ elementary.datediff(elementary.cast_as_timestamp('detected_at'), elementary.edr_current_timestamp(), 'day') }} < {{ elementary.get_config_var("days_back") }}
+        where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp('detected_at'), elementary.edr_current_timestamp(), 'day') }} < {{ elementary.get_config_var("days_back") }}
         and result_rows is not null
     {% endset %}
     {% set test_results_with_result_rows = elementary.run_query(backfill_query) %}
