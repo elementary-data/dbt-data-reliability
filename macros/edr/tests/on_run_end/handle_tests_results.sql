@@ -1,9 +1,9 @@
 {% macro handle_tests_results() %}
     {{ elementary.debug_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
-    {% set store_result_rows_in_table = elementary.get_config_var("store_result_rows_in_table") %}
-    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, render_result_rows=(not store_result_rows_in_table)) %}
-    {% if store_result_rows_in_table %}
+    {% set store_result_rows_in_own_table = elementary.get_config_var("store_result_rows_in_own_table") %}
+    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, render_result_rows=(not store_result_rows_in_own_table)) %}
+    {% if store_result_rows_in_own_table %}
       {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
     {% endif %}
     {% set tables_cache = elementary.get_cache("tables") %}
