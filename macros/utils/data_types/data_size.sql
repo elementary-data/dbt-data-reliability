@@ -19,5 +19,5 @@
 {% endmacro %}
 
 {% macro redshift__get_column_size() %}
-  {{ return(elementary.get_config_var('long_string_size')) }}
+  {{ return(elementary.default__get_column_size()) }}
 {% endmacro %}
