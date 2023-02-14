@@ -57,7 +57,7 @@
                 {%- set ignore_column = elementary.should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
-                    {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node,
+                    {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
                                                                                                      backfill_days,
                                                                                                      column_monitors,
                                                                                                      column_name,

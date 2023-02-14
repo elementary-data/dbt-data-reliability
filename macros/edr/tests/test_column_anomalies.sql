@@ -47,7 +47,7 @@
         {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.quote(elementary.get_test_min_bucket_start(model_graph_node,
+        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
                                                                                          backfill_days,
                                                                                          column_monitors,
                                                                                          column_name,

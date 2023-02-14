@@ -30,8 +30,8 @@
     {%- set min_bucket_start_query %}
         with min_times as (
             select min(last_bucket_end) as last_run,
-                {{ elementary.cast_as_timestamp(elementary.quote(min_bucket_start)) }} as min_start,
-                {{ elementary.cast_as_timestamp(elementary.quote(backfill_bucket_start)) }} as backfill_start
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(min_bucket_start)) }} as min_start,
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(backfill_bucket_start)) }} as backfill_start
             from {{ ref('monitors_runs') }}
             where upper(full_table_name) = upper('{{ full_table_name }}')
               and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}

@@ -6,7 +6,7 @@
 {# For Snowflake, Databricks, Redshift, Postgres & Spark #}
 {# the dbt adapter implementation supports both timestamp and dates #}
 {% macro default__timediff(timepart, first_timestamp, second_timestamp) %}
-    {{ elementary.datediff(first_timestamp, second_timestamp, timepart)}}
+    {{ elementary.edr_datediff(first_timestamp, second_timestamp, timepart)}}
 {% endmacro %}
 
 {% macro bigquery__timediff(timepart, first_timestamp, second_timestamp) %}
