@@ -87,7 +87,7 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{ elementary.current_timestamp_in_utc() }} as updated_at,
+        {{ elementary.edr_current_timestamp_in_utc() }} as updated_at,
         dimension,
         dimension_value,
         metric_properties
@@ -211,7 +211,7 @@
             edr_bucket_start,
             edr_bucket_end,
             max(timestamp_val) as update_timestamp,
-            {{ elementary.timediff('second', elementary.cast_as_timestamp('max(timestamp_val)'), "least(edr_bucket_end, {})".format(elementary.current_timestamp_column())) }} as freshness
+            {{ elementary.timediff('second', elementary.cast_as_timestamp('max(timestamp_val)'), "least(edr_bucket_end, {})".format(elementary.edr_current_timestamp_column())) }} as freshness
         from buckets cross join unique_timestamps
         where timestamp_val < edr_bucket_end
         group by 1,2
