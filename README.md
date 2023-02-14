@@ -25,7 +25,7 @@ Add to your `packages.yml` according to your dbt version:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.13
+    version: 0.7.0
     ## Docs: https://docs.elementary-data.com
 ```
 
@@ -34,7 +34,7 @@ packages:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.13
+    version: 0.7.0
     ## Docs: https://docs.elementary-data.com
 
     ## !! Important !! For dbt >=1.2.0 \<1.3.0 ##
@@ -48,7 +48,7 @@ packages:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.13
+    version: 0.7.0
     ## Docs: https://docs.elementary-data.com
 
     ## !! Important !! For dbt <1.2.0 ##
