@@ -1,4 +1,5 @@
 {% macro backfill_result_rows() %}
+    -- depends_on: {{ ref('elementary_test_results') }}
     {% if is_incremental() %}
         {% do return('') %}
     {% endif %}
