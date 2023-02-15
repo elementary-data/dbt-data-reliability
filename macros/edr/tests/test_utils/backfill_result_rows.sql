@@ -3,7 +3,7 @@
         {% do return('') %}
     {% endif %}
 
-    {% set elementary_test_results_relation = ref("elementary", "elementary_test_results") %}
+    {% set elementary_test_results_relation = ref("elementary_test_results") %}
     {% set result_row_exists = elementary.get_column_in_relation(elementary_test_results_relation, "result_rows") is not none %}
     {% if not result_row_exists %}
         {% do return('') %}
@@ -15,7 +15,7 @@
         id,
         detected_at,
         result_rows
-        from {{ ref("elementary", "elementary_test_results") }}
+        from {{ elementary_test_results_relation }}
         where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp('detected_at'), elementary.edr_current_timestamp(), 'day') }} < {{ elementary.get_config_var("days_back") }}
         and result_rows is not null
     {% endset %}
