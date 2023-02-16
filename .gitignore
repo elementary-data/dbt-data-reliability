@@ -12,3 +12,8 @@ integration_tests/data
 venv/
 elementary*.html
 elementary*.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
