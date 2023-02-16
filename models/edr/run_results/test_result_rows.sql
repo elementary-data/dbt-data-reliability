@@ -8,6 +8,7 @@
   )
 }}
 
+-- depends_on: {{ ref('elementary_test_results') }}
 {{ elementary.empty_table([
     ('elementary_test_results_id', 'long_string'),
     ('result_row', 'long_string'),
