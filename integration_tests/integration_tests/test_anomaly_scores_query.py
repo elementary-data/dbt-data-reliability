@@ -33,7 +33,7 @@ DATA_MONITORING_METRICS_COLUMNS_TO_TYPES = [
     ("metric_properties", "string"),
 ]
 BASE_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "anomaly_scores_query_test_cases"
+    os.path.dirname(os.path.realpath(__file__)), "anomaly_query_cases"
 )
 
 
@@ -45,36 +45,36 @@ BASE_DIR = os.path.join(
 @Parametrization.case(
     name="freshness_1_day_mostly_non_anomalous",
     metric_name="freshness",
-    input_rows=os.path.join(BASE_DIR, "freshness_1_day_mostly_non_anomalous_test.csv"),
+    input_rows=os.path.join(BASE_DIR, "freshness_1_day_test.csv"),
     input_rows_history=os.path.join(
-        BASE_DIR, "freshness_1_day_mostly_non_anomalous_history.csv"
+        BASE_DIR, "freshness_1_day_history.csv"
     ),
     expected_output=os.path.join(
-        BASE_DIR, "freshness_1_day_mostly_non_anomalous_after.csv"
+        BASE_DIR, "freshness_1_day_after.csv"
     ),
     alias_table_name="numeric_column_anomalies",
 )
 @Parametrization.case(
     name="row_count_1_day_1_row_no_anomalies",
     metric_name="row_count",
-    input_rows=os.path.join(BASE_DIR, "row_count_1_day_1_row_no_anomalies_test.csv"),
+    input_rows=os.path.join(BASE_DIR, "row_count_1_day_1_row_test.csv"),
     input_rows_history=os.path.join(
-        BASE_DIR, "row_count_1_day_1_row_no_anomalies_history.csv"
+        BASE_DIR, "row_count_1_day_1_row_history.csv"
     ),
     expected_output=os.path.join(
-        BASE_DIR, "row_count_1_day_1_row_no_anomalies_after.csv"
+        BASE_DIR, "row_count_1_day_1_row_after.csv"
     ),
     alias_table_name="any_type_column_anomalies_training",
 )
 @Parametrization.case(
     name="row_count_1_day_mostly_non_anomalous",
     metric_name="row_count",
-    input_rows=os.path.join(BASE_DIR, "row_count_1_day_mostly_non_anomalous_test.csv"),
+    input_rows=os.path.join(BASE_DIR, "row_count_1_day_test.csv"),
     input_rows_history=os.path.join(
-        BASE_DIR, "row_count_1_day_mostly_non_anomalous_history.csv"
+        BASE_DIR, "row_count_1_day_history.csv"
     ),
     expected_output=os.path.join(
-        BASE_DIR, "row_count_1_day_mostly_non_anomalous_after.csv"
+        BASE_DIR, "row_count_1_day_after.csv"
     ),
     alias_table_name="string_column_anomalies_training",
 )
@@ -83,15 +83,15 @@ BASE_DIR = os.path.join(
     metric_name="row_count",
     input_rows=os.path.join(
         BASE_DIR,
-        "row_count_4_hour_non_empty_history_with_anomalies_in_the_end_test.csv",
+        "row_count_4_hour_test.csv",
     ),
     input_rows_history=os.path.join(
         BASE_DIR,
-        "row_count_4_hour_non_empty_history_with_anomalies_in_the_end_history.csv",
+        "row_count_4_hour_history.csv",
     ),
     expected_output=os.path.join(
         BASE_DIR,
-        "row_count_4_hour_non_empty_history_with_anomalies_in_the_end_after.csv",
+        "row_count_4_hour_after.csv",
     ),
     alias_table_name="any_type_column_anomalies",
     time_bucket={"period": "hour", "count": 4},
