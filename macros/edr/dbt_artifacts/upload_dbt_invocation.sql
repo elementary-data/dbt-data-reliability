@@ -60,7 +60,7 @@
         {{- return(config.args.select) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {%- macro get_invocation_yaml_selector() -%}
@@ -71,14 +71,18 @@
         {{- return(config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}
     {% set invocation_vars = {} %}
     {% if invocation_args_dict and invocation_args_dict.vars %}
-        {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% if invocation_args_dict.vars is mapping %}
+            {% set invocation_vars = invocation_args_dict.vars %}
+        {% else %}
+            {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% endif %}
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
