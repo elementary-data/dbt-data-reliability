@@ -1,5 +1,4 @@
 {% test schema_changes(model) %}
-    -- depends_on: {{ ref('elementary_test_results') }}
     -- depends_on: {{ ref('schema_columns_snapshot') }}
     -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
