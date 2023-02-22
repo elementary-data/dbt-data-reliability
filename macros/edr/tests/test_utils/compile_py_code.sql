@@ -1,4 +1,4 @@
-{% macro snowflake__compile_py_code(model, py_code, output_table, code_type) %}
+{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
 import pandas
 import snowflake.snowpark
 
@@ -32,12 +32,17 @@ def get_output_df(model_df, code_type, ref, session):
 def main(session):
     ref = session.table
     model_df = ref('{{ model }}')
+
+    {% if where_expression %}
+    model_df = model_df.filter("""{{ where_expression }}""")
+    {% endif %}
+
     output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
 {% endmacro %}
 
 
-{% macro bigquery__compile_py_code(model, py_code, output_table, code_type) %}
+{% macro bigquery__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
 import pandas
 import pyspark.sql
 
@@ -78,6 +83,11 @@ def main():
     session = get_session()
     ref = session.read.format('bigquery').load
     model_df = ref('{{ model }}')
+
+    {% if where_expression %}
+    model_df = model_df.filter("""{{ where_expression }}""")
+    {% endif %}
+
     output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
 
