@@ -40,7 +40,7 @@ python run_e2e_tests.py
 
 ### Web Interface
 
-You can browse the database by visiting http://localhost:5050 in your browser.
+You can browse the database by visiting http://localhost:5433 in your browser.
 The credentials are:
 
 - **Email**: admin@admin.com
