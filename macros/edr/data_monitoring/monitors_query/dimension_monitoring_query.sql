@@ -1,3 +1,7 @@
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, metric_properties) -%}
+    {{ return(adapter.dispatch('dimension_monitoring_query', 'elementary') (monitored_table_relation, dimensions, min_bucket_start, metric_properties)) }}
+{%- endmacro %}
+
 {% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, metric_properties) %}
     {% set metric_name = 'dimension' %}
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
