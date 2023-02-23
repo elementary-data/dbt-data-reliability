@@ -1,10 +1,9 @@
-{% macro get_tables_from_information_schema(schema_tuple) %}
-    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')(schema_tuple)) }}
+{% macro get_tables_from_information_schema() %}
+    {{ return(adapter.dispatch('get_tables_from_information_schema','elementary')()) }}
 {% endmacro %}
 
 {# Snowflake, Bigquery #}
-{% macro default__get_tables_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = schema_tuple %}
+{% macro default__get_tables_from_information_schema() %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
     with information_schema_tables as (
@@ -14,7 +13,6 @@
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
         from {{ schema_relation.information_schema('TABLES') }}
-        where upper(table_schema) = upper('{{ schema_name }}')
 
     ),
 
@@ -24,7 +22,6 @@
             upper(catalog_name) as database_name,
             upper(schema_name) as schema_name
         from {{ schema_relation.information_schema('SCHEMATA') }}
-        where upper(schema_name) = upper('{{ schema_name }}')
 
     )
 
@@ -41,8 +38,7 @@
     on (tables.database_name = schemas.database_name and tables.schema_name = schemas.schema_name)
 {% endmacro %}
 
-{% macro redshift__get_tables_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = schema_tuple %}
+{% macro redshift__get_tables_from_information_schema() %}
 
     with information_schema_tables as (
 
@@ -51,7 +47,6 @@
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
         from svv_tables
-            where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
 
     )
 
@@ -64,8 +59,7 @@
     from information_schema_tables
 {% endmacro %}
 
-{% macro postgres__get_tables_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = schema_tuple %}
+{% macro postgres__get_tables_from_information_schema() %}
 
     with information_schema_tables as (
 
@@ -74,7 +68,6 @@
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
         from information_schema.tables
-            where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
 
     )
 
