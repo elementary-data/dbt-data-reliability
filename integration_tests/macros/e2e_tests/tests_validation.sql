@@ -52,6 +52,15 @@
     {{ return(0) }}
 {% endmacro %}
 
+{% macro assert_empty_table(table, context='') %}
+    {% if table | length > 0 %}
+        {% do elementary.edr_log(context ~ " FAILED: Table not empty.") %}
+        {% do table.print_table() %}
+        {{ return(1) }}
+    {% endif %}
+    {% do elementary.edr_log(context ~ " SUCCESS: Table is empty.") %}
+    {{ return(0) }}
+{% endmacro %}
 
 {% macro validate_table_anomalies() %}
     -- no validation data which means table freshness and volume should alert
@@ -391,4 +400,14 @@
     {% do all_executable_nodes.extend(models) %}
     {% do all_executable_nodes.extend(tests) %}
     {{ assert_list1_in_list2(run_results, all_executable_nodes, context='dbt_run_results') }}
+
+
+    {% set query %}
+    select distinct invocations.invocation_id, results.invocation_id from {{ ref("dbt_invocations") }} invocations
+    full outer join {{ ref("dbt_run_results") }} results
+    on invocations.invocation_id = results.invocation_id
+    where invocations.invocation_id is null or results.invocation_id is null
+    {% endset %}
+    {% set result = elementary.run_query(query) %}
+    {% do assert_empty_table(result, "dbt_invocations") %}
 {% endmacro %}
