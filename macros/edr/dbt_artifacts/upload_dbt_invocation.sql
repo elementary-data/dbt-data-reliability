@@ -36,6 +36,7 @@
       'pull_request_id': elementary.get_first_env_var(["DBT_PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
       'orchestrator': elementary.get_orchestrator(),
+      'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
@@ -59,7 +60,7 @@
         {{- return(config.args.select) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {%- macro get_invocation_yaml_selector() -%}
@@ -70,14 +71,18 @@
         {{- return(config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}
     {% set invocation_vars = {} %}
     {% if invocation_args_dict and invocation_args_dict.vars %}
-        {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% if invocation_args_dict.vars is mapping %}
+            {% set invocation_vars = invocation_args_dict.vars %}
+        {% else %}
+            {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% endif %}
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
@@ -105,7 +110,7 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(none) %}
+  {% do return(elementary.get_first_env_var(["DBT_ORCHESTRATOR"])) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
@@ -139,5 +144,6 @@
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
       ('orchestrator', 'string'),
+      ('dbt_user', 'string')
     ])) }}
 {% endmacro %}

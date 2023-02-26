@@ -1,6 +1,6 @@
-{% macro edr_log(msg) %}
+{% macro edr_log(msg, info=True) %}
     {%- if execute %}
-        {% do log('Elementary: ' ~ msg, info=True) %}
+        {% do log('Elementary: ' ~ msg, info=info) %}
     {%- endif %}
 {% endmacro %}
 

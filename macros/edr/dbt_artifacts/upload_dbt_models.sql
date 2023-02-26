@@ -1,8 +1,8 @@
-{%- macro upload_dbt_models(should_commit=false) -%}
+{%- macro upload_dbt_models(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_models') %}
     {% if execute and relation %}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, should_commit=should_commit) %}
+        {% do elementary.upload_artifacts_to_table(relation, models, elementary.flatten_model, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -24,7 +24,9 @@
                                                                   ('package_name', 'string'),
                                                                   ('original_path', 'long_string'),
                                                                   ('path', 'string'),
-                                                                  ('generated_at', 'string')]) %}
+                                                                  ('generated_at', 'string'),
+                                                                  ('metadata_hash', 'string'),
+                                                                  ]) %}
     {{ return(dbt_models_empty_table_query) }}
 {% endmacro %}
 
@@ -71,5 +73,6 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
+    {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}

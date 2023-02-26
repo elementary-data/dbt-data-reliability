@@ -52,13 +52,15 @@
     'insert_rows_method': 'max_query_size',
     'project_name': none,
     'elementary_full_refresh': false,
-    'min_training_set_size': 14
+    'min_training_set_size': 14,
+    'cache_artifacts': true,
+    'store_result_rows_in_own_table': true
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 100000}) %}
+    {% do default_config.update({'query_max_size': 500000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}

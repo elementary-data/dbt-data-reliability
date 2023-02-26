@@ -6,11 +6,11 @@
 }}
 
 {% set job_run_started_at %}
-min({{ elementary.cast_as_timestamp("run_started_at") }})
+min({{ elementary.edr_cast_as_timestamp("run_started_at") }})
 {% endset %}
 
 {% set job_run_completed_at %}
-max({{ elementary.cast_as_timestamp("run_completed_at") }})
+max({{ elementary.edr_cast_as_timestamp("run_completed_at") }})
 {% endset %}
 
 with jobs as (

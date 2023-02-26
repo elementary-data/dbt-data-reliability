@@ -6,6 +6,10 @@ on:
     branches: [ "master" ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    dbt-version:
+      type: string
+      required: false
+      description: dbt's version to test with
 
 jobs:
   test:
@@ -16,5 +20,5 @@ jobs:
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
-      dbt-version: 1.0.2
+      dbt-version: ${{ github.event_name != 'workflow_dispatch' && '1.0.2' || inputs.dbt-version }}
     secrets: inherit
