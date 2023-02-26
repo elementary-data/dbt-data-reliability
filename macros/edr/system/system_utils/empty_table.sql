@@ -47,10 +47,20 @@
     ]) }}
 {% endmacro %}
 
-{# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}
-{# Therefore we added "dimension" and "dimension_value" at the end of the table. #}
 {% macro empty_data_monitoring_metrics() %}
-    {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp'),('dimension','string'),('dimension_value','string')]) }}
+    {{ elementary.empty_table([('id','string'),
+                               ('full_table_name','string'),
+                               ('column_name','string'),
+                               ('metric_name','string'),
+                               ('metric_value','float'),
+                               ('source_value','string'),
+                               ('bucket_start','timestamp'),
+                               ('bucket_end','timestamp'),
+                               ('bucket_duration_hours','int'),
+                               ('updated_at','timestamp'),
+                               ('dimension','string'),
+                               ('dimension_value','string'),
+                               ('metric_properties','string')]) }}
 {% endmacro %}
 
 {% macro empty_schema_columns_snapshot() %}
@@ -91,19 +101,19 @@
     {%- set dummy_values = elementary.dummy_values() %}
 
     {%- if data_type == 'boolean' %}
-        cast ({{ dummy_values['boolean'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
+        cast ({{ dummy_values['boolean'] }} as {{ elementary.edr_type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.edr_type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
-        cast({{ dummy_values['int'] }} as {{ elementary.type_int() }}) as {{ column_name }}
+        cast({{ dummy_values['int'] }} as {{ elementary.edr_type_int() }}) as {{ column_name }}
     {%- elif data_type == 'bigint' %}
-        cast({{ dummy_values['bigint'] }} as {{ elementary.type_bigint() }}) as {{ column_name }}
+        cast({{ dummy_values['bigint'] }} as {{ elementary.edr_type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
-        cast({{ dummy_values['float'] }} as {{ elementary.type_float() }}) as {{ column_name }}
+        cast({{ dummy_values['float'] }} as {{ elementary.edr_type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
-        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.edr_type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.edr_type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}

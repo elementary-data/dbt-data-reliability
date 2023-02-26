@@ -330,7 +330,7 @@ def generate_dimension_anomalies_training_and_validation_files():
 def main():
     print("Generating fake data!")
     generate_fake_data()
-    print("Done. Please run 'dbt seed' to load the data into your database.")
+    print("Done. Please run 'dbt seed -f' to load the data into your database.")
 
 
 if __name__ == "__main__":

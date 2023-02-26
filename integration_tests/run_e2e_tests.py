@@ -1,16 +1,19 @@
+import json
 import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 import click
+from dbt.version import __version__
+from packaging import version
 
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from generate_data import generate_fake_data
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
-
+DBT_VERSION = version.parse(version.parse(__version__).base_version)
 EPOCH = datetime.utcfromtimestamp(0)
 
 
@@ -37,6 +40,9 @@ class TestResults:
     def __init__(self):
         self.results = []
 
+    def append(self, test_result: TestResult):
+        self.extend([test_result])
+
     def extend(self, test_results: List[TestResult]):
         if not test_results:
             raise ValueError("Received an empty test results list.")
@@ -50,6 +56,48 @@ class TestResults:
 
 class TestDbtRunner(DbtRunner):
     pass
+
+
+def get_generated_at(alias: str, dbt_runner: DbtRunner) -> str:
+    return json.loads(
+        dbt_runner.run_operation(
+            "read_table",
+            macro_args={"table": "dbt_models", "where": f"alias = '{alias}'"},
+            should_log=False,
+        )[0]
+    )
+
+
+def test_artifacts_on_run_end(dbt_runner: TestDbtRunner) -> TestResult:
+    test_model = "one"
+    dbt_runner.run(test_model)
+    first_generated_at = get_generated_at(test_model, dbt_runner)
+    dbt_runner.run(test_model, vars={"one_owner": "ele"})
+    second_generated_at = get_generated_at(test_model, dbt_runner)
+    return TestResult(
+        type="test_artifacts_on_run_end",
+        message=(
+            "SUCCESS: Artifacts are updated on run end."
+            if first_generated_at != second_generated_at
+            else "FAILED: Artifacts are not updated on run end."
+        ),
+    )
+
+
+def test_cache_artifacts(dbt_runner: TestDbtRunner) -> Optional[TestResult]:
+    test_model = "one"
+    dbt_runner.run(test_model)
+    first_generated_at = get_generated_at(test_model, dbt_runner)
+    dbt_runner.run(test_model)
+    second_generated_at = get_generated_at(test_model, dbt_runner)
+    return TestResult(
+        type="test_cache_artifacts",
+        message=(
+            "SUCCESS: Artifacts are cached."
+            if first_generated_at == second_generated_at
+            else "FAILED: Artifacts are not cached."
+        ),
+    )
 
 
 def e2e_tests(
@@ -70,7 +118,9 @@ def e2e_tests(
         dbt_runner.seed(full_refresh=True)
 
     if clear_tests:
-        clear_test_logs = dbt_runner.run_operation(macro_name="clear_tests")
+        clear_test_logs = dbt_runner.run_operation(
+            macro_name="clear_tests", should_log=False
+        )
         for clear_test_log in clear_test_logs:
             print(clear_test_log)
 
@@ -80,7 +130,9 @@ def e2e_tests(
         dbt_runner.test(select="tag:table_anomalies")
         results = [
             TestResult(type="table_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_table_anomalies")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_table_anomalies", should_log=False
+            )
         ]
         test_results.extend(results)
 
@@ -93,7 +145,9 @@ def e2e_tests(
         dbt_runner.test(select="tag:error_test")
         results = [
             TestResult(type="error_test", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_error_test")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_test", should_log=False
+            )
         ]
         test_results.extend(results)
 
@@ -101,7 +155,9 @@ def e2e_tests(
         dbt_runner.run(select="tag:error_model")
         results = [
             TestResult(type="error_model", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_error_model")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_model", should_log=False
+            )
         ]
         test_results.extend(results)
 
@@ -109,7 +165,9 @@ def e2e_tests(
         dbt_runner.snapshot()
         results = [
             TestResult(type="error_snapshot", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_error_snapshot")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_snapshot", should_log=False
+            )
         ]
         test_results.extend(results)
 
@@ -119,7 +177,9 @@ def e2e_tests(
         # So we convert the days_back value into int.
         days_back_project_var = int(
             dbt_runner.run_operation(
-                macro_name="return_config_var", macro_args={"var_name": "days_back"}
+                macro_name="return_config_var",
+                macro_args={"var_name": "days_back"},
+                should_log=False,
             )[0]
         )
         # No need to create today's metric because the validation run does it.
@@ -147,7 +207,7 @@ def e2e_tests(
         results = [
             TestResult(type="no_timestamp_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_no_timestamp_anomalies"
+                macro_name="validate_no_timestamp_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -157,7 +217,7 @@ def e2e_tests(
         results = [
             TestResult(type="event_freshness_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_event_freshness_anomalies"
+                macro_name="validate_event_freshness_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -167,7 +227,7 @@ def e2e_tests(
         results = [
             TestResult(type="string_column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_string_column_anomalies"
+                macro_name="validate_string_column_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -176,7 +236,7 @@ def e2e_tests(
         results = [
             TestResult(type="numeric_column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_numeric_column_anomalies"
+                macro_name="validate_numeric_column_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -185,7 +245,7 @@ def e2e_tests(
         results = [
             TestResult(type="any_type_column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_any_type_column_anomalies"
+                macro_name="validate_any_type_column_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -195,7 +255,7 @@ def e2e_tests(
         results = [
             TestResult(type="dimension_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_dimension_anomalies"
+                macro_name="validate_dimension_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -204,7 +264,9 @@ def e2e_tests(
         dbt_runner.test(select="tag:schema_changes")
         results = [
             TestResult(type="schema_changes", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_schema_changes")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_schema_changes", should_log=False
+            )
         ]
         test_results.extend(results)
 
@@ -212,16 +274,27 @@ def e2e_tests(
         dbt_runner.test(select="test_type:singular tag:regular_tests")
         results = [
             TestResult(type="regular_tests", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_regular_tests")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_regular_tests", should_log=False
+            )
         ]
         test_results.extend(results)
 
     if "artifacts" in test_types:
         results = [
             TestResult(type="artifacts", message=msg)
-            for msg in dbt_runner.run_operation(macro_name="validate_dbt_artifacts")
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_dbt_artifacts", should_log=False
+            )
         ]
         test_results.extend(results)
+        auto_upload_results = test_artifacts_on_run_end(dbt_runner)
+        test_results.append(auto_upload_results)
+        if DBT_VERSION >= version.parse("1.4.0"):
+            cache_artifacts_results = test_cache_artifacts(dbt_runner)
+            if cache_artifacts_results:
+                test_results.append(cache_artifacts_results)
+
     return test_results
 
 

@@ -28,7 +28,7 @@
             schema_name,
             table_name,
             column_name,
-            cast(data_type as {{ elementary.type_string() }}) as data_type,
+            cast(data_type as {{ elementary.edr_type_string() }}) as data_type,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             case when
                     {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
@@ -60,13 +60,13 @@
     )
 
     select
-        {{ elementary.cast_as_string('column_state_id') }} as column_state_id,
-        {{ elementary.cast_as_string('full_column_name') }} as full_column_name,
-        {{ elementary.cast_as_string('full_table_name') }} as full_table_name,
-        {{ elementary.cast_as_string('column_name') }} as column_name,
-        {{ elementary.cast_as_string('data_type') }} as data_type,
-        {{ elementary.cast_as_bool('is_new') }} as is_new,
-        {{ elementary.cast_as_timestamp('detected_at') }} as detected_at
+        {{ elementary.edr_cast_as_string('column_state_id') }} as column_state_id,
+        {{ elementary.edr_cast_as_string('full_column_name') }} as full_column_name,
+        {{ elementary.edr_cast_as_string('full_table_name') }} as full_table_name,
+        {{ elementary.edr_cast_as_string('column_name') }} as column_name,
+        {{ elementary.edr_cast_as_string('data_type') }} as data_type,
+        {{ elementary.edr_cast_as_bool('is_new') }} as is_new,
+        {{ elementary.edr_cast_as_timestamp('detected_at') }} as detected_at
     from columns_snapshot_with_id
 
 {%- endmacro %}
