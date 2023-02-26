@@ -154,7 +154,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
             "average": random.randint(101, 110),
             "standard_deviation": random.randint(80, 120),
             "variance": random.randint(80, 120),
-            "sum": random.randint(100, 300),
+            "sum": random.randint(300, 400),
         }
 
     numeric_columns = [

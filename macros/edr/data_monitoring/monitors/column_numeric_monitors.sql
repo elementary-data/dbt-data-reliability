@@ -27,5 +27,5 @@
 {%- endmacro %}
 
 {% macro sum(column_name) -%}
-    sum(cast({{ column_name }} as {{ elementary.type_float() }}))
+    sum(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}

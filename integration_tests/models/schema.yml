@@ -241,6 +241,8 @@ models:
       - name: sum
         tests:
           - elementary.column_anomalies:
+              column_anomalies:
+                - sum
               tags: ["numeric_column_anomalies"]
 
   - name: groups
