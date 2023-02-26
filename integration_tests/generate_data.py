@@ -135,6 +135,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
             "average": random.randint(99, 101),
             "standard_deviation": random.randint(99, 101),
             "variance": random.randint(99, 101),
+            "sum": random.randint(100, 200),
         }
 
     def get_validation_row(date, row_index, rows_count):
@@ -153,6 +154,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
             "average": random.randint(101, 110),
             "standard_deviation": random.randint(80, 120),
             "variance": random.randint(80, 120),
+            "sum": random.randint(300, 400),
         }
 
     numeric_columns = [
@@ -165,6 +167,7 @@ def generate_numeric_anomalies_training_and_validation_files(rows_count_per_day=
         "average",
         "standard_deviation",
         "variance",
+        "sum",
     ]
     dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=2))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
