@@ -51,7 +51,6 @@
 {% macro all_column_monitors() %}
     {% set all_column_monitors = [] %}
     {% set default_monitors = elementary.get_config_var('default_monitors') %}
-    {% set numeric = default_monitors['column_numeric'] %}
     {% do all_column_monitors.extend(default_monitors['column_any_type']) %}
     {% do all_column_monitors.extend(default_monitors['column_string']) %}
     {% do all_column_monitors.extend(default_monitors['column_numeric']) %}
