@@ -28,7 +28,8 @@ with training as (
          zero_percent,
          average,
          standard_deviation,
-         variance
+         variance,
+         sum
      from source
  )
 
