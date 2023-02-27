@@ -76,8 +76,11 @@
     {{ elementary.empty_table(columns_definition) }}
 {% endmacro %}
 
+{% macro empty_table(column_name_and_type_list) -%}
+    {{ return(adapter.dispatch('empty_table', 'elementary')(column_name_and_type_list)) }}
+{%- endmacro %}
 
-{% macro empty_table(column_name_and_type_list) %}
+{% macro default__empty_table(column_name_and_type_list) %}
 
     {%- set empty_table_query -%}
         with empty_table as (
@@ -87,6 +90,23 @@
             {%- endfor %}
             )
         select * from empty_table
+        where 1 = 0
+    {%- endset -%}
+
+    {{- return(empty_table_query)-}}
+
+{% endmacro %}
+
+{% macro sqlserver__empty_table(column_name_and_type_list) %}
+
+    {%- set empty_table_query -%}
+        select * 
+        from (
+            select
+            {% for column in column_name_and_type_list %}
+                {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
+            {%- endfor %}
+        ) empty_table
         where 1 = 0
     {%- endset -%}
 
@@ -123,7 +143,7 @@
     {%- set dummy_values = {
      'string': "dummy_string",
      'long_string': "this_is_just_a_long_dummy_string",
-     'boolean': 'True',
+     'boolean': elementary.true_bool(),
      'int': 123456789,
      'bigint': 31474836478,
      'float': 123456789.99,

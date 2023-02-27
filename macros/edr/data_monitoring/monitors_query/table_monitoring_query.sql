@@ -1,4 +1,8 @@
-{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
+{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) -%}
+    {{ return(adapter.dispatch('table_monitoring_query', 'elementary') (monitored_table_relation, min_bucket_start, table_monitors, metric_properties)) }}
+{%- endmacro %}
+
+{% macro default__table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
 
     {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set timestamp_column = metric_properties.timestamp_column %}
@@ -95,6 +99,111 @@
 
 {% endmacro %}
 
+{% macro sqlserver__table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
+
+    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {% set timestamp_column = metric_properties.timestamp_column %}
+
+    {% set monitored_table %}
+        (
+        select * from {{ monitored_table_relation }}
+        {% if where_expression %}
+        where {{ where_expression }}
+        {% endif %}
+        ) monitored_table
+    {% endset %}
+
+    {% if timestamp_column %}
+
+        {% set buckets %}
+            (
+            select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
+            where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+            ) buckets
+        {% endset %}
+
+        {% set time_filtered_monitored_table %}
+            (
+            select *,
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
+            from {{ monitored_table }}
+            where
+                {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from {{ buckets }})
+                and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from {{ buckets }})
+            ) time_filtered_monitored_table
+        {% endset %}
+
+    {% endif %}
+
+    {% set metrics %}
+        (
+        {{ elementary.get_unified_metrics_query(metrics=table_monitors,
+                                                metric_properties=metric_properties) }}
+        ) metrics
+    {% endset %}
+
+    {% set metrics_final %}
+        (
+        {% if timestamp_column %}
+            select
+                {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
+                {{ elementary.null_string() }} as column_name,
+                metric_name,
+                {{ elementary.cast_as_float('metric_value') }} as metric_value,
+                source_value,
+                edr_bucket_start as bucket_start,
+                edr_bucket_end as bucket_end,
+                {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
+                {{ elementary.null_string() }} as dimension,
+                {{ elementary.null_string() }} as dimension_value,
+                {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+            from
+                {{ metrics }}
+            where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+                metric_value is null
+        {% else %}
+            select
+                {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
+                {{ elementary.null_string() }} as column_name,
+                metric_name,
+                {{ elementary.cast_as_float('metric_value') }} as metric_value,
+                {{ elementary.null_string() }} as source_value,
+                {{ elementary.null_timestamp() }} as bucket_start,
+                {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                {{ elementary.null_int() }} as bucket_duration_hours,
+                {{ elementary.null_string() }} as dimension,
+                {{ elementary.null_string() }} as dimension_value,
+                {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+            from metrics
+        {% endif %}
+        ) metrics_final
+    {% endset %}
+
+    select
+       {{ elementary.generate_surrogate_key([
+                  'full_table_name',
+                  'column_name',
+                  'metric_name',
+                  'bucket_end',
+                  'metric_properties'
+                  ]) }}  as id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        {{ elementary.current_timestamp_in_utc() }} as updated_at,
+        dimension,
+        dimension_value,
+        metric_properties
+    from {{ metrics_final }}
+
+{% endmacro %}
+
+
 {% macro get_unified_metrics_query(metrics, metric_properties) %}
     {%- set included_monitors = {} %}
     {%- for metric_name in metrics %}
@@ -125,6 +234,7 @@
     {%- endfor %}
 {% endmacro %}
 
+
 {% macro get_metric_query(metric_name, metric_properties) %}
     {%- set metrics_macro_mapping = {
         "row_count": elementary.row_count_metric_query,
@@ -144,6 +254,7 @@
 
     {{ metric_query }}
 {% endmacro %}
+
 
 {% macro row_count_metric_query(metric_properties) %}
 {% if metric_properties.timestamp_column %}
@@ -172,6 +283,7 @@
     group by 1
 {% endif %}
 {% endmacro %}
+
 
 {% macro freshness_metric_query(metric_properties) %}
 {% if metric_properties.timestamp_column %}
@@ -247,6 +359,7 @@
     {% do return(none) %}
 {% endif %}
 {% endmacro %}
+
 
 {% macro event_freshness_metric_query(metric_properties) %}
 {% set event_timestamp_column = metric_properties.event_timestamp_column %}

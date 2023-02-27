@@ -92,12 +92,20 @@
 {% endmacro %}
 
 
-{% macro type_timestamp() %}
+{%- macro type_timestamp() -%}
+    {{ return(adapter.dispatch('type_timestamp', 'elementary')()) }}
+{%- endmacro -%}
+
+{% macro default__type_timestamp() %}
     {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
     {% endif %}
     {{ return(macro()) }}
+{% endmacro %}
+
+{% macro sqlserver__type_timestamp() %}
+    datetime
 {% endmacro %}
 
 {% macro type_numeric() %}

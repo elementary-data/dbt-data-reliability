@@ -79,6 +79,22 @@
 {% endmacro %}
 
 
+{% macro sqlserver__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' -%}
+        {%- set part_index = 0 -%}
+    {%- elif part_name == 'schema_name' -%}
+        {%- set part_index = 1 -%}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 2 -%}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+    
+    (SELECT TRIM(value) FROM STRING_SPLIT(full_table_name, '.', 1) WHERE ordinal = {{ part_index }})
+
+{% endmacro %}
+
+
 {% macro relation_to_full_name(relation) %}
     {%- if relation.database %}
         {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}

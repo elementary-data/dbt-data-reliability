@@ -14,7 +14,7 @@
       'command': flags.WHICH,
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
-      'full_refresh': flags.FULL_REFRESH,
+      'full_refresh': elementary.full_refresh(),
       'invocation_vars': elementary.get_invocation_vars(),
       'vars': elementary.get_all_vars(),
       'target_name': target.name,
