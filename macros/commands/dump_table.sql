@@ -7,7 +7,7 @@
             {% if since %}
                 where {{ timestamp_column }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
             {% else %}
-                where {{ elementary.edr_datediff(timestamp_column, elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
+                where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
             {% endif %}
         {% endif %}
     {% endset %}
