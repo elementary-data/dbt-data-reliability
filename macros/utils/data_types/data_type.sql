@@ -19,6 +19,10 @@
     {% do return("BOOL") %}
 {% endmacro %}
 
+{% macro sqlserver__type_bool() %}
+    BIT
+{% endmacro %}
+
 
 {%- macro type_string() -%}
     {{ return(adapter.dispatch('type_string', 'elementary')()) }}
@@ -61,6 +65,11 @@
 
 {%- macro postgres__type_long_string() -%}
     {% set long_string = 'text' %}
+    {{ return(long_string) }}
+{%- endmacro -%}
+
+{%- macro sqlserver__type_long_string() -%}
+    {% set long_string = 'varchar(max)' %}
     {{ return(long_string) }}
 {%- endmacro -%}
 
