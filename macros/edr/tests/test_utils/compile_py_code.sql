@@ -94,6 +94,6 @@ def main():
 main()
 {% endmacro %}
 
-{% macro default__compile_py_code(model, py_code, output_table, code_type) %}
+{% macro default__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
   {{ exceptions.raise_compiler_error("Elementary's Python tests are not yet supported on %s." % target.type) }}
 {% endmacro %}
