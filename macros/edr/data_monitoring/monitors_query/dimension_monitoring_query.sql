@@ -125,7 +125,7 @@
                    {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
         {% if metric_properties.where_expression %}
-            and {{ metric_properties.where_expression }}
+            where {{ metric_properties.where_expression }}
         {% endif %}
         ),
         
@@ -212,11 +212,10 @@
             select
                 {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
-                {{ elementary.row_count() }} as metric_value,
-                {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+                {{ elementary.row_count() }} as metric_value
             from {{ monitored_table_relation }}
             {% if metric_properties.where_expression %}
-                and {{ metric_properties.where_expression }}
+                where {{ metric_properties.where_expression }}
             {% endif %}
             {{ dbt_utils.group_by(2) }}
         ),
@@ -233,7 +232,7 @@
                 {{ elementary.null_int() }} as bucket_duration_hours,
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value,
-                metric_properties
+                {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count
         )
     {% endif %}
