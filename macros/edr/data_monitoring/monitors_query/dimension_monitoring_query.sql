@@ -232,7 +232,7 @@
                 {{ elementary.null_int() }} as bucket_duration_hours,
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value,
-                {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+                {{ elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count
         )
     {% endif %}
