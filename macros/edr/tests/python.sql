@@ -1,4 +1,4 @@
-{% test python(model, code_macro, macro_args) %}
+{% test python(model, code_macro, macro_args, where_expression) %}
   {{ config(fail_calc = 'fail_count') }}
 
   {% if not execute %}
@@ -39,7 +39,7 @@
   {% endif %}
   {% set user_py_code = user_py_code_macro(macro_args) %}
   {% set compiled_py_code = adapter.dispatch('compile_py_code', 'elementary')(model_relation, user_py_code,
-                                                                              output_table, code_type='test') %}
+                                                                              output_table, where_expression, code_type='test') %}
 
   {% do elementary.run_python(test_node, compiled_py_code) %}
   select fail_count from {{ output_table }}
