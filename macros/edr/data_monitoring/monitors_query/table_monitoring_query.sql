@@ -5,9 +5,7 @@
 
     with monitored_table as (
         select * from {{ monitored_table_relation }}
-        {% if where_expression %}
-        where {{ where_expression }}
-        {% endif %}
+        {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
 
     {% if timestamp_column %}
