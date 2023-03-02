@@ -120,7 +120,7 @@ def main():
     {% if detailed_output_table %}
     output_df, detailed_output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
-    write_output_table(session, detailed_output_df, '{{ detailed_output_table }}', 'transient')
+    write_output_table(session, detailed_output_df, '{{ detailed_output_table }}')
     {% else %}
     output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
