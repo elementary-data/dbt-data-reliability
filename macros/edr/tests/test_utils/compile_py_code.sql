@@ -1,11 +1,11 @@
-{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
+{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, detailed_output_table, code_type) %}
 import pandas
 import snowflake.snowpark
 
 {{ py_code }}
 
-def write_output_table(session, output_df, target_relation):
-    output_df.write.mode('overwrite').save_as_table(target_relation, table_type='temporary')
+def write_output_table(session, output_df, target_relation, table_type='temporary'):
+    output_df.write.mode('overwrite').save_as_table(target_relation, table_type=table_type)
 
 def get_fail_count(test_output):
     if isinstance(test_output, int):
@@ -22,7 +22,21 @@ def get_output_df(model_df, code_type, ref, session):
     if code_type == "test":
         test_output = test(model_df, ref, session)
         fail_count = get_fail_count(test_output)
+        
+        {% if detailed_output_table %}
+        if isinstance(test_output, snowflake.snowpark.DataFrame):
+            pass 
+        elif isinstance(test_output, pandas.DataFrame):
+            test_output = session.createDataFrame(test_output)
+        else:
+            raise ValueError('Detailed output needs python test to return pandas Dataframe or spark Dataframe.')
+        detailed_output_sql = """SELECT * FROM {{ detailed_output_table }}"""
+        
+        return session.createDataFrame([[fail_count, detailed_output_sql]], ['fail_count', 'detailed_output_table']), test_output
+        {% else %}
         return session.createDataFrame([[fail_count]], ['fail_count'])
+        {% endif %}
+
     elif code_type == "function":
         res = func(model_df, ref, session)
         return session.createDataFrame([[res]], ['result'])
@@ -37,8 +51,15 @@ def main(session):
     model_df = model_df.filter("""{{ where_expression }}""")
     {% endif %}
 
+    {% if detailed_output_table %}
+    output_df, detailed_output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
+    write_output_table(session, output_df, '{{ output_table }}')
+    write_output_table(session, detailed_output_df, '{{ detailed_output_table }}', 'transient')
+    {% else %}
     output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
+    {% endif %}
+
 {% endmacro %}
 
 
@@ -72,7 +93,14 @@ def get_output_df(model_df, code_type, ref, session):
     if code_type == "test":
         test_output = test(model_df, ref, session)
         fail_count = get_fail_count(test_output)
+
+        {% if detailed_output_table %}
+        detailed_output_sql = """SELECT * FROM {{ detailed_output_table }}"""
+        return session.createDataFrame([[fail_count, detailed_output_sql]], ['fail_count', 'detailed_output_table']), test_output
+        {% else %}
         return session.createDataFrame([[fail_count]], ['fail_count'])
+        {% endif %}
+
     elif code_type == "function":
         res = func(model_df, ref, session)
         return session.createDataFrame([[res]], ['result'])
@@ -88,12 +116,19 @@ def main():
     model_df = model_df.filter("""{{ where_expression }}""")
     {% endif %}
 
+
+    {% if detailed_output_table %}
+    output_df, detailed_output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
+    write_output_table(session, output_df, '{{ output_table }}')
+    write_output_table(session, detailed_output_df, '{{ detailed_output_table }}', 'transient')
+    {% else %}
     output_df = get_output_df(model_df, '{{ code_type }}', ref, session)
     write_output_table(session, output_df, '{{ output_table }}')
+    {% endif %}
 
 main()
 {% endmacro %}
 
-{% macro default__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
+{% macro default__compile_py_code(model, py_code, output_table, where_expression, detailed_output_table, code_type) %}
   {{ exceptions.raise_compiler_error("Elementary's Python tests are not yet supported on %s." % target.type) }}
 {% endmacro %}

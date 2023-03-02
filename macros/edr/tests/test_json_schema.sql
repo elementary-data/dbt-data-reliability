@@ -1,4 +1,4 @@
-{% test json_schema(model, column_name, where_expression) %}
+{% test json_schema(model, column_name, where_expression, detailed_test_output) %}
     {{ config(fail_calc = 'fail_count') }}
 
     {% if not execute %}
@@ -11,7 +11,7 @@
         {% do exceptions.raise_compiler_error("A json schema must be supplied as a part of the test!") %}
     {% endif %}
 
-    {{ elementary.test_python(model, elementary.json_schema_python_test, {'column_name': column_name, 'json_schema': kwargs}, where_expression,
+    {{ elementary.test_python(model, elementary.json_schema_python_test, {'column_name': column_name, 'json_schema': kwargs}, where_expression, detailed_test_output,
                               packages=['jsonschema']) }}
 {% endtest %}
 
