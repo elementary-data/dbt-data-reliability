@@ -1,11 +1,11 @@
-{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
+{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, detailed_output, code_type) %}
 import pandas
 import snowflake.snowpark
 
 {{ py_code }}
 
 def write_output_table(session, output_df, target_relation):
-    output_df.write.mode('overwrite').save_as_table(target_relation, table_type='temporary')
+    output_df.write.mode('overwrite').save_as_table(target_relation)
 
 def get_fail_count(test_output):
     if isinstance(test_output, int):
