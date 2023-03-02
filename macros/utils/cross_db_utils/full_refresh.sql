@@ -10,6 +10,10 @@
 
 {% macro sqlserver__full_refresh() %}
 
-    1 if flags.FULL_REFRESH else 0
+    {% if flags.FULL_REFRESH %}
+        {{ return(1) }}
+    {% else %}
+        {{ return(0) }}
+    {% endif %}
 
 {% endmacro %}

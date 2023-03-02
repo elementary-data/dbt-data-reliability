@@ -28,6 +28,12 @@
     {% do elementary.run_query(query) %}
 {% endmacro %}
 
+{% macro sqlserver__replace_table_data(relation, rows) %}
+    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
+    {% do elementary.create_or_replace(False, relation, intermediate_relation) %}
+{% endmacro %}
+
+
 {% macro create_intermediate_relation(base_relation, rows, temporary) %}
     {% if temporary %}
         {% set int_relation = dbt.make_temp_relation(base_relation) %}

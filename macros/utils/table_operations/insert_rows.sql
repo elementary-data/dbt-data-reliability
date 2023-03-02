@@ -39,7 +39,12 @@
     {% endif %}
 {% endmacro %}
 
-{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size')) -%}
+
+{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size) %}
+    {{ return(adapter.dispatch('get_insert_rows_queries', 'elementary')(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size'))) }}
+{% endmacro %}
+
+{% macro default__get_insert_rows_queries(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size')) -%}
     {% set insert_queries = [] %}
     {% set insert_query %}
        insert into {{ table_relation }}
@@ -77,6 +82,46 @@
 
     {{ return(insert_queries) }}
 {%- endmacro %}
+
+{% macro sqlserver__get_insert_rows_queries(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size')) -%}
+    {% set insert_queries = [] %}
+    {% set insert_query %}
+       insert into {{ table_relation }}
+         ({%- for column in columns -%}
+           {{- column.name -}} {{- "," if not loop.last else "" -}}
+         {%- endfor -%})
+    {% endset %}
+
+    {% set current_query = namespace(data=insert_query) %}
+    {% for row in rows %}
+      {% set rendered_column_values = [] %}
+      {% for column in columns %}
+        {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
+        {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+      {% endfor %}
+      {% set row_sql = "SELECT {} ".format(rendered_column_values | join(",")) %}
+      {% set query_with_row = current_query.data + (" UNION ALL " if not loop.first else "") + row_sql %}
+
+      {% if query_with_row | length > query_max_size %}
+        {% set new_insert_query = insert_query + row_sql %}
+        {# Check if row is too large to fit into an insert query. #}
+        {% if new_insert_query | length > query_max_size %}
+          {% do elementary.debug_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
+          {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
+        {% endif %}
+        {% do insert_queries.append(current_query.data) %}
+        {% set current_query.data = new_insert_query %}
+      {% else %}
+        {% set current_query.data = query_with_row %}
+      {% endif %}
+      {% if loop.last %}
+        {% do insert_queries.append(current_query.data) %}
+      {% endif %}
+    {% endfor %}
+
+    {{ return(insert_queries) }}
+{%- endmacro %}
+
 
 {% macro get_chunk_insert_query(table_relation, columns, rows) -%}
     {% set insert_rows_query %}
