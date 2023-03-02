@@ -1,5 +1,10 @@
-{% test python(model, code_macro, macro_args, where_expression) %}
+{% test python(model, code_macro, macro_args, where_expression, detailed_output) %}
+  
+  {% if detailed_output %}
+  {{ config(fail_calc = 'count(*)') }}
+  {% else %}
   {{ config(fail_calc = 'fail_count') }}
+  {% endif %}
 
   {% if not execute %}
     {% do return(none) %}
@@ -17,7 +22,7 @@
   {% set model_relation = model.quote(false, false, false) %}
   {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
   {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,
-    identifier='pytest_tmp__' ~ test_node.alias).quote(false, false, false) %}
+    identifier='pytest_output_' ~ test_node.alias).quote(false, false, false) %}
 
   {# This affects where resources needed for python execution (e.g. stored procedures) are created.
      By default, dbt uses the audit schema (adds _dbt__test_audit to the model's schema).
@@ -42,5 +47,12 @@
                                                                               output_table, where_expression, code_type='test') %}
 
   {% do elementary.run_python(test_node, compiled_py_code) %}
+
+  {% if detailed_output %}
+  select * from {{ output_table }}
+  {% else %}
   select fail_count from {{ output_table }}
+  {% endif %}
+
+  
 {% endtest %}
