@@ -29,30 +29,39 @@
 
 {% endmacro %}
 
+{% macro get_available_monitors() %}
+    {% set monitors = elementary.get_config_var("edr_monitors").copy() %}
+    {% set extended_column_numeric = monitors["column_numeric"].copy() %}
+    {% do extended_column_numeric.append("sum") %}
+    {% do monitors.update({"column_numeric": extended_column_numeric}) %}
+    {% do return(monitors) %}
+{% endmacro %}
 
 {% macro column_monitors_by_type(data_type, column_tests=none) %}
     {% set monitors = column_tests or [] %}
     {% set normalized_data_type = elementary.normalize_data_type(data_type) %}
 
-    {% set default_monitors = elementary.get_config_var('edr_monitors') %}
-    {% set default_all_types = default_monitors['column_any_type'] %}
-    {% set default_numeric_monitors = default_monitors['column_numeric'] %}
-    {% set default_string_monitors = default_monitors['column_string'] %}
+    {% set available_monitors = elementary.get_available_monitors() %}
+    {% set available_all_types = available_monitors['column_any_type'] %}
+    {% set available_numeric_monitors = available_monitors['column_numeric'] %}
+    {% set available_string_monitors = available_monitors['column_string'] %}
 
-    {% do monitors.extend(default_all_types) %}
+    {% do monitors.extend(available_all_types) %}
     {% if normalized_data_type == 'numeric' %}
-        {% do monitors.extend(default_numeric_monitors) %}
+        {% do monitors.extend(available_numeric_monitors) %}
+        {% set monitors = elementary.lists_intersection(monitors, available_numeric_monitors) %}
     {% elif normalized_data_type == 'string' %}
-        {% do monitors.extend(default_string_monitors) %}
+        {% do monitors.extend(available_string_monitors) %}
+        {% set monitors = elementary.lists_intersection(monitors, available_string_monitors) %}
     {% endif %}
     {{ return(monitors | unique | list) }}
 {% endmacro %}
 
 {% macro all_column_monitors() %}
     {% set all_column_monitors = [] %}
-    {% set default_monitors = elementary.get_config_var('default_monitors') %}
-    {% do all_column_monitors.extend(default_monitors['column_any_type']) %}
-    {% do all_column_monitors.extend(default_monitors['column_string']) %}
-    {% do all_column_monitors.extend(default_monitors['column_numeric']) %}
+    {% set available_monitors = elementary.get_available_monitors() %}
+    {% do all_column_monitors.extend(available_monitors['column_any_type']) %}
+    {% do all_column_monitors.extend(available_monitors['column_string']) %}
+    {% do all_column_monitors.extend(available_monitors['column_numeric']) %}
     {{ return(all_column_monitors) }}
 {% endmacro %}
