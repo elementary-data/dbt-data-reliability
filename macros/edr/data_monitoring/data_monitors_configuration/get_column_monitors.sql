@@ -30,11 +30,21 @@
 {% endmacro %}
 
 {% macro get_available_monitors() %}
-    {% set monitors = elementary.get_config_var("edr_monitors").copy() %}
-    {% set extended_column_numeric = monitors["column_numeric"].copy() %}
-    {% do extended_column_numeric.append("sum") %}
-    {% do monitors.update({"column_numeric": extended_column_numeric}) %}
-    {% do return(monitors) %}
+    {% do return({
+      'table': ['row_count', 'freshness'],
+      'column_any_type': ['null_count', 'null_percent'],
+      'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
+      'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance', 'sum']
+    }) %}
+{% endmacro %}
+
+{% macro get_default_monitors() %}
+    {% do return({
+      'table': ['row_count', 'freshness'],
+      'column_any_type': ['null_count', 'null_percent'],
+      'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
+      'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
+    }) %}
 {% endmacro %}
 
 {% macro column_monitors_by_type(data_type, column_tests=none) %}
@@ -47,11 +57,11 @@
     {% set available_string_monitors = available_monitors['column_string'] %}
 
     {% do monitors.extend(available_all_types) %}
+    {% do monitors.extend(available_numeric_monitors) %}
+    {% do monitors.extend(available_string_monitors) %}
     {% if normalized_data_type == 'numeric' %}
-        {% do monitors.extend(available_numeric_monitors) %}
         {% set monitors = elementary.lists_intersection(monitors, available_numeric_monitors) %}
     {% elif normalized_data_type == 'string' %}
-        {% do monitors.extend(available_string_monitors) %}
         {% set monitors = elementary.lists_intersection(monitors, available_string_monitors) %}
     {% endif %}
     {{ return(monitors | unique | list) }}
