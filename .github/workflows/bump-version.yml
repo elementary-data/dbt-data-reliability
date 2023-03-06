@@ -32,7 +32,7 @@ jobs:
           script: |
             core.setFailed("Invalid version input - ${{ inputs.dbt-package-version }}")
 
-  bump-cli-version:
+  bump-version:
     needs: validate-version
     runs-on: ubuntu-latest
     steps:
