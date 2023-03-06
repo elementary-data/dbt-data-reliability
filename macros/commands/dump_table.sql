@@ -13,4 +13,5 @@
     {% endset %}
     {% set results = elementary.run_query(query) %}
     {% do results.to_csv(output_path) %}
+    {% do return(results.column_names) %}
 {% endmacro %}
