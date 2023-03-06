@@ -48,21 +48,19 @@
 {% endmacro %}
 
 {% macro column_monitors_by_type(data_type, column_tests=none) %}
-    {% set monitors = column_tests or [] %}
     {% set normalized_data_type = elementary.normalize_data_type(data_type) %}
-
+    {% set monitors = [] %}
+    {% set chosen_monitors = column_tests or elementary.all_column_monitors() %}
     {% set available_monitors = elementary.get_available_monitors() %}
-    {% set available_all_types = available_monitors['column_any_type'] %}
-    {% set available_numeric_monitors = available_monitors['column_numeric'] %}
-    {% set available_string_monitors = available_monitors['column_string'] %}
 
-    {% do monitors.extend(available_all_types) %}
-    {% do monitors.extend(available_numeric_monitors) %}
-    {% do monitors.extend(available_string_monitors) %}
+    {% set any_type_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_any_type"]) %}
+    {% do monitors.extend(any_type_monitors) %}
     {% if normalized_data_type == 'numeric' %}
-        {% set monitors = elementary.lists_intersection(monitors, available_numeric_monitors) %}
+        {% set numeric_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_numeric"]) %}
+        {% set monitors = elementary.lists_intersection(monitors, numeric_monitors) %}
     {% elif normalized_data_type == 'string' %}
-        {% set monitors = elementary.lists_intersection(monitors, available_string_monitors) %}
+        {% set string_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_string"]) %}
+        {% set monitors = elementary.lists_intersection(monitors, string_monitors) %}
     {% endif %}
     {{ return(monitors | unique | list) }}
 {% endmacro %}
