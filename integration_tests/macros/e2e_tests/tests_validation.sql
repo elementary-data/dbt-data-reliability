@@ -157,6 +157,15 @@
                                                  'standard_deviation', 'variance', 'sum']) }}
 {% endmacro %}
 
+{% macro validate_custom_column_monitors() %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
+    {% set query %}
+    select distinct sub_type from {{ alerts_relation }}
+    where status in ('fail', 'warn') and upper(table_name) = 'COPY_NUMERIC_COLUMN_ANOMALIES'
+    {% endset %}
+    {% set results = elementary.result_column_to_list(query) %}
+    {{ assert_lists_contain_same_items(results, ["zero_count"]) }}
+{% endmacro %}
 
 {% macro validate_any_type_column_anomalies() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}

@@ -241,6 +241,14 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+        results = [
+            TestResult(type="custom_column_monitors", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_custom_column_monitors", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
         dbt_runner.test(select="tag:all_any_type_columns_anomalies")
         results = [
             TestResult(type="any_type_column_anomalies", message=msg)

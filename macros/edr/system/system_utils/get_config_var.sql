@@ -39,12 +39,7 @@
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': none,
-    'edr_monitors': {
-      'table': ['row_count', 'freshness'],
-      'column_any_type': ['null_count', 'null_percent'],
-      'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
-      'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
-    },
+    'edr_monitors': elementary.get_default_monitors(),
     'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
