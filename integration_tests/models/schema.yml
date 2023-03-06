@@ -115,7 +115,7 @@ models:
           event_timestamp_column: occurred_at
           update_timestamp_column: updated_at
       - elementary.all_columns_anomalies:
-          tags: ["all_string_column_anomalies"]
+          tags: ["string_column_anomalies"]
       - elementary.schema_changes:
           tags: ["schema_changes"]
     columns:
@@ -244,6 +244,16 @@ models:
               column_anomalies:
                 - sum
               tags: ["numeric_column_anomalies"]
+
+  - name: copy_numeric_column_anomalies
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+      - elementary.all_columns_anomalies:
+          column_anomalies:
+            - zero_count
+          tags: ["numeric_column_anomalies"]
 
   - name: groups
     columns:
