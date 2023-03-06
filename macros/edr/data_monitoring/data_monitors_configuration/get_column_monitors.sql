@@ -57,10 +57,10 @@
     {% do monitors.extend(any_type_monitors) %}
     {% if normalized_data_type == 'numeric' %}
         {% set numeric_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_numeric"]) %}
-        {% set monitors = elementary.lists_intersection(monitors, numeric_monitors) %}
+        {% do monitors.extend(numeric_monitors) %}
     {% elif normalized_data_type == 'string' %}
         {% set string_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_string"]) %}
-        {% set monitors = elementary.lists_intersection(monitors, string_monitors) %}
+        {% do monitors.extend(string_monitors) %}
     {% endif %}
     {{ return(monitors | unique | list) }}
 {% endmacro %}
