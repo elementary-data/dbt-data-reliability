@@ -50,7 +50,7 @@
 {% macro column_monitors_by_type(data_type, column_tests=none) %}
     {% set normalized_data_type = elementary.normalize_data_type(data_type) %}
     {% set monitors = [] %}
-    {% set chosen_monitors = column_tests or elementary.all_column_monitors() %}
+    {% set chosen_monitors = column_tests or elementary.get_agg_column_monitors(only_defaults=true) %}
     {% set available_monitors = elementary.get_available_monitors() %}
 
     {% set any_type_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_any_type"]) %}
@@ -65,11 +65,15 @@
     {{ return(monitors | unique | list) }}
 {% endmacro %}
 
-{% macro all_column_monitors() %}
-    {% set all_column_monitors = [] %}
-    {% set available_monitors = elementary.get_available_monitors() %}
-    {% do all_column_monitors.extend(available_monitors['column_any_type']) %}
-    {% do all_column_monitors.extend(available_monitors['column_string']) %}
-    {% do all_column_monitors.extend(available_monitors['column_numeric']) %}
-    {{ return(all_column_monitors) }}
+{% macro get_agg_column_monitors(only_defaults=false) %}
+    {% set agg_column_monitors = [] %}
+    {% if only_defaults %}
+        {% set monitors = elementary.get_default_monitors() %}
+    {% else %}
+        {% set monitors = elementary.get_available_monitors() %}
+    {% endif %}
+    {% do agg_column_monitors.extend(monitors['column_any_type']) %}
+    {% do agg_column_monitors.extend(monitors['column_string']) %}
+    {% do agg_column_monitors.extend(monitors['column_numeric']) %}
+    {{ return(agg_column_monitors) }}
 {% endmacro %}

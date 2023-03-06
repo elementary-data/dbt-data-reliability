@@ -69,7 +69,7 @@
 
 
 {% macro empty_column_monitors_cte() %}
-    {%- set column_monitors_list = elementary.all_column_monitors() %}
+    {%- set column_monitors_list = elementary.get_agg_column_monitors() %}
     {%- set columns_definition = [('column_name', 'string'), ('bucket', 'timestamp')] %}
     {%- for monitor in column_monitors_list %}
         {%- do columns_definition.append((monitor,'int'))-%}
