@@ -199,11 +199,11 @@
             change as test_sub_type,
             case
                 when change = 'column_added'
-                    then 'The column "' || column_name || '" was added'
+                    then 'The column "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was added'
                 when change= 'column_removed'
-                    then 'The column "' || column_name || '" was removed'
+                    then 'The column "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was removed'
                 when change= 'type_changed'
-                    then 'The type of "' || column_name || '" was changed from ' || pre_data_type || ' to ' || data_type
+                    then 'The type of "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was changed from ' {{ elementary.and() }} pre_data_type {{ elementary.and() }} ' to ' {{ elementary.and() }} data_type
                 else NULL
             end as test_results_description
         from all_column_changes
@@ -321,11 +321,11 @@
             change as test_sub_type,
             case
                 when change = 'column_added'
-                    then 'The column "' || column_name || '" was added'
+                    then 'The column "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was added'
                 when change= 'column_removed'
-                    then 'The column "' || column_name || '" was removed'
+                    then 'The column "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was removed'
                 when change= 'type_changed'
-                    then 'The type of "' || column_name || '" was changed from ' || pre_data_type || ' to ' || data_type
+                    then 'The type of "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was changed from ' {{ elementary.and() }} pre_data_type {{ elementary.and() }} ' to ' {{ elementary.and() }} data_type
                 else NULL
             end as test_results_description
         from all_column_changes
