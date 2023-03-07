@@ -1,3 +1,5 @@
+The ORDER BY clause is invalid in views
+
 {{
   config(
     materialized = 'view',
@@ -22,4 +24,4 @@ select
 from {{ ref(artifact_model) }}
 {% if not loop.last %} union all {% endif %}
 {% endfor %}
-order by metadata_hash
+{{ elementary.orderby('metadata_hash') }}

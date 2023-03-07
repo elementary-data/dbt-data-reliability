@@ -1,3 +1,6 @@
+The ORDER BY clause is invalid in views
+SQLServer adapter: On model.elementary.metrics_anomaly_score: USE
+
 {{
   config(
     materialized = 'view',
@@ -32,7 +35,7 @@ time_window_aggregation as (
         last_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by bucket_start asc rows between unbounded preceding and current row) training_end,
         first_value(bucket_end) over (partition by metric_name, full_table_name, column_name order by bucket_start asc rows between unbounded preceding and current row) as training_start
     from data_monitoring_metrics
-    {{ dbt_utils.group_by(12) }}
+    group by id,full_table_name,column_name,dimension,dimension_value,metric_name,metric_value,source_value,bucket_start,bucket_end,bucket_duration_hours,updated_at
 ),
 
 metrics_anomaly_score as (
@@ -64,8 +67,9 @@ metrics_anomaly_score as (
             and training_avg is not null
             and training_set_size >= {{ elementary.get_config_var('min_training_set_size') }}
             and bucket_end >= {{ elementary.timeadd('day', '-7', elementary.date_trunc('day', elementary.current_timestamp())) }}
-    {{ dbt_utils.group_by(15) }}
-    order by bucket_end desc
+    group by id,full_table_name,column_name,dimension,dimension_value,metric_name,metric_value,bucket_start,bucket_end,training_avg
+        ,training_stddev,training_start,training_end,training_set_size
+    {{ elementary.orderby('bucket_end desc') }}
 
 
 ),
@@ -90,8 +94,8 @@ final as (
         training_set_size,
         updated_at,
         case
-            when abs(anomaly_score) > {{ elementary.get_config_var('anomaly_sensitivity') }} then true
-            else false end
+            when abs(anomaly_score) > {{ elementary.get_config_var('anomaly_sensitivity') }} then {{ cast_as_bool(quote(TRUE)) }}
+            else {{ cast_as_bool(quote(FALSE)) }} end
         as is_anomaly
     from metrics_anomaly_score
 )
