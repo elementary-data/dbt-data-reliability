@@ -1,5 +1,3 @@
-The ORDER BY clause is invalid in views
-
 {{
   config(
     materialized = 'view',

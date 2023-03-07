@@ -1,6 +1,3 @@
-The ORDER BY clause is invalid in views
-SQLServer adapter: On model.elementary.metrics_anomaly_score: USE
-
 {{
   config(
     materialized = 'view',
