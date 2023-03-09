@@ -351,7 +351,7 @@
                                 {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
                                 select distinct 
                                     dimension_value,
-                                    sum(metric_value)
+                                    sum(metric_value) as sum_metric_value
                                 from {{ ref('data_monitoring_metrics') }}
                                 where full_table_name = {{ full_table_name_str }}
                                     and metric_name = {{ elementary.quote(metric_name) }}
@@ -501,7 +501,7 @@
                                 from (
                                     select distinct 
                                         dimension_value,
-                                        sum(metric_value)
+                                        sum(metric_value) as sum_metric_value
                                     from (
                                         {# Get all of the dimension anomally metrics that were created for the test until this run #}
                                         select 
@@ -536,10 +536,55 @@
                         ) filtered_monitored_table
                     ) results
                 ) dimension_values_union on buckets.joiner = dimension_values_union.joiner
-                left outer join dimension_values_without_outdated on (buckets.edr_bucket_end = dimension_values_without_outdated.bucket_end and dimension_values_union.dimension_value = dimension_values_without_outdated.dimension_value)
+                left outer join (
+                            {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
+                            select
+                                bucket_end,
+                                dimension_value,
+                                metric_value
+                            from (
+                                {# Get all of the dimension anomally metrics that were created for the test until this run #}
+                                select 
+                                    bucket_end,
+                                    dimension_value,
+                                    metric_value
+                                from {{ ref('data_monitoring_metrics') }}
+                                where full_table_name = {{ full_table_name_str }}
+                                    and metric_name = {{ elementary.quote(metric_name) }}
+                                    and dimension = {{ elementary.quote(dimensions_string) }}
+                                    and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd(metric_properties.time_bucket.period,
+                                                                                                                metric_properties.time_bucket.count,
+                                                                                                                elementary.cast_as_timestamp(min_bucket_start)) }}
+                            ) last_dimension_metrics
+                            where dimension_value in (
+                                select dimension_value
+                                from (
+                                    select distinct 
+                                        dimension_value,
+                                        sum(metric_value) as sum_metric_value
+                                    from (
+                                        {# Get all of the dimension anomally metrics that were created for the test until this run #}
+                                        select 
+                                            bucket_end,
+                                            dimension_value,
+                                            metric_value
+                                        from {{ ref('data_monitoring_metrics') }}
+                                        where full_table_name = {{ full_table_name_str }}
+                                            and metric_name = {{ elementary.quote(metric_name) }}
+                                            and dimension = {{ elementary.quote(dimensions_string) }}
+                                            and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd(metric_properties.time_bucket.period,
+                                                                                                                        metric_properties.time_bucket.count,
+                                                                                                                        elementary.cast_as_timestamp(min_bucket_start)) }}
+                                    ) last_dimension_metrics
+                                    {# group by 1 #}
+                                    group by dimension_value
+                                    having sum(metric_value) > 0
+                                ) results
+                            )
+                ) dimension_values_without_outdated on (buckets.edr_bucket_end = dimension_values_without_outdated.bucket_end and dimension_values_union.dimension_value = dimension_values_without_outdated.dimension_value)
             ) hydrated_last_dimension_metrics
             union all
-            select
+            select distinct
                 {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value,
@@ -548,8 +593,6 @@
             {% if metric_properties.where_expression %}
                 and {{ metric_properties.where_expression }}
             {% endif %}
-            {# {{ dbt_utils.group_by(2) }} #}
-            group by bucket_end, dimension_value
         ) row_count
 
     {% endif %}

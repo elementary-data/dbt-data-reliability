@@ -80,7 +80,7 @@
         select
           edr_bucket_start,
           {{ edr_bucket_end_expr }} as edr_bucket_end
-        from {{ elementary.generate_series(elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())), {'count': time_bucket.count, 'period': time_bucket.period}) }} edr_bucket_start
+        from {{ elementary.generate_series(elementary.cast_as_timestamp(elementary.quote(elementary.get_min_bucket_start())), elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())), {'count': time_bucket.count, 'period': time_bucket.period}, 'edr_bucket_start') }}
         where {{ edr_bucket_end_expr }} <= {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}

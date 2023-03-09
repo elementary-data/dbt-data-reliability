@@ -22,7 +22,7 @@
     {% for item in item_list %}
         {% set new_item = item %}
         {% if handle_nulls %}
-            {% set new_item = "case when " ~ elementary.cast_as_string(item) ~ " is null then 'NULL' else " ~ elementary.cast_as_string(item) ~ " end" %}
+            {% set new_item = "case when " ~ elementary.cast_as_string(elementary.quote(item)) ~ " is null then 'NULL' else " ~ elementary.cast_as_string(elementary.quote(item)) ~ " end" %}
         {% endif %}
         {% do new_list.append(new_item) %}
         {% if not loop.last %}
