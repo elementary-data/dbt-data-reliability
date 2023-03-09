@@ -454,7 +454,8 @@
             select 
                 bucket_end,
                 dimension_value,
-                metric_value
+                metric_value,
+                {{ elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from (
                 {# Get all of the metrics for all of the dimensions that were create for the test until this run, #}
                 {# "hydrated" with metrics with value 0 for dimensions with no row count in the given time range. #}

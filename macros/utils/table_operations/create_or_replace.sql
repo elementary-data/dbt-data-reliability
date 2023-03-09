@@ -27,8 +27,8 @@
 {% endmacro %}
 
 {% macro sqlserver__create_or_replace(temporary, relation, sql_query) %}
-
-    {% set table_query = 'SELECT * INTO {} FROM {}'.format(relation, sql_query) %}
+    
+    {% set table_query = 'WITH cte AS ({}) SELECT * INTO {} FROM cte'.format(sql_query, relation) %}
     {% set drop_if_relation_exist_list = dbt.get_or_create_relation(database=relation.database, schema=relation.schema, identifier=relation.identifier, type=relation.type) -%}
 
     {% if drop_if_relation_exist_list[0] %}

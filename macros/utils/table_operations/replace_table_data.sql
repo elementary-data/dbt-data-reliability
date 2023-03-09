@@ -30,7 +30,7 @@
 
 {% macro sqlserver__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do elementary.create_or_replace(False, relation, intermediate_relation) %}
+    {% do elementary.create_or_replace(False, relation, 'select * from ' ~ intermediate_relation) %}
 {% endmacro %}
 
 
