@@ -1,0 +1,6 @@
+# required repo metadata. (more info: https://imstfs.bisinfo.org/tfs/DevBIS/CA%20DevOps/_wiki/wikis/FAQ/4847/repo-categorization)
+owners:
+  - mathieu.lecam@bis.org
+  - prafull.shikare@bis.org
+description: Fork from Elementary Data's dbt-data-reliability project (https://github.com/elementary-data/dbt-data-reliability)
+usedInProduction: false
