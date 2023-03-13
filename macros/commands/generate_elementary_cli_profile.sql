@@ -55,7 +55,7 @@ elementary:
       http_path: {{ target.http_path }}
       {%- if elementary_database %}
       catalog: {{ elementary_database }}
-      {% endif %}
+      {%- endif %}
       schema: {{ elementary_schema }}
       token: <TOKEN>
       threads: {{ target.threads }}
