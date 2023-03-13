@@ -23,11 +23,10 @@ elementary:
   outputs:
     default:
       type: {{ target.type }}
-      method: <AUTH_METHOD>
+      method: <AUTH_METHOD> # Configure your auth method and add the required fields according to https://docs.getdbt.com/reference/warehouse-setups/bigquery-setup#authentication-methods
       project: {{ elementary_database }}
       {%- if method == 'github-actions' %}
       keyfile: /tmp/bigquery_keyfile.json # Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`.
-      {%- endif %}
       dataset: {{ elementary_schema }}
       threads: {{ target.threads }}
 {% endmacro %}
