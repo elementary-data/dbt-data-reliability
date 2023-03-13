@@ -27,7 +27,7 @@ elementary:
       project: {{ elementary_database }}
       {%- if method == 'github-actions' %}
       keyfile: /tmp/bigquery_keyfile.json # Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`.
-      {% endif %}
+      {%- endif %}
       dataset: {{ elementary_schema }}
       threads: {{ target.threads }}
 {% endmacro %}
