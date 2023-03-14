@@ -8,7 +8,7 @@
 
 {% endmacro %}
 
-{% macro sqlserver__limit(sample_limit) %}
+{% macro sqlserver__limit(expression, sample_limit) %}
 
     {{ expression | replace('select', 'select top(' ~ sample_limit ~ ')', 1) }}
 

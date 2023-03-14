@@ -19,9 +19,8 @@
 {% endmacro %}
 
 {% macro standard_deviation(column_name) -%}
-    stddev(cast({{ column_name }} as {{ elementary.type_float() }}))
+    {{ elementary.stddev(elementary.cast_as_float(column_name)) }}
 {%- endmacro %}
-
 
 {% macro variance(column_name) -%}
     {{ return(adapter.dispatch('variance', 'elementary') (column_name)) }}

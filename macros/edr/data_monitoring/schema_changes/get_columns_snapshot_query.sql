@@ -111,8 +111,8 @@
                 case when
                         {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
                         and full_table_name in ({{ known_tables_query }})
-                    then true
-                    else false
+                    then {{ elementary.true_bool() }}
+                    else {{ elementary.false_bool() }}
                 end as is_new
             from {{ information_schema_columns }}
         ) columns_snapshot
@@ -133,7 +133,7 @@
                 data_type,
                 is_new,
                 detected_at
-            from columns_snapshot
+            from {{ columns_snapshot }}
             {# group by 1,2,3,4,5,6,7 #}
         ) columns_snapshot_with_id
     {% endset %}

@@ -15,7 +15,7 @@
         from {{ ref('schema_columns_snapshot') }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
             and detected_at = {{ previous_schema_time_query }}
-        order by detected_at desc
+        {{ elementary.orderby('detected_at desc') }}
     {% endset %}
 
     {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
@@ -60,12 +60,12 @@
 
 {% macro sqlserver__get_column_changes_from_baseline_query(full_table_name, model_baseline_relation, include_added=False) %}
     {% set cur %}
-        {% set baseline %}
+        {%- set baseline -%}
             (
                 select lower(column_name) as column_name, data_type
                 from {{ model_baseline_relation }}
             ) baseline
-        {% endset %}
+        {%- endset -%}
 
         select
             info_schema.full_table_name,
@@ -94,7 +94,7 @@
 
 
 {% macro get_columns_changes_query_generic(full_table_name, cur, pre, include_added=True) -%}
-    {{ return(adapter.dispatch('get_column_changes_from_baseline_query', 'elementary') (full_table_name, cur, pre, include_added=True)) }}
+    {{ return(adapter.dispatch('get_columns_changes_query_generic', 'elementary') (full_table_name, cur, pre, include_added=True)) }}
 {%- endmacro %}
 
 {% macro default__get_columns_changes_query_generic(full_table_name, cur, pre, include_added=True) %}
@@ -237,7 +237,7 @@
                 cur.data_type as data_type,
                 pre.data_type as pre_data_type,
                 pre.detected_at
-            from {{ cur }} inner join {{ pre }}
+            from ({{ cur }}) cur inner join ({{ pre }}) pre
                 on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
             where pre.data_type IS NOT NULL AND lower(cur.data_type) != lower(pre.data_type)
 
@@ -255,8 +255,8 @@
                     data_type,
                     {{ elementary.null_string() }} as pre_data_type,
                     detected_at as detected_at
-                from {{ cur }}
-                where is_new = true
+                from ({{ cur }}) cur
+                where is_new = {{ elementary.true_bool() }}
             ) columns_added
         {% endset %}
     {% endif %}
@@ -271,10 +271,10 @@
             {{ elementary.null_string() }} as data_type,
             pre.data_type as pre_data_type,
             pre.detected_at as detected_at
-        from {{ pre }} left join {{ cur }}
+        from ({{ pre }}) pre left join ({{ cur }}) cur
             on (cur.full_table_name = pre.full_table_name and lower(cur.column_name) = lower(pre.column_name))
         where cur.full_table_name is null and cur.column_name is null
-    ) columns_removed
+    )
     {% endset %}
 
 
@@ -288,7 +288,7 @@
             removed.data_type,
             removed.pre_data_type,
             removed.detected_at
-        from {{ columns_removed }} as removed join {{ cur }}
+        from {{ columns_removed }} as removed join ({{ cur }}) cur
             on (removed.full_table_name = cur.full_table_name)
     ) columns_removed_filter_deleted_tables
     {% endset %}
@@ -313,9 +313,9 @@
         select distinct
             {{ elementary.generate_surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
-            {{ elementary.full_name_split('database_name') }},
-            {{ elementary.full_name_split('schema_name') }},
-            {{ elementary.full_name_split('table_name') }},
+            {{ elementary.full_name_split('database_name') }} as database_name,
+            {{ elementary.full_name_split('schema_name') }} as schema_name,
+            {{ elementary.full_name_split('table_name') }} as table_name,
             column_name,
             'schema_change' as test_type,
             change as test_sub_type,
@@ -328,7 +328,7 @@
                     then 'The type of "' {{ elementary.and() }} column_name {{ elementary.and() }} '" was changed from ' {{ elementary.and() }} pre_data_type {{ elementary.and() }} ' to ' {{ elementary.and() }} data_type
                 else NULL
             end as test_results_description
-        from all_column_changes
+        from {{ all_column_changes }}
         {# {{ dbt_utils.group_by(9) }} #}
     ) column_changes_test_results
     {% endset %}

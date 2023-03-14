@@ -4,8 +4,7 @@
         where
           unique_id = '{{ model_node.unique_id }}' and
           full_refresh = true
-        order by generated_at desc
-        limit 1
+        {{ elementary.orderby('generated_at desc') }}
     {% endset %}
-    {% do return(elementary.result_value(query)) %}
+    {% do return(elementary.result_value(elementary.limit(query))) %}
 {% endmacro %}

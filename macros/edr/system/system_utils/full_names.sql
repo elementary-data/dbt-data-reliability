@@ -90,7 +90,9 @@
         {{ return('') }}
     {%- endif -%}
     
-    (SELECT TRIM(value) FROM STRING_SPLIT(full_table_name, '.', 1) WHERE ordinal = {{ part_index }})
+    (SELECT TRIM(value) FROM
+            (SELECT value, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum FROM STRING_SPLIT(full_table_name, '.')) CteStringSplit
+        WHERE RowNum = {{ part_index }})
 
 {% endmacro %}
 
