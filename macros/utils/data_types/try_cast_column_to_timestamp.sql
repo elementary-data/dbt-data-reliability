@@ -8,10 +8,9 @@
         select {{ elementary.safe_cast(timestamp_column, elementary.type_timestamp()) }} as timestamp_column
         from {{ table_relation }}
         where {{ timestamp_column }} is not null
-        limit 1
     {%- endset %}
 
-    {%- set result = elementary.result_value(query) %}
+    {%- set result = elementary.result_value(elementary.limit(query)) %}
     {%- if result is not none %}
         {{ return(true) }}
     {%- endif %}
