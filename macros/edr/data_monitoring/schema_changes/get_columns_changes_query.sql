@@ -29,7 +29,7 @@
         )
 
         select
-            info_schema.full_table_name,
+            lower(info_schema.full_table_name) as full_table_name,
             lower(info_schema.column_name) as column_name,
             info_schema.data_type,
             (baseline.column_name IS NULL) as is_new,
@@ -43,8 +43,8 @@
 
     {% set pre %}
         select
-            {{ elementary.const_as_string(full_table_name) }} as full_table_name,
-            column_name,
+            lower({{ elementary.const_as_string(full_table_name) }}) as full_table_name,
+            lower(column_name) as column_name,
             data_type,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
         from {{ model_baseline_relation }}
@@ -77,7 +77,7 @@
             pre.data_type as pre_data_type,
             pre.detected_at
         from cur inner join pre
-            on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
+            on (lower(cur.full_table_name) = lower(pre.full_table_name) and lower(cur.column_name) = lower(pre.column_name))
         where pre.data_type IS NOT NULL AND lower(cur.data_type) != lower(pre.data_type)
 
     ),
