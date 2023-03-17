@@ -36,22 +36,37 @@
 
 {% macro bigquery__complete_buckets_cte(time_bucket) %}
     {% set edr_bucket_end_expr = elementary.edr_timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') %}
-    {%- set complete_buckets_cte %}
-        select
-          edr_bucket_start,
-          {{ edr_bucket_end_expr }} as edr_bucket_end
-        from unnest(generate_timestamp_array({{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start())) }}, {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start
-        where {{ edr_bucket_end_expr }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }}
-    {%- endset %}
+
+    {%- if time_bucket.period | lower in ['second', 'minute', 'hour', 'day'] %}
+        {%- set complete_buckets_cte %}
+            select
+              edr_bucket_start,
+              {{ edr_bucket_end_expr }} as edr_bucket_end
+            from unnest(generate_timestamp_array({{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start())) }}, {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start
+            where {{ edr_bucket_end_expr }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }}
+        {%- endset %}
+    {%- elif time_bucket.period | lower in ['week', 'month', 'quarter', 'year'] %}
+        {%- set complete_buckets_cte %}
+            select
+              {{ elementary.edr_cast_as_timestamp('edr_bucket_start') }} as edr_bucket_start,
+              {{ elementary.edr_cast_as_timestamp(edr_bucket_end_expr) }} as edr_bucket_end
+            from unnest(generate_date_array({{ elementary.edr_cast_as_date(elementary.edr_quote(elementary.get_min_bucket_start())) }}, {{ elementary.edr_cast_as_date(elementary.edr_quote(elementary.get_max_bucket_end())) }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as edr_bucket_start
+            where {{ edr_bucket_end_expr }} <= {{ elementary.edr_cast_as_date(elementary.edr_quote(elementary.get_max_bucket_end())) }}
+        {%- endset %}
+    {%- else %}
+        {{ exceptions.raise_compiler_error("Unsupported time bucket period: ".format(time_bucket.period)) }}
+    {%- endif %}
+
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
+
 
 {% macro redshift__complete_buckets_cte(time_bucket) %}
     {%- set complete_buckets_cte %}
       with integers as (
         select (row_number() over (order by 1)) - 1 as num
         from pg_catalog.pg_class
-        limit {{ elementary.timediff(time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start())), elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end()))) }} / {{ time_bucket.count }} + 1
+        limit {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start())), elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())), time_bucket.period) }} / {{ time_bucket.count }} + 1
       )
       select
         {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start())) }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket_start,
