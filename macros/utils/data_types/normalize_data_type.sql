@@ -1,6 +1,6 @@
 {% macro normalize_data_type(data_type) %}
 
-    {# decimal data type is in the format decimal(p,s) #}
+    {# In case data type has precision info - e.g. decimal is in the format decimal(p,s) #}
     {%- if '(' in data_type %}
         {%- set data_type = data_type.split('(')[0] %}
     {%- endif %}
