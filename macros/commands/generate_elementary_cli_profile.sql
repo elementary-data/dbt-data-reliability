@@ -7,14 +7,14 @@
 elementary:
   outputs:
     default:
-      type: {{ target.type }}
-      account: {{ target.account }}
-      user: {{ target.user }}
-      password: <PASSWORD>
-      role: {{ target.role }}
-      warehouse: {{ target.warehouse }}
-      database: {{ elementary_database }}
-      schema: {{ elementary_schema }}
+      type: "{{ target.type }}"
+      account: "{{ target.account }}"
+      user: "{{ target.user }}"
+      password: "<PASSWORD>"
+      role: "{{ target.role }}"
+      warehouse: "{{ target.warehouse }}"
+      database: "{{ elementary_database }}"
+      schema: "{{ elementary_schema }}"
       threads: {{ target.threads }}
 {% endmacro %}
 
@@ -22,13 +22,13 @@ elementary:
 elementary:
   outputs:
     default:
-      type: {{ target.type }}
-      method: <AUTH_METHOD> # Configure your auth method and add the required fields according to https://docs.getdbt.com/reference/warehouse-setups/bigquery-setup#authentication-methods
-      project: {{ elementary_database }}
+      type: "{{ target.type }}"
+      method: "<AUTH_METHOD>" # Configure your auth method and add the required fields according to https://docs.getdbt.com/reference/warehouse-setups/bigquery-setup#authentication-methods
+      project: "{{ elementary_database }}"
       {%- if method == 'github-actions' %}
-      keyfile: /tmp/bigquery_keyfile.json # Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`.
+      keyfile: "/tmp/bigquery_keyfile.json" # Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`.
       {%- endif %}
-      dataset: {{ elementary_schema }}
+      dataset: "{{ elementary_schema }}"
       threads: {{ target.threads }}
 {% endmacro %}
 
@@ -36,13 +36,13 @@ elementary:
 elementary:
   outputs:
     default:
-      type: {{ target.type }}
-      host: {{ target.host }}
-      port: {{ target.port }}
-      user: {{ target.user }}
-      password: <PASSWORD>
-      dbname: {{ elementary_database }}
-      schema: {{ elementary_schema }}
+      type: "{{ target.type }}"
+      host: "{{ target.host }}"
+      port: "{{ target.port }}"
+      user: "{{ target.user }}"
+      password: "<PASSWORD>"
+      dbname: "{{ elementary_database }}"
+      schema: "{{ elementary_schema }}"
       threads: {{ target.threads }}
 {% endmacro %}
 
@@ -50,14 +50,14 @@ elementary:
 elementary:
   outputs:
     default:
-      type: {{ target.type }}
-      host: {{ target.host }}
-      http_path: {{ target.http_path }}
+      type: "{{ target.type }}"
+      host: "{{ target.host }}"
+      http_path: "{{ target.http_path }}"
       {%- if elementary_database %}
-      catalog: {{ elementary_database }}
+      catalog: "{{ elementary_database }}"
       {%- endif %}
-      schema: {{ elementary_schema }}
-      token: <TOKEN>
+      schema: "{{ elementary_schema }}"
+      token: "<TOKEN>"
       threads: {{ target.threads }}
 {% endmacro %}
 
@@ -65,14 +65,14 @@ elementary:
 elementary:
   outputs:
     default:
-      type: databricks
-      host: {{ target.host }}
-      http_path: <HTTP PATH>
+      type: "databricks"
+      host: "{{ target.host }}"
+      http_path: "<HTTP PATH>"
       {%- if elementary_database %}
-      catalog: {{ elementary_database }}
+      catalog: "{{ elementary_database }}"
       {% endif %}
-      schema: {{ elementary_schema }}
-      token: <TOKEN>
+      schema: "{{ elementary_schema }}"
+      token: "<TOKEN>"
       threads: {{ target.threads }}
 {% endmacro %}
 
