@@ -38,7 +38,7 @@ elementary:
     default:
       type: "{{ target.type }}"
       host: "{{ target.host }}"
-      port: "{{ target.port }}"
+      port: {{ target.port }}
       user: "{{ target.user }}"
       password: "<PASSWORD>"
       dbname: "{{ elementary_database }}"
