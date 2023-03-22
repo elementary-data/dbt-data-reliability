@@ -21,6 +21,7 @@
 
     {% set query %}
         begin transaction;
+        lock {{ relation }};
         delete from {{ relation }};   -- truncate supported in Redshift transactions, but causes an immediate commit
         insert into {{ relation }} select * from {{ intermediate_relation }};
         commit;
