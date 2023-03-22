@@ -47,7 +47,8 @@
 
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_namespace = test_metadata.get('namespace') %}
-    {% set test_short_name = test_metadata.get('name') %}
+    {% set test_short_name = elementary.get_test_short_name(node_dict, test_metadata) %}
+
     {% set default_description = elementary.get_default_description(test_short_name, test_namespace) %}
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
@@ -173,6 +174,40 @@
     {%- endif -%}
     {{- return(test_type) -}}
 {%- endmacro -%}
+
+
+{% macro get_test_short_name(node_dict, test_metadata) %}
+    {#
+    If there is a custom name it overrides the dbt auto generated long name.
+    This is a best effort to extract custom names.
+    dbt automated name generation -
+        - Generic test long name starts with the generic name or source_generic
+        - Generic tests from packages long name starts with the package_generic or package_source_generic
+    #}
+
+    {% set generic_test_name = test_metadata.get('name') %} {# 'unique', 'relationships', 'volume_anomalies' etc #}
+    {% set test_package_name = test_metadata.get('namespace') %}
+    {% set specific_test_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
+    {%- if specific_test_name and generic_test_name and test_package_name %}
+        {% set test_short_name =
+              generic_test_name if (specific_test_name.startswith(generic_test_name) or specific_test_name.startswith('source_' + generic_test_name)
+              or specific_test_name.startswith(test_package_name + '_' + generic_test_name) or specific_test_name.startswith(test_package_name + '_source_' + generic_test_name))
+              else specific_test_name
+        %}
+        {{ return(test_short_name) }}
+    {%- elif specific_test_name and generic_test_name %}
+        {% set test_short_name =
+              generic_test_name if (specific_test_name.startswith(generic_test_name) or specific_test_name.startswith('source_' + generic_test_name))
+              else specific_test_name
+        %}
+        {{ return(test_short_name) }}
+    {%- elif generic_test_name %}
+        {{ return(generic_test_name) }}
+    {%- else %}
+        {{ return(specific_test_name) }}
+    {%- endif %}
+{% endmacro %}
+
 
 {% macro get_default_description(short_name, test_namespace = none) %}
     {# Relevant for dbt_expectations 0.8.0 #}
