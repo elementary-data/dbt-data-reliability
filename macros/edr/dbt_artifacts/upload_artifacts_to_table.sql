@@ -7,7 +7,7 @@
         {% endif %}
     {% endfor %}
 
-    {% if metadata_hashes and elementary.get_config_var("cache_artifacts") %}
+    {% if metadata_hashes is not none and elementary.get_config_var("cache_artifacts") %}
         {% set artifacts_hashes = flatten_artifact_dicts | map(attribute="metadata_hash") | sort %}
         {% if artifacts_hashes == metadata_hashes %}
             {% do elementary.debug_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
