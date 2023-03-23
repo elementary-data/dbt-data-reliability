@@ -187,24 +187,24 @@
 
     {% set generic_test_name = test_metadata.get('name') %} {# 'unique', 'relationships', 'volume_anomalies' etc #}
     {% set test_package_name = test_metadata.get('namespace') %}
-    {% set specific_test_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
-    {%- if specific_test_name and generic_test_name and test_package_name %}
-        {% set test_short_name =
-              generic_test_name if (specific_test_name.startswith(generic_test_name) or specific_test_name.startswith('source_' + generic_test_name)
-              or specific_test_name.startswith(test_package_name + '_' + generic_test_name) or specific_test_name.startswith(test_package_name + '_source_' + generic_test_name))
-              else specific_test_name
-        %}
-        {{ return(test_short_name) }}
-    {%- elif specific_test_name and generic_test_name %}
-        {% set test_short_name =
-              generic_test_name if (specific_test_name.startswith(generic_test_name) or specific_test_name.startswith('source_' + generic_test_name))
-              else specific_test_name
-        %}
+    {% set test_instance_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
+    {%- if test_instance_name and generic_test_name %}
+        {%- if test_package_name %}
+            {% set test_short_name =
+                generic_test_name if (test_instance_name.startswith(test_package_name + '_' + generic_test_name) or test_instance_name.startswith(test_package_name + '_source_' + generic_test_name))
+                else test_instance_name
+            %}
+        {%- else %}
+            {% set test_short_name =
+                generic_test_name if (test_instance_name.startswith(generic_test_name) or test_instance_name.startswith('source_' + generic_test_name))
+                else test_instance_name
+            %}
+        {%- endif %}
         {{ return(test_short_name) }}
     {%- elif generic_test_name %}
         {{ return(generic_test_name) }}
     {%- else %}
-        {{ return(specific_test_name) }}
+        {{ return(test_instance_name) }}
     {%- endif %}
 {% endmacro %}
 
