@@ -56,7 +56,7 @@ jobs:
         run: git push origin release/${{ inputs.dbt-package-version }}
 
   create-pr:
-    needs: bump-cli-version
+    needs: bump-version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
