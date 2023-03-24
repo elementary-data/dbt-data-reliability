@@ -1,7 +1,8 @@
 {% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
 
-    {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
-    {% set timestamp_column = metric_properties.timestamp_column %}
+    {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {%- set timestamp_column = metric_properties.timestamp_column %}
+    {%- set min_bucket_start = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(min_bucket_start))%}
 
     with monitored_table as (
         select * from {{ monitored_table_relation }}
