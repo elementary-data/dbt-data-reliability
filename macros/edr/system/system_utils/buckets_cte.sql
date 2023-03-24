@@ -77,6 +77,7 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
+
 {% macro postgres__complete_buckets_cte(time_bucket, edr_bucket_end_expr, edr_min_bucket_start_expr, edr_max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
         select
