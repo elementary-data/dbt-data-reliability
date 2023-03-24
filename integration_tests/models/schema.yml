@@ -46,7 +46,7 @@ models:
             count: 1
           config:
             severity: warn
-          tags: ["table_anomalies"]
+          tags: ["debug"]
       - elementary.all_columns_anomalies:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name

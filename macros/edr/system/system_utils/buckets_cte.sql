@@ -61,29 +61,29 @@
 {% endmacro %}
 
 
-{% macro redshift__complete_buckets_cte(time_bucket, edr_bucket_end_expr, edr_min_bucket_start_expr, edr_min_bucket_start_expr) %}
+{% macro redshift__complete_buckets_cte(time_bucket, edr_bucket_end_expr, edr_min_bucket_start_expr, edr_max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
       with integers as (
         select (row_number() over (order by 1)) - 1 as num
         from pg_catalog.pg_class
-        limit {{ elementary.edr_datediff(edr_min_bucket_start_expr, edr_min_bucket_start_expr, time_bucket.period) }} / {{ time_bucket.count }} + 1
+        limit {{ elementary.edr_datediff(edr_min_bucket_start_expr, edr_max_bucket_end_expr, time_bucket.period) }} / {{ time_bucket.count }} + 1
       )
       select
         {{ edr_min_bucket_start_expr }} + (num * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket_start,
         {{ edr_min_bucket_start_expr }} + ((num + 1) * interval '{{ time_bucket.count }} {{ time_bucket.period }}') as edr_bucket_end
       from integers
-      where edr_bucket_end <= {{ edr_min_bucket_start_expr }}
+      where edr_bucket_end <= {{ edr_max_bucket_end_expr }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
-{% macro postgres__complete_buckets_cte(time_bucket, edr_bucket_end_expr, edr_min_bucket_start_expr, edr_min_bucket_start_expr) %}
+{% macro postgres__complete_buckets_cte(time_bucket, edr_bucket_end_expr, edr_min_bucket_start_expr, edr_max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
         select
           edr_bucket_start,
           {{ edr_bucket_end_expr }} as edr_bucket_end
-        from generate_series({{ edr_min_bucket_start_expr }}, {{ edr_min_bucket_start_expr }}, interval '{{ time_bucket.count }} {{ time_bucket.period }}') edr_bucket_start
-        where {{ edr_bucket_end_expr }} <= {{ edr_min_bucket_start_expr }}
+        from generate_series({{ edr_min_bucket_start_expr }}, {{ edr_max_bucket_end_expr }}, interval '{{ time_bucket.count }} {{ time_bucket.period }}') edr_bucket_start
+        where {{ edr_bucket_end_expr }} <= {{ edr_max_bucket_end_expr }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
