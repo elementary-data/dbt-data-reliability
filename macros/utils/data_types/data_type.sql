@@ -100,10 +100,24 @@
     {{ return(macro()) }}
 {% endmacro %}
 
+
 {% macro edr_type_numeric() %}
     {% set macro = dbt.type_numeric or dbt_utils.type_numeric %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_numeric` macro.") }}
     {% endif %}
     {{ return(macro()) }}
+{% endmacro %}
+
+
+{% macro edr_type_date() %}
+    {{ return(adapter.dispatch('edr_type_date', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__edr_type_date() %}
+    {{ elementary.edr_type_timestamp() }}
+{% endmacro %}
+
+{% macro bigquery__edr_type_date() %}
+    date
 {% endmacro %}

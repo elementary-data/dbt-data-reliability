@@ -1,30 +1,36 @@
 {% macro column_monitoring_query(monitored_table_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}
-    {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {%- set min_bucket_start = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(min_bucket_start))%}
+    {%- set timestamp_column = metric_properties.timestamp_column %}
 
-    with buckets as (
-        select edr_bucket_start, edr_bucket_end from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
-        {% if min_bucket_start -%}
-          where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
-        {%- endif %}
+
+    with monitored_table as (
+        select * from {{ monitored_table_relation }}
+            {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
-    {% set timestamp_column = metric_properties.timestamp_column %}
-    filtered_monitored_table as (
-        select {{ column_obj.quoted }}
-            {% if timestamp_column -%}
-             , {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
-            {%- else %}
-            , {{ elementary.null_timestamp() }} as start_bucket_in_data
-            {%- endif %}
-        from {{ monitored_table_relation }}
-        where
-        {% if timestamp_column -%}
-            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
-            and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
-        {%- else %}
-            true
-        {%- endif %}
-        {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
-    ),
+
+    {% if timestamp_column -%}
+         buckets as (
+             select edr_bucket_start, edr_bucket_end
+             from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
+             where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+         ),
+
+         filtered_monitored_table as (
+            select {{ column_obj.quoted }},
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
+            from monitored_table
+            where
+                {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
+                and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
+        ),
+    {%- else %}
+        filtered_monitored_table as (
+            select {{ column_obj.quoted }},
+                   {{ elementary.null_timestamp() }} as start_bucket_in_data
+            from {{ monitored_table_relation }}
+        ),
+    {% endif %}
 
     column_monitors as (
 

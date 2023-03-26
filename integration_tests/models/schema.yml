@@ -40,6 +40,13 @@ models:
           config:
             severity: warn
           tags: ["table_anomalies"]
+      - elementary.volume_anomalies:
+          time_bucket:
+            period: week
+            count: 1
+          config:
+            severity: warn
+          tags: ["table_anomalies"]
       - elementary.all_columns_anomalies:
           tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
