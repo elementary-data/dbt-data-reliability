@@ -1,5 +1,11 @@
 {% macro dump_table(model_unique_id, output_path, since=none, days_back=7) %}
     {% set node = graph.nodes[model_unique_id] %}
+    {% set relation_exists = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
+    {% if not relation_exists %}
+        {% do print("Relation '{}' does not exist.".format(node.relation_name)) %}
+        {% do return([]) %}
+    {% endif %}
+
     {% set timestamp_column = node.meta.timestamp_column %}
     {% set query %}
         select * from {{ node.relation_name }}

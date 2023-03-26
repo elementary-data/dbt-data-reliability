@@ -12,5 +12,7 @@
         {% do exceptions.raise_compiler_error("Received invalid macro name: {}".format(macro_name)) %}
     {% endif %}
     {% set results = macro(**macro_args) %}
-    {% do elementary.edr_log(tojson(results)) %}
+    {% if results is not none %}
+        {% do elementary.edr_log(tojson(results)) %}
+    {% endif %}
 {% endmacro %}
