@@ -5,7 +5,7 @@
         select * from {{ node.relation_name }}
         {% if timestamp_column %}
             {% if since %}
-                where {{ timestamp_column }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
+                where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
             {% else %}
                 where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
             {% endif %}
