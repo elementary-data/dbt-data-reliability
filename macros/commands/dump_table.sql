@@ -18,7 +18,7 @@
 
     {% set timestamp_column = node.meta.timestamp_column %}
     {% set query %}
-        select {{ '\"' + column_names | join('\", \"') + '\"' }} from {{ relation }}
+        select {{ elementary.escape_select(column_names) }} from {{ relation }}
         {% if timestamp_column %}
             {% if since %}
                 where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
