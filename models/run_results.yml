@@ -122,7 +122,6 @@ models:
         data_type: string
         description: The orchestrator that was used to run this invocation. For example, dbt Cloud, GitHub Actions, etc.
 
-
   - name: dbt_run_results
     description: >
       Run results of dbt invocations, inserted at the end of each invocation.
@@ -194,6 +193,11 @@ models:
         data_type: string
         description: The compiled code (SQL / Python) executed against the database.
 
+      - name: compiled_sql
+        deprecated: true
+        data_type: string
+        description: The compiled SQL executed against the database.
+
       - name: failures
         data_type: int
         description: Number of failures in this run.
@@ -226,7 +230,6 @@ models:
 
   - name: job_run_results
     description: >
-        Run results of dbt invocations, enriched with jobs metadata.
-        Each row is the result of a single job.
-        This is a view on `dbt_invocations`.
-
+      Run results of dbt invocations, enriched with jobs metadata.
+      Each row is the result of a single job.
+      This is a view on `dbt_invocations`.

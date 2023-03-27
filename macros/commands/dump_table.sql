@@ -1,14 +1,24 @@
-{% macro dump_table(model_unique_id, output_path, since=none, days_back=7) %}
+{% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, since=none, days_back=7) %}
     {% set node = graph.nodes[model_unique_id] %}
-    {% set relation_exists = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
-    {% if not relation_exists %}
+    {% set relation = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
+    {% if relation is none %}
         {% do print("Relation '{}' does not exist.".format(node.relation_name)) %}
         {% do return([]) %}
     {% endif %}
 
+    {% set column_names = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
+    {% if exclude_deprecated_columns %}
+        {% set deprecated_column_names = node.columns.values()| selectattr("deprecated") | map(attribute="name") | list %}
+        {% for deprecated_column_name in deprecated_column_names %}
+            {% if deprecated_column_name in column_names %}
+                {% do column_names.remove(deprecated_column_name) %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
     {% set timestamp_column = node.meta.timestamp_column %}
     {% set query %}
-        select * from {{ node.relation_name }}
+        select {{ elementary.escape_select(column_names) }} from {{ relation }}
         {% if timestamp_column %}
             {% if since %}
                 where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
