@@ -16,6 +16,7 @@
                                                                  ('schema_name', 'string'),
                                                                  ('name', 'string'),
                                                                  ('short_name', 'string'),
+                                                                 ('display_name', 'string'),
                                                                  ('alias', 'string'),
                                                                  ('test_column_name', 'string'),
                                                                  ('severity', 'string'),
@@ -47,7 +48,8 @@
 
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_namespace = test_metadata.get('namespace') %}
-    {% set test_short_name = elementary.get_test_short_name(node_dict, test_metadata) %}
+    {% set test_short_name = test_metadata.get('name')%}
+    {% set test_display_name = elementary.get_test_display_name(node_dict, test_metadata) %}
 
     {% set default_description = elementary.get_default_description(test_short_name, test_namespace) %}
 
@@ -134,6 +136,7 @@
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_short_name,
+        'display_name': test_display_name,
         'alias': node_dict.get('alias'),
         'test_column_name': node_dict.get('column_name'),
         'severity': config_dict.get('severity'),
@@ -176,7 +179,7 @@
 {%- endmacro -%}
 
 
-{% macro get_test_short_name(node_dict, test_metadata) %}
+{% macro get_test_display_name(node_dict, test_metadata) %}
     {#
     If there is a custom name it overrides the dbt auto generated long name.
     This is a best effort to extract custom names.
@@ -190,17 +193,17 @@
     {% set test_instance_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
     {%- if generic_test_name %}
         {%- if test_package_name %}
-            {% set test_short_name =
+            {% set test_display_name =
                 generic_test_name if (test_instance_name.startswith(test_package_name + '_' + generic_test_name) or test_instance_name.startswith(test_package_name + '_source_' + generic_test_name))
                 else test_instance_name
             %}
         {%- else %}
-            {% set test_short_name =
+            {% set test_display_name =
                 generic_test_name if (test_instance_name.startswith(generic_test_name) or test_instance_name.startswith('source_' + generic_test_name))
                 else test_instance_name
             %}
         {%- endif %}
-        {{ return(test_short_name) }}
+        {{ return(test_display_name) }}
     {%- else %}
         {{ return(test_instance_name) }}
     {%- endif %}

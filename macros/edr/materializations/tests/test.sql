@@ -59,17 +59,6 @@
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
-{% macro get_elementary_test_type(flattened_test) %}
-  {% if flattened_test.test_namespace == "elementary" %}
-    {% if flattened_test.short_name.endswith("anomalies") %}
-      {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name.startswith('schema_changes') %}
-      {% do return("schema_change") %}
-    {% endif %}
-  {% endif %}
-  {% do return("dbt_test") %}
-{% endmacro %}
-
 {% macro materialize_test() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
@@ -208,6 +197,7 @@
         'test_params': elementary.insensitive_get_dict_value(flattened_test, 'test_params'),
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
         'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
+        'test_display_name': elementary.insensitive_get_dict_value(flattened_test, 'display_name'),
         'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
         'result_rows': result_rows
     }%}

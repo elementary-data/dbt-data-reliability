@@ -31,6 +31,7 @@ alerts_schema_changes as (
            other,
            test_name,
            test_short_name,
+           test_display_name,
            test_params,
            severity,
            status,

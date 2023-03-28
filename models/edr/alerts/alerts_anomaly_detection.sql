@@ -29,6 +29,7 @@ alerts_anomaly_detection as (
            other,
            test_name,
            test_short_name,
+           test_display_name,
            test_params,
            severity,
            status,
