@@ -134,5 +134,6 @@ class Args(BaseModel):
     """
 
     project_dir: str
+    profile: str = None
     target: Optional[str] = None
     threads: Optional[int] = 1
