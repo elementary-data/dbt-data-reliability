@@ -189,7 +189,9 @@
     {% set test_package_name = test_metadata.get('namespace') %}
     {% set test_instance_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
     {%- if generic_test_name %}
-        {%- if test_package_name %}
+        {%- if test_package_name == 'elementary' %}
+            {{ return(generic_test_name) }}
+        {%- elif test_package_name %}
             {% set test_short_name =
                 generic_test_name if (test_instance_name.startswith(test_package_name + '_' + generic_test_name) or test_instance_name.startswith(test_package_name + '_source_' + generic_test_name))
                 else test_instance_name

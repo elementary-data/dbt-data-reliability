@@ -59,17 +59,6 @@
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
-{% macro get_elementary_test_type(flattened_test) %}
-  {% if flattened_test.test_namespace == "elementary" %}
-    {% if flattened_test.short_name.endswith("anomalies") %}
-      {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name.startswith('schema_changes') %}
-      {% do return("schema_change") %}
-    {% endif %}
-  {% endif %}
-  {% do return("dbt_test") %}
-{% endmacro %}
-
 {% macro materialize_test() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
