@@ -328,6 +328,38 @@ def generate_dimension_anomalies_training_and_validation_files():
     )
 
 
+def generate_seasonality_volume_anomalies_files():
+    # seasonal_data : should trigger volume anomalies and not trigger 
+    columns = ["updated_at",
+               "user_id"]
+    dates = generate_rows_timestamps(base_date=EPOCH-timedelta(days=7), days_back=210) # 7 * 30 days backwards
+    training_rows = []
+    for ix,date in enumerate(dates):
+        if (ix % 7) == 1:
+            training_rows.extend([{"updated_at": date.strftime(DATE_FORMAT),
+                                   "user_id": random.randint(1000,9999)}
+                                  for _ in range(700)])
+        else:
+            continue
+    write_rows_to_csv(csv_path=os.path.join(FILE_DIR, "data", "training", "users_per_day_weekly_seasonal_training.csv"),
+                      rows=training_rows,
+                      header=columns)
+
+    validation_dates = generate_rows_timestamps(base_date=EPOCH, days_back=7) # one week
+    validation_rows = []
+    for ix, date in enumerate(validation_dates):
+        validation_rows.extend([{"updated_at": date.strftime(DATE_FORMAT),
+                                   "user_id": random.randint(1000,9999)}
+                                  for _ in range(100)])
+    write_rows_to_csv(csv_path=os.path.join(FILE_DIR, "data", "validation", "users_per_day_weekly_seasonal_validation.csv"),
+                      rows=validation_rows,
+                      header=columns)
+
+
+    
+
+
+
 def main():
     print("Generating fake data!")
     generate_fake_data()
