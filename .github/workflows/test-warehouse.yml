@@ -117,12 +117,11 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: dbt deps
 
-      # dbt-osmosis is incompatible with new version of dbt.
-      # - name: Run integration tests
-      #   working-directory: ${{ env.TESTS_DIR }}/integration_tests
-      #   run: |
-      #     pip install -r requirements.txt
-      #     pytest -vv --target "${{ inputs.warehouse-type }}"
+      - name: Run integration tests
+        working-directory: ${{ env.TESTS_DIR }}/integration_tests
+        run: |
+          pip install -r requirements.txt
+          pytest -vv --target "${{ inputs.warehouse-type }}"
 
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
