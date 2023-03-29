@@ -1,6 +1,6 @@
 {% macro get_test_type(flattened_test) %}
     {% if flattened_test.test_namespace == "elementary" %}
-        {%- set elementary_test_type = get_elementary_test_type(flattened_test) %}
+        {%- set elementary_test_type = elementary.get_elementary_test_type(flattened_test) %}
     {% endif %}
 
     {%- if elementary_test_type and elementary_test_type != "python_test" %}
