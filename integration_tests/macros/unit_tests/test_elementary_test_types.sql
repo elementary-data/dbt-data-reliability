@@ -15,5 +15,5 @@
         {% endif %}
     {% endfor %}
     {%- set elementary_test_types = elementary_test_types | unique | list %}
-    {{ assert_value(elementary_test_types, expected_elementary_test_types ) }}
+    {{ assert_lists_contain_same_items(elementary_test_types, expected_elementary_test_types ) }}
 {% endmacro %}
