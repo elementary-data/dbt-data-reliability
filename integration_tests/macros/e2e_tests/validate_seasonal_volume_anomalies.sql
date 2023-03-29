@@ -7,7 +7,6 @@
         from {{ alerts_relation }}
         where test_name = {{ non_seasonal_test_name }}
     {% endset %}
-            {% do debug() %}
     {% set test_result_rows_query = elementary.result_column_to_list(query_to_get_test_result_rows_query) %}
     {% set anomalous_result_rows_description_query %}
         with test_result_rows as
