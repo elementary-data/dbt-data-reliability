@@ -153,7 +153,7 @@
         'description': meta_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
-        'type': elementary.get_test_type(original_file_path, test_namespace),
+        'type': elementary.get_test_sub_type(original_file_path, test_namespace),
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
@@ -163,7 +163,7 @@
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 
-{% macro get_test_type(test_path, test_namespace = none) %}
+{% macro get_test_sub_type(test_path, test_namespace = none) %}
     {% set test_type = 'generic' %}
     {%- if test_namespace == 'dbt_expectations' -%}
         {% set test_type = 'expectation' %}

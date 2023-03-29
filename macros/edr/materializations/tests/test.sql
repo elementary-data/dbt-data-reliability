@@ -65,7 +65,7 @@
   {% endif %}
 
   {% set flattened_test = elementary.flatten_test(model) %}
-  {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
+  {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
     "schema_change": elementary.handle_schema_changes_test,
@@ -187,7 +187,7 @@
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(flattened_test, 'test_column_name'),
-        'test_type': elementary.get_elementary_test_type(flattened_test),
+        'test_type': elementary.get_test_type(flattened_test),
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),

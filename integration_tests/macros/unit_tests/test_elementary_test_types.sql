@@ -1,6 +1,6 @@
 {% macro test_elementary_test_types() %}
     {# assert that all the elementary tests are identified as elementary types #}
-    {%- set expected_elementary_test_types = ['anomaly_detection', 'schema_change'] %}
+    {%- set expected_elementary_test_types = ['anomaly_detection', 'schema_change', 'python_test'] %}
     {%- set elementary_test_types = [] %}
     {% for test_node in graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
         {% set test_metadata = test_node.get('test_metadata') %}
