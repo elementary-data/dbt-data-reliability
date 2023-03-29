@@ -1,4 +1,4 @@
-{% test volume_anomalies(model, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
+{% test volume_anomalies(model, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket,seasonality=none) %}
   {{ elementary.test_table_anomalies(
       model=model,
       table_anomalies=["row_count"],
