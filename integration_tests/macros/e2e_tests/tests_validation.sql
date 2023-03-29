@@ -1,5 +1,6 @@
 {% macro validate_dimension_anomalies() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
+
     {% set dimension_validation_query %}
         select *
         from {{ alerts_relation }}
@@ -16,7 +17,6 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-
     {% if results | length != 2 %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}

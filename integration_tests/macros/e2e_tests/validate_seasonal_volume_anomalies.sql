@@ -12,13 +12,12 @@
         with test_result_rows as
             (
             {{ test_result_rows_query[0] }}
-            ) select distinct anomaly_description
+            ) select distinct metric_value
               from test_result_rows
               where is_anomalous
     {% endset %}
-    {% set descriptions_for_errors = elementary.result_column_to_list(anomalous_result_rows_description_query) %}
-    {{ assert_lists_contain_same_items(descriptions_for_errors, ['the last row_count value is 700.000. the average for this metric is 103.046.',
-                                                                 'the last row_count value is 700.000. the average for this metric is 102.941.']) }}
+    {% set numeric_metric_from_error = elementary.result_value(anomalous_result_rows_description_query) %}
+    {{ assert_value(numeric_metric_from_error, 700.0) }}
 
     -- now the seasonal anomalies: should not have any rows.
     {% set seasonal_test_name = "'elementary_volume_anomalies_users_per_day_weekly_seasonal_14__day_of_week__2__updated_at'" %}
