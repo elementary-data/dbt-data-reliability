@@ -83,6 +83,11 @@
                 source_value,
                 bucket_start,
                 bucket_end,
+                {%- if metric_properties and metric_properties.seasonality and metric_properties.seasonality=='day_of_week' %}
+                    {{ elementary.edr_day_of_week_mod_7('bucket_end') }} as bucket_end_mod_7,
+                {%- else %}
+                    0 as bucket_end_mod_7,
+                {%- endif %}
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -103,15 +108,16 @@
                 source_value,
                 bucket_start,
                 bucket_end,
+                bucket_end_mod_7,
                 bucket_duration_hours,
                 updated_at,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_end_mod_7 order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_end_mod_7 order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_end_mod_7 order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_end_mod_7 order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_end_mod_7 order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            {{ dbt_utils.group_by(12) }}
+            {{ dbt_utils.group_by(13) }}
         ),
 
         anomaly_scores as (

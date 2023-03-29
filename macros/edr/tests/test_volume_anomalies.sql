@@ -7,7 +7,8 @@
       sensitivity=sensitivity,
       backfill_days=backfill_days,
       where_expression=where_expression,
-      time_bucket=time_bucket
+      time_bucket=time_bucket,
+      seasonality=seasonality
     )
   }}
 {% endtest %}

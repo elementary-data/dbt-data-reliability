@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket) %}
+{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -30,7 +30,8 @@
 
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
-                                                                               time_bucket=time_bucket) %}
+                                                                               time_bucket=time_bucket,
+                                                                               seasonality=seasonality) %}
 
 
 

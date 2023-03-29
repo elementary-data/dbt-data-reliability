@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket, event_timestamp_column=none,freshness_column=none) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket, event_timestamp_column=none,freshness_column=none, seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -29,7 +29,8 @@
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
                                                                                event_timestamp_column=event_timestamp_column,
-                                                                               freshness_column=freshness_column) %}
+                                                                               freshness_column=freshness_column,
+                                                                               seasonality=seasonality) %}
 
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
