@@ -1,5 +1,5 @@
 {% macro handle_tests_results() %}
-    {{ elementary.debug_log("Handling test results.") }}
+    {{ elementary.file_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
     {% set store_result_rows_in_own_table = elementary.get_config_var("store_result_rows_in_own_table") %}
     {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, render_result_rows=(not store_result_rows_in_own_table)) %}
@@ -20,7 +20,7 @@
       {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
       {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
     {% endif %}
-    {{ elementary.debug_log("Handled test results successfully.") }}
+    {{ elementary.file_log("Handled test results successfully.") }}
     {{ return('') }}
 {% endmacro %}
 
@@ -61,17 +61,17 @@
         {% endif %}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
-            {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
+            {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-            {{ elementary.debug_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
+            {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {%- if target_relation and temp_relation and dest_columns %}
                 {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'id', dest_columns) %}
                 {%- do run_query(merge_sql) %}
                 {%- do adapter.commit() -%}
-                {{ elementary.debug_log('Finished merging') }}
+                {{ elementary.file_log('Finished merging') }}
             {%- else %}
-                {{ elementary.debug_log('Error: could not merge to table: ' ~ target_name) }}
+                {{ elementary.file_log('Error: could not merge to table: ' ~ target_name) }}
             {%- endif %}
         {%- endif %}
     {%- endif %}
@@ -86,17 +86,17 @@
         {% endif %}
         {%- set temp_relation = dbt.make_temp_relation(target_relation) -%}
         {%- if test_tables_union_query %}
-            {{ elementary.debug_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
+            {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
             {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-            {{ elementary.debug_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
+            {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {%- if target_relation and temp_relation and dest_columns %}
                 {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'column_state_id', dest_columns) %}
                 {%- do run_query(merge_sql) %}
                 {%- do adapter.commit() -%}
-                {{ elementary.debug_log('Finished merging') }}
+                {{ elementary.file_log('Finished merging') }}
             {%- else %}
-                {{ elementary.debug_log('Error: could not merge to table: ' ~ target_name) }}
+                {{ elementary.file_log('Error: could not merge to table: ' ~ target_name) }}
             {%- endif %}
         {%- endif %}
     {%- endif %}
