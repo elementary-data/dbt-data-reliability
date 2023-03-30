@@ -143,6 +143,7 @@
                 source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
+                bucket_end_mod_7,
                 metric_value,
                 case 
                     when training_stddev is null then null
