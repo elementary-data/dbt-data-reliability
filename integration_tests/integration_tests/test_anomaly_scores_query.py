@@ -215,5 +215,6 @@ def test_anomaly_scores_query(
             "training_avg",
             "training_stddev",
             "training_set_size",
+            "bucket_end_mod_7",
         ],
     )
