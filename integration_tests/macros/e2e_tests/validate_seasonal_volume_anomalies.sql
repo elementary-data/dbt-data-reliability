@@ -8,6 +8,7 @@
         where test_name = {{ non_seasonal_test_name }}
     {% endset %}
     {% set test_result_rows_query = elementary.result_column_to_list(query_to_get_test_result_rows_query) %}
+    {{ assert_list_has_expected_length(test_result_rows_query, 1) }}
     {% set anomalous_result_rows_description_query %}
         with test_result_rows as
             (
