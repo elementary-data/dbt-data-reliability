@@ -10,5 +10,7 @@ schema_changes as (
 select * from dbt
 union all
 select * from anomalies
+{%- if target.type != 'databricks' %}
 union all
 select * from schema_changes
+{%- endif %}
