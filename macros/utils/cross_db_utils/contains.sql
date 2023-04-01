@@ -15,7 +15,8 @@
     {%- if case_sensitive %}
         contains_substr({{ string }}, '{{ string_to_search }}')
     {%- else %}
-        contains_substr(lower({{ string }}), lower('{{ string_to_search }}'))
+        {%- set string_to_search = string_to_search | lower %}
+        contains_substr(lower({{ string }}), '{{ string_to_search }}')
     {%- endif %}
 {% endmacro %}
 
