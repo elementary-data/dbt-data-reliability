@@ -13,7 +13,7 @@
     {%- set default_numeric_monitors = elementary.get_config_var('edr_monitors')['column_numeric'] | list %}
     {% set numeric_monitors = [] %}
 
-
+    {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
     {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
                                                                            where_expression=none,
                                                                            time_bucket=none)%}

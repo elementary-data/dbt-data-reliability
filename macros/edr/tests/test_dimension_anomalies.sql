@@ -28,6 +28,7 @@
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
 
+        {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
