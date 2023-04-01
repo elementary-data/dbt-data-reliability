@@ -256,7 +256,7 @@
         with error_tests as (
             select
                 test_name,
-                {{ elementary.contains('tags', "'error_test'") }} as error_tag
+                {{ elementary.contains('tags', 'error_test') }} as error_tag
             from {{ alerts_relation }}
             where status = 'error'
         )
