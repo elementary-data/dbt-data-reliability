@@ -253,11 +253,20 @@
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
-        select distinct {{ elementary.get_json_path('test_params','assert') }}
-        from {{ alerts_relation }}
-        where status = 'error'
+        with error_tests as (
+            select
+                test_name,
+                {{ elementary.contains('tags', "'error_test'") }} as error_tag
+            from {{ alerts_relation }}
+            where status = 'error'
+        )
+        select
+            case when error_tag = true then 'error'
+            else 'error: ' || test_name
+            end as error_tests
+        from error_tests
     {% endset %}
-    {% set results = elementary.result_column_to_list(error_test_validation_query) %}
+    {% set results = elementary.result_column_to_list(error_test_validation_query) | unique | list %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 
