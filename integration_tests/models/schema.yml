@@ -106,6 +106,8 @@ models:
         tests:
           - uniques:
               tags: ["error_test", "regular_tests"]
+              config:
+                assert: "error"
 
   - name: string_column_anomalies
     meta:
@@ -278,6 +280,8 @@ models:
       - elementary.schema_changes_from_baseline:
           tags: ["schema_changes_from_baseline"]
           enforce_types: true
+          config:
+            assert: "error"
 
   - name: stats_players
     columns:

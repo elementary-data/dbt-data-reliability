@@ -249,11 +249,11 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {% set alerts_relation = ref('alerts_dbt_tests') %}
+    {% set alerts_relation = ref('test_alerts_union') %}
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
-        select distinct status
+        select distinct {{ elementary.get_json_path('test_params','assert') }}
         from {{ alerts_relation }}
         where status = 'error'
     {% endset %}
