@@ -84,7 +84,7 @@
                 bucket_start,
                 bucket_end,
                 {%- if metric_properties and metric_properties.seasonality and metric_properties.seasonality=='day_of_week' %}
-                    {{ elementary.edr_day_of_week_mod_7('bucket_end') }} as bucket_end_mod_7,
+                    {{ elementary.edr_day_of_week_expression('bucket_end') }} as bucket_end_mod_7,
                 {%- else %}
                     0 as bucket_end_mod_7,
                 {%- endif %}
