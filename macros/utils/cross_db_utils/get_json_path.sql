@@ -20,7 +20,5 @@
 {% endmacro %}
 
 {% macro postgres__get_json_path(json_column, json_path, quoted_json_path) %}
-
   {{ json_column }}::json->>{{ quoted_json_path }}
-
 {% endmacro %}
