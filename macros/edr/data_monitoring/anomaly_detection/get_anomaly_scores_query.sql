@@ -1,9 +1,8 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, anomaly_direction=none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-
     {% if not data_monitoring_metrics_table %}
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
@@ -138,13 +137,19 @@
                 bucket_start,
                 bucket_end,
                 metric_value,
-                case 
+                case
                     when training_stddev is null then null
+                    {% if anomaly_direction is not none %}
+                        when '{{ anomaly_direction }}' = 'spike' then training_stddev
+                    {% endif %}
                     else (-1) * {{ sensitivity }} * training_stddev + training_avg
                 end as min_metric_value,
                 case 
                     when training_stddev is null then null
-                    else {{ sensitivity }} * training_stddev + training_avg 
+                    {% if anomaly_direction is not none %}
+                        when '{{ anomaly_direction }}' = 'drop' then training_stddev
+                    {% endif %}
+                    else {{ sensitivity }} * training_stddev + training_avg
                 end as max_metric_value,
                 training_avg,
                 training_stddev,

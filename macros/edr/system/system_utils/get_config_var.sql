@@ -49,6 +49,7 @@
     'elementary_full_refresh': false,
     'min_training_set_size': 14,
     'cache_artifacts': true,
+    'anomaly_direction': none,
     'store_result_rows_in_own_table': true
   } %}
   {{- return(default_config) -}}

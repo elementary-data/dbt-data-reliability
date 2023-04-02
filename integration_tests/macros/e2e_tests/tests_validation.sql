@@ -119,8 +119,7 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-
-    {% if results | length != 2 %}
+    {% if results | length != 3 %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
@@ -259,6 +258,42 @@
     {% endset %}
     {% set results = elementary.result_column_to_list(error_test_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_spike_directional_anomalies() %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
+    {# Validating alert for correct direction anomalies #}
+
+    {% set row_count_validation_query %}
+        select distinct table_name
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and tags like '%spike_directional_anomalies%';
+    {% endset %}
+    {% set results = elementary.result_column_to_list(row_count_validation_query) %}
+    -- The result list's purpose is a more readable error messages
+    {% set results_list = [] %}
+    {% for result in results %}
+        {% do results_list.append(result) %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies']) }}
+{% endmacro %}
+
+{% macro validate_drop_directional_anomalies() %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
+    {# Validating alert for correct direction anomalies #}
+
+    {% set row_count_validation_query %}
+        select distinct table_name
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and tags like '%drop_directional_anomalies%';
+    {% endset %}
+    {% set results = elementary.result_column_to_list(row_count_validation_query) %}
+    -- The result list's purpose is a more readable error messages
+    {% set results_list = [] %}
+    {% for result in results %}
+        {% do results_list.append(result) %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies', 'dimension_anomalies', 'numeric_column_anomalies']) }}
 {% endmacro %}
 
 {% macro validate_error_model() %}

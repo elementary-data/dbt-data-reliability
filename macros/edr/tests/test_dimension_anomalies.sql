@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket) %}
+{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, anomaly_direction) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -69,7 +69,8 @@
                                                                           backfill_days,
                                                                           ['dimension'],
                                                                           dimensions=dimensions,
-                                                                          metric_properties=metric_properties) %}
+                                                                          metric_properties=metric_properties,
+                                                                          anomaly_direction=anomaly_direction) %}
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
