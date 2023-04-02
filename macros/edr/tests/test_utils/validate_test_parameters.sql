@@ -12,3 +12,14 @@
       {% endif %}
     {% endif %}
 {% endmacro %}
+
+{% macro validate_directional_parameter(anomaly_direction) %}
+    {% if anomaly_direction %}
+      {% set direction_case_insensitive = anomaly_direction | lower %}
+      {% if direction_case_insensitive not in ['drop','spike','both'] %}
+        {% do exceptions.raise_compiler_error('Supported anomaly directions are: both, drop, spike. received anomaly_direction: {}'.format(anomaly_direction)) %}
+      {% endif %}
+    {% else %}
+      {% do exceptions.raise_compiler_error('anomaly_direction can\'t be empty. Supported anomaly directions are: both, drop, spike') %}
+    {% endif %}
+{% endmacro %}
