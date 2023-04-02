@@ -15,13 +15,13 @@
         {{ return(none) }}
     {% endif %}
 
-    {{ elementary.debug_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
+    {{ elementary.file_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
     {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
     {% if insert_rows_method == 'max_query_size' %}
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
-        {% do elementary.debug_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
+        {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
         {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
@@ -62,7 +62,7 @@
         {% set new_insert_query = insert_query + row_sql %}
         {# Check if row is too large to fit into an insert query. #}
         {% if new_insert_query | length > query_max_size %}
-          {% do elementary.debug_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
+          {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
           {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
