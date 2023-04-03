@@ -132,7 +132,7 @@ def e2e_tests(
             vars={"custom_run_started_at": "1969-12-31 08:00:00"}
         )
         results = [
-            TestResult(type="table_anomalies", message=msg)
+            TestResult(type="seasonal_volume", message=msg)
             for msg in dbt_runner.run_operation(
                 macro_name="validate_seasonal_volume_anomalies_after_training", should_log=False
             )
