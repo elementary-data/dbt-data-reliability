@@ -4,20 +4,20 @@
 
 {# Databricks, Spark: #}
 {% macro default__edr_day_of_week_expression(date_expr) %}
-    DATE_FORMAT(date_expr, 'EEEE')
+    DATE_FORMAT({{ date_expr }}, 'EEEE')
 {% endmacro %}
 
 {% macro bigquery__edr_day_of_week_expression(date_expr) %}
-    FORMAT_DATE('%A', date_expr)
+    FORMAT_DATE('%A', {{ date_expr }})
 {% endmacro %}
 
 {% macro postgres__edr_day_of_week_expression(date_expr) %}
-    to_char(current_date, 'Day')
+    to_char({{ date_expr }}, 'Day')
 {% endmacro %}
 
 {% macro redshift__edr_day_of_week_expression(date_expr) %}
 {# RedShift returns the days padded with whitespaces to width of 9 #}
-    trim(' ' FROM to_char(current_date, 'Day'))
+    trim(' ' FROM to_char({{ date_expr }}, 'Day'))
 {% endmacro %}
 
 {% macro snowflake__edr_day_of_week_expression(date_expr) %}
