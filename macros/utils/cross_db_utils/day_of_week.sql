@@ -16,7 +16,7 @@
 {% endmacro %}
 
 {% macro redshift__edr_day_of_week_expression(date_expr) %}
-{# RedShift returns the days padded with whitespaces to width of 9 #}
+{# Redshift returns the days padded with whitespaces to width of 9 #}
     trim(' ' FROM to_char({{ date_expr }}, 'Day'))
 {% endmacro %}
 
