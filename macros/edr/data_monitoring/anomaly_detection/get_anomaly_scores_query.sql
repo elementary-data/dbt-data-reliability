@@ -20,7 +20,7 @@
     {%- if metric_properties and metric_properties.seasonality and metric_properties.seasonality == 'day_of_week' %}
         {% set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
     {% else %}
-        {% set bucket_seasonality_expr = elementary.const_as_string(elementary.edr_quote('no_seasonality')) %}
+        {% set bucket_seasonality_expr = elementary.const_as_string('no_seasonality') %}
     {% endif %}
 
     {% set anomaly_scores_query %}
