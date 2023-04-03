@@ -56,7 +56,7 @@
          'freshness_error_after': freshness_dict.get('error_after', {}),
          'freshness_filter': freshness_dict.get('filter'),
          'relation_name': node_dict.get('relation_name'),
-         'tags': tags,
+         'tags': elementary.filter_none_and_sort(tags),
          'meta': meta_dict,
          'owner': owner,
          'package_name': node_dict.get('package_name'),
