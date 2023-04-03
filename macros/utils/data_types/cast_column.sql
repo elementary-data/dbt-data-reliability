@@ -42,3 +42,15 @@
 {%- macro bigquery__edr_cast_as_date(timestamp_field) -%}
     cast({{ elementary.edr_cast_as_timestamp(timestamp_field) }} as {{ elementary.edr_type_date() }})
 {%- endmacro -%}
+
+{%- macro const_as_text(string) -%}
+    {{ return(adapter.dispatch('const_as_text', 'elementary')(string)) }}
+{%- endmacro -%}
+
+{%- macro default__const_as_text(string) -%}
+    {{ elementary.const_as_string(string) }}
+{%- endmacro -%}
+
+{%- macro redshift__const_as_text(string) -%}
+    '{{ string }}'::text
+{%- endmacro -%}

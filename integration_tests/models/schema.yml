@@ -303,6 +303,25 @@ models:
       - elementary.schema_changes:
           tags: ["schema_changes"]
 
+  - name: users_per_day_weekly_seasonal
+    description: >
+      Volume anomalies on the training should fail when seasonality is Off and pass when seasonality is On. 
+      When Validation data is added, should fail when seasonality is On and pass when seasonality is Off.
+    tests:
+      - elementary.volume_anomalies:
+          alias: volume_anomalies_no_seasonality_anomalies
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume"]
+          sensitivity: 2
+          backfill_days: 14
+      - elementary.volume_anomalies:
+          alias: volume_anomalies_with_seasonality_anomalies
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume"]
+          sensitivity: 2
+          backfill_days: 14
+          seasonality: day_of_week
+
 sources:
   - name: training
     schema: test_seeds
@@ -343,6 +362,7 @@ sources:
               event_timestamp_column: occurred_at
               update_timestamp_column: updated_at
       - name: numeric_column_anomalies_training
+      - name: users_per_day_weekly_seasonal_training
   - name: validation
     schema: test_seeds
     tables:
@@ -362,6 +382,7 @@ sources:
             tests:
               - generic_test_on_column:
                   tags: ["regular_tests"]
+      - name: users_per_day_weekly_seasonal_validation
 
 exposures:
   - name: elementary_exposure

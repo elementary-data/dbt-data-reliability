@@ -129,6 +129,19 @@ def e2e_tests(
 
     dbt_runner.run(vars={"stage": "training"})
 
+    if "seasonal_volume" in test_types:
+        dbt_runner.test(
+            select="tag:seasonality_volume",
+            vars={"custom_run_started_at": "1969-12-31 08:00:00"}
+        )
+        results = [
+            TestResult(type="seasonal_volume", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_seasonal_volume_anomalies_after_training", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "table" in test_types:
         dbt_runner.test(select="tag:table_anomalies")
         results = [
@@ -351,6 +364,7 @@ def main(target, e2e_type, generate_data, clear_tests):
 
     if e2e_type == "all":
         e2e_types = [
+            "seasonal_volume",
             "table",
             "column",
             "schema",

@@ -1,108 +1,6 @@
-{% macro assert_value_in_list(value, list, context='') %}
-    {% set upper_value = value | upper %}
-    {% set lower_value = value | lower %}
-    {% if upper_value in list or lower_value in list %}
-        {% do elementary.edr_log(context ~ " SUCCESS: " ~ upper_value  ~ " in list " ~ list) %}
-        {{ return(0) }}
-    {% else %}
-        {% do elementary.edr_log(context ~ " FAILED: " ~ upper_value ~ " not in list " ~ list) %}
-        {{ return(1) }}
-    {% endif %}
-{% endmacro %}
-
-{% macro assert_value_not_in_list(value, list) %}
-    {% set upper_value = value | upper %}
-    {% if upper_value not in list %}
-        {% do elementary.edr_log("SUCCESS: " ~ upper_value  ~ " not in list " ~ list) %}
-        {{ return(0) }}
-    {% else %}
-        {% do elementary.edr_log("FAILED: " ~ upper_value ~ " in list " ~ list) %}
-        {{ return(1) }}
-    {% endif %}
-{% endmacro %}
-
-{% macro assert_lists_contain_same_items(list1, list2) %}
-    {% if list1 | length != list2 | length %}
-        {% do elementary.edr_log("FAILED: " ~ list1 ~ " has different length than " ~ list2) %}
-        {{ return(1) }}
-    {% endif %}
-    {% for item1 in list1 %}
-        {% if item1 | lower not in list2 %}
-            {% do elementary.edr_log("FAILED: " ~ item1 ~ " not in list " ~ list2) %}
-            {{ return(1) }}
-        {% endif %}
-    {% endfor %}
-    {% do elementary.edr_log("SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
-    {{ return(0) }}
-{% endmacro %}
-
-{% macro assert_list1_in_list2(list1, list2, context = '') %}
-    {% set lower_list2 = list2 | lower %}
-    {% if not list1 or not list2 %}
-        {% do elementary.edr_log(context ~ " FAILED: list1 is empty or list2 is empty") %}
-        {{ return(1) }}
-    {% endif %}
-    {% for item1 in list1 %}
-        {% if item1 | lower not in lower_list2 %}
-            {% do elementary.edr_log(context ~ " FAILED: " ~ item1 ~ " not in list " ~ list2) %}
-            {{ return(1) }}
-        {% endif %}
-    {% endfor %}
-    {% do elementary.edr_log(context ~ " SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
-    {{ return(0) }}
-{% endmacro %}
-
-{% macro assert_empty_table(table, context='') %}
-    {% if table | length > 0 %}
-        {% do elementary.edr_log(context ~ " FAILED: Table not empty.") %}
-        {% do table.print_table() %}
-        {{ return(1) }}
-    {% endif %}
-    {% do elementary.edr_log(context ~ " SUCCESS: Table is empty.") %}
-    {{ return(0) }}
-{% endmacro %}
-
-{% macro validate_table_anomalies() %}
-    -- no validation data which means table freshness and volume should alert
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set freshness_validation_query %}
-        select distinct table_name
-        from {{ alerts_relation }}
-        where status in ('fail', 'warn') and sub_type = 'freshness'
-    {% endset %}
-    {% set results = elementary.result_column_to_list(freshness_validation_query) %}
-    {{ assert_lists_contain_same_items(results, ['string_column_anomalies',
-                                                 'numeric_column_anomalies',
-                                                 'string_column_anomalies_training']) }}
-    {% set row_count_validation_query %}
-        select distinct table_name
-        from {{ alerts_relation }}
-        where status in ('fail', 'warn') and sub_type = 'row_count'
-    {% endset %}
-    {% set results = elementary.result_column_to_list(row_count_validation_query) %}
-    {{ assert_lists_contain_same_items(results, ['any_type_column_anomalies',
-                                                 'numeric_column_anomalies',
-                                                 'string_column_anomalies_training']) }}
-
-{% endmacro %}
-
-{% macro validate_event_freshness_anomalies() %}
-    {%- set max_bucket_end = elementary.edr_quote(elementary.get_run_started_at().strftime("%Y-%m-%d 00:00:00")) %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set freshness_validation_query %}
-        select distinct table_name
-        from {{ alerts_relation }}
-        where sub_type = 'event_freshness' and detected_at >= {{ max_bucket_end }}
-    {% endset %}
-
-    {% set results = elementary.result_column_to_list(freshness_validation_query) %}
-    {{ assert_lists_contain_same_items(results, ['string_column_anomalies',
-                                                 'numeric_column_anomalies',
-                                                 'string_column_anomalies_training']) }}
-{% endmacro %}
-
 {% macro validate_dimension_anomalies() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
+
     {% set dimension_validation_query %}
         select *
         from {{ alerts_relation }}
@@ -119,7 +17,6 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-
     {% if results | length != 2 %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
         {{ return(1) }}
@@ -132,78 +29,6 @@
     {% endif %}
 {% endmacro %}
 
-{% macro validate_string_column_anomalies() %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set string_column_alerts %}
-    select distinct column_name
-    from {{ alerts_relation }}
-    where status in ('fail', 'warn') and lower(sub_type) = lower(column_name) and upper(table_name) = 'STRING_COLUMN_ANOMALIES'
-    {% endset %}
-    {% set results = elementary.result_column_to_list(string_column_alerts) %}
-    {{ assert_lists_contain_same_items(results, ['min_length', 'max_length', 'average_length', 'missing_count',
-                                                 'missing_percent']) }}
-{% endmacro %}
-
-{% macro validate_numeric_column_anomalies() %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set numeric_column_alerts %}
-    select distinct column_name
-    from {{ alerts_relation }}
-    where status in ('fail', 'warn') and lower(sub_type) = lower(column_name)
-      and upper(table_name) = 'NUMERIC_COLUMN_ANOMALIES'
-    {% endset %}
-    {% set results = elementary.result_column_to_list(numeric_column_alerts) %}
-    {{ assert_lists_contain_same_items(results, ['min', 'max', 'zero_count', 'zero_percent', 'average',
-                                                 'standard_deviation', 'variance', 'sum']) }}
-{% endmacro %}
-
-{% macro validate_custom_column_monitors() %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set query %}
-    select distinct sub_type from {{ alerts_relation }}
-    where status in ('fail', 'warn') and upper(table_name) = 'COPY_NUMERIC_COLUMN_ANOMALIES'
-    {% endset %}
-    {% set results = elementary.result_column_to_list(query) %}
-    {{ assert_lists_contain_same_items(results, ["zero_count"]) }}
-{% endmacro %}
-
-{% macro validate_any_type_column_anomalies() %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-    {% set any_type_column_alerts %}
-        select column_name, sub_type
-        from {{ alerts_relation }}
-        where status in ('fail', 'warn') and upper(table_name) = 'ANY_TYPE_COLUMN_ANOMALIES'
-          and column_name is not NULL
-        group by 1,2
-    {% endset %}
-    {% set alert_rows = run_query(any_type_column_alerts) %}
-    {% set indexed_columns = {} %}
-    {% for row in alert_rows %}
-        {% set column_name = row[0] %}
-        {% set alert = row[1] %}
-        {% if column_name in indexed_columns %}
-            {% do indexed_columns[column_name].append(alert) %}
-        {% else %}
-            {% do indexed_columns.update({column_name: [alert]}) %}
-        {% endif %}
-    {% endfor %}
-    {% set results = [] %}
-    {% for column, column_alerts in indexed_columns.items() %}
-        {% for alert in column_alerts %}
-            {% if alert | lower in column | lower %}
-                {% do results.append(column) %}
-            {% endif %}
-        {% endfor %}
-    {% endfor %}
-    {{ assert_lists_contain_same_items(results, ['null_count_str',
-                                                 'null_percent_str',
-                                                 'null_count_float',
-                                                 'null_percent_float',
-                                                 'null_count_int',
-                                                 'null_percent_int',
-                                                 'null_count_bool',
-                                                 'null_percent_bool']) }}
-{% endmacro %}
 
 {% macro validate_no_timestamp_anomalies() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
@@ -283,67 +108,6 @@
     {% endset %}
     {% set results = elementary.result_column_to_list(error_snapshot_validation_query) %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
-{% endmacro %}
-
-{% macro validate_schema_changes() %}
-    {% set expected_changes = {('schema_changes', 'red_cards'): 'column_added',
-                               ('schema_changes', 'group_a'):   'column_removed',
-                               ('schema_changes', 'goals'):   'type_changed',
-                               ('schema_changes', 'key_crosses'): 'column_added',
-                               ('schema_changes', 'offsides'): 'column_removed',
-                               ('schema_changes_from_baseline', 'group_b'): 'type_changed',
-                               ('schema_changes_from_baseline', 'group_d'): 'column_added',
-                               ('schema_changes_from_baseline', 'goals'): 'type_changed',
-                               ('schema_changes_from_baseline', 'coffee_cups_consumed'): 'column_removed'
-                               } %}
-    {% set alerts_relation = ref('alerts_schema_changes') %}
-    {% set failed_schema_changes_alerts %}
-    select test_short_name, column_name, sub_type
-    from {{ alerts_relation }}
-    where status in ('fail', 'warn')
-    group by 1,2,3
-    {% endset %}
-    {% set error_schema_changes_alerts %}
-    select test_short_name, column_name, sub_type
-    from {{ alerts_relation }}
-    where status = 'error'
-    group by 1,2,3
-    {% endset %}
-    {% set error_alert_rows = run_query(error_schema_changes_alerts) %}
-    {# We should have one error test from schema_changes_from_baseline with enforce_types true #}
-    {% if error_alert_rows | length != 1 %}
-        {% do elementary.edr_log("FAILED: for schema_changes_from_baseline with enforce_types true - no error eccured") %}
-        {{ return(1) }}
-    {% endif %}
-    {% set failure_alert_rows = run_query(failed_schema_changes_alerts) %}
-    {% set found_schema_changes = {} %}
-    {% for row in failure_alert_rows %}
-        {% set test_short_name = row[0] | lower %}
-        {% set column_name = row[1] | lower %}
-        {% set alert = row[2] | lower %}
-        {% if (test_short_name, column_name) not in expected_changes %}
-            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - could not find expected alert for " ~ column_name ~ ", " ~ alert) %}
-        {% endif %}
-        {% if expected_changes[(test_short_name, column_name)] != alert %}
-            {% do elementary.edr_log("FAILED: " ~ test_short_name ~ " - for column " ~ column_name ~ " expected alert type " ~ expected_changes[(test_short_name, column_name)] ~ " but got " ~ alert) %}
-            {{ return(1) }}
-        {% endif %}
-        {% do found_schema_changes.update({(test_short_name, column_name): alert}) %}
-    {% endfor %}
-    {% if found_schema_changes %}
-        {%- set missing_changes = [] %}
-        {%- for expected_change in expected_changes %}
-            {%- if expected_change not in found_schema_changes %}
-                {% do elementary.edr_log("FAILED: for column " ~ expected_change ~ " expected alert " ~ expected_changes[expected_change] ~ " but alert is missing") %}
-                {%- do missing_changes.append(expected_change) -%}
-            {%- endif %}
-        {%- endfor %}
-        {%- if missing_changes | length == 0 %}
-            {% do elementary.edr_log("SUCCESS: all expected schema changes were found - " ~ found_schema_changes) %}
-            {{ return(0) }}
-        {%- endif %}
-    {% endif %}
-    {{ return(0) }}
 {% endmacro %}
 
 {% macro validate_regular_tests() %}

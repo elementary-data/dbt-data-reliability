@@ -13,10 +13,12 @@
     {%- set default_numeric_monitors = elementary.get_config_var('edr_monitors')['column_numeric'] | list %}
     {% set numeric_monitors = [] %}
 
-
+    {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
+    {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
     {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
                                                                            where_expression=none,
-                                                                           time_bucket=none)%}
+                                                                           time_bucket=none,
+                                                                           days_back=days_back)%}
 
     {% do numeric_monitors.extend(default_all_types) %}
     {% do numeric_monitors.extend(default_numeric_monitors) %}

@@ -8,13 +8,19 @@
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
           {% set data_monitoring_metrics_table = ref('data_monitoring_metrics') %}
-        {% endif %}
+    {% endif %}
 
 
     {% if elementary.is_incremental_model(model_graph_node) %}
       {% set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
     {% else %}
       {% set latest_full_refresh = none %}
+    {% endif %}
+
+    {%- if metric_properties and metric_properties.seasonality and metric_properties.seasonality == 'day_of_week' %}
+        {% set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
+    {% else %}
+        {% set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {% endif %}
 
     {% set anomaly_scores_query %}
@@ -24,7 +30,7 @@
             select * from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end())) }}
+                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end(metric_properties))) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
@@ -83,6 +89,7 @@
                 source_value,
                 bucket_start,
                 bucket_end,
+                {{ bucket_seasonality_expr }} as bucket_seasonality,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -103,15 +110,16 @@
                 source_value,
                 bucket_start,
                 bucket_end,
+                bucket_seasonality,
                 bucket_duration_hours,
                 updated_at,
-                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                avg(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                stddev(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            {{ dbt_utils.group_by(12) }}
+            {{ dbt_utils.group_by(13) }}
         ),
 
         anomaly_scores as (
@@ -137,6 +145,7 @@
                 source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
+                bucket_seasonality,
                 metric_value,
                 case 
                     when training_stddev is null then null

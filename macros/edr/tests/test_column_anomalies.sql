@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket,seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -25,9 +25,13 @@
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
 
+        {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
+        {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
-                                                                               time_bucket=time_bucket) %}
+                                                                               time_bucket=time_bucket,
+                                                                               seasonality=seasonality,
+                                                                               days_back=days_back) %}
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}
