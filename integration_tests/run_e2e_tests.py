@@ -68,7 +68,23 @@ def get_generated_at(alias: str, dbt_runner: DbtRunner) -> str:
     )
 
 
-def test_artifacts_on_run_end(dbt_runner: TestDbtRunner) -> TestResult:
+def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
+    test_model = "one"
+    dbt_runner.run(test_model, vars={"one_tags": ["hello", "world"]})
+    first_generated_at = get_generated_at(test_model, dbt_runner)
+    dbt_runner.run(test_model, vars={"one_tags": ["world", "hello"]})
+    second_generated_at = get_generated_at(test_model, dbt_runner)
+    return TestResult(
+        type="test_artifacts_on_run_end",
+        message=(
+            "SUCCESS: Artifacts are cached at the on run end."
+            if first_generated_at == second_generated_at
+            else "FAILED: Artifacts are not cached at the on run end."
+        ),
+    )
+
+
+def test_artifacts_update(dbt_runner: TestDbtRunner) -> TestResult:
     test_model = "one"
     dbt_runner.run(test_model)
     first_generated_at = get_generated_at(test_model, dbt_runner)
@@ -80,22 +96,6 @@ def test_artifacts_on_run_end(dbt_runner: TestDbtRunner) -> TestResult:
             "SUCCESS: Artifacts are updated on run end."
             if first_generated_at != second_generated_at
             else "FAILED: Artifacts are not updated on run end."
-        ),
-    )
-
-
-def test_cache_artifacts(dbt_runner: TestDbtRunner) -> Optional[TestResult]:
-    test_model = "one"
-    dbt_runner.run(test_model)
-    first_generated_at = get_generated_at(test_model, dbt_runner)
-    dbt_runner.run(test_model)
-    second_generated_at = get_generated_at(test_model, dbt_runner)
-    return TestResult(
-        type="test_cache_artifacts",
-        message=(
-            "SUCCESS: Artifacts are cached."
-            if first_generated_at == second_generated_at
-            else "FAILED: Artifacts are not cached."
         ),
     )
 
@@ -296,10 +296,10 @@ def e2e_tests(
             )
         ]
         test_results.extend(results)
-        auto_upload_results = test_artifacts_on_run_end(dbt_runner)
+        auto_upload_results = test_artifacts_update(dbt_runner)
         test_results.append(auto_upload_results)
         if DBT_VERSION >= version.parse("1.4.0"):
-            cache_artifacts_results = test_cache_artifacts(dbt_runner)
+            cache_artifacts_results = test_artifacts_cache(dbt_runner)
             if cache_artifacts_results:
                 test_results.append(cache_artifacts_results)
 
