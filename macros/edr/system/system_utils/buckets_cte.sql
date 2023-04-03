@@ -1,6 +1,7 @@
-{% macro complete_buckets_cte(time_bucket) %}
+{% macro complete_buckets_cte(metric_properties) %}
+    {%- set time_bucket = metric_properties.time_bucket %}
     {%- set bucket_end_expr = elementary.edr_timeadd(time_bucket.period, time_bucket.count, 'edr_bucket_start') %}
-    {%- set min_bucket_start_expr = elementary.edr_date_trunc(time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start()))) %}
+    {%- set min_bucket_start_expr = elementary.edr_date_trunc(time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start(metric_properties)))) %}
     {%- set max_bucket_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) %}
     {{ adapter.dispatch('complete_buckets_cte','elementary')(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) }}
 {% endmacro %}

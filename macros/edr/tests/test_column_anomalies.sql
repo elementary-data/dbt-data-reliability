@@ -26,10 +26,12 @@
         {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
 
         {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
+        {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
-                                                                               seasonality=seasonality) %}
+                                                                               seasonality=seasonality,
+                                                                               days_back=days_back) %}
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}

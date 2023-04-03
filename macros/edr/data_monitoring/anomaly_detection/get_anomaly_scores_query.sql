@@ -24,7 +24,7 @@
             select * from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end())) }}
+                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end(metric_properties))) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
