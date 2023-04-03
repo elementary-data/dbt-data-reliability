@@ -58,27 +58,30 @@ class TestDbtRunner(DbtRunner):
     pass
 
 
-def get_generated_at(alias: str, dbt_runner: DbtRunner) -> str:
-    return json.loads(
+def get_row(alias: str, dbt_runner: DbtRunner) -> str:
+    rows = json.loads(
         dbt_runner.run_operation(
             "read_table",
             macro_args={"table": "dbt_models", "where": f"alias = '{alias}'"},
             should_log=False,
-        )[0]
+        )
     )
+    if len(rows) != 1:
+        raise ValueError("Expected to find a single row.")
+    return rows[0]
 
 
 def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
     test_model = "one"
     dbt_runner.run(test_model, vars={"one_tags": ["hello", "world"]})
-    first_generated_at = get_generated_at(test_model, dbt_runner)
+    first_row = get_row(test_model, dbt_runner)
     dbt_runner.run(test_model, vars={"one_tags": ["world", "hello"]})
-    second_generated_at = get_generated_at(test_model, dbt_runner)
+    second_row = get_row(test_model, dbt_runner)
     return TestResult(
         type="test_artifacts_on_run_end",
         message=(
             "SUCCESS: Artifacts are cached at the on run end."
-            if first_generated_at == second_generated_at
+            if first_row == second_row
             else "FAILED: Artifacts are not cached at the on run end."
         ),
     )
@@ -87,14 +90,14 @@ def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
 def test_artifacts_update(dbt_runner: TestDbtRunner) -> TestResult:
     test_model = "one"
     dbt_runner.run(test_model)
-    first_generated_at = get_generated_at(test_model, dbt_runner)
+    first_row = get_row(test_model, dbt_runner)
     dbt_runner.run(test_model, vars={"one_owner": "ele"})
-    second_generated_at = get_generated_at(test_model, dbt_runner)
+    second_row = get_row(test_model, dbt_runner)
     return TestResult(
         type="test_artifacts_on_run_end",
         message=(
             "SUCCESS: Artifacts are updated on run end."
-            if first_generated_at != second_generated_at
+            if first_row != second_row
             else "FAILED: Artifacts are not updated on run end."
         ),
     )
