@@ -64,7 +64,7 @@ def get_row(alias: str, dbt_runner: DbtRunner) -> str:
             "read_table",
             macro_args={"table": "dbt_models", "where": f"alias = '{alias}'"},
             should_log=False,
-        )
+        )[0]
     )
     if len(rows) != 1:
         raise ValueError("Expected to find a single row.")
