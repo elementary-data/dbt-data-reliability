@@ -9,11 +9,7 @@
     {% set column_names = adapter.get_columns_in_relation(relation) | map(attribute="name") | map("lower") | list %}
     {% if exclude_deprecated_columns %}
         {% set deprecated_column_names = node.columns.values() | selectattr("deprecated") | map(attribute="name") | map("lower") | list %}
-        {% for deprecated_column_name in deprecated_column_names %}
-            {% if deprecated_column_name in column_names %}
-                {% do column_names.remove(deprecated_column_name) %}
-            {% endif %}
-        {% endfor %}
+        {% set column_names = column_names | reject("in", deprecated_column_names) | list %}
     {% endif %}
 
     {% set timestamp_column = node.meta.timestamp_column %}
