@@ -2,7 +2,8 @@ version: 2
 
 models:
   - name: one
-    tags: "{{ var('one_tags', none) }}"
+    config:
+      tags: "{{ var('one_tags', []) }}"
     meta:
       owner: "{{ var('one_owner', none) }}"
     columns:
