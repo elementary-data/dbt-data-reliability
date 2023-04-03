@@ -54,7 +54,7 @@
 
 {% macro assert_list_has_expected_length(list, expected_length) %}
     {% if list | length != expected_length %}
-        {% do elementary.edr_log("FAILED: " ~ list ~ " has different length than expected" ~ expected_length) %}
+        {% do elementary.edr_log("FAILED: " ~ list ~ " has different length than expected " ~ expected_length) %}
         {{ return(1) }}
     {% endif %}
     {% do elementary.edr_log("SUCCESS: " ~ list  ~ " has length " ~ expected_length) %}
