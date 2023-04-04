@@ -17,6 +17,17 @@
         {% do return(none) %}
     {% endif %}
 
+    {% set queries = elementary.get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+    {% for query in queries %}
+        {% do elementary.run_query(query) %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+    {% do return(adapter.dispatch("get_delete_and_insert_queries", "elementary")(relation, insert_relation, delete_relation, delete_column_key)) %}
+{% endmacro %}
+
+{% macro default__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set query %}
         begin transaction;
         {% if delete_relation %}
@@ -27,5 +38,25 @@
         {% endif %}
         commit;
     {% endset %}
-    {% do elementary.run_query(query) %}
+    {% do return([query]) %}
+{% endmacro %}
+
+{% macro spark__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+    {% set queries = [] %}
+
+    {% if delete_relation %}
+        {% set delete_query %}
+            delete from {{ relation }} where {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+        {% endset %}
+        {% do queries.append(delete_query) %}
+    {% endif %}
+
+    {% if insert_relation %}
+        {% set insert_query %}
+            insert into {{ relation }} select * from {{ insert_relation }};
+        {% endset %}
+        {% do queries.append(insert_query) %}
+    {% endif %}
+
+    {% do return(queries) %}
 {% endmacro %}
