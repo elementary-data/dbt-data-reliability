@@ -13,6 +13,10 @@
         {% set insert_relation = elementary.create_intermediate_relation(relation, insert_rows, temporary=True) %}
     {% endif %}
 
+    {% if not insert_relation and not delete_relation %}
+        {% do return(none) %}
+    {% endif %}
+
     {% set query %}
         begin transaction;
         {% if delete_relation %}
