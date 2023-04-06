@@ -51,6 +51,7 @@
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
         {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
                                                                                          backfill_days,
+                                                                                         days_back,
                                                                                          column_monitors,
                                                                                          column_name,
                                                                                          metric_properties=metric_properties)) %}
@@ -59,6 +60,7 @@
         {{ elementary.test_log('start', full_table_name, column_name) }}
         {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation,
                                                                              min_bucket_start,
+                                                                             days_back,
                                                                              column_obj,
                                                                              column_monitors,
                                                                              metric_properties) %}
@@ -73,6 +75,7 @@
                                                                           model_graph_node,
                                                                           sensitivity,
                                                                           backfill_days,
+                                                                          days_back,
                                                                           column_monitors,
                                                                           column_name,
                                                                           seasonality=seasonality,

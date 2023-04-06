@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, days_back, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -30,7 +30,7 @@
             select * from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end >= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_end(metric_properties))) }}
+                bucket_end > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_min_bucket_start(days_back))) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}

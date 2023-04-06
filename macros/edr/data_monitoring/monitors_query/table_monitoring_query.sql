@@ -1,4 +1,4 @@
-{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
+{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, days_back, metric_properties) %}
 
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
@@ -12,7 +12,7 @@
     {% if timestamp_column %}
         buckets as (
             select edr_bucket_start, edr_bucket_end
-            from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+            from ({{ elementary.complete_buckets_cte(metric_properties, days_back) }}) results
             where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         ),
 

@@ -23,6 +23,7 @@
     {% do numeric_monitors.extend(default_numeric_monitors) %}
     {%- set column_monitoring_query = elementary.column_monitoring_query(monitored_table_relation=monitors_inputs_table_relation,
                                                                          min_bucket_start=elementary.get_run_started_at(),
+                                                                         days_back=days_back,
                                                                          column_obj=column_object,
                                                                          column_monitors=numeric_monitors,
                                                                          metric_properties=metric_properties) %}

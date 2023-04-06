@@ -1,4 +1,4 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, metric_properties) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, days_back, metric_properties) %}
     {% set metric_name = 'dimension' %}
     {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
@@ -13,7 +13,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, days_back) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         ),
 
@@ -187,7 +187,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, days_back) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         ),
 

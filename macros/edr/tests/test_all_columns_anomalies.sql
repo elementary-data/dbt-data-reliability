@@ -61,12 +61,13 @@
                     {%- do monitors.extend(column_monitors) -%}
                     {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
                                                                                                      backfill_days,
+                                                                                                     days_back,
                                                                                                      column_monitors,
                                                                                                      column_name,
                                                                                                      metric_properties=metric_properties)) %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, days_back, column_obj, column_monitors, metric_properties) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
@@ -80,6 +81,7 @@
                                                                            model_graph_node,
                                                                            sensitivity,
                                                                            backfill_days,
+                                                                           days_back,
                                                                            all_columns_monitors,
                                                                            columns_only=true,
                                                                            seasonality=seasonality,

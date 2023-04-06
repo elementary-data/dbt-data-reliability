@@ -1,13 +1,8 @@
--- TODO: remove metric_properties
-{% macro get_min_bucket_start(metric_properties) %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(metric_properties.days_back | int)).strftime("%Y-%m-%d 00:00:00")) %}
+{% macro get_min_bucket_start(days_back)) %}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
--- TODO: remove metric_properties
-{% macro get_min_bucket_end(metric_properties) %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta((metric_properties.days_back | int) - 1)).strftime("%Y-%m-%d 00:00:00")) %}
-{% endmacro %}
-
+-- TODO: This needs to be truncated according to the latest full bucket
 {% macro get_max_bucket_end() %}
     {% do return(elementary.run_started_at_as_string()) %}
 {% endmacro %}
@@ -16,9 +11,8 @@
     {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
--- TODO: remove metric_properties
-{% macro get_test_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none, metric_properties=none) %}
-    {%- set min_bucket_start = elementary.get_min_bucket_start(metric_properties) %}
+{% macro get_test_min_bucket_start(model_graph_node, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none) %}
+    {%- set min_bucket_start = elementary.get_min_bucket_start(days_back) %}
     {# We assume we should also cosider sources as incremental #}
     {% if not elementary.is_incremental_model(model_graph_node, source_included=true) %}
         {% do return(min_bucket_start) %}
@@ -32,7 +26,8 @@
 
     {%- set min_bucket_start_query %}
         with min_times as (
-            select min(last_bucket_end) as last_run,
+            select min(last_bucket_end) as last_run_of_metric,
+                   min(first_bucket_end) as first_run_of_metric,
                 {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(min_bucket_start)) }} as min_start,
                 {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(backfill_bucket_start)) }} as backfill_start
             from {{ ref('monitors_runs') }}
@@ -44,13 +39,14 @@
             {%- if column_name %}
                 and upper(column_name) = upper('{{ column_name }}')
             {%- endif %}
-
             )
         select
             case
-                when last_run is null then min_start
-                when last_run < min_start then min_start
-                when last_run < backfill_start then last_run
+                {# This prevents gaps in buckets for the metric #}
+                when last_run_of_metric is null then min_start {# This is the first run of this metric #}
+                when last_run_of_metric < min_start then min_start {# The metric was not collected for a period longer than days_back #}
+                when first_run_of_metric > min_start then min_start {# The metric was collected recently, but for a period that is smaller than days_back #}
+                when last_run < backfill_start then last_run {# The metric was not collected for a period longer than backfill_days #}
                 else backfill_start
             end as min_start
         from min_times
