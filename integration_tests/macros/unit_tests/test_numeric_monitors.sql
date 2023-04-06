@@ -17,8 +17,7 @@
     {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
     {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
                                                                            where_expression=none,
-                                                                           time_bucket=none,
-                                                                           days_back=days_back)%}
+                                                                           time_bucket=none)%}
 
     {% do numeric_monitors.extend(default_all_types) %}
     {% do numeric_monitors.extend(default_numeric_monitors) %}

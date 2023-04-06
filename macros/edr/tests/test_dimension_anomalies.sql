@@ -32,9 +32,7 @@
         {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
-                                                                               time_bucket=time_bucket,
-                                                                               seasonality=seasonality,
-                                                                               days_back=days_back) %}
+                                                                               time_bucket=time_bucket) %}
 
 
 
@@ -73,6 +71,7 @@
                                                                           backfill_days,
                                                                           ['dimension'],
                                                                           dimensions=dimensions,
+                                                                          seasonality=seasonality,
                                                                           metric_properties=metric_properties) %}
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}

@@ -32,9 +32,7 @@
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
                                                                                event_timestamp_column=event_timestamp_column,
-                                                                               freshness_column=freshness_column,
-                                                                               seasonality=seasonality,
-                                                                               days_back=days_back) %}
+                                                                               freshness_column=freshness_column) %}
 
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
@@ -72,6 +70,7 @@
                                                                           sensitivity,
                                                                           backfill_days,
                                                                           table_monitors,
+                                                                          seasonality=seasonality,
                                                                           metric_properties=metric_properties) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         

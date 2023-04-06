@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none) %}
 
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -17,7 +17,7 @@
       {% set latest_full_refresh = none %}
     {% endif %}
 
-    {%- if metric_properties and metric_properties.seasonality and metric_properties.seasonality == 'day_of_week' %}
+    {%- if seasonality and seasonality == 'day_of_week' %}
         {% set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
     {% else %}
         {% set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
