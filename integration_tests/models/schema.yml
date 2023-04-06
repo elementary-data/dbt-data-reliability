@@ -318,7 +318,7 @@ sources:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
           - elementary.freshness_anomalies:
-              tags: ["table_anomalies"]
+              tags: ["table_anomalies", "error_test"]
           - elementary.event_freshness_anomalies:
               tags: ["event_freshness_anomalies"]
               event_timestamp_column: occurred_at
