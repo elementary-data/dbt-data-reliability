@@ -12,7 +12,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties, days_back) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
             and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
@@ -187,8 +187,9 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties, days_back) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         {# Get all of the metrics for all of the dimensions that were create for the test until this run, #}
