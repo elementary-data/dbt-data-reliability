@@ -20,12 +20,12 @@
 {% endmacro %}
 
 
-{% macro get_test_buckets_min_and_max(model, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
+{% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
 
     {%- set run_start_expr = elementary.edr_quote(elementary.get_run_started_at().strftime("%Y-%m-%d %H:00:00")) %}
     {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
     {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_backfill_bucket_start(backfill_days))) %}
-    {%- set full_table_name = elementary.relation_to_full_name(model) %}
+    {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
 
     {%- if monitors %}
         {%- set monitors_tuple = elementary.strings_list_to_tuple(monitors) %}
@@ -114,8 +114,8 @@
     {% endif %}
 
     {%- if buckets %}
-        {%- set min_bucket_start = buckets.get('min_bucket_start') %}
-        {%- set max_bucket_end = buckets.get('max_bucket_end') %}
+        {%- set min_bucket_start = elementary.edr_quote(buckets.get('min_bucket_start')) %}
+        {%- set max_bucket_end = elementary.edr_quote(buckets.get('max_bucket_end')) %}
         {{ return([min_bucket_start, max_bucket_end]) }}
     {%- else %}
         {{ exceptions.raise_compiler_error("Failed to calc test buckets min and max") }}

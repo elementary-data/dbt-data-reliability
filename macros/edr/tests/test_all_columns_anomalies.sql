@@ -60,11 +60,12 @@
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
                     {% if timestamp_column and is_timestamp %}
-                        {%- set min_bucket_start, max_bucket_end = elementary.edr_quote(elementary.get_test_buckets_min_and_max(model_graph_node,
-                                                                                                backfill_days,
-                                                                                                days_back,
-                                                                                                table_monitors,
-                                                                                                metric_properties=metric_properties)) %}
+                        {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
+                                                                                                backfill_days=backfill_days,
+                                                                                                days_back=days_back,
+                                                                                                monitors=column_monitors,
+                                                                                                column_name=column_name,
+                                                                                                metric_properties=metric_properties) %}
                     {%- endif %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}

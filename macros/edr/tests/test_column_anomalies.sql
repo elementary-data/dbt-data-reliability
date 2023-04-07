@@ -50,11 +50,12 @@
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
         {% if timestamp_column and is_timestamp %}
-            {%- set min_bucket_start, max_bucket_end = elementary.edr_quote(elementary.get_test_buckets_min_and_max(model_graph_node,
-                                                                                    backfill_days,
-                                                                                    days_back,
-                                                                                    table_monitors,
-                                                                                    metric_properties=metric_properties)) %}
+            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
+                                                                                    backfill_days=backfill_days,
+                                                                                    days_back=days_back,
+                                                                                    monitors=column_monitors,
+                                                                                    column_name=column_name,
+                                                                                    metric_properties=metric_properties) %}
         {%- endif %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}

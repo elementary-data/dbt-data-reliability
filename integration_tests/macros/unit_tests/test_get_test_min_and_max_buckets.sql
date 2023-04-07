@@ -13,7 +13,7 @@
     {%- set backfill_days = 2 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 1, 'period': 'day'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -28,7 +28,7 @@
     {# Previous run smaller than backfill, daily buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(3,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -44,7 +44,7 @@
     {%- set monitors_runs_relation = create_unit_test_table('monitors_runs_unit_test', monitors_runs_schema, temp=false) %}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(1,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -58,7 +58,7 @@
 
     {# No previous run, 5 days buckets #}
     {%- set metric_properties = {'time_bucket' : {'count': 5, 'period': 'day'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -73,7 +73,7 @@
     {# Previous run smaller than backfill, 5 days buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(5,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -90,7 +90,7 @@
     {%- set backfill_days = 2 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 1, 'period': 'hour'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -106,7 +106,7 @@
     {# Last run larger than backfill, hourly buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(1,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -124,7 +124,7 @@
     {%- set backfill_days = 2 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 12, 'period': 'hour'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -144,7 +144,7 @@
     {# Last run smaller than backfill, 12 hours buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(3,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -166,7 +166,7 @@
     {%- set backfill_days = 14 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 1, 'period': 'week'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -181,7 +181,7 @@
     {# First run smaller than days back, 1 week buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(1,'weeks'), 'first_bucket_end': get_x_time_ago(10,'weeks')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -198,7 +198,7 @@
     {%- set backfill_days = 14 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 1, 'period': 'month'}} %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
@@ -213,7 +213,7 @@
     {# Last run is earlier than days_back, 1 month buckets #}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(500,'weeks'), 'first_bucket_end': get_x_time_ago(1000,'weeks')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
-    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model=unit_test_relation,
+    {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=unit_test_relation,
                                                            backfill_days=backfill_days,
                                                            days_back=days_back,
                                                            metric_properties=metric_properties,
