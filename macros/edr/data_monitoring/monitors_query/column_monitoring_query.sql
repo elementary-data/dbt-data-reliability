@@ -12,7 +12,7 @@
     {% if timestamp_column -%}
          buckets as (
              select edr_bucket_start, edr_bucket_end
-             from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+             from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
              where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
          ),
 
