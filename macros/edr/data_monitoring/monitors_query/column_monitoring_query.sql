@@ -12,7 +12,7 @@
     {% if timestamp_column -%}
          buckets as (
              select edr_bucket_start, edr_bucket_end
-             from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
+             from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
              where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
          ),
 
@@ -37,15 +37,8 @@
         {%- if column_monitors %}
             {%- set column = column_obj.quoted -%}
                 select
-                    {%- if timestamp_column %}
-                        edr_bucket_start as bucket_start,
-                        edr_bucket_end as bucket_end,
-                        {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
-                    {%- else %}
-                        {{ elementary.null_timestamp() }} as bucket_start,
-                        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
-                        {{ elementary.null_int() }} as bucket_duration_hours,
-                    {%- endif %}
+                    edr_bucket_start,
+                    edr_bucket_end,
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
@@ -62,11 +55,8 @@
                     {%- if 'missing_count' in column_monitors -%} {{ elementary.missing_count(column) }} {%- else -%} null {% endif %} as missing_count,
                     {%- if 'missing_percent' in column_monitors -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent,
                     {%- if 'sum' in column_monitors -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum
-                from filtered_monitored_table
-                {%- if timestamp_column %}
-                    left join buckets on (edr_bucket_start = start_bucket_in_data)
-                {%- endif %}
-                group by 1,2,3,4
+                from filtered_monitored_table left join buckets on (edr_bucket_start = start_bucket_in_data)
+                group by 1,2,3
         {%- else %}
             {{ elementary.empty_column_monitors_cte() }}
         {%- endif %}
@@ -77,11 +67,11 @@
 
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
-                select edr_column_name, bucket_start, bucket_end, bucket_duration_hours, {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name, {{ elementary.edr_cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                select edr_column_name, edr_bucket_start, edr_bucket_end, {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name, {{ elementary.edr_cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
-            {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('metric_name','string'),('metric_value','float')]) }}
+            {{ elementary.empty_table([('edr_column_name','string'),('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('metric_value','float')]) }}
         {%- endif %}
 
     ),
@@ -94,9 +84,15 @@
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
-            bucket_start,
-            bucket_end,
-            bucket_duration_hours,
+            {%- if timestamp_column %}
+                edr_bucket_start as bucket_start,
+                edr_bucket_end as bucket_end,
+                {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
+            {%- else %}
+                {{ elementary.null_timestamp() }} as bucket_start,
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                {{ elementary.null_int() }} as bucket_duration_hours,
+            {%- endif %}
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
             {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
