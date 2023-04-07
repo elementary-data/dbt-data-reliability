@@ -22,6 +22,7 @@ vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
   custom_run_started_at: "{{ modules.datetime.datetime.utcfromtimestamp(0) }}"
 
+
 seeds:
   +schema: test_seeds
 
