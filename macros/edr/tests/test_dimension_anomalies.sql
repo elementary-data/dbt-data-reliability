@@ -50,15 +50,18 @@
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
         {{ elementary.debug_log('where_expression - ' ~ metric_properties.where_expression) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                         backfill_days,
-                                                                                         days_back,
-                                                                                         column_name=dimensions_str,
-                                                                                         metric_properties=metric_properties)) %}
+        {% if timestamp_column and is_timestamp %}
+            {%- set min_bucket_start, max_bucket_end = elementary.edr_quote(elementary.get_test_buckets_min_and_max(model_graph_node,
+                                                                                        backfill_days,
+                                                                                        days_back,
+                                                                                        table_monitors,
+                                                                                        metric_properties=metric_properties)) %}
+        {%- endif %}
+
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, days_back, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}

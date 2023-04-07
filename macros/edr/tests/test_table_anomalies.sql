@@ -49,16 +49,19 @@
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                         backfill_days,
-                                                                                         days_back,
-                                                                                         table_monitors,
-                                                                                         metric_properties=metric_properties)) %}
+        {% if timestamp_column and is_timestamp %}
+            {%- set min_bucket_start, max_bucket_end = elementary.edr_quote(elementary.get_test_buckets_min_and_max(model_graph_node,
+                                                                                        backfill_days,
+                                                                                        days_back,
+                                                                                        table_monitors,
+                                                                                        metric_properties=metric_properties)) %}
+        {%- endif %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation,
                                                                            min_bucket_start,
+                                                                           max_bucket_end,
                                                                            table_monitors,
                                                                            days_back,
                                                                            metric_properties=metric_properties) %}

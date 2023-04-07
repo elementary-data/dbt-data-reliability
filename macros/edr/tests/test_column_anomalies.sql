@@ -49,17 +49,19 @@
         {%- set column_obj = column_obj_and_monitors['column'] -%}
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                         backfill_days,
-                                                                                         days_back,
-                                                                                         column_monitors,
-                                                                                         column_name,
-                                                                                         metric_properties=metric_properties)) %}
-    {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
+        {% if timestamp_column and is_timestamp %}
+        {%- set min_bucket_start, max_bucket_end = elementary.edr_quote(elementary.get_test_buckets_min_and_max(model_graph_node,
+                                                                                backfill_days,
+                                                                                days_back,
+                                                                                table_monitors,
+                                                                                metric_properties=metric_properties)) %}
+        {%- endif %}
+        {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
         {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation,
                                                                              min_bucket_start,
+                                                                             max_bucket_end,
                                                                              days_back,
                                                                              column_obj,
                                                                              column_monitors,
