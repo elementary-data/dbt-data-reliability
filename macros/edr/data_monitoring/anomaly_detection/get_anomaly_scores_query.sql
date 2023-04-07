@@ -22,6 +22,7 @@
     {% else %}
         {% set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {% endif %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
 
     {% set anomaly_scores_query %}
 
@@ -30,7 +31,7 @@
             select * from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end > {{ elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) }}
+                bucket_end > {{ min_bucket_start_expr }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
