@@ -14,12 +14,15 @@
     {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
     {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+
     {%- set anomaly_query -%}
       with anomaly_scores as (
         select
           *,
-          {{ elementary.anomaly_detection_description() }}
+          {{ elementary.anomaly_detection_description() }},
+          max(bucket_end) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
+        {{ dbt_utils.group_by(25) }}
       ),
       anomaly_scores_with_is_anomalous as (
         select
@@ -27,7 +30,7 @@
           case when
             anomaly_score is not null and
             {{ elementary.is_score_anomalous_condition(sensitivity) }} and
-            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, elementary.edr_quote(elementary.get_max_bucket_end())) }} and
+            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ elementary.get_config_var('min_training_set_size') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
