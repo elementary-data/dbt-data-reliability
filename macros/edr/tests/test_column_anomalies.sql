@@ -55,7 +55,7 @@
                                                                                          column_monitors,
                                                                                          column_name,
                                                                                          metric_properties=metric_properties)) %}
-        {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
+    {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name, column_name) }}
         {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation,

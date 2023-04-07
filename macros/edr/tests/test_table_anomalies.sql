@@ -9,6 +9,7 @@
         {% if not time_bucket %}
           {% set time_bucket = elementary.get_default_time_bucket() %}
         {% endif %}
+
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
         {#- creates temp relation for test metrics -#}

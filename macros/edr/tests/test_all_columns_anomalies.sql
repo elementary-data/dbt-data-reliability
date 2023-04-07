@@ -65,6 +65,7 @@
                                                                                                      column_monitors,
                                                                                                      column_name,
                                                                                                      metric_properties=metric_properties)) %}
+
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
                     {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, days_back, column_obj, column_monitors, metric_properties) %}
