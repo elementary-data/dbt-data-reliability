@@ -4,7 +4,7 @@
 {% endmacro %}
 
 {% macro get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
-    {%- set min_buclet_start = elementary.get_min_bucket_start(days_back) %}
+    {%- set min_bucket_start = elementary.get_min_bucket_start(days_back) %}
     {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(min_bucket_start)))%}
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
@@ -40,18 +40,19 @@
     {%- set regular_bucket_times_query %}
         with bucket_times as (
             select
-            {{ trunc_min_bucket_start_expr }} as days_back_start,
-            {{ run_start_expr }} as run_started
-            full_buckets_calc as (
+            {{ trunc_min_bucket_start_expr }} as days_back_start
+           , {{ run_start_expr }} as run_started
+        ),
+        full_buckets_calc as (
             select *,
-            floor({{ elementary.edr_datediff('days_back_start', 'run_started', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count } as periods_until_max
-                from bucket_times
-                )
-            select
-                 days_back_start as min_bucket_start,
-                 {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'last_max_bucket_end') }} {# Add full buckets to last_max_bucket_end #}
-            as max_bucket_end
-            from full_buckets_calc
+                floor({{ elementary.edr_datediff('days_back_start', 'run_started', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }} as periods_until_max
+            from bucket_times
+        )
+        select
+             days_back_start as min_bucket_start,
+             {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start') }} {# Add full buckets to last_max_bucket_end #}
+        as max_bucket_end
+        from full_buckets_calc
     {%- endset %}
 
     {%- set incremental_bucket_times_query %}
@@ -76,7 +77,7 @@
                 {# How many periods we need to reduce from last_max_bucket_end to backfill full time buckets #}
                 case
                     when last_max_bucket_end is not null
-                    then greatest(ceil({{ elementary.edr_datediff('last_max_bucket_end', 'backfill_start', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}), 1) * {{ metric_properties.time_bucket.count }}
+                    then least(ceil({{ elementary.edr_datediff('last_max_bucket_end', 'backfill_start', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}), -1) * {{ metric_properties.time_bucket.count }}
                     else 0
                 end as periods_to_backfill,
                 {# How many periods we need to add to last run time to get only full time buckets #}
@@ -115,7 +116,7 @@
     {%- if buckets %}
         {%- set min_bucket_start = buckets.get('min_bucket_start') %}
         {%- set max_bucket_end = buckets.get('max_bucket_end') %}
-        {{ return(min_bucket_start, max_bucket_end) }}
+        {{ return([min_bucket_start, max_bucket_end]) }}
     {%- else %}
         {{ exceptions.raise_compiler_error("Failed to calc test buckets min and max") }}
     {%- endif %}
