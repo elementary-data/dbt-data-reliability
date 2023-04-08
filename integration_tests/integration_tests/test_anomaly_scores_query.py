@@ -105,6 +105,7 @@ def test_anomaly_scores_query(
     alias_table_name,
     time_bucket,
     timestamp_column,
+    days_back,
     where_expression=None,
     dimensions=None,
     columns_only=False,
@@ -114,12 +115,13 @@ def test_anomaly_scores_query(
     get_anomaly_scores_query macro returns a query that expects 2 input tables.
     first - history of metrics, assumed to be the parameter `data_monitoring_metrics_table` if given, or else,
     `<db>.<schema>_elementary.data_monitoring_metrics` .
-    seccond - newly calculated metrics, assumed to be in the paramaeter `test_metrics_table_relation` .
+    second - newly calculated metrics, assumed to be in the paramaeter `test_metrics_table_relation` .
 
     The macro queries the historic rows, where relevant to the metric_properties the current test is testing , and also
         where relevant to the current `column_name` if given, as well as the `dimensions` if given.
-      than it joins with the newly calculated metrics, dedups based on metric_id, bucket start, and a few more. Than,
+      Then it joins with the newly calculated metrics, dedups based on metric_id, bucket start, and a few more. Then,
       it groups by metric_id, table name and a few other things, and calculates the average, STD, and the z-score.
+    :param days_back:
     :param dbt_project:
     :param input_rows: Either path for csv with input rows, or as a list of dicts
     :param input_rows_history: Either path for csv with historical rows, or as a list of dicts
@@ -154,9 +156,7 @@ def test_anomaly_scores_query(
         "timestamp_column": timestamp_column,
         "where_expression": where_expression,
         "freshness_column": None,
-        "event_timestamp_column": None,
-        "seasonality": None,
-        "days_back": 30
+        "event_timestamp_column": None
     }
     if dbt_project.adapter_name not in ["postgres", "redshift"]:
         database, schema = get_package_database_and_schema(dbt_project)
@@ -176,6 +176,7 @@ def test_anomaly_scores_query(
         model_graph_node=node,  # the table the test has ran on / is monitoring.
         sensitivity=3,  # for z-score (3 sigmas is the default)
         backfill_days=2,  # should be removed from the macro since it's not used TODO
+        days_back=30,
         monitors=[
             metric_name
         ],  # a list of strings that should include "metric_name" as well.
