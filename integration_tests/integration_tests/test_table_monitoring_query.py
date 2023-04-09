@@ -161,14 +161,13 @@ def test_table_monitoring_query(
         # dict.get(x) defaults to dict.get(x, None) so this
         "freshness_column": metric_args.get("freshness_column"),
         "event_timestamp_column": metric_args.get("event_timestamp_column"),
-        "seasonality": None,
-        "days_back": 30
     }
     query = dbt_project.execute_macro(
         "elementary.table_monitoring_query",
         monitored_table_relation=relation,
         min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
         table_monitors=[metric],
+        days_back=30,
         metric_properties=metric_properties,
     )
 
