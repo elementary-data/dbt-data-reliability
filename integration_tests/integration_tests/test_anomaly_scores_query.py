@@ -41,6 +41,7 @@ BASE_DIR = os.path.join(
 @Parametrization.default_parameters(
     time_bucket={"period": "day", "count": 1},
     timestamp_column="updated_at",
+    days_back=30,
 )
 @Parametrization.case(
     name="freshness_1_day_mostly_non_anomalous",
