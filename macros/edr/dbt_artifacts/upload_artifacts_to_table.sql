@@ -1,17 +1,22 @@
 {% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, metadata_hashes=None) %}
     {% set flatten_artifact_dicts = [] %}
+    {% do elementary.file_log("[{}] Flattening the artifacts.".format(table_relation.identifier)) %}
     {% for artifact in artifacts %}
         {% set flatten_artifact_dict = flatten_artifact_callback(artifact) %}
         {% if flatten_artifact_dict is not none %}
             {% do flatten_artifact_dicts.append(flatten_artifact_dict) %}
         {% endif %}
     {% endfor %}
+    {% do elementary.file_log("[{}] Flattened the artifacts.".format(table_relation.identifier)) %}
 
     {% if metadata_hashes is not none and elementary.get_config_var("cache_artifacts") %}
+        {% do elementary.file_log("[{}] Comparing the artifacts state.".format(table_relation.identifier)) %}
         {% set artifacts_hashes = flatten_artifact_dicts | map(attribute="metadata_hash") | sort %}
         {% if artifacts_hashes == metadata_hashes %}
             {% do elementary.file_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
             {% do return(none) %}
+        {% else %}
+            {% do elementary.file_log("[{}] Artifacts changed.".format(table_relation.identifier)) %}
         {% endif %}
     {% endif %}
 
