@@ -9,7 +9,7 @@
     {% endfor %}
     {% do elementary.file_log("[{}] Flattened the artifacts.".format(table_relation.identifier)) %}
 
-    {% if metadata_hashes is not none and elementary.get_config_var("cache_artifacts") %}
+    {% if not append and metadata_hashes is not none and elementary.get_config_var("cache_artifacts") %}
         {% do elementary.file_log("[{}] Comparing the artifacts state.".format(table_relation.identifier)) %}
         {% set artifacts_hashes = flatten_artifact_dicts | map(attribute="metadata_hash") | sort %}
         {% if artifacts_hashes == metadata_hashes %}
@@ -24,7 +24,7 @@
         {# In append mode, just insert, and no need to be atomic #}
         {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% else %}
-        {% if metadata_hashes %}
+        {% if metadata_hashes is not none %}
             {% set added_artifacts = flatten_artifact_dicts | rejectattr("metadata_hash", "in", metadata_hashes) | list %}
             {% set removed_artifact_hashes = metadata_hashes | reject("in", artifacts_hashes) | list %}
             {% do elementary.delete_and_insert(table_relation, insert_rows=added_artifacts, delete_values=removed_artifact_hashes, delete_column_key="metadata_hash") %}
