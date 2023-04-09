@@ -7,7 +7,6 @@
             {{ return(elementary.normalize_data_type(column_obj.dtype)) }}
         {% endif %}
     {% endfor %}
-    {% do exceptions.raise_compiler_error("Column `{}` was not found in `{}`.".format(column_name, model_relation.name)) %}
 {% endif %}
 {{ return(none) }}
 
