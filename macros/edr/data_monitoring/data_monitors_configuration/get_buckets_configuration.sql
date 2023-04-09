@@ -1,9 +1,9 @@
-{% macro get_min_bucket_start() %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back'))).strftime("%Y-%m-%d 00:00:00")) %}
+{% macro get_min_bucket_start(metric_properties) %}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(metric_properties.days_back | int)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
-{% macro get_min_bucket_end() %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(elementary.get_config_var('days_back') - 1)).strftime("%Y-%m-%d 00:00:00")) %}
+{% macro get_min_bucket_end(metric_properties) %}
+    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta((metric_properties.days_back | int) - 1)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
 {% macro get_max_bucket_end() %}
@@ -16,7 +16,7 @@
 
 
 {% macro get_test_min_bucket_start(model_graph_node, backfill_days, monitors=none, column_name=none,metric_properties=none) %}
-    {%- set min_bucket_start = elementary.get_min_bucket_start() %}
+    {%- set min_bucket_start = elementary.get_min_bucket_start(metric_properties) %}
     {% if not elementary.is_incremental_model(model_graph_node) %}
         {% do return(min_bucket_start) %}
     {% endif %}

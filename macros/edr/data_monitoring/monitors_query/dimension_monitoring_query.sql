@@ -13,7 +13,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         ),
 
@@ -65,7 +65,7 @@
             from buckets left join dimension_values_union on buckets.joiner = dimension_values_union.joiner
         ),
 
-        {# Calculating the row count for each dimension value's #}
+        {# Calculating the row count for the value of each dimension #}
         filtered_row_count_values as (
             select 
                 start_bucket_in_data,
@@ -187,7 +187,7 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties.time_bucket) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
         ),
 

@@ -155,6 +155,8 @@ def test_anomaly_scores_query(
         "where_expression": where_expression,
         "freshness_column": None,
         "event_timestamp_column": None,
+        "seasonality": None,
+        "days_back": 30
     }
     if dbt_project.adapter_name not in ["postgres", "redshift"]:
         database, schema = get_package_database_and_schema(dbt_project)
