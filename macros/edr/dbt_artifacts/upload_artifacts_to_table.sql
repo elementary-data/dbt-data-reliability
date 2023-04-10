@@ -18,7 +18,6 @@
             {% set new_metadata_hashes = flatten_artifact_dicts | map(attribute="metadata_hash") | sort %}
             {% if new_metadata_hashes == metadata_hashes %}
                 {% do elementary.file_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
-                {% do return(none) %}
             {% else %}
                 {% do elementary.file_log("[{}] Artifacts changed.".format(table_relation.identifier)) %}
                 {% set added_artifacts = flatten_artifact_dicts | rejectattr("metadata_hash", "in", metadata_hashes) | list %}
