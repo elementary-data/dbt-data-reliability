@@ -64,8 +64,8 @@
          'path': node_dict.get('path'),
          'source_description': node_dict.get('source_description'),
          'description': node_dict.get('description'),
-         'generated_at': elementary.datetime_now_utc_as_string()
+         'generated_at': elementary.datetime_now_utc_as_string(),
+        'metadata_hash': elementary.get_artifact_metadata_hash(node_dict)
      }%}
-    {% do flatten_source_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_source_metadata_dict)}) %}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}

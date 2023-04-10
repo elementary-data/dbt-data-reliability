@@ -157,9 +157,9 @@
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'metadata_hash': elementary.get_artifact_metadata_hash(node_dict)
     }%}
-    {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 

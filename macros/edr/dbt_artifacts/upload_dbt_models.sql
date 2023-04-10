@@ -71,8 +71,8 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'metadata_hash': elementary.get_artifact_metadata_hash(node_dict)
     }%}
-    {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}
