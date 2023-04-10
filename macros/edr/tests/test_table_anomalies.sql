@@ -9,6 +9,7 @@
         {% if not time_bucket %}
           {% set time_bucket = elementary.get_default_time_bucket() %}
         {% endif %}
+
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
         {#- creates temp relation for test metrics -#}
@@ -32,9 +33,7 @@
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
                                                                                event_timestamp_column=event_timestamp_column,
-                                                                               freshness_column=freshness_column,
-                                                                               seasonality=seasonality,
-                                                                               days_back=days_back) %}
+                                                                               freshness_column=freshness_column) %}
 
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
@@ -50,16 +49,21 @@
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                         backfill_days,
-                                                                                         table_monitors,
-                                                                                         metric_properties=metric_properties)) %}
+        {% if timestamp_column and is_timestamp %}
+            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model,
+                                                                                        backfill_days,
+                                                                                        days_back,
+                                                                                        monitors=table_monitors,
+                                                                                        metric_properties=metric_properties) %}
+        {%- endif %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
         {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation,
                                                                            min_bucket_start,
+                                                                           max_bucket_end,
                                                                            table_monitors,
+                                                                           days_back,
                                                                            metric_properties=metric_properties) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
 
@@ -72,9 +76,12 @@
                                                                           model_graph_node,
                                                                           sensitivity,
                                                                           backfill_days,
+                                                                          days_back,
                                                                           table_monitors,
+                                                                          seasonality=seasonality,
                                                                           metric_properties=metric_properties,
                                                                           anomaly_direction=anomaly_direction) %}
+
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}

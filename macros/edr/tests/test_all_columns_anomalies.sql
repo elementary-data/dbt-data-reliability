@@ -31,9 +31,7 @@
         {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
-                                                                               time_bucket=time_bucket,
-                                                                               seasonality=seasonality,
-                                                                               days_back=days_back) %}
+                                                                               time_bucket=time_bucket) %}
 
 
 
@@ -61,14 +59,17 @@
                 {%- set ignore_column = elementary.should_ignore_column(column_name, exclude_regexp, exclude_prefix) -%}
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
-                    {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                                     backfill_days,
-                                                                                                     column_monitors,
-                                                                                                     column_name,
-                                                                                                     metric_properties=metric_properties)) %}
+                    {% if timestamp_column and is_timestamp %}
+                        {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
+                                                                                                backfill_days=backfill_days,
+                                                                                                days_back=days_back,
+                                                                                                monitors=column_monitors,
+                                                                                                column_name=column_name,
+                                                                                                metric_properties=metric_properties) %}
+                    {%- endif %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, column_obj, column_monitors, metric_properties) %}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties) %}
                     {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
@@ -83,10 +84,13 @@
                                                                            model_graph_node,
                                                                            sensitivity,
                                                                            backfill_days,
+                                                                           days_back,
                                                                            all_columns_monitors,
                                                                            columns_only=true,
+                                                                           seasonality=seasonality,
                                                                            metric_properties=metric_properties,
                                                                            anomaly_direction=anomaly_direction) %}
+
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}

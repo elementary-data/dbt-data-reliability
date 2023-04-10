@@ -15,12 +15,38 @@
     {% set anomaly_direction = elementary.get_test_argument(argument_name='anomaly_direction', value=flattened_test.test_params.anomaly_direction) | lower %}
     {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
+
     {%- set anomaly_query -%}
       with anomaly_scores as (
         select
-          *,
-          {{ elementary.anomaly_detection_description() }}
+            id,
+            metric_id,
+            test_execution_id,
+            test_unique_id,
+            detected_at,
+            full_table_name,
+            column_name,
+            metric_name,
+            anomaly_score,
+            anomaly_score_threshold,
+            anomalous_value,
+            bucket_start,
+            bucket_end,
+            bucket_seasonality,
+            metric_value,
+            min_metric_value,
+            max_metric_value,
+            training_avg,
+            training_stddev,
+            training_set_size,
+            training_start,
+            training_end,
+            dimension,
+            dimension_value,
+            {{ elementary.anomaly_detection_description() }},
+            max(bucket_end) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
+        {{ dbt_utils.group_by(25) }}
       ),
       anomaly_scores_with_is_anomalous as (
         select
@@ -28,7 +54,7 @@
           case when
             anomaly_score is not null and
             {{ elementary.is_score_anomalous_condition(sensitivity, anomaly_direction) }} and
-            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, elementary.edr_quote(elementary.get_max_bucket_end())) }} and
+            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ elementary.get_config_var('min_training_set_size') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores

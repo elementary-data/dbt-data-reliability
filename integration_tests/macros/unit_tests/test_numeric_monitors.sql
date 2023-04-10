@@ -17,13 +17,13 @@
     {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
     {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
                                                                            where_expression=none,
-                                                                           time_bucket=none,
-                                                                           days_back=days_back)%}
+                                                                           time_bucket=none)%}
 
     {% do numeric_monitors.extend(default_all_types) %}
     {% do numeric_monitors.extend(default_numeric_monitors) %}
     {%- set column_monitoring_query = elementary.column_monitoring_query(monitored_table_relation=monitors_inputs_table_relation,
                                                                          min_bucket_start=elementary.get_run_started_at(),
+                                                                         days_back=days_back,
                                                                          column_obj=column_object,
                                                                          column_monitors=numeric_monitors,
                                                                          metric_properties=metric_properties) %}
