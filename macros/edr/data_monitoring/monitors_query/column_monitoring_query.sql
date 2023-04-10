@@ -43,7 +43,7 @@
                         {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
                     {%- else %}
                         {{ elementary.null_timestamp() }} as bucket_start,
-                        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
                         {{ elementary.null_int() }} as bucket_duration_hours,
                     {%- endif %}
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,

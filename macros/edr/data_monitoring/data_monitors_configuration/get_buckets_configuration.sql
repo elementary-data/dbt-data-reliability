@@ -9,11 +9,6 @@
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
--- TODO: This needs to be truncated according to the latest full bucket
-{% macro get_max_bucket_end() %}
-    {% do return(elementary.run_started_at_as_string()) %}
-{% endmacro %}
-
 {# This macro can't be used without truncating to full buckets #}
 {% macro get_backfill_bucket_start(backfill_days, metric_properties) %}
     {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
