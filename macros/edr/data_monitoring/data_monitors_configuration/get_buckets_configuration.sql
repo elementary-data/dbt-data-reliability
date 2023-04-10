@@ -22,7 +22,7 @@
     {%- endif %}
 
     {%- if unit_test %}
-        {%- set monitors_runs_relation = elementary.relation_to_full_name(unit_test_relation) %}
+        {%- set monitors_runs_relation = dbt.load_relation(unit_test_relation) %}
     {%- else %}
         {%- set monitors_runs_relation = ref('monitors_runs') %}
     {%- endif %}
@@ -85,13 +85,13 @@
                 when last_max_bucket_end < days_back_start then days_back_start {# When the metric was not collected for a period longer than days_back #}
                 when last_min_bucket_end > days_back_start then days_back_start {# When the metric was collected recently, but for a period that is smaller than days_back #}
                 when last_max_bucket_end < backfill_start then last_max_bucket_end {# When the metric was not collected for a period longer than backfill_days #}
-                else {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_to_backfill', 'last_max_bucket_end') }} {# When backfill reduce full time buckets from last_max_bucket_end to backfill #}
+                else {{ elementary.edr_cast_as_timestamp(elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_to_backfill', 'last_max_bucket_end')) }} {# When backfill reduce full time buckets from last_max_bucket_end to backfill #}
             end as min_bucket_start,
             case
                 {# This makes sure we collect only full bucket #}
                 when last_max_bucket_end is null or last_max_bucket_end < days_back_start or last_min_bucket_end > days_back_start
-                then {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start') }} {# Add full buckets to days_back_start #}
-                else {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'last_max_bucket_end') }} {# Add full buckets to last_max_bucket_end #}
+                then {{ elementary.edr_cast_as_timestamp(elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start')) }} {# Add full buckets to days_back_start #}
+                else {{ elementary.edr_cast_as_timestamp(elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'last_max_bucket_end')) }} {# Add full buckets to last_max_bucket_end #}
             end as max_bucket_end
         from full_buckets_calc
     {%- endset %}

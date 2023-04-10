@@ -1,5 +1,8 @@
 {% macro test_get_test_buckets_min_and_max() %}
 
+    {%- do drop_unit_test_table('monitors_runs_unit_test') -%}
+    {%- do drop_unit_test_table('unit_test_table') -%}
+
     {%- set monitors_runs_schema = [('full_table_name', 'string'), ('metric_properties', 'string'), ('last_bucket_end', 'timestamp'), ('first_bucket_end', 'timestamp')] %}
     {%- set monitors_runs_relation = create_unit_test_table('monitors_runs_unit_test', monitors_runs_schema, temp=false) %}
 
@@ -41,6 +44,7 @@
     {{ assert_round_time(max_bucket_end,'days') }}
 
     {# Previous larger than backfill, daily buckets #}
+    {%- do drop_unit_test_table('monitors_runs_unit_test') -%}
     {%- set monitors_runs_relation = create_unit_test_table('monitors_runs_unit_test', monitors_runs_schema, temp=false) %}
     {% set dicts = [{'full_table_name': full_table_name, 'metric_properties': metric_properties, 'last_bucket_end': get_x_time_ago(1,'days'), 'first_bucket_end': get_x_time_ago(200,'days')}] %}
     {% do elementary.insert_rows(monitors_runs_relation, dicts) %}
@@ -194,7 +198,7 @@
     {{ assert_round_time(max_bucket_end,'weeks') }}
 
     {# No previous run, 1 month buckets #}
-    {%- set days_back = 310 %}
+    {%- set days_back = 300 %}
     {%- set backfill_days = 14 %}
 
     {%- set metric_properties = {'time_bucket' : {'count': 1, 'period': 'month'}} %}
@@ -232,6 +236,9 @@
 
 
 {% macro time_diff(min_time, max_time, unit) %}
+
+    {%- set min_time = min_time | replace("'", "") | replace("+00:00", "") %}
+    {%- set max_time = max_time | replace("'", "") | replace("+00:00", "") %}
     {%- set start_time = modules.datetime.datetime.strptime(min_time, "%Y-%m-%dT%H:%M:%S") %}
     {%- set end_time = modules.datetime.datetime.strptime(max_time, "%Y-%m-%dT%H:%M:%S") %}
     {%- set delta = end_time - start_time %}
@@ -249,6 +256,7 @@
 {% endmacro %}
 
 {% macro assert_round_time(datetime, unit) %}
+    {%- set datetime = datetime | replace("'", "") | replace("+00:00", "") %}
     {%- if unit == 'hours' %}
        {%- set time_string = modules.datetime.datetime.strptime(datetime, "%Y-%m-%dT%H:%M:%S").strftime("%M:%S") %}
        {{ assert_value(time_string, '00:00') }}
@@ -257,7 +265,11 @@
        {{ assert_value(time_string, '00:00:00') }}
     {%- elif unit == 'weeks' %}
         {%- set time_string = modules.datetime.datetime.strptime(datetime, "%Y-%m-%dT%H:%M:%S").strftime("%w %H:%M:%S") %}
-        {{ assert_value(time_string, '1 00:00:00') }}
+        {%- if target.type == 'bigquery'%}
+            {{ assert_value(time_string, '0 00:00:00') }}
+        {%- else %}
+            {{ assert_value(time_string, '1 00:00:00') }}
+        {%- endif %}
     {%- elif unit == 'months' %}
         {%- set time_string = modules.datetime.datetime.strptime(datetime, "%Y-%m-%dT%H:%M:%S").strftime("%d %H:%M:%S") %}
         {{ assert_value(time_string, '01 00:00:00') }}
