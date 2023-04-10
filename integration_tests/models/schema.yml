@@ -55,7 +55,12 @@ models:
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
       - generic_test_on_model:
           tags: ["regular_tests"]
-
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "all_any_type_columns_anomalies", "drop_directional_anomalies" ]
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "all_any_type_columns_anomalies", "spike_directional_anomalies" ]
   - name: no_timestamp_anomalies
     meta:
       owner: "elon@elementary-data.com, or@elementary-data.com"
@@ -84,6 +89,16 @@ models:
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "dimension_anomalies", "spike_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "dimension_anomalies", "drop_directional_anomalies" ]
           dimensions:
             - platform
       - elementary.dimension_anomalies:
@@ -171,6 +186,12 @@ models:
     tests:
       - elementary.volume_anomalies:
           tags: ["table_anomalies"]
+      - elementary.volume_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "table_anomalies", "drop_directional_anomalies" ]
+      - elementary.volume_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "table_anomalies", "spike_directional_anomalies" ]
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.event_freshness_anomalies:
@@ -213,6 +234,16 @@ models:
               tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - average
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "spike"
+              tags: [ "numeric_column_anomalies", "spike_directional_anomalies" ]
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "drop"
+              tags: [ "numeric_column_anomalies", "drop_directional_anomalies" ]
       - name: average
         tests:
           - elementary.column_anomalies:
