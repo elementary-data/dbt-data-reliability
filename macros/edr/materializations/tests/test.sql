@@ -59,24 +59,13 @@
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
-{% macro get_elementary_test_type(flattened_test) %}
-  {% if flattened_test.test_namespace == "elementary" %}
-    {% if flattened_test.short_name.endswith("anomalies") %}
-      {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name.startswith('schema_changes') %}
-      {% do return("schema_change") %}
-    {% endif %}
-  {% endif %}
-  {% do return("dbt_test") %}
-{% endmacro %}
-
 {% macro materialize_test() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
   {% endif %}
 
   {% set flattened_test = elementary.flatten_test(model) %}
-  {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
+  {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
     "schema_change": elementary.handle_schema_changes_test,
@@ -198,7 +187,7 @@
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(flattened_test, 'test_column_name'),
-        'test_type': elementary.get_elementary_test_type(flattened_test),
+        'test_type': elementary.get_test_type(flattened_test),
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
