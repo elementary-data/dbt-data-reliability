@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none, anomaly_direction='both') %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, days_back, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none, anomaly_direction='both') %}
     {%- set anomaly_direction = anomaly_direction | lower %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
