@@ -21,6 +21,7 @@
     {% for query in queries %}
         {% do elementary.run_query(query) %}
     {% endfor %}
+    {% do elementary.file_log("Finished deleting from and inserting to: {}".format(relation)) %}
 {% endmacro %}
 
 {% macro get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
