@@ -7,6 +7,7 @@ from .dbt_project import DbtProject
 from .utils import create_test_table, insert_rows, update_var, lowercase_column_names, get_package_database_and_schema
 
 MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
+MAX_BUCKET_END = datetime(2022, 1, 4, 0, 0, 0)
 RUN_STARTED_AT = datetime(2022, 1, 4, 0, 13, 42)
 
 
@@ -161,40 +162,14 @@ def test_table_monitoring_query(
         "freshness_column": metric_args.get("freshness_column"),
         "event_timestamp_column": metric_args.get("event_timestamp_column"),
     }
-    # macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none)
-    if dbt_project.adapter_name not in ["postgres", "redshift"]:
-        database, schema = get_package_database_and_schema(dbt_project)
-    else:
-        database = schema = None
-
-    model_relation = {
-        "identifier": relation.identifier,
-        "database": database,
-        "schema": schema,
-    }
-
-    monitors_runs_schema = dict([('full_table_name', 'string'), ('metric_properties', 'string'), ('metric_name', 'string') ,('last_bucket_end', 'timestamp'), ('first_bucket_end', 'timestamp')])
-    monitors_runs_relation=create_test_table(dbt_project,'monitors_runs_unit_test', monitors_runs_schema)
-
-    buckets_start_and_end = dbt_project.execute_macro(
-        "elementary.get_test_buckets_min_and_max",
-        model_relation=model_relation,
-        backfill_days=2,
-        days_back=3,
-        monitors=[metric],
-        column_name=None,
-        metric_properties=metric_properties,
-        unit_test=True,
-        unit_test_relation=monitors_runs_relation,
-    )
 
     query = dbt_project.execute_macro(
         "elementary.table_monitoring_query",
         monitored_table_relation=relation,
-        min_bucket_start=buckets_start_and_end[0],
-        max_bucket_end=buckets_start_and_end[1],
+        min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
+        max_bucket_end=MAX_BUCKET_END.strftime("'%Y-%m-%d %H:%M:%S'"),
         table_monitors=[metric],
-        days_back=3,
+        days_back=(MAX_BUCKET_END-MIN_BUCKET_START).days,
         metric_properties=metric_properties,
     )
     res_table = dbt_project.execute_sql(query)
@@ -206,13 +181,3 @@ def test_table_monitoring_query(
         row["bucket_end"].replace(tzinfo=None): row["metric_value"] for row in res_table
     }
     assert result_metrics == expected_metrics
-
-
-# @dataclass
-# class Node:
-#     database: str
-#     schema: str
-#     identifier: str
-#     alias: Optional[str]
-#     name: Optional[str]
-#
