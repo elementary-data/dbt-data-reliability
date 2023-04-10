@@ -197,7 +197,6 @@ def test_table_monitoring_query(
         days_back=3,
         metric_properties=metric_properties,
     )
-    #import pdb;pdb.set_trace() # NO_COMMIT
     res_table = dbt_project.execute_sql(query)
 
     res_table = lowercase_column_names(res_table)
