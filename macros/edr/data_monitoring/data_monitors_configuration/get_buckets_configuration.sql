@@ -1,11 +1,6 @@
-{# This macro can't be used without truncating to full buckets #}
-{% macro get_min_bucket_start(days_back) %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00")) %}
-{% endmacro %}
-
 {% macro get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
-    {%- set min_bucket_start = elementary.get_min_bucket_start(days_back) %}
-    {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(min_bucket_start)))%}
+    {%- set untruncated_min = elementary.get_run_started_at() - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00") %}
+    {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(untruncated_min)))%}
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
