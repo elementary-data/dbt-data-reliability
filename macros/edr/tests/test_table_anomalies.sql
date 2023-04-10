@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket, event_timestamp_column=none,freshness_column=none, seasonality=none) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket, event_timestamp_column=none, freshness_column=none, seasonality=none, anomaly_direction='both') %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -71,6 +71,7 @@
 
         {#- calculate anomaly scores for metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {% do elementary.validate_directional_parameter(anomaly_direction) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
                                                                           model_graph_node,
                                                                           sensitivity,
@@ -78,7 +79,9 @@
                                                                           days_back,
                                                                           table_monitors,
                                                                           seasonality=seasonality,
-                                                                          metric_properties=metric_properties) %}
+                                                                          metric_properties=metric_properties,
+                                                                          anomaly_direction=anomaly_direction) %}
+
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}

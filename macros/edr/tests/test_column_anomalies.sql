@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket,seasonality=none) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, sensitivity, backfill_days, where_expression, time_bucket,anomaly_direction='both', seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -74,6 +74,7 @@
         {#- calculate anomaly scores for metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {% do elementary.validate_directional_parameter(anomaly_direction) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
                                                                           model_graph_node,
                                                                           sensitivity,
@@ -82,7 +83,9 @@
                                                                           column_monitors,
                                                                           column_name,
                                                                           seasonality=seasonality,
-                                                                          metric_properties=metric_properties) %}
+                                                                          metric_properties=metric_properties,
+                                                                          anomaly_direction=anomaly_direction) %}
+
         {{ elementary.debug_log('anomaly_score_query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name, column_name) }}

@@ -152,6 +152,26 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:drop_directional_anomalies")
+        results = [
+            TestResult(type="drop_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_drop_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:spike_directional_anomalies")
+        results = [
+            TestResult(type="spike_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_spike_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "create_table" in test_types:
         # If there is a problem with create_or_replace macro, it will crash the test.
         dbt_runner.test(select="tag:table_anomalies")
@@ -325,7 +345,7 @@ def e2e_tests(
 def print_failed_test_results(e2e_target: str, failed_test_results: List[TestResult]):
     print(f"Failed {e2e_target} tests:")
     for failed_test_result in failed_test_results:
-        print(f"{failed_test_result.type}: {failed_test_result.message}")
+        print(f"\033[1m\033[91m{failed_test_result.type}: {failed_test_result.message}\033[0m")
 
 
 @click.command()
@@ -367,6 +387,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "seasonal_volume",
             "table",
             "column",
+            "directional_anomalies"
             "schema",
             "regular",
             "artifacts",
