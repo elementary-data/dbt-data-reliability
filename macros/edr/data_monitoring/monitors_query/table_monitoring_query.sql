@@ -242,7 +242,7 @@
     from bucket_freshness_ranked
     where row_number = 1
 {% else %}
-    {# Update freshness test not supported when timestamp column is not provided #}
+    {% do exceptions.raise_compiler_error("freshness_anomalies test is not supported whitout timestamp_column.") %}
     {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
     {% do return(none) %}
 {% endif %}
