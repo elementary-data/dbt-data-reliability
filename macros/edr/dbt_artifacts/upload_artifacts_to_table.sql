@@ -7,7 +7,7 @@
             {% do flatten_artifact_dicts.append(flatten_artifact_dict) %}
         {% endif %}
     {% endfor %}
-    {% do elementary.file_log("[{}] Flattened the artifacts.".format(table_relation.identifier)) %}
+    {% do elementary.file_log("[{}] Flattened {} artifacts.".format(table_relation.identifier, flatten_artifact_dicts | length)) %}
 
     {% if append %}
         {# In append mode, just insert, and no need to be atomic #}
