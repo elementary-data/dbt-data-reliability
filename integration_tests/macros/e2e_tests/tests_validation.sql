@@ -74,15 +74,24 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {% set alerts_relation = ref('alerts_dbt_tests') %}
+    {% set alerts_relation = ref('test_alerts_union') %}
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
-        select distinct status
-        from {{ alerts_relation }}
-        where status = 'error'
+        with error_tests as (
+            select
+                test_name,
+                {{ elementary.contains('tags', 'error_test') }} as error_tag
+            from {{ alerts_relation }}
+            where status = 'error'
+        )
+        select
+            case when error_tag = true then 'error'
+            else 'error: ' || test_name
+            end as error_tests
+        from error_tests
     {% endset %}
-    {% set results = elementary.result_column_to_list(error_test_validation_query) %}
+    {% set results = elementary.result_column_to_list(error_test_validation_query) | unique | list %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
 {% endmacro %}
 
