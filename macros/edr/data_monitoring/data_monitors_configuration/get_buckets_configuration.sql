@@ -22,7 +22,7 @@
 
 {% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
 
-    {%- set run_start_expr = elementary.edr_quote(elementary.get_run_started_at().strftime("%Y-%m-%d %H:00:00")) %}
+    {%- set run_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) %}
     {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
     {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_backfill_bucket_start(backfill_days))) %}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}

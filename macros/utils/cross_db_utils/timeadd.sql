@@ -19,9 +19,9 @@
 {% endmacro %}
 
 {% macro postgres__edr_timeadd(date_part, number, timestamp_expression) %}
-    {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + {{ number }} * INTERVAL '1 {{ date_part }}'
+    {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + {{ elementary.edr_cast_as_int(number) }} * INTERVAL '1 {{ date_part }}'
 {% endmacro %}
 
 {% macro redshift__edr_timeadd(date_part, number, timestamp_expression) %}
-    dateadd({{ date_part }}, {{ number }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
+    dateadd({{ date_part }}, {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
