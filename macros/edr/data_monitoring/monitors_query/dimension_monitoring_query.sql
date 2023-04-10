@@ -1,9 +1,8 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, metric_properties) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
     {% set metric_name = 'dimension' %}
     {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
-    {%- set min_bucket_start = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(min_bucket_start))%}
 
     {% set timestamp_column = metric_properties.timestamp_column %}
 
@@ -13,8 +12,9 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         filtered_monitored_table as (
@@ -187,8 +187,9 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
           where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         {# Get all of the metrics for all of the dimensions that were create for the test until this run, #}
@@ -211,7 +212,7 @@
             from hydrated_last_dimension_metrics
             union all
             select
-                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value
             from {{ monitored_table_relation }}

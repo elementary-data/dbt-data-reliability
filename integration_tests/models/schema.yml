@@ -55,7 +55,12 @@ models:
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
       - generic_test_on_model:
           tags: ["regular_tests"]
-
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "all_any_type_columns_anomalies", "drop_directional_anomalies" ]
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "all_any_type_columns_anomalies", "spike_directional_anomalies" ]
   - name: no_timestamp_anomalies
     meta:
       owner: "elon@elementary-data.com, or@elementary-data.com"
@@ -84,6 +89,16 @@ models:
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "dimension_anomalies", "spike_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "dimension_anomalies", "drop_directional_anomalies" ]
           dimensions:
             - platform
       - elementary.dimension_anomalies:
@@ -171,6 +186,12 @@ models:
     tests:
       - elementary.volume_anomalies:
           tags: ["table_anomalies"]
+      - elementary.volume_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "table_anomalies", "drop_directional_anomalies" ]
+      - elementary.volume_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "table_anomalies", "spike_directional_anomalies" ]
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.event_freshness_anomalies:
@@ -213,6 +234,16 @@ models:
               tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - average
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "spike"
+              tags: [ "numeric_column_anomalies", "spike_directional_anomalies" ]
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "drop"
+              tags: [ "numeric_column_anomalies", "drop_directional_anomalies" ]
       - name: average
         tests:
           - elementary.column_anomalies:
@@ -278,8 +309,9 @@ models:
           fail_on_added: true
           tags: ["schema_changes_from_baseline"]
       - elementary.schema_changes_from_baseline:
-          tags: ["schema_changes_from_baseline"]
+          tags: ["schema_changes_from_baseline", "error_test"]
           enforce_types: true
+
 
   - name: stats_players
     columns:
@@ -311,13 +343,13 @@ models:
       - elementary.volume_anomalies:
           alias: volume_anomalies_no_seasonality_anomalies
           timestamp_column: "updated_at"
-          tags: ["seasonality_volume"]
+          tags: ["seasonality_volume","table_anomalies"]
           sensitivity: 2
           backfill_days: 14
       - elementary.volume_anomalies:
           alias: volume_anomalies_with_seasonality_anomalies
           timestamp_column: "updated_at"
-          tags: ["seasonality_volume"]
+          tags: ["seasonality_volume","table_anomalies"]
           sensitivity: 2
           backfill_days: 14
           seasonality: day_of_week
@@ -338,7 +370,7 @@ sources:
           - elementary.volume_anomalies:
               tags: ["table_anomalies"]
           - elementary.freshness_anomalies:
-              tags: ["table_anomalies"]
+              tags: ["table_anomalies", "error_test"]
           - elementary.event_freshness_anomalies:
               tags: ["event_freshness_anomalies"]
               event_timestamp_column: occurred_at

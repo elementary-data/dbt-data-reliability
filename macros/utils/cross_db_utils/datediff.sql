@@ -20,7 +20,7 @@
         {% if not macro %}
             {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}
         {% endif %}
-        {{ return(macro(first_date, second_date, date_part)) }}
+        {{ return(macro(elementary.edr_cast_as_date(first_date), elementary.edr_cast_as_date(second_date), date_part)) }}
     {%- else %}
         {{ exceptions.raise_compiler_error("Unsupported date_part in edr_datediff: ".format(date_part)) }}
     {%- endif %}

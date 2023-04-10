@@ -1,8 +1,7 @@
-{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, table_monitors, metric_properties) %}
+{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, days_back, metric_properties) %}
 
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
-    {%- set min_bucket_start = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(min_bucket_start))%}
 
     with monitored_table as (
         select * from {{ monitored_table_relation }}
@@ -12,8 +11,9 @@
     {% if timestamp_column %}
         buckets as (
             select edr_bucket_start, edr_bucket_end
-            from ({{ elementary.complete_buckets_cte(metric_properties) }}) results
+            from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
             where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+              and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         time_filtered_monitored_table as (
@@ -61,7 +61,7 @@
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
             {{ elementary.null_string() }} as source_value,
             {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_max_bucket_end())) }} as bucket_end,
+            {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
             {{ elementary.null_int() }} as bucket_duration_hours,
             {{ elementary.null_string() }} as dimension,
             {{ elementary.null_string() }} as dimension_value,
@@ -242,7 +242,7 @@
     from bucket_freshness_ranked
     where row_number = 1
 {% else %}
-    {# Update freshness test not supported when timestamp column is not provided #}
+    {% do exceptions.raise_compiler_error("freshness_anomalies test is not supported whitout timestamp_column.") %}
     {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
     {% do return(none) %}
 {% endif %}

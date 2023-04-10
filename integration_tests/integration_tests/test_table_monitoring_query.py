@@ -4,10 +4,10 @@ from parametrization import Parametrization
 
 
 from .dbt_project import DbtProject
-from .utils import create_test_table, insert_rows, update_var, lowercase_column_names
-
+from .utils import create_test_table, insert_rows, update_var, lowercase_column_names, get_package_database_and_schema
 
 MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
+MAX_BUCKET_END = datetime(2022, 1, 4, 0, 0, 0)
 RUN_STARTED_AT = datetime(2022, 1, 4, 0, 13, 42)
 
 
@@ -161,17 +161,17 @@ def test_table_monitoring_query(
         # dict.get(x) defaults to dict.get(x, None) so this
         "freshness_column": metric_args.get("freshness_column"),
         "event_timestamp_column": metric_args.get("event_timestamp_column"),
-        "seasonality": None,
-        "days_back": 30
     }
+
     query = dbt_project.execute_macro(
         "elementary.table_monitoring_query",
         monitored_table_relation=relation,
         min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
+        max_bucket_end=MAX_BUCKET_END.strftime("'%Y-%m-%d %H:%M:%S'"),
         table_monitors=[metric],
+        days_back=(MAX_BUCKET_END-MIN_BUCKET_START).days,
         metric_properties=metric_properties,
     )
-
     res_table = dbt_project.execute_sql(query)
 
     res_table = lowercase_column_names(res_table)
@@ -181,13 +181,3 @@ def test_table_monitoring_query(
         row["bucket_end"].replace(tzinfo=None): row["metric_value"] for row in res_table
     }
     assert result_metrics == expected_metrics
-
-
-# @dataclass
-# class Node:
-#     database: str
-#     schema: str
-#     identifier: str
-#     alias: Optional[str]
-#     name: Optional[str]
-#

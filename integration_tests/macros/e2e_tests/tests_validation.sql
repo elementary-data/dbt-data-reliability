@@ -17,8 +17,8 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-    {% if results | length != 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests') %}
+    {% if results | length != 3 %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests: ' ~ results | length) %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
@@ -74,16 +74,61 @@
 {% endmacro %}
 
 {% macro validate_error_test() %}
-    {% set alerts_relation = ref('alerts_dbt_tests') %}
+    {% set alerts_relation = ref('test_alerts_union') %}
 
     {# Validating alert for error test was created #}
     {% set error_test_validation_query %}
-        select distinct status
-        from {{ alerts_relation }}
-        where status = 'error'
+        with error_tests as (
+            select
+                test_name,
+                {{ elementary.contains('tags', 'error_test') }} as error_tag
+            from {{ alerts_relation }}
+            where status = 'error'
+        )
+        select
+            case when error_tag = true then 'error'
+            else 'error: ' || test_name
+            end as error_tests
+        from error_tests
     {% endset %}
-    {% set results = elementary.result_column_to_list(error_test_validation_query) %}
+    {% set results = elementary.result_column_to_list(error_test_validation_query) | unique | list %}
     {{ assert_lists_contain_same_items(results, ['error']) }}
+{% endmacro %}
+
+{% macro validate_spike_directional_anomalies() %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
+    {# Validating alert for correct direction anomalies #}
+
+    {% set row_count_validation_query %}
+        select distinct table_name
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and tags like '%spike_directional_anomalies%';
+    {% endset %}
+    {% set results = elementary.result_column_to_list(row_count_validation_query) %}
+    -- The result list's purpose is a more readable error messages
+    {% set results_list = [] %}
+    {% for result in results %}
+        {% do results_list.append(result) %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies']) }}
+{% endmacro %}
+
+{% macro validate_drop_directional_anomalies() %}
+    {% set alerts_relation = ref('alerts_anomaly_detection') %}
+    {# Validating alert for correct direction anomalies #}
+
+    {% set row_count_validation_query %}
+        select distinct table_name
+        from {{ alerts_relation }}
+        where status in ('fail', 'warn') and tags like '%drop_directional_anomalies%';
+    {% endset %}
+    {% set results = elementary.result_column_to_list(row_count_validation_query) %}
+    -- The result list's purpose is a more readable error messages
+    {% set results_list = [] %}
+    {% for result in results %}
+        {% do results_list.append(result) %}
+    {% endfor %}
+    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies', 'dimension_anomalies', 'numeric_column_anomalies']) }}
 {% endmacro %}
 
 {% macro validate_error_model() %}

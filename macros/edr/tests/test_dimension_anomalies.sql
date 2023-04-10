@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, seasonality=none) %}
+{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, anomaly_direction='both', seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -33,10 +33,7 @@
         {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
                                                                                where_expression=where_expression,
                                                                                time_bucket=time_bucket,
-                                                                               seasonality=seasonality,
-                                                                               days_back=days_back) %}
-
-
+                                                                               dimensions=dimensions) %}
 
         {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
         {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}
@@ -52,14 +49,16 @@
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
         {{ elementary.debug_log('where_expression - ' ~ metric_properties.where_expression) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {%- set min_bucket_start = elementary.edr_quote(elementary.get_test_min_bucket_start(model_graph_node,
-                                                                                         backfill_days,
-                                                                                         column_name=dimensions_str,
-                                                                                         metric_properties=metric_properties)) %}
+        {% if timestamp_column and is_timestamp %}
+            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
+                                                                                    backfill_days=backfill_days,
+                                                                                    days_back=days_back,
+                                                                                    metric_properties=metric_properties) %}
+        {%- endif %}
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
@@ -67,13 +66,18 @@
 
         {#- calculate anomaly scores for metrics -#}
         {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {% do elementary.validate_directional_parameter(anomaly_direction) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
                                                                           model_graph_node,
                                                                           sensitivity,
                                                                           backfill_days,
+                                                                          days_back,
                                                                           ['dimension'],
                                                                           dimensions=dimensions,
-                                                                          metric_properties=metric_properties) %}
+                                                                          seasonality=seasonality,
+                                                                          metric_properties=metric_properties,
+                                                                          anomaly_direction=anomaly_direction) %}
+
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
