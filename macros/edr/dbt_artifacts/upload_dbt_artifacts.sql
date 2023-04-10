@@ -16,7 +16,7 @@
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% if elementary.get_elementary_relation(artifacts_model) %}
-          {% if artifacts_hashes %}
+          {% if artifacts_hashes is not none %}
             {% do upload_artifacts_func(should_commit=true, metadata_hashes=artifacts_hashes.get(artifacts_model, [])) %}
           {% else %}
             {% do upload_artifacts_func(should_commit=true) %}
