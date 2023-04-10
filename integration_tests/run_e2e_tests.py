@@ -78,7 +78,7 @@ def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
     dbt_runner.run(test_model, vars={"one_tags": ["world", "hello"]})
     second_row = get_row(test_model, dbt_runner)
     return TestResult(
-        type="test_artifacts_on_run_end",
+        type="test_artifacts_cache",
         message=(
             "SUCCESS: Artifacts are cached at the on run end."
             if first_row == second_row
@@ -94,7 +94,7 @@ def test_artifacts_update(dbt_runner: TestDbtRunner) -> TestResult:
     dbt_runner.run(test_model, vars={"one_owner": "ele"})
     second_row = get_row(test_model, dbt_runner)
     return TestResult(
-        type="test_artifacts_on_run_end",
+        type="test_artifacts_update",
         message=(
             "SUCCESS: Artifacts are updated on run end."
             if first_row != second_row

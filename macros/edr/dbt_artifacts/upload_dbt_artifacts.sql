@@ -16,7 +16,11 @@
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
       {% if not elementary.get_result_node(artifacts_model) %}
         {% if elementary.get_elementary_relation(artifacts_model) %}
-          {% do upload_artifacts_func(should_commit=true, metadata_hashes=artifacts_hashes.get(artifacts_model, [])) %}
+          {% if artifacts_hashes %}
+            {% do upload_artifacts_func(should_commit=true, metadata_hashes=artifacts_hashes.get(artifacts_model, [])) %}
+          {% else %}
+            {% do upload_artifacts_func(should_commit=true) %}
+          {% endif %}
         {% endif %}
       {% else %}
         {% do elementary.file_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
@@ -28,13 +32,13 @@
 {% macro get_artifacts_hashes() %}
     {# The stored hashes are only needed if it can be compared later to the local hashes. #}
     {% if not local_md5 %}
-        {% do return({}) %}
+        {% do return(none) %}
     {% endif %}
 
     {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
     {% set artifacts_hash_relation = adapter.get_relation(database_name, schema_name, "dbt_artifacts_hashes") %}
     {% if not artifacts_hash_relation %}
-        {% do return({}) %}
+        {% do return(none) %}
     {% endif %}
 
     {% set stored_artifacts_query %}
