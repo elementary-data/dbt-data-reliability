@@ -18,9 +18,32 @@
     {%- set anomaly_query -%}
       with anomaly_scores as (
         select
-          *,
-          {{ elementary.anomaly_detection_description() }},
-          max(bucket_end) as max_bucket_end
+            id,
+            metric_id,
+            test_execution_id,
+            test_unique_id,
+            detected_at,
+            full_table_name,
+            column_name,
+            metric_name,
+            anomaly_score,
+            anomaly_score_threshold,
+            anomalous_value,
+            bucket_start,
+            bucket_end,
+            bucket_seasonality,
+            metric_value,
+            min_metric_value,
+            max_metric_value,
+            training_avg,
+            training_stddev,
+            training_set_size,
+            training_start,
+            training_end,
+            dimension,
+            dimension_value,
+            {{ elementary.anomaly_detection_description() }},
+            max(bucket_end) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
         {{ dbt_utils.group_by(25) }}
       ),
