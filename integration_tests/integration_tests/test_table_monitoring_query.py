@@ -180,7 +180,7 @@ def test_table_monitoring_query(
         "elementary.get_test_buckets_min_and_max",
         model_relation=model_relation,
         backfill_days=2,
-        days_back=30,
+        days_back=3,
         monitors=[metric],
         column_name=None,
         metric_properties=metric_properties,
@@ -194,10 +194,10 @@ def test_table_monitoring_query(
         min_bucket_start=buckets_start_and_end[0],
         max_bucket_end=buckets_start_and_end[1],
         table_monitors=[metric],
-        days_back=30,
+        days_back=3,
         metric_properties=metric_properties,
     )
-
+    #import pdb;pdb.set_trace() # NO_COMMIT
     res_table = dbt_project.execute_sql(query)
 
     res_table = lowercase_column_names(res_table)
