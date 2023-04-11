@@ -20,9 +20,16 @@
                 {% do elementary.file_log("[{}] Artifacts did not change.".format(table_relation.identifier)) %}
             {% else %}
                 {% do elementary.file_log("[{}] Artifacts changed.".format(table_relation.identifier)) %}
-                {% set added_artifacts = flatten_artifact_dicts | rejectattr("metadata_hash", "in", metadata_hashes) | list %}
-                {% set removed_artifact_hashes = metadata_hashes | reject("in", new_metadata_hashes) | list %}
-                {% do elementary.delete_and_insert(table_relation, insert_rows=added_artifacts, delete_values=removed_artifact_hashes, delete_column_key="metadata_hash") %}
+                {% set upload_artifacts_method = elementary.get_config_var("upload_artifacts_method") %}
+                {% if upload_artifacts_method == "diff" %}
+                    {% set added_artifacts = flatten_artifact_dicts | rejectattr("metadata_hash", "in", metadata_hashes) | list %}
+                    {% set removed_artifact_hashes = metadata_hashes | reject("in", new_metadata_hashes) | list %}
+                    {% do elementary.delete_and_insert(table_relation, insert_rows=added_artifacts, delete_values=removed_artifact_hashes, delete_column_key="metadata_hash") %}
+                {% elif upload_artifacts_method == "replace" %}
+                    {% do elementary.replace_table_data(table_relation, flatten_artifact_dicts) %}
+                {% else %}
+                    {% do exceptions.raise_compiler_error("Invalid var('upload_artifacts_method') provided.") %}
+                {% endif %}
             {% endif %}
         {% else %}
             {% do elementary.replace_table_data(table_relation, flatten_artifact_dicts) %}

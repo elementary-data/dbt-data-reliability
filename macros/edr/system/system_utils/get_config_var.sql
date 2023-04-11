@@ -45,6 +45,7 @@
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
+    'upload_artifacts_method': 'diff',
     'project_name': none,
     'elementary_full_refresh': false,
     'min_training_set_size': 14,
