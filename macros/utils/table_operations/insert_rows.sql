@@ -15,14 +15,14 @@
         {{ return(none) }}
     {% endif %}
 
-    {{ elementary.debug_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
+    {{ elementary.file_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
     {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
     {% if insert_rows_method == 'max_query_size' %}
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
-        {% do elementary.debug_log("[%d/%d] Running insert query." % (loop.index, queries_len)) %}
-        {% do dbt.run_query(insert_query) %}
+        {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
+        {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
@@ -55,15 +55,18 @@
         {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
         {% do rendered_column_values.append(elementary.render_value(column_value)) %}
       {% endfor %}
-      {% set row_sql = "(%s)" % (rendered_column_values | join(",")) %}
+      {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
       {% if query_with_row | length > query_max_size %}
-        {% if loop.first %}
-          {% do exceptions.raise_compiler_error("First row to be inserted exceeds 'query_max_size'. Consider increasing its value.") %}
+        {% set new_insert_query = insert_query + row_sql %}
+        {# Check if row is too large to fit into an insert query. #}
+        {% if new_insert_query | length > query_max_size %}
+          {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
+          {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
-        {% set current_query.data = insert_query + row_sql %}
+        {% set current_query.data = new_insert_query %}
       {% else %}
         {% set current_query.data = query_with_row %}
       {% endif %}
@@ -92,8 +95,20 @@
     {{ return(insert_rows_query) }}
 {%- endmacro %}
 
-{%- macro escape_special_chars(string_value) -%}
+{% macro escape_special_chars(string_value) %}
+    {{ return(adapter.dispatch('escape_special_chars', 'elementary')(string_value)) }}
+{% endmacro %}
+
+{%- macro default__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{%- endmacro -%}
+
+{%- macro redshift__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{%- endmacro -%}
+
+{%- macro postgres__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
 {%- macro render_value(value) -%}

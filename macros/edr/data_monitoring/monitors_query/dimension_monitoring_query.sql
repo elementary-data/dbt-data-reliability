@@ -1,8 +1,10 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, where_expression, timestamp_column, min_bucket_start, time_bucket) %}
+{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
     {% set metric_name = 'dimension' %}
-    {% set full_table_name_str = elementary.quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
+
+    {% set timestamp_column = metric_properties.timestamp_column %}
 
     {% if timestamp_column %}
         with buckets as (
@@ -10,20 +12,21 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(time_bucket) }})
-          where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
+          where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         filtered_monitored_table as (
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value,
-                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, time_bucket) }} as start_bucket_in_data
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             from {{ monitored_table_relation }}
             where
-                {{ elementary.cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
-                and {{ elementary.cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
-            {% if where_expression %}
-                and {{ where_expression }}
+                {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
+                and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
+            {% if metric_properties.where_expression %}
+                and {{ metric_properties.where_expression }}
             {% endif %}
         ),
 
@@ -34,9 +37,9 @@
                 sum(metric_value)
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
-                and metric_name = {{ elementary.quote(metric_name) }}
-                and dimension = {{ elementary.quote(dimensions_string) }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+                and metric_name = {{ elementary.edr_quote(metric_name) }}
+                and dimension = {{ elementary.edr_quote(dimensions_string) }}
+                and {{ elementary.edr_cast_as_timestamp('bucket_end') }} >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
             group by 1
             having sum(metric_value) > 0
         ),
@@ -53,7 +56,7 @@
                     dimension_value,
                     1 as joiner
                 from filtered_monitored_table
-            )
+            ) results
         ),
 
         {# Created buckets for each dimension value #}
@@ -62,12 +65,12 @@
             from buckets left join dimension_values_union on buckets.joiner = dimension_values_union.joiner
         ),
 
-        {# Calculating the row count for each dimension value's #}
+        {# Calculating the row count for the value of each dimension #}
         filtered_row_count_values as (
             select 
                 start_bucket_in_data,
                 {{ concat_dimensions_sql_expression }} as dimension_value, 
-                {{ elementary.cast_as_float(elementary.row_count()) }} as row_count_value
+                {{ elementary.edr_cast_as_float(elementary.row_count()) }} as row_count_value
             from filtered_monitored_table
             {{ dbt_utils.group_by(2) }}
         ),
@@ -92,26 +95,28 @@
                    {{ elementary.null_string() }} as source_value,
                    row_count_value as metric_value,
                    {{ elementary.const_as_string(dimensions_string) }} as dimension,
-                   dimension_value
+                   dimension_value,
+                   {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count_values
         ),
 
         metrics_final as (
 
         select
-            {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
-            {{ elementary.cast_as_float('metric_value') }} as metric_value,
+            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
             source_value,
             edr_bucket_start as bucket_start,
             edr_bucket_end as bucket_end,
-            {{ elementary.datediff("edr_bucket_start", "edr_bucket_end", "hour") }} as bucket_duration_hours,
+            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
             dimension,
-            dimension_value
+            dimension_value,
+            metric_properties
         from
             row_count
-        where (metric_value is not null and cast(metric_value as {{ elementary.type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+        where (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
             metric_value is null
         )
 
@@ -120,8 +125,8 @@
             select *,
                    {{ concat_dimensions_sql_expression }} as dimension_value
             from {{ monitored_table_relation }}
-        {% if where_expression %}
-            where {{ where_expression }}
+        {% if metric_properties.where_expression %}
+            where {{ metric_properties.where_expression }}
         {% endif %}
         ),
         
@@ -133,9 +138,11 @@
                 metric_value
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
-                and metric_name = {{ elementary.quote(metric_name) }}
-                and dimension = {{ elementary.quote(dimensions_string) }}
-                and {{ elementary.cast_as_timestamp('bucket_end') }} >= {{ elementary.timeadd(time_bucket.period, time_bucket.count, elementary.cast_as_timestamp(min_bucket_start)) }}
+                and metric_name = {{ elementary.edr_quote(metric_name) }}
+                and dimension = {{ elementary.edr_quote(dimensions_string) }}
+                and {{ elementary.edr_cast_as_timestamp('bucket_end') }} >= {{ elementary.edr_timeadd(metric_properties.time_bucket.period,
+                                                                                              metric_properties.time_bucket.count,
+                                                                                              elementary.edr_cast_as_timestamp(min_bucket_start)) }}
         ),
 
         {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
@@ -154,7 +161,7 @@
                     from last_dimension_metrics
                     group by 1
                     having sum(metric_value) > 0
-                )
+                ) results
             )
         ),
         
@@ -171,7 +178,7 @@
                     dimension_value,
                     1 as joiner
                 from filtered_monitored_table
-            )
+            ) results
         ),
 
         {# Create buckets for each day from max(first metric time, min bucket end) until max bucket end #}
@@ -180,8 +187,9 @@
             edr_bucket_start,
             edr_bucket_end,
             1 as joiner
-          from ({{ elementary.complete_buckets_cte(time_bucket) }})
-          where edr_bucket_start >= {{ elementary.cast_as_timestamp(min_bucket_start) }}
+          from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
+          where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
         ),
 
         {# Get all of the metrics for all of the dimensions that were create for the test until this run, #}
@@ -204,28 +212,29 @@
             from hydrated_last_dimension_metrics
             union all
             select
-                {{ elementary.cast_as_timestamp(elementary.quote(elementary.get_max_bucket_end())) }} as bucket_end,
+                {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
                 {{ concat_dimensions_sql_expression }} as dimension_value,
                 {{ elementary.row_count() }} as metric_value
             from {{ monitored_table_relation }}
-            {% if where_expression %}
-                where {{ where_expression }}
+            {% if metric_properties.where_expression %}
+                where {{ metric_properties.where_expression }}
             {% endif %}
             {{ dbt_utils.group_by(2) }}
         ),
 
         metrics_final as (
             select
-                {{ elementary.cast_as_string(full_table_name_str) }} as full_table_name,
+                {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
                 {{ elementary.null_string() }} as column_name,
                 {{ elementary.const_as_string(metric_name) }} as metric_name,
-                {{ elementary.cast_as_float('metric_value') }} as metric_value,
+                {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
                 {{ elementary.null_string() }} as source_value,
                 {{ elementary.null_timestamp() }} as bucket_start,
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
-                dimension_value
+                dimension_value,
+                {{ elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count
         )
     {% endif %}
@@ -237,8 +246,8 @@
             'metric_name',
             'dimension',
             'dimension_value',
-            'bucket_end'
-        ]) }} as id,
+            'bucket_end',
+            'metric_properties']) }} as id,
         full_table_name,
         column_name,
         metric_name,
@@ -247,9 +256,10 @@
         bucket_start,
         bucket_end,
         bucket_duration_hours,
-        {{ elementary.current_timestamp_in_utc() }} as updated_at,
+        {{ elementary.edr_current_timestamp_in_utc() }} as updated_at,
         dimension,
-        dimension_value
+        dimension_value,
+        metric_properties
     from metrics_final
 
 {% endmacro %}

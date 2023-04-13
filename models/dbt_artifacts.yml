@@ -76,9 +76,8 @@ models:
         data_type: string
         description: Update time of the table.
 
-
   - name: dbt_tests
-    description:  >
+    description: >
       Metadata about tests in the project, including configuration and properties from the dbt graph. Each row contains information about a single test.
       Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
     columns:
@@ -182,7 +181,6 @@ models:
         data_type: string
         description: ""
 
-
   - name: dbt_sources
     description: >
       Metadata about sources in the project, including configuration and properties from the dbt graph. Each row contains information about a single source.
@@ -268,7 +266,6 @@ models:
         data_type: string
         description: ""
 
-
   - name: dbt_snapshots
     description: >
       Metadata about snapshots in the project, including configuration and properties from the dbt graph. Each row contains information about a single snapshot.
@@ -341,7 +338,6 @@ models:
       - name: generated_at
         data_type: string
         description: ""
-
 
   - name: dbt_metrics
     description: >

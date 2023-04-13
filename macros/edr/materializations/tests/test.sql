@@ -1,8 +1,11 @@
 {% macro query_test_result_rows(sample_limit=none) %}
-  {%- set query -%}
-      select * from ({{ sql }}) {%- if sample_limit -%} limit {{ sample_limit }} {%- endif -%}
-  {%- endset -%}
-  {% do return(elementary.agate_to_dicts(dbt.run_query(query))) %}
+  {% set query %}
+    with test_results as (
+      {{ sql }}
+    )
+    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
+  {% endset %}
+  {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
 {% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
@@ -12,7 +15,7 @@
 
 {% macro handle_anomaly_test(flattened_test) %}
   {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics") %}
-  {% set metrics_table = elementary.get_elementary_test_table(flattened_test.name, 'metrics') %}
+  {% set metrics_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'metrics') %}
   {% if metrics_table %}
     {% do metrics_tables_cache.append(metrics_table) %}
   {% endif %}
@@ -37,7 +40,7 @@
 
 {% macro handle_schema_changes_test(flattened_test) %}
   {% set schema_snapshots_tables_cache = elementary.get_cache("tables").get("schema_snapshots") %}
-  {% set schema_snapshots_table = elementary.get_elementary_test_table(flattened_test.name, 'schema_changes') %}
+  {% set schema_snapshots_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'schema_changes') %}
   {% if schema_snapshots_table %}
     {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
   {% endif %}
@@ -56,24 +59,13 @@
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
-{% macro get_elementary_test_type(flattened_test) %}
-  {% if flattened_test.test_namespace == "elementary" %}
-    {% if flattened_test.short_name.endswith("anomalies") %}
-      {% do return("anomaly_detection") %}
-    {% elif flattened_test.short_name.startswith('schema_changes') %}
-      {% do return("schema_change") %}
-    {% endif %}
-  {% endif %}
-  {% do return("dbt_test") %}
-{% endmacro %}
-
 {% macro materialize_test() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
   {% endif %}
 
   {% set flattened_test = elementary.flatten_test(model) %}
-  {% set test_type = elementary.get_elementary_test_type(flattened_test) %}
+  {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
     "schema_change": elementary.handle_schema_changes_test,
@@ -124,7 +116,7 @@
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
-      select * from ({{ sql }})
+      select * from ({{ sql }}) results
       where
         anomaly_score is not null and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and
@@ -161,7 +153,7 @@
       'other': elementary.insensitive_get_dict_value(latest_row, 'anomalous_value'),
       'test_results_query': test_results_query,
       'test_params': test_params,
-      'result_rows': elementary.render_result_rows(filtered_anomaly_scores_rows),
+      'result_rows': filtered_anomaly_scores_rows,
       'failures': failures.data
   } %}
   {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
@@ -195,7 +187,7 @@
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
         'table_name': parent_model_name,
         'column_name': elementary.insensitive_get_dict_value(flattened_test, 'test_column_name'),
-        'test_type': elementary.get_elementary_test_type(flattened_test),
+        'test_type': elementary.get_test_type(flattened_test),
         'test_sub_type': elementary.insensitive_get_dict_value(flattened_test, 'type'),
         'other': none,
         'owners': elementary.insensitive_get_dict_value(flattened_test, 'model_owners'),
@@ -206,14 +198,7 @@
         'severity': elementary.insensitive_get_dict_value(flattened_test, 'severity'),
         'test_short_name': elementary.insensitive_get_dict_value(flattened_test, 'short_name'),
         'test_alias': elementary.insensitive_get_dict_value(flattened_test, 'alias'),
-        'result_rows': elementary.render_result_rows(result_rows)
+        'result_rows': result_rows
     }%}
     {% do return(test_result_dict) %}
-{% endmacro %}
-
-{% macro render_result_rows(test_result_rows) %}
-  {% if (tojson(test_result_rows) | length) < elementary.get_column_size() %}
-    {% do return(test_result_rows) %}
-  {% endif %}
-  {% do return(none) %}
 {% endmacro %}

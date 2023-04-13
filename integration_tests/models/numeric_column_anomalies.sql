@@ -21,13 +21,15 @@ with training as (
  final as (
      select
          updated_at,
+         occurred_at,
          min,
          max,
          zero_count,
          zero_percent,
          average,
          standard_deviation,
-         variance
+         variance,
+         sum
      from source
  )
 

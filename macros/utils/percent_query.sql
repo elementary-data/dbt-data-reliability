@@ -1,3 +1,8 @@
-{% macro percent(value, total) %}
-    round(cast({{ value }} as {{ elementary.type_float() }}) / nullif(cast({{ total }} as {{ elementary.type_float() }}), 0) * 100.0, 3)
+{% macro edr_percent(value, total) %}
+    {% set value = elementary.edr_cast_as_float(value) %}
+    {% set total = elementary.edr_cast_as_float(total) %}
+    {% set query %}
+      round({{ elementary.edr_cast_as_numeric('{} / nullif({}, 0) * 100.0'.format(value, total)) }}, 3)
+    {% endset %}
+    {% do return(query) %}
 {% endmacro %}

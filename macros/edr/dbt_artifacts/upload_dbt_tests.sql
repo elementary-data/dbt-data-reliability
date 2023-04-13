@@ -1,8 +1,8 @@
-{%- macro upload_dbt_tests(should_commit=false, cache=true) -%}
+{%- macro upload_dbt_tests(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_tests') %}
     {% if execute and relation %}
         {% set tests = graph.nodes.values() | selectattr('resource_type', '==', 'test') %}
-        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, cache=cache) %}
+        {% do elementary.upload_artifacts_to_table(relation, tests, elementary.flatten_test, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -35,7 +35,9 @@
                                                                  ('type', 'string'),
                                                                  ('original_path', 'long_string'),
                                                                  ('path', 'string'),
-                                                                 ('generated_at', 'string')]) %}
+                                                                 ('generated_at', 'string'),
+                                                                 ('metadata_hash', 'string'),
+                                                                 ]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
 
@@ -45,7 +47,8 @@
 
     {% set test_metadata = elementary.safe_get_with_default(node_dict, 'test_metadata', {}) %}
     {% set test_namespace = test_metadata.get('namespace') %}
-    {% set test_short_name = test_metadata.get('name') %}
+    {% set test_short_name = elementary.get_test_short_name(node_dict, test_metadata) %}
+
     {% set default_description = elementary.get_default_description(test_short_name, test_namespace) %}
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
@@ -88,7 +91,6 @@
     {% set test_models_tags = test_models_tags | unique | list %}
 
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
-    {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
 
     {% set primary_test_model_id = namespace(data=none) %}
     {% if test_model_unique_ids | length == 1 %}
@@ -112,6 +114,22 @@
         {% endif %}
       {% endif %}
     {% endif %}
+
+    {% set primary_test_model_database = none %}
+    {% set primary_test_model_schema = none %}
+    {%- if primary_test_model_id.data is not none -%}
+        {% set tested_model_node = elementary.get_node(primary_test_model_id.data) %}
+        {%- if tested_model_node -%}
+            {% set primary_test_model_database = tested_model_node.get('database') %}
+            {% set primary_test_model_schema = tested_model_node.get('schema') %}
+        {%- endif -%}
+    {%- endif -%}
+
+    {%- if primary_test_model_database is none or primary_test_model_schema is none -%}
+        {# This is mainly here to support singular test cases with multiple referred models, in this case the tested node is being used to extract the db and schema #}
+        {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
+    {%- endif -%}
+
     {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -123,28 +141,29 @@
         'error_if': config_dict.get('error_if'),
         'test_params': test_kwargs,
         'test_namespace': test_namespace,
-        'tags': tags,
-        'model_tags': test_models_tags,
-        'model_owners': test_models_owners,
+        'tags': elementary.filter_none_and_sort(tags),
+        'model_tags': elementary.filter_none_and_sort(test_models_tags),
+        'model_owners': elementary.filter_none_and_sort(test_models_owners),
         'meta': meta_dict,
         'database_name': primary_test_model_database,
         'schema_name': primary_test_model_schema,
-        'depends_on_macros': depends_on_dict.get('macros', []),
-        'depends_on_nodes': depends_on_dict.get('nodes', []),
+        'depends_on_macros': elementary.filter_none_and_sort(depends_on_dict.get('macros', [])),
+        'depends_on_nodes': elementary.filter_none_and_sort(depends_on_dict.get('nodes', [])),
         'parent_model_unique_id': primary_test_model_id.data,
-        'description': node_dict.get('description'),
+        'description': meta_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
-        'type': elementary.get_test_type(original_file_path, test_namespace),
+        'type': elementary.get_test_sub_type(original_file_path, test_namespace),
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
     }%}
+    {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 
-{% macro get_test_type(test_path, test_namespace = none) %}
+{% macro get_test_sub_type(test_path, test_namespace = none) %}
     {% set test_type = 'generic' %}
     {%- if test_namespace == 'dbt_expectations' -%}
         {% set test_type = 'expectation' %}
@@ -156,8 +175,42 @@
     {{- return(test_type) -}}
 {%- endmacro -%}
 
+
+{% macro get_test_short_name(node_dict, test_metadata) %}
+    {#
+    If there is a custom name it overrides the dbt auto generated long name.
+    This is a best effort to extract custom names.
+    dbt automated name generation -
+        - Generic test long name starts with the generic name or source_generic
+        - Generic tests from packages long name starts with the package_generic or package_source_generic
+    #}
+
+    {% set generic_test_name = test_metadata.get('name') %} {# 'unique', 'relationships', 'volume_anomalies' etc #}
+    {% set test_package_name = test_metadata.get('namespace') %}
+    {% set test_instance_name = node_dict.get('name') %} {# Test custom name or dbt auto generated long name #}
+    {%- if generic_test_name %}
+        {%- if test_package_name == 'elementary' %}
+            {{ return(generic_test_name) }}
+        {%- elif test_package_name %}
+            {% set test_short_name =
+                generic_test_name if (test_instance_name.startswith(test_package_name + '_' + generic_test_name) or test_instance_name.startswith(test_package_name + '_source_' + generic_test_name))
+                else test_instance_name
+            %}
+        {%- else %}
+            {% set test_short_name =
+                generic_test_name if (test_instance_name.startswith(generic_test_name) or test_instance_name.startswith('source_' + generic_test_name))
+                else test_instance_name
+            %}
+        {%- endif %}
+        {{ return(test_short_name) }}
+    {%- else %}
+        {{ return(test_instance_name) }}
+    {%- endif %}
+{% endmacro %}
+
+
 {% macro get_default_description(short_name, test_namespace = none) %}
-    {# Relevant for dbt_expectatiopns 0.8.0 #}
+    {# Relevant for dbt_expectations 0.8.0 #}
     {% set dbt_expectations_descriptions_map = {
         "expect_column_to_exist": "Expect the specified column to exist.",
         "expect_row_values_to_have_recent_data": "Expect the model to have rows that are at least as recent as the defined interval prior to the current timestamp. Optionally gives the possibility to apply filters on the results.",

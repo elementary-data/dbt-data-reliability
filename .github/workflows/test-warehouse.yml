@@ -7,6 +7,7 @@ on:
         required: true
         description: Type of warehouse platform
         options:
+          - postgres
           - snowflake
           - bigquery
           - redshift
@@ -29,6 +30,11 @@ on:
         required: false
         default: true
         description: Whether to clean test environment
+      generate-data:
+        type: boolean
+        required: false
+        default: false
+        description: Whether to generate new data
 
   workflow_call:
     inputs:
@@ -48,9 +54,14 @@ on:
         type: boolean
         required: false
         default: true
+      generate-data:
+        type: boolean
+        required: false
+        default: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
 
 jobs:
   test:
@@ -59,14 +70,6 @@ jobs:
       group: tests-${{ inputs.warehouse-type }}-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
-      - name: Write dbt profiles
-        env:
-          CI_PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
-        run: |
-          mkdir -p ~/.dbt
-          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | sed "s/-/_/g")
-          echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
-
       - name: Checkout Elementary
         uses: actions/checkout@v3
         with:
@@ -80,23 +83,46 @@ jobs:
           path: dbt-data-reliability
           ref: ${{ inputs.dbt-data-reliability-ref }}
 
+      - name: Start Postgres
+        if: inputs.warehouse-type == 'postgres'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker-compose up -d postgres
+
+      - name: Write dbt profiles
+        env:
+          CI_PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
+        run: |
+          mkdir -p ~/.dbt
+          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | sed "s/-/_/g")
+          echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7.5'
+          python-version: "3.7.5"
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        if: inputs.dbt-version
-        run: pip install dbt-core==${{ inputs.dbt-version }} dbt-${{ inputs.warehouse-type }}==${{ inputs.dbt-version }}
+        run: pip install --pre
+          "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
+          "dbt-${{ inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ inputs.warehouse-type }}]"
 
-      - name: Run E2E tests
+      - name: Install E2E project deps
+        working-directory: ${{ env.TESTS_DIR }}
+        run: dbt deps
+
+      - name: Run integration tests
+        working-directory: ${{ env.TESTS_DIR }}/integration_tests
         run: |
-          dbt deps --project-dir ./dbt-data-reliability/integration_tests
-          python ./dbt-data-reliability/integration_tests/run_e2e_tests.py -t "${{ inputs.warehouse-type }}" --clear-tests "${{ inputs.clear-tests }}"
+          pip install -r requirements.txt
+          pytest -vv --target "${{ inputs.warehouse-type }}"
+
+      - name: Run E2E tests
+        working-directory: ${{ env.TESTS_DIR }}
+        run: python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.warehouse-type == 'postgres' || inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"

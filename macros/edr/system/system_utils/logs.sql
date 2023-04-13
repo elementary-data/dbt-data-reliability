@@ -1,7 +1,14 @@
-{% macro edr_log(msg) %}
+{% macro edr_log(msg, info=True) %}
     {%- if execute %}
-        {% do log('Elementary: ' ~ msg, info=True) %}
+        {% do log('Elementary: ' ~ msg, info=info) %}
     {%- endif %}
+{% endmacro %}
+
+{% macro file_log(msg) %}
+    {% if execute %}
+        {% do elementary.edr_log(msg, info=false) %}
+        {% do elementary.debug_log(msg) %}
+    {% endif %}
 {% endmacro %}
 
 {% macro debug_log(msg) %}

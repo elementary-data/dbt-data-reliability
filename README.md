@@ -25,7 +25,7 @@ Add to your `packages.yml` according to your dbt version:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.6
+    version: 0.7.5
     ## Docs: https://docs.elementary-data.com
 ```
 
@@ -34,7 +34,7 @@ packages:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.6
+    version: 0.7.5
     ## Docs: https://docs.elementary-data.com
 
     ## !! Important !! For dbt >=1.2.0 \<1.3.0 ##
@@ -48,7 +48,7 @@ packages:
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.6.6
+    version: 0.7.5
     ## Docs: https://docs.elementary-data.com
 
     ## !! Important !! For dbt <1.2.0 ##
@@ -80,6 +80,7 @@ Run results tables:
 - dbt_run_results
 - model_run_results
 - snapshot_run_results
+- dbt_invocations
 - elementary_test_results (all dbt test results)
 
 Metadata tables:
@@ -88,7 +89,7 @@ Metadata tables:
 - dbt_sources
 - dbt_exposures
 - dbt_metrics
-- sbt_sbapshots
+- dbt_snapshots
 
 Here you can find [additional details about the tables](https://docs.elementary-data.com/guides/modules-overview/dbt-package).
 
@@ -142,6 +143,7 @@ Elementary dbt package creates tables of metadata and test results in your data 
 * [x] **BigQuery**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/bigquery-16.svg) 
 * [x] **Redshift**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/redshift-16.png)
 * [x] **Databricks SQL**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/databricks-16.png)
+* [x] **Postgres**  ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/postgres-16.png)
 
 
 ## Community & Support

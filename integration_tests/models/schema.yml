@@ -1,9 +1,22 @@
 version: 2
 
 models:
+  - name: one
+    config:
+      tags: "{{ var('one_tags', []) }}"
+    meta:
+      owner: "{{ var('one_owner', none) }}"
+    columns:
+      - name: one
+        tests:
+          - accepted_values:
+              meta:
+                owner: "@elon"
+              values: [2, 3]
+
   - name: any_type_column_anomalies
     meta:
-      owner: [ '@edr', 'ele@data.com', 'another@mail.com' ]
+      owner: ["@edr"]
       subscribers: "@egk"
     description: >
       This is a very weird description
@@ -28,88 +41,116 @@ models:
               WDYT?
           config:
             severity: warn
-          tags: [ "table_anomalies" ]
+          tags: ["table_anomalies"]
+      - elementary.volume_anomalies:
+          time_bucket:
+            period: week
+            count: 1
+          config:
+            severity: warn
+          tags: ["table_anomalies"]
       - elementary.all_columns_anomalies:
-          tags: [ "all_any_type_columns_anomalies" ]
+          tags: ["all_any_type_columns_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
       - generic_test_on_model:
-          tags: [ "regular_tests" ]
-
+          tags: ["regular_tests"]
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "all_any_type_columns_anomalies", "drop_directional_anomalies" ]
+      - elementary.all_columns_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "all_any_type_columns_anomalies", "spike_directional_anomalies" ]
   - name: no_timestamp_anomalies
     meta:
-      owner: "ele@data.com, another@mail.com"
-      subscribers: [ "@elon@gmail.com", "elon@gmail.com" ]
+      owner: "elon@elementary-data.com, or@elementary-data.com"
+      subscribers: ["elon@elementary-data.com"]
       description: This is a description.
     description: We use this model to test anomalies when there is no timestamp column
     tests:
       - elementary.volume_anomalies:
-          tags: [ "no_timestamp" ]
+          tags: ["no_timestamp"]
     columns:
       - name: "null_count_str"
         tests:
           - elementary.column_anomalies:
-              tags: [ "no_timestamp" ]
+              tags: ["no_timestamp"]
               column_anomalies:
                 - null_count
 
   - name: dimension_anomalies
     meta:
-      owner: "@egk.com"
-      subscribers: [ "elon@egk" ]
+      owner: "egk"
+      subscribers: "elon, egk"
     description: We use this model to test dimension anomalies
     config:
       elementary:
         timestamp_column: updated_at
     tests:
       - elementary.dimension_anomalies:
-          tags: [ "dimension_anomalies" ]
+          tags: ["dimension_anomalies"]
           dimensions:
             - platform
       - elementary.dimension_anomalies:
-          tags: [ "dimension_anomalies" ]
+          anomaly_direction: "spike"
+          tags: [ "dimension_anomalies", "spike_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "dimension_anomalies", "drop_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          tags: ["dimension_anomalies"]
           dimensions:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
-          tags: [ "dimension_anomalies" ]
+          tags: ["dimension_anomalies"]
           dimensions:
             - platform
             - version
 
   - name: error_model
     description: We use this model to create error runs and tests
+    meta:
+      owner: ["elon@elementary-data.com", "@elon", "egk"]
     config:
-      tags: [ "error_model" ]
+      tags: ["error_model"]
     columns:
       - name: "missing_column"
         tests:
           - uniques:
-              tags: [ "error_test", "regular_tests" ]
+              tags: ["error_test", "regular_tests"]
 
   - name: string_column_anomalies
     meta:
       owner: "@or"
-      tags: [ "marketing" ]
+      tags: ["marketing"]
     config:
       elementary:
         timestamp_column: updated_at
     tests:
       - elementary.freshness_anomalies:
-          tags: [ "table_anomalies" ]
+          tags: ["table_anomalies"]
+      - elementary.event_freshness_anomalies:
+          tags: ["event_freshness_anomalies"]
+          event_timestamp_column: occurred_at
+          update_timestamp_column: updated_at
       - elementary.all_columns_anomalies:
-          tags: [ "all_string_column_anomalies" ]
+          tags: ["string_column_anomalies"]
       - elementary.schema_changes:
-          tags: [ "schema_changes" ]
+          tags: ["schema_changes"]
     columns:
       - name: "min_length"
         tests:
           - relationships:
-              tags: [ "regular_tests" ]
+              tags: ["regular_tests"]
               to: source('training', 'string_column_anomalies_training')
               field: max_length
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
               column_anomalies:
                 - min_length
                 - max_length
@@ -117,26 +158,26 @@ models:
       - name: max_length
         tests:
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
       - name: average_length
         tests:
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
               column_anomalies:
                 - average_length
                 - null_count
       - name: missing_count
         tests:
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
       - name: missing_percent
         tests:
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: [ "string_column_anomalies" ]
+              tags: ["string_column_anomalies"]
 
   - name: numeric_column_anomalies
     config:
@@ -144,13 +185,23 @@ models:
         timestamp_column: updated_at
     tests:
       - elementary.volume_anomalies:
-          tags: [ "table_anomalies" ]
+          tags: ["table_anomalies"]
+      - elementary.volume_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "table_anomalies", "drop_directional_anomalies" ]
+      - elementary.volume_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "table_anomalies", "spike_directional_anomalies" ]
       - elementary.freshness_anomalies:
-          tags: [ "table_anomalies" ]
+          tags: ["table_anomalies"]
+      - elementary.event_freshness_anomalies:
+          tags: ["event_freshness_anomalies"]
+          event_timestamp_column: occurred_at
+          update_timestamp_column: updated_at
       - elementary.schema_changes:
-          tags: [ "schema_changes" ]
+          tags: ["schema_changes"]
       - elementary.all_columns_anomalies:
-          tags: [ "all_numeric_columns_anomalies" ]
+          tags: ["all_numeric_columns_anomalies"]
           column_anomalies:
             - average_length
             - null_count
@@ -158,79 +209,109 @@ models:
       - name: min
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - average
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - average
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "spike"
+              tags: [ "numeric_column_anomalies", "spike_directional_anomalies" ]
+          - elementary.column_anomalies:
+              column_anomalies:
+                - average
+              anomaly_direction: "drop"
+              tags: [ "numeric_column_anomalies", "drop_directional_anomalies" ]
       - name: average
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
               column_anomalies:
                 - average
       - name: zero_count
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
       - name: zero_percent
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
       - name: variance
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
       - name: standard_deviation
         tests:
           - elementary.column_anomalies:
-              tags: [ "numeric_column_anomalies" ]
+              tags: ["numeric_column_anomalies"]
+      - name: sum
+        tests:
+          - elementary.column_anomalies:
+              column_anomalies:
+                - sum
+              tags: ["numeric_column_anomalies"]
+
+  - name: copy_numeric_column_anomalies
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+      - elementary.all_columns_anomalies:
+          column_anomalies:
+            - zero_count
+          tags: ["numeric_column_anomalies"]
 
   - name: groups
     columns:
       - name: group_a
-        data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+        data_type: "{{ 'strIng' if target.type == 'bigquery' else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
       - name: group_b
-        data_type: DOUBLE
+        data_type: double
       - name: group_c
     tests:
       - elementary.schema_changes:
-          tags: [ "schema_changes" ]
+          tags: ["schema_changes"]
       - elementary.schema_changes_from_baseline:
           fail_on_added: true
-          tags: [ "schema_changes_from_baseline" ]
+          tags: ["schema_changes_from_baseline"]
+      - elementary.schema_changes_from_baseline:
+          tags: ["schema_changes_from_baseline", "error_test"]
+          enforce_types: true
+
 
   - name: stats_players
     columns:
@@ -242,20 +323,44 @@ models:
         data_type: INTEGER
     tests:
       - elementary.schema_changes:
-          tags: [ "schema_changes" ]
+          tags: ["schema_changes"]
       - elementary.schema_changes_from_baseline:
-          tags: [ "schema_changes_from_baseline" ]
+          tags: ["schema_changes_from_baseline"]
+      - elementary.schema_changes_from_baseline:
+          tags: ["schema_changes_from_baseline"]
+          enforce_types: true
 
   - name: stats_team
     tests:
       - elementary.schema_changes:
-          tags: [ "schema_changes" ]
+          tags: ["schema_changes"]
+
+  - name: users_per_day_weekly_seasonal
+    description: >
+      Volume anomalies on the training should fail when seasonality is Off and pass when seasonality is On. 
+      When Validation data is added, should fail when seasonality is On and pass when seasonality is Off.
+    tests:
+      - elementary.volume_anomalies:
+          alias: volume_anomalies_no_seasonality_anomalies
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume","table_anomalies"]
+          sensitivity: 2
+          backfill_days: 14
+      - elementary.volume_anomalies:
+          alias: volume_anomalies_with_seasonality_anomalies
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume","table_anomalies"]
+          sensitivity: 2
+          backfill_days: 14
+          seasonality: day_of_week
 
 sources:
   - name: training
     schema: test_seeds
     tables:
       - name: any_type_column_anomalies_training
+        meta:
+          owner: ["@edr", "egk"]
         freshness:
           error_after:
             count: 1
@@ -263,29 +368,39 @@ sources:
         loaded_at_field: updated_at
         tests:
           - elementary.volume_anomalies:
-              tags: [ "table_anomalies" ]
+              tags: ["table_anomalies"]
           - elementary.freshness_anomalies:
-              tags: [ "table_anomalies" ]
-
+              tags: ["table_anomalies", "error_test"]
+          - elementary.event_freshness_anomalies:
+              tags: ["event_freshness_anomalies"]
+              event_timestamp_column: occurred_at
       - name: string_column_anomalies_training
+        meta:
+          owner: "@edr"
+          elementary:
+            timestamp_column: updated_at
         freshness:
           error_after:
             count: 1
             period: minute
         loaded_at_field: no_such_column
-        meta:
-          elementary:
-            timestamp_column: updated_at
         tests:
           - elementary.volume_anomalies:
-              tags: [ "table_anomalies" ]
+              tags: ["table_anomalies"]
           - elementary.freshness_anomalies:
-              tags: [ "table_anomalies" ]
+              tags: ["table_anomalies"]
+          - elementary.event_freshness_anomalies:
+              tags: ["event_freshness_anomalies"]
+              event_timestamp_column: occurred_at
+              update_timestamp_column: updated_at
       - name: numeric_column_anomalies_training
+      - name: users_per_day_weekly_seasonal_training
   - name: validation
     schema: test_seeds
     tables:
       - name: any_type_column_anomalies_validation
+        meta:
+          owner: "hello, world"
         freshness:
           warn_after:
             count: 1
@@ -293,12 +408,13 @@ sources:
         loaded_at_field: updated_at
         tests:
           - elementary.all_columns_anomalies:
-              tags: [ "elementary_source" ]
+              tags: ["elementary_source"]
         columns:
           - name: null_count_int
             tests:
               - generic_test_on_column:
-                  tags: [ "regular_tests" ]
+                  tags: ["regular_tests"]
+      - name: users_per_day_weekly_seasonal_validation
 
 exposures:
   - name: elementary_exposure

@@ -5,7 +5,7 @@
 {% macro default__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {# We try casting for Snowflake, Bigquery and Databricks as these support safe cast and the query will not fail if the cast fails #}
     {%- set query %}
-        select {{ elementary.safe_cast(timestamp_column, elementary.type_timestamp()) }} as timestamp_column
+        select {{ elementary.edr_safe_cast(timestamp_column, elementary.edr_type_timestamp()) }} as timestamp_column
         from {{ table_relation }}
         where {{ timestamp_column }} is not null
         limit 1
@@ -19,6 +19,6 @@
 
 {% endmacro %}
 
-{% macro redshift__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
+{% macro postgres__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {{ return(false) }}
 {% endmacro %}

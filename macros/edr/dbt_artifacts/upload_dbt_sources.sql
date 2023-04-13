@@ -1,8 +1,8 @@
-{%- macro upload_dbt_sources(should_commit=false, cache=true) -%}
+{%- macro upload_dbt_sources(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% if execute and relation %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit, cache=cache) %}
+        {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
     {{- return('') -}}
 {%- endmacro -%}
@@ -29,7 +29,9 @@
                                                                    ('path', 'string'),
                                                                    ('source_description', 'long_string'),
                                                                    ('description', 'long_string'),
-                                                                   ('generated_at', 'string')]) %}
+                                                                   ('generated_at', 'string'),
+                                                                   ('metadata_hash', 'string'),
+                                                                   ]) %}
     {{ return(dbt_sources_empty_table_query) }}
 {% endmacro %}
 
@@ -68,7 +70,7 @@
          'freshness_error_after': freshness_dict.get('error_after', {}),
          'freshness_filter': freshness_dict.get('filter'),
          'relation_name': node_dict.get('relation_name'),
-         'tags': tags,
+         'tags': elementary.filter_none_and_sort(tags),
          'meta': meta_dict,
          'owner': formatted_owner,
          'package_name': node_dict.get('package_name'),
@@ -78,5 +80,6 @@
          'description': node_dict.get('description'),
          'generated_at': elementary.datetime_now_utc_as_string()
      }%}
+    {% do flatten_source_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_source_metadata_dict)}) %}
     {{ return(flatten_source_metadata_dict) }}
 {% endmacro %}
