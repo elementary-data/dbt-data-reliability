@@ -8,7 +8,7 @@
 
     {% set column_names = adapter.get_columns_in_relation(relation) | map(attribute="name") | map("lower") | list %}
     {% if exclude_deprecated_columns %}
-        {% set deprecated_column_names = node.columns.values() | selectattr("deprecated") | map(attribute="name") | map("lower") | list %}
+        {% set deprecated_column_names = node.meta.get("deprecated_columns", []) | map(attribute="name") | map("lower") | list %}
         {% set column_names = column_names | reject("in", deprecated_column_names) | list %}
     {% endif %}
 

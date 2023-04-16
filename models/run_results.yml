@@ -128,6 +128,12 @@ models:
       Each row is the invocation result of a single resource (model, test, snapshot, etc).
       New data is loaded to this model on an on-run-end hook named 'elementary.upload_run_results' from each invocation that produces a result object.
       This is an incremental model.
+    meta:
+      deprecated_columns:
+        - name: compiled_sql
+          data_type: string
+          description: The compiled SQL executed against the database.
+
     columns:
       - name: model_execution_id
         data_type: string
@@ -192,11 +198,6 @@ models:
       - name: compiled_code
         data_type: string
         description: The compiled code (SQL / Python) executed against the database.
-
-      - name: compiled_sql
-        deprecated: true
-        data_type: string
-        description: The compiled SQL executed against the database.
 
       - name: failures
         data_type: int
