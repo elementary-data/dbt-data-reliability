@@ -3,8 +3,8 @@
     {% set cache_key = "query_test_results_rows_sample_limit_0" %}
     {% set cached_empty_test_results_rows = elementary.get_cache("elementary_test_results").get(cache_key) %}
     {% if cached_empty_test_results_rows is none %} {# update the cache #}
-      {% set cached_empty_test_results_rows = elementary.empty_elementary_test_results() %}
-      {% do elementary.get_cache("elementary_test_results").update({cache_key: cached_empty_test_results_rows}) %}
+      {% set cached_empty_test_results_rows = elementary.agate_to_dicts(elementary.run_query(elementary.empty_elementary_test_results())) %}
+      {% do elementary.get_cache("elementary_test_results").update({cache_key: }) %}
     {% endif %}
     {% do return(cached_empty_test_results_rows) %}
   {% endif %}
