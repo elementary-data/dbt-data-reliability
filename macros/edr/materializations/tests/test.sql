@@ -1,4 +1,13 @@
 {% macro query_test_result_rows(sample_limit=none) %}
+  {% if sample_limit == 0 %}
+    {% set cache_key = "query_test_results_rows_sample_limit_0" %}
+    {% set cached_empty_test_results_rows = elementary.get_cache("elementary_test_results").get(cache_key) %}
+    {% if cached_empty_test_results_rows is none %} {# update the cache #}
+      {% set cached_empty_test_results_rows = elementary.empty_elementary_test_results() %}
+      {% do elementary.get_cache("elementary_test_results").update({cache_key: cached_empty_test_results_rows} %}
+    {% endif %}
+    {% do return(cached_empty_test_results_rows) %}
+  {% endif %}
   {% set query %}
     with test_results as (
       {{ sql }}
