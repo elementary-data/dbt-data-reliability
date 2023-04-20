@@ -12,13 +12,13 @@
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
     {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
-    {% if elementary_test_results %}
-      {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
-      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
-    {% endif %}
     {% if test_result_rows %}
       {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
       {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
+    {% endif %}
+    {% if elementary_test_results %}
+      {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
+      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
     {% endif %}
     {{ elementary.file_log("Handled test results successfully.") }}
     {{ return('') }}
