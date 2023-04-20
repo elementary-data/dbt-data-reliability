@@ -30,6 +30,7 @@
     'disable_source_freshness_alerts': false,
     'disable_run_results': false,
     'disable_tests_results': false,
+    'disable_test_result_rows_sampling': false,
     'disable_dbt_artifacts_autoupload': false,
     'disable_dbt_invocation_autoupload': false,
     'disable_skipped_model_alerts': true,

@@ -1,4 +1,10 @@
 {% macro query_test_result_rows(sample_limit=none) %}
+    {# if sampling was disabled in the test,or global configuration: we return an empty list #}
+    {% set sampling_was_disabled_per_test = model.get('config',{}).get('meta', {}).get('disable_test_result_rows_sampling',none) %}
+    {% set sampling_was_disabled_globally = elementary.get_config_var('disable_test_result_rows_sampling') %}
+    {% if sampling_was_disabled_per_test or sampling_was_disabled_globally %}
+      {% do return([])%}
+    {% endif%}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
