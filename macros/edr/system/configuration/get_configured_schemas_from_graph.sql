@@ -22,3 +22,14 @@
     {% endif %}
     {{ return(configured_schemas | unique | list ) }}
 {% endmacro %}
+
+{% macro get_configured_databases_from_graph() %}
+    {% set configured_schemas = elementary.get_configured_schemas_from_graph() %}
+    {% set configured_databases = [] %}
+
+    {% for configured_schema in configured_schemas %}
+        {% do configured_databases.append(configured_schema[0]) %}
+    {%endfor%}
+
+    {{ return(configured_databases | unique | list ) }}
+{% endmacro %}
