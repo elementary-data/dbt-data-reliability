@@ -124,6 +124,25 @@ models:
           - uniques:
               tags: ["error_test", "regular_tests"]
 
+  - name: backfill_days_column_anomalies
+    config:
+      elementary:
+        timestamp_column: updated_at
+    columns:
+      - name: "min_length"
+        tests:
+          - elementary.column_anomalies:
+              column_anomalies:
+                - min_length
+                - max_length
+              tags: ["backfill_days"]
+          - elementary.column_anomalies:
+              backfill_days: 7
+              column_anomalies:
+                - min_length
+                - max_length
+              tags: ["backfill_days"]
+
   - name: string_column_anomalies
     meta:
       owner: "@or"
