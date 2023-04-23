@@ -28,7 +28,7 @@
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
                    {{ elementary.null_timestamp() }} as start_bucket_in_data
-            from {{ monitored_table_relation }}
+            from monitored_table
         ),
     {% endif %}
 
