@@ -1,7 +1,7 @@
 {% macro validate_backfill_days() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set string_column_alerts %}
-    select distinct column_name
+    select column_name
     from {{ alerts_relation }}
         where status in ('fail', 'warn') and lower(sub_type) = lower(column_name) and upper(table_name) = 'BACKFILL_DAYS_COLUMN_ANOMALIES'
     {% endset %}
