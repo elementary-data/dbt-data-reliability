@@ -92,16 +92,6 @@ models:
           dimensions:
             - platform
       - elementary.dimension_anomalies:
-          anomaly_direction: "spike"
-          tags: [ "spike_directional_anomalies" ]
-          dimensions:
-            - platform
-      - elementary.dimension_anomalies:
-          anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
-          dimensions:
-            - platform
-      - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
           dimensions:
             - platform
@@ -111,6 +101,16 @@ models:
           dimensions:
             - platform
             - version
+      - elementary.dimension_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "spike_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "drop_directional_anomalies" ]
+          dimensions:
+            - platform
 
   - name: error_model
     description: We use this model to create error runs and tests

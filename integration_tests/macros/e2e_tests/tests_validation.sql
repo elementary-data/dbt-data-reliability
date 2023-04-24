@@ -17,8 +17,11 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-    {% if results | length != 3 %}
+    {% if results | length > 2 %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests: ' ~ results | length) %}
+        {{ return(1) }}
+    {% elif results | length < 2 %}
+        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has not enough fail/error tests: ' ~ results | length) %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
