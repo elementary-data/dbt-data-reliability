@@ -4,7 +4,7 @@
     {% set dimension_validation_query %}
         select *
         from {{ alerts_relation }}
-        where status in ('fail', 'warn') and sub_type = 'dimension'
+        where status in ('fail', 'warn') and tags like '%dimension_anomalies%'
     {% endset %}
     {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
     {% set dimensions_with_problems = [] %}
