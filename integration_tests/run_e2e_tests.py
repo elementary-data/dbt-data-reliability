@@ -294,6 +294,16 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "backfill_days" in test_types:
+        dbt_runner.test(select="tag:backfill_days")
+        results = [
+            TestResult(type="backfill_days", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_backfill_days", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "dimension" in test_types:
         dbt_runner.test(select="tag:dimension_anomalies")
         results = [
@@ -387,7 +397,8 @@ def main(target, e2e_type, generate_data, clear_tests):
             "seasonal_volume",
             "table",
             "column",
-            "directional_anomalies"
+            "directional_anomalies",
+            "backfill_days",
             "schema",
             "regular",
             "artifacts",
