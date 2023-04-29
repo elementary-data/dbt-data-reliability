@@ -6,8 +6,8 @@
   {% do return(elementary.get_daily_time_bucket()) %}
 {% endmacro %}
 
-{% macro get_time_bucket(time_bucket, model_node) %}
-    {%- set configured_time_bucket = elementary.get_test_argument('time_bucket', time_bucket, model_node) %}
+{% macro get_time_bucket(time_bucket, model_graph_node) %}
+    {%- set configured_time_bucket = elementary.get_test_argument('time_bucket', time_bucket, model_graph_node) %}
     {%- do elementary.validate_time_bucket(configured_time_bucket) %}
     {%- set default_time_bucket = elementary.get_default_time_bucket() %}
 

@@ -324,6 +324,16 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "config_levels" in test_types:
+        dbt_runner.test(select="tag:config_levels")
+        results = [
+            TestResult(type="config_levels", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_config_levels", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "artifacts" in test_types:
         results = [
             TestResult(type="artifacts", message=msg)
@@ -390,6 +400,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "directional_anomalies"
             "schema",
             "regular",
+            "config_levels",
             "artifacts",
             "error_test",
             "error_model",
