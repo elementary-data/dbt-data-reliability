@@ -5,9 +5,6 @@
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
-        {% if not time_bucket %}
-          {% set time_bucket = elementary.get_default_time_bucket() %}
-        {% endif %}
 
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
@@ -24,6 +21,7 @@
 
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
+        {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
 
         {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
         {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
