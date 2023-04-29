@@ -360,9 +360,14 @@ models:
         timestamp_column: updated_at
     tests:
       - elementary.volume_anomalies:
-          tags: ["ephemeral_model"]
+          tags: ["ephemeral_model", "error_test"]
       - elementary.all_columns_anomalies:
           tags: ["ephemeral_model", "error_test"]
+      - elementary.freshness_anomalies:
+          tags: ["ephemeral_model", "error_test"]
+      - elementary.schema_changes:
+          tags: ["ephemeral_model", "error_test"]
+
 
 sources:
   - name: training

@@ -5,32 +5,30 @@
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
+        {%- if elementary.is_ephemeral_model(model) %}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral modles, model name: {}".format(model.identifier)) }}
+        {%- endif %}
+
         {% if not time_bucket %}
           {% set time_bucket = elementary.get_default_time_bucket() %}
         {% endif %}
 
-        {%- set model_relation = dbt.load_relation(model) %}
-        {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
-        {%- endif %}
-
-        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
-        {%- if is_ephemeral_model(model_graph_node) %}
-            {{ exceptions.raise_compiler_error("Anomaly detection is not supported for ephemeral modles, model name: {}".format(model.identifier)) }}
-        {%- endif %}
-
-        {{- elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
-
-        {#- creates temp relation for test metrics -#}
         {%- set test_table_name = elementary.get_elementary_test_table_name() %}
+        {{- elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
+        {#- creates temp relation for test metrics -#}
         {%- set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {%- set empty_table_query = elementary.empty_data_monitoring_metrics() %}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', empty_table_query) %}
 
-
         {#- get all columns configuration -#}
+        {%- set full_table_name = elementary.relation_to_full_name(model) %}
+        {%- set model_relation = dbt.load_relation(model) %}
+        {%- if not model_relation %}
+            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
+        {%- endif %}
+
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
 
         {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
