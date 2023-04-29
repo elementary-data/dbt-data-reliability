@@ -13,6 +13,7 @@
     {% endif %}
 {% endmacro %}
 
+-- TODO: delete this
 {% macro validate_directional_parameter(anomaly_direction) %}
     {% if anomaly_direction %}
       {% set direction_case_insensitive = anomaly_direction | lower %}
