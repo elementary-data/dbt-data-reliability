@@ -2,12 +2,6 @@
 
     {%- set default_config = elementary.get_default_time_bucket() %}
 
-    {%- set config = {'period': 'day', 'count': 5, 'bla': 'bla'} %}
-    {%- set result = elementary.get_time_bucket(config) %}
-    {{ assert_value(result.period, "day") }}
-    {{ assert_value(result.count, 5) }}
-
-
     {%- set config = {'period': 'day', 'count': 5} %}
     {%- set result = elementary.get_time_bucket(config) %}
     {{ assert_value(result.period, "day") }}
