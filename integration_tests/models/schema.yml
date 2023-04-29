@@ -393,6 +393,42 @@ models:
           tags: ["ephemeral_model", "error_test"]
 
 
+  - name: config_levels_test_and_model
+    tags: ["config_levels"]
+    config:
+      elementary:
+        time_bucket:
+          period: day
+          count: 3
+    tests:
+      - config_levels:
+          tags: ["config_levels"]
+          name: 'test_level_config'
+          time_bucket:
+            period: hour
+            count: 4
+          expected_config:
+            time_bucket:
+              period: hour
+              count: 4
+      - config_levels:
+          tags: ["debug"]
+          name: 'model_level_config'
+          expected_config:
+            time_bucket:
+              period: day
+              count: 3
+  - name: config_levels_project
+    tags: ["config_levels"]
+    tests:
+      - config_levels:
+          tags: ["config_levels"]
+          name: 'project_level_config'
+          expected_config:
+            time_bucket:
+              period: day
+              count: 1
+
 sources:
   - name: training
     schema: test_seeds
