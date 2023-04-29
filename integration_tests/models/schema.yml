@@ -403,7 +403,7 @@ models:
     tests:
       - config_levels:
           tags: ["config_levels"]
-          name: 'test_level_config'
+          alias: 'test_level_config'
           time_bucket:
             period: hour
             count: 4
@@ -413,7 +413,7 @@ models:
               count: 4
       - config_levels:
           tags: ["debug"]
-          name: 'model_level_config'
+          alias: 'model_level_config'
           expected_config:
             time_bucket:
               period: day
@@ -423,7 +423,7 @@ models:
     tests:
       - config_levels:
           tags: ["config_levels"]
-          name: 'project_level_config'
+          alias: 'project_level_config'
           expected_config:
             time_bucket:
               period: day
