@@ -62,7 +62,8 @@
 
 
 {% macro relation_to_full_name(relation) %}
-    {%- if relation.database %}
+    {# Ephemeral models don't have a schema #}
+    {%- if relation.database and relation.schema %}
         {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {%- else %}
     {# Databricks doesn't always have a database #}

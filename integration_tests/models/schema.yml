@@ -354,6 +354,16 @@ models:
           backfill_days: 14
           seasonality: day_of_week
 
+  - name: ephemeral_model
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+      - elementary.volume_anomalies:
+          tags: ["ephemeral_model"]
+      - elementary.all_columns_anomalies:
+          tags: ["ephemeral_model", "error_test"]
+
 sources:
   - name: training
     schema: test_seeds
