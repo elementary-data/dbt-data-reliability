@@ -397,6 +397,8 @@ models:
     tags: ["config_levels"]
     config:
       elementary:
+        anomaly_direction: 'drop'
+        anomaly_sensitivity: 4
         where_expression: 'true'
         timestamp_column: 'updated_at'
         time_bucket:
@@ -406,12 +408,16 @@ models:
       - config_levels:
           tags: ["config_levels"]
           alias: 'test_level_config'
+          anomaly_direction: 'spike'
+          anomaly_sensitivity: 5
           where_expression: '1=1'
           timestamp_column: 'occurred_at'
           time_bucket:
             period: hour
             count: 4
           expected_config:
+            anomaly_direction: 'spike'
+            anomaly_sensitivity: 5
             where_expression: '1=1'
             timestamp_column: 'occurred_at'
             time_bucket:
@@ -421,6 +427,8 @@ models:
           tags: ["config_levels"]
           alias: 'model_level_config'
           expected_config:
+            anomaly_direction: 'drop'
+            anomaly_sensitivity: 4
             where_expression: 'true'
             timestamp_column: 'updated_at'
             time_bucket:
@@ -433,6 +441,8 @@ models:
           tags: ["config_levels"]
           alias: 'project_level_config'
           expected_config:
+            anomaly_direction: both
+            anomaly_sensitivity: 3
             where_expression: null
             timestamp_column: null
             time_bucket:
