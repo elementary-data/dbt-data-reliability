@@ -27,7 +27,7 @@
         upper(schema_name) as schema_name,
         upper(table_name) as table_name,
         upper(column_name) as column_name,
-        data_type
+        case when data_type like '%character varying%' then 'character varying' else data_type end as data_type
     from svv_redshift_columns
     where upper(database_name) = upper('{{ database_name }}')
         {%- if schema_name -%} and upper(schema_name) = upper('{{ schema_name }}') {%- endif -%}
