@@ -22,15 +22,15 @@
 
 {% macro redshift__get_columns_from_information_schema(database_name, schema_name) %}
     select
-        upper(database_name || '.' || schema_name || '.' || table_name) as full_table_name,
-        upper(database_name) as database_name,
-        upper(schema_name) as schema_name,
+        upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
+        upper(table_catalog) as database_name,
+        upper(table_schema) as schema_name,
         upper(table_name) as table_name,
         upper(column_name) as column_name,
-        case when data_type like '%character varying%' then 'character varying' else data_type end as data_type
-    from svv_redshift_columns
-    where upper(database_name) = upper('{{ database_name }}')
-        {%- if schema_name -%} and upper(schema_name) = upper('{{ schema_name }}') {%- endif -%}
+        data_type
+    from svv_columns
+    where 1=1
+        {%- if schema_name -%} and upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
 
 {% endmacro %}
 
