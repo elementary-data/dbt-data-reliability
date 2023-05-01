@@ -16,6 +16,9 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_packages"
   - "dbt_modules"
 
+models:
+  elementary:
+    enabled: false
 
 vars:
   days_back: 30
@@ -25,6 +28,4 @@ vars:
 seeds:
   +schema: test_seeds
 
-models:
-  elementary:
-    +schema: elementary
+on-run-end: "{{ dbt_run_end(results) }}"
