@@ -62,7 +62,7 @@
 
 
 {% macro relation_to_full_name(relation) %}
-    {%- if relation.identifier.startswith('__dbt__cte__') %}
+    {%- if relation.is_cte %}
         {# Ephemeral models don't have db and schema #}
         {%- set full_table_name = relation.identifier | upper %}
     {%- elif relation.database %}

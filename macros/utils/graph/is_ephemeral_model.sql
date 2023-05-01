@@ -1,5 +1,5 @@
-{% macro is_ephemeral_model(model) %}
+{% macro is_ephemeral_model(model_relation) %}
     {% do return(
-      model.identifier.startswith('__dbt__cte__')
+      model_relation.is_cte
     ) %}
 {% endmacro %}
