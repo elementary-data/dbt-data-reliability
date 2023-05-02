@@ -5,7 +5,7 @@
 
 {# Snowflake, Bigquery#}
 {% macro default__get_columns_from_information_schema(database_name, schema_name) %}
-    {% set schema_relation = api.Relation.create(database=database_name).without_identifier() %}
+    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
     select
         upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
