@@ -5,6 +5,6 @@
     {% for _ in range(0, amount_of_padded) %}
         {% do padded_list.append(None) %}
     {% endfor %}
-    {% set result = padded_list[:len]  %}
+    {% set result = padded_list[:len] %}
     {{ return(result) }}
 {% endmacro %}
