@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: dummy_model
+    tests:
+      - elementary.volume_anomalies:
+          timestamp_column: "{{ var('integration_tests_volume_anomalies_timestamp_column') }}"
+          sensitivity: "{{ var('integration_tests_volume_anomalies_sensitivity') }}"
+          backfill_days: "{{ var('integration_tests_volume_anomalies_backfill_days') }}"
+          where_expression: "{{ var('integration_tests_volume_anomalies_where_expression') }}"
+          time_bucket: "{{ var('integration_tests_volume_anomalies_time_bucket') }}"
+          anomaly_direction: "{{ var('integration_tests_volume_anomalies_anomaly_direction', 'both') }}"
+          seasonality: "{{ var('integration_tests_volume_anomalies_seasonality') }}"
+

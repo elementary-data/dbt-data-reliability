@@ -40,14 +40,14 @@ def insert_rows_from_list_of_dicts(
 
 
 def insert_rows_from_csv(
-    dbt_project: DbtProject, relation: BaseRelation, rows_path: str
+    dbt_project: DbtProject, relation: BaseRelation, rows_path: str, numeric_columns=tuple()
 ):
     def fillna(row):
         d = {k: (None if v == "" else v) for (k, v) in row.items()}
         return d
 
     def convert_numeric_columns(
-        row, numeric_columns=["metric_value", "bucket_duration_hours"]
+        row, numeric_columns=tuple()
     ):
         d = {
             k: eval(v) if (v and (k in numeric_columns)) else v
@@ -57,15 +57,15 @@ def insert_rows_from_csv(
 
     with open(rows_path) as rows_csv:
         reader = csv.DictReader(rows_csv)
-        rows = [convert_numeric_columns(fillna(row)) for row in reader]
+        rows = [convert_numeric_columns(fillna(row), numeric_columns=numeric_columns) for row in reader]
         insert_rows_from_list_of_dicts(dbt_project, relation, rows)
 
 
 def insert_rows(
-    dbt_project: DbtProject, relation: BaseRelation, rows: Union[str, List[Dict]]
+    dbt_project: DbtProject, relation: BaseRelation, rows: Union[str, List[Dict]], numeric_columns=tuple()
 ):
     if isinstance(rows, str):
-        insert_rows_from_csv(dbt_project, relation, rows)
+        insert_rows_from_csv(dbt_project, relation, rows, numeric_columns=numeric_columns)
     elif isinstance(rows, List):
         insert_rows_from_list_of_dicts(dbt_project, relation, rows)
     else:

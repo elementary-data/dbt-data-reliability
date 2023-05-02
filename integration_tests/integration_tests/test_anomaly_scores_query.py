@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import pytest
 import pandas as pd
 from parametrization import Parametrization
 
@@ -36,7 +37,7 @@ BASE_DIR = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "anomaly_query_cases"
 )
 
-
+@pytest.mark.unit
 @Parametrization.autodetect_parameters()
 @Parametrization.default_parameters(
     time_bucket={"period": "day", "count": 1},

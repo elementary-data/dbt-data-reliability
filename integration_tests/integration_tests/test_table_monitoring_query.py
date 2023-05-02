@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import pytest
 from parametrization import Parametrization
 
 
@@ -10,7 +10,7 @@ MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
 MAX_BUCKET_END = datetime(2022, 1, 4, 0, 0, 0)
 RUN_STARTED_AT = datetime(2022, 1, 4, 0, 13, 42)
 
-
+@pytest.mark.unit
 @Parametrization.autodetect_parameters()
 @Parametrization.default_parameters(
     time_bucket={"period": "day", "count": 1},
