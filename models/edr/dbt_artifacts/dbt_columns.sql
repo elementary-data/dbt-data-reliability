@@ -6,7 +6,25 @@
 }}
 
 with dbt_models_data as (
-    select * from {{ ref('dbt_models') }}
+    select
+        database_name,
+        schema_name,
+        alias as table_name
+    from {{ ref('dbt_models') }}
+),
+
+dbt_sources_data as (
+    select
+        database_name,
+        schema_name,
+        name as table_name
+    from {{ ref('dbt_sources') }}
+),
+
+tables_information as (
+    select * from dbt_models_data
+    union all
+    select * from dbt_sources_data
 ),
 
 columns_information as (
@@ -15,11 +33,11 @@ columns_information as (
 
 dbt_columns as (
     select col_info.*
-    from dbt_models_data models
+    from tables_information tbl_info
     join columns_information col_info
-        on (lower(models.database_name) = lower(col_info.database_name) and
-            lower(models.schema_name) = lower(col_info.schema_name) and
-            lower(models.name) = lower(col_info.table_name)
+        on (lower(tbl_info.database_name) = lower(col_info.database_name) and
+            lower(tbl_info.schema_name) = lower(col_info.schema_name) and
+            lower(tbl_info.table_name) = lower(col_info.table_name)
         )
 )
 
