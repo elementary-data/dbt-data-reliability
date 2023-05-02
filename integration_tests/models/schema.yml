@@ -409,6 +409,21 @@ models:
               period: day
               count: 1
 
+  - name: ephemeral_model
+    config:
+      elementary:
+        timestamp_column: updated_at
+    tests:
+      - elementary.volume_anomalies:
+          tags: ["ephemeral_model", "error_test"]
+      - elementary.all_columns_anomalies:
+          tags: ["ephemeral_model", "error_test"]
+      - elementary.freshness_anomalies:
+          tags: ["ephemeral_model", "error_test"]
+      - elementary.schema_changes:
+          tags: ["ephemeral_model", "error_test"]
+
+
 sources:
   - name: training
     schema: test_seeds
