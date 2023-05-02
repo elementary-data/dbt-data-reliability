@@ -1,5 +1,5 @@
 {% macro get_columns_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = elementary.tuple_to_list_of_size(schema_tuple, 2) %}
+    {%- set database_name, schema_name = schema_tuple %}
     {{ return(adapter.dispatch('get_columns_from_information_schema', 'elementary')(database_name, schema_name)) }}
 {% endmacro %}
 
