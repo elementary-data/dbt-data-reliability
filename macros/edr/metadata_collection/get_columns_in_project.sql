@@ -1,16 +1,20 @@
 {% macro get_columns_in_project() %}
-    {% set dbt_models_relation = ref('dbt_models') %}
+    {% set configured_schemas = elementary.get_project_configured_schemas() %}
+    {{ elementary.get_columns_by_configured_schemas(configured_schemas) }}
+{% endmacro %}
 
-    {% set databases_query %}
-        select
-            database_name
-        from {{ ref('dbt_models') }}
-        group by 1
-    {% endset %}
-
-    {% set configured_databases = [] %}
+{% macro get_project_configured_schemas() %}
+    {% set configured_schemas = [] %}
     {% if execute %}
-        {% do configured_databases.extend(elementary.result_column_to_list(databases_query)) %}
+        {% set root_project = context["project_name"] %}
+        {% set nodes = elementary.get_nodes_from_graph() %}
+        {% for node in nodes %}
+            {% if node["package_name"] == root_project %}
+                {% if adapter.check_schema_exists(node['database'], node['schema']) %}
+                    {% do configured_schemas.append((node['database'], node['schema'])) %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
     {% endif %}
-    {{ elementary.get_columns_by_configured_databases(configured_databases) }}
+    {{ return(configured_schemas | unique | list ) }}
 {% endmacro %}
