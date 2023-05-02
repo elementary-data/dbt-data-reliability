@@ -29,8 +29,7 @@
         upper(column_name) as column_name,
         data_type
     from svv_columns
-    where 1=1
-        {%- if schema_name -%} and upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
+    {%- if schema_name -%} where upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
 
 {% endmacro %}
 
@@ -43,7 +42,6 @@
         upper(column_name) as column_name,
         data_type
     from information_schema.columns
-    where 1=1
-        {%- if schema_name -%} and upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
+    {%- if schema_name %} where upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
 
 {% endmacro %}
