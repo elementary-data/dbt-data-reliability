@@ -62,10 +62,13 @@
 
 
 {% macro relation_to_full_name(relation) %}
-    {%- if relation.database %}
+    {%- if relation.is_cte %}
+        {# Ephemeral models don't have db and schema #}
+        {%- set full_table_name = relation.identifier | upper %}
+    {%- elif relation.database %}
         {%- set full_table_name = relation.database | upper ~'.'~ relation.schema | upper ~'.'~ relation.identifier | upper %}
     {%- else %}
-    {# Databricks doesn't always have a database #}
+        {# Databricks doesn't always have a database #}
         {%- set full_table_name = relation.schema | upper ~'.'~ relation.identifier | upper %}
     {%- endif %}
     {{ return(full_table_name) }}

@@ -83,7 +83,7 @@
     {% set error_test_validation_query %}
         with error_tests as (
             select
-                test_name,
+                distinct test_name,
                 {{ elementary.contains('tags', 'error_test') }} as error_tag
             from {{ alerts_relation }}
             where status = 'error'
