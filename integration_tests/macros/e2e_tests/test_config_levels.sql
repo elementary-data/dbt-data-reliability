@@ -11,30 +11,22 @@
                                                            anomaly_sensitivity,
                                                            anomaly_direction) %}
 
-        {%- set config_check = compare_configs('time_bucket', time_bucket, expected_config) %}
-        {%- if config_check %}
-            {%- do unexpected_config.append(config_check) -%}
-        {%- endif %}
+        --TODO: min_training_set
 
-        {%- set config_check = compare_configs('timestamp_column', timestamp_column, expected_config) %}
-        {%- if config_check %}
-            {%- do unexpected_config.append(config_check) -%}
-        {%- endif %}
+        {%- set configs_to_test = [('timestamp_column', timestamp_column),
+                                   ('where_expression', where_expression),
+                                   ('time_bucket', time_bucket),
+                                   ('anomaly_sensitivity', anomaly_sensitivity),
+                                   ('anomaly_direction', anomaly_direction)]
+                                   %}
 
-        {%- set config_check = compare_configs('where_expression', where_expression, expected_config) %}
-        {%- if config_check %}
-            {%- do unexpected_config.append(config_check) -%}
-        {%- endif %}
-
-        {%- set config_check = compare_configs('anomaly_sensitivity', anomaly_sensitivity, expected_config) %}
-        {%- if config_check %}
-            {%- do unexpected_config.append(config_check) -%}
-        {%- endif %}
-
-        {%- set config_check = compare_configs('anomaly_direction', anomaly_direction, expected_config) %}
-        {%- if config_check %}
-            {%- do unexpected_config.append(config_check) -%}
-        {%- endif %}
+        {%- for config in configs_to_test %}
+            {%- set config_name, config_value = config %}
+            {%- set config_check = compare_configs(config_name, config_value, expected_config) %}
+            {%- if config_check %}
+                {%- do unexpected_config.append(config_check) -%}
+            {%- endif %}
+        {%- endfor %}
 
         {%- if unexpected_config | length > 0 %}
             {%- do exceptions.raise_compiler_error('Failure config_levels: ' ~ unexpected_config) -%}
