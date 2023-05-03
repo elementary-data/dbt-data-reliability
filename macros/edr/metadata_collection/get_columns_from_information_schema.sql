@@ -15,7 +15,7 @@
         upper(column_name) as column_name,
         data_type
     from {{ schema_relation.information_schema('COLUMNS') }}
-    {%- if schema_name %} where upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
+    where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}
 
@@ -28,7 +28,7 @@
         upper(column_name) as column_name,
         data_type
     from svv_columns
-    {%- if schema_name %} where upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
+    where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}
 
@@ -41,6 +41,6 @@
         upper(column_name) as column_name,
         data_type
     from information_schema.columns
-    {%- if schema_name %} where upper(table_schema) = upper('{{ schema_name }}') {%- endif -%}
+    where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}
