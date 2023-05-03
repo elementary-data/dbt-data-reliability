@@ -1,4 +1,4 @@
-{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, sensitivity, backfill_days, where_expression, time_bucket) %}
+{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, sensitivity, days_back, backfill_days, where_expression, time_bucket) %}
   {% if execute %}
     {%- if not event_timestamp_column -%}
       {%- do exceptions.raise_compiler_error('event_timestamp_column must be specified for the event freshness test!') -%}
@@ -16,6 +16,7 @@
       event_timestamp_column=event_timestamp_column,
       timestamp_column=update_timestamp_column,
       sensitivity=sensitivity,
+      days_back=days_back,
       backfill_days=backfill_days,
       where_expression=where_expression,
       time_bucket=time_bucket

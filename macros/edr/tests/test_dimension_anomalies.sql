@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, anomaly_direction='both', seasonality=none) %}
+{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, days_back, backfill_days, time_bucket, anomaly_direction='both', seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
