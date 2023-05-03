@@ -1,15 +1,17 @@
-{% test config_levels(model, expected_config, timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction) %}
+{% test config_levels(model, expected_config, timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction, days_back, backfill_days) %}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {%- set unexpected_config = [] %}
         {%- set model_relation = dbt.load_relation(model) %}
 
-        {% set timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction =
+        {% set timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction days_back, backfill_days =
                elementary.get_anomalies_test_configuration(model_relation,
                                                            timestamp_column,
                                                            where_expression,
                                                            time_bucket,
                                                            anomaly_sensitivity,
-                                                           anomaly_direction) %}
+                                                           anomaly_direction,
+                                                           days_back,
+                                                           backfill_days) %}
 
         --TODO: min_training_set
 
