@@ -13,6 +13,14 @@ with dbt_models_data as (
     from {{ ref('dbt_models') }}
 ),
 
+dbt_snapshots_data as (
+    select
+        database_name,
+        schema_name,
+        alias as table_name
+    from {{ ref('dbt_snapshots') }}
+),
+
 dbt_sources_data as (
     select
         database_name,
@@ -25,6 +33,8 @@ tables_information as (
     select * from dbt_models_data
     union all
     select * from dbt_sources_data
+    union all
+    select * from dbt_snapshots_data
 ),
 
 columns_information as (
