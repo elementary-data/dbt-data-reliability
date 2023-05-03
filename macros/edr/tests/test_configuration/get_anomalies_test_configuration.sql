@@ -15,6 +15,7 @@
 -- TODO:
 -- Add days_back and backfill_days to the test on schema.yml
 -- Add validation for backfill days and sensitivity?
+-- Add days_back to tests as a param
 
 
     {{ return([timestamp_column,
