@@ -4,7 +4,7 @@
     {% set cached_empty_test_results_rows = elementary.get_cache("elementary_test_results").get(cache_key) %}
     {% if cached_empty_test_results_rows is none %} {# update the cache #}
       {% set cached_empty_test_results_rows = elementary.empty_elementary_test_results() %}
-      {% do elementary.get_cache("elementary_test_results").update({cache_key: cached_empty_test_results_rows}) %}
+      {% do elementary.get_cache("elementary_test_results").update({cache_key: cached_empty_test_results_rows} %}
     {% endif %}
     {% do return(cached_empty_test_results_rows) %}
   {% endif %}
