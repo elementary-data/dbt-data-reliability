@@ -1,9 +1,10 @@
 {% macro get_anomalies_test_configuration(model_relation,
                                           timestamp_column,
                                           where_expression,
-                                          time_bucket,
                                           anomaly_sensitivity,
                                           anomaly_direction,
+                                          min_training_set_size,
+                                          time_bucket,
                                           days_back,
                                           backfill_days,
                                           seasonality) %}
@@ -15,6 +16,7 @@
     {%- set where_expression = elementary.get_test_argument('where_expression', where_expression, model_graph_node) %}
     {%- set anomaly_sensitivity = elementary.get_test_argument('anomaly_sensitivity', anomaly_sensitivity, model_graph_node) %}
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
+    {%- set min_training_set_size = elementary.get_test_argument('min_training_set_size', min_training_set_size, model_graph_node) %}
 
     {# timestamp_column anomaly detection tests #}
     {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
@@ -22,16 +24,17 @@
     {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
-
 -- TODO:
--- Add validation for backfill days and sensitivity?
+-- Add validation for backfill days, sensitivity and min_training_size?
+-- Add min_training_set_size to tests and use it
 
 
     {{ return([timestamp_column,
-               time_bucket,
                where_expression,
                anomaly_sensitivity,
                anomaly_direction,
+               min_training_set_size,
+               time_bucket,
                days_back,
                backfill_days,
                seasonality]) }}
