@@ -397,6 +397,7 @@ models:
     tags: ["config_levels"]
     config:
       elementary:
+        min_training_set_size: 22
         days_back: 100
         backfill_days: 10
         anomaly_direction: 'drop'
@@ -410,6 +411,7 @@ models:
       - config_levels:
           tags: ["config_levels"]
           alias: 'test_level_config'
+          min_training_set_size: 18
           days_back: 5
           backfill_days: 5
           seasonality: 'day_of_week'
@@ -420,8 +422,9 @@ models:
           time_bucket:
             period: day
             count: 1
-          expected_config:
+          expected_config: ## Test level expected config
             seasonality: 'day_of_week'
+            min_training_set_size: 18
             days_back: 35 ## *7 because of seasonality
             backfill_days: 5
             anomaly_direction: 'spike'
@@ -434,7 +437,8 @@ models:
       - config_levels:
           tags: ["config_levels"]
           alias: 'model_level_config'
-          expected_config:
+          expected_config: ## Model level expected config
+            min_training_set_size: 22
             seasonality: null
             days_back: 100
             backfill_days: 10
@@ -451,7 +455,8 @@ models:
       - config_levels:
           tags: ["config_levels"]
           alias: 'project_level_config'
-          expected_config:
+          expected_config: ## Project level expected config
+            min_training_set_size: 14
             seasonality: null
             days_back: 30
             backfill_days: 2

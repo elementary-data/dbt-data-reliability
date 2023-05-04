@@ -1,26 +1,26 @@
-{% test config_levels(model, expected_config, timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction, days_back, backfill_days, seasonality) %}
+{% test config_levels(model, expected_config, timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction, days_back, backfill_days, seasonality, min_training_set_size) %}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {%- set unexpected_config = [] %}
         {%- set model_relation = dbt.load_relation(model) %}
 
-        {% set timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction, days_back, backfill_days, seasonality =
+        {% set timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality =
                elementary.get_anomalies_test_configuration(model_relation,
                                                            timestamp_column,
                                                            where_expression,
-                                                           time_bucket,
                                                            anomaly_sensitivity,
                                                            anomaly_direction,
+                                                           min_training_set_size,
+                                                           time_bucket,
                                                            days_back,
                                                            backfill_days,
                                                            seasonality) %}
-
-        --TODO: min_training_set
 
         {%- set configs_to_test = [('timestamp_column', timestamp_column),
                                    ('where_expression', where_expression),
                                    ('time_bucket', time_bucket),
                                    ('anomaly_sensitivity', anomaly_sensitivity),
                                    ('anomaly_direction', anomaly_direction),
+                                   ('min_training_set_size', min_training_set_size),
                                    ('days_back', days_back),
                                    ('backfill_days', backfill_days),
                                    ('seasonality', seasonality)
@@ -45,7 +45,7 @@
 
 {% macro compare_configs(config_name, config, expected_config) %}
     {%- if config != expected_config.get(config_name) %}
-        {%- set unexpected_message = ('got config: {0}, expected config: {1}').format(config, expected_config.get(config_name) ) %}
+        {%- set unexpected_message = ('For {0} - got config: {1}, expected config: {2}').format(config_name, config, expected_config.get(config_name) ) %}
         {{ return(unexpected_message) }}
     {%- endif %}
     {{ return(none) }}
