@@ -3,10 +3,6 @@
     -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
     {%- if execute and flags.WHICH in ['test', 'build'] %}
-        {%- if elementary.is_ephemeral_model(model) %}
-            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral modles, model name: {}".format(model.identifier)) }}
-        {%- endif %}
-
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}

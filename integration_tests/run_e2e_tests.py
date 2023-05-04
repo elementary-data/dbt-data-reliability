@@ -177,6 +177,16 @@ def e2e_tests(
         dbt_runner.test(select="tag:table_anomalies")
         dbt_runner.test(select="tag:table_anomalies")
 
+    if "error_test" in test_types:
+        dbt_runner.test(select="tag:error_test")
+        results = [
+            TestResult(type="error_test", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_test", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "error_model" in test_types:
         dbt_runner.run(select="tag:error_model")
         results = [
@@ -338,17 +348,6 @@ def e2e_tests(
             cache_artifacts_results = test_artifacts_cache(dbt_runner)
             if cache_artifacts_results:
                 test_results.append(cache_artifacts_results)
-
-    # Test errors validation needs to run last
-    if "error_test" in test_types:
-        dbt_runner.test(select="tag:error_test")
-        results = [
-            TestResult(type="error_test", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_error_test", should_log=False
-            )
-        ]
-        test_results.extend(results)
 
     return test_results
 
