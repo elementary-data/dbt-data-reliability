@@ -1,5 +1,5 @@
 {% macro query_test_result_rows(sample_limit=none) %}
-  {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
+  {% if sample_limit == 0 %}
     {% do return([]) %}
   {% endif %}
   {% set query %}
