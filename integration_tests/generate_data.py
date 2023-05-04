@@ -15,7 +15,6 @@ def generate_fake_data():
     generate_numeric_anomalies_training_and_validation_files()
     generate_any_type_anomalies_training_and_validation_files()
     generate_dimension_anomalies_training_and_validation_files()
-    generate_backfill_days_training_and_validation_files()
     generate_seasonality_volume_anomalies_files()
 
 
@@ -357,51 +356,6 @@ def generate_seasonality_volume_anomalies_files():
                       header=columns)
 
 
-def generate_backfill_days_training_and_validation_files(rows_count_per_day=100):
-    def get_training_row(date, row_index, rows_count):
-        return {
-            "updated_at": date.strftime(DATE_FORMAT),
-            "occurred_at": (date - timedelta(hours=1)).strftime(DATE_FORMAT),
-            "min_length": "".join(
-                random.choices(string.ascii_lowercase, k=random.randint(5, 10))
-            )
-        }
-
-    def get_validation_row(date, row_index, rows_count):
-        return {
-            "updated_at": date.strftime(DATE_FORMAT),
-            "occurred_at": (date - timedelta(hours=7)).strftime(DATE_FORMAT),
-            "min_length": "".join(
-                random.choices(string.ascii_lowercase, k=random.randint(1, 10))
-            )
-        }
-
-    string_columns = [
-        "updated_at",
-        "occurred_at",
-        "min_length"
-    ]
-    dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=1))
-    training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
-    write_rows_to_csv(
-        os.path.join(
-            FILE_DIR, "data", "training", "backfill_days_column_anomalies_training.csv"
-        ),
-        training_rows,
-        string_columns,
-    )
-
-    validation_date = EPOCH - timedelta(days=5)
-    validation_rows = generate_rows(
-        rows_count_per_day, [validation_date], get_validation_row
-    )
-    write_rows_to_csv(
-        os.path.join(
-            FILE_DIR, "data", "validation", "backfill_days_column_anomalies_validation.csv"
-        ),
-        validation_rows,
-        string_columns,
-    )
     
 
 

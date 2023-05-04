@@ -57,10 +57,10 @@ models:
           tags: ["regular_tests"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
+          tags: [ "all_any_type_columns_anomalies", "drop_directional_anomalies" ]
       - elementary.all_columns_anomalies:
           anomaly_direction: "spike"
-          tags: [ "spike_directional_anomalies" ]
+          tags: [ "all_any_type_columns_anomalies", "spike_directional_anomalies" ]
   - name: no_timestamp_anomalies
     meta:
       owner: "elon@elementary-data.com, or@elementary-data.com"
@@ -92,6 +92,16 @@ models:
           dimensions:
             - platform
       - elementary.dimension_anomalies:
+          anomaly_direction: "spike"
+          tags: [ "dimension_anomalies", "spike_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
+          anomaly_direction: "drop"
+          tags: [ "dimension_anomalies", "drop_directional_anomalies" ]
+          dimensions:
+            - platform
+      - elementary.dimension_anomalies:
           tags: ["dimension_anomalies"]
           dimensions:
             - platform
@@ -101,16 +111,6 @@ models:
           dimensions:
             - platform
             - version
-      - elementary.dimension_anomalies:
-          anomaly_direction: "spike"
-          tags: [ "spike_directional_anomalies" ]
-          dimensions:
-            - platform
-      - elementary.dimension_anomalies:
-          anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
-          dimensions:
-            - platform
 
   - name: error_model
     description: We use this model to create error runs and tests
@@ -123,25 +123,6 @@ models:
         tests:
           - uniques:
               tags: ["error_test", "regular_tests"]
-
-  - name: backfill_days_column_anomalies
-    config:
-      elementary:
-        timestamp_column: updated_at
-    columns:
-      - name: "min_length"
-        tests:
-          - elementary.column_anomalies:
-              column_anomalies:
-                - min_length
-                - max_length
-              tags: ["backfill_days"]
-          - elementary.column_anomalies:
-              backfill_days: 7
-              column_anomalies:
-                - min_length
-                - max_length
-              tags: ["backfill_days"]
 
   - name: string_column_anomalies
     meta:
@@ -207,10 +188,10 @@ models:
           tags: ["table_anomalies"]
       - elementary.volume_anomalies:
           anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
+          tags: [ "table_anomalies", "drop_directional_anomalies" ]
       - elementary.volume_anomalies:
           anomaly_direction: "spike"
-          tags: ["spike_directional_anomalies" ]
+          tags: [ "table_anomalies", "spike_directional_anomalies" ]
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.event_freshness_anomalies:
@@ -257,12 +238,12 @@ models:
               column_anomalies:
                 - average
               anomaly_direction: "spike"
-              tags: ["spike_directional_anomalies" ]
+              tags: [ "numeric_column_anomalies", "spike_directional_anomalies" ]
           - elementary.column_anomalies:
               column_anomalies:
                 - average
               anomaly_direction: "drop"
-              tags: ["drop_directional_anomalies" ]
+              tags: [ "numeric_column_anomalies", "drop_directional_anomalies" ]
       - name: average
         tests:
           - elementary.column_anomalies:

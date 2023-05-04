@@ -44,8 +44,9 @@
             dimension,
             dimension_value,
             {{ elementary.anomaly_detection_description() }},
-            max(bucket_end) over (partition by test_execution_id) as max_bucket_end
+            max(bucket_end) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
+        {{ dbt_utils.group_by(25) }}
       ),
       anomaly_scores_with_is_anomalous as (
         select

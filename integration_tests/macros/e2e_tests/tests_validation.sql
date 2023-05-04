@@ -4,7 +4,7 @@
     {% set dimension_validation_query %}
         select *
         from {{ alerts_relation }}
-        where status in ('fail', 'warn') and tags like '%dimension_anomalies%'
+        where status in ('fail', 'warn') and sub_type = 'dimension'
     {% endset %}
     {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
     {% set dimensions_with_problems = [] %}
@@ -17,11 +17,8 @@
             {% do dimensions_with_problems.append[dimensions] %}
         {% endif %}
     {% endfor %}
-    {% if results | length > 2 %}
+    {% if results | length != 3 %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests: ' ~ results | length) %}
-        {{ return(1) }}
-    {% elif results | length < 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has not enough fail/error tests: ' ~ results | length) %}
         {{ return(1) }}
     {% elif dimensions_with_problems %}
         {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
