@@ -70,6 +70,10 @@ models:
     tests:
       - elementary.volume_anomalies:
           tags: ["no_timestamp"]
+      - elementary.dimension_anomalies:
+          dimensions: null_count_str
+          tags: ["no_timestamp"]
+
     columns:
       - name: "null_count_str"
         tests:
