@@ -17,6 +17,6 @@
     {% if model_sql_size_limit < model_code | length %}
         {{ return('Model code is too long - over ' ~ model_sql_size_limit ~ ' bytes') }}
     {% else %}
-        {{ return(model_code) }}
+        {{ return(model_code.replace("%", "%%")) }}
     {% endif %}
 {% endmacro %}
