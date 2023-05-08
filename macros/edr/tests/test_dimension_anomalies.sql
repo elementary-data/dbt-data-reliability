@@ -6,7 +6,7 @@
     -- depends_on: {{ ref('dbt_run_results') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {%- if elementary.is_ephemeral_model(model) %}
-            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral modles, model name: {}".format(model.identifier)) }}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
         {%- endif %}
         {% if not dimensions %}
             {{ exceptions.raise_compiler_error('Dimension anomalies test must get "dimensions" as a parameter!') }}
