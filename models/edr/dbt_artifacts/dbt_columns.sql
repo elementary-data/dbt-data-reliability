@@ -29,12 +29,22 @@ dbt_sources_data as (
     from {{ ref('dbt_sources') }}
 ),
 
+dbt_seeds_data as (
+    select
+        database_name,
+        schema_name,
+        name as table_name
+    from {{ ref('dbt_seeds') }}
+),
+
 tables_information as (
     select * from dbt_models_data
     union all
     select * from dbt_sources_data
     union all
     select * from dbt_snapshots_data
+    union all
+    select * from dbt_seeds_data
 ),
 
 columns_information as (
