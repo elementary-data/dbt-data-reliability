@@ -1,5 +1,5 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, sensitivity, backfill_days, days_back, monitors, column_name = none, columns_only = false, dimensions = none, metric_properties = none, data_monitoring_metrics_table=none, seasonality=none, anomaly_direction='both') %}
-    {%- set anomaly_direction = anomaly_direction | lower %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_graph_node, test_configuration, monitors, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
+    {%- set anomaly_direction = test_configuration.anomaly_direction | lower %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -16,12 +16,12 @@
       {% set latest_full_refresh = none %}
     {% endif %}
 
-    {%- if seasonality and seasonality == 'day_of_week' %}
+    {%- if test_configuration.seasonality == 'day_of_week' %}
         {% set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
     {% else %}
         {% set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {% endif %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, test_configuration.days_back) %}
 
     {% set anomaly_scores_query %}
 
@@ -43,8 +43,8 @@
                 {%- if columns_only %}
                     and column_name is not null
                 {%- endif %}
-                {% if dimensions %}
-                    and dimension = {{ elementary.edr_quote(elementary.join_list(dimensions, '; ')) }}
+                {% if test_configuration.dimensions %}
+                    and dimension = {{ elementary.edr_quote(elementary.join_list(test_configuration.dimensions, '; ')) }}
                 {% endif %}
         ),
 
@@ -141,7 +141,7 @@
                     when training_stddev = 0 then 0
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
-                {{ sensitivity }} as anomaly_score_threshold,
+                {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
                 bucket_start,
                 bucket_end,
@@ -149,11 +149,11 @@
                 metric_value,
                 case
                     when training_stddev is null then null
-                    else (-1) * {{ sensitivity }} * training_stddev + training_avg
+                    else (-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
                 end as min_metric_value,
                 case 
                     when training_stddev is null then null
-                    else {{ sensitivity }} * training_stddev + training_avg
+                    else {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
                 end as max_metric_value,
                 training_avg,
                 training_stddev,

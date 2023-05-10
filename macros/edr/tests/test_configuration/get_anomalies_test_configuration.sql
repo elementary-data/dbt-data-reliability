@@ -1,3 +1,6 @@
+-- TODO: Add validation for backfill days, sensitivity and min_training_size?
+-- TODO: Add min_training_set_size to tests and use it
+
 {% macro get_anomalies_test_configuration(model_relation,
                                           timestamp_column,
                                           where_expression,
@@ -7,7 +10,10 @@
                                           time_bucket,
                                           days_back,
                                           backfill_days,
-                                          seasonality) %}
+                                          seasonality,
+                                          freshness_column,
+                                          event_timestamp_column,
+                                          dimensions) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -24,20 +30,28 @@
     {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
--- TODO:
--- Add validation for backfill days, sensitivity and min_training_size?
--- Add min_training_set_size to tests and use it
+    {% set anomalies_test_configuration_dict =
+      {'timestamp_column': (timestamp_column if timestamp_column else None),
+       'where_expression': (where_expression if where_expression else None),
+       'anomaly_sensitivity': (anomaly_sensitivity if anomaly_sensitivity else None),
+       'anomaly_direction': (anomaly_direction if anomaly_direction else None),
+       'min_training_set_size': (min_training_set_size if min_training_set_size else None),
+       'time_bucket': (time_bucket if time_bucket else None) ,
+       'days_back': (days_back if days_back else None) ,
+       'backfill_days':(backfill_days if backfill_days else None),
+       'seasonality':(seasonality if seasonality else None)
+        } %}
 
+  {# Changes in these configs impact the metric id of the test. #}
+  {# If these configs change, we ignore the old metrics and recalculate. #}
+    {% set metric_properties_dict =
+      {'timestamp_column': (timestamp_column if timestamp_column else None) ,
+       'where_expression': (where_expression if where_expression else None) ,
+       'time_bucket': (time_bucket if time_bucket else None),
+       'freshness_column': (freshness_column if freshness_column else None) ,
+       'event_timestamp_column':(event_timestamp_column if event_timestamp_column else None),
+       'dimensions':(dimensions if dimensions else None)
+        } %}
 
-    {{ return([timestamp_column,
-               where_expression,
-               anomaly_sensitivity,
-               anomaly_direction,
-               min_training_set_size,
-               time_bucket,
-               days_back,
-               backfill_days,
-               seasonality]) }}
+    {{ return([anomalies_test_configuration_dict, metric_properties_dict]) }}
 {% endmacro %}
-
-
