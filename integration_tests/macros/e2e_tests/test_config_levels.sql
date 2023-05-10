@@ -3,7 +3,7 @@
         {%- set unexpected_config = [] %}
         {%- set model_relation = dbt.load_relation(model) %}
 
-        {% set timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality =
+        {% set configuration_dict, metric_properties_dict =
                elementary.get_anomalies_test_configuration(model_relation,
                                                            timestamp_column,
                                                            where_expression,
@@ -15,15 +15,15 @@
                                                            backfill_days,
                                                            seasonality) %}
 
-        {%- set configs_to_test = [('timestamp_column', timestamp_column),
-                                   ('where_expression', where_expression),
-                                   ('time_bucket', time_bucket),
-                                   ('anomaly_sensitivity', anomaly_sensitivity),
-                                   ('anomaly_direction', anomaly_direction),
-                                   ('min_training_set_size', min_training_set_size),
-                                   ('days_back', days_back),
-                                   ('backfill_days', backfill_days),
-                                   ('seasonality', seasonality)
+        {%- set configs_to_test = [('timestamp_column', metric_properties_dict.timestamp_column),
+                                   ('where_expression', metric_properties_dict.where_expression),
+                                   ('time_bucket', configuration_dict.time_bucket),
+                                   ('anomaly_sensitivity', configuration_dict.anomaly_sensitivity),
+                                   ('anomaly_direction', configuration_dict.anomaly_direction),
+                                   ('min_training_set_size', configuration_dict.min_training_set_size),
+                                   ('days_back', configuration_dict.days_back),
+                                   ('backfill_days', configuration_dict.backfill_days),
+                                   ('seasonality', configuration_dict.seasonality)
                                    ] %}
 
         {%- for config in configs_to_test %}
