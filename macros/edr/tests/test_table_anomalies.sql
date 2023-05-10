@@ -7,7 +7,7 @@
 
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {%- if elementary.is_ephemeral_model(model) %}
-            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral modles, model name: {}".format(model.identifier)) }}
         {%- endif %}
 
         {% set test_table_name = elementary.get_elementary_test_table_name() %}

@@ -61,7 +61,6 @@ models:
       - elementary.all_columns_anomalies:
           anomaly_direction: "spike"
           tags: [ "spike_directional_anomalies" ]
-
   - name: no_timestamp_anomalies
     meta:
       owner: "elon@elementary-data.com, or@elementary-data.com"
