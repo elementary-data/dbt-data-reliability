@@ -8,7 +8,6 @@ scripts/
 
 edr.log
 integration_tests/data
-edr_target
 
 venv/
 elementary*.html
