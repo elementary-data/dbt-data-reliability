@@ -5,6 +5,9 @@
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
+        {%- if elementary.is_ephemeral_model(model) %}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
+        {%- endif %}
         {% if not dimensions %}
             {{ exceptions.raise_compiler_error('Dimension anomalies test must get "dimensions" as a parameter!') }}
         {% endif %}
@@ -47,15 +50,15 @@
         {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
         {{ elementary.debug_log('where_expression - ' ~ metric_properties.where_expression) }}
         {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
-        {% if timestamp_column and is_timestamp %}
-            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
-                                                                                    backfill_days=backfill_days,
-                                                                                    days_back=days_back,
-                                                                                    metric_properties=metric_properties) %}
-        {%- endif %}
+        {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
+                                                                                backfill_days=backfill_days,
+                                                                                days_back=days_back,
+                                                                                metric_properties=metric_properties) %}
+
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
+
         {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 

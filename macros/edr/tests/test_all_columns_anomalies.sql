@@ -5,6 +5,9 @@
     -- depends_on: {{ ref('metrics_anomaly_score') }}
     -- depends_on: {{ ref('dbt_run_results') }}
     {%- if execute and flags.WHICH in ['test', 'build'] %}
+        {%- if elementary.is_ephemeral_model(model) %}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
+        {%- endif %}
 
         {%- set test_table_name = elementary.get_elementary_test_table_name() %}
         {{- elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}

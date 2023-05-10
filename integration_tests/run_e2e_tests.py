@@ -177,16 +177,6 @@ def e2e_tests(
         dbt_runner.test(select="tag:table_anomalies")
         dbt_runner.test(select="tag:table_anomalies")
 
-    if "error_test" in test_types:
-        dbt_runner.test(select="tag:error_test")
-        results = [
-            TestResult(type="error_test", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_error_test", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
     if "error_model" in test_types:
         dbt_runner.run(select="tag:error_model")
         results = [
@@ -294,6 +284,16 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "backfill_days" in test_types:
+        dbt_runner.test(select="tag:backfill_days")
+        results = [
+            TestResult(type="backfill_days", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_backfill_days", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "dimension" in test_types:
         dbt_runner.test(select="tag:dimension_anomalies")
         results = [
@@ -349,6 +349,17 @@ def e2e_tests(
             if cache_artifacts_results:
                 test_results.append(cache_artifacts_results)
 
+    # Test errors validation needs to run last
+    if "error_test" in test_types:
+        dbt_runner.test(select="tag:error_test")
+        results = [
+            TestResult(type="error_test", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_test", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     return test_results
 
 
@@ -397,7 +408,8 @@ def main(target, e2e_type, generate_data, clear_tests):
             "seasonal_volume",
             "table",
             "column",
-            "directional_anomalies"
+            "directional_anomalies",
+            "backfill_days",
             "schema",
             "regular",
             "config_levels",
