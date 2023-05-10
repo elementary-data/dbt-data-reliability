@@ -411,7 +411,7 @@ models:
               period: hour
               count: 4
       - config_levels:
-          tags: ["debug"]
+          tags: ["config_levels"]
           alias: 'model_level_config'
           expected_config:
             time_bucket:
