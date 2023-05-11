@@ -32,7 +32,10 @@
     {% set query %}
         begin transaction;
         {% if delete_relation %}
-            delete from {{ relation }} where {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+            delete from {{ relation }}
+            where
+            {{ delete_column_key }} is null
+            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
         {% endif %}
         {% if insert_relation %}
             insert into {{ relation }} select * from {{ insert_relation }};
@@ -47,7 +50,10 @@
 
     {% if delete_relation %}
         {% set delete_query %}
-            delete from {{ relation }} where {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+            delete from {{ relation }}
+            where
+            {{ delete_column_key }} is null
+            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
         {% endset %}
         {% do queries.append(delete_query) %}
     {% endif %}
