@@ -8,7 +8,8 @@
         {{ return(none) }}
     {% endif %}
 
-    {% set columns = adapter.get_columns_in_relation(table_relation) -%}
+    {# The warehouse should auto-fill the insertion time. #}
+    {% set columns = adapter.get_columns_in_relation(table_relation) | rejectattr("name", "==", "insertion_time") | list %}
     {% if not columns %}
         {% set table_name = elementary.relation_to_full_name(table_relation) %}
         {{ elementary.edr_log('Could not extract columns for table - ' ~ table_name ~ ' (might be a permissions issue)') }}
