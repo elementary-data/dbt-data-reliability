@@ -97,6 +97,7 @@
 
 
 {% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
+-- TODO: get all these params from cache
   {% set latest_row = anomaly_scores_rows[-1] %}
   {% set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
   {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params') %}
@@ -104,10 +105,6 @@
   {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') or elementary.get_config_var('backfill_days') %}
   {% set timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
   {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
-  {% if not timestamp_column %}
-    {% set parent_model_node = elementary.get_node(parent_model_unique_id) %}
-    {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, parent_model_node) %}
-  {% endif %}
   {% do test_params.update({'sensitivity': sensitivity, 'timestamp_column': timestamp_column, 'backfill_days': backfill_days}) %}
   {% set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
   {% set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}

@@ -53,5 +53,9 @@
        'dimensions':(dimensions if dimensions else None)
         } %}
 
+   {# Adding to cache so test configuration will be available outside the test context #}
+    {%- set test_unique_id = elementary.get_test_unique_id() %}
+    {%- do elementary.set_cache(test_unique_id, anomalies_test_configuration_dict) -%}
+
     {{ return([anomalies_test_configuration_dict, metric_properties_dict]) }}
 {% endmacro %}

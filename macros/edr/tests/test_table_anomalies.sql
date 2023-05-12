@@ -24,16 +24,16 @@
         {% endif %}
         {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
-        {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation,
-                                                                                                   timestamp_column,
-                                                                                                   where_expression,
-                                                                                                   anomaly_sensitivity,
-                                                                                                   anomaly_direction,
-                                                                                                   min_training_set_size,
-                                                                                                   time_bucket,
-                                                                                                   days_back,
-                                                                                                   backfill_days,
-                                                                                                   seasonality) %}
+        {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+                                                                                                   timestamp_column=timestamp_column,
+                                                                                                   where_expression=where_expression,
+                                                                                                   anomaly_sensitivity=anomaly_sensitivity,
+                                                                                                   anomaly_direction=anomaly_direction,
+                                                                                                   min_training_set_size=min_training_set_size,
+                                                                                                   time_bucket=time_bucket,
+                                                                                                   days_back=days_back,
+                                                                                                   backfill_days=backfill_days,
+                                                                                                   seasonality=seasonality) %}
         {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}

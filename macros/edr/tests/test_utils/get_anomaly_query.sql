@@ -10,10 +10,11 @@
     {% if not flattened_test %}
       {% set flattened_test = elementary.flatten_test(model) %}
     {% endif %}
-
-    {% set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=flattened_test.test_params.sensitivity) %}
-    {% set anomaly_direction = elementary.get_test_argument(argument_name='anomaly_direction', value=flattened_test.test_params.anomaly_direction) | lower %}
-    {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=flattened_test.test_params.backfill_days) %}
+    {%- set test_unique_id = flattened_test.unique_id %}
+    {%- set test_configuration = elementary.get_cache(test_unique_id) %}
+    {%- set sensitivity = test_configuration.anomaly_sensitivity %}
+    {%- set anomaly_direction = test_configuration.anomaly_direction | lower %}
+    {%- set backfill_days = test_configuration.backfill_days %}
     {%- set backfill_period = "'-" ~ backfill_days ~ "'" %}
 
     {%- set anomaly_query -%}
