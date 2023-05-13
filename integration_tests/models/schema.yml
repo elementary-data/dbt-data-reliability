@@ -368,13 +368,13 @@ models:
           alias: volume_anomalies_no_seasonality_anomalies
           timestamp_column: "updated_at"
           tags: ["seasonality_volume","table_anomalies"]
-          anomaly_sensitivity: 2
+          sensitivity: 2
           backfill_days: 14
       - elementary.volume_anomalies:
           alias: volume_anomalies_with_seasonality_anomalies
           timestamp_column: "updated_at"
           tags: ["seasonality_volume","table_anomalies"]
-          anomaly_sensitivity: 2
+          sensitivity: 2
           backfill_days: 14
           seasonality: day_of_week
 

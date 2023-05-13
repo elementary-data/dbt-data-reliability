@@ -5,6 +5,7 @@
 
         {% set configuration_dict, metric_properties_dict =
                elementary.get_anomalies_test_configuration(model_relation,
+                                                           mandatory_params,
                                                            timestamp_column,
                                                            where_expression,
                                                            anomaly_sensitivity,

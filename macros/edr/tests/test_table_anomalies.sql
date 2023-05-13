@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, event_timestamp_column=none, freshness_column=none) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -24,6 +24,7 @@
         {% endif %}
 
         {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+                                                                                                   mandatory_params=mandatory_params,
                                                                                                    timestamp_column=timestamp_column,
                                                                                                    where_expression=where_expression,
                                                                                                    anomaly_sensitivity=anomaly_sensitivity,
@@ -33,7 +34,8 @@
                                                                                                    days_back=days_back,
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
-                                                                                                   event_timestamp_column=event_timestamp_column) %}
+                                                                                                   event_timestamp_column=event_timestamp_column,
+                                                                                                   sensitivity=sensitivity) %}
         {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}
