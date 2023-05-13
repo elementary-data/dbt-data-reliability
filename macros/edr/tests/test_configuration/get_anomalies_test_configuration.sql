@@ -1,5 +1,9 @@
 -- TODO: Add validation for backfill days, sensitivity and min_training_size?
 -- TODO: Add min_training_set_size to tests and use it
+-- TODO: Add monitors to this macro
+-- TODO: Add min and max time buckets to be in the config as well
+-- TODO: Add tests specific config to be part of the config as well
+-- TODO: Add validation that mandatory config to run the test was passed
 
 {% macro get_anomalies_test_configuration(model_relation,
                                           timestamp_column,
