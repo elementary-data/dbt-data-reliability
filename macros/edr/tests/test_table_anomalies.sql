@@ -33,7 +33,8 @@
                                                                                                    time_bucket=time_bucket,
                                                                                                    days_back=days_back,
                                                                                                    backfill_days=backfill_days,
-                                                                                                   seasonality=seasonality) %}
+                                                                                                   seasonality=seasonality,
+                                                                                                   event_timestamp_column=event_timestamp_column) %}
         {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}
