@@ -6,7 +6,7 @@
     {%- endif -%}
 -- TODO: This check happens twice if the exception is here and not in the configuration macro
     {%- set event_timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, event_timestamp_column) -%}
-    {%- if not elementary.get_is_column_timestamp(model_relation, event_timestamp_column, event_timestamp_column_data_type) -%}
+    {%- if not elementary.is_column_timestamp(model_relation, event_timestamp_column, event_timestamp_column_data_type) -%}
       {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(event_timestamp_column)) %}
     {%- endif -%}
   {% endif %}
