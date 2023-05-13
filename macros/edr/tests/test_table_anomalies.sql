@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, sensitivity, days_back, backfill_days, where_expression, time_bucket, event_timestamp_column=none, freshness_column=none, seasonality=none, anomaly_direction='both') %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, event_timestamp_column=none, freshness_column=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
