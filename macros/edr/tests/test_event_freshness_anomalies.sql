@@ -19,7 +19,7 @@
       days_back=days_back,
       backfill_days=backfill_days,
       event_timestamp_column=event_timestamp_column,
-      mandatory_params=['timestamp_column', 'event_timestamp_column'],
+      mandatory_params=['event_timestamp_column'],
       sensitivity=sensitivity
     )
   }}
