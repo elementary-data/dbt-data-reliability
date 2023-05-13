@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality) %}
+{% test dimension_anomalies(model, dimensions, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -8,9 +8,7 @@
         {%- if elementary.is_ephemeral_model(model) %}
             {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
         {%- endif %}
-        {% if not dimensions %}
-            {{ exceptions.raise_compiler_error('Dimension anomalies test must get "dimensions" as a parameter!') }}
-        {% endif %}
+        {%- set mandatory_params = ['dimensions'] %}
 
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
@@ -26,6 +24,7 @@
         {% endif %}
 
         {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+                                                                                                   mandatory_params=mandatory_params,
                                                                                                    timestamp_column=timestamp_column,
                                                                                                    where_expression=where_expression,
                                                                                                    anomaly_sensitivity=anomaly_sensitivity,
@@ -35,7 +34,8 @@
                                                                                                    days_back=days_back,
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
-                                                                                                   dimensions=dimensions) %}
+                                                                                                   dimensions=dimensions,
+                                                                                                   sensitivity=sensitivity) %}
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
