@@ -51,7 +51,8 @@
     'min_training_set_size': 14,
     'cache_artifacts': true,
     'anomaly_direction': 'both',
-    'store_result_rows_in_own_table': true
+    'store_result_rows_in_own_table': true,
+    'seasonality': None
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

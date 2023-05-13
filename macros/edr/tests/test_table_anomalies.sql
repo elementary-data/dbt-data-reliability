@@ -22,7 +22,6 @@
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
         {% endif %}
-        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
         {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
                                                                                                    timestamp_column=timestamp_column,
@@ -63,7 +62,7 @@
 
         {#- calculate anomaly scores for metrics -#}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
-                                                                          model_graph_node,
+                                                                          model_relation,
                                                                           test_configuration=test_configuration,
                                                                           metric_properties=metric_properties) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}

@@ -4,6 +4,7 @@
 -- TODO: Add min and max time buckets to be in the config as well
 -- TODO: Add tests specific config to be part of the config as well
 -- TODO: Add validation that mandatory config to run the test was passed
+-- TODO: Validate that all configs have defaults
 
 {% macro get_anomalies_test_configuration(model_relation,
                                           timestamp_column,
