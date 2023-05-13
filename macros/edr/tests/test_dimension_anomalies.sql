@@ -42,8 +42,8 @@
         {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
 
         {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
-                                                                                backfill_days=backfill_days,
-                                                                                days_back=days_back,
+                                                                                backfill_days=test_configuration.backfill_days,
+                                                                                days_back=test_configuration.days_back,
                                                                                 metric_properties=metric_properties) %}
 
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
