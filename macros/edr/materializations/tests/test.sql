@@ -97,22 +97,18 @@
 
 
 {% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
--- TODO: get all these params from cache
-  {% set latest_row = anomaly_scores_rows[-1] %}
-  {% set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
-  {% set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params') %}
-  {% set sensitivity = elementary.insensitive_get_dict_value(test_params, 'sensitivity') or elementary.get_config_var('anomaly_sensitivity') %}
-  {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') or elementary.get_config_var('backfill_days') %}
-  {% set timestamp_column = elementary.insensitive_get_dict_value(test_params, 'timestamp_column') %}
-  {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
-  {% do test_params.update({'sensitivity': sensitivity, 'timestamp_column': timestamp_column, 'backfill_days': backfill_days}) %}
-  {% set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
-  {% set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
-  {% set backfill_days = elementary.insensitive_get_dict_value(test_params, 'backfill_days') %}
-  {% set backfill_period = "'-" ~ backfill_days ~ "'" %}
-  {% set test_unique_id = elementary.insensitive_get_dict_value(latest_row, 'test_unique_id') %}
-  {% set has_anomaly_score = elementary.insensitive_get_dict_value(latest_row, 'anomaly_score') is not none %}
-  {% if not has_anomaly_score %}
+  {%- set latest_row = anomaly_scores_rows[-1] %}
+  {%- set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
+  {%- set test_unique_id = flattened_test.unique_id %}
+  {%- set test_configuration = elementary.get_cache(test_unique_id) %}
+  {%- set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params') %}
+  {%- do test_params.update(test_configuration) %}
+  {%- set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
+  {%- set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
+  {%- set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
+  {%- set test_unique_id = elementary.insensitive_get_dict_value(latest_row, 'test_unique_id') %}
+  {%- set has_anomaly_score = elementary.insensitive_get_dict_value(latest_row, 'anomaly_score') is not none %}
+  {%- if not has_anomaly_score %}
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
