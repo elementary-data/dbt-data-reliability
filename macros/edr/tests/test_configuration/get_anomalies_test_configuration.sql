@@ -43,7 +43,11 @@
        'time_bucket': (time_bucket if time_bucket else none) ,
        'days_back': (days_back if days_back else none) ,
        'backfill_days':(backfill_days if backfill_days else none),
-       'seasonality':(seasonality if seasonality else none)
+       'seasonality':(seasonality if seasonality else none),
+       'freshness_column': (freshness_column if freshness_column else none),
+       'event_timestamp_column':(event_timestamp_column if event_timestamp_column else none),
+       'dimensions':(dimensions if dimensions else none)
+
         } %}
 
   {# Changes in these configs impact the metric id of the test. #}
@@ -62,4 +66,9 @@
     {%- do elementary.set_cache(test_unique_id, test_configuration) -%}
 
     {{ return([test_configuration, metric_properties]) }}
+{% endmacro %}
+
+
+{% macro validate_mandatory_configuration(test_configuration, mandatory_configuration) %}
+
 {% endmacro %}

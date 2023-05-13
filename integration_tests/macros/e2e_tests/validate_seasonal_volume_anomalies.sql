@@ -1,6 +1,6 @@
 {% macro validate_seasonal_volume_anomalies_after_training() %}
     -- start by validating the non-seasonal anomalies
-    {% set non_seasonal_test_name = "'elementary_volume_anomalies_users_per_day_weekly_seasonal_14__2__updated_at'" %}
+    {% set non_seasonal_test_name = "'elementary_volume_anomalies_users_per_day_weekly_seasonal_2__14__updated_at'" %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
     {% set query_to_get_test_result_rows_query %}
         select ALERT_RESULTS_QUERY
@@ -21,7 +21,7 @@
     {{ assert_value(numeric_metric_from_error, 700.0) }}
 
     -- now the seasonal anomalies: should not have any rows.
-    {% set seasonal_test_name = "'elementary_volume_anomalies_users_per_day_weekly_seasonal_14__day_of_week__2__updated_at'" %}
+    {% set seasonal_test_name = "'elementary_volume_anomalies_users_per_day_weekly_seasonal_2__14__day_of_week__updated_at'" %}
     {% set query_to_get_test_result_rows_query %}
         select ALERT_RESULTS_QUERY
         from {{ alerts_relation }}
