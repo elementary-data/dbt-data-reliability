@@ -1,5 +1,4 @@
 -- TODO: Add validation for backfill days, sensitivity and min_training_size?
--- TODO: Add min_training_set_size to tests and use it
 -- TODO: Add monitors to this macro
 -- TODO: Add min and max time buckets to be in the config as well
 -- TODO: Add tests specific config to be part of the config as well
@@ -35,7 +34,7 @@
     {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
-    {% set anomalies_test_configuration_dict =
+    {% set test_configuration =
       {'timestamp_column': (timestamp_column if timestamp_column else none),
        'where_expression': (where_expression if where_expression else none),
        'anomaly_sensitivity': (anomaly_sensitivity if anomaly_sensitivity else none),
@@ -49,7 +48,7 @@
 
   {# Changes in these configs impact the metric id of the test. #}
   {# If these configs change, we ignore the old metrics and recalculate. #}
-    {% set metric_properties_dict =
+    {% set metric_properties =
       {'timestamp_column': (timestamp_column if timestamp_column else none),
        'where_expression': (where_expression if where_expression else none),
        'time_bucket': (time_bucket if time_bucket else none),
@@ -60,7 +59,7 @@
 
    {# Adding to cache so test configuration will be available outside the test context #}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
-    {%- do elementary.set_cache(test_unique_id, anomalies_test_configuration_dict) -%}
+    {%- do elementary.set_cache(test_unique_id, test_configuration) -%}
 
-    {{ return([anomalies_test_configuration_dict, metric_properties_dict]) }}
+    {{ return([test_configuration, metric_properties]) }}
 {% endmacro %}
