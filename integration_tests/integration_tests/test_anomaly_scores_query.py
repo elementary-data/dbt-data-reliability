@@ -172,7 +172,7 @@ def test_anomaly_scores_query(
     }
 
     test_configuration = {
-        "sensitivity": 3,  # for z-score (3 sigmas is the default)
+        "anomaly_sensitivity": 3,  # for z-score (3 sigmas is the default)
         "backfill_days": 2,  # should be removed from the macro since it's not used TODO
         "days_back": 30,
         "dimensions": dimensions,  # should be the same as in the input
