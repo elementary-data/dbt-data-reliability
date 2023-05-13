@@ -171,13 +171,21 @@ def test_anomaly_scores_query(
         "schema": schema,
     }
 
+    test_configuration = {
+        "sensitivity": 3,  # for z-score (3 sigmas is the default)
+        "backfill_days": 2,  # should be removed from the macro since it's not used TODO
+        "days_back": 30
+        "dimensions": dimensions  # should be the same as in the input
+        "time_bucket": time_bucket,
+        "timestamp_column": timestamp_column,
+        "where_expression": where_expression,
+    }
+
     query = dbt_project.execute_macro(
         "elementary.get_anomaly_scores_query",
         test_metrics_table_relation=my_test_metrics_relation,
         model_relation=node,  # the table the test has ran on / is monitoring.
-        sensitivity=3,  # for z-score (3 sigmas is the default)
-        backfill_days=2,  # should be removed from the macro since it's not used TODO
-        days_back=30,
+        test_configuration=test_configuration,
         monitors=[
             metric_name
         ],  # a list of strings that should include "metric_name" as well.
@@ -185,7 +193,6 @@ def test_anomaly_scores_query(
         # table, but in tests I think it makes sense to have 1 at a time.
         column_name=column_name,  # should be the same as in the input
         columns_only=columns_only,  # if True, don't do table-level anomalies
-        dimensions=dimensions,  # should be the same as in the input
         metric_properties=metric_properties,
         data_monitoring_metrics_table=my_test_data_monitoring_metrics,
     )
