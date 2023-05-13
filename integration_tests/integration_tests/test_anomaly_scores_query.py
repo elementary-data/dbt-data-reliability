@@ -168,17 +168,17 @@ def test_anomaly_scores_query(
         "resource_type": "dummy_type_not_incremental",
         "alias": alias_table_name,
         "database": database,
-        "schema": schema,
+        "schema": schema
     }
 
     test_configuration = {
         "sensitivity": 3,  # for z-score (3 sigmas is the default)
         "backfill_days": 2,  # should be removed from the macro since it's not used TODO
-        "days_back": 30
-        "dimensions": dimensions  # should be the same as in the input
+        "days_back": 30,
+        "dimensions": dimensions,  # should be the same as in the input
         "time_bucket": time_bucket,
         "timestamp_column": timestamp_column,
-        "where_expression": where_expression,
+        "where_expression": where_expression
     }
 
     query = dbt_project.execute_macro(
