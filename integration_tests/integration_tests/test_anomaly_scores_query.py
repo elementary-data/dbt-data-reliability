@@ -174,7 +174,7 @@ def test_anomaly_scores_query(
     query = dbt_project.execute_macro(
         "elementary.get_anomaly_scores_query",
         test_metrics_table_relation=my_test_metrics_relation,
-        model_graph_node=node,  # the table the test has ran on / is monitoring.
+        model_relation=node,  # the table the test has ran on / is monitoring.
         sensitivity=3,  # for z-score (3 sigmas is the default)
         backfill_days=2,  # should be removed from the macro since it's not used TODO
         days_back=30,
