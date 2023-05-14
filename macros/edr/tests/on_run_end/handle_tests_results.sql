@@ -59,7 +59,7 @@
         {% if not target_relation %}
           {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
         {% endif %}
-        {%- set temp_relation = elementary.edr_make_session_temp_relation(target_relation) -%}
+        {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
@@ -84,7 +84,7 @@
         {% if not target_relation %}
           {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
         {% endif %}
-        {%- set temp_relation = elementary.edr_make_session_temp_relation(target_relation) -%}
+        {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
         {%- if test_tables_union_query %}
             {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
