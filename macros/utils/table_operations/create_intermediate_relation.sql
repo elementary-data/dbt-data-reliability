@@ -1,5 +1,5 @@
 {% macro create_intermediate_relation(base_relation, rows, temporary, like_columns=none) %}
-    {% set int_relation = elementary.make_temp_relation(base_relation).incorporate(type='table') %}
+    {% set int_relation = elementary.edr_make_temp_relation(base_relation).incorporate(type='table') %}
 
     {% if not elementary.has_temp_table_support() %}
         {% set temporary = false %}
