@@ -13,12 +13,11 @@
 
     {%- if not configured_time_bucket %}
         {{ return(default_time_bucket) }}
-    {%- elif configured_time_bucket and not configured_time_bucket.period %}
-        {%- do configured_time_bucket.update({"period": default_time_bucket.period }) -%}
-    {%- elif configured_time_bucket and not configured_time_bucket.count %}
-        {%- do configured_time_bucket.update({"count": default_time_bucket.count }) %}
+    {%- else %}
+        {%- set time_bucket = default_time_bucket.copy() %}
+        {%- do time_bucket.update(configured_time_bucket) %}
+        {{ return(time_bucket) }}
     {%- endif %}
-    {{ return(configured_time_bucket) }}
 {% endmacro %}
 
 
@@ -38,7 +37,7 @@
             {%- set invalid_keys = [] %}
             {%- set valid_keys = ['period', 'count'] %}
             {%- for key, value in time_bucket.items() %}
-                {%- if key not in ['period', 'count'] %}
+                {%- if key not in valid_keys %}
                     {%- do invalid_keys.append(key) -%}
                 {%- endif %}
             {%- endfor %}
@@ -57,7 +56,7 @@
         {%- endif %}
 
         {% if time_bucket.count and time_bucket.count is not integer %}
-            {% do exceptions.raise_compiler_error("time_bucket.count expectes valid integer, got: {} (If it's an integer, try to remove quotes)".format(time_bucket.count)) %}
+            {% do exceptions.raise_compiler_error("time_bucket.count expects valid integer, got: {} (If it's an integer, try to remove quotes)".format(time_bucket.count)) %}
         {% endif %}
         {% set supported_periods = ['hour','day','week','month'] %}
         {% if time_bucket.period and time_bucket.period not in supported_periods %}
