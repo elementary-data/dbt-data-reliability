@@ -1,3 +1,11 @@
+{% macro edr_make_session_temp_relation(base_relation, suffix=none) %}
+    {% if not suffix %}
+        {% set suffix = modules.datetime.datetime.utcnow().strftime('__tmp_%Y%m%d%H%M%S%f') %}
+    {% endif %}
+
+    {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
+{% endmacro %}
+
 {% macro edr_make_temp_relation(base_relation, suffix=none) %}
     {% if not suffix %}
         {% set suffix = modules.datetime.datetime.utcnow().strftime('__tmp_%Y%m%d%H%M%S%f') %}
