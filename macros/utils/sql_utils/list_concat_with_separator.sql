@@ -3,7 +3,7 @@
     {% for item in item_list %}
         {% set new_item = elementary.edr_quote(item) %}
         {% if handle_nulls %}
-            {% set new_item = "case when " ~ elementary.edr_cast_as_string(elementary.edr_quote(item)) ~ " is null then 'NULL' else " ~ elementary.edr_cast_as_string(elementary.edr_quote(item)) ~ " end" %}
+            {% set new_item = "case when " ~ elementary.edr_cast_as_string(item) ~ " is null then 'NULL' else " ~ elementary.edr_cast_as_string(item) ~ " end" %}
         {% endif %}
         {% do new_list.append(new_item) %}
         {% if not loop.last %}
