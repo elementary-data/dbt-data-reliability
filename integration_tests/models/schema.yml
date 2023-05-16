@@ -508,6 +508,61 @@ sources:
               event_timestamp_column: occurred_at
               update_timestamp_column: updated_at
       - name: numeric_column_anomalies_training
+        meta:
+          elementary:
+            min_training_set_size: 22
+            days_back: 100
+            backfill_days: 10
+            anomaly_direction: 'drop'
+            anomaly_sensitivity: 4
+            where_expression: 'true'
+            timestamp_column: 'updated_at'
+            time_bucket:
+              period: hour
+              count: 4
+        tests:
+          - config_levels:
+              tags: ["config_levels"]
+              alias: 'test_level_config'
+              min_training_set_size: 18
+              days_back: 5
+              backfill_days: 5
+              seasonality: 'day_of_week'
+              anomaly_direction: 'spike'
+              anomaly_sensitivity: 5
+              where_expression: '1=1'
+              timestamp_column: 'occurred_at'
+              time_bucket:
+                period: day
+                count: 1
+              expected_config: ## Test level expected config
+                seasonality: 'day_of_week'
+                min_training_set_size: 18
+                days_back: 35 ## *7 because of seasonality
+                backfill_days: 5
+                anomaly_direction: 'spike'
+                anomaly_sensitivity: 5
+                where_expression: '1=1'
+                timestamp_column: 'occurred_at'
+                time_bucket:
+                  period: day
+                  count: 1
+          - config_levels:
+              tags: ["config_levels"]
+              alias: 'model_level_config'
+              expected_config: ## Model level expected config
+                min_training_set_size: 22
+                seasonality: null
+                days_back: 100
+                backfill_days: 10
+                anomaly_direction: 'drop'
+                anomaly_sensitivity: 4
+                where_expression: 'true'
+                timestamp_column: 'updated_at'
+                time_bucket:
+                  period: hour
+                  count: 4
+
       - name: users_per_day_weekly_seasonal_training
   - name: validation
     schema: test_seeds
