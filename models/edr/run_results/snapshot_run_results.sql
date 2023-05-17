@@ -32,7 +32,7 @@ SELECT
     run_results.thread_id,
     snapshots.database_name,
     snapshots.schema_name,
-    snapshots.materialization,
+    coalesce(run_results.materialization, snapshots.materialization) as materialization,
     snapshots.tags,
     snapshots.package_name,
     snapshots.path,

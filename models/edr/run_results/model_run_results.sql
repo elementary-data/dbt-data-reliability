@@ -32,7 +32,7 @@ SELECT
     run_results.thread_id,
     models.database_name,
     models.schema_name,
-    models.materialization,
+    coalesce(run_results.materialization, models.materialization) as materialization,
     models.tags,
     models.package_name,
     models.path,
