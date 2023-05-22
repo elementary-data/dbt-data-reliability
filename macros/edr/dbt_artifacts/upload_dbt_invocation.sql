@@ -113,6 +113,18 @@
   {% do return(elementary.get_first_env_var(["DBT_ORCHESTRATOR"])) %}
 {% endmacro %}
 
+{% macro get_job_url() %}
+  {% if elementary.get_first_env_var(["GITHUB_ACTIONS"]) %}
+    {% set server_utl = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
+    {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
+    {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
+
+    {% set github_job_url = server_utl ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
+    {% do return(github_job_url) %}
+  {% endif %}
+  {% do return(elementary.get_config_var("job_url") or elementary.get_first_env_var(["DBT_JOB_URL"])) %}
+{% endmacro %}
+
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
