@@ -48,6 +48,7 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions
         } %}
+    {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
 
   {# Changes in these configs impact the metric id of the test. #}
@@ -60,6 +61,7 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions
         } %}
+    {%- set metric_properties = elementary.empty_dict_keys_to_none(metric_properties) -%}
 
   {# Adding to cache so test configuration will be available outside the test context #}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -89,4 +91,14 @@
     {%- if missing_mandatory_params | length > 0 %}
         {% do exceptions.raise_compiler_error('Missing mandatory configuration: {}'.format(missing_mandatory_params)) %}
     {%- endif %}
+{% endmacro %}
+
+
+{% macro empty_dict_keys_to_none(dict) %}
+    {% for key in dict %}
+        {% if not dict[key] %}
+            {% do dict.update({key: none}) %}
+        {% endif %}
+    {% endfor %}
+    {{ return(dict) }}
 {% endmacro %}
