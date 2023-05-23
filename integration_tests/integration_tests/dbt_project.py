@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import dbt.adapters.factory
 
 dbt.adapters.factory.get_adapter = lambda config: config.adapter
@@ -25,6 +28,24 @@ COMPILED_CODE = (
 
 # Disable dbt tracking
 disable_tracking()
+
+
+def default_project_dir() -> Path:
+    if "DBT_PROJECT_DIR" in os.environ:
+        return Path(os.environ["DBT_PROJECT_DIR"]).resolve()
+    paths = list(Path.cwd().parents)
+    paths.insert(0, Path.cwd())
+    return next((x for x in paths if (x / "dbt_project.yml").exists()), Path.cwd())
+
+
+def default_profiles_dir() -> Path:
+    if "DBT_PROFILES_DIR" in os.environ:
+        return Path(os.environ["DBT_PROFILES_DIR"]).resolve()
+    return Path.cwd() if (Path.cwd() / "profiles.yml").exists() else Path.home() / ".dbt"
+
+
+DEFAULT_PROFILES_DIR = str(default_profiles_dir())
+DEFAULT_PROJECT_DIR = str(default_project_dir())
 
 
 class DbtProject:
@@ -133,7 +154,8 @@ class Args(BaseModel):
     Minimal mock to dbt config arguments
     """
 
-    project_dir: str
+    project_dir: str = DEFAULT_PROJECT_DIR
+    profiles_dir: str = DEFAULT_PROFILES_DIR
     profile: str = None
     target: Optional[str] = None
     threads: Optional[int] = 1

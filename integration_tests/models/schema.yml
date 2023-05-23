@@ -72,8 +72,10 @@ models:
       - elementary.volume_anomalies:
           tags: ["no_timestamp"]
       - elementary.dimension_anomalies:
-          dimensions: null_count_str
-          tags: ["no_timestamp"]
+          dimensions:
+            - null_count_str
+          tags: ["no_timestamp","dimension_anomalies"]
+          alias: 'dimension_anomalies_no_timestamp'
 
     columns:
       - name: "null_count_str"
@@ -93,16 +95,19 @@ models:
         timestamp_column: updated_at
     tests:
       - elementary.dimension_anomalies:
-          tags: ["dimension_anomalies"]
+          tags: ["dimension_anomalies", "should_fail"]
+          alias: 'dimension_anomalies_platform'
           dimensions:
             - platform
       - elementary.dimension_anomalies:
+          alias: 'dimension_anomalies_platform_where_expression'
           tags: ["dimension_anomalies"]
           dimensions:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
-          tags: ["dimension_anomalies"]
+          tags: ["dimension_anomalies", "should_fail"]
+          alias: 'dimension_anomalies_platform_version'
           dimensions:
             - platform
             - version
@@ -392,6 +397,42 @@ models:
       - elementary.schema_changes:
           tags: ["ephemeral_model", "error_test"]
 
+
+  - name: config_levels_test_and_model
+    tags: ["config_levels"]
+    config:
+      elementary:
+        time_bucket:
+          period: day
+          count: 3
+    tests:
+      - config_levels:
+          tags: ["config_levels"]
+          alias: 'test_level_config'
+          time_bucket:
+            period: hour
+            count: 4
+          expected_config:
+            time_bucket:
+              period: hour
+              count: 4
+      - config_levels:
+          tags: ["config_levels"]
+          alias: 'model_level_config'
+          expected_config:
+            time_bucket:
+              period: day
+              count: 3
+  - name: config_levels_project
+    tags: ["config_levels"]
+    tests:
+      - config_levels:
+          tags: ["config_levels"]
+          alias: 'project_level_config'
+          expected_config:
+            time_bucket:
+              period: day
+              count: 1
 
 sources:
   - name: training

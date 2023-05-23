@@ -8,7 +8,7 @@
                                                                    identifier=temp_table_name,
                                                                    type='table') -%}
         {% if is_temp_table %}
-            {% set temp_table_relation = elementary.make_temp_relation(temp_table_relation) %}
+            {% set temp_table_relation = elementary.make_temp_view_relation(temp_table_relation) %}
         {% endif %}
 
         {# Cache the test table for easy access later #}

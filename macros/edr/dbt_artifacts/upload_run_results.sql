@@ -30,6 +30,7 @@
                                                                        ('failures', 'bigint'),
                                                                        ('query_id', 'string'),
                                                                        ('thread_id', 'string'),
+                                                                       ('materialization', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -37,6 +38,7 @@
 {% macro flatten_run_result(run_result) %}
     {% set run_result_dict = run_result.to_dict() %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
+    {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
     {% set flatten_run_result_dict = {
         'model_execution_id': elementary.get_node_execution_id(node),
         'invocation_id': invocation_id,
@@ -56,7 +58,8 @@
         'compiled_code': elementary.get_compiled_model_code_text(node),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
-        'thread_id': run_result_dict.get('thread_id')
+        'thread_id': run_result_dict.get('thread_id'),
+        'materialization': config_dict.get('materialized')
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}

@@ -28,7 +28,7 @@
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
       {% for rows_chunk in rows_chunks %}
         {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
-        {% do run_query(insert_rows_query) %}
+        {% do elementary.run_query(insert_rows_query) %}
       {% endfor %}
     {% else %}
       {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}

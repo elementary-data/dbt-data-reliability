@@ -1,38 +1,3 @@
-{% macro validate_dimension_anomalies() %}
-    {% set alerts_relation = ref('alerts_anomaly_detection') %}
-
-    {% set dimension_validation_query %}
-        select *
-        from {{ alerts_relation }}
-        where status in ('fail', 'warn') and tags like '%dimension_anomalies%'
-    {% endset %}
-    {% set results = elementary.agate_to_dicts(run_query(dimension_validation_query)) %}
-    {% set dimensions_with_problems = [] %}
-    
-    {% for result in results %}
-        {% set test_params = fromjson(result.get('test_params', '{}')) %}
-        {% set where_expression = test_params.get('where_expression') %}
-        {% set dimensions = test_params.get('dimensions') %}
-        {% if where_expression %}
-            {% do dimensions_with_problems.append[dimensions] %}
-        {% endif %}
-    {% endfor %}
-    {% if results | length > 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has too many fail/error tests: ' ~ results | length) %}
-        {{ return(1) }}
-    {% elif results | length < 2 %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed because it has not enough fail/error tests: ' ~ results | length) %}
-        {{ return(1) }}
-    {% elif dimensions_with_problems %}
-        {% do elementary.edr_log('FAILED: dimension anomalies tests failed on the dimensions - ' ~ dimensions_with_problems) %}
-        {{ return(1) }}
-    {% else %}
-        {% do elementary.edr_log('SUCCESS: dimension anomalies tests succeeded') %}
-        {{ return(0) }}
-    {% endif %}
-{% endmacro %}
-
-
 {% macro validate_no_timestamp_anomalies() %}
     {% set alerts_relation = ref('alerts_anomaly_detection') %}
 

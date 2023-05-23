@@ -6,6 +6,7 @@
 {% macro default__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
     {% do elementary.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
+    {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
 {# Spark / Databricks - truncate and insert (non-atomic) #}
@@ -26,4 +27,6 @@
         commit;
     {% endset %}
     {% do elementary.run_query(query) %}
+
+    {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}

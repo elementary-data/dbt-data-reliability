@@ -21,6 +21,15 @@
     {% for query in queries %}
         {% do elementary.run_query(query) %}
     {% endfor %}
+
+    {# Make sure we delete the temp tables we created #}
+    {% if delete_relation %}
+        {% do adapter.drop_relation(delete_relation) %}
+    {% endif %}
+    {% if insert_relation %}
+        {% do adapter.drop_relation(insert_relation) %}
+    {% endif %}
+
     {% do elementary.file_log("Finished deleting from and inserting to: {}".format(relation)) %}
 {% endmacro %}
 
