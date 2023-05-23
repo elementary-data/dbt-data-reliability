@@ -13,17 +13,21 @@
     {%- set default_numeric_monitors = elementary.get_config_var('edr_monitors')['column_numeric'] | list %}
     {% set numeric_monitors = [] %}
 
-    {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
-    {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
-    {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=none,
-                                                                           where_expression=none,
-                                                                           time_bucket=none)%}
-
+    {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+                                                                                           timestamp_column=timestamp_column,
+                                                                                           where_expression=where_expression,
+                                                                                           anomaly_sensitivity=anomaly_sensitivity,
+                                                                                           anomaly_direction=anomaly_direction,
+                                                                                           min_training_set_size=min_training_set_size,
+                                                                                           time_bucket=time_bucket,
+                                                                                           days_back=days_back,
+                                                                                           backfill_days=backfill_days,
+                                                                                           seasonality=seasonality) %}
     {% do numeric_monitors.extend(default_all_types) %}
     {% do numeric_monitors.extend(default_numeric_monitors) %}
     {%- set column_monitoring_query = elementary.column_monitoring_query(monitored_table_relation=monitors_inputs_table_relation,
                                                                          min_bucket_start=elementary.get_run_started_at(),
-                                                                         days_back=days_back,
+                                                                         days_back=test_configuration.days_back,
                                                                          column_obj=column_object,
                                                                          column_monitors=numeric_monitors,
                                                                          metric_properties=metric_properties) %}
