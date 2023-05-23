@@ -22,9 +22,6 @@
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% if table_relation.identifier == "dbt_run_results" %}
-          {% do debug() %}
-        {% endif %}
         {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
