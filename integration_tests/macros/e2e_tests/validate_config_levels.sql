@@ -13,6 +13,6 @@
     from error_tests
     where is_config_levels_tag = true
     {% endset %}
-    {% set results = elementary.agate_to_dicts(run_query(config_levels_validation_query)) | unique | list %}
-    {{ assert_lists_contain_same_items(results, []) }}
+    {% set results = elementary.run_query(config_levels_validation_query) %}
+    {{ assert_empty_table(results) }}
 {% endmacro %}
