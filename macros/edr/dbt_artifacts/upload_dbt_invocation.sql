@@ -122,6 +122,7 @@
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
       ('generated_at', 'string'),
+      ('created_at', 'timestamp'),
       ('command', 'string'),
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),

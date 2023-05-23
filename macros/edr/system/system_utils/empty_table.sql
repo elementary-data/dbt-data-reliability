@@ -7,6 +7,7 @@
     ('model_unique_id','long_string'),
     ('invocation_id', 'string'),
     ('detected_at','timestamp'),
+    ('created_at','timestamp'),
     ('database_name','string'),
     ('schema_name','string'),
     ('table_name','string'),
@@ -36,6 +37,7 @@
     ('max_loaded_at','string'),
     ('snapshotted_at','string'),
     ('generated_at', 'string'),
+    ('created_at', 'timestamp'),
     ('max_loaded_at_time_ago_in_s','float'),
     ('status','string'),
     ('error','string'),
@@ -58,13 +60,14 @@
                                ('bucket_end','timestamp'),
                                ('bucket_duration_hours','int'),
                                ('updated_at','timestamp'),
+                               ('created_at','timestamp'),
                                ('dimension','string'),
                                ('dimension_value','string'),
                                ('metric_properties','string')]) }}
 {% endmacro %}
 
 {% macro empty_schema_columns_snapshot() %}
-    {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp')]) }}
+    {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp'),('created_at','timestamp')]) }}
 {% endmacro %}
 
 

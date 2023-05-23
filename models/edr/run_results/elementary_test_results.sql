@@ -4,7 +4,7 @@
     unique_key = 'id',
     on_schema_change = 'append_new_columns',
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
-    meta={"timestamp_column": "detected_at"},
+    meta={"timestamp_column": "created_at"},
   )
 }}
 
