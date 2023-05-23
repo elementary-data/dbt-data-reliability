@@ -35,30 +35,30 @@
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
     {% set test_configuration =
-      {'timestamp_column': (timestamp_column if timestamp_column else none),
-       'where_expression': (where_expression if where_expression else none),
-       'anomaly_sensitivity': (anomaly_sensitivity if anomaly_sensitivity else none),
-       'anomaly_direction': (anomaly_direction if anomaly_direction else none),
-       'min_training_set_size': (min_training_set_size if min_training_set_size else none),
-       'time_bucket': (time_bucket if time_bucket else none) ,
-       'days_back': (days_back if days_back else none) ,
-       'backfill_days':(backfill_days if backfill_days else none),
-       'seasonality':(seasonality if seasonality else none),
-       'freshness_column': (freshness_column if freshness_column else none),
-       'event_timestamp_column':(event_timestamp_column if event_timestamp_column else none),
-       'dimensions':(dimensions if dimensions else none)
+      {'timestamp_column': timestamp_column,
+       'where_expression': where_expression,
+       'anomaly_sensitivity': anomaly_sensitivity,
+       'anomaly_direction': anomaly_direction,
+       'min_training_set_size': min_training_set_size,
+       'time_bucket': time_bucket,
+       'days_back': days_back,
+       'backfill_days': backfill_days,
+       'seasonality': seasonality,
+       'freshness_column': freshness_column,
+       'event_timestamp_column': event_timestamp_column,
+       'dimensions': dimensions
         } %}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
 
   {# Changes in these configs impact the metric id of the test. #}
   {# If these configs change, we ignore the old metrics and recalculate. #}
     {% set metric_properties =
-      {'timestamp_column': (timestamp_column if timestamp_column else none),
-       'where_expression': (where_expression if where_expression else none),
-       'time_bucket': (time_bucket if time_bucket else none),
-       'freshness_column': (freshness_column if freshness_column else none),
-       'event_timestamp_column':(event_timestamp_column if event_timestamp_column else none),
-       'dimensions':(dimensions if dimensions else none)
+      {'timestamp_column': timestamp_column,
+       'where_expression': where_expression,
+       'time_bucket': time_bucket,
+       'freshness_column': freshness_column,
+       'event_timestamp_column': event_timestamp_column,
+       'dimensions': dimensions
         } %}
 
   {# Adding to cache so test configuration will be available outside the test context #}
