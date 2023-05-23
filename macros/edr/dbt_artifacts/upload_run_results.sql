@@ -29,7 +29,7 @@
                                                                        ('failures', 'bigint'),
                                                                        ('query_id', 'string'),
                                                                        ('thread_id', 'string'),
-                                                                       ('insertion_time', 'timestamp')
+                                                                       ('updated_at', 'timestamp')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}

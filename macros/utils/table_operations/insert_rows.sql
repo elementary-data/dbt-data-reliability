@@ -8,8 +8,7 @@
         {{ return(none) }}
     {% endif %}
 
-    {# The warehouse should auto-fill the insertion time. #}
-    {% set columns = adapter.get_columns_in_relation(table_relation) | rejectattr("name", "==", "insertion_time") | list %}
+    {% set columns = adapter.get_columns_in_relation(table_relation) %}
     {% if not columns %}
         {% set table_name = elementary.relation_to_full_name(table_relation) %}
         {{ elementary.edr_log('Could not extract columns for table - ' ~ table_name ~ ' (might be a permissions issue)') }}
@@ -23,6 +22,9 @@
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
+        {% if table_relation.identifier == "dbt_run_results" %}
+          {% do debug() %}
+        {% endif %}
         {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
@@ -53,8 +55,13 @@
     {% for row in rows %}
       {% set rendered_column_values = [] %}
       {% for column in columns %}
-        {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
-        {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+        {% if column.name == "updated_at" %}
+          {% set column_value = elementary.edr_current_timestamp() %}
+          {% do rendered_column_values.append(elementary.render_value(column_value, quote=false)) %}
+        {% else %}
+          {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
+          {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+        {% endif %}
       {% endfor %}
       {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
@@ -112,12 +119,16 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{%- macro render_value(value) -%}
+{%- macro render_value(value, quote=True) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string -%}
-            '{{- elementary.escape_special_chars(value) -}}'
+            {%- if quote -%}
+                '{{- elementary.escape_special_chars(value) -}}'
+            {%- else -%}
+                {{- elementary.escape_special_chars(value) -}}
+            {%- endif -%}
         {%- elif value is mapping or value is sequence -%}
             '{{- elementary.escape_special_chars(tojson(value)) -}}'
         {%- else -%}
