@@ -49,21 +49,25 @@
     ]) }}
 {% endmacro %}
 
-{% macro empty_data_monitoring_metrics() %}
-    {{ elementary.empty_table([('id','string'),
-                               ('full_table_name','string'),
-                               ('column_name','string'),
-                               ('metric_name','string'),
-                               ('metric_value','float'),
-                               ('source_value','string'),
-                               ('bucket_start','timestamp'),
-                               ('bucket_end','timestamp'),
-                               ('bucket_duration_hours','int'),
-                               ('updated_at','timestamp'),
-                               ('created_at','timestamp'),
-                               ('dimension','string'),
-                               ('dimension_value','string'),
-                               ('metric_properties','string')]) }}
+{% macro empty_data_monitoring_metrics(with_created_at=true) %}
+    {% set columns = [('id','string'),
+                      ('full_table_name','string'),
+                      ('column_name','string'),
+                      ('metric_name','string'),
+                      ('metric_value','float'),
+                      ('source_value','string'),
+                      ('bucket_start','timestamp'),
+                      ('bucket_end','timestamp'),
+                      ('bucket_duration_hours','int'),
+                      ('updated_at','timestamp'),
+                      ('dimension','string'),
+                      ('dimension_value','string'),
+                      ('metric_properties','string')] 
+    %}
+    {% if with_created_at %}
+        {% do columns.append(('created_at','timestamp')) %}
+    {% endif %}
+    {{ elementary.empty_table(columns) }}
 {% endmacro %}
 
 {% macro empty_schema_columns_snapshot() %}
