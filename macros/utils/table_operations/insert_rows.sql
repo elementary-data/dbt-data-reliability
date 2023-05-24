@@ -54,7 +54,7 @@
       {% for column in columns %}
         {% if column.name == "created_at" %}
           {% set column_value = elementary.edr_current_timestamp() %}
-          {% do rendered_column_values.append(elementary.render_value(column_value, quote=false)) %}
+          {% do rendered_column_values.append(column_value) %}
         {% else %}
           {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
           {% do rendered_column_values.append(elementary.render_value(column_value)) %}
@@ -116,16 +116,12 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{%- macro render_value(value, quote=True) -%}
+{%- macro render_value(value) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string -%}
-            {%- if quote -%}
-                '{{- elementary.escape_special_chars(value) -}}'
-            {%- else -%}
-                {{- elementary.escape_special_chars(value) -}}
-            {%- endif -%}
+            '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}
             '{{- elementary.escape_special_chars(tojson(value)) -}}'
         {%- else -%}
