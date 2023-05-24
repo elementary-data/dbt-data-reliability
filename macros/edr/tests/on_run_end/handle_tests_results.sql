@@ -53,53 +53,115 @@
 {% endmacro %}
 
 {% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
-    {%- if test_metrics_tables %}
-        {%- set test_tables_union_query = elementary.union_metrics_query(test_metrics_tables) -%}
-        {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
-        {% if not target_relation %}
-          {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
-        {% endif %}
-        {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
-        {%- if test_tables_union_query %}
-            {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
-            {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
-            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-            {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
-            {%- if target_relation and temp_relation and dest_columns %}
-                {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'id', dest_columns) %}
-                {%- do run_query(merge_sql) %}
-                {%- do adapter.commit() -%}
-                {{ elementary.file_log('Finished merging') }}
-            {%- else %}
-                {{ elementary.file_log('Error: could not merge to table: ' ~ target_name) }}
-            {%- endif %}
-        {%- endif %}
-    {%- endif %}
+    {%- if not test_metrics_tables %}
+      {% do return(none) %}
+    {% endif %}
+
+    {%- set test_tables_union_query = elementary.union_metrics_query(test_metrics_tables) -%}
+    {% if not test_tables_union_query %}
+      {% do return(none) %}
+    {% endif %}
+
+    {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
+    {% if not target_relation %}
+      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+    {% endif %}
+
+    {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
+    {% set insert_query %}
+      INSERT INTO {{ target_relation }} (
+        id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        updated_at,
+        dimension,
+        dimension_value,
+        metric_properties,
+        created_at
+      )
+      SELECT
+        id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        updated_at,
+        dimension,
+        dimension_value,
+        metric_properties,
+        {{ elementary.edr_current_timestamp() }} as created_at
+      FROM {{ temp_relation }}
+    {% endset %}
+
+    {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
+    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {% do elementary.run_query(insert_query) %}
 {% endmacro %}
 
 {% macro merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
-    {%- if test_columns_snapshot_tables %}
-        {%- set test_tables_union_query = elementary.union_columns_snapshot_query(test_columns_snapshot_tables) -%}
-        {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
-        {% if not target_relation %}
-          {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
-        {% endif %}
-        {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
-        {%- if test_tables_union_query %}
-            {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
-            {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
-            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
-            {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
-            {%- if target_relation and temp_relation and dest_columns %}
-                {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'column_state_id', dest_columns) %}
-                {%- do run_query(merge_sql) %}
-                {%- do adapter.commit() -%}
-                {{ elementary.file_log('Finished merging') }}
-            {%- else %}
-                {{ elementary.file_log('Error: could not merge to table: ' ~ target_name) }}
-            {%- endif %}
-        {%- endif %}
-    {%- endif %}
+    {%- if not test_columns_snapshot_tables %}
+      {% do return(none) %}
+    {% endif %}
+
+    {%- set test_tables_union_query = elementary.union_columns_snapshot_query(test_columns_snapshot_tables) -%}
+    {% if not test_tables_union_query %}
+      {% do return(none) %}
+    {% endif %}
+
+    {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
+    {% if not target_relation %}
+      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+    {% endif %}
+
+    {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
+    {% set insert_query %}
+      INSERT INTO {{ target_relation }} (
+        id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        updated_at,
+        dimension,
+        dimension_value,
+        metric_properties,
+        created_at
+      )
+      SELECT
+        id,
+        full_table_name,
+        column_name,
+        metric_name,
+        metric_value,
+        source_value,
+        bucket_start,
+        bucket_end,
+        bucket_duration_hours,
+        updated_at,
+        dimension,
+        dimension_value,
+        metric_properties,
+        {{ elementary.edr_current_timestamp() }} as created_at
+      FROM {{ temp_relation }}
+    {% endset %}
+
+    {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
+    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {% do elementary.run_query(insert_query) %}
 {% endmacro %}
 
 {% macro pop_test_result_rows(elementary_test_results) %}
