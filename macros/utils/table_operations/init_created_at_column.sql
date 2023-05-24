@@ -29,14 +29,6 @@
 {% endmacro %}
 
 {% macro bigquery__create_created_at_column() %}
-    {% do elementary.add_and_alter_created_at_column() %}
-{% endmacro %}
-
-{% macro spark__create_created_at_column() %}
-    {% do elementary.add_and_alter_created_at_column() %}
-{% endmacro %}
-
-{% macro add_and_alter_created_at_column() %}
     {% set add_column_query %}
         ALTER TABLE {{ this }} ADD COLUMN created_at {{ elementary.edr_type_timestamp() }};
     {% endset %}
@@ -44,5 +36,20 @@
         ALTER TABLE {{ this }} ALTER COLUMN created_at SET DEFAULT {{ elementary.edr_current_timestamp() }};
     {% endset %}
     {% do elementary.run_query(add_column_query) %}
+    {% do elementary.run_query(set_default_value_query) %}
+{% endmacro %}
+
+{% macro databricks__create_created_at_column() %}
+    {% set add_column_query %}
+        ALTER TABLE {{ this }} ADD COLUMN created_at {{ elementary.edr_type_timestamp() }};
+    {% endset %}
+    {% set allow_default_values_query %}
+        ALTER TABLE {{ this }} SET TBLPROPERTIES('delta.feature.allowColumnDefaults' = 'supported');
+    {% endset %}
+    {% set set_default_value_query %}
+        ALTER TABLE {{ this }} ALTER COLUMN created_at SET DEFAULT {{ elementary.edr_current_timestamp() }};
+    {% endset %}
+    {% do elementary.run_query(add_column_query) %}
+    {% do elementary.run_query(allow_default_values_query) %}
     {% do elementary.run_query(set_default_value_query) %}
 {% endmacro %}
