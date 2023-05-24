@@ -4,8 +4,8 @@
     unique_key = 'elementary_test_results_id',
     on_schema_change = 'append_new_columns',
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
-    post_hook='{{ elementary.backfill_result_rows() }}',
-    meta={"timestamp_column": "detected_at"}
+    post_hook='{{ init_created_at() }}{{ elementary.backfill_result_rows() }}',
+    meta={"timestamp_column": "detected_at"},
   )
 }}
 

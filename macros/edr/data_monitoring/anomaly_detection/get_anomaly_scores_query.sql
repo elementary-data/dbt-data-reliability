@@ -26,8 +26,21 @@
     {%- set anomaly_scores_query %}
 
         with data_monitoring_metrics as (
-
-            select * from {{ data_monitoring_metrics_table }}
+            select
+                id,
+                full_table_name,
+                column_name,
+                metric_name,
+                metric_value,
+                source_value,
+                bucket_start,
+                bucket_end,
+                bucket_duration_hours,
+                updated_at,
+                dimension,
+                dimension_value,
+                metric_properties
+            from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
                 bucket_end > {{ min_bucket_start_expr }}

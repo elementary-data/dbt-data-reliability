@@ -63,7 +63,7 @@
         {%- if test_tables_union_query %}
             {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
-            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) | rejectattr("name", "==", "created_at") | list %}
             {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {%- if target_relation and temp_relation and dest_columns %}
                 {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'id', dest_columns) %}
@@ -88,7 +88,7 @@
         {%- if test_tables_union_query %}
             {{ elementary.file_log('Running union query from test tables to ' ~ temp_relation.identifier) }}
             {%- do run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
-            {% set dest_columns = adapter.get_columns_in_relation(target_relation) %}
+            {% set dest_columns = adapter.get_columns_in_relation(target_relation) | rejectattr("name", "==", "created_at") | list %}
             {{ elementary.file_log('Merging ' ~ temp_relation.identifier ~ ' to ' ~ target_relation.database ~ '.' ~ target_relation.schema ~ '.' ~ target_relation.identifier) }}
             {%- if target_relation and temp_relation and dest_columns %}
                 {% set merge_sql = elementary.merge_sql(target_relation, temp_relation, 'column_state_id', dest_columns) %}
