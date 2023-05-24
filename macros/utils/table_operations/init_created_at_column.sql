@@ -1,4 +1,4 @@
-{% macro init_created_at() %}
+{% macro init_created_at_column() %}
     {% if not execute %}
         {% do return('') %}
     {% endif %}
