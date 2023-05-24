@@ -37,9 +37,12 @@
 {% endmacro %}
 
 {% macro add_and_alter_created_at_column() %}
-    {% set query %}
-        ALTER TABLE {{ this }} ADD COLUMN created_at;
+    {% set add_column_query %}
+        ALTER TABLE {{ this }} ADD COLUMN created_at {{ elementary.edr_type_timestamp() }};
+    {% endset %}
+    {% set set_default_value_query %}
         ALTER TABLE {{ this }} ALTER COLUMN created_at SET DEFAULT {{ elementary.edr_current_timestamp() }};
     {% endset %}
-    {% do elementary.run_query(query) %}
+    {% do elementary.run_query(add_column_query) %}
+    {% do elementary.run_query(set_default_value_query) %}
 {% endmacro %}
