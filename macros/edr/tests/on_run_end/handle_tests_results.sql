@@ -126,35 +126,23 @@
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
     {% set insert_query %}
       INSERT INTO {{ target_relation }} (
-        id,
+        column_state_id,
+        full_column_name,
         full_table_name,
         column_name,
-        metric_name,
-        metric_value,
-        source_value,
-        bucket_start,
-        bucket_end,
-        bucket_duration_hours,
-        updated_at,
-        dimension,
-        dimension_value,
-        metric_properties,
+        data_type,
+        is_new,
+        detected_at,
         created_at
       )
       SELECT
-        id,
+        column_state_id,
+        full_column_name,
         full_table_name,
         column_name,
-        metric_name,
-        metric_value,
-        source_value,
-        bucket_start,
-        bucket_end,
-        bucket_duration_hours,
-        updated_at,
-        dimension,
-        dimension_value,
-        metric_properties,
+        data_type,
+        is_new,
+        detected_at,
         {{ elementary.edr_current_timestamp() }} as created_at
       FROM {{ temp_relation }}
     {% endset %}
