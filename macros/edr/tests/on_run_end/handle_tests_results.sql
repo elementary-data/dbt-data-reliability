@@ -10,8 +10,8 @@
     {% set test_metrics_tables = tables_cache.get("metrics") %}
     {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {{ elementary.merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
-    {{ elementary.merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
+    {{ elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) }}
+    {{ elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) }}
     {% if test_result_rows %}
       {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
       {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
@@ -52,7 +52,7 @@
   {% do return(elementary_test_results) %}
 {% endmacro %}
 
-{% macro merge_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
+{% macro insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {%- if not test_metrics_tables %}
       {% do return(none) %}
     {% endif %}
@@ -108,7 +108,7 @@
     {% do elementary.run_query(insert_query) %}
 {% endmacro %}
 
-{% macro merge_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
+{% macro insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
     {%- if not test_columns_snapshot_tables %}
       {% do return(none) %}
     {% endif %}
