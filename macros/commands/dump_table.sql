@@ -12,7 +12,12 @@
         {% set column_names = column_names | reject("in", deprecated_column_names) | list %}
     {% endif %}
 
-    {% set timestamp_column = node.meta.timestamp_column %}
+    {% if "created_at" in column_names %}
+        {% set timestamp_column = "created_at" %}
+    {% else %}
+        {% set timestamp_column = node.meta.timestamp_column %}
+    {% endif %}
+
     {% set query %}
         select {{ elementary.escape_select(column_names) }} from {{ relation }}
         {% if timestamp_column %}
