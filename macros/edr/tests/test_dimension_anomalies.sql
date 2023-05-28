@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
+{% test dimension_anomalies(model, dimensions, where_expression, timestamp_column, sensitivity, backfill_days, time_bucket, anomaly_direction='both', seasonality=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('alerts_anomaly_detection') }}
@@ -8,7 +8,9 @@
         {%- if elementary.is_ephemeral_model(model) %}
             {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
         {%- endif %}
-        {%- set mandatory_params = ['dimensions'] %}
+        {% if not dimensions %}
+            {{ exceptions.raise_compiler_error('Dimension anomalies test must get "dimensions" as a parameter!') }}
+        {% endif %}
 
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
@@ -23,44 +25,59 @@
             {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
         {% endif %}
 
-        {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
-                                                                                                   mandatory_params=mandatory_params,
-                                                                                                   timestamp_column=timestamp_column,
-                                                                                                   where_expression=where_expression,
-                                                                                                   anomaly_sensitivity=anomaly_sensitivity,
-                                                                                                   anomaly_direction=anomaly_direction,
-                                                                                                   min_training_set_size=min_training_set_size,
-                                                                                                   time_bucket=time_bucket,
-                                                                                                   days_back=days_back,
-                                                                                                   backfill_days=backfill_days,
-                                                                                                   seasonality=seasonality,
-                                                                                                   dimensions=dimensions,
-                                                                                                   sensitivity=sensitivity) %}
-        {%- if not test_configuration %}
-            {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
-        {%- endif %}
-        {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+        {% set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node) %}
+        {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
 
+        {% do elementary.validate_seasonality_parameter(seasonality=seasonality, time_bucket=time_bucket, timestamp_column=timestamp_column) %}
+        {% set days_back = elementary.get_days_back(seasonality=seasonality) %}
+        {% set metric_properties = elementary.construct_metric_properties_dict(timestamp_column=timestamp_column,
+                                                                               where_expression=where_expression,
+                                                                               time_bucket=time_bucket,
+                                                                               dimensions=dimensions) %}
+
+        {%- set timestamp_column_data_type = elementary.find_normalized_data_type_for_column(model, metric_properties.timestamp_column) %}
+        {{ elementary.debug_log('timestamp_column - ' ~ metric_properties.timestamp_column) }}
+        {{ elementary.debug_log('timestamp_column_data_type - ' ~ timestamp_column_data_type) }}
+        {%- set is_timestamp = elementary.get_is_column_timestamp(model_relation, metric_properties.timestamp_column, timestamp_column_data_type) %}
+        {{ elementary.debug_log('is_timestamp - ' ~ is_timestamp) }}
+
+        {% if metric_properties.timestamp_column and not is_timestamp %}
+          {% do exceptions.raise_compiler_error("Column `{}` is not a timestamp.".format(metric_properties.timestamp_column)) %}
+        {% endif %}
+
+        {% set dimensions_str = elementary.join_list(dimensions, ', ') %}
+        {{ elementary.debug_log('dimensions - ' ~ dimensions) }}
+        {{ elementary.debug_log('where_expression - ' ~ metric_properties.where_expression) }}
+        {% set backfill_days = elementary.get_test_argument(argument_name='backfill_days', value=backfill_days) %}
         {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model,
-                                                                                backfill_days=test_configuration.backfill_days,
-                                                                                days_back=test_configuration.days_back,
+                                                                                backfill_days=backfill_days,
+                                                                                days_back=days_back,
                                                                                 metric_properties=metric_properties) %}
 
         {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
 
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration.days_back, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, dimensions, min_bucket_start, max_bucket_end, days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
 
+
         {#- calculate anomaly scores for metrics -#}
-        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
-                                                                          model_relation=model_relation,
-                                                                          test_configuration=test_configuration,
-                                                                          monitors=['dimension'],
-                                                                          metric_properties=metric_properties) %}
+        {%- set sensitivity = elementary.get_test_argument(argument_name='anomaly_sensitivity', value=sensitivity) %}
+        {% do elementary.validate_directional_parameter(anomaly_direction) %}
+        {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
+                                                                          model_graph_node,
+                                                                          sensitivity,
+                                                                          backfill_days,
+                                                                          days_back,
+                                                                          ['dimension'],
+                                                                          dimensions=dimensions,
+                                                                          seasonality=seasonality,
+                                                                          metric_properties=metric_properties,
+                                                                          anomaly_direction=anomaly_direction) %}
 
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
