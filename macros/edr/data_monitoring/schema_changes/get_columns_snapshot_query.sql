@@ -46,7 +46,8 @@
             {{ elementary.generate_surrogate_key([
               'full_table_name',
               'column_name',
-              'data_type'
+              'data_type',
+              elementary.edr_quote(invocation_id)
             ]) }} as column_state_id,
             {{ elementary.full_column_name() }} as full_column_name,
             full_table_name,

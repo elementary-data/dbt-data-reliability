@@ -247,7 +247,9 @@
             'dimension',
             'dimension_value',
             'bucket_end',
-            'metric_properties']) }} as id,
+            'metric_properties',
+            elementary.edr_quote(invocation_id)
+            ]) }} as id,
         full_table_name,
         column_name,
         metric_name,

@@ -110,7 +110,8 @@
             'column_name',
             'metric_name',
             'bucket_end',
-            'metric_properties'
+            'metric_properties',
+            elementary.edr_quote(invocation_id)
         ]) }} as id,
         full_table_name,
         column_name,
