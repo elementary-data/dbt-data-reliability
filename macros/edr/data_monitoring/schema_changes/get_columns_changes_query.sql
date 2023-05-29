@@ -151,7 +151,6 @@
                 'column_name',
                 'change',
                 'detected_at',
-                elementary.edr_quote(invocation_id)
             ]) }} as data_issue_id,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             {{ elementary.full_name_split('database_name') }},
