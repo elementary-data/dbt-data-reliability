@@ -112,7 +112,7 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(elementary.get_first_env_var(["ORCHESTRATOR", ""DBT_ORCHESTRATOR"])) %}
+  {% do return(elementary.get_first_env_var(["ORCHESTRATOR", "DBT_ORCHESTRATOR"])) %}
 {% endmacro %}
 
 {% macro get_job_url() %}
