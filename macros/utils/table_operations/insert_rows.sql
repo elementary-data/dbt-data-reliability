@@ -52,7 +52,7 @@
     {% for row in rows %}
       {% set rendered_column_values = [] %}
       {% for column in columns %}
-        {% if column.name == "created_at" %}
+        {% if column.name.lower() == "created_at" %}
           {% set column_value = elementary.edr_current_timestamp() %}
           {% do rendered_column_values.append(column_value) %}
         {% else %}
