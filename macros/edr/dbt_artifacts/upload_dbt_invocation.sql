@@ -25,9 +25,9 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
-      'job_id': elementary.get_var("job_id", ["DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
+      'job_id': elementary.get_var("job_id", ["JOB_ID", "DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
       'job_run_id': elementary.get_var("job_run_id", ["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
-      'job_name': elementary.get_var("job_name", ["DBT_JOB_NAME"]),
+      'job_name': elementary.get_var("job_name", ["JOB_NAME", "DBT_JOB_NAME"]),
       'env': elementary.get_first_env_var(["DBT_ENV"]),
       'env_id': elementary.get_first_env_var(["DBT_ENV_ID"]),
       'project_id': elementary.get_first_env_var(["DBT_PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
@@ -111,7 +111,7 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(elementary.get_first_env_var(["DBT_ORCHESTRATOR"])) %}
+  {% do return(elementary.get_first_env_var(["ORCHESTRATOR", ""DBT_ORCHESTRATOR"])) %}
 {% endmacro %}
 
 {% macro get_job_url() %}
@@ -123,7 +123,7 @@
     {% set github_job_url = server_utl ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
     {% do return(github_job_url) %}
   {% endif %}
-  {% do return(elementary.get_var("job_url", ["DBT_JOB_URL"])) %}
+  {% do return(elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"])) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
