@@ -57,10 +57,10 @@ models:
           tags: ["regular_tests"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
+          tags: ["drop_directional_anomalies"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "spike"
-          tags: [ "spike_directional_anomalies" ]
+          tags: ["spike_directional_anomalies"]
 
   - name: no_timestamp_anomalies
     meta:
@@ -74,8 +74,8 @@ models:
       - elementary.dimension_anomalies:
           dimensions:
             - null_count_str
-          tags: ["no_timestamp","dimension_anomalies"]
-          alias: 'dimension_anomalies_no_timestamp'
+          tags: ["no_timestamp", "dimension_anomalies"]
+          alias: "dimension_anomalies_no_timestamp"
 
     columns:
       - name: "null_count_str"
@@ -96,29 +96,29 @@ models:
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
-          alias: 'dimension_anomalies_platform'
+          alias: "dimension_anomalies_platform"
           dimensions:
             - platform
       - elementary.dimension_anomalies:
-          alias: 'dimension_anomalies_platform_where_expression'
+          alias: "dimension_anomalies_platform_where_expression"
           tags: ["dimension_anomalies"]
           dimensions:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
-          alias: 'dimension_anomalies_platform_version'
+          alias: "dimension_anomalies_platform_version"
           dimensions:
             - platform
             - version
       - elementary.dimension_anomalies:
           anomaly_direction: "spike"
-          tags: [ "spike_directional_anomalies" ]
+          tags: ["spike_directional_anomalies"]
           dimensions:
             - platform
       - elementary.dimension_anomalies:
           anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
+          tags: ["drop_directional_anomalies"]
           dimensions:
             - platform
 
@@ -217,10 +217,10 @@ models:
           tags: ["table_anomalies"]
       - elementary.volume_anomalies:
           anomaly_direction: "drop"
-          tags: [ "drop_directional_anomalies" ]
+          tags: ["drop_directional_anomalies"]
       - elementary.volume_anomalies:
           anomaly_direction: "spike"
-          tags: ["spike_directional_anomalies" ]
+          tags: ["spike_directional_anomalies"]
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.event_freshness_anomalies:
@@ -267,12 +267,12 @@ models:
               column_anomalies:
                 - average
               anomaly_direction: "spike"
-              tags: ["spike_directional_anomalies" ]
+              tags: ["spike_directional_anomalies"]
           - elementary.column_anomalies:
               column_anomalies:
                 - average
               anomaly_direction: "drop"
-              tags: ["drop_directional_anomalies" ]
+              tags: ["drop_directional_anomalies"]
       - name: average
         tests:
           - elementary.column_anomalies:
@@ -341,7 +341,6 @@ models:
           tags: ["schema_changes_from_baseline", "error_test"]
           enforce_types: true
 
-
   - name: stats_players
     columns:
       - name: player
@@ -372,13 +371,13 @@ models:
       - elementary.volume_anomalies:
           alias: volume_anomalies_no_seasonality_anomalies
           timestamp_column: "updated_at"
-          tags: ["seasonality_volume","table_anomalies"]
+          tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
           backfill_days: 14
       - elementary.volume_anomalies:
           alias: volume_anomalies_with_seasonality_anomalies
           timestamp_column: "updated_at"
-          tags: ["seasonality_volume","table_anomalies"]
+          tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
           backfill_days: 14
           seasonality: day_of_week
@@ -397,7 +396,6 @@ models:
       - elementary.schema_changes:
           tags: ["ephemeral_model", "error_test"]
 
-
   - name: config_levels_test_and_model
     tags: ["config_levels"]
     config:
@@ -405,52 +403,52 @@ models:
         min_training_set_size: 22
         days_back: 100
         backfill_days: 10
-        anomaly_direction: 'drop'
+        anomaly_direction: "drop"
         anomaly_sensitivity: 4
-        where_expression: 'true'
-        timestamp_column: 'updated_at'
+        where_expression: "true"
+        timestamp_column: "updated_at"
         time_bucket:
           period: hour
           count: 4
     tests:
       - config_levels:
           tags: ["config_levels"]
-          alias: 'test_level_config'
+          alias: "test_level_config"
           min_training_set_size: 18
           days_back: 5
           backfill_days: 5
-          seasonality: 'day_of_week'
-          anomaly_direction: 'spike'
+          seasonality: "day_of_week"
+          anomaly_direction: "spike"
           anomaly_sensitivity: 5
-          where_expression: '1=1'
-          timestamp_column: 'occurred_at'
+          where_expression: "1=1"
+          timestamp_column: "occurred_at"
           time_bucket:
             period: day
             count: 1
           expected_config: ## Test level expected config
-            seasonality: 'day_of_week'
+            seasonality: "day_of_week"
             min_training_set_size: 18
             days_back: 35 ## *7 because of seasonality
             backfill_days: 5
-            anomaly_direction: 'spike'
+            anomaly_direction: "spike"
             anomaly_sensitivity: 5
-            where_expression: '1=1'
-            timestamp_column: 'occurred_at'
+            where_expression: "1=1"
+            timestamp_column: "occurred_at"
             time_bucket:
               period: day
               count: 1
       - config_levels:
           tags: ["config_levels"]
-          alias: 'model_level_config'
+          alias: "model_level_config"
           expected_config: ## Model level expected config
             min_training_set_size: 22
             seasonality: null
             days_back: 100
             backfill_days: 10
-            anomaly_direction: 'drop'
+            anomaly_direction: "drop"
             anomaly_sensitivity: 4
-            where_expression: 'true'
-            timestamp_column: 'updated_at'
+            where_expression: "true"
+            timestamp_column: "updated_at"
             time_bucket:
               period: hour
               count: 4
@@ -459,7 +457,7 @@ models:
     tests:
       - config_levels:
           tags: ["config_levels"]
-          alias: 'project_level_config'
+          alias: "project_level_config"
           expected_config: ## Project level expected config
             min_training_set_size: 14
             seasonality: null
@@ -518,52 +516,52 @@ sources:
             min_training_set_size: 22
             days_back: 100
             backfill_days: 10
-            anomaly_direction: 'drop'
+            anomaly_direction: "drop"
             anomaly_sensitivity: 4
-            where_expression: 'true'
-            timestamp_column: 'updated_at'
+            where_expression: "true"
+            timestamp_column: "updated_at"
             time_bucket:
               period: hour
               count: 4
         tests:
           - config_levels:
               tags: ["config_levels"]
-              alias: 'test_level_config'
+              alias: "test_level_config"
               min_training_set_size: 18
               days_back: 5
               backfill_days: 5
-              seasonality: 'day_of_week'
-              anomaly_direction: 'spike'
+              seasonality: "day_of_week"
+              anomaly_direction: "spike"
               anomaly_sensitivity: 5
-              where_expression: '1=1'
-              timestamp_column: 'occurred_at'
+              where_expression: "1=1"
+              timestamp_column: "occurred_at"
               time_bucket:
                 period: day
                 count: 1
               expected_config: ## Test level expected config
-                seasonality: 'day_of_week'
+                seasonality: "day_of_week"
                 min_training_set_size: 18
                 days_back: 35 ## *7 because of seasonality
                 backfill_days: 5
-                anomaly_direction: 'spike'
+                anomaly_direction: "spike"
                 anomaly_sensitivity: 5
-                where_expression: '1=1'
-                timestamp_column: 'occurred_at'
+                where_expression: "1=1"
+                timestamp_column: "occurred_at"
                 time_bucket:
                   period: day
                   count: 1
           - config_levels:
               tags: ["config_levels"]
-              alias: 'model_level_config'
+              alias: "model_level_config"
               expected_config: ## Model level expected config
                 min_training_set_size: 22
                 seasonality: null
                 days_back: 100
                 backfill_days: 10
-                anomaly_direction: 'drop'
+                anomaly_direction: "drop"
                 anomaly_sensitivity: 4
-                where_expression: 'true'
-                timestamp_column: 'updated_at'
+                where_expression: "true"
+                timestamp_column: "updated_at"
                 time_bucket:
                   period: hour
                   count: 4
@@ -597,14 +595,14 @@ exposures:
     url: https://elementary.not.really
     description: >
       Keep calm, Elementary tests exposures.
-
     depends_on:
       - ref('error_model')
       - source('training', 'any_type_column_anomalies_training')
-
     owner:
       name: Complete Nonsense
       email: fake@fakerson.com
+    tags:
+      - marketing
 
   - name: weekly_jaffle_metrics
     type: dashboard
@@ -612,11 +610,13 @@ exposures:
     url: https://bi.tool/dashboards/1
     description: >
       Did someone say "exponential growth"?
-
     depends_on:
       - ref('string_column_anomalies')
       - ref('numeric_column_anomalies')
-
     owner:
       name: Claire from Data
       email: data@jaffleshop.com
+    tags:
+      - hack
+      - the
+      - planet
