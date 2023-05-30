@@ -116,6 +116,10 @@
 {% endmacro %}
 
 {% macro get_job_url() %}
+  {% set var_value = elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"]) %}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
   {% if elementary.get_first_env_var(["GITHUB_ACTIONS"]) %}
     {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
     {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
@@ -124,7 +128,7 @@
     {% set github_job_url = server_url ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
     {% do return(github_job_url) %}
   {% endif %}
-  {% do return(elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"])) %}
+  {% do return(none) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
