@@ -123,7 +123,7 @@
     {% set github_job_url = server_utl ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
     {% do return(github_job_url) %}
   {% endif %}
-  {% do return(elementary.get_config_var("job_url") or elementary.get_first_env_var(["DBT_JOB_URL"])) %}
+  {% do return(elementary.get_var("job_url", ["DBT_JOB_URL"])) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
