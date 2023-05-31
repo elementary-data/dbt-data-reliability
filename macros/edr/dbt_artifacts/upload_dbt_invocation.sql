@@ -35,7 +35,7 @@
       'cause': elementary.get_first_env_var(["DBT_CAUSE", "DBT_CLOUD_RUN_REASON"]),
       'pull_request_id': elementary.get_first_env_var(["DBT_PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
-      'orchestrator': elementary.get_config_var("orchestrator") or elementary.get_orchestrator(),
+      'orchestrator': elementary.get_orchestrator(),
       'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
       'job_url': elementary.get_job_url(),
       'account_id': elementary.get_var("account_id", ["ACCOUNT_ID"]),
