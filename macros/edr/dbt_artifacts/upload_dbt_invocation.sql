@@ -25,9 +25,9 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
-      'job_id': elementary.get_first_env_var(["DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
-      'job_run_id': elementary.get_first_env_var(["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
-      'job_name': elementary.get_first_env_var(["DBT_JOB_NAME"]),
+      'job_id': elementary.get_var("job_id", ["JOB_ID", "DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
+      'job_run_id': elementary.get_var("job_run_id", ["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
+      'job_name': elementary.get_var("job_name", ["JOB_NAME", "DBT_JOB_NAME"]),
       'env': elementary.get_first_env_var(["DBT_ENV"]),
       'env_id': elementary.get_first_env_var(["DBT_ENV_ID"]),
       'project_id': elementary.get_first_env_var(["DBT_PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
@@ -37,6 +37,9 @@
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
       'orchestrator': elementary.get_orchestrator(),
       'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
+      'job_url': elementary.get_job_url(),
+      'job_run_url': elementary.null_string(),
+      'account_id': elementary.get_var("account_id", ["ACCOUNT_ID"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
@@ -100,6 +103,10 @@
 {%- endmacro -%}
 
 {% macro get_orchestrator() %}
+  {% set var_value = elementary.get_var("orchestrator", ["ORCHESTRATOR", "DBT_ORCHESTRATOR"])%}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
   {% set orchestrator_env_map = {
     "airflow": ["AIRFLOW_HOME"],
     "dbt_cloud": ["DBT_CLOUD_PROJECT_ID"],
@@ -110,7 +117,23 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(elementary.get_first_env_var(["DBT_ORCHESTRATOR"])) %}
+  {% do return(none) %}
+{% endmacro %}
+
+{% macro get_job_url() %}
+  {% set var_value = elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"]) %}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
+  {% if elementary.get_first_env_var(["GITHUB_ACTIONS"]) %}
+    {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
+    {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
+    {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
+
+    {% set github_job_url = server_url ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
+    {% do return(github_job_url) %}
+  {% endif %}
+  {% do return(none) %}
 {% endmacro %}
 
 {% macro get_dbt_invocations_empty_table_query() %}
@@ -125,7 +148,7 @@
       ('command', 'string'),
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
-	  ('full_refresh', 'boolean'),
+      ('full_refresh', 'boolean'),
       ('invocation_vars', 'long_string'),
       ('vars', 'long_string'),
       ('target_name', 'string'),
@@ -144,6 +167,9 @@
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
       ('orchestrator', 'string'),
-      ('dbt_user', 'string')
+      ('dbt_user', 'string'),
+      ('job_url', 'string'),
+      ('job_run_url', 'string'),
+      ('account_id', 'string')
     ])) }}
 {% endmacro %}
