@@ -38,6 +38,7 @@
       'orchestrator': elementary.get_orchestrator(),
       'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
       'job_url': elementary.get_job_url(),
+      'job_run_url': elementary.null_string(),
       'account_id': elementary.get_var("account_id", ["ACCOUNT_ID"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -168,6 +169,7 @@
       ('orchestrator', 'string'),
       ('dbt_user', 'string'),
       ('job_url', 'string'),
+      ('job_run_url', 'string'),
       ('account_id', 'string')
     ])) }}
 {% endmacro %}
