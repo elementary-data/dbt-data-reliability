@@ -102,6 +102,10 @@
 {%- endmacro -%}
 
 {% macro get_orchestrator() %}
+  {% set var_value = elementary.get_var("orchestrator", ["ORCHESTRATOR", "DBT_ORCHESTRATOR"])%}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
   {% set orchestrator_env_map = {
     "airflow": ["AIRFLOW_HOME"],
     "dbt_cloud": ["DBT_CLOUD_PROJECT_ID"],
@@ -112,7 +116,7 @@
       {% do return(orchestrator) %}
     {% endif %}
   {% endfor %}
-  {% do return(elementary.get_first_env_var(["ORCHESTRATOR", "DBT_ORCHESTRATOR"])) %}
+  {% do return(none) %}
 {% endmacro %}
 
 {% macro get_job_url() %}
