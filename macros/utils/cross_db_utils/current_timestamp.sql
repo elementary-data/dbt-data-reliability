@@ -46,3 +46,13 @@
 {% macro spark__edr_current_timestamp_in_utc() %}
     cast(unix_timestamp() as timestamp)
 {% endmacro %}
+
+{% macro athena__edr_current_timestamp() -%}
+    CURRENT_TIMESTAMP
+{%- endmacro -%}
+
+{% macro athena__edr_current_timestamp_in_utc() %}
+    (
+        CURRENT_TIMESTAMP AT TIME ZONE 'utc'
+    )
+{% endmacro %}
