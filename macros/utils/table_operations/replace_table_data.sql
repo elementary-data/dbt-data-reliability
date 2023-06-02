@@ -38,3 +38,9 @@
 
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
+
+{% macro athena__replace_table_data(relation, rows) %}
+    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
+    {% do elementary.create_or_replace(False, relation, 'select * from {}'.format(intermediate_relation)) %}
+    {% do adapter.drop_relation(intermediate_relation) %}
+{% endmacro %}
