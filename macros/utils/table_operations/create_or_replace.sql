@@ -25,3 +25,12 @@
     {% do elementary.run_query(dbt.create_table_as(temporary, relation, sql_query)) %}
     {% do adapter.commit() %}
 {% endmacro %}
+
+{% macro athena__create_or_replace(temporary, relation, sql_query) %}
+    {% set drop_query %}
+        drop table if exists {{ relation.schema }}.{{ relation.identifier }}
+    {% endset %}
+    {% do elementary.run_query(drop_query) %}
+    {% do run_query(dbt.create_table_as(temporary, relation, sql_query)) %}
+    {% do adapter.commit() %}
+{% endmacro %}
