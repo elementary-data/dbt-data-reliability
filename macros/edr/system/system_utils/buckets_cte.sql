@@ -95,3 +95,14 @@
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
+
+{% macro athena__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    {%- set complete_buckets_cte %}
+        select
+          edr_bucket_start,
+          {{ bucket_end_expr }} as edr_bucket_end
+        from unnest(sequence({{ min_bucket_start_expr }}, {{ max_bucket_end_expr }}, interval {{ time_bucket.count }} {{ time_bucket.period }})) as t(edr_bucket_start)
+        where {{ bucket_end_expr }} <= {{ max_bucket_end_expr }}
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
+{% endmacro %}
