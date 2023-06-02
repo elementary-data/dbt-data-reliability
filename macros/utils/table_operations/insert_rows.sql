@@ -143,7 +143,11 @@
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string -%}
-            '{{- elementary.escape_special_chars(value) -}}'
+            {%- if value.startswith('cast(')  -%}
+              {{- value -}}
+            {%- else -%}
+              '{{- elementary.escape_special_chars(value) -}}'
+            {%- endif -%}
         {%- elif value is mapping or value is sequence -%}
             '{{- elementary.escape_special_chars(tojson(value)) -}}'
         {%- else -%}
