@@ -91,3 +91,16 @@
 {% macro get_empty_columns_from_information_schema_table() %}
     {{ elementary.empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string'), ('column_name', 'string'), ('data_type', 'string')]) }}
 {% endmacro %}
+
+{% macro athena__get_columns_from_information_schema(database_name, schema_name) %}
+    select
+        upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
+        upper(table_catalog) as database_name,
+        upper(table_schema) as schema_name,
+        upper(table_name) as table_name,
+        upper(column_name) as column_name,
+        data_type
+    from information_schema.columns
+    where upper(table_schema) = upper('{{ schema_name }}')
+
+{% endmacro %}
