@@ -1,4 +1,4 @@
-{% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, since=none, days_back=7) %}
+{% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, timestamp_column=none, since=none, days_back=7) %}
     {% set node = graph.nodes[model_unique_id] %}
     {% set relation = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
     {% if relation is none %}
@@ -10,12 +10,6 @@
     {% if exclude_deprecated_columns %}
         {% set deprecated_column_names = node.meta.get("deprecated_columns", []) | map(attribute="name") | map("lower") | list %}
         {% set column_names = column_names | reject("in", deprecated_column_names) | list %}
-    {% endif %}
-
-    {% if "created_at" in column_names %}
-        {% set timestamp_column = "created_at" %}
-    {% else %}
-        {% set timestamp_column = node.meta.timestamp_column %}
     {% endif %}
 
     {% set query %}
