@@ -40,8 +40,8 @@
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
       'orchestrator': orchestrator,
       'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
-      'job_url': elementary.get_job_url(),
       'job_run_url': elementary.null_string(),
+      'job_url': elementary.get_job_url(orchestrator, job_id),
       'account_id': elementary.get_var("account_id", ["ACCOUNT_ID"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
@@ -123,12 +123,33 @@
   {% do return(none) %}
 {% endmacro %}
 
-{% macro get_job_url() %}
+{% macro get_job_url(orchestrator, job_id) %}
   {% set var_value = elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"]) %}
   {% if var_value %}
     {% do return(var_value) %}
   {% endif %}
-  {% if elementary.get_first_env_var(["GITHUB_ACTIONS"]) %}
+  {% if orchestrator == 'airflow' %}
+    {% set server_url = elementary.get_var('orchestrator_domain', ["ORCHESTRATOR_DOMAIN"]) %}
+    {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid" %}
+    {% do return(airflow_job_url) %}
+  {% elif orchestrator == 'dbt_cloud' %}
+    {% set account_id = elementary.get_var('account_id', ['ACCOUNT_ID']) %}
+    {% set dbt_cloud_project_id = elementary.get_first_env_var(['DBT_CLOUD_PROJECT_ID']) %}
+    {% set dbt_cloud_job_id = elementary.get_first_env_var(['DBT_CLOUD_JOB_ID']) %}
+
+    {% set dbt_cloud_job_url = "https://cloud.getdbt.com/deploy/" ~ account_id ~ "/projects/" ~ dbt_cloud_project_id ~ "/jobs/" ~ dbt_cloud_job_id %}
+    {% do return(dbt_cloud_job_url) %}
+  {% elif orchestrator == 'github_actions' %}
+    {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
+    {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
+    {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
+
+    {% set github_job_url = server_url ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
+    {% do return(github_job_url) %}
+  {% endif %}
+  {% do return(none) %}
+{% endmacro %}
+
     {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
     {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
     {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
