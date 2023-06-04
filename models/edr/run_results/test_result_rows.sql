@@ -14,4 +14,5 @@
     ('elementary_test_results_id', 'long_string'),
     ('result_row', 'long_string'),
     ('detected_at','timestamp'),
+    ('created_at','timestamp'),
 ]) }}

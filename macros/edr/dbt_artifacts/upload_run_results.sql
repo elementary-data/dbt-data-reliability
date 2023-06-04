@@ -14,6 +14,7 @@
                                                                        ('unique_id', 'long_string'),
                                                                        ('invocation_id', 'string'),
                                                                        ('generated_at', 'string'),
+                                                                       ('created_at', 'timestamp'),
                                                                        ('name', 'long_string'),
                                                                        ('message', 'long_string'),
                                                                        ('status', 'string'),
