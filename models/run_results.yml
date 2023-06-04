@@ -76,15 +76,15 @@ models:
 
       - name: job_id
         data_type: string
-        description: The ID of a job, defined in the `DBT_JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+        description: The ID of a job, defined in the `job_id` var or in the `JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
 
       - name: job_name
         data_type: string
-        description: The name of a job, defined in the `DBT_JOB_NAME` env var.
+        description: The name of a job, defined in the `job_name` var or in the `JOB_NAME` env var.
 
       - name: job_run_id
         data_type: string
-        description: The run ID of a job, defined in the `DBT_JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+        description: The run ID of a job, defined in the `job_run_id` var or in the `DBT_JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
 
       - name: env
         data_type: string
@@ -120,7 +120,15 @@ models:
 
       - name: orchestrator
         data_type: string
-        description: The orchestrator that was used to run this invocation. For example, dbt Cloud, GitHub Actions, etc.
+        description: The orchestrator that was used to run this invocation, defined in the `orchestrator` var or in the `ORCHESTRATOR` env var or by the orchestrator env vars. For example, dbt Cloud, GitHub Actions, etc.
+
+      - name: job_url
+        data_type: string
+        description: The name of a job, defined in the `job_url` var or in the `JOB_URL` env var or by the orchestrator. For GitHub Actions orchestrator, the value is calculated.
+
+      - name: account_id
+        data_type: string
+        description: The ID of the account, defined in the `account_id` var or in the `ACCOUNT_ID` env var or by the orchestrator.
 
   - name: dbt_run_results
     description: >
