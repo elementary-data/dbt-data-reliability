@@ -26,6 +26,7 @@
         {% do elementary.file_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
+    {% do elementary.file_log("Uploaded dbt artifacts.") %}
   {% endif %}
 {% endmacro %}
 
