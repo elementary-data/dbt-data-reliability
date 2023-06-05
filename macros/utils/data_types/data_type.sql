@@ -101,6 +101,10 @@
 
 
 {% macro edr_type_timestamp() %}
+    {{ return(adapter.dispatch('edr_type_timestamp', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__edr_type_timestamp() %}
     {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
@@ -124,4 +128,8 @@
 
 {% macro default__edr_type_date() %}
     date
+{% endmacro %}
+
+{% macro athena__edr_type_timestamp() %}
+    timestamp(6)
 {% endmacro %}
