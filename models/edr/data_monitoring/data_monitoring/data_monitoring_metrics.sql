@@ -8,6 +8,8 @@
       "timestamp_column": "created_at",
       "prev_timestamp_column": "updated_at",
       }
+    table_type="iceberg",
+    incremental_strategy="merge"
   )
 }}
 
