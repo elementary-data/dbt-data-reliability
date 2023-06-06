@@ -50,7 +50,7 @@
             upper(table_catalog) as database_name,
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
-        from svv_tables
+        from pg_catalog.svv_tables
             where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
 
     )

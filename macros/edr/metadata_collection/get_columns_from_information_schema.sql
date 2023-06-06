@@ -27,7 +27,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from svv_columns
+    from pg_catalog.svv_columns
     where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}
