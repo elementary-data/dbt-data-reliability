@@ -1,4 +1,8 @@
 {% macro delete_duplicate_rows(model_unique_id) %}
+    {% do return(adapter.dispatch("delete_duplicate_rows", "elementary")(model_unique_id)) %}
+{% endmacro %}
+
+{% macro postgres__delete_duplicate_rows(model_unique_id) %}
     {% set node = graph.nodes[model_unique_id] %}
     {% set relation = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
     {% if relation is none %}
@@ -18,4 +22,8 @@
     {% endset %}
     {% do elementary.run_query(query) %}
     {% do adapter.commit() %}
+{% endmacro %}
+
+{% macro default__delete_duplicate_rows(model_unique_id) %}
+  {{ exceptions.raise_compiler_error("This macro is not supported on '{}'.".format(target.type)) }}
 {% endmacro %}
