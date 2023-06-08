@@ -1,5 +1,17 @@
 {%- macro edr_cast_as_timestamp(timestamp_field) -%}
+    {{ return(adapter.dispatch('edr_cast_as_timestamp', 'elementary')(timestamp_field)) }}
+{%- endmacro -%}
+
+{%- macro default__edr_cast_as_timestamp(timestamp_field) -%}
     cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
+{%- endmacro -%}
+
+{# Athena needs explicit conversion for ISO8601 timestamps used in buckets_cte #}
+{%- macro athena__edr_cast_as_timestamp(timestamp_field) -%}
+    coalesce(
+        try_cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }}),
+        cast(from_iso8601_timestamp(cast({{ timestamp_field }} AS {{ elementary.edr_type_string() }})) AS {{ elementary.edr_type_timestamp() }})
+    )
 {%- endmacro -%}
 
 {%- macro edr_cast_as_float(column) -%}
@@ -42,6 +54,15 @@
 {%- macro bigquery__edr_cast_as_date(timestamp_field) -%}
     cast({{ elementary.edr_cast_as_timestamp(timestamp_field) }} as {{ elementary.edr_type_date() }})
 {%- endmacro -%}
+
+{# Athena needs explicit conversion for ISO8601 timestamps used in buckets_cte #}
+{%- macro athena__edr_cast_as_date(timestamp_field) -%}
+    coalesce(
+        try_cast({{ timestamp_field }} as {{ elementary.edr_type_date() }}),
+        cast(from_iso8601_timestamp(cast({{ timestamp_field }} AS {{ elementary.edr_type_string() }})) AS {{ elementary.edr_type_date() }})
+    )
+{%- endmacro -%}
+
 
 {%- macro const_as_text(string) -%}
     {{ return(adapter.dispatch('const_as_text', 'elementary')(string)) }}
