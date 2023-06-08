@@ -1,5 +1,10 @@
 {% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, timestamp_column=none, since=none, days_back=7) %}
-    {% set node = graph.nodes[model_unique_id] %}
+    {% set node = graph.nodes.get(model_unique_id) %}
+    {% if not node %}
+        {% do print("Node '{}' does not exist.".format(model_unique_id)) %}
+        {% do return([]) %}
+    {% endif %}
+
     {% set relation = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
     {% if relation is none %}
         {% do print("Relation '{}' does not exist.".format(node.relation_name)) %}
