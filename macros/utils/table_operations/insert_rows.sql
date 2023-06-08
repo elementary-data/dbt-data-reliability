@@ -149,6 +149,8 @@
         {%- elif value is string -%}
             {%- if value.startswith('cast(')  -%}
               {{- value -}}
+            {%- elif value.startswith('coalesce(') -%}
+              {{- value -}}
             {%- else -%}
               '{{- elementary.escape_special_chars(value) -}}'
             {%- endif -%}
