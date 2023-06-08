@@ -27,5 +27,5 @@
 {% endmacro %}
 
 {% macro athena__edr_timeadd(date_part, number, timestamp_expression) %}
-    date_add('{{ datepart }}', {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
+    date_add('{{ date_part }}', {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
