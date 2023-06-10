@@ -4,6 +4,8 @@ models:
   - name: one
     config:
       tags: "{{ var('one_tags', []) }}"
+      alert_channel: "custom_channel"
+      alert_suppression_interval: 12
     meta:
       owner: "{{ var('one_owner', none) }}"
     columns:
@@ -17,7 +19,7 @@ models:
   - name: any_type_column_anomalies
     meta:
       owner: ["@edr"]
-      subscribers: "@egk"
+      subscribers: ["@egk"]
     description: >
       This is a very weird description
       with breaklines
@@ -88,7 +90,7 @@ models:
   - name: dimension_anomalies
     meta:
       owner: "egk"
-      subscribers: "elon, egk"
+      subscribers: ["elon, egk"]
     description: We use this model to test dimension anomalies
     config:
       elementary:

@@ -1,15 +1,15 @@
-{% macro get_config_argument(argument_name, value, model_graph_node, test_graph_node) %}
+{% macro get_config_argument(argument_name, value, model_node, test_node) %}
     {% if value %}
         {{ return(value) }}
     {%- endif %}
-    {%- if test_graph_node %}
-        {%- set test_config_value = get_argument_from_config_and_meta(argument_name, test_graph_node) %}
+    {%- if test_node %}
+        {%- set test_config_value = elementary.get_argument_from_config_and_meta(argument_name, test_node) %}
         {%- if test_config_value %}
             {{ return(test_config_value) }}
         {%- endif %}
     {%- endif %}
-    {%- if model_graph_node %}
-        {%- set model_config_value = get_argument_from_config_and_meta(argument_name, nodel_graph_node) %}
+    {%- if model_node %}
+        {%- set model_config_value = elementary.get_argument_from_config_and_meta(argument_name, model_node) %}
         {%- if model_config_value %}
             {{ return(model_config_value) }}
         {%- endif %}

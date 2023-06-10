@@ -44,7 +44,9 @@
     {% do meta_dict.update(source_meta_dict) %}
     {% do meta_dict.update(config_meta_dict) %}
     {%- set alerts_config = elementary.get_alerts_config_dict(node_dict) %}
-    {%- do meta_dict.update({'alerts_config': alerts_config}) -%}
+    {%- if alerts_config %}
+        {%- do meta_dict.update({'alerts_config': alerts_config}) -%}
+    {%- endif %}
     {% set formatted_owner = [] %}
     {% set raw_owner = meta_dict.get('owner') %}
     {% if raw_owner is string %}

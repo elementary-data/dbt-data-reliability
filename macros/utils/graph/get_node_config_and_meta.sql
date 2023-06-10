@@ -4,5 +4,5 @@
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% do meta_dict.update(elementary.safe_get_with_default(node_dict, 'meta', {})) %}
     {% do meta_dict.update(config_meta_dict) %}
-    {{ return(config_dict, meta_dict) }}
+    {{ return([config_dict, meta_dict]) }}
 {% endmacro %}
