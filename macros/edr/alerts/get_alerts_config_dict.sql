@@ -26,15 +26,18 @@
     {%- set slack_group_alerts_by = elementary.get_config_argument(argument_name='slack_group_alerts_by', value=none, model_node=model_node, test_node=test_node) %}
     {%- set subscribers = elementary.get_alert_subscribers(model_node, test_node) %}
 
-    {% set alerts_config =
-      {'alert_suppression_interval': alert_suppression_interval,
-       'channel': alert_channel,
-       'alert_fields': alert_fields,
-       'slack_group_alerts_by': slack_group_alerts_by,
-       'subscribers': subscribers
-        } %}
-    {%- set alerts_config = elementary.empty_dict_keys_to_none(alerts_config) -%}
-    {{ return(alerts_config) }}
+    {%- if alert_suppression_interval or alert_channel or alert_fields or slack_group_alerts_by or subscribers %}
+        {% set alerts_config =
+          {'alert_suppression_interval': alert_suppression_interval,
+           'channel': alert_channel,
+           'alert_fields': alert_fields,
+           'slack_group_alerts_by': slack_group_alerts_by,
+           'subscribers': subscribers
+            } %}
+        {%- set alerts_config = elementary.empty_dict_keys_to_none(alerts_config) -%}
+        {{ return(alerts_config) }}
+    {%- endif %}
+    {{ return(none) }}
 {% endmacro %}
 
 
