@@ -2,6 +2,7 @@
     {%- set test_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(test_node_dict) %}
     {%- set test_model_nodes = elementary.get_nodes_by_unique_ids(test_model_unique_ids) %}
     {% set primary_test_model_id = namespace(data=none) %}
+
     {% if test_model_unique_ids | length == 1 %}
         {# if only one parent model for this test, simply use this model #}
         {% set primary_test_model_id.data = test_model_unique_ids[0] %}

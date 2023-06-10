@@ -2,13 +2,15 @@
 -- Get alerts_config dict from config, if not found from meta
 -- Merge config from model and test level
 -- For subscribers union lists, for the rest the lower granularity config overrides
--- docs - changed channel to alert_channel
+-- docs - changed channel to alert_channel, subscribers needs to be a list
 
 {% macro get_alerts_config_dict(node_dict) %}
     {%- if node_dict.get('resource_type') == 'test' %}
         {%- set test_node = node_dict %}
         {%- set parent_model_unique_id = elementary.get_primary_test_model_unique_id_from_test_node(test_node) %}
-        {%- set model_node = elementary.get_node(parent_model_unique_id) %}
+        {%- if parent_model_unique_id %}
+            {%- set model_node = elementary.get_node(parent_model_unique_id) %}
+        {%- endif %}
     {%- else %}
         {%- set model_node = node_dict %}
     {%- endif %}
@@ -31,8 +33,7 @@
        'slack_group_alerts_by': slack_group_alerts_by,
        'subscribers': subscribers
         } %}
-    {%- set test_configuration = elementary.empty_dict_keys_to_none(alerts_config) -%}
-    {%- do print(node_dict.get('alerts_config')) -%}
+    {%- set alerts_config = elementary.empty_dict_keys_to_none(alerts_config) -%}
     {{ return(alerts_config) }}
 {% endmacro %}
 
@@ -53,13 +54,19 @@
     {%- set test_alerts_config = elementary.get_config_argument('alerts_config', value=none, model_node=none, test_node=test_node_dict) %}
     {%- if model_alerts_config or test_alerts_config %}
         {%- set alerts_config = {} %}
-        {%- do alerts_config.update(model_alerts_config) -%}
-        {%- do alerts_config.update(test_alerts_config) -%}
+        {%- if model_alerts_config %}
+            {%- do alerts_config.update(model_alerts_config) -%}
+            {%- set model_subscribers = elementary.safe_get_with_default(model_alerts_config, 'subscribers', []) %}
+        {%- endif %}
+        {%- if test_alerts_config %}
+            {%- do alerts_config.update(test_alerts_config) -%}
+            {%- set test_subscribers = elementary.safe_get_with_default(test_alerts_config, 'subscribers', []) %}
+        {%- endif %}
         {# We want to union subscribers, not override #}
-        {%- set model_subscribers = elementary.safe_get_with_default(model_alerts_config, 'subscribers', []) %}
-        {%- set test_subscribers = elementary.safe_get_with_default(test_alerts_config, 'subscribers', []) %}
         {%- set subscribers = elementary.union_lists(model_subscribers, test_subscribers) %}
-        {%- do alerts_config.update({'subscribers': subscribers}) -%}
+        {%- if subscribers %}
+            {%- do alerts_config.update({'subscribers': subscribers}) -%}
+        {%- endif %}
         {{ return(alerts_config) }}
     {%- endif %}
     {{ return(none) }}
