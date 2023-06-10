@@ -59,6 +59,9 @@
     {% do meta_dict.update(elementary.safe_get_with_default(node_dict, 'meta', {})) %}
     {% do meta_dict.update(config_meta_dict) %}
 
+    {%- set alerts_config = elementary.get_alerts_config_dict(node_dict) %}
+    {%- do meta_dict.update({'alerts_config': alerts_config}) -%}
+
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
