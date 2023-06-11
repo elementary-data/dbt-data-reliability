@@ -5,6 +5,8 @@
   )
 }}
 
+{%- if target.type != 'databricks' and target.type != 'spark' %}
+
 with dbt_models_data as (
     select
         database_name,
@@ -63,3 +65,8 @@ dbt_columns as (
 
 select *
 from dbt_columns
+
+{%- else %}
+    {{ elementary.no_results_query() }}
+{%- endif %}
+

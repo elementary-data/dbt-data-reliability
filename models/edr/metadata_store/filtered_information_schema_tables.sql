@@ -5,6 +5,8 @@
   )
 }}
 
+{%- if target.type != 'databricks' and target.type != 'spark' %}
+
 {% set configured_schemas = elementary.get_configured_schemas_from_graph() %}
 
 with filtered_information_schema_tables as (
@@ -20,3 +22,7 @@ with filtered_information_schema_tables as (
 select *
 from filtered_information_schema_tables
 where schema_name is not null
+
+{%- else %}
+    {{ elementary.no_results_query() }}
+{%- endif %}
