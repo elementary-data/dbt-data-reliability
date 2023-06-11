@@ -16,9 +16,6 @@
     {%- endif %}
 
     {%- set alerts_config_backcomp = elementary.get_alerts_config_backcomp(model_node, test_node) %}
-    {%- if alerts_config_backcomp %}
-        {{ return(alerts_config_backcomp) }}
-    {%- endif %}
 
     {%- set alert_suppression_interval = elementary.get_config_argument(argument_name='alert_suppression_interval', value=none, model_node=model_node, test_node=test_node) %}
     {%- set alert_channel = elementary.get_config_argument(argument_name='alert_channel', value=none, model_node=model_node, test_node=test_node) %}
@@ -35,7 +32,16 @@
            'subscribers': subscribers
             } %}
         {%- set alerts_config = elementary.empty_dict_keys_to_none(alerts_config) -%}
-        {{ return(alerts_config) }}
+        {%- if alerts_config_backcomp %}
+            {%- do alerts_config_backcomp.update(alerts_config) -%}
+            {{ return(alerts_config_backcomp) }}
+        {%- else %}
+            {{ return(alerts_config) }}
+        {%- endif %}
+    {%- endif %}
+
+    {%- if alerts_config_backcomp %}
+        {{ return(alerts_config_backcomp) }}
     {%- endif %}
     {{ return(none) }}
 {% endmacro %}
@@ -52,9 +58,10 @@
     {{ return(none) }}
 {% endmacro %}
 
-{% macro get_alerts_config_backcomp(model_node_dict, test_node_dict) %}
-    {%- set model_alerts_config = elementary.get_config_argument('alerts_config', value=none, model_node=model_node_dict, test_node=none) %}
-    {%- set test_alerts_config = elementary.get_config_argument('alerts_config', value=none, model_node=none, test_node=test_node_dict) %}
+{% macro get_alerts_config_backcomp(model_node, test_node) %}
+    {%- set model_alerts_config = elementary.get_config_argument('alerts_config', value=none, model_node=model_node, test_node=none) %}
+    {%- set test_alerts_config = elementary.get_config_argument('alerts_config', value=none, model_node=none, test_node=test_node) %}
+
     {%- if model_alerts_config or test_alerts_config %}
         {%- set alerts_config = {} %}
         {%- if model_alerts_config %}

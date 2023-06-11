@@ -17,9 +17,9 @@ models:
               meta:
                 owner: "@elon"
                 subscribers: ["@or"]
-              values: [2, 3]
-              config:
                 alert_channel: "test_channel"
+              values: [2, 3]
+
 
   - name: any_type_column_anomalies
     meta:

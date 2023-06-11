@@ -16,7 +16,8 @@
     {%- set dbt_tests_dict = elementary.agate_to_dicts(results_agate) %}
 
     {%- set expected_alerts_config = {
-        'one': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"model_channel","slack_group_alerts_by":null,"subscribers":["@idan"]}'
+        'one': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"model_channel","slack_group_alerts_by":null,"subscribers":["@idan"]}',
+        'accepted_values_one_one__2__3': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"test_channel","slack_group_alerts_by":null,"subscribers":["@idan","@or"]}'
     }
     %}
 
