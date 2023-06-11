@@ -4,8 +4,10 @@ models:
   - name: one
     config:
       tags: "{{ var('one_tags', []) }}"
-      alert_channel: "custom_channel"
+      alert_channel: "model_channel"
       alert_suppression_interval: 12
+      subscribers:
+        - "@idan"
     meta:
       owner: "{{ var('one_owner', none) }}"
     columns:
@@ -14,7 +16,10 @@ models:
           - accepted_values:
               meta:
                 owner: "@elon"
+                subscribers: ["@or"]
               values: [2, 3]
+              config:
+                alert_channel: "test_channel"
 
   - name: any_type_column_anomalies
     meta:
