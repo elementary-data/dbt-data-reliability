@@ -1,9 +1,3 @@
--- Keep backcomp
--- Get alerts_config dict from config, if not found from meta
--- Merge config from model and test level
--- For subscribers union lists, for the rest the lower granularity config overrides
--- docs - changed channel to alert_channel, subscribers needs to be a list
-
 {% macro get_alerts_config_dict(node_dict) %}
     {%- if node_dict.get('resource_type') == 'test' %}
         {%- set test_node = node_dict %}
