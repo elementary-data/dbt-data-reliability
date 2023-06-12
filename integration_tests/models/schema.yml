@@ -24,7 +24,9 @@ models:
   - name: any_type_column_anomalies
     meta:
       owner: ["@edr"]
-      subscribers: ["@egk"]
+      alerts_config:
+        subscribers: ["@egk"]
+        alert_suppression_interval: 24
     description: >
       This is a very weird description
       with breaklines
@@ -46,6 +48,8 @@ models:
               and comma,
               and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
               WDYT?
+            alert_channel: "test_channel"
+            subscribers: ["@or", "@idan"]
           config:
             severity: warn
           tags: ["table_anomalies"]

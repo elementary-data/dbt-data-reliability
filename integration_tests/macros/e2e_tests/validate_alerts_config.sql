@@ -17,7 +17,9 @@
 
     {%- set expected_alerts_config = {
         'one': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"model_channel","slack_group_alerts_by":null,"subscribers":["@idan"]}',
-        'accepted_values_one_one__2__3': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"test_channel","slack_group_alerts_by":null,"subscribers":["@idan","@or"]}'
+        'accepted_values_one_one__2__3': '{"alert_fields":null,"alert_suppression_interval":12,"channel":"test_channel","slack_group_alerts_by":null,"subscribers":["@idan","@or"]}',
+        'elementary_volume_anomalies_any_type_column_anomalies_hour__4': '{"alert_fields":null,"alert_suppression_interval":24,"channel":"test_channel","slack_group_alerts_by":null,"subscribers":["@egk","@or","@idan"]}',
+        'any_type_column_anomalies': '{"alert_fields":null,"alert_suppression_interval":24,"channel":null,"slack_group_alerts_by":null,"subscribers":["@egk"]}'
     }
     %}
 
