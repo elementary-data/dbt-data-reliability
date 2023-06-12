@@ -334,6 +334,15 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "alerts_config" in test_types:
+        results = [
+            TestResult(type="alerts_config", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_alerts_config", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "artifacts" in test_types:
         results = [
             TestResult(type="artifacts", message=msg)
@@ -413,6 +422,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "schema",
             "regular",
             "config_levels",
+            "alerts_config",
             "artifacts",
             "error_test",
             "error_model",
