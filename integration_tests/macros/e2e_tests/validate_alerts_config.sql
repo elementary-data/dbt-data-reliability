@@ -26,14 +26,16 @@
     {%- for row_dict in dbt_models_dict %}
         {%- set name = elementary.insensitive_get_dict_value(row_dict, 'name', none) %}
         {%- if name in expected_alerts_config.keys() %}
-            {%- do assert_value(row_dict.get('alerts_config'), expected_alerts_config.get(name) ) -%}
+            {%- set row_dict = row_dict.get('alerts_config') | replace(' ','') %}
+            {%- do assert_value(row_dict, expected_alerts_config.get(name) ) -%}
         {%- endif %}
     {%- endfor %}
 
     {%- for row_dict in dbt_tests_dict %}
         {%- set name = elementary.insensitive_get_dict_value(row_dict, 'name', none) %}
         {%- if name in expected_alerts_config.keys() %}
-            {%- do assert_value(row_dict.get('alerts_config'), expected_alerts_config.get(name) ) -%}
+            {%- set row_dict = row_dict.get('alerts_config') | replace(' ','') %}
+            {%- do assert_value(row_dict, expected_alerts_config.get(name) ) -%}
         {%- endif %}
     {%- endfor %}
 {% endmacro %}
