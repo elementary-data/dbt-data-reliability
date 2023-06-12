@@ -20,7 +20,8 @@
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
         {% if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
+            {%- set model_relation = model %}
+            {%- do elementary.edr_log("Unable to load_relation for table `{}`".format(full_table_name) -%}
         {% endif %}
 
         {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,

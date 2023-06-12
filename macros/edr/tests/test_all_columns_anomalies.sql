@@ -17,12 +17,13 @@
         {%- set empty_table_query = elementary.empty_data_monitoring_metrics(with_created_at=false) %}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', empty_table_query) %}
 
-        {#- get all columns configuration -#}
+        {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
         {%- set model_relation = dbt.load_relation(model) %}
-        {%- if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
-        {%- endif %}
+        {% if not model_relation %}
+            {%- set model_relation = model %}
+            {%- do elementary.edr_log("Unable to load_relation for table `{}`".format(full_table_name) -%}
+        {% endif %}
 
         {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
                                                                                                    timestamp_column=timestamp_column,
