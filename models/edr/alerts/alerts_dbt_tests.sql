@@ -15,7 +15,7 @@ alerts_dbt_tests as (
            test_execution_id,
            test_unique_id,
            model_unique_id,
-           detected_at,
+           {{ elementary.edr_cast_as_timestamp("detected_at") }} detected_at,
            database_name,
            schema_name,
            table_name,
