@@ -14,11 +14,6 @@
 
         {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- set model_relation = dbt.load_relation(model) %}
-        {% if not model_relation %}
-            {%- set model_relation = model %}
-            {%- do elementary.edr_log('Unable to load_relation for table: ' ~ full_table_name) -%}
-        {% endif %}
 
         {#- query current schema and write to temp test table -#}
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}

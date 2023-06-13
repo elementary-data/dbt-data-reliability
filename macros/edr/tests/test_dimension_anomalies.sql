@@ -18,13 +18,8 @@
 
         {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- set model_relation = dbt.load_relation(model) %}
-        {% if not model_relation %}
-            {%- set model_relation = model %}
-            {%- do elementary.edr_log('Unable to load_relation for table: ' ~ full_table_name) -%}
-        {% endif %}
 
-        {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+        {%- set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model,
                                                                                                    mandatory_params=mandatory_params,
                                                                                                    timestamp_column=timestamp_column,
                                                                                                    where_expression=where_expression,
@@ -51,14 +46,14 @@
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
 
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration.days_back, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration.days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
-                                                                          model_relation=model_relation,
+                                                                          model_relation=model,
                                                                           test_configuration=test_configuration,
                                                                           monitors=['dimension'],
                                                                           metric_properties=metric_properties) %}
