@@ -129,7 +129,7 @@
     {% do return(var_value) %}
   {% endif %}
   {% if orchestrator == 'airflow' %}
-    {% set server_url = elementary.get_var('orchestrator_domain', ["ORCHESTRATOR_DOMAIN"]) %}
+    {% set server_url = elementary.get_var('airflow_url', ["AIRFLOW_URL"]) %}
     {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid" %}
     {% do return(airflow_job_url) %}
   {% elif orchestrator == 'dbt_cloud' %}
@@ -156,7 +156,7 @@
     {% do return(var_value) %}
   {% endif %}
   {% if orchestrator == 'airflow' %}
-    {% set server_url = elementary.get_var('orchestrator_domain', ["ORCHESTRATOR_DOMAIN"]) %}
+    {% set server_url = elementary.get_var('airflow_url', ["AIRFLOW_URL"]) %}
     {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid?dag_run_id=" ~ job_run_id %}
     {% do return(airflow_job_url) %}
   {% elif orchestrator == 'dbt_cloud' %}
