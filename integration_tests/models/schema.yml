@@ -605,6 +605,7 @@ exposures:
       - marketing
 
   - name: weekly_jaffle_metrics
+    label: Jaffles by the Week
     type: dashboard
     maturity: high
     url: https://bi.tool/dashboards/1
@@ -620,3 +621,51 @@ exposures:
       - hack
       - the
       - planet
+    meta:
+      platform: Tableau
+      workbook: By the Week
+      path: ByTheWeek/Jaffles
+
+  - name: monthly_jaffle_metrics
+    label: Jaffles by the Month
+    type: dashboard
+    maturity: high
+    url: https://bi.tool/dashboards/2
+    description: >
+      Did someone say "exponential growth"?
+    depends_on:
+      - ref('string_column_anomalies')
+      - ref('numeric_column_anomalies')
+    owner:
+      name: Claire from Data
+      email: data@jaffleshop.com
+    tags:
+      - hack
+      - the
+      - planet
+    meta:
+      platform: Looker
+      workbook: By the Month
+      path: ByTheMonth/Jaffles
+
+  - name: daily_jaffle_metrics
+    label: Jaffles by the Day
+    type: dashboard
+    maturity: high
+    url: https://bi.tool/dashboards/3
+    description: >
+      Did someone say "exponential growth"?
+    depends_on:
+      - ref('string_column_anomalies')
+      - ref('numeric_column_anomalies')
+    owner:
+      name: Claire from Data
+      email: data@jaffleshop.com
+    tags:
+      - hack
+      - the
+      - planet
+    meta:
+      platform: bi.tool
+      workbook: By the Day
+      path: ByTheDay/Jaffles
