@@ -12,6 +12,7 @@
 {% macro get_dbt_exposures_empty_table_query() %}
     {% set dbt_exposures_empty_table_query = elementary.empty_table([('unique_id', 'string'),
                                                                      ('name', 'string'),
+                                                                     ('label', 'string'),
                                                                      ('maturity', 'string'),
                                                                      ('type', 'string'),
                                                                      ('owner_email', 'string'),
@@ -39,6 +40,7 @@
     {% set flatten_exposure_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
+        'label': node_dict.get('label'),
         'maturity': node_dict.get('maturity'),
         'type': node_dict.get('type'),
         'owner_email': owner_dict.get('email'),
