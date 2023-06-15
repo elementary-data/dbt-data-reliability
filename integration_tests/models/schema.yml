@@ -605,7 +605,6 @@ exposures:
       - marketing
 
   - name: weekly_jaffle_metrics
-    label: Jaffles by the Week
     type: dashboard
     maturity: high
     url: https://bi.tool/dashboards/1
@@ -627,7 +626,6 @@ exposures:
       path: ByTheWeek/Jaffles
 
   - name: monthly_jaffle_metrics
-    label: Jaffles by the Month
     type: dashboard
     maturity: high
     url: https://bi.tool/dashboards/2
@@ -649,7 +647,6 @@ exposures:
       path: ByTheMonth/Jaffles
 
   - name: daily_jaffle_metrics
-    label: Jaffles by the Day
     type: dashboard
     maturity: high
     url: https://bi.tool/dashboards/3
