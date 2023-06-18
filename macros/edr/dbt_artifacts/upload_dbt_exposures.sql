@@ -12,7 +12,6 @@
 {% macro get_dbt_exposures_empty_table_query() %}
     {% set dbt_exposures_empty_table_query = elementary.empty_table([('unique_id', 'string'),
                                                                      ('name', 'string'),
-                                                                     ('label', 'string'),
                                                                      ('maturity', 'string'),
                                                                      ('type', 'string'),
                                                                      ('owner_email', 'string'),
@@ -28,6 +27,7 @@
                                                                      ('path', 'string'),
                                                                      ('generated_at', 'string'),
                                                                      ('metadata_hash', 'string'),
+                                                                     ('label', 'string'),
                                                                      ]) %}
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
