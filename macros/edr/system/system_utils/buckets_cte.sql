@@ -6,6 +6,12 @@
     {{ adapter.dispatch('complete_buckets_cte','elementary')(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) }}
 {% endmacro %}
 
+{% macro default__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    {{ exceptions.raise_compiler_error("The adapter does not have an implementation for macro 'complete_buckets_cte'") }}
+    {{ return('') }}
+{% endmacro %}
+
+
 {% macro spark__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
         select
