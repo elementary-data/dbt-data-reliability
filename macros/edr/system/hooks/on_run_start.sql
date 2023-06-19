@@ -4,6 +4,8 @@
     {{ return('') }}
   {% endif %}
 
+  {% do recommend_dbt_core_artifacts_upgrade() %}
+
   {% do elementary.init_elementary_graph() %}
 
   {% if flags.WHICH in ['test', 'build'] %}
