@@ -9,8 +9,7 @@
     {% if major < 1 or major == 1 and minor < 4 %}
         {%- set msg %}
 You are using dbt version {{ dbt_version }}.
-Elementary received major performance improvements in dbt version 1.4.0 or later.
-You can find instructions for upgrading here: https://docs.getdbt.com/docs/installation
+Elementary introduced major performance improvements for dbt version 1.4.0 or later.
 More information on the performance impact can be found here: https://docs.elementary-data.com/dbt/on-run-end_hooks#performance-impact-of-on-run-end-hooks
 This message can be muted by setting the 'mute_dbt_upgrade_recommendation' var to true.
         {% endset %}
