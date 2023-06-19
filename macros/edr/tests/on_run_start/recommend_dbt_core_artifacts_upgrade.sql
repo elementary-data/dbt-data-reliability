@@ -14,6 +14,6 @@ You can find instructions for upgrading here: https://docs.getdbt.com/docs/insta
 More information on the performance impact can be found here: https://docs.elementary-data.com/dbt/on-run-end_hooks#performance-impact-of-on-run-end-hooks
 This message can be muted by setting the 'mute_dbt_upgrade_recommendation' var to true.
         {% endset %}
-        {% do print(msg) %}
+        {% do log(msg, info=true) %}
     {% endif %}
 {% endmacro %}
