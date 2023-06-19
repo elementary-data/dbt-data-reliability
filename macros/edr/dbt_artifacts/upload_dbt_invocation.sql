@@ -151,7 +151,7 @@
 {% endmacro %}
 
 {% macro get_job_run_url(orchestrator, job_id, job_run_id) %}
-  {% set var_value = elementary.get_var("job_url", ["JOB_RUN_URL", "DBT_JOB_RUN_URL"]) %}
+  {% set var_value = elementary.get_var("job_run_url", ["JOB_RUN_URL", "DBT_JOB_RUN_URL"]) %}
   {% if var_value %}
     {% do return(var_value) %}
   {% endif %}
