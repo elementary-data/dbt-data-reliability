@@ -361,9 +361,9 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
-    if "default_macro" in test_types:
+    if "adapter_macro_has_default" in test_types:
         results = [
-            TestResult(type="default_macro", message=msg)
+            TestResult(type="adapter_macro_has_default", message=msg)
             for msg in dbt_runner.run_operation(
                 macro_name="test_adapter_specific_macros_have_default_implementation",
                 should_log=False,
@@ -432,7 +432,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_snapshot",
             "dimension",
             "create_table",
-            "default_macro",
+            "adapter_macro_has_default",
         ]
     else:
         e2e_types = [e2e_type]
