@@ -21,18 +21,18 @@
     {% endif %}
 {% endmacro %}
 
-{% macro assert_lists_contain_same_items(list1, list2) %}
+{% macro assert_lists_contain_same_items(list1, list2, context='') %}
     {% if list1 | length != list2 | length %}
-        {% do elementary.edr_log("FAILED: " ~ list1 ~ " has different length than " ~ list2) %}
+        {% do elementary.edr_log(context ~ " FAILED: " ~ list1 ~ " has different length than " ~ list2) %}
         {{ return(1) }}
     {% endif %}
     {% for item1 in list1 %}
         {% if item1 | lower not in list2 %}
-            {% do elementary.edr_log("FAILED: " ~ item1 ~ " not in list " ~ list2) %}
+            {% do elementary.edr_log(context ~ " FAILED: " ~ item1 ~ " not in list " ~ list2) %}
             {{ return(1) }}
         {% endif %}
     {% endfor %}
-    {% do elementary.edr_log("SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
+    {% do elementary.edr_log(context ~ " SUCCESS: " ~ list1  ~ " in list " ~ list2) %}
     {{ return(0) }}
 {% endmacro %}
 
