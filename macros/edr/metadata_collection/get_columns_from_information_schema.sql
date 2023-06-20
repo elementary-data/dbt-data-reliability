@@ -44,3 +44,11 @@
     where upper(table_schema) = upper('{{ schema_name }}')
 
 {% endmacro %}
+
+{% macro spark__get_columns_from_information_schema(database_name, schema_name) %}
+    {{ elementary.get_empty_columns_from_information_schema_table() }}
+{% endmacro %}
+
+{% macro get_empty_columns_from_information_schema_table() %}
+    {{ elementary.empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string'), ('column_name', 'string'), ('data_type', 'string')]) }}
+{% endmacro %}
