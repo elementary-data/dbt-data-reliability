@@ -1,11 +1,8 @@
 {{
   config(
     materialized = 'view' if not var('sync', false) else 'table',
-    enabled = elementary.get_config_var('enable_dbt_columns') and target.type != 'databricks' and target.type != 'spark' | as_bool()
   )
 }}
-
-{%- if target.type != 'databricks' and target.type != 'spark' %}
 
 with dbt_models_data as (
     select
@@ -65,8 +62,3 @@ dbt_columns as (
 
 select *
 from dbt_columns
-
-{%- else %}
-    {{ elementary.no_results_query() }}
-{%- endif %}
-
