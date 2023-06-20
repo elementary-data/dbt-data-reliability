@@ -1,6 +1,6 @@
 {{
   config(
-    materialized = 'view',
+    materialized = 'view' if not var('sync', false) else 'table',
     enabled = elementary.get_config_var('enable_dbt_columns') and target.type != 'databricks' and target.type != 'spark' | as_bool()
   )
 }}
