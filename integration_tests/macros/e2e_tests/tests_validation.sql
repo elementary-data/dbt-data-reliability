@@ -205,10 +205,7 @@
         {% set parts = macro.split("__") %}
         {% if parts | length == 2 %}
             {% set adapter, macro_name = parts %}
-            {% if macro_name in no_default_macros %}
-                {% continue %}
-            {% endif %}
-            {% if "default__{}".format(macro_name) not in elementary_macros %}
+            {% if macro_name not in no_default_macros and "default__{}".format(macro_name) not in elementary_macros %}
                 {% do no_default_macros.append(macro_name) %}
             {% endif %}
         {% endif %}
