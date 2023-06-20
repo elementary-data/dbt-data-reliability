@@ -5,13 +5,13 @@
         {% do return([]) %}
     {% endif %}
 
-    {% set relation = adapter.get_relation(database=node.database, schema=node.schema, identifier=node.alias) %}
-    {% if relation is none %}
+    {% set relation = api.Relation.create(database=node.database, schema=node.schema, identifier=node.alias) %}
+    {% set column_names = adapter.get_columns_in_relation(relation) | map(attribute="name") | map("lower") | list %}
+    {% if not column_names %}
         {% do print("Relation '{}' does not exist.".format(node.relation_name)) %}
         {% do return([]) %}
     {% endif %}
 
-    {% set column_names = adapter.get_columns_in_relation(relation) | map(attribute="name") | map("lower") | list %}
     {% if exclude_deprecated_columns %}
         {% set deprecated_column_names = node.meta.get("deprecated_columns", []) | map(attribute="name") | map("lower") | list %}
         {% set column_names = column_names | reject("in", deprecated_column_names) | list %}

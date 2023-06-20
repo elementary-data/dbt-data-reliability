@@ -117,6 +117,10 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: dbt deps
 
+      - name: Run unit tests
+        working-directory: ${{ env.TESTS_DIR }}
+        run: python run_unit_tests.py -t "${{ inputs.warehouse-type }}"
+
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
         run: python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.warehouse-type == 'postgres' || inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"

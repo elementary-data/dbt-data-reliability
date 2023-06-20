@@ -15,7 +15,7 @@
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `current_timestamp` macro.") }}
     {% endif %}
-    {{ return(macro()) }}§
+    {{ return(macro()) }}
 {%- endmacro %}
 
 {% macro spark__edr_current_timestamp() %}

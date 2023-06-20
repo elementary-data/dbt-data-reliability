@@ -12,12 +12,8 @@
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
 
-        {# get table configuration #}
+        {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- set model_relation = dbt.load_relation(model) %}
-        {% if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
-        {% endif %}
 
         {#- query current schema and write to temp test table -#}
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
