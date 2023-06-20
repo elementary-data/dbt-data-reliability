@@ -18,12 +18,8 @@
 
         {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- set model_relation = dbt.load_relation(model) %}
-        {% if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
-        {% endif %}
 
-        {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model_relation,
+        {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model,
                                                                                                    mandatory_params=mandatory_params,
                                                                                                    timestamp_column=timestamp_column,
                                                                                                    where_expression=where_expression,
@@ -53,7 +49,7 @@
 
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
-        {%- set table_monitoring_query = elementary.table_monitoring_query(model_relation,
+        {%- set table_monitoring_query = elementary.table_monitoring_query(model,
                                                                            min_bucket_start,
                                                                            max_bucket_end,
                                                                            table_monitors,
@@ -64,7 +60,7 @@
 
         {#- calculate anomaly scores for metrics -#}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(temp_table_relation,
-                                                                          model_relation,
+                                                                          model,
                                                                           test_configuration=test_configuration,
                                                                           metric_properties=metric_properties) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
