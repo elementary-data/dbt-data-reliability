@@ -51,19 +51,13 @@ def run_unit_tests(test_file, target="snowflake"):
     "--target",
     "-t",
     type=str,
-    default="all",
-    help="snowflake / bigquery / redshift / all (default = all)",
+    default="postgres",
 )
 @click.option(
     "--test-file", "-f", type=str, default=None, help="The name of tests file to run"
 )
 def main(target, test_file):
-    if target == "all":
-        targets = ["snowflake", "bigquery", "redshift"]
-    else:
-        targets = [target]
-    for target in targets:
-        run_unit_tests(test_file, target)
+    run_unit_tests(test_file, target)
 
 
 if __name__ == "__main__":
