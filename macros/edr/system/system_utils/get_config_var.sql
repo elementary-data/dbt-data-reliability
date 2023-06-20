@@ -32,7 +32,6 @@
     'disable_tests_results': false,
     'disable_dbt_artifacts_autoupload': false,
     'disable_dbt_invocation_autoupload': false,
-    'enable_dbt_columns': true,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
     'dbt_artifacts_chunk_size': 5000,
