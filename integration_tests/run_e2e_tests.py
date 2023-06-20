@@ -132,12 +132,13 @@ def e2e_tests(
     if "seasonal_volume" in test_types:
         dbt_runner.test(
             select="tag:seasonality_volume",
-            vars={"custom_run_started_at": "1969-12-31 08:00:00"}
+            vars={"custom_run_started_at": "1969-12-31 08:00:00"},
         )
         results = [
             TestResult(type="seasonal_volume", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_seasonal_volume_anomalies_after_training", should_log=False
+                macro_name="validate_seasonal_volume_anomalies_after_training",
+                should_log=False,
             )
         ]
         test_results.extend(results)
@@ -360,13 +361,25 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "default_macro" in test_types:
+        results = [
+            TestResult(type="default_macro", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="test_adapter_specific_macros_have_default_implementation",
+                should_log=False,
+            )
+        ]
+        test_results.extend(results)
+
     return test_results
 
 
 def print_failed_test_results(e2e_target: str, failed_test_results: List[TestResult]):
     print(f"Failed {e2e_target} tests:")
     for failed_test_result in failed_test_results:
-        print(f"\033[1m\033[91m{failed_test_result.type}: {failed_test_result.message}\033[0m")
+        print(
+            f"\033[1m\033[91m{failed_test_result.type}: {failed_test_result.message}\033[0m"
+        )
 
 
 @click.command()
@@ -419,6 +432,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_snapshot",
             "dimension",
             "create_table",
+            "default_macro",
         ]
     else:
         e2e_types = [e2e_type]
