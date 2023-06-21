@@ -27,6 +27,7 @@
                                                                      ('path', 'string'),
                                                                      ('generated_at', 'string'),
                                                                      ('metadata_hash', 'string'),
+                                                                     ('label', 'string'),
                                                                      ]) %}
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
@@ -39,6 +40,7 @@
     {% set flatten_exposure_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
+        'label': node_dict.get('label'),
         'maturity': node_dict.get('maturity'),
         'type': node_dict.get('type'),
         'owner_email': owner_dict.get('email'),
