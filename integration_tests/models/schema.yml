@@ -71,11 +71,6 @@ models:
     tests:
       - elementary.volume_anomalies:
           tags: ["no_timestamp"]
-      - elementary.dimension_anomalies:
-          dimensions:
-            - null_count_str
-          tags: ["no_timestamp", "dimension_anomalies"]
-          alias: "dimension_anomalies_no_timestamp"
 
     columns:
       - name: "null_count_str"
@@ -90,37 +85,44 @@ models:
       owner: "egk"
       subscribers: "elon, egk"
     description: We use this model to test dimension anomalies
-    config:
-      elementary:
-        timestamp_column: updated_at
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform"
+          timestamp_column: updated_at
           dimensions:
             - platform
       - elementary.dimension_anomalies:
           alias: "dimension_anomalies_platform_where_expression"
           tags: ["dimension_anomalies"]
+          timestamp_column: updated_at
           dimensions:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform_version"
+          timestamp_column: updated_at
           dimensions:
             - platform
             - version
       - elementary.dimension_anomalies:
           anomaly_direction: "spike"
           tags: ["spike_directional_anomalies"]
+          timestamp_column: updated_at
           dimensions:
             - platform
       - elementary.dimension_anomalies:
           anomaly_direction: "drop"
           tags: ["drop_directional_anomalies"]
+          timestamp_column: updated_at
           dimensions:
             - platform
+      - elementary.dimension_anomalies:
+          dimensions:
+            - platform
+          tags: ["dimension_anomalies", "should_fail"]
+          alias: "dimension_anomalies_no_timestamp"
 
   - name: error_model
     description: We use this model to create error runs and tests
