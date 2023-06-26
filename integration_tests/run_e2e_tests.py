@@ -153,26 +153,6 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:drop_directional_anomalies")
-        results = [
-            TestResult(type="drop_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_drop_directional_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:spike_directional_anomalies")
-        results = [
-            TestResult(type="spike_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_spike_directional_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
     if "create_table" in test_types:
         # If there is a problem with create_or_replace macro, it will crash the test.
         dbt_runner.test(select="tag:table_anomalies")
@@ -224,6 +204,26 @@ def e2e_tests(
         dbt_runner.test(select="tag:schema_changes_from_baseline")
 
     dbt_runner.run(vars={"stage": "validation"})
+
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:drop_directional_anomalies")
+        results = [
+            TestResult(type="drop_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_drop_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:spike_directional_anomalies")
+        results = [
+            TestResult(type="spike_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_spike_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
 
     if "debug" in test_types:
         dbt_runner.test(select="tag:debug")
