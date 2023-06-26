@@ -130,18 +130,18 @@ def e2e_tests(
     dbt_runner.run(vars={"stage": "training"})
 
     if "seasonal_volume" in test_types:
-        dbt_runner.test(
-            select="tag:seasonality_volume",
-            vars={"custom_run_started_at": "1969-12-31 08:00:00"},
-        )
-        results = [
-            TestResult(type="seasonal_volume", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_seasonal_volume_anomalies_after_training",
-                should_log=False,
+            dbt_runner.test(
+                select="tag:seasonality_volume",
+                vars={"custom_run_started_at": "1969-12-31 08:00:00"},
             )
-        ]
-        test_results.extend(results)
+            results = [
+                TestResult(type="seasonal_volume", message=msg)
+                for msg in dbt_runner.run_operation(
+                    macro_name="validate_seasonal_volume_anomalies_after_training",
+                    should_log=False,
+                )
+            ]
+            test_results.extend(results)
 
     if "table" in test_types:
         dbt_runner.test(select="tag:table_anomalies")
@@ -149,26 +149,6 @@ def e2e_tests(
             TestResult(type="table_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
                 macro_name="validate_table_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:drop_directional_anomalies")
-        results = [
-            TestResult(type="drop_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_drop_directional_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:spike_directional_anomalies")
-        results = [
-            TestResult(type="spike_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_spike_directional_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
@@ -224,6 +204,26 @@ def e2e_tests(
         dbt_runner.test(select="tag:schema_changes_from_baseline")
 
     dbt_runner.run(vars={"stage": "validation"})
+
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:drop_directional_anomalies")
+        results = [
+            TestResult(type="drop_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_drop_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
+    if "directional_anomalies" in test_types:
+        dbt_runner.test(select="tag:spike_directional_anomalies")
+        results = [
+            TestResult(type="spike_directional_anomalies", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_spike_directional_anomalies", should_log=False
+            )
+        ]
+        test_results.extend(results)
 
     if "debug" in test_types:
         dbt_runner.test(select="tag:debug")

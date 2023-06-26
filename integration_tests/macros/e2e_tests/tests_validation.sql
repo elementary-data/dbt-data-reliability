@@ -78,7 +78,7 @@
     {% for result in results %}
         {% do results_list.append(result) %}
     {% endfor %}
-    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies']) }}
+    {{ assert_lists_contain_same_items(results_list, ['any_type_column_anomalies', 'numeric_column_anomalies']) }}
 {% endmacro %}
 
 {% macro validate_drop_directional_anomalies() %}
@@ -96,7 +96,7 @@
     {% for result in results %}
         {% do results_list.append(result) %}
     {% endfor %}
-    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies', 'dimension_anomalies', 'numeric_column_anomalies']) }}
+    {{ assert_lists_contain_same_items(results_list,  ['any_type_column_anomalies', 'dimension_anomalies']) }}
 {% endmacro %}
 
 {% macro validate_error_model() %}
