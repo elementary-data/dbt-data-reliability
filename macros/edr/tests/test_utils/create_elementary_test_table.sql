@@ -3,6 +3,12 @@
         {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type) %}
         {{ elementary.debug_log(table_type ~ ' table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_table_name) }}
 
+        {# We want to delete the test table before replacing it to make sure we create it with the updated schema #}
+        {% set test_table_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=temp_table_name) %}
+        {% if test_table_relation %}
+            {% do adapter.drop_relation(test_table_relation) %}
+        {% endif %}
+
         {% set _, temp_table_relation = dbt.get_or_create_relation(database=database_name,
                                                                    schema=schema_name,
                                                                    identifier=temp_table_name,
