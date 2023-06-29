@@ -15,7 +15,7 @@
         {%- set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {%- set empty_table_query = elementary.empty_data_monitoring_metrics(with_created_at=false) %}
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', empty_table_query) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', empty_table_query, is_temp_table=True) %}
 
         {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
