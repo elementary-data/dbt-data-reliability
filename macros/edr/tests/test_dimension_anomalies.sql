@@ -49,7 +49,7 @@
         {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration.days_back, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query, is_temp_table=True) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,

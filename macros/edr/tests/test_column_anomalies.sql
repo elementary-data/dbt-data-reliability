@@ -61,7 +61,7 @@
                                                                              column_monitors,
                                                                              metric_properties) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
-        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', column_monitoring_query, is_temp_table=True) %}
+        {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', column_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
         {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
