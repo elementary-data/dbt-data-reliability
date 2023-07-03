@@ -45,6 +45,25 @@
 
 {% endmacro %}
 
+{% macro databricks__get_columns_from_information_schema(database_name, schema_name) %}
+{% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
+
+{% if schema_relation.database %}
+    select
+        upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
+        upper(table_catalog) as database_name,
+        upper(table_schema) as schema_name,
+        upper(table_name) as table_name,
+        upper(column_name) as column_name,
+        data_type
+    from {{ database_name }}.information_schema.columns
+    where upper(table_schema) = upper('{{ schema_name }}')
+{% else %}
+    {{ elementary.get_empty_columns_from_information_schema_table() }}
+{% endif %}
+
+{% endmacro %}
+
 {% macro spark__get_columns_from_information_schema(database_name, schema_name) %}
     {{ elementary.get_empty_columns_from_information_schema_table() }}
 {% endmacro %}
