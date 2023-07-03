@@ -79,6 +79,7 @@
     {% do exceptions.raise_compiler_error("Unknown test type: {}".format(test_type)) %}
   {% endif %}
   {% do test_type_handler(flattened_test) %}
+  {% do elementary.handle_failed_test_result_count(flattened_test) %}
 {% endmacro %}
 
 {% materialization test, default %}
