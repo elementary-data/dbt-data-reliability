@@ -1,4 +1,3 @@
 {{ config(materialized='dummy') }}
-    begin;
-    commit;
+    SELECT 1
 -- depends_on: {{ ref('one') }}
