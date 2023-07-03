@@ -361,6 +361,23 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+    if "dummy_models" in test_types:
+        model = "dummy_model"
+        try:
+            row = get_row(model, dbt_runner)
+            if row['depends_on_nodes'] != '["model.elementary_integration_tests.one"]' \
+                    or row['materialization'] != "dummy":
+                result = TestResult(type="dummy_models", message="FAILED: dummy model not materialized as expected")
+            else:
+                res = dbt_runner.run_operation('assert_no_dummy_model_table')
+                assertion_res = len(res) == 1 and "true" in res[0].lower()
+                result = TestResult(type="dummy_models",
+                                    message="SUCCESS: dummy model shows in the run but isn't created" if assertion_res
+                                    else "FAILED: dummy_model table shouldn't exist")
+        except ValueError:
+            result = TestResult(type="dummy_models", message="FAILED: we need to see the dummy model in the run")
+        test_results.append(result)
+
     return test_results
 
 
@@ -422,6 +439,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_snapshot",
             "dimension",
             "create_table",
+            "dummy_models",
         ]
     else:
         e2e_types = [e2e_type]

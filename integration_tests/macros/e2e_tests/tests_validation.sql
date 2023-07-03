@@ -197,3 +197,7 @@
     {% set result = elementary.run_query(query) %}
     {% do assert_empty_table(result, "dbt_invocations") %}
 {% endmacro %}
+
+{% macro assert_no_dummy_model_table() %}
+    {{ load_relation(ref('dummy_model')) is none }}
+{% endmacro %}
