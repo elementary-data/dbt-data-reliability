@@ -369,11 +369,11 @@ def e2e_tests(
                     or row['materialization'] != "dummy":
                 result = TestResult(type="dummy_models", message="FAILED: dummy model not materialized as expected")
             else:
-                res = dbt_runner.run_operation('assert_no_dummy_model_table')
-                assertion_res = len(res) == 1 and "true" in res[0].lower()
-                result = TestResult(type="dummy_models",
-                                    message="SUCCESS: dummy model shows in the run but isn't created" if assertion_res
-                                    else "FAILED: dummy_model table shouldn't exist")
+                result = TestResult(
+                    type="dummy_models",
+                    message=dbt_runner.run_operation('assert_table_doesnt_exist',
+                                                     macro_args={"model_name": "dummy_model"}, should_log=False)[0]
+                )
         except ValueError:
             result = TestResult(type="dummy_models", message="FAILED: we need to see the dummy model in the run")
         test_results.append(result)
