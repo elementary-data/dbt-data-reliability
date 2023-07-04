@@ -361,21 +361,21 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
-    if "dummy_models" in test_types:
-        model = "dummy_model"
+    if "non_dbt_models" in test_types:
+        model = "non_dbt_model"
         try:
             row = get_row(model, dbt_runner)
             if row['depends_on_nodes'] != '["model.elementary_integration_tests.one"]' \
-                    or row['materialization'] != "dummy":
-                result = TestResult(type="dummy_models", message="FAILED: dummy model not materialized as expected")
+                    or row['materialization'] != "non_dbt":
+                result = TestResult(type="non_dbt_models", message="FAILED: non_dbt model not materialized as expected")
             else:
                 result = TestResult(
-                    type="dummy_models",
+                    type="non_dbt_models",
                     message=dbt_runner.run_operation('assert_table_doesnt_exist',
-                                                     macro_args={"model_name": "dummy_model"}, should_log=False)[0]
+                                                     macro_args={"model_name": "non_dbt_model"}, should_log=False)[0]
                 )
         except ValueError:
-            result = TestResult(type="dummy_models", message="FAILED: we need to see the dummy model in the run")
+            result = TestResult(type="non_dbt_models", message="FAILED: we need to see the non_dbt model in the run")
         test_results.append(result)
 
     return test_results
@@ -439,7 +439,7 @@ def main(target, e2e_type, generate_data, clear_tests):
             "error_snapshot",
             "dimension",
             "create_table",
-            "dummy_models",
+            "non_dbt_models",
         ]
     else:
         e2e_types = [e2e_type]
