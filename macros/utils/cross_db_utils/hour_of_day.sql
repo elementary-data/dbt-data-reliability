@@ -3,19 +3,19 @@
 {% endmacro %}
 
 {# Databricks, Spark: #}
-{% macro default__edr_day_of_week_expression(date_expr) %}
+{% macro default__edr_hour_of_day_expression(date_expr) %}
     HOUR({{ date_expr }})
 {% endmacro %}
 
-{% macro bigquery__edr_day_of_week_expression(date_expr) %}
+{% macro bigquery__edr_hour_of_day_expression(date_expr) %}
     EXTRACT(hour from {{ date_expr }})
 {% endmacro %}
 
-{% macro postgres__edr_day_of_week_expression(date_expr) %}
+{% macro postgres__edr_hour_of_day_expression(date_expr) %}
     EXTRACT(hour from {{ date_expr }})
 {% endmacro %}
 
-{% macro redshift__edr_day_of_week_expression(date_expr) %}
+{% macro redshift__edr_hour_of_day_expression(date_expr) %}
     EXTRACT(hour from {{ date_expr }})
 {% endmacro %}
 
