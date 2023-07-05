@@ -1,0 +1,32 @@
+{% macro edr_hour_of_day_expression(date_expr) %}
+    {{ return(adapter.dispatch('edr_hour_of_day_expression','elementary')(elementary.edr_cast_as_date(date_expr))) }}
+{% endmacro %}
+
+{# Databricks, Spark: #}
+{% macro default__edr_day_of_week_expression(date_expr) %}
+    concat(cast(DATE_FORMAT({{ date_expr }}, 'EEEE') as string), cast(HOUR({{ date_expr }}) as string))
+{% endmacro %}
+
+{% macro bigquery__edr_day_of_week_expression(date_expr) %}
+    concat(cast(FORMAT_DATE('%A', {{ date_expr }}) as string), cast(EXTRACT(hour from {{ date_expr }}) as string))
+{% endmacro %}
+
+{% macro postgres__edr_day_of_week_expression(date_expr) %}
+    concat(cast(to_char({{ date_expr }}, 'Day') as string), cast(EXTRACT(hour from {{ date_expr }}) as string))
+{% endmacro %}
+
+{% macro redshift__edr_day_of_week_expression(date_expr) %}
+    concat(trim(' ' FROM to_char({{ date_expr }}, 'Day')), cast(EXTRACT(hour from {{ date_expr }}) as string))
+{% endmacro %}
+
+{% macro snowflake__edr_hour_of_day_expression(date_expr) %}
+    concat(DECODE (EXTRACT('dayofweek',{{ date_expr }}),
+    1 , 'Monday',
+    2 , 'Tuesday',
+    3 , 'Wednesday',
+    4 , 'Thursday',
+    5 , 'Friday',
+    6 , 'Saturday',
+    0 , 'Sunday'
+    )::string,  HOUR({{ date_expr }})::string)
+{% endmacro %}
