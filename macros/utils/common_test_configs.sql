@@ -29,6 +29,7 @@
     The config may contain:
       description: A human readable description of the test.
       failed_count: Configuration to get the number of failed rows from the test result, see handle_failed_test_result_count.sql for details.
+      quality_dimension: The quality dimension of the test, see https://www.precisely.com/blog/data-quality/data-quality-dimensions-measure for details.
   #}
   {% set common_tests_configs_mapping = {
       "dbt": {
@@ -36,27 +37,31 @@
           "failed_count": {
             "method": "count"
           },
-          "description": "This test validates that there are no `null` values present in a column."
+          "description": "This test validates that there are no `null` values present in a column.",
+          "quality_dimension": "completeness"
         },
         "relationships": {
           "failed_count": {
             "method": "count"
           },
-          "description": "This test validates that all of the records in a child table have a corresponding record in a parent table. This property is referred to as \"referential integrity\"."
+          "description": "This test validates that all of the records in a child table have a corresponding record in a parent table. This property is referred to as \"referential integrity\".",
+          "quality_dimension": "consistency"
         },
         "unique": {
           "failed_count": {
             "method": "sum",
             "parameters": ["n_records"]
           },
-          "description": "This test validates that there are no duplicate values present in a field."
+          "description": "This test validates that there are no duplicate values present in a field.",
+          "quality_dimension": "uniqueness"
         },
         "accepted_values": {
           "failed_count": {
             "method": "sum",
             "parameters": ["n_records"]
           },
-          "description": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail."
+          "description": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail.",
+          "quality_dimension": "validity"
         }
       },
       "dbt_expectations": {
@@ -64,127 +69,148 @@
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column values to not be null."
+          "description": "Expect column values to not be null.",
+          "quality_dimension": "completeness"
         },
         "expect_column_values_to_be_null": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column values to be null."
+          "description": "Expect column values to be null.",
+          "quality_dimension": "completeness"
         },
         "expect_column_values_to_be_in_set": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect each column value to be in a given set."
+          "description": "Expect each column value to be in a given set.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_be_between": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect each column value to be between two values."
+          "description": "Expect each column value to be between two values.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_not_be_in_set": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect each column value not to be in a given set."
+          "description": "Expect each column value not to be in a given set.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_be_increasing": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column values to be increasing. If `strictly: True`, then this expectation is only satisfied if each consecutive value is strictly increasing \u2013 equal values are treated as failures."
+          "description": "Expect column values to be increasing. If `strictly: True`, then this expectation is only satisfied if each consecutive value is strictly increasing \u2013 equal values are treated as failures.",
+          "quality_dimension": "accuracy"
         },
         "expect_column_values_to_be_decreasing": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column values to be decreasing. If `strictly=True`, then this expectation is only satisfied if each consecutive value is strictly decreasing \u2013 equal values are treated as failures."
+          "description": "Expect column values to be decreasing. If `strictly=True`, then this expectation is only satisfied if each consecutive value is strictly decreasing \u2013 equal values are treated as failures.",
+          "quality_dimension": "accuracy"
         },
         "expect_column_value_lengths_to_be_between": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings with length between a min_value value and a max_value value (inclusive)."
+          "description": "Expect column entries to be strings with length between a min_value value and a max_value value (inclusive).",
+          "quality_dimension": "validity"
         },
         "expect_column_value_lengths_to_equal": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings with length equal to the provided value."
+          "description": "Expect column entries to be strings with length equal to the provided value.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_match_regex": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings that match a given regular expression. Valid matches can be found anywhere in the string, for example \"[at]+\" will identify the following strings as expected: \"cat\", \"hat\", \"aa\", \"a\", and \"t\", and the following strings as unexpected: \"fish\", \"dog\". Optionally, `is_raw` indicates the `regex` pattern is a \"raw\" string and should be escaped. The default is `False`."
+          "description": "Expect column entries to be strings that match a given regular expression. Valid matches can be found anywhere in the string, for example \"[at]+\" will identify the following strings as expected: \"cat\", \"hat\", \"aa\", \"a\", and \"t\", and the following strings as unexpected: \"fish\", \"dog\". Optionally, `is_raw` indicates the `regex` pattern is a \"raw\" string and should be escaped. The default is `False`.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_not_match_regex": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings that do NOT match a given regular expression. The regex must not match any portion of the provided string. For example, \"[at]+\" would identify the following strings as expected: \"fish\u201d, \"dog\u201d, and the following as unexpected: \"cat\u201d, \"hat\u201d. Optionally, `is_raw` indicates the `regex` pattern is a \"raw\" string and should be escaped. The default is `False`."
+          "description": "Expect column entries to be strings that do NOT match a given regular expression. The regex must not match any portion of the provided string. For example, \"[at]+\" would identify the following strings as expected: \"fish\u201d, \"dog\u201d, and the following as unexpected: \"cat\u201d, \"hat\u201d. Optionally, `is_raw` indicates the `regex` pattern is a \"raw\" string and should be escaped. The default is `False`.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_match_regex_list": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the column entries to be strings that can be matched to either any of or all of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are \"raw\" strings and should be escaped. The default is `False`."
+          "description": "Expect the column entries to be strings that can be matched to either any of or all of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are \"raw\" strings and should be escaped. The default is `False`.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_not_match_regex_list": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the column entries to be strings that do not match any of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are \"raw\" strings and should be escaped. The default is `False`."
+          "description": "Expect the column entries to be strings that do not match any of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are \"raw\" strings and should be escaped. The default is `False`.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_match_like_pattern": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings that match a given SQL like pattern."
+          "description": "Expect column entries to be strings that match a given SQL like pattern.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_not_match_like_pattern": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect column entries to be strings that do not match a given SQL like pattern."
+          "description": "Expect column entries to be strings that do not match a given SQL like pattern.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_match_like_pattern_list": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the column entries to be strings that match any of a list of SQL like patterns."
+          "description": "Expect the column entries to be strings that match any of a list of SQL like patterns.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_not_match_like_pattern_list": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the column entries to be strings that do not match any of a list of SQL like patterns."
+          "description": "Expect the column entries to be strings that do not match any of a list of SQL like patterns.",
+          "quality_dimension": "validity"
         },
         "expect_column_pair_values_A_to_be_greater_than_B": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect values in column A to be greater than column B."
+          "description": "Expect values in column A to be greater than column B.",
+          "quality_dimension": "accuracy"
         },
         "expect_column_pair_values_to_be_equal": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the values in column A to be the same as column B."
+          "description": "Expect the values in column A to be the same as column B.",
+          "quality_dimension": "accuracy"
         },
         "expect_column_pair_values_to_be_in_set": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect paired values from columns A and B to belong to a set of valid pairs. Note: value pairs are expressed as lists within lists"
+          "description": "Expect paired values from columns A and B to belong to a set of valid pairs. Note: value pairs are expressed as lists within lists",
+          "quality_dimension": "validity"
         },
         "expect_select_column_values_to_be_unique_within_record": {
           "failed_count": {
             "method": "count"
           },
-          "description": "Expect the values for each record to be unique across the columns listed. Note that records can be duplicated."
+          "description": "Expect the values for each record to be unique across the columns listed. Note that records can be duplicated.",
+          "quality_dimension": "validity"
         },
         "expect_column_values_to_be_unique": {
           "description": "Expect each column value to be unique."
@@ -312,46 +338,54 @@
           "failed_count": {
             "method": "sum",
             "parameters": ["diff_count"]
-          }
+          },
+          "quality_dimension": "consistency"
         },
         "fewer_rows_than": {
           "failed_count": {
             "method": "sum",
             "parameters": ["row_count_delta"]
-          }
+          },
+          "quality_dimension": "consistency"
         },
         "expression_is_true": {
           "failed_count": {
             "method": "count"
-          }
+          },
+          "quality_dimension": "accuracy"
         },
         "not_empty_string": {
           "failed_count": {
             "method": "count"
-          }
+          },
+          "quality_dimension": "completeness"
         },
         "cardinality_equality": {
           "failed_count": {
             "method": "sum",
             "parameters": ["num_rows"]
-          }
+          },
+          "quality_dimension": "consistency"
         },
         "sequential_values": {
           "failed_count": {
             "method": "count"
-          }
+          },
+          "quality_dimension": "accuracy"
         },
         "accepted_range": {
           "failed_count": {
             "method": "count"
-          }
+          },
+          "quality_dimension": "validity"
         }
       },
       "elementary": {
         "json_schema": {
           "failed_count": {
             "method": "count"
-          }
+          },
+          "quality_dimension": "validity"
         }
       }
     } %}

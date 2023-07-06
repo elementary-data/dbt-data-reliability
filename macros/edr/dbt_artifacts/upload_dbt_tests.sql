@@ -37,6 +37,7 @@
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string'),
                                                                  ('metadata_hash', 'string'),
+                                                                 ('quality_dimension', 'string')
                                                                  ]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
@@ -157,7 +158,8 @@
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'quality_dimension': elementary.get_quality_dimension(test_short_name, test_namespace)
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
@@ -216,4 +218,14 @@
         {% set description = common_test_config.get("description") %}
     {% endif %}
     {% do return(description) %}
+{% endmacro %}
+
+
+{% macro get_quality_dimension(short_name, test_namespace = none) %}
+    {% set quality_dimension = none %}
+    {% set common_test_config = elementary.get_common_test_config_by_namespace_and_name(test_namespace, short_name) %}
+    {% if common_test_config %}
+        {% set quality_dimension = common_test_config.get("quality_dimension") %}
+    {% endif %}
+    {% do return(quality_dimension) %}
 {% endmacro %}
