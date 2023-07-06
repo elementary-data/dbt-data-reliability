@@ -1,3 +1,16 @@
+{% macro create_test_result_temp_table() %}
+  {% set database, schema = elementary.get_package_database_and_schema() %}
+  {% set relation = make_temp_relation(api.Relation.create(identifier=model['alias'], database=database, schema=schema, type='table')) %}
+  {% call statement('temp_table') %}
+    {{ create_table_as(True, relation, sql) }}
+  {% endcall %}
+  {% set new_sql %}
+    select * from {{ relation }}
+  {% endset %}
+  {% do context.update({'sql': new_sql}) %}
+  {% do return(relation) %}
+{% endmacro %}
+
 {% macro query_test_result_rows(sample_limit=none) %}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
@@ -67,6 +80,7 @@
     {% do return(none) %}
   {% endif %}
 
+  {% do elementary.create_test_result_temp_table() %}
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
