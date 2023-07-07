@@ -1,5 +1,5 @@
 select
-        {{ elementary.edr_cast_as_timestanp('updated_at') }},
+        {{ elementary.edr_cast_as_timestamp('updated_at') }},
         occurred_at,
         min,
         max,
