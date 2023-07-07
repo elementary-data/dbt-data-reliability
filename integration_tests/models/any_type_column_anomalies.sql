@@ -3,7 +3,10 @@
 ) }}
 
 with training as (
-select * from {{ ref('any_type_column_anomalies_training') }}
+    select * from {{ ref('any_type_column_anomalies_training') }}
+    {% if is_incremental() %}
+    where updated_at > (select max(updated_at) from {{ this }})
+    {% endif %}
 ),
 
 {% if var("stage") == "validation" %}
@@ -38,6 +41,3 @@ select * from {{ ref('any_type_column_anomalies_training') }}
  )
 
 select * from final
-{% if is_incremental() %}
-    where updated_at > (select max(updated_at) from {{ this }})
-{% endif %}

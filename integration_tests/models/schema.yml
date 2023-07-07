@@ -18,8 +18,6 @@ models:
     meta:
       owner: ["@edr"]
       subscribers: "@egk"
-    config:
-      tags: ["validation_stage"]
     description: >
       This is a very weird description
       with breaklines
@@ -27,6 +25,7 @@ models:
       and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
       WDYT?
     config:
+      tags: ["validation_stage"]
       elementary:
         timestamp_column: updated_at
     tests:

@@ -4,6 +4,9 @@
 
 with training as (
     select * from {{ ref('dimension_anomalies_training') }}
+    {% if is_incremental() %}
+        where updated_at > (select max(updated_at) from {{ this }})
+    {% endif %}
 ),
 
 {% if var("stage") == "validation" %}
@@ -32,6 +35,3 @@ with training as (
  )
 
 select * from final
-{% if is_incremental() %}
-    where updated_at > (select max(updated_at) from {{ this }})
-{% endif %}
