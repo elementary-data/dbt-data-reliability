@@ -140,8 +140,7 @@
             dimension,
             dimension_value,
             metric_properties
-        from
-            row_count
+        from row_count
         where (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
             metric_value is null
         )
@@ -188,7 +187,7 @@
                    dimension_value,
                    0 as row_count_value
             from training_set_dimensions
-            where dimension_value not in (select distinct dimension_value from row_count_values)
+            where dimension_value not in (select distinct dimension_value from row_count_values) results
         ),
 
         {# Union between current row count for each dimension, and the "hydrated" metrics of the test until this run #}
