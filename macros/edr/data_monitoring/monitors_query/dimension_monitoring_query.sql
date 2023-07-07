@@ -111,7 +111,7 @@
             select * from row_count_values
               union all
             select * from fill_empty_buckets_row_count_values
-            )
+            ) as results
         ),
 
         row_count as (
@@ -187,7 +187,7 @@
                    dimension_value,
                    0 as row_count_value
             from training_set_dimensions
-            where dimension_value not in (select distinct dimension_value from row_count_values) results
+            where dimension_value not in (select distinct dimension_value from row_count_values)
         ),
 
         {# Union between current row count for each dimension, and the "hydrated" metrics of the test until this run #}
