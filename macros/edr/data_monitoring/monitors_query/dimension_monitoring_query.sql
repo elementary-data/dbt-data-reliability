@@ -34,31 +34,45 @@
                 and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
         ),
 
-        {# Outdated dimension values are dimensions with all metrics of 0 in the range of the test time #}
-        previous_dimension_values_without_outdated as (
-            select distinct 
+        all_dimension_metrics as (
+            select
+                bucket_end,
                 dimension_value,
-                sum(metric_value)
+                metric_value,
+                row_number () over (partition by dimension_value order by bucket_end desc) as row_number
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
-                and dimension = {{ elementary.edr_quote(dimensions_string) }}
-                and {{ elementary.edr_cast_as_timestamp('bucket_end') }} >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
+        ),
+
+        training_set_dimensions as (
+            select distinct
+                dimension_value,
+                min(bucket_end) as dimension_min_bucket_end,
+                sum(metric_value)
+            from all_dimension_metrics
+            where row_number <= {{ test_configuration.min_training_set_size }}
             group by 1
+            {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0
         ),
 
         unique_previous_dimension_values as (
             select distinct
                 dimension_value,
+                dimension_min_bucket_end,
                 1 as joiner
-            from previous_dimension_values_without_outdated
+            from training_set_dimensions
         ),
 
         {# Create buckets for each previous dimension value #}
         dimensions_buckets as (
             select edr_bucket_start, edr_bucket_end, dimension_value
-            from buckets left join unique_previous_dimension_values on buckets.joiner = unique_previous_dimension_values.joiner
+            from unique_previous_dimension_values left join buckets
+                on (buckets.joiner = unique_previous_dimension_values.joiner
+                {# This makes sure we don't create empty buckets for dimensions before their first apperance #}
+                and edr_bucket_end >= dimension_min_bucket_end)
             where dimension_value is not null
         ),
 
@@ -144,7 +158,7 @@
             from {{ ref('data_monitoring_metrics') }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
-                and dimension = {{ elementary.edr_quote(dimensions_string) }}
+                and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
         ),
 
         training_set_dimensions as (
