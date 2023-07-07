@@ -1,5 +1,9 @@
+{{ config(
+    materialized="incremental"
+) }}
+
 with training as (
-    select * from {{ ref('any_type_column_anomalies_training') }}
+select * from {{ ref('any_type_column_anomalies_training') }}
 ),
 
 {% if var("stage") == "validation" %}
@@ -34,3 +38,6 @@ with training as (
  )
 
 select * from final
+{% if is_incremental() %}
+    where updated_at > (select max(updated_at) from {{ this }})
+{% endif %}

@@ -143,6 +143,20 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+# Calculating metrics in training stage to test incremental models monitoring
+    if "column" in test_types:
+        dbt_runner.test(select="tag:all_any_type_columns_anomalies")
+    if "table" in test_types:
+        dbt_runner.test(
+            select="tag:incremental_table_anomalies",
+            vars={"custom_run_started_at": "1969-12-30 00:01:00"},
+        )
+    if "dimension" in test_types:
+        dbt_runner.test(
+            select="tag:dimension_anomalies",
+            vars={"custom_run_started_at": "1969-12-29 00:01:00"},
+        )
+
     if "table" in test_types:
         dbt_runner.test(select="tag:table_anomalies")
         results = [

@@ -41,7 +41,7 @@ models:
               WDYT?
           config:
             severity: warn
-          tags: ["table_anomalies"]
+          tags: ["table_anomalies","incremental_table_anomalies"]
       - elementary.volume_anomalies:
           time_bucket:
             period: week
