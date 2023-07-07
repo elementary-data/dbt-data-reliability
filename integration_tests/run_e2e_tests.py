@@ -217,7 +217,10 @@ def e2e_tests(
         dbt_runner.test(select="tag:schema_changes")
         dbt_runner.test(select="tag:schema_changes_from_baseline")
 
-    dbt_runner.run(vars={"stage": "validation"})
+    dbt_runner.run(
+        select="tag:validation_stage",
+        vars={"stage": "validation"}
+    )
 
     if "directional_anomalies" in test_types:
         dbt_runner.test(select="tag:drop_directional_anomalies")

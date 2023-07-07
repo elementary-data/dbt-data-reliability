@@ -18,6 +18,8 @@ models:
     meta:
       owner: ["@edr"]
       subscribers: "@egk"
+    config:
+      tags: ["validation_stage"]
     description: >
       This is a very weird description
       with breaklines
@@ -63,6 +65,8 @@ models:
           tags: ["spike_directional_anomalies"]
 
   - name: no_timestamp_anomalies
+    config:
+      tags: ["validation_stage"]
     meta:
       owner: "elon@elementary-data.com, or@elementary-data.com"
       subscribers: ["elon@elementary-data.com"]
@@ -85,6 +89,8 @@ models:
       owner: "egk"
       subscribers: "elon, egk"
     description: We use this model to test dimension anomalies
+    config:
+      tags: ["validation_stage"]
     tests:
       - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
@@ -121,7 +127,7 @@ models:
       - elementary.dimension_anomalies:
           dimensions:
             - platform
-          tags: ["dimension_anomalies", "should_fail"]
+          tags: ["dimension_anomalies"]
           alias: "dimension_anomalies_no_timestamp"
 
   - name: error_model
@@ -140,6 +146,7 @@ models:
     config:
       elementary:
         timestamp_column: updated_at
+      tags: ["validation_stage"]
     columns:
       - name: "min_length"
         tests:
@@ -160,6 +167,7 @@ models:
       owner: "@or"
       tags: ["marketing"]
     config:
+      tags: ["validation_stage"]
       elementary:
         timestamp_column: updated_at
     tests:
@@ -214,6 +222,7 @@ models:
     config:
       elementary:
         timestamp_column: updated_at
+      tags: ["validation_stage"]
     tests:
       - elementary.volume_anomalies:
           tags: ["table_anomalies"]
@@ -327,6 +336,8 @@ models:
           tags: ["numeric_column_anomalies"]
 
   - name: groups
+    config:
+      tags: ["validation_stage"]
     columns:
       - name: group_a
         data_type: "{{ 'strIng' if target.type == 'bigquery' else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
@@ -344,6 +355,8 @@ models:
           enforce_types: true
 
   - name: stats_players
+    config:
+      tags: ["validation_stage"]
     columns:
       - name: player
         data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
@@ -361,11 +374,15 @@ models:
           enforce_types: true
 
   - name: stats_team
+    config:
+      tags: ["validation_stage"]
     tests:
       - elementary.schema_changes:
           tags: ["schema_changes"]
 
   - name: users_per_day_weekly_seasonal
+    config:
+      tags: ["validation_stage"]
     description: >
       Volume anomalies on the training should fail when seasonality is Off and pass when seasonality is On. 
       When Validation data is added, should fail when seasonality is On and pass when seasonality is Off.
