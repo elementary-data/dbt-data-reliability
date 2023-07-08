@@ -23,5 +23,5 @@
         {%- endif %}
     {% endfor %}
 
-    {{ assert_lists_contain_same_items(should_fail_names, ['elementary_dimension_anomalies_dimension_anomalies_platform', 'elementary_dimension_anomalies_dimension_anomalies_platform__updated_at', 'elementary_dimension_anomalies_dimension_anomalies_platform__version__updated_at']) }}
+    {{ assert_lists_contain_same_items(should_fail_names, ['elementary_dimension_anomalies_dimension_anomalies_platform__updated_at', 'elementary_dimension_anomalies_dimension_anomalies_platform__version__updated_at']) }}
 {% endmacro %}
