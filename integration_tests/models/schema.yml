@@ -24,6 +24,7 @@ models:
       and comma,
       and even a string like this 'wow'. You know, these $##$34#@#!^ can also be helpful
       WDYT?
+    config:
       elementary:
         timestamp_column: updated_at
     tests:
@@ -40,7 +41,7 @@ models:
               WDYT?
           config:
             severity: warn
-          tags: ["table_anomalies","incremental_table_anomalies"]
+          tags: ["table_anomalies", "incremental_table_anomalies"]
       - elementary.volume_anomalies:
           time_bucket:
             period: week
@@ -120,7 +121,7 @@ models:
       - elementary.dimension_anomalies:
           dimensions:
             - platform
-          tags: ["dimension_anomalies"]
+          tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_no_timestamp"
 
   - name: error_model
@@ -343,7 +344,6 @@ models:
           enforce_types: true
 
   - name: stats_players
-
     columns:
       - name: player
         data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
