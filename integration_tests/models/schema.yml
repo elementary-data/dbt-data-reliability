@@ -121,7 +121,7 @@ models:
       - elementary.dimension_anomalies:
           dimensions:
             - platform
-          tags: ["dimension_anomalies", "should_fail"]
+          tags: ["dimension_anomalies"]
           alias: "dimension_anomalies_no_timestamp"
 
   - name: error_model
