@@ -80,7 +80,9 @@
     {% do return(none) %}
   {% endif %}
 
-  {% do elementary.create_test_result_temp_table() %}
+  {% if elementary.get_config_var("use_temp_tables") %}
+    {% do elementary.create_test_result_temp_table() %}
+  {% endif %}
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
@@ -93,9 +95,11 @@
     {% do exceptions.raise_compiler_error("Unknown test type: {}".format(test_type)) %}
   {% endif %}
   {% do test_type_handler(flattened_test) %}
-  {% set failed_count = elementary.get_failed_test_result_count(flattened_test) %}
-  {% if failed_count is not none %}
-    {% do elementary.get_cache('elementary_test_failed_count').update({model.unique_id: failed_count}) %}
+  {% if elementary.get_config_var("calculate_failed_count") %}
+    {% set failed_count = elementary.get_failed_test_result_count(flattened_test) %}
+    {% if failed_count is not none %}
+      {% do elementary.get_cache('elementary_test_failed_count').update({model.unique_id: failed_count}) %}
+    {% endif %}
   {% endif %}
 {% endmacro %}
 

@@ -53,6 +53,8 @@
     'anomaly_direction': 'both',
     'store_result_rows_in_own_table': true,
     'mute_dbt_upgrade_recommendation': false,
+    'calculate_failed_count': true,
+    'use_temp_tables': true
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
