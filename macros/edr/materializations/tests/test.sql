@@ -91,7 +91,7 @@
     {% do return(none) %}
   {% endif %}
 
-  {% if elementary.get_config_var("use_temp_tables") %}
+  {% if elementary.get_config_var("tests_use_temp_tables") %}
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
     {% do context.update({"sql": temp_table_sql}) %}
   {% endif %}
