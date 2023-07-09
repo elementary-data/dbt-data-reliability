@@ -3,14 +3,13 @@ import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List
 
 import click
 from dbt.version import __version__
-from packaging import version
-
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from generate_data import generate_fake_data
+from packaging import version
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 DBT_VERSION = version.parse(version.parse(__version__).base_version)
@@ -365,17 +364,28 @@ def e2e_tests(
         model = "non_dbt_model"
         try:
             row = get_row(model, dbt_runner)
-            if row['depends_on_nodes'] != '["model.elementary_integration_tests.one"]' \
-                    or row['materialization'] != "non_dbt":
-                result = TestResult(type="non_dbt_models", message="FAILED: non_dbt model not materialized as expected")
+            if (
+                row["depends_on_nodes"] != '["model.elementary_integration_tests.one"]'
+                or row["materialization"] != "non_dbt"
+            ):
+                result = TestResult(
+                    type="non_dbt_models",
+                    message="FAILED: non_dbt model not materialized as expected",
+                )
             else:
                 result = TestResult(
                     type="non_dbt_models",
-                    message=dbt_runner.run_operation('assert_table_doesnt_exist',
-                                                     macro_args={"model_name": "non_dbt_model"}, should_log=False)[0]
+                    message=dbt_runner.run_operation(
+                        "assert_table_doesnt_exist",
+                        macro_args={"model_name": "non_dbt_model"},
+                        should_log=False,
+                    )[0],
                 )
         except ValueError:
-            result = TestResult(type="non_dbt_models", message="FAILED: we need to see the non_dbt model in the run")
+            result = TestResult(
+                type="non_dbt_models",
+                message="FAILED: we need to see the non_dbt model in the run",
+            )
         test_results.append(result)
 
     return test_results

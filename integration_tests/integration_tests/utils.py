@@ -1,13 +1,13 @@
+import csv
 import uuid
 from functools import lru_cache
-from typing import Dict, List, Any, Union
-import csv
-import pandas as pd
+from typing import Any, Dict, List, Union
 
 import agate
+import pandas as pd
 from dbt.adapters.base import BaseRelation
 
-from .dbt_project import DbtProject, dbt_version
+from .dbt_project import DbtProject
 
 
 def create_test_table(
