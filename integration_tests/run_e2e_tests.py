@@ -225,26 +225,13 @@ def e2e_tests(
 
     if "directional_anomalies" in test_types:
         dbt_runner.test(
-            select="tag:drop_directional_anomalies",
+            select="tag:directional_anomalies",
             vars={"disable_dbt_artifacts_autoupload": "true"}
         )
         results = [
-            TestResult(type="drop_directional_anomalies", message=msg)
+            TestResult(type="directional_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_drop_directional_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(
-            select="tag:spike_directional_anomalies",
-            vars={"disable_dbt_artifacts_autoupload": "true"}
-        )
-        results = [
-            TestResult(type="spike_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_spike_directional_anomalies", should_log=False
+                macro_name="validate_directional_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
