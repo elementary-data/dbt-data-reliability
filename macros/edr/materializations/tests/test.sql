@@ -1,13 +1,13 @@
 {% macro create_test_result_temp_table() %}
   {% set database, schema = elementary.get_package_database_and_schema() %}
-  {% set relation = make_temp_relation(api.Relation.create(identifier=model['alias'], database=database, schema=schema, type='table')) %}
-  {% call statement('temp_table') %}
+  {% set relation = make_temp_relation(api.Relation.create(identifier=model["alias"], database=database, schema=schema, type="table")) %}
+  {% call statement("temp_table") %}
     {{ create_table_as(True, relation, sql) }}
   {% endcall %}
   {% set new_sql %}
     select * from {{ relation }}
   {% endset %}
-  {% do context.update({'sql': new_sql}) %}
+  {% do context.update({"sql": new_sql}) %}
   {% do return(relation) %}
 {% endmacro %}
 
@@ -98,7 +98,7 @@
   {% if elementary.get_config_var("calculate_failed_count") %}
     {% set failed_count = elementary.get_failed_test_result_count(flattened_test) %}
     {% if failed_count is not none %}
-      {% do elementary.get_cache('elementary_test_failed_count').update({model.unique_id: failed_count}) %}
+      {% do elementary.get_cache("elementary_test_failed_count").update({model.unique_id: failed_count}) %}
     {% endif %}
   {% endif %}
 {% endmacro %}

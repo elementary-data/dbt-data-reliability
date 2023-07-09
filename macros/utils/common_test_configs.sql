@@ -1,13 +1,13 @@
 {% macro get_common_test_config(flattened_test) %}
-  {% set test_name = flattened_test['short_name'] %}
-  {% set test_namespace = flattened_test['test_namespace'] %}
+  {% set test_name = flattened_test["short_name"] %}
+  {% set test_namespace = flattened_test["test_namespace"] %}
   {% do return(elementary.get_common_test_config_by_namespace_and_name(test_namespace, test_name)) %}
 {% endmacro %}
 
 {% macro get_common_test_config_by_namespace_and_name(test_namespace, test_name) %}
   {% set common_tests_configs_mapping = elementary.get_common_tests_configs_mapping() %}
   {% if test_namespace is none %}
-    {% set test_namespace = 'dbt' %}
+    {% set test_namespace = "dbt" %}
   {% endif %}
   {% if test_namespace in common_tests_configs_mapping %}
     {% if test_name in common_tests_configs_mapping[test_namespace] %}

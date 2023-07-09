@@ -19,11 +19,11 @@
 {% macro get_failed_count_calc(flattened_test) %}
   {% set common_test_config = elementary.get_common_test_config(flattened_test) %}
   {% if common_test_config %}
-    {% if 'failed_count_calc' in common_test_config %}
-      {% do return(common_test_config['failed_count_calc']) %}
+    {% if "failed_count_calc" in common_test_config %}
+      {% do return(common_test_config["failed_count_calc"]) %}
     {% endif %}
   {% endif %}
-  {% do return(flattened_test['meta'].get('failed_count_calc')) %}
+  {% do return(flattened_test["meta"].get("failed_count_calc")) %}
 {% endmacro %}
 
 {% macro get_failed_count_calc_query(failed_count_calc) %}
