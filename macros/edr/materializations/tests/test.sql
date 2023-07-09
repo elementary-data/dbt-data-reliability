@@ -93,7 +93,10 @@
     {% do exceptions.raise_compiler_error("Unknown test type: {}".format(test_type)) %}
   {% endif %}
   {% do test_type_handler(flattened_test) %}
-  {% do elementary.handle_failed_test_result_count(flattened_test) %}
+  {% set failed_count = elementary.get_failed_test_result_count(flattened_test) %}
+  {% if failed_count is not none %}
+    {% do elementary.get_cache('elementary_test_failed_count').update({model.unique_id: failed_count}) %}
+  {% endif %}
 {% endmacro %}
 
 {% materialization test, default %}
