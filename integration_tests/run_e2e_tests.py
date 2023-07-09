@@ -271,7 +271,7 @@ def e2e_tests(
             vars={"disable_dbt_artifacts_autoupload": "true"}
         )
         results = [
-            TestResult(type="string_column_anomalies", message=msg)
+            TestResult(type="column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
                 macro_name="validate_column_anomalies", should_log=False
             )

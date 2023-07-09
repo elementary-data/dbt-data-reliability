@@ -1,7 +1,7 @@
 {% macro validate_column_anomalies() %}
     {%- do validate_string_column_anomalies() -%}
     {%- do validate_numeric_column_anomalies() -%}
-    {%- do validate_custom_column_anomalies() -%}
+    {%- do validate_custom_column_monitors() -%}
     {%- do validate_any_type_column_anomalies() -%}
 {% endmacro %}
 
