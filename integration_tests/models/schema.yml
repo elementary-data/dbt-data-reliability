@@ -27,6 +27,7 @@ models:
     config:
       elementary:
         timestamp_column: updated_at
+      tags: ["incremental"]
     tests:
       - elementary.volume_anomalies:
           time_bucket:
@@ -41,7 +42,7 @@ models:
               WDYT?
           config:
             severity: warn
-          tags: ["table_anomalies", "incremental_table_anomalies"]
+          tags: ["table_anomalies"]
       - elementary.volume_anomalies:
           time_bucket:
             period: week
@@ -81,6 +82,8 @@ models:
                 - null_count
 
   - name: dimension_anomalies
+    config:
+      tags: ["incremental"]
     meta:
       owner: "egk"
       subscribers: "elon, egk"
