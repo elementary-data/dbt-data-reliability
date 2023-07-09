@@ -1,3 +1,13 @@
+{% macro create_test_result_temp_table() %}
+  {% set database, schema = elementary.get_package_database_and_schema() %}
+  {% set table_name = model["alias"] %}
+  {% set relation = elementary.create_temp_table(database, schema, table_name, sql) %}
+  {% set new_sql %}
+    select * from {{ relation }}
+  {% endset %}
+  {% do return(new_sql) %}
+{% endmacro %}
+
 {% macro query_test_result_rows(sample_limit=none) %}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
@@ -62,12 +72,7 @@
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
 
-{% macro materialize_test() %}
-  {% if not elementary.is_elementary_enabled() %}
-    {% do return(none) %}
-  {% endif %}
-
-  {% set flattened_test = elementary.flatten_test(model) %}
+{% macro get_test_type_handler(flattened_test) %}
   {% set test_type = elementary.get_test_type(flattened_test) %}
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
@@ -78,7 +83,27 @@
   {% if not test_type_handler %}
     {% do exceptions.raise_compiler_error("Unknown test type: {}".format(test_type)) %}
   {% endif %}
+  {% do return(test_type_handler) %}
+{% endmacro %}
+
+{% macro materialize_test() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(none) %}
+  {% endif %}
+
+  {% if elementary.get_config_var("tests_use_temp_tables") %}
+    {% set temp_table_sql = elementary.create_test_result_temp_table() %}
+    {% do context.update({"sql": temp_table_sql}) %}
+  {% endif %}
+  {% set flattened_test = elementary.flatten_test(model) %}
+  {% set test_type_handler = elementary.get_test_type_handler(flattened_test) %}
   {% do test_type_handler(flattened_test) %}
+  {% if elementary.get_config_var("calculate_failed_count") %}
+    {% set failed_row_count = elementary.get_failed_row_count(flattened_test) %}
+    {% if failed_row_count is not none %}
+      {% do elementary.get_cache("elementary_test_failed_row_counts").update({model.unique_id: failed_row_count}) %}
+    {% endif %}
+  {% endif %}
 {% endmacro %}
 
 {% materialization test, default %}
