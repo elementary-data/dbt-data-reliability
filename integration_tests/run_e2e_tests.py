@@ -129,6 +129,15 @@ def e2e_tests(
 
     dbt_runner.run(vars={"stage": "training"})
 
+    if "error_model" in test_types:
+        results = [
+            TestResult(type="error_model", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_model", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "seasonal_volume" in test_types:
         dbt_runner.test(
             select="tag:seasonality_volume",
@@ -167,21 +176,10 @@ def e2e_tests(
             vars={"disable_dbt_artifacts_autoupload": "true"}
         )
 
-    if "error_model" in test_types:
-        dbt_runner.run(
-            select="tag:error_model",
+    if "error_snapshot" in test_types:
+        dbt_runner.snapshot(
             vars={"disable_dbt_artifacts_autoupload": "true"}
         )
-        results = [
-            TestResult(type="error_model", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_error_model", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-    if "error_snapshot" in test_types:
-        dbt_runner.snapshot()
         results = [
             TestResult(type="error_snapshot", message=msg)
             for msg in dbt_runner.run_operation(
