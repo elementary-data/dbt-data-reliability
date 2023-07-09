@@ -1,9 +1,9 @@
 {% macro handle_tests_results() %}
     {{ elementary.file_log("Handling test results.") }}
     {% set cached_elementary_test_results = elementary.get_cache("elementary_test_results") %}
-    {% set cached_elementary_test_failed_count = elementary.get_cache("elementary_test_failed_count") %}
+    {% set cached_elementary_test_failed_row_counts = elementary.get_cache("elementary_test_failed_row_counts") %}
     {% set store_result_rows_in_own_table = elementary.get_config_var("store_result_rows_in_own_table") %}
-    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_count, render_result_rows=(not store_result_rows_in_own_table)) %}
+    {% set elementary_test_results = elementary.get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_row_counts, render_result_rows=(not store_result_rows_in_own_table)) %}
     {% if store_result_rows_in_own_table %}
       {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
     {% endif %}
@@ -25,13 +25,13 @@
     {{ return('') }}
 {% endmacro %}
 
-{% macro get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_count, render_result_rows=false) %}
+{% macro get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_row_counts, render_result_rows=false) %}
   {% set elementary_test_results = [] %}
 
   {% for result in results | selectattr('node.resource_type', '==', 'test') %}
     {% set result = result.to_dict() %}
     {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
-    {% set elementary_test_failed_count = cached_elementary_test_failed_count.get(result.node.unique_id) %}
+    {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(result.node.unique_id) %}
 
     {# Materializing the test failed and therefore was not added to the cache. #}
     {% if not elementary_test_results_rows %}
@@ -43,7 +43,7 @@
       {% set failures = elementary_test_results_row.get("failures", result.failures) %}
       {% set status = "pass" if failures == 0 else result.status %}
       {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
-                                                'failed_count': elementary_test_failed_count}) %}
+                                                'failed_row_count': elementary_test_failed_row_count}) %}
       {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
       {% if render_result_rows %}
         {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}

@@ -99,9 +99,9 @@
   {% set test_type_handler = elementary.get_test_type_handler(flattened_test) %}
   {% do test_type_handler(flattened_test) %}
   {% if elementary.get_config_var("calculate_failed_count") %}
-    {% set failed_count = elementary.get_failed_test_result_count(flattened_test) %}
-    {% if failed_count is not none %}
-      {% do elementary.get_cache("elementary_test_failed_count").update({model.unique_id: failed_count}) %}
+    {% set failed_row_count = elementary.get_failed_row_count(flattened_test) %}
+    {% if failed_row_count is not none %}
+      {% do elementary.get_cache("elementary_test_failed_row_counts").update({model.unique_id: failed_row_count}) %}
     {% endif %}
   {% endif %}
 {% endmacro %}
