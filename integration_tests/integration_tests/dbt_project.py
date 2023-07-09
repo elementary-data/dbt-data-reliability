@@ -7,7 +7,6 @@ dbt.adapters.factory.get_adapter = lambda config: config.adapter
 
 import uuid
 from typing import Optional
-from packaging import version
 
 from dbt.adapters.base import BaseRelation
 from dbt.adapters.factory import get_adapter_class_by_name, register_adapter
@@ -19,6 +18,7 @@ from dbt.parser.sql import SqlBlockParser
 from dbt.task.sql import SqlCompileRunner
 from dbt.tracking import disable_tracking
 from dbt.version import __version__
+from packaging import version
 from pydantic import BaseModel
 
 dbt_version = version.parse(__version__)
@@ -41,7 +41,9 @@ def default_project_dir() -> Path:
 def default_profiles_dir() -> Path:
     if "DBT_PROFILES_DIR" in os.environ:
         return Path(os.environ["DBT_PROFILES_DIR"]).resolve()
-    return Path.cwd() if (Path.cwd() / "profiles.yml").exists() else Path.home() / ".dbt"
+    return (
+        Path.cwd() if (Path.cwd() / "profiles.yml").exists() else Path.home() / ".dbt"
+    )
 
 
 DEFAULT_PROFILES_DIR = str(default_profiles_dir())

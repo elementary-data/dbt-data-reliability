@@ -2,9 +2,8 @@ from datetime import datetime
 
 from parametrization import Parametrization
 
-
 from .dbt_project import DbtProject
-from .utils import create_test_table, insert_rows, update_var, lowercase_column_names, get_package_database_and_schema
+from .utils import create_test_table, insert_rows, lowercase_column_names, update_var
 
 MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
 MAX_BUCKET_END = datetime(2022, 1, 4, 0, 0, 0)
@@ -169,7 +168,7 @@ def test_table_monitoring_query(
         min_bucket_start=MIN_BUCKET_START.strftime("'%Y-%m-%d %H:%M:%S'"),
         max_bucket_end=MAX_BUCKET_END.strftime("'%Y-%m-%d %H:%M:%S'"),
         table_monitors=[metric],
-        days_back=(MAX_BUCKET_END-MIN_BUCKET_START).days,
+        days_back=(MAX_BUCKET_END - MIN_BUCKET_START).days,
         metric_properties=metric_properties,
     )
     res_table = dbt_project.execute_sql(query)
