@@ -271,45 +271,13 @@ def e2e_tests(
 
     if "column" in test_types:
         dbt_runner.test(
-            select="tag:string_column_anomalies",
+            select="tag:column_anomalies",
             vars={"disable_dbt_artifacts_autoupload": "true"}
         )
         results = [
             TestResult(type="string_column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_string_column_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        dbt_runner.test(
-            select="tag:numeric_column_anomalies",
-            vars={"disable_dbt_artifacts_autoupload": "true"}
-        )
-        results = [
-            TestResult(type="numeric_column_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_numeric_column_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        results = [
-            TestResult(type="custom_column_monitors", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_custom_column_monitors", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        dbt_runner.test(
-            select="tag:all_any_type_columns_anomalies",
-            vars={"disable_dbt_artifacts_autoupload": "true"}
-        )
-        results = [
-            TestResult(type="any_type_column_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_any_type_column_anomalies", should_log=False
+                macro_name="validate_column_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
