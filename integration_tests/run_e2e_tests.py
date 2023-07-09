@@ -177,9 +177,7 @@ def e2e_tests(
         )
 
     if "error_snapshot" in test_types:
-        dbt_runner.snapshot(
-            vars={"disable_dbt_artifacts_autoupload": "true"}
-        )
+        dbt_runner.snapshot()
         results = [
             TestResult(type="error_snapshot", message=msg)
             for msg in dbt_runner.run_operation(
