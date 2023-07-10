@@ -128,6 +128,12 @@ def e2e_tests(
 
     dbt_runner.run(vars={"stage": "training"})
 
+    if "dimension" in test_types:
+        dbt_runner.run_operation(
+            macro_name="create_new_dimension",
+            should_log=True,
+        )
+
     if "error_model" in test_types:
         results = [
             TestResult(type="error_model", message=msg)
@@ -308,6 +314,11 @@ def e2e_tests(
             )
         ]
         test_results.extend(results)
+
+        dbt_runner.run_operation(
+            macro_name="delete_new_dimension",
+            should_log=True,
+        )
 
     if "schema" in test_types and target not in ["databricks", "spark"]:
         dbt_runner.test(
