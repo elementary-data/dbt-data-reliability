@@ -164,7 +164,10 @@ def e2e_tests(
     if any(item in ["column", "table", "dimension"] for item in test_types):
         dbt_runner.test(
             select="tag:incremental",
-            vars={"custom_run_started_at": "1969-12-29 00:01:00", "disable_dbt_artifacts_autoupload": "true"}
+            vars={
+                "custom_run_started_at": "1969-12-29 00:01:00",
+                "disable_dbt_artifacts_autoupload": "true",
+            },
         )
 
     if "table" in test_types:
