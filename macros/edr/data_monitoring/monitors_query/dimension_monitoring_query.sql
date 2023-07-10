@@ -49,28 +49,21 @@
         training_set_dimensions as (
             select distinct
                 dimension_value,
+                1 as joiner,
                 min(bucket_end) as dimension_min_bucket_end,
                 sum(metric_value)
             from all_dimension_metrics
             where row_number <= {{ test_configuration.min_training_set_size }}
-            group by 1
+            group by 1,2
             {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0
-        ),
-
-        unique_previous_dimension_values as (
-            select distinct
-                dimension_value,
-                dimension_min_bucket_end,
-                1 as joiner
-            from training_set_dimensions
         ),
 
         {# Create buckets for each previous dimension value #}
         dimensions_buckets as (
             select edr_bucket_start, edr_bucket_end, dimension_value
-            from unique_previous_dimension_values left join buckets
-                on (buckets.joiner = unique_previous_dimension_values.joiner
+            from training_set_dimensions left join buckets
+                on (buckets.joiner = training_set_dimensions.joiner
                 {# This makes sure we don't create empty buckets for dimensions before their first apperance #}
                 and edr_bucket_end >= dimension_min_bucket_end)
             where dimension_value is not null
@@ -104,6 +97,7 @@
                 on (dimensions_buckets.edr_bucket_start = start_bucket_in_data and dimensions_buckets.dimension_value = row_count_values.dimension_value)
         ),
 
+        {# We union so new buckets added in this run will be included (were filtered by the join we did on 'fill_empty_buckets_row_count_values') #}
         union_row_count_values as (
             select distinct *
             from

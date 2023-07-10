@@ -100,6 +100,19 @@ models:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
+          alias: "dimension_anomalies_platform_new_dimension"
+          tags: ["dimension_anomalies"]
+          timestamp_column: updated_at
+          dimensions:
+            - platform
+          where_expression: "platform = 'windows'"
+      - elementary.dimension_anomalies:
+          alias: "dimension_anomalies_platform_new_dimension_no_timestamp"
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+          where_expression: "platform = 'windows'"
+      - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform_version"
           timestamp_column: updated_at
