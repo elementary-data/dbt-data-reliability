@@ -1,4 +1,8 @@
-{% macro bigquery_can_access_relation(relation) %}
+{% macro can_query_relation(relation) %}
+  {% do return(adapter.dispatch("can_query_relation", "elementary")(relation)) %}
+{% endmacro %}
+
+{% macro bigquery__can_query_relation(relation) %}
   {% set query %}
     begin
       select 1
@@ -9,10 +13,9 @@
     end
   {% endset %}
   {% set result = elementary.result_value(query) %}
-  {% if result == 1 %}
-  {% if bigquery__get_columns_from_information_schema %}
-  {% endif %}
-    {% do return(true) %}
-  {% endif %}
-  {% do return(false) %}
+  {% do return(result == 1) %}
+{% endmacro %}
+
+{% macro default__can_query_relation(relation) %}
+  {% do exceptions.raise_compiler_error("'can_query_relation' not implemented on '{}'.".format(target.type)) %}
 {% endmacro %}

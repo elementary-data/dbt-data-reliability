@@ -21,7 +21,7 @@
 {% macro bigquery__get_columns_from_information_schema(database_name, schema_name) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
     {% set columns_schema = schema_relation.information_schema('COLUMNS') %}
-    {% if elementary.bigquery_can_access_relation(columns_schema) %}
+    {% if elementary.can_query_relation(columns_schema) %}
       {{ elementary.default__get_columns_from_information_schema(database_name, schema_name) }}
     {% else %}
       {{ elementary.get_empty_columns_from_information_schema_table() }}
