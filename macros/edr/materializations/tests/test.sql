@@ -1,7 +1,7 @@
 {% macro create_test_result_temp_table() %}
   {% set database, schema = elementary.get_package_database_and_schema() %}
-  {% set table_name = model["alias"] %}
-  {% set relation = elementary.create_temp_table(database, schema, table_name, sql) %}
+  {% set test_id = model["alias"] %}
+  {% set relation = elementary.create_temp_table(database, schema, test_id, sql) %}
   {% set new_sql %}
     select * from {{ relation }}
   {% endset %}
