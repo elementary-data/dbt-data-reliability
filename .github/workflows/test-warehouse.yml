@@ -93,21 +93,20 @@ jobs:
           CI_PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
         run: |
           mkdir -p ~/.dbt
-          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | sed "s/-/_/g")
+          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | head -c 32 | sed "s/-/_/g")
           echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.7.5'
+          python-version: "3.7.5"
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        run:
-          pip install --pre
+        run: pip install --pre
           "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
           "dbt-${{ inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
@@ -118,11 +117,9 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: dbt deps
 
-      - name: Run Integration Tests
-        working-directory: ${{ env.TESTS_DIR }}/integration_tests
-        run: |
-          pip install -r requirements.txt
-          pytest -vv --target "${{ inputs.warehouse-type }}"
+      - name: Run unit tests
+        working-directory: ${{ env.TESTS_DIR }}
+        run: python run_unit_tests.py -t "${{ inputs.warehouse-type }}"
 
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}

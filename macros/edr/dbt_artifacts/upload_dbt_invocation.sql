@@ -4,8 +4,11 @@
     {{ return('') }}
   {% endif %}
 
-  {% do elementary.debug_log("Uploading dbt invocation.") %}
+  {% do elementary.file_log("Uploading dbt invocation.") %}
   {% set now_str = elementary.datetime_now_utc_as_string() %}
+  {% set orchestrator = elementary.get_orchestrator() %}
+  {% set job_id = elementary.get_var("job_id", ["JOB_ID", "DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]) %}
+  {% set job_run_id = elementary.get_var("job_run_id", ["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]) %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
@@ -25,9 +28,9 @@
       'selected': elementary.get_invocation_select_filter(),
       'yaml_selector': elementary.get_invocation_yaml_selector(),
       'project_name': elementary.get_project_name(),
-      'job_id': elementary.get_first_env_var(["DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]),
-      'job_run_id': elementary.get_first_env_var(["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]),
-      'job_name': elementary.get_first_env_var(["DBT_JOB_NAME"]),
+      'job_id': job_id,
+      'job_run_id': job_run_id,
+      'job_name': elementary.get_var("job_name", ["JOB_NAME", "DBT_JOB_NAME"]),
       'env': elementary.get_first_env_var(["DBT_ENV"]),
       'env_id': elementary.get_first_env_var(["DBT_ENV_ID"]),
       'project_id': elementary.get_first_env_var(["DBT_PROJECT_ID", "DBT_CLOUD_PROJECT_ID", "GITHUB_REPOSITORY"]),
@@ -35,10 +38,14 @@
       'cause': elementary.get_first_env_var(["DBT_CAUSE", "DBT_CLOUD_RUN_REASON"]),
       'pull_request_id': elementary.get_first_env_var(["DBT_PULL_REQUEST_ID", "DBT_CLOUD_PR_ID", "GITHUB_HEAD_REF"]),
       'git_sha': elementary.get_first_env_var(["DBT_GIT_SHA", "DBT_CLOUD_GIT_SHA", "GITHUB_SHA"]),
-      'orchestrator': elementary.get_orchestrator(),
+      'orchestrator': orchestrator,
+      'dbt_user': elementary.get_first_env_var(["DBT_USER"]),
+      'job_url': elementary.get_job_url(orchestrator, job_id),
+      'job_run_url': elementary.get_job_run_url(orchestrator, job_id, job_run_id),
+      'account_id': elementary.get_var("account_id", ["ACCOUNT_ID"]),
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
-  {% do elementary.debug_log("Uploaded dbt invocation successfully.") %}
+  {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
 {% macro get_project_name() %}
@@ -59,7 +66,7 @@
         {{- return(config.args.select) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {%- macro get_invocation_yaml_selector() -%}
@@ -70,14 +77,18 @@
         {{- return(config.args.selector_name) -}}
     {%- else -%}
         {{- return([]) -}}
-    {%- endif -%})
+    {%- endif -%}
 {%- endmacro -%}
 
 {% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}
     {% set invocation_vars = {} %}
     {% if invocation_args_dict and invocation_args_dict.vars %}
-        {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% if invocation_args_dict.vars is mapping %}
+            {% set invocation_vars = invocation_args_dict.vars %}
+        {% else %}
+            {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
+        {% endif %}
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
@@ -95,6 +106,10 @@
 {%- endmacro -%}
 
 {% macro get_orchestrator() %}
+  {% set var_value = elementary.get_var("orchestrator", ["ORCHESTRATOR", "DBT_ORCHESTRATOR"])%}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
   {% set orchestrator_env_map = {
     "airflow": ["AIRFLOW_HOME"],
     "dbt_cloud": ["DBT_CLOUD_PROJECT_ID"],
@@ -108,6 +123,60 @@
   {% do return(none) %}
 {% endmacro %}
 
+{% macro get_job_url(orchestrator, job_id) %}
+  {% set var_value = elementary.get_var("job_url", ["JOB_URL", "DBT_JOB_URL"]) %}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
+  {% if orchestrator == 'airflow' %}
+    {% set server_url = elementary.get_var('airflow_url', ["AIRFLOW_URL"]) %}
+    {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid" %}
+    {% do return(airflow_job_url) %}
+  {% elif orchestrator == 'dbt_cloud' %}
+    {% set account_id = elementary.get_var('account_id', ['ACCOUNT_ID']) %}
+    {% set dbt_cloud_project_id = elementary.get_first_env_var(['DBT_CLOUD_PROJECT_ID']) %}
+    {% set dbt_cloud_job_id = elementary.get_first_env_var(['DBT_CLOUD_JOB_ID']) %}
+
+    {% set dbt_cloud_job_url = "https://cloud.getdbt.com/deploy/" ~ account_id ~ "/projects/" ~ dbt_cloud_project_id ~ "/jobs/" ~ dbt_cloud_job_id %}
+    {% do return(dbt_cloud_job_url) %}
+  {% elif orchestrator == 'github_actions' %}
+    {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
+    {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
+    {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
+
+    {% set github_job_url = server_url ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
+    {% do return(github_job_url) %}
+  {% endif %}
+  {% do return(none) %}
+{% endmacro %}
+
+{% macro get_job_run_url(orchestrator, job_id, job_run_id) %}
+  {% set var_value = elementary.get_var("job_run_url", ["JOB_RUN_URL", "DBT_JOB_RUN_URL"]) %}
+  {% if var_value %}
+    {% do return(var_value) %}
+  {% endif %}
+  {% if orchestrator == 'airflow' %}
+    {% set server_url = elementary.get_var('airflow_url', ["AIRFLOW_URL"]) %}
+    {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid?dag_run_id=" ~ job_run_id %}
+    {% do return(airflow_job_url) %}
+  {% elif orchestrator == 'dbt_cloud' %}
+    {% set account_id = elementary.get_var('account_id', ['ACCOUNT_ID']) %}
+    {% set dbt_cloud_project_id = elementary.get_first_env_var(['DBT_CLOUD_PROJECT_ID']) %}
+    {% set dbt_cloud_run_id = elementary.get_first_env_var(['DBT_CLOUD_RUN_ID']) %}
+
+    {% set dbt_cloud_job_url = "https://cloud.getdbt.com/deploy/" ~ account_id ~ "/projects/" ~ dbt_cloud_project_id ~ "/runs/" ~ dbt_cloud_run_id %}
+    {% do return(dbt_cloud_job_url) %}
+  {% elif orchestrator == 'github_actions' %}
+    {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
+    {% set repository = elementary.get_first_env_var(["GITHUB_REPOSITORY"]) %}
+    {% set run_id = elementary.get_first_env_var(["GITHUB_RUN_ID"]) %}
+
+    {% set github_job_url = server_url ~ "/" ~ repository ~ "/actions/runs/" ~ run_id %}
+    {% do return(github_job_url) %}
+  {% endif %}
+  {% do return(none) %}
+{% endmacro %}
+
 {% macro get_dbt_invocations_empty_table_query() %}
     {{ return(elementary.empty_table([
       ('invocation_id', 'long_string'),
@@ -117,10 +186,11 @@
       ('run_started_at', 'string'),
       ('run_completed_at', 'string'),
       ('generated_at', 'string'),
+      ('created_at', 'timestamp'),
       ('command', 'string'),
       ('dbt_version', 'string'),
       ('elementary_version', 'string'),
-	  ('full_refresh', 'boolean'),
+      ('full_refresh', 'boolean'),
       ('invocation_vars', 'long_string'),
       ('vars', 'long_string'),
       ('target_name', 'string'),
@@ -139,5 +209,9 @@
       ('pull_request_id', 'string'),
       ('git_sha', 'string'),
       ('orchestrator', 'string'),
+      ('dbt_user', 'string'),
+      ('job_url', 'string'),
+      ('job_run_url', 'string'),
+      ('account_id', 'string')
     ])) }}
 {% endmacro %}

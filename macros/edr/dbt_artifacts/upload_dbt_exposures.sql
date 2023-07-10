@@ -27,6 +27,7 @@
                                                                      ('path', 'string'),
                                                                      ('generated_at', 'string'),
                                                                      ('metadata_hash', 'string'),
+                                                                     ('label', 'string'),
                                                                      ]) %}
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
@@ -39,15 +40,16 @@
     {% set flatten_exposure_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'name': node_dict.get('name'),
+        'label': node_dict.get('label'),
         'maturity': node_dict.get('maturity'),
         'type': node_dict.get('type'),
         'owner_email': owner_dict.get('email'),
         'owner_name': owner_dict.get('name'),
         'url': node_dict.get('url'),
-        'depends_on_macros': depends_on_dict.get('macros', []),
-        'depends_on_nodes': depends_on_dict.get('nodes', []),
+        'depends_on_macros': elementary.filter_none_and_sort(depends_on_dict.get('macros', [])),
+        'depends_on_nodes': elementary.filter_none_and_sort(depends_on_dict.get('nodes', [])),
         'description': node_dict.get('description'),
-        'tags': tags,
+        'tags': elementary.filter_none_and_sort(tags),
         'meta': meta_dict,
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),

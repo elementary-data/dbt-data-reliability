@@ -76,15 +76,15 @@ models:
 
       - name: job_id
         data_type: string
-        description: The ID of a job, defined in the `DBT_JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+        description: The ID of a job, defined in the `job_id` var or in the `JOB_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
 
       - name: job_name
         data_type: string
-        description: The name of a job, defined in the `DBT_JOB_NAME` env var.
+        description: The name of a job, defined in the `job_name` var or in the `JOB_NAME` env var.
 
       - name: job_run_id
         data_type: string
-        description: The run ID of a job, defined in the `DBT_JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
+        description: The run ID of a job, defined in the `job_run_id` var or in the `DBT_JOB_RUN_ID` env var or by the orchestrator (dbt Cloud, GitHub Actions, etc).
 
       - name: env
         data_type: string
@@ -120,8 +120,15 @@ models:
 
       - name: orchestrator
         data_type: string
-        description: The orchestrator that was used to run this invocation. For example, dbt Cloud, GitHub Actions, etc.
+        description: The orchestrator that was used to run this invocation, defined in the `orchestrator` var or in the `ORCHESTRATOR` env var or by the orchestrator env vars. For example, dbt Cloud, GitHub Actions, etc.
 
+      - name: job_url
+        data_type: string
+        description: The name of a job, defined in the `job_url` var or in the `JOB_URL` env var or by the orchestrator. For GitHub Actions orchestrator, the value is calculated.
+
+      - name: account_id
+        data_type: string
+        description: The ID of the account, defined in the `account_id` var or in the `ACCOUNT_ID` env var or by the orchestrator.
 
   - name: dbt_run_results
     description: >
@@ -129,6 +136,12 @@ models:
       Each row is the invocation result of a single resource (model, test, snapshot, etc).
       New data is loaded to this model on an on-run-end hook named 'elementary.upload_run_results' from each invocation that produces a result object.
       This is an incremental model.
+    meta:
+      deprecated_columns:
+        - name: compiled_sql
+          data_type: string
+          description: The compiled SQL executed against the database.
+
     columns:
       - name: model_execution_id
         data_type: string
@@ -202,6 +215,9 @@ models:
         data_type: string
         description: Query ID in the data warehouse, if returned by the adapter (currently only supported in Snowflake, is null for any other adapter).
 
+      - name: thread_id
+        data_type: string
+        description: Id of the thread of this resource run.
 
   - name: elementary_test_results
     description: >
@@ -223,7 +239,6 @@ models:
 
   - name: job_run_results
     description: >
-        Run results of dbt invocations, enriched with jobs metadata.
-        Each row is the result of a single job.
-        This is a view on `dbt_invocations`.
-
+      Run results of dbt invocations, enriched with jobs metadata.
+      Each row is the result of a single job.
+      This is a view on `dbt_invocations`.

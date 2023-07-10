@@ -41,7 +41,7 @@ def run_unit_tests(test_file, target="snowflake"):
     print(f"Running unit tests against target - {target}")
     for unit_test in unit_tests:
         unit_test_results = dbt_runner.run_operation(
-            macro_name=unit_test, log_errors=True
+            macro_name=unit_test, log_errors=True, should_log=False
         )
         print_unit_test_results(unit_test, unit_test_results)
 
@@ -51,19 +51,13 @@ def run_unit_tests(test_file, target="snowflake"):
     "--target",
     "-t",
     type=str,
-    default="all",
-    help="snowflake / bigquery / redshift / all (default = all)",
+    default="postgres",
 )
 @click.option(
     "--test-file", "-f", type=str, default=None, help="The name of tests file to run"
 )
 def main(target, test_file):
-    if target == "all":
-        targets = ["snowflake", "bigquery", "redshift"]
-    else:
-        targets = [target]
-    for target in targets:
-        run_unit_tests(test_file, target)
+    run_unit_tests(test_file, target)
 
 
 if __name__ == "__main__":

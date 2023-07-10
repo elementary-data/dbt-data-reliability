@@ -4,31 +4,31 @@
     {% endif %}
 
     {% if not table_relation %}
-        {{ elementary.edr_log('Unable to insert rows to non-existent table. Please run "dbt run -s elementary".') }}
+        {{ elementary.edr_log('Unable to insert rows to non-existent table. Please run "dbt run -s elementary --target ' ~ target.name ~ '"') }}
         {{ return(none) }}
     {% endif %}
 
-    {% set columns = adapter.get_columns_in_relation(table_relation) -%}
+    {% set columns = adapter.get_columns_in_relation(table_relation) %}
     {% if not columns %}
         {% set table_name = elementary.relation_to_full_name(table_relation) %}
         {{ elementary.edr_log('Could not extract columns for table - ' ~ table_name ~ ' (might be a permissions issue)') }}
         {{ return(none) }}
     {% endif %}
 
-    {{ elementary.debug_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
+    {{ elementary.file_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
     {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
     {% if insert_rows_method == 'max_query_size' %}
       {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
-        {% do elementary.debug_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% do dbt.run_query(insert_query) %}
+        {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
+        {% do elementary.run_query(insert_query) %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
       {% for rows_chunk in rows_chunks %}
         {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
-        {% do run_query(insert_rows_query) %}
+        {% do elementary.run_query(insert_rows_query) %}
       {% endfor %}
     {% else %}
       {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
@@ -52,8 +52,13 @@
     {% for row in rows %}
       {% set rendered_column_values = [] %}
       {% for column in columns %}
-        {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
-        {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+        {% if column.name.lower() == "created_at" %}
+          {% set column_value = elementary.edr_current_timestamp() %}
+          {% do rendered_column_values.append(column_value) %}
+        {% else %}
+          {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
+          {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+        {% endif %}
       {% endfor %}
       {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
@@ -62,7 +67,7 @@
         {% set new_insert_query = insert_query + row_sql %}
         {# Check if row is too large to fit into an insert query. #}
         {% if new_insert_query | length > query_max_size %}
-          {% do elementary.debug_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
+          {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
           {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}

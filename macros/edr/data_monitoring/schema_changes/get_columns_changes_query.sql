@@ -77,7 +77,7 @@
             pre.data_type as pre_data_type,
             pre.detected_at
         from cur inner join pre
-            on (cur.full_table_name = pre.full_table_name and cur.column_name = pre.column_name)
+            on (lower(cur.full_table_name) = lower(pre.full_table_name) and lower(cur.column_name) = lower(pre.column_name))
         where pre.data_type IS NOT NULL AND lower(cur.data_type) != lower(pre.data_type)
 
     ),
@@ -110,7 +110,7 @@
             pre.data_type as pre_data_type,
             pre.detected_at as detected_at
         from pre left join cur
-            on (cur.full_table_name = pre.full_table_name and lower(cur.column_name) = lower(pre.column_name))
+            on (lower(cur.full_table_name) = lower(pre.full_table_name) and lower(cur.column_name) = lower(pre.column_name))
         where cur.full_table_name is null and cur.column_name is null
 
     ),
@@ -126,7 +126,7 @@
             removed.pre_data_type,
             removed.detected_at
         from columns_removed as removed join cur
-            on (removed.full_table_name = cur.full_table_name)
+            on (lower(removed.full_table_name) = lower(cur.full_table_name))
 
     ),
 
@@ -146,7 +146,12 @@
 
         {# This is the query that is creating the test results table, by formatting a description and adding id + detection time #}
         select
-            {{ elementary.generate_surrogate_key(['full_table_name', 'column_name', 'change', 'detected_at']) }} as data_issue_id,
+            {{ elementary.generate_surrogate_key([
+                'full_table_name',
+                'column_name',
+                'change',
+                'detected_at',
+            ]) }} as data_issue_id,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
             {{ elementary.full_name_split('database_name') }},
             {{ elementary.full_name_split('schema_name') }},

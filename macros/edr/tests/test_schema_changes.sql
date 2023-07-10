@@ -1,26 +1,25 @@
 {% test schema_changes(model) %}
-    -- depends_on: {{ ref('elementary_test_results') }}
     -- depends_on: {{ ref('schema_columns_snapshot') }}
     -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
     {%- if execute and flags.WHICH in ['test', 'build'] %}
+        {%- if elementary.is_ephemeral_model(model) %}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
+        {%- endif %}
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
         {# creates temp relation for schema columns info #}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
 
-        {# get table configuration #}
+        {#- get table configuration -#}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
-        {%- set model_relation = dbt.load_relation(model) %}
-        {% if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unable to find table `{}`".format(full_table_name)) }}
-        {% endif %}
 
         {#- query current schema and write to temp test table -#}
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
         {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
+
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'schema_changes', column_snapshot_query) %}
 
         {# query if there were schema changes since last execution #}

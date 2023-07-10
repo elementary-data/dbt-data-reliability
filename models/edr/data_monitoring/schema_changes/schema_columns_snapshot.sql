@@ -2,8 +2,12 @@
   config(
     materialized='incremental',
     unique_key = 'column_state_id',
-    enabled = target.type != 'databricks' and target.type != 'spark' | as_bool(),
-    full_refresh=elementary.get_config_var('elementary_full_refresh')
+    on_schema_change = 'append_new_columns',
+    full_refresh=elementary.get_config_var('elementary_full_refresh'),
+    meta={
+      "timestamp_column": "created_at",
+      "prev_timestamp_column": "detected_at",
+      }
   )
 }}
 

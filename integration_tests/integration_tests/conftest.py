@@ -48,6 +48,8 @@ def dbt_project(dbt_project_dir, dbt_target):
 @pytest.fixture(autouse=True)
 def elementary_schema(dbt_project: DbtProject):
     database, schema = get_package_database_and_schema(dbt_project)
-    schema_relation = dbt_project.create_relation(database, schema, None).without_identifier()
+    schema_relation = dbt_project.create_relation(
+        database, schema, None
+    ).without_identifier()
     dbt_project.execute_macro("dbt.create_schema", relation=schema_relation)
     return schema_relation

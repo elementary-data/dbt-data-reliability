@@ -7,6 +7,7 @@
     ('model_unique_id','long_string'),
     ('invocation_id', 'string'),
     ('detected_at','timestamp'),
+    ('created_at','timestamp'),
     ('database_name','string'),
     ('schema_name','string'),
     ('table_name','string'),
@@ -25,7 +26,8 @@
     ('failures', 'bigint'),
     ('test_short_name', 'string'),
     ('test_alias', 'string'),
-    ('result_rows', 'long_string')
+    ('result_rows', 'long_string'),
+    ('failed_row_count', 'bigint')
     ]) }}
 {% endmacro %}
 
@@ -36,6 +38,7 @@
     ('max_loaded_at','string'),
     ('snapshotted_at','string'),
     ('generated_at', 'string'),
+    ('created_at', 'timestamp'),
     ('max_loaded_at_time_ago_in_s','float'),
     ('status','string'),
     ('error','string'),
@@ -47,19 +50,34 @@
     ]) }}
 {% endmacro %}
 
-{# Currently append strategy for incremental tables adds the new columns at the end of the table (no matter where you defined them in the select.) #}
-{# Therefore we added "dimension" and "dimension_value" at the end of the table. #}
-{% macro empty_data_monitoring_metrics() %}
-    {{ elementary.empty_table([('id','string'),('full_table_name','string'),('column_name','string'),('metric_name','string'),('metric_value','float'),('source_value','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('updated_at','timestamp'),('dimension','string'),('dimension_value','string')]) }}
+{% macro empty_data_monitoring_metrics(with_created_at=true) %}
+    {% set columns = [('id','string'),
+                      ('full_table_name','string'),
+                      ('column_name','string'),
+                      ('metric_name','string'),
+                      ('metric_value','float'),
+                      ('source_value','string'),
+                      ('bucket_start','timestamp'),
+                      ('bucket_end','timestamp'),
+                      ('bucket_duration_hours','int'),
+                      ('updated_at','timestamp'),
+                      ('dimension','string'),
+                      ('dimension_value','string'),
+                      ('metric_properties','string')] 
+    %}
+    {% if with_created_at %}
+        {% do columns.append(('created_at','timestamp')) %}
+    {% endif %}
+    {{ elementary.empty_table(columns) }}
 {% endmacro %}
 
 {% macro empty_schema_columns_snapshot() %}
-    {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp')]) }}
+    {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp'),('created_at','timestamp')]) }}
 {% endmacro %}
 
 
 {% macro empty_column_monitors_cte() %}
-    {%- set column_monitors_list = elementary.all_column_monitors() %}
+    {%- set column_monitors_list = elementary.get_agg_column_monitors() %}
     {%- set columns_definition = [('column_name', 'string'), ('bucket', 'timestamp')] %}
     {%- for monitor in column_monitors_list %}
         {%- do columns_definition.append((monitor,'int'))-%}
@@ -91,19 +109,19 @@
     {%- set dummy_values = elementary.dummy_values() %}
 
     {%- if data_type == 'boolean' %}
-        cast ({{ dummy_values['boolean'] }} as {{ elementary.type_bool()}}) as {{ column_name }}
+        cast ({{ dummy_values['boolean'] }} as {{ elementary.edr_type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}
-        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.type_timestamp() }}) as {{ column_name }}
+        cast('{{ dummy_values['timestamp'] }}' as {{ elementary.edr_type_timestamp() }}) as {{ column_name }}
     {%- elif data_type == 'int' %}
-        cast({{ dummy_values['int'] }} as {{ elementary.type_int() }}) as {{ column_name }}
+        cast({{ dummy_values['int'] }} as {{ elementary.edr_type_int() }}) as {{ column_name }}
     {%- elif data_type == 'bigint' %}
-        cast({{ dummy_values['bigint'] }} as {{ elementary.type_bigint() }}) as {{ column_name }}
+        cast({{ dummy_values['bigint'] }} as {{ elementary.edr_type_bigint() }}) as {{ column_name }}
     {%- elif data_type == 'float' %}
-        cast({{ dummy_values['float'] }} as {{ elementary.type_float() }}) as {{ column_name }}
+        cast({{ dummy_values['float'] }} as {{ elementary.edr_type_float() }}) as {{ column_name }}
     {%- elif data_type == 'long_string' %}
-        cast('{{ dummy_values['long_string'] }}' as {{ elementary.type_long_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['long_string'] }}' as {{ elementary.edr_type_long_string() }}) as {{ column_name }}
     {%- else %}
-        cast('{{ dummy_values['string'] }}' as {{ elementary.type_string() }}) as {{ column_name }}
+        cast('{{ dummy_values['string'] }}' as {{ elementary.edr_type_string() }}) as {{ column_name }}
     {%- endif %}
 
 {% endmacro %}

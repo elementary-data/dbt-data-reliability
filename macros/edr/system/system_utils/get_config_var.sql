@@ -39,27 +39,28 @@
     'edr_cli_run': false,
     'max_int': 2147483647,
     'custom_run_started_at': none,
-    'edr_monitors': {
-      'table': ['row_count', 'freshness'],
-      'column_any_type': ['null_count', 'null_percent'],
-      'column_string': ['min_length', 'max_length', 'average_length', 'missing_count', 'missing_percent'],
-      'column_numeric': ['min', 'max', 'zero_count', 'zero_percent', 'average', 'standard_deviation', 'variance']
-    },
+    'edr_monitors': elementary.get_default_monitors(),
     'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
+    'upload_artifacts_method': 'diff',
     'project_name': none,
     'elementary_full_refresh': false,
     'min_training_set_size': 14,
     'cache_artifacts': true,
+    'anomaly_direction': 'both',
+    'store_result_rows_in_own_table': true,
+    'mute_dbt_upgrade_recommendation': false,
+    'calculate_failed_count': true,
+    'tests_use_temp_tables': true
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 500000}) %}
+    {% do default_config.update({'query_max_size': 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}

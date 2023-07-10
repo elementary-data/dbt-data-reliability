@@ -4,6 +4,13 @@
     {%- endif %}
 {% endmacro %}
 
+{% macro file_log(msg) %}
+    {% if execute %}
+        {% do elementary.edr_log(msg, info=false) %}
+        {% do elementary.debug_log(msg) %}
+    {% endif %}
+{% endmacro %}
+
 {% macro debug_log(msg) %}
     {%- if execute %}
         {% set debug_logs_enabled = elementary.get_config_var('debug_logs') %}

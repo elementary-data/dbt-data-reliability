@@ -5,7 +5,8 @@
 {# Default (Bigquery & Snowflake) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do dbt.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
+    {% do elementary.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
+    {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
 {# Spark / Databricks - truncate and insert (non-atomic) #}
@@ -25,20 +26,7 @@
         insert into {{ relation }} select * from {{ intermediate_relation }};
         commit;
     {% endset %}
-    {% do dbt.run_query(query) %}
-{% endmacro %}
+    {% do elementary.run_query(query) %}
 
-{% macro create_intermediate_relation(base_relation, rows, temporary) %}
-    {% if temporary %}
-        {% set int_relation = dbt.make_temp_relation(base_relation) %}
-    {% else %}
-        {# for non temporary relations - make sure the name is unique #}
-        {% set int_suffix = modules.datetime.datetime.utcnow().strftime('__tmp_%Y%m%d%H%M%S%f') %}
-        {% set int_relation = dbt.make_temp_relation(base_relation, suffix=int_suffix).incorporate(type='table') %}
-    {% endif %}
-
-    {% do elementary.create_table_like(int_relation, base_relation, temporary=temporary) %}
-    {% do elementary.insert_rows(int_relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
-
-    {% do return(int_relation) %}
+    {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}

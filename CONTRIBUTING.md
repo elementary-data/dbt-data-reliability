@@ -28,6 +28,8 @@ packages:
 dbt deps
 ```
 
+You're done. Running `dbt` will now run the code in your local repository.
+
 ## First time contributors
 
 If you're looking for things to help with, browse
