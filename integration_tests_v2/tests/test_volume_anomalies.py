@@ -12,7 +12,8 @@ def test_table_volume_anomalies():
     dbt_runner = dbt_project.get_dbt_runner()
     data = [
         {"updated_at": date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=datetime.now())
+        for date in generate_dates(base_date=datetime.now(), days_back=120)
+        for _ in range(100)
     ]
     with DbtDataSeeder().seed_data(data, table_name):
         dbt_runner.test(
