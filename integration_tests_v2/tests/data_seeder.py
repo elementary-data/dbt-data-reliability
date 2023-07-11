@@ -1,4 +1,5 @@
 import csv
+from contextlib import contextmanager
 from typing import List
 
 import dbt_project
@@ -9,8 +10,6 @@ import dbt_project
 class DbtDataSeeder:
     def __init__(self):
         self.dbt_runner = dbt_project.get_dbt_runner()
-
-    from contextlib import contextmanager
 
     @contextmanager
     def seed_data(self, data: List[dict], table_name: str):
