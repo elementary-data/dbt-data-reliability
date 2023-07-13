@@ -3,14 +3,13 @@ import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List
 
 import click
 from dbt.version import __version__
-from packaging import version
-
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from generate_data import generate_fake_data
+from packaging import version
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 DBT_VERSION = version.parse(version.parse(__version__).base_version)
@@ -129,10 +128,28 @@ def e2e_tests(
 
     dbt_runner.run(vars={"stage": "training"})
 
+    if "dimension" in test_types:
+        dbt_runner.run_operation(
+            macro_name="create_new_dimension",
+            should_log=True,
+        )
+
+    if "error_model" in test_types:
+        results = [
+            TestResult(type="error_model", message=msg)
+            for msg in dbt_runner.run_operation(
+                macro_name="validate_error_model", should_log=False
+            )
+        ]
+        test_results.extend(results)
+
     if "seasonal_volume" in test_types:
         dbt_runner.test(
             select="tag:seasonality_volume",
-            vars={"custom_run_started_at": "1969-12-31 08:00:00"},
+            vars={
+                "custom_run_started_at": "1969-12-31 08:00:00",
+                "disable_dbt_artifacts_autoupload": "true",
+            },
         )
         results = [
             TestResult(type="seasonal_volume", message=msg)
@@ -144,7 +161,10 @@ def e2e_tests(
         test_results.extend(results)
 
     if "table" in test_types:
-        dbt_runner.test(select="tag:table_anomalies")
+        dbt_runner.test(
+            select="tag:table_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="table_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
@@ -155,18 +175,14 @@ def e2e_tests(
 
     if "create_table" in test_types:
         # If there is a problem with create_or_replace macro, it will crash the test.
-        dbt_runner.test(select="tag:table_anomalies")
-        dbt_runner.test(select="tag:table_anomalies")
-
-    if "error_model" in test_types:
-        dbt_runner.run(select="tag:error_model")
-        results = [
-            TestResult(type="error_model", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_error_model", should_log=False
-            )
-        ]
-        test_results.extend(results)
+        dbt_runner.test(
+            select="tag:table_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
+        dbt_runner.test(
+            select="tag:table_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
 
     if "error_snapshot" in test_types:
         dbt_runner.snapshot()
@@ -196,41 +212,49 @@ def e2e_tests(
             ).isoformat()
             dbt_runner.test(
                 select="tag:no_timestamp",
-                vars={"custom_run_started_at": custom_run_time},
+                vars={
+                    "custom_run_started_at": custom_run_time,
+                    "disable_dbt_artifacts_autoupload": "true",
+                },
             )
 
     if "schema" in test_types and target not in ["databricks", "spark"]:
-        dbt_runner.test(select="tag:schema_changes")
-        dbt_runner.test(select="tag:schema_changes_from_baseline")
+        dbt_runner.test(
+            select="tag:schema_changes",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
+        dbt_runner.test(
+            select="tag:schema_changes_from_baseline",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
 
-    dbt_runner.run(vars={"stage": "validation"})
-
-    if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:drop_directional_anomalies")
-        results = [
-            TestResult(type="drop_directional_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_drop_directional_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
+    dbt_runner.run(
+        vars={"stage": "validation", "disable_dbt_artifacts_autoupload": "true"}
+    )
 
     if "directional_anomalies" in test_types:
-        dbt_runner.test(select="tag:spike_directional_anomalies")
+        dbt_runner.test(
+            select="tag:directional_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
-            TestResult(type="spike_directional_anomalies", message=msg)
+            TestResult(type="directional_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_spike_directional_anomalies", should_log=False
+                macro_name="validate_directional_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
 
     if "debug" in test_types:
-        dbt_runner.test(select="tag:debug")
+        dbt_runner.test(
+            select="tag:debug", vars={"disable_dbt_artifacts_autoupload": "true"}
+        )
         return test_results
 
     if "no_timestamp" in test_types:
-        dbt_runner.test(select="tag:no_timestamp")
+        dbt_runner.test(
+            select="tag:no_timestamp", vars={"disable_dbt_artifacts_autoupload": "true"}
+        )
         results = [
             TestResult(type="no_timestamp_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
@@ -240,7 +264,10 @@ def e2e_tests(
         test_results.extend(results)
 
     if "table" in test_types:
-        dbt_runner.test(select="tag:event_freshness_anomalies")
+        dbt_runner.test(
+            select="tag:event_freshness_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="event_freshness_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
@@ -250,43 +277,23 @@ def e2e_tests(
         test_results.extend(results)
 
     if "column" in test_types:
-        dbt_runner.test(select="tag:string_column_anomalies")
+        dbt_runner.test(
+            select="tag:column_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
-            TestResult(type="string_column_anomalies", message=msg)
+            TestResult(type="column_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_string_column_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        dbt_runner.test(select="tag:numeric_column_anomalies")
-        results = [
-            TestResult(type="numeric_column_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_numeric_column_anomalies", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        results = [
-            TestResult(type="custom_column_monitors", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_custom_column_monitors", should_log=False
-            )
-        ]
-        test_results.extend(results)
-
-        dbt_runner.test(select="tag:all_any_type_columns_anomalies")
-        results = [
-            TestResult(type="any_type_column_anomalies", message=msg)
-            for msg in dbt_runner.run_operation(
-                macro_name="validate_any_type_column_anomalies", should_log=False
+                macro_name="validate_column_anomalies", should_log=False
             )
         ]
         test_results.extend(results)
 
     if "backfill_days" in test_types:
-        dbt_runner.test(select="tag:backfill_days")
+        dbt_runner.test(
+            select="tag:backfill_days",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="backfill_days", message=msg)
             for msg in dbt_runner.run_operation(
@@ -296,7 +303,10 @@ def e2e_tests(
         test_results.extend(results)
 
     if "dimension" in test_types:
-        dbt_runner.test(select="tag:dimension_anomalies")
+        dbt_runner.test(
+            select="tag:dimension_anomalies",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="dimension_anomalies", message=msg)
             for msg in dbt_runner.run_operation(
@@ -305,8 +315,16 @@ def e2e_tests(
         ]
         test_results.extend(results)
 
+        dbt_runner.run_operation(
+            macro_name="delete_new_dimension",
+            should_log=True,
+        )
+
     if "schema" in test_types and target not in ["databricks", "spark"]:
-        dbt_runner.test(select="tag:schema_changes")
+        dbt_runner.test(
+            select="tag:schema_changes",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="schema_changes", message=msg)
             for msg in dbt_runner.run_operation(
@@ -316,7 +334,10 @@ def e2e_tests(
         test_results.extend(results)
 
     if "regular" in test_types:
-        dbt_runner.test(select="test_type:singular tag:regular_tests")
+        dbt_runner.test(
+            select="test_type:singular tag:regular_tests",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="regular_tests", message=msg)
             for msg in dbt_runner.run_operation(
@@ -326,7 +347,10 @@ def e2e_tests(
         test_results.extend(results)
 
     if "config_levels" in test_types:
-        dbt_runner.test(select="tag:config_levels")
+        dbt_runner.test(
+            select="tag:config_levels",
+            vars={"disable_dbt_artifacts_autoupload": "true"},
+        )
         results = [
             TestResult(type="config_levels", message=msg)
             for msg in dbt_runner.run_operation(
@@ -352,7 +376,9 @@ def e2e_tests(
 
     # Test errors validation needs to run last
     if "error_test" in test_types:
-        dbt_runner.test(select="tag:error_test")
+        dbt_runner.test(
+            select="tag:error_test", vars={"disable_dbt_artifacts_autoupload": "true"}
+        )
         results = [
             TestResult(type="error_test", message=msg)
             for msg in dbt_runner.run_operation(
@@ -365,17 +391,28 @@ def e2e_tests(
         model = "non_dbt_model"
         try:
             row = get_row(model, dbt_runner)
-            if row['depends_on_nodes'] != '["model.elementary_integration_tests.one"]' \
-                    or row['materialization'] != "non_dbt":
-                result = TestResult(type="non_dbt_models", message="FAILED: non_dbt model not materialized as expected")
+            if (
+                row["depends_on_nodes"] != '["model.elementary_integration_tests.one"]'
+                or row["materialization"] != "non_dbt"
+            ):
+                result = TestResult(
+                    type="non_dbt_models",
+                    message="FAILED: non_dbt model not materialized as expected",
+                )
             else:
                 result = TestResult(
                     type="non_dbt_models",
-                    message=dbt_runner.run_operation('assert_table_doesnt_exist',
-                                                     macro_args={"model_name": "non_dbt_model"}, should_log=False)[0]
+                    message=dbt_runner.run_operation(
+                        "assert_table_doesnt_exist",
+                        macro_args={"model_name": "non_dbt_model"},
+                        should_log=False,
+                    )[0],
                 )
         except ValueError:
-            result = TestResult(type="non_dbt_models", message="FAILED: we need to see the non_dbt model in the run")
+            result = TestResult(
+                type="non_dbt_models",
+                message="FAILED: we need to see the non_dbt model in the run",
+            )
         test_results.append(result)
 
     return test_results

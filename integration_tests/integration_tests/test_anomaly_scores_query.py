@@ -1,18 +1,18 @@
-from datetime import datetime
 import os
+from datetime import datetime
+
 import pandas as pd
 from parametrization import Parametrization
 
-
 from .dbt_project import DbtProject
 from .utils import (
-    create_test_table,
-    insert_rows,
-    update_var,
-    lowercase_column_names,
-    assert_dfs_equal,
     agate_table_to_pandas_dataframe,
+    assert_dfs_equal,
+    create_test_table,
     get_package_database_and_schema,
+    insert_rows,
+    lowercase_column_names,
+    update_var,
 )
 
 MIN_BUCKET_START = datetime(2022, 1, 1, 0, 0, 0)
@@ -47,36 +47,24 @@ BASE_DIR = os.path.join(
     name="freshness_1_day_mostly_non_anomalous",
     metric_name="freshness",
     input_rows=os.path.join(BASE_DIR, "freshness_1_day_test.csv"),
-    input_rows_history=os.path.join(
-        BASE_DIR, "freshness_1_day_history.csv"
-    ),
-    expected_output=os.path.join(
-        BASE_DIR, "freshness_1_day_after.csv"
-    ),
+    input_rows_history=os.path.join(BASE_DIR, "freshness_1_day_history.csv"),
+    expected_output=os.path.join(BASE_DIR, "freshness_1_day_after.csv"),
     alias_table_name="numeric_column_anomalies",
 )
 @Parametrization.case(
     name="row_count_1_day_1_row_no_anomalies",
     metric_name="row_count",
     input_rows=os.path.join(BASE_DIR, "row_count_1_day_1_row_test.csv"),
-    input_rows_history=os.path.join(
-        BASE_DIR, "row_count_1_day_1_row_history.csv"
-    ),
-    expected_output=os.path.join(
-        BASE_DIR, "row_count_1_day_1_row_after.csv"
-    ),
+    input_rows_history=os.path.join(BASE_DIR, "row_count_1_day_1_row_history.csv"),
+    expected_output=os.path.join(BASE_DIR, "row_count_1_day_1_row_after.csv"),
     alias_table_name="any_type_column_anomalies_training",
 )
 @Parametrization.case(
     name="row_count_1_day_mostly_non_anomalous",
     metric_name="row_count",
     input_rows=os.path.join(BASE_DIR, "row_count_1_day_test.csv"),
-    input_rows_history=os.path.join(
-        BASE_DIR, "row_count_1_day_history.csv"
-    ),
-    expected_output=os.path.join(
-        BASE_DIR, "row_count_1_day_after.csv"
-    ),
+    input_rows_history=os.path.join(BASE_DIR, "row_count_1_day_history.csv"),
+    expected_output=os.path.join(BASE_DIR, "row_count_1_day_after.csv"),
     alias_table_name="string_column_anomalies_training",
 )
 @Parametrization.case(
@@ -157,7 +145,7 @@ def test_anomaly_scores_query(
         "timestamp_column": timestamp_column,
         "where_expression": where_expression,
         "freshness_column": None,
-        "event_timestamp_column": None
+        "event_timestamp_column": None,
     }
     if dbt_project.adapter_name not in ["postgres", "redshift"]:
         database, schema = get_package_database_and_schema(dbt_project)
@@ -168,7 +156,7 @@ def test_anomaly_scores_query(
         "resource_type": "dummy_type_not_incremental",
         "alias": alias_table_name,
         "database": database,
-        "schema": schema
+        "schema": schema,
     }
 
     test_configuration = {
@@ -178,7 +166,7 @@ def test_anomaly_scores_query(
         "dimensions": dimensions,  # should be the same as in the input
         "time_bucket": time_bucket,
         "timestamp_column": timestamp_column,
-        "where_expression": where_expression
+        "where_expression": where_expression,
     }
 
     query = dbt_project.execute_macro(

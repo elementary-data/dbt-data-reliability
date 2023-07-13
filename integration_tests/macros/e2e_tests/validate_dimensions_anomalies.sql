@@ -23,5 +23,19 @@
         {%- endif %}
     {% endfor %}
 
-    {{ assert_lists_contain_same_items(should_fail_names, ['elementary_dimension_anomalies_dimension_anomalies_platform', 'elementary_dimension_anomalies_dimension_anomalies_platform__updated_at', 'elementary_dimension_anomalies_dimension_anomalies_platform__version__updated_at']) }}
+    {{ assert_lists_contain_same_items(should_fail_names, ['elementary_dimension_anomalies_dimension_anomalies_platform__updated_at', 'elementary_dimension_anomalies_dimension_anomalies_platform__version__updated_at']) }}
+{% endmacro %}
+
+{% macro create_new_dimension() %}
+    {% set dimension_validation_data = ref('dimension_anomalies_validation') %}
+    {%- set insert_dimension_query %}
+        INSERT INTO {{ dimension_validation_data }} values ('1969-12-28 00:00:00.000', 'windows', 1, 318);
+    {% endset %}
+{% endmacro %}
+
+{% macro delete_new_dimension() %}
+    {% set dimension_validation_data = ref('dimension_anomalies_validation') %}
+    {%- set delete_dimension_query %}
+        DELETE FROM{{ dimension_validation_data }} WHERE platform = 'windows';
+    {% endset %}
 {% endmacro %}
