@@ -16,7 +16,7 @@ def test_anomalyless_table_volume_anomalies(request):
     run_dbt_test(data, test_id, dbt_test_name, {"timestamp_column": "updated_at"})
     results = read_table(
         "elementary_test_results",
-        where=f"test_name = '{test_id}'",
+        where=f"table_name = '{test_id}'",
         column_names=["status"],
     )
     assert all(result["status"] == "pass" for result in results)
