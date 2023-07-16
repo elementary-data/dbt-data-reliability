@@ -22,7 +22,7 @@ def test_anomalyless_table_volume_anomalies(request):
     test_id = request.node.name
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=datetime.now(), days_back=120)
+        for date in generate_dates(base_date=datetime.now())
         for _ in range(100)
     ]
     run_dbt_test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
@@ -33,7 +33,7 @@ def test_full_drop_table_volume_anomalies(request):
     test_id = request.node.name
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=datetime.now(), days_back=120)
+        for date in generate_dates(base_date=datetime.now())
         for _ in range(100)
         if date < datetime.now() - timedelta(days=2)
     ]
@@ -45,7 +45,7 @@ def test_partial_drop_table_volume_anomalies(request):
     test_id = request.node.name
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=datetime.now(), days_back=120)
+        for date in generate_dates(base_date=datetime.now())
         for _ in range(100 if date < datetime.now() - timedelta(days=2) else 10)
     ]
     run_dbt_test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
@@ -56,7 +56,7 @@ def test_spike_table_volume_anomalies(request):
     test_id = request.node.name
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=datetime.now(), days_back=120)
+        for date in generate_dates(base_date=datetime.now())
         for _ in range(100 if date < datetime.now() - timedelta(days=2) else 1000)
     ]
     run_dbt_test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
