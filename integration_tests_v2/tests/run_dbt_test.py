@@ -11,8 +11,8 @@ _MODELS_DIR_PATH = dbt_project.PATH / "models"
 
 def run_dbt_test(
     data: List[dict],
-    table_name: str,
-    test_name: str,
+    test_id: str,
+    dbt_test_name: str,
     test_args: Optional[Dict[str, Any]] = None,
 ):
     test_args = test_args or {}
@@ -23,12 +23,17 @@ def run_dbt_test(
             {
                 "name": "test_data",
                 "schema": "test_seeds",
-                "tables": [{"name": table_name, "tests": [{test_name: test_args}]}],
+                "tables": [
+                    {
+                        "name": test_id,
+                        "tests": [{dbt_test_name: test_args}],
+                    }
+                ],
             }
         ],
     }
 
-    with DbtDataSeeder().seed_data(data, table_name):
+    with DbtDataSeeder().seed_data(data, test_id):
         with NamedTemporaryFile(dir=_MODELS_DIR_PATH, suffix=".yaml") as props_file:
             YAML().dump(props_yaml, props_file)
             relative_props_path = Path(props_file.name).relative_to(dbt_project.PATH)
