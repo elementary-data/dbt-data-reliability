@@ -6,6 +6,8 @@ import dbt_project
 from data_seeder import DbtDataSeeder
 from ruamel.yaml import YAML
 
+_MODELS_DIR_PATH = dbt_project.PATH / "models"
+
 
 def run_dbt_test(
     data: List[dict],
@@ -15,7 +17,7 @@ def run_dbt_test(
 ):
     test_args = test_args or {}
     dbt_runner = dbt_project.get_dbt_runner()
-    props = {
+    props_yaml = {
         "version": 2,
         "sources": [
             {
@@ -26,9 +28,8 @@ def run_dbt_test(
         ],
     }
 
-    models_dir_path = dbt_project.PATH / "models"
     with DbtDataSeeder().seed_data(data, table_name):
-        with NamedTemporaryFile(dir=models_dir_path, suffix=".yml") as props_file:
-            YAML().dump(props, props_file)
+        with NamedTemporaryFile(dir=_MODELS_DIR_PATH, suffix=".yaml") as props_file:
+            YAML().dump(props_yaml, props_file)
             relative_props_path = Path(props_file.name).relative_to(dbt_project.PATH)
             dbt_runner.test(select=str(relative_props_path))
