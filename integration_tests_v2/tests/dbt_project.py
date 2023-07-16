@@ -3,6 +3,7 @@ from pathlib import Path
 from elementary.clients.dbt.dbt_runner import DbtRunner
 
 PATH = Path(__file__).parent.parent / "dbt_project"
+MODELS_DIR_PATH = PATH / "models"
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
