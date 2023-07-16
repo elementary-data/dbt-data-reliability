@@ -23,7 +23,7 @@ def test_anomalyless_table_volume_anomalies(request):
         for _ in range(100)
     ]
     run_dbt_test(data, test_id, dbt_test_name, {"timestamp_column": "updated_at"})
-    assert all(result["status"] == "fail" for result in read_status(test_id))
+    assert all(result["status"] == "pass" for result in read_status(test_id))
 
 
 def test_anomalyful_table_volume_anomalies(request):
