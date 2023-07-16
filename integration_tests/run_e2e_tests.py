@@ -154,7 +154,7 @@ def e2e_tests(
         results = [
             TestResult(type="seasonal_volume", message=msg)
             for msg in dbt_runner.run_operation(
-                macro_name="validate_seasonal_volume_anomalies",
+                macro_name="validate_seasonal_volume_anomalies_after_training",
                 should_log=False,
             )
         ]

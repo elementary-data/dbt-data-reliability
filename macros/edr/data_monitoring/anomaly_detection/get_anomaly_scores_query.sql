@@ -18,13 +18,6 @@
 
     {%- if test_configuration.seasonality == 'day_of_week' %}
         {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
-
-    {%- elif test_configuration.seasonality == 'hour_of_day' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression('bucket_end') %}
-
-    {%- elif test_configuration.seasonality == 'hour_of_week' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression('bucket_end') %}
-
     {%- else %}
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
