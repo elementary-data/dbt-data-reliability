@@ -4,7 +4,7 @@ with training as (
 
 {% if var("stage") == "validation" %}
  validation as (
-     select * from {{ source('training', 'users_per_hour_daily_seasonal_validation') }}
+     select * from {{ source('validation', 'users_per_hour_daily_seasonal_validation') }}
  ),
 
  source as (
