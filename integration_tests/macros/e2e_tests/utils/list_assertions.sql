@@ -27,6 +27,9 @@
         {{ return(1) }}
     {% endif %}
     {% for item1 in list1 %}
+        {% if item1 is string %}
+            {% set item1 = item1 | lower %}
+        {% endif %}
         {% if item1 not in list2 %}
             {% do elementary.edr_log(context ~ " FAILED: " ~ item1 ~ " not in list " ~ list2) %}
             {{ return(1) }}
