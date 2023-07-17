@@ -525,6 +525,7 @@ sources:
   - name: training
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_training
       - name: any_type_column_anomalies_training
         meta:
           owner: ["@edr", "egk"]
@@ -620,6 +621,7 @@ sources:
   - name: validation
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_validation
       - name: any_type_column_anomalies_validation
         meta:
           owner: "hello, world"

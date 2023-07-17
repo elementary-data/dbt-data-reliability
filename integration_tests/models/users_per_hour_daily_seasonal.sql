@@ -1,10 +1,10 @@
 with training as (
-    select * from {{ ref('users_per_hour_daily_seasonal_training') }}
+    select * from {{ source('training', 'users_per_hour_daily_seasonal_training') }}
 ),
 
 {% if var("stage") == "validation" %}
  validation as (
-     select * from {{ ref('users_per_hour_daily_seasonal_validation') }}
+     select * from {{ source('validation', 'users_per_hour_daily_seasonal_validation') }}
  ),
 
  source as (
