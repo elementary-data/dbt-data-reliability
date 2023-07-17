@@ -6,9 +6,9 @@
     {% set temp_table_relation = dbt.make_temp_relation(temp_table_relation) %}
     {% if temp_table_exists %}
         {% do adapter.drop_relation(temp_table_relation) %}
-        {% do run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
+        {% do elementary.run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
     {% else %}
-        {% do run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
+        {% do elementary.run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
     {% endif %}
     {{ return(temp_table_relation) }}
 {% endmacro %}

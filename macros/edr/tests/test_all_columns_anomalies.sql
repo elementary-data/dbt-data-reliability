@@ -59,7 +59,7 @@
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
                     {%- set column_monitoring_query = elementary.column_monitoring_query(model, min_bucket_start, max_bucket_end, test_configuration.days_back, column_obj, column_monitors, metric_properties) %}
-                    {%- do run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
+                    {%- do elementary.run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
                 {%- endif -%}
