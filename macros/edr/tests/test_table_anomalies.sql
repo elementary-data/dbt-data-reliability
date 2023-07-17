@@ -12,6 +12,9 @@
 
         {% do elementary.debug_log('starting test') %}
         {% do elementary.debug_log('model: ' ~ model) %}
+        {% if model is string %}
+            {% do elementary.debug_log('model is string!') %}
+        {% endif %}
 
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {% do elementary.debug_log('collecting metrics for test: ' ~ test_table_name) %}
