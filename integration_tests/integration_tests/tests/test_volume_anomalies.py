@@ -9,12 +9,11 @@ DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN}
 
 
 def read_status(test_id: str, dbt_project: DbtProject):
-    results = dbt_project.read_table(
+    return dbt_project.read_table(
         "elementary_test_results",
         where=f"table_name = '{test_id}'",
         column_names=["status"],
     )
-    return results
 
 
 def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
