@@ -10,15 +10,22 @@
             {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
         {%- endif %}
 
+        {% do elementary.debug_log('starting test') %}
+        {% do elementary.debug_log('model: ' ~ model) %}
+
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
-        {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
+        {% do elementary.debug_log('collecting metrics for test: ' ~ test_table_name) %}
         {#- creates temp relation for test metrics -#}
+        {% do elementary.debug_log('getting package database and schema') %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+        {% do elementary.debug_log('getting elementary test schema') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
 
         {#- get table configuration -#}
+        {% do elementary.debug_log('getting full table name') %}
         {%- set full_table_name = elementary.relation_to_full_name(model) %}
 
+        {% do elementary.debug_log('getting anomalies test configuration') %}
         {% set test_configuration, metric_properties = elementary.get_anomalies_test_configuration(model_relation=model,
                                                                                                    mandatory_params=mandatory_params,
                                                                                                    timestamp_column=timestamp_column,

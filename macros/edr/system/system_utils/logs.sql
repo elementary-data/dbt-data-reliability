@@ -13,10 +13,7 @@
 
 {% macro debug_log(msg) %}
     {%- if execute %}
-        {% set debug_logs_enabled = elementary.get_config_var('debug_logs') %}
-        {% if debug_logs_enabled %}
-            {{ elementary.edr_log(msg) }}
-        {% endif %}
+        {{ elementary.edr_log(msg) }}
     {%- endif %}
 {% endmacro %}
 
