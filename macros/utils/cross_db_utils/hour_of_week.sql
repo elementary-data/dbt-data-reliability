@@ -1,5 +1,5 @@
 {% macro edr_hour_of_week_expression(date_expr) %}
-    {{ return(adapter.dispatch('edr_hour_of_week_expression','elementary')(elementary.edr_cast_as_date(date_expr))) }}
+    {{ return(adapter.dispatch('edr_hour_of_week_expression','elementary')(elementary.edr_cast_as_timestamp(date_expr))) }}
 {% endmacro %}
 
 {# Databricks, Spark: #}
