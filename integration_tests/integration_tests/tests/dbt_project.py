@@ -10,6 +10,7 @@ from ruamel.yaml import YAML
 
 PATH = Path(__file__).parent.parent / "dbt_project"
 MODELS_DIR_PATH = PATH / "models"
+SEEDS_DIR_PATH = PATH / "data"
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
