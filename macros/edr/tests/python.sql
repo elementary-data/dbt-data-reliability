@@ -6,7 +6,7 @@
   {% endif %}
 
   {% if model is string %}
-    {{ exceptions.raise_compiler_error("Python tests don't support 'where' parameters for the test, or custom 'ref' definitions") }}
+    {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you provide a 'where' parameter to the test or override 'ref')") }}
   {% endif %}
 
   {% if not code_macro %}
