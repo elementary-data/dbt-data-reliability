@@ -4,7 +4,9 @@
         {% do return(test_model) %}
     {% endif %}
 
-    {# Test model is a string, meaning probably that a "where" parameter was used in the query #}
+    {# Test model is a string, this might mean that a "where" parameter was passed to the test.
+       In the heuristic below we rely on the fact that in this case the model jinja will have
+       a very specific structure (see the "build_model_str" function in dbt-core) #}
 
     {% set test_metadata = elementary.safe_get_with_default(test_node, 'test_metadata', {}) %}
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
@@ -37,5 +39,7 @@
         {% do return(source(source_name, table_name)) %}
     {% endif %}
 
+    {# If we got here, then probably "ref" or "source" have been overridden with a string query,
+       which right now we cannot handle #}
     {% do return(none) %}
 {% endmacro %}
