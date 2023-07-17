@@ -12,7 +12,6 @@ def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProjec
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
-        for _ in range(10)
     ]
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert test_result["status"] == "pass"
@@ -22,8 +21,7 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
-        for _ in range(10)
-        if date < datetime.now() - timedelta(days=2)
+        if date < datetime.now() - timedelta(days=3)
     ]
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert test_result["status"] == "fail"
@@ -33,7 +31,7 @@ def test_partial_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProje
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
-        for _ in range(10 if date < datetime.now() - timedelta(days=2) else 1)
+        for _ in range(2 if date < datetime.now() - timedelta(days=3) else 1)
     ]
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert test_result["status"] == "fail"
@@ -43,7 +41,7 @@ def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
-        for _ in range(10 if date < datetime.now() - timedelta(days=2) else 100)
+        for _ in range(1 if date < datetime.now() - timedelta(days=3) else 2)
     ]
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert test_result["status"] == "fail"
