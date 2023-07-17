@@ -1,6 +1,5 @@
 import pytest
-from dbt_project import get_dbt_runner
-from elementary.clients.dbt.dbt_runner import DbtRunner
+from dbt_project import DbtProject
 from env import Environment
 
 
@@ -16,8 +15,8 @@ def pytest_sessionstart(session):
 
 
 @pytest.fixture
-def dbt_runner(target: str) -> DbtRunner:
-    return get_dbt_runner(target)
+def dbt_project(target: str) -> DbtProject:
+    return DbtProject(target)
 
 
 @pytest.fixture(scope="session")
