@@ -20,7 +20,7 @@ class DbtDataSeeder:
     @contextmanager
     def seed(self, data: List[dict], table_name: str):
         with NamedTemporaryFile(
-            mode="w", dir=dbt_project.SEEDS_DIR_PATH, suffix=".csv"
+            mode="w+", dir=dbt_project.SEEDS_DIR_PATH, suffix=".csv"
         ) as seed_file:
             relative_seed_path = Path(seed_file.name).relative_to(dbt_project.PATH)
             writer = csv.DictWriter(seed_file, fieldnames=data[0].keys())
