@@ -6,7 +6,7 @@
   {% endif %}
 
   {% if model is string %}
-    {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you provide a 'where' parameter to the test or override 'ref')") }}
+    {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you provide a 'where' parameter to the test or override 'ref' or 'source')") }}
   {% endif %}
 
   {% if not code_macro %}

@@ -2,7 +2,7 @@
   {% if execute %}
     {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
     {% if not model_relation %}
-        {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref')") }}
+        {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
     {% endif %}
 
     {%- if not event_timestamp_column -%}

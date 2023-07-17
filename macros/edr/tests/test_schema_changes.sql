@@ -5,7 +5,7 @@
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
-            {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref')") }}
+            {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
         {% endif %}
 
         {%- if elementary.is_ephemeral_model(model_relation) %}
