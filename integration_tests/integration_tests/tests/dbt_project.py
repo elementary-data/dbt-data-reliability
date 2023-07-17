@@ -98,8 +98,8 @@ class DbtProject:
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
 
-    def _read_test_result(self, test_id: str) -> Dict[str, Any]:
+    def _read_test_result(self, table_name: str) -> Dict[str, Any]:
         return self.read_table(
             "elementary_test_results",
-            where=f"table_name = '{test_id}'",
+            where=f"table_name = '{table_name}'",
         )[0]
