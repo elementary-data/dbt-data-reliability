@@ -1,8 +1,14 @@
-{% macro read_table(table, where=none) %}
+{% macro read_table(table, where=none, column_names=none) %}
   {% set query %}
-    select * from {{ ref(table) }}
+    select
+    {% if column_names %}
+      {{ elementary.escape_select(column_names) }}
+    {% else %}
+      *
+    {% endif %}
+    from {{ ref(table) }}
     {% if where %}
-        where {{ where }}
+      where {{ where }}
     {% endif %}
   {% endset %}
 
