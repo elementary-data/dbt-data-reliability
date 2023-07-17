@@ -5,6 +5,10 @@
     {% do return(none) %}
   {% endif %}
 
+  {% if model is string %}
+    {{ exceptions.raise_compiler_error("Python tests don't support 'where' parameters for the test, or custom 'ref' definitions") }}
+  {% endif %}
+
   {% if not code_macro %}
     {% do exceptions.raise_compiler_error('A `code_macro` must be provided to a Python test.') %}
   {% endif %}

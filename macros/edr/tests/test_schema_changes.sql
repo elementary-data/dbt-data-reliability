@@ -3,8 +3,13 @@
     -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
     {%- if execute and flags.WHICH in ['test', 'build'] %}
-        {%- if elementary.is_ephemeral_model(model) %}
-            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model.identifier)) }}
+        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
+        {% if not model_relation %}
+            {{ exceptions.raise_compiler_error("Unsupported model string: " ~ model ~ " (this might happen if you override 'ref')") }}
+        {% endif %}
+
+        {%- if elementary.is_ephemeral_model(model_relation) %}
+            {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model_relation.identifier)) }}
         {%- endif %}
         {% set test_table_name = elementary.get_elementary_test_table_name() %}
         {{ elementary.debug_log('collecting metrics for test: ' ~ test_table_name) }}
@@ -13,7 +18,7 @@
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
 
         {#- get table configuration -#}
-        {%- set full_table_name = elementary.relation_to_full_name(model) %}
+        {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
 
         {#- query current schema and write to temp test table -#}
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}

@@ -4,6 +4,11 @@
     {% if not execute %}
         {% do return(none) %}
     {% endif %}
+
+    {% if model is string %}
+        {{ exceptions.raise_compiler_error("Json schema tests don't support 'where' parameters for the test, or custom 'ref' definitions") }}
+    {% endif %}
+
     {% if not elementary.column_exists_in_relation(model, column_name) %}
         {% do exceptions.raise_compiler_error("Column '{}' does not exist in node '{}'!".format(column_name, model.name)) %}
     {% endif %}
