@@ -30,6 +30,15 @@ class DbtProject:
     def __init__(self, target: str):
         self.dbt_runner = get_dbt_runner(target)
 
+    def run_query(self, query: str):
+        results = json.loads(
+            self.dbt_runner.run_operation(
+                "elementary_tests.run_query",
+                macro_args={"query": query},
+            )[0]
+        )
+        return results
+
     def read_table(
         self,
         table_name: str,
@@ -37,16 +46,12 @@ class DbtProject:
         column_names: Optional[List[str]] = None,
         raise_if_empty: bool = True,
     ) -> List[dict]:
-        results = json.loads(
-            self.dbt_runner.run_operation(
-                "read_table",
-                macro_args={
-                    "table": table_name,
-                    "where": where,
-                    "column_names": column_names,
-                },
-            )[0]
-        )
+        query = f"""
+        SELECT {', '.join(column_names) if column_names else '*'}
+        FROM {{{{ ref('{table_name}') }}}}
+        {f"WHERE {where}" if where else ""}
+        """
+        results = self.run_query(query)
         if raise_if_empty and len(results) == 0:
             raise ValueError(
                 f"Table '{table_name}' with the '{where}' condition is empty."
