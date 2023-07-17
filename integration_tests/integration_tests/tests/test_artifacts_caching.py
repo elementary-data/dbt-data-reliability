@@ -21,4 +21,4 @@ def test_artifacts_caching(dbt_project: DbtProject):
     first_row = read_model_artifact_row(dbt_project)
     dbt_project.dbt_runner.run(select=TEST_MODEL, vars={"one_owner": "ele"})
     second_row = read_model_artifact_row(dbt_project)
-    assert first_row != second_row, "Artifacts are not cached at the on run end."
+    assert first_row != second_row, "Artifacts are not updated at the on run end."
