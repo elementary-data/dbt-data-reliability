@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.dbt_runner import DbtRunner
+from logger import get_logger
 from ruamel.yaml import YAML
 
 PATH = Path(__file__).parent.parent / "dbt_project"
@@ -15,6 +16,8 @@ _DEFAULT_VARS = {
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
 }
+
+logger = get_logger(__name__)
 
 
 def get_dbt_runner(target: str) -> DbtRunner:
@@ -86,7 +89,9 @@ class DbtProject:
             with NamedTemporaryFile(dir=MODELS_DIR_PATH, suffix=".yaml") as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
+                logger.info(f"Testing {test_id}.")
                 self.dbt_runner.test(select=str(relative_props_path))
+                logger.info(f"Tested {test_id}.")
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
