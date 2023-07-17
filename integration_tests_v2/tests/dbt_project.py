@@ -12,5 +12,10 @@ _DEFAULT_VARS = {
 }
 
 
-def get_dbt_runner(raise_on_failure: bool = False):
-    return DbtRunner(str(PATH), vars=_DEFAULT_VARS, raise_on_failure=raise_on_failure)
+def get_dbt_runner(target: str) -> DbtRunner:
+    return DbtRunner(
+        str(PATH),
+        target=target,
+        vars=_DEFAULT_VARS,
+        raise_on_failure=False,
+    )

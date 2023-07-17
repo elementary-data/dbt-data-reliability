@@ -4,17 +4,18 @@ from typing import Any, Dict, List, Optional
 
 import dbt_project
 from data_seeder import DbtDataSeeder
+from elementary.clients.dbt.dbt_runner import DbtRunner
 from ruamel.yaml import YAML
 
 
 def run_dbt_test(
+    dbt_runner: DbtRunner,
     data: List[dict],
     test_id: str,
     dbt_test_name: str,
     test_args: Optional[Dict[str, Any]] = None,
 ):
     test_args = test_args or {}
-    dbt_runner = dbt_project.get_dbt_runner()
     props_yaml = {
         "version": 2,
         "sources": [
@@ -31,7 +32,7 @@ def run_dbt_test(
         ],
     }
 
-    with DbtDataSeeder().seed_data(data, test_id):
+    with DbtDataSeeder(dbt_runner).seed_data(data, test_id):
         with NamedTemporaryFile(
             dir=dbt_project.MODELS_DIR_PATH, suffix=".yaml"
         ) as props_file:
