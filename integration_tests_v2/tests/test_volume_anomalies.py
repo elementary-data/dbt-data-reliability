@@ -8,7 +8,7 @@ DBT_TEST_NAME = "elementary.volume_anomalies"
 DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN}
 
 
-def read_status(dbt_project: DbtProject, test_id: str):
+def read_status(test_id: str, dbt_project: DbtProject):
     results = dbt_project.read_table(
         "elementary_test_results",
         where=f"table_name = '{test_id}'",
@@ -17,8 +17,7 @@ def read_status(dbt_project: DbtProject, test_id: str):
     return results
 
 
-def test_anomalyless_table_volume_anomalies(request, dbt_project: DbtProject):
-    test_id = request.node.name
+def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
@@ -26,12 +25,11 @@ def test_anomalyless_table_volume_anomalies(request, dbt_project: DbtProject):
     ]
     dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert all(
-        result["status"] == "pass" for result in read_status(dbt_project, test_id)
+        result["status"] == "pass" for result in read_status(test_id, dbt_project)
     )
 
 
-def test_full_drop_table_volume_anomalies(request, dbt_project: DbtProject):
-    test_id = request.node.name
+def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
@@ -40,12 +38,11 @@ def test_full_drop_table_volume_anomalies(request, dbt_project: DbtProject):
     ]
     dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert all(
-        result["status"] == "fail" for result in read_status(dbt_project, test_id)
+        result["status"] == "fail" for result in read_status(test_id, dbt_project)
     )
 
 
-def test_partial_drop_table_volume_anomalies(request, dbt_project: DbtProject):
-    test_id = request.node.name
+def test_partial_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
@@ -53,12 +50,11 @@ def test_partial_drop_table_volume_anomalies(request, dbt_project: DbtProject):
     ]
     dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert all(
-        result["status"] == "fail" for result in read_status(dbt_project, test_id)
+        result["status"] == "fail" for result in read_status(test_id, dbt_project)
     )
 
 
-def test_spike_table_volume_anomalies(request, dbt_project: DbtProject):
-    test_id = request.node.name
+def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
@@ -66,5 +62,5 @@ def test_spike_table_volume_anomalies(request, dbt_project: DbtProject):
     ]
     dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
     assert all(
-        result["status"] == "fail" for result in read_status(dbt_project, test_id)
+        result["status"] == "fail" for result in read_status(test_id, dbt_project)
     )

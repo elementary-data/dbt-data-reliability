@@ -22,3 +22,8 @@ def dbt_project(target: str) -> DbtProject:
 @pytest.fixture(scope="session")
 def target(request) -> str:
     return request.config.getoption("--target")
+
+
+@pytest.fixture
+def test_id(request) -> str:
+    return request.node.name
