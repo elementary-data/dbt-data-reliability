@@ -13,7 +13,7 @@ class DbtDataSeeder:
         self.dbt_runner = dbt_runner
 
     @contextmanager
-    def seed_data(self, data: List[dict], table_name: str):
+    def seed(self, data: List[dict], table_name: str):
         seed_path = dbt_project.PATH / "data" / f"{table_name}.csv"
         try:
             with open(seed_path, "w") as f:

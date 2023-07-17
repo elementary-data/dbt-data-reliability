@@ -77,11 +77,11 @@ class DbtProject:
             ],
         }
 
-        with self.seed_data(data, test_id):
+        with self.seed(data, test_id):
             with NamedTemporaryFile(dir=MODELS_DIR_PATH, suffix=".yaml") as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
                 self.dbt_runner.test(select=str(relative_props_path))
 
-    def seed_data(self, data: List[dict], table_name: str):
-        return DbtDataSeeder(self.dbt_runner).seed_data(data, table_name)
+    def seed(self, data: List[dict], table_name: str):
+        return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
