@@ -68,7 +68,7 @@ class DbtProject:
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Dict[str, Any]:
         test_args = test_args or {}
         props_yaml = {
             "version": 2,
@@ -93,6 +93,13 @@ class DbtProject:
                 logger.info(f"Testing {test_id}.")
                 self.dbt_runner.test(select=str(relative_props_path))
                 logger.info(f"Tested {test_id}.")
+        return self._read_test_result(test_id)
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
+
+    def _read_test_result(self, test_id: str) -> Dict[str, Any]:
+        return self.read_table(
+            "elementary_test_results",
+            where=f"table_name = '{test_id}'",
+        )[0]
