@@ -3,6 +3,6 @@
     {% set remove_rows_query %}
         delete from {{ table_name }}
     {% endset %}
-    {% do run_query(remove_rows_query) %}
+    {% do elementary.run_query(remove_rows_query) %}
 
 {% endmacro %}

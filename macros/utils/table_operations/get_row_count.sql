@@ -4,7 +4,7 @@
         select count(*) from {{ full_table_name }}
     {% endset %}
     {% if execute %}
-        {% set result = run_query(query_row_count).columns[0].values()[0] %}
+        {% set result = elementary.run_query(query_row_count).columns[0].values()[0] %}
     {% endif %}
     {{ return(result) }}
 
