@@ -1,2 +1,0 @@
-id,full_table_name,column_name,metric_name,metric_value,source_value,bucket_start,bucket_end,bucket_duration_hours,updated_at,dimension,dimension_value,metric_properties
-d6b8e06b5d9a220a570c0583a3555658,ELEMENTARY_TESTS.TEST_SEEDS.ANY_TYPE_COLUMN_ANOMALIES_TRAINING,,row_count,54000.0,,,1970-01-01T00:00:00,,2023-02-12T09:40:20.324000,,,"{""event_timestamp_column"": null, ""freshness_column"": null, ""time_bucket"": {""count"": 1, ""period"": ""day""}, ""timestamp_column"": null, ""where_expression"": null}"
