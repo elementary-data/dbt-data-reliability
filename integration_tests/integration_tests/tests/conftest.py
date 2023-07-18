@@ -15,8 +15,8 @@ def init_tests_env(request, tmp_path_factory, worker_id: str):
         env.init(target)
         return
 
-    # get the temp directory shared by all workers
-    tmp_dir = tmp_path_factory.getbasetemp()
+    # Temp dir shared by all workers.
+    tmp_dir = tmp_path_factory.getbasetemp().parent
     env_ready_indicator_path = tmp_dir / ".wait_env_ready"
     with FileLock(str(env_ready_indicator_path) + ".lock"):
         if env_ready_indicator_path.is_file():
