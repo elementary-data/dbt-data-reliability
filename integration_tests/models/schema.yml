@@ -48,19 +48,21 @@ models:
             count: 1
           config:
             severity: warn
+          where: 1=1
           tags: ["table_anomalies"]
       - elementary.all_columns_anomalies:
-          tags: ["all_any_type_columns_anomalies"]
+          tags: ["all_any_type_columns_anomalies", "column_anomalies"]
           #This here is to simulate a long test name as test params are part of the test name
           exclude_regexp: ".*column1|column2|column3|column4|column5|column6|column7|column8|column9|column10|column11|column12|column13|column14|column15|column16|column17.*"
       - generic_test_on_model:
           tags: ["regular_tests"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "drop"
-          tags: ["drop_directional_anomalies"]
+          where: 1=1
+          tags: ["directional_anomalies", "drop"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "spike"
-          tags: ["spike_directional_anomalies"]
+          tags: ["directional_anomalies", "spike"]
 
   - name: no_timestamp_anomalies
     meta:
@@ -77,6 +79,7 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ["no_timestamp"]
+              where: 1=1
               column_anomalies:
                 - null_count
 
@@ -90,6 +93,7 @@ models:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform"
           timestamp_column: updated_at
+          where: 1=1
           dimensions:
             - platform
       - elementary.dimension_anomalies:
@@ -100,6 +104,19 @@ models:
             - platform
           where_expression: "platform = 'android'"
       - elementary.dimension_anomalies:
+          alias: "dimension_anomalies_platform_new_dimension"
+          tags: ["dimension_anomalies"]
+          timestamp_column: updated_at
+          dimensions:
+            - platform
+          where_expression: "platform = 'windows'"
+      - elementary.dimension_anomalies:
+          alias: "dimension_anomalies_platform_new_dimension_no_timestamp"
+          tags: ["dimension_anomalies"]
+          dimensions:
+            - platform
+          where_expression: "platform = 'windows'"
+      - elementary.dimension_anomalies:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform_version"
           timestamp_column: updated_at
@@ -108,20 +125,20 @@ models:
             - version
       - elementary.dimension_anomalies:
           anomaly_direction: "spike"
-          tags: ["spike_directional_anomalies"]
+          tags: ["directional_anomalies", "spike"]
           timestamp_column: updated_at
           dimensions:
             - platform
       - elementary.dimension_anomalies:
           anomaly_direction: "drop"
-          tags: ["drop_directional_anomalies"]
+          tags: ["directional_anomalies", "drop"]
           timestamp_column: updated_at
           dimensions:
             - platform
       - elementary.dimension_anomalies:
           dimensions:
             - platform
-          tags: ["dimension_anomalies", "should_fail"]
+          tags: ["dimension_anomalies"]
           alias: "dimension_anomalies_no_timestamp"
 
   - name: error_model
@@ -170,8 +187,9 @@ models:
           event_timestamp_column: occurred_at
           update_timestamp_column: updated_at
       - elementary.all_columns_anomalies:
-          tags: ["string_column_anomalies"]
+          tags: ["string_column_anomalies", "column_anomalies"]
       - elementary.schema_changes:
+          where: 1=1
           tags: ["schema_changes"]
     columns:
       - name: "min_length"
@@ -181,7 +199,7 @@ models:
               to: source('training', 'string_column_anomalies_training')
               field: max_length
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - min_length
                 - max_length
@@ -189,26 +207,26 @@ models:
       - name: max_length
         tests:
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
       - name: average_length
         tests:
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - average_length
                 - null_count
       - name: missing_count
         tests:
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
       - name: missing_percent
         tests:
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: ["string_column_anomalies"]
+              tags: ["string_column_anomalies", "column_anomalies"]
 
   - name: numeric_column_anomalies
     config:
@@ -219,10 +237,10 @@ models:
           tags: ["table_anomalies"]
       - elementary.volume_anomalies:
           anomaly_direction: "drop"
-          tags: ["drop_directional_anomalies"]
+          tags: ["directional_anomalies", "drop"]
       - elementary.volume_anomalies:
           anomaly_direction: "spike"
-          tags: ["spike_directional_anomalies"]
+          tags: ["directional_anomalies", "spike"]
       - elementary.freshness_anomalies:
           tags: ["table_anomalies"]
       - elementary.event_freshness_anomalies:
@@ -240,81 +258,81 @@ models:
       - name: min
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - average
       - name: max
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - average
           - elementary.column_anomalies:
               column_anomalies:
                 - average
               anomaly_direction: "spike"
-              tags: ["spike_directional_anomalies"]
+              tags: ["directional_anomalies", "spike"]
           - elementary.column_anomalies:
               column_anomalies:
                 - average
               anomaly_direction: "drop"
-              tags: ["drop_directional_anomalies"]
+              tags: ["directional_anomalies", "drop"]
       - name: average
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - min
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - max
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
               column_anomalies:
                 - average
       - name: zero_count
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
       - name: zero_percent
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
       - name: updated_at
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
       - name: variance
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
       - name: standard_deviation
         tests:
           - elementary.column_anomalies:
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
       - name: sum
         tests:
           - elementary.column_anomalies:
               column_anomalies:
                 - sum
-              tags: ["numeric_column_anomalies"]
+              tags: ["numeric_column_anomalies", "column_anomalies"]
 
   - name: copy_numeric_column_anomalies
     config:
@@ -324,7 +342,7 @@ models:
       - elementary.all_columns_anomalies:
           column_anomalies:
             - zero_count
-          tags: ["numeric_column_anomalies"]
+          tags: ["numeric_column_anomalies", "column_anomalies"]
 
   - name: groups
     columns:
@@ -338,6 +356,7 @@ models:
           tags: ["schema_changes"]
       - elementary.schema_changes_from_baseline:
           fail_on_added: true
+          where: 1=1
           tags: ["schema_changes_from_baseline"]
       - elementary.schema_changes_from_baseline:
           tags: ["schema_changes_from_baseline", "error_test"]
@@ -394,6 +413,7 @@ models:
       - elementary.all_columns_anomalies:
           tags: ["ephemeral_model", "error_test"]
       - elementary.freshness_anomalies:
+          where: 1=1
           tags: ["ephemeral_model", "error_test"]
       - elementary.schema_changes:
           tags: ["ephemeral_model", "error_test"]

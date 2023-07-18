@@ -1,0 +1,7 @@
+version: 2
+
+sources:
+  - name: tests_data
+    schema: test_seeds
+    tables:
+      - name: dummy
