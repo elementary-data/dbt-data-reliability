@@ -47,6 +47,8 @@ class DbtProject:
         self,
         table_name: str,
         where: Optional[str] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
         raise_if_empty: bool = True,
     ) -> List[dict]:
@@ -54,6 +56,8 @@ class DbtProject:
         SELECT {', '.join(column_names) if column_names else '*'}
         FROM {{{{ ref('{table_name}') }}}}
         {f"WHERE {where}" if where else ""}
+        {f"ORDER BY {order_by}" if order_by else ""}
+        {f"LIMIT {limit}" if limit else ""}
         """
         results = self.run_query(query)
         if raise_if_empty and len(results) == 0:
@@ -101,5 +105,7 @@ class DbtProject:
     def _read_test_result(self, table_name: str) -> Dict[str, Any]:
         return self.read_table(
             "elementary_test_results",
-            where=f"table_name = '{table_name}'",
+            where=f"lower(table_name) = lower('{table_name}')",
+            order_by="created_at DESC",
+            limit=1,
         )[0]
