@@ -4,6 +4,10 @@
   {% endif %}
 
   {% set source_freshness_results_relation = ref('dbt_source_freshness_results') %}
+  {% if not source_freshness_results_relation %}
+    {% do exceptions.raise_compiler_error('Unable to upload source freshness as "dbt_source_freshness_results" table was not found in ' ~ target.database ~ '.' ~ target.schema ) %}
+  {% endif %}
+
   {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
   {% if not sources_json_path.exists() %}
     {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
