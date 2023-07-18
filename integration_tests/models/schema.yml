@@ -385,23 +385,58 @@ models:
           tags: ["schema_changes"]
 
   - name: users_per_day_weekly_seasonal
-    description: >
-      Volume anomalies on the training should fail when seasonality is Off and pass when seasonality is On. 
-      When Validation data is added, should fail when seasonality is On and pass when seasonality is Off.
+    config:
+      elementary:
+        backfill_days: 14
     tests:
       - elementary.volume_anomalies:
-          alias: volume_anomalies_no_seasonality_anomalies
+          alias: day_of_week_volume_anomalies_no_seasonality
           timestamp_column: "updated_at"
           tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
-          backfill_days: 14
       - elementary.volume_anomalies:
-          alias: volume_anomalies_with_seasonality_anomalies
+          alias: day_of_week_volume_anomalies_with_seasonality
           timestamp_column: "updated_at"
           tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
-          backfill_days: 14
           seasonality: day_of_week
+      - elementary.volume_anomalies:
+          alias: hour_of_week_volume_anomalies_no_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+      - elementary.volume_anomalies:
+          alias: hour_of_week_volume_anomalies_with_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+          seasonality: hour_of_week
+
+  - name: users_per_hour_daily_seasonal
+    tests:
+      - elementary.volume_anomalies:
+          alias: hour_of_day_volume_anomalies_no_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+      - elementary.volume_anomalies:
+          alias: hour_of_day_volume_anomalies_with_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+          seasonality: hour_of_day
 
   - name: ephemeral_model
     config:
@@ -497,6 +532,7 @@ sources:
   - name: training
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_training
       - name: any_type_column_anomalies_training
         meta:
           owner: ["@edr", "egk"]
@@ -592,6 +628,7 @@ sources:
   - name: validation
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_validation
       - name: any_type_column_anomalies_validation
         meta:
           owner: "hello, world"

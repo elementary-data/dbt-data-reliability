@@ -16,7 +16,8 @@
         where status in ('fail', 'warn') and sub_type = 'row_count'
     {% endset %}
     {% set results = elementary.result_column_to_list(row_count_validation_query) %}
-    {{ assert_lists_contain_same_items(results, ['users_per_day_weekly_seasonal',
+    {{ assert_lists_contain_same_items(results, ['users_per_hour_daily_seasonal',
+                                                 'users_per_day_weekly_seasonal',
                                                  'any_type_column_anomalies',
                                                  'numeric_column_anomalies',
                                                  'string_column_anomalies_training']) }}
