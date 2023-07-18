@@ -1,4 +1,4 @@
-{% macro dimension_monitoring_query(monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties) %}
+{% macro dimension_monitoring_query(monitored_table, monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties) %}
     {% set metric_name = 'dimension' %}
     {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
@@ -8,7 +8,7 @@
     with filtered_monitored_table as (
         select *,
         {{ concat_dimensions_sql_expression }} as dimension_value
-        from {{ monitored_table_relation }}
+        from {{ monitored_table }}
         {% if metric_properties.where_expression %}
             where {{ metric_properties.where_expression }}
         {% endif %}

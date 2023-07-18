@@ -5,6 +5,10 @@
     {% do return(none) %}
   {% endif %}
 
+  {% if model is string %}
+    {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you provide a 'where' parameter to the test or override 'ref' or 'source')") }}
+  {% endif %}
+
   {% if not code_macro %}
     {% do exceptions.raise_compiler_error('A `code_macro` must be provided to a Python test.') %}
   {% endif %}
