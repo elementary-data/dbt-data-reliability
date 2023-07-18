@@ -4,7 +4,7 @@ TEST_MODEL = "one"
 
 
 def read_model_artifact_row(dbt_project: DbtProject):
-    return dbt_project.read_table("dbt_models", where=f"alias = '{TEST_MODEL}'")
+    return dbt_project.read_table("dbt_models", where=f"alias = '{TEST_MODEL}'")[0]
 
 
 def test_artifacts_caching(dbt_project: DbtProject):
