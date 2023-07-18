@@ -9,8 +9,7 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def init_tests_env(request, tmp_path_factory, worker_id: str):
-    target = request.config.getoption("--target")
+def init_tests_env(target, tmp_path_factory, worker_id: str):
     # Tests are not multi-threaded.
     if worker_id == "master":
         env.init(target)
