@@ -3,7 +3,7 @@ from datetime import timedelta
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def generate_dates(base_date, period="days", count=1, days_back=30):
+def generate_dates(base_date, period="days", count=1, days_back=31):
     min_date = base_date - timedelta(days=days_back)
     dates = []
     while base_date > min_date:

@@ -1,10 +1,10 @@
-{% macro table_monitoring_query(monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, days_back, metric_properties) %}
+{% macro table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, days_back, metric_properties) %}
 
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     with monitored_table as (
-        select * from {{ monitored_table_relation }}
+        select * from {{ monitored_table }}
         {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
 
