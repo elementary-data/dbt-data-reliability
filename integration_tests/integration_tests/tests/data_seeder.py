@@ -26,9 +26,7 @@ class DbtDataSeeder:
                 writer.writeheader()
                 writer.writerows(data)
                 seed_file.flush()
-                logger.info(f"Seeding {table_name} with {len(data)} rows.")
                 self.dbt_runner.seed(select=str(relative_seed_path), full_refresh=True)
-                logger.info(f"Seeded {table_name} with {len(data)} rows.")
                 yield
         finally:
             seed_path.unlink()
