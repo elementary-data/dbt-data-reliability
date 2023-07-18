@@ -10,6 +10,7 @@ from ruamel.yaml import YAML
 
 PATH = Path(__file__).parent.parent / "dbt_project"
 MODELS_DIR_PATH = PATH / "models"
+TMP_MODELS_DIR_PATH = MODELS_DIR_PATH / "tmp"
 SEEDS_DIR_PATH = PATH / "data"
 
 _DEFAULT_VARS = {
@@ -47,6 +48,8 @@ class DbtProject:
         self,
         table_name: str,
         where: Optional[str] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
         raise_if_empty: bool = True,
     ) -> List[dict]:
@@ -54,6 +57,8 @@ class DbtProject:
         SELECT {', '.join(column_names) if column_names else '*'}
         FROM {{{{ ref('{table_name}') }}}}
         {f"WHERE {where}" if where else ""}
+        {f"ORDER BY {order_by}" if order_by else ""}
+        {f"LIMIT {limit}" if limit else ""}
         """
         results = self.run_query(query)
         if raise_if_empty and len(results) == 0:
@@ -68,7 +73,7 @@ class DbtProject:
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Dict[str, Any]:
         test_args = test_args or {}
         props_yaml = {
             "version": 2,
@@ -87,12 +92,23 @@ class DbtProject:
         }
 
         with self.seed(data, test_id):
-            with NamedTemporaryFile(dir=MODELS_DIR_PATH, suffix=".yaml") as props_file:
+            with NamedTemporaryFile(
+                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
+            ) as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
                 logger.info(f"Testing {test_id}.")
                 self.dbt_runner.test(select=str(relative_props_path))
                 logger.info(f"Tested {test_id}.")
+        return self._read_test_result(test_id)
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
+
+    def _read_test_result(self, table_name: str) -> Dict[str, Any]:
+        return self.read_table(
+            "elementary_test_results",
+            where=f"lower(table_name) = lower('{table_name}')",
+            order_by="created_at DESC",
+            limit=1,
+        )[0]
