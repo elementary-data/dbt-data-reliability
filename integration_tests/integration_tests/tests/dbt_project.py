@@ -26,7 +26,7 @@ def get_dbt_runner(target: str) -> DbtRunner:
     return DbtRunner(
         str(PATH),
         target=target,
-        vars=_DEFAULT_VARS,
+        vars=_DEFAULT_VARS.copy(),
         raise_on_failure=False,
     )
 
