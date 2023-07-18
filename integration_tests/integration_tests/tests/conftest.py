@@ -1,17 +1,29 @@
+import env
 import pytest
 from dbt_project import DbtProject
-from env import Environment
+from filelock import FileLock
 
 
 def pytest_addoption(parser):
     parser.addoption("--target", action="store", default="postgres")
 
 
-def pytest_sessionstart(session):
-    target = session.config.getoption("--target")
-    tests_env = Environment(target)
-    tests_env.clear()
-    tests_env.init()
+@pytest.fixture(scope="session", autouse=True)
+def init_tests_env(request, tmp_path_factory, worker_id: str):
+    target = request.config.getoption("--target")
+    if worker_id == "master":
+        env.init(target)
+        return
+
+    # get the temp directory shared by all workers
+    tmp_dir = tmp_path_factory.getbasetemp()
+    env_ready_indicator_path = tmp_dir / ".wait_env_ready"
+    with FileLock(str(env_ready_indicator_path) + ".lock"):
+        if env_ready_indicator_path.is_file():
+            return
+        else:
+            env.init(target)
+            env_ready_indicator_path.touch()
 
 
 @pytest.fixture
