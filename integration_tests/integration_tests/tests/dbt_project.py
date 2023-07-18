@@ -10,6 +10,7 @@ from ruamel.yaml import YAML
 
 PATH = Path(__file__).parent.parent / "dbt_project"
 MODELS_DIR_PATH = PATH / "models"
+TMP_MODELS_DIR_PATH = MODELS_DIR_PATH / "tmp"
 SEEDS_DIR_PATH = PATH / "data"
 
 _DEFAULT_VARS = {
@@ -91,7 +92,9 @@ class DbtProject:
         }
 
         with self.seed(data, test_id):
-            with NamedTemporaryFile(dir=MODELS_DIR_PATH, suffix=".yaml") as props_file:
+            with NamedTemporaryFile(
+                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
+            ) as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
                 logger.info(f"Testing {test_id}.")
