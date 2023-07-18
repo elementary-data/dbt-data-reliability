@@ -97,9 +97,7 @@ class DbtProject:
             ) as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
-                logger.info(f"Testing {test_id}.")
                 self.dbt_runner.test(select=str(relative_props_path))
-                logger.info(f"Tested {test_id}.")
         return self._read_test_result(test_id)
 
     def seed(self, data: List[dict], table_name: str):
