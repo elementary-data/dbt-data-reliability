@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: first_metrics_table
+    config:
+      tags:
+        - metrics
+  - name: second_metrics_table
+    config:
+      tags:
+        - metrics
+
+sources:
+  - name: test_data
+    schema: test_seeds
+    tables:
+      - name: first_metrics_table_seed
+      - name: second_metrics_table_seed
+      - name: dummy

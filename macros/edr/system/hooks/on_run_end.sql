@@ -5,6 +5,10 @@
         {{ return('') }}
       {% endif %}
 
+      {% if flags.WHICH in ['run', 'build'] %}
+        {{ elementary.insert_metrics() }}
+      {% endif %}
+
       {% if not elementary.get_config_var('disable_dbt_artifacts_autoupload') %}
         {{ elementary.upload_dbt_artifacts() }}
       {% endif %}

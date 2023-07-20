@@ -16,4 +16,4 @@ class Environment:
 
     def init(self):
         self.dbt_runner.run_operation("elementary_tests.create_env")
-        self.dbt_runner.run()
+        self.dbt_runner.run(select="elementary")
