@@ -16,11 +16,8 @@ def test_metrics(dbt_project: DbtProject):
         for date in generate_dates(base_date=datetime.now())
         for _ in range(random.randint(0, 20))
     ]
-    with dbt_project.seed(data1, "first_metrics_table_seed"):
-        pass
-    with dbt_project.seed(data2, "second_metrics_table_seed"):
-        pass
-
+    dbt_project.seed(data1, "first_metrics_table_seed")
+    dbt_project.seed(data2, "second_metrics_table_seed")
     dbt_project.dbt_runner.run(select="tag:metrics")
 
     first_metric_found = False
