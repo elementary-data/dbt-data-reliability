@@ -29,7 +29,7 @@
     The config may contain:
       description: A human readable description of the test.
       failed_row_count_calc: SQL expression to get the number of failed rows from the test result.
-      quality_dimension: The quality dimension of the test, see https://www.precisely.com/blog/data-quality/data-quality-dimensions-measure for details.
+      quality_dimension: The quality dimension of the test, see https://www.getdbt.com/blog/data-quality-dimensions/ for details.
   #}
   {% set common_tests_configs_mapping = {
       "dbt": {

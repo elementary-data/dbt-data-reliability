@@ -48,6 +48,7 @@ models:
             count: 1
           config:
             severity: warn
+          where: 1=1
           tags: ["table_anomalies"]
       - elementary.all_columns_anomalies:
           tags: ["all_any_type_columns_anomalies", "column_anomalies"]
@@ -57,6 +58,7 @@ models:
           tags: ["regular_tests"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "drop"
+          where: 1=1
           tags: ["directional_anomalies", "drop"]
       - elementary.all_columns_anomalies:
           anomaly_direction: "spike"
@@ -77,6 +79,7 @@ models:
         tests:
           - elementary.column_anomalies:
               tags: ["no_timestamp"]
+              where: 1=1
               column_anomalies:
                 - null_count
 
@@ -90,6 +93,7 @@ models:
           tags: ["dimension_anomalies", "should_fail"]
           alias: "dimension_anomalies_platform"
           timestamp_column: updated_at
+          where: 1=1
           dimensions:
             - platform
       - elementary.dimension_anomalies:
@@ -185,6 +189,7 @@ models:
       - elementary.all_columns_anomalies:
           tags: ["string_column_anomalies", "column_anomalies"]
       - elementary.schema_changes:
+          where: 1=1
           tags: ["schema_changes"]
     columns:
       - name: "min_length"
@@ -351,6 +356,7 @@ models:
           tags: ["schema_changes"]
       - elementary.schema_changes_from_baseline:
           fail_on_added: true
+          where: 1=1
           tags: ["schema_changes_from_baseline"]
       - elementary.schema_changes_from_baseline:
           tags: ["schema_changes_from_baseline", "error_test"]
@@ -379,23 +385,58 @@ models:
           tags: ["schema_changes"]
 
   - name: users_per_day_weekly_seasonal
-    description: >
-      Volume anomalies on the training should fail when seasonality is Off and pass when seasonality is On. 
-      When Validation data is added, should fail when seasonality is On and pass when seasonality is Off.
+    config:
+      elementary:
+        backfill_days: 14
     tests:
       - elementary.volume_anomalies:
-          alias: volume_anomalies_no_seasonality_anomalies
+          alias: day_of_week_volume_anomalies_no_seasonality
           timestamp_column: "updated_at"
           tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
-          backfill_days: 14
       - elementary.volume_anomalies:
-          alias: volume_anomalies_with_seasonality_anomalies
+          alias: day_of_week_volume_anomalies_with_seasonality
           timestamp_column: "updated_at"
           tags: ["seasonality_volume", "table_anomalies"]
           sensitivity: 2
-          backfill_days: 14
           seasonality: day_of_week
+      - elementary.volume_anomalies:
+          alias: hour_of_week_volume_anomalies_no_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+      - elementary.volume_anomalies:
+          alias: hour_of_week_volume_anomalies_with_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+          seasonality: hour_of_week
+
+  - name: users_per_hour_daily_seasonal
+    tests:
+      - elementary.volume_anomalies:
+          alias: hour_of_day_volume_anomalies_no_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+      - elementary.volume_anomalies:
+          alias: hour_of_day_volume_anomalies_with_seasonality
+          timestamp_column: "updated_at"
+          tags: ["seasonality_volume", "table_anomalies"]
+          sensitivity: 2
+          time_bucket:
+            period: hour
+            count: 1
+          seasonality: hour_of_day
 
   - name: ephemeral_model
     config:
@@ -407,6 +448,7 @@ models:
       - elementary.all_columns_anomalies:
           tags: ["ephemeral_model", "error_test"]
       - elementary.freshness_anomalies:
+          where: 1=1
           tags: ["ephemeral_model", "error_test"]
       - elementary.schema_changes:
           tags: ["ephemeral_model", "error_test"]
@@ -490,6 +532,7 @@ sources:
   - name: training
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_training
       - name: any_type_column_anomalies_training
         meta:
           owner: ["@edr", "egk"]
@@ -585,6 +628,7 @@ sources:
   - name: validation
     schema: test_seeds
     tables:
+      - name: users_per_hour_daily_seasonal_validation
       - name: any_type_column_anomalies_validation
         meta:
           owner: "hello, world"
