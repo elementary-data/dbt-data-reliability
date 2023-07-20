@@ -1,6 +1,5 @@
 import csv
 from contextlib import contextmanager
-from pathlib import Path
 from typing import List
 
 import dbt_project
@@ -21,7 +20,7 @@ class DbtDataSeeder:
         seed_path = dbt_project.SEEDS_DIR_PATH.joinpath(f"{table_name}.csv")
         try:
             with seed_path.open("w") as seed_file:
-                relative_seed_path = Path(seed_file.name).relative_to(dbt_project.PATH)
+                relative_seed_path = seed_path.relative_to(dbt_project.PATH)
                 writer = csv.DictWriter(seed_file, fieldnames=data[0].keys())
                 writer.writeheader()
                 writer.writerows(data)
