@@ -73,20 +73,26 @@ class DbtProject:
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
+        test_column: Optional[str] = None,
     ) -> Dict[str, Any]:
         test_args = test_args or {}
+        table_yaml: Dict[str, Any] = {
+            "name": test_id,
+        }
+        if test_column is None:
+            table_yaml["tests"] = [{dbt_test_name: test_args}]
+        else:
+            table_yaml["columns"] = [
+                {"name": test_column, "tests": [{dbt_test_name: test_args}]}
+            ]
+
         props_yaml = {
             "version": 2,
             "sources": [
                 {
                     "name": "test_data",
                     "schema": "test_seeds",
-                    "tables": [
-                        {
-                            "name": test_id,
-                            "tests": [{dbt_test_name: test_args}],
-                        }
-                    ],
+                    "tables": [table_yaml],
                 }
             ],
         }
