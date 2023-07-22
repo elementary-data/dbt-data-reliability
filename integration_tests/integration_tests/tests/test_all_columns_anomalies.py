@@ -37,11 +37,11 @@ def test_anomalyless_all_columns_anomalies(test_id: str, dbt_project: DbtProject
 
 
 def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
     data: List[Dict[str, Any]] = [
-        {TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT), TEST_COLUMN: None},
-        {TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT), TEST_COLUMN: None},
-        {TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT), TEST_COLUMN: None},
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), TEST_COLUMN: None},
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), TEST_COLUMN: None},
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), TEST_COLUMN: None},
     ] + sum(
         [
             [
@@ -55,7 +55,7 @@ def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
                 },
                 {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), TEST_COLUMN: None},
             ]
-            for cur_date in dates[1:]
+            for cur_date in training_dates
         ],
         [],
     )
@@ -67,25 +67,26 @@ def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
 def test_all_columns_anomalies_with_where_expression(
     test_id: str, dbt_project: DbtProject
 ):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
+
     data: List[Dict[str, Any]] = [
         {
-            TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT),
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
             "universe": "DC",
             TEST_COLUMN: None,
         },
         {
-            TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT),
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
             "universe": "DC",
             TEST_COLUMN: None,
         },
         {
-            TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT),
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
             "universe": "DC",
             TEST_COLUMN: None,
         },
         {
-            TIMESTAMP_COLUMN: dates[0].strftime(DATE_FORMAT),
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
             "universe": "Marvel",
             TEST_COLUMN: "Spiderman",
         },
@@ -113,7 +114,7 @@ def test_all_columns_anomalies_with_where_expression(
                     TEST_COLUMN: "Spiderman",
                 },
             ]
-            for cur_date in dates[1:]
+            for cur_date in training_dates
         ],
         [],
     )

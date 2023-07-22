@@ -54,22 +54,21 @@ def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
 def test_volume_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject, as_model: bool
 ):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
     data = [
-        # date[0] is yesterday
-        {TIMESTAMP_COLUMN: dates[0], "payback": "karate"},
-        {TIMESTAMP_COLUMN: dates[0], "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: dates[0], "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: dates[0], "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: dates[0], "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: dates[0], "payback": "ka-razy"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "karate"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
+        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
     ] + sum(
         [
             [
                 {TIMESTAMP_COLUMN: cur_date, "payback": "karate"},
                 {TIMESTAMP_COLUMN: cur_date, "payback": "ka-razy"},
             ]
-            for cur_date in dates[1:]
+            for cur_date in training_dates
         ],
         [],
     )

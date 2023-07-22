@@ -33,22 +33,22 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
 
 
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
     data: List[Dict[str, Any]] = [
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             DIMENSION: "Batman",
         },
     ] + sum(
@@ -63,7 +63,7 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
                     DIMENSION: "Batman",
                 },
             ]
-            for cur_date in dates[1:]
+            for cur_date in training_dates
         ],
         [],
     )
@@ -74,25 +74,25 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
 def test_dimensions_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject
 ):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
     data: List[Dict[str, Any]] = [
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
             DIMENSION: "Superman",
         },
         {
-            TIMESTAMP_COLUMN: dates[0],
+            TIMESTAMP_COLUMN: test_date,
             "universe": "Marvel",
             DIMENSION: "Spiderman",
         },
@@ -110,7 +110,7 @@ def test_dimensions_anomalies_with_where_parameter(
                     DIMENSION: "Spiderman",
                 },
             ]
-            for cur_date in dates[1:]
+            for cur_date in training_dates
         ],
         [],
     )
