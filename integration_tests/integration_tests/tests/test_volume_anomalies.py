@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
+from parametrization import Parametrization
 
 TIMESTAMP_COLUMN = "updated_at"
 DBT_TEST_NAME = "elementary.volume_anomalies"
@@ -47,7 +48,12 @@ def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-def test_volume_anomalies_with_where_parameter(test_id: str, dbt_project: DbtProject):
+@Parametrization.autodetect_parameters()
+@Parametrization.case(name="source", as_model=False)
+@Parametrization.case(name="model", as_model=True)
+def test_volume_anomalies_with_where_parameter(
+    test_id: str, dbt_project: DbtProject, as_model: bool
+):
     dates = generate_dates(base_date=date.today() - timedelta(1))
     data = [
         # date[0] is yesterday
@@ -70,18 +76,18 @@ def test_volume_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
 
     params_without_where = DBT_TEST_ARGS
     result_without_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_without_where
+        data, test_id, DBT_TEST_NAME, params_without_where, as_model=as_model
     )
     assert result_without_where["status"] == "fail"
 
     params_with_where = dict(params_without_where, where="payback = 'karate'")
     result_with_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where
+        data, test_id, DBT_TEST_NAME, params_with_where, as_model=as_model
     )
     assert result_with_where["status"] == "pass"
 
     params_with_where2 = dict(params_without_where, where="payback = 'ka-razy'")
     result_with_where2 = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where2
+        data, test_id, DBT_TEST_NAME, params_with_where2, as_model=as_model
     )
     assert result_with_where2["status"] == "fail"

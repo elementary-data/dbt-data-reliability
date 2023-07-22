@@ -74,7 +74,9 @@ class DbtProject:
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        as_model: bool = False,
     ) -> Dict[str, Any]:
+        test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {
             "name": test_id,
@@ -86,16 +88,22 @@ class DbtProject:
                 {"name": test_column, "tests": [{dbt_test_name: test_args}]}
             ]
 
-        props_yaml = {
-            "version": 2,
-            "sources": [
-                {
-                    "name": "test_data",
-                    "schema": "test_seeds",
-                    "tables": [table_yaml],
-                }
-            ],
-        }
+        if as_model:
+            props_yaml = {
+                "version": 2,
+                "models": [table_yaml],
+            }
+        else:
+            props_yaml = {
+                "version": 2,
+                "sources": [
+                    {
+                        "name": "test_data",
+                        "schema": "test_seeds",
+                        "tables": [table_yaml],
+                    }
+                ],
+            }
 
         with self.seed(data, test_id):
             with NamedTemporaryFile(
