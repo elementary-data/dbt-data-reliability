@@ -1,11 +1,17 @@
 version: 2
 
 models:
-  - name: first_metrics_table
+  - name: metrics_table
     config:
       tags:
         - metrics
-  - name: second_metrics_table
+
+  - name: metrics_incremental
+    config:
+      tags:
+        - metrics
+
+  - name: metrics_view
     config:
       tags:
         - metrics

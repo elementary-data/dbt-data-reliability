@@ -20,20 +20,19 @@ def test_metrics(dbt_project: DbtProject):
     dbt_project.seed(data2, "second_metrics_table_seed")
     dbt_project.dbt_runner.run(select="tag:metrics")
 
-    first_metric_found = False
-    second_metric_found = False
+    remaining_models_to_row_count = {
+        "metrics_view": len(data1) + len(data2),
+        "metrics_table": len(data1),
+        "metrics_incremental": len(data2),
+    }
     for metric in dbt_project.read_table("data_monitoring_metrics"):
-        if (
-            "first_metrics_table" in metric["full_table_name"]
-            and metric["metric_name"] == "row_count"
-        ):
-            assert metric["metric_value"] == len(data1)
-            first_metric_found = True
-        if (
-            "second_metrics_table" in metric["full_table_name"]
-            and metric["metric_name"] == "row_count"
-        ):
-            assert metric["metric_value"] == len(data2)
-            second_metric_found = True
+        for model_name, row_count in remaining_models_to_row_count.items():
+            if (
+                model_name in metric["full_table_name"]
+                and metric["metric_name"] == "row_count"
+            ):
+                assert metric["metric_value"] == row_count
+                remaining_models_to_row_count.pop(model_name)
+                break
 
-    assert first_metric_found and second_metric_found
+    assert not remaining_models_to_row_count
