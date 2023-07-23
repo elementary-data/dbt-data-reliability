@@ -16,8 +16,8 @@ def test_metrics(dbt_project: DbtProject):
         for date in generate_dates(base_date=datetime.now())
         for _ in range(random.randint(0, 20))
     ]
-    dbt_project.seed(data1, "first_metrics_table_seed")
-    dbt_project.seed(data2, "second_metrics_table_seed")
+    dbt_project.seed(data1, "metrics_seed1")
+    dbt_project.seed(data2, "metrics_seed2")
     dbt_project.dbt_runner.run(select="tag:metrics")
 
     remaining_models_to_row_count = {

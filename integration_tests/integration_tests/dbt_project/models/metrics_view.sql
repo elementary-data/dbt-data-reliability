@@ -1,5 +1,5 @@
 {{ config(materialized="view") }}
 
-select * from {{ source("test_data", "first_metrics_table_seed") }}
+select * from {{ source("test_data", "metrics_seed1") }}
 union all
-select * from {{ source("test_data", "second_metrics_table_seed") }}
+select * from {{ source("test_data", "metrics_seed2") }}

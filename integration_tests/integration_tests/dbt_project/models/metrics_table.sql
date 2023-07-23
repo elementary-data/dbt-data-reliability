@@ -1,3 +1,3 @@
 {{ config(materialized="table") }}
 
-select * from {{ source("test_data", "first_metrics_table_seed") }}
+select * from {{ source("test_data", "metrics_seed1") }}

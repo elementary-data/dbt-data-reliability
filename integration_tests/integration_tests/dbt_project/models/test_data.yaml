@@ -20,6 +20,6 @@ sources:
   - name: test_data
     schema: test_seeds
     tables:
-      - name: first_metrics_table_seed
-      - name: second_metrics_table_seed
+      - name: metrics_seed1
+      - name: metrics_seed2
       - name: dummy
