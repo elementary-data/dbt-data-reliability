@@ -123,7 +123,9 @@ jobs:
 
       - name: Run new integration tests
         working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
-        run: py.test -vvv
+        run: |
+          pip install -r ../requirements.txt
+          py.test -vvv
 
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
