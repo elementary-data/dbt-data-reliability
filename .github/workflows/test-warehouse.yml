@@ -125,6 +125,7 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
         run: |
           pip install -r ../requirements.txt
+          dbt deps --project-dir=../dbt_project
           py.test -vvv
 
       - name: Run E2E tests
