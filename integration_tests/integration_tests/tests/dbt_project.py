@@ -35,11 +35,11 @@ class DbtProject:
     def __init__(self, target: str):
         self.dbt_runner = get_dbt_runner(target)
 
-    def run_query(self, query: str):
+    def render_run_query(self, prerendered_query: str):
         results = json.loads(
             self.dbt_runner.run_operation(
-                "elementary_tests.run_query",
-                macro_args={"query": query},
+                "render_run_query",
+                macro_args={"prerendered_query": prerendered_query},
             )[0]
         )
         return results
@@ -60,7 +60,7 @@ class DbtProject:
         {f"ORDER BY {order_by}" if order_by else ""}
         {f"LIMIT {limit}" if limit else ""}
         """
-        results = self.run_query(query)
+        results = self.render_run_query(query)
         if raise_if_empty and len(results) == 0:
             raise ValueError(
                 f"Table '{table_name}' with the '{where}' condition is empty."
