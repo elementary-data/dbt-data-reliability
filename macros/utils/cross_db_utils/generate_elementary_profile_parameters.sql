@@ -7,7 +7,7 @@
       (optinal) parameter comment
   #}
   {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
-  {% set parameters = return(adapter.dispatch('generate_elementary_profile_parameters', 'elementary')(method, elementary_database, elementary_schema)) %}
+  {% set parameters = adapter.dispatch('generate_elementary_profile_parameters', 'elementary')(method, elementary_database, elementary_schema) %}
   {% if overwrite_values %}
     {% for parameter in parameters %}
       {% set parameter_name = parameter[0] %}
@@ -16,6 +16,7 @@
       {% endif %}
     {% endfor %}
   {% endif %}
+  {% do return(parameters) %}
 {% endmacro %}
 
 {% macro snowflake__generate_elementary_profile_parameters(method, elementary_database, elementary_schema) %}

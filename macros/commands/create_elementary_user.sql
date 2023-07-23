@@ -1,18 +1,26 @@
-{% macro create_elementary_user(username=none, password=none, role=none) %}
-  {% if username is none %}
-    {% set username = "elementary" %}
-  {% endif %}
+{% macro create_elementary_user(user="elementary", password=none, role="ELEMENTARY_ROLE") %}
   {% if password is none %}
     {% set password = elementary.generate_password() %}
-    {% do log("Generated password: " ~ password, info=True) %}
   {% endif %}
-  {% set query = elementary.create_user(username, password)|trim ~ "\n" ~ elementary.grant_elementary_access(username, role)|trim %}
-  {% do print(query) %}
-  {% call statement("create_elementary_user", fetch_result=True) %}
-    {{ query }}
-  {% endcall %}
-  {% do adapter.commit() %}
-  {% do print(load_result("create_elementary_user")) %}
+  {% set profile_parameters = elementary.generate_elementary_profile_parameters(overwrite_values={
+    "user": user,
+    "password": password,
+    "role": role
+  }) %}
+  {% set profile_parameters_dict = {} %}
+  {% for parameter in profile_parameters %}
+    {% set name, value = parameter[0], parameter[1] %}
+    {% set profile_parameters_dict = profile_parameters_dict.update({name: value}) %}
+  {% endfor %}
+  {% set profile_creation_query = elementary.get_profile_creation_query(profile_parameters_dict) %}
+  {% do print("\nPlease run the following query in your database to create the Elementary user:\n" ~ profile_creation_query) %}
+  {% do print("\nAfter that, use the following parameters when configuring your environment\n") %}
+  {% for parameter in profile_parameters %}
+    {% set name, value = parameter[0], parameter[1] %}
+    {% if name != "threads" %}  {# threads is not a parameter for the environment #}
+      {% do print(name|capitalize ~ ": " ~ value) %}
+    {% endif %}
+  {% endfor %}
 {% endmacro %}
 
 
