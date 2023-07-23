@@ -1,5 +1,5 @@
 {% macro generate_elementary_cli_profile(method=none) %}
-  {% set profile_parameters = elementary.generate_elementary_profile_parameters(method) %}
+  {% set profile_parameters = elementary.generate_elementary_profile_args(method) %}
   {% if profile_parameters is string %}
     {% set profile = profile_parameters %}
   {% else %}
@@ -13,14 +13,11 @@ elementary:
   outputs:
     default:
       {% for parameter in parameters -%}
-      {%- set key = parameter[0] -%}
-      {%- set value = parameter[1] -%}
+      {%- set key = parameter["name"] -%}
+      {%- set value = parameter["value"] -%}
       {%- if value is string -%}
         {%- set value = '"' ~ value ~ '"' -%}
       {%- endif -%}
-      {%- if parameters|length > 2 -%}
-        {%- set comment = parameter[2] -%}
-      {%- endif -%}
-      {{ key }}: {{ value }}{% if comment %}  # {{ comment }}{% endif %}
+      {{ key }}: {{ value }}{% if parameter["comment"] %}  # {{ parameter["comment"] }}{% endif %}
       {% endfor -%}
 {% endmacro %}
