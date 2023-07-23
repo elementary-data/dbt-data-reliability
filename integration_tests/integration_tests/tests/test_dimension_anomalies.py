@@ -115,20 +115,14 @@ def test_dimensions_anomalies_with_where_parameter(
         [],
     )
 
-    params_without_where = DBT_TEST_ARGS
-    result_without_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_without_where
-    )
-    assert result_without_where["status"] == "fail"
+    params = DBT_TEST_ARGS
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    assert test_result["status"] == "fail"
 
-    params_with_where = dict(params_without_where, where="universe = 'Marvel'")
-    result_with_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where
-    )
-    assert result_with_where["status"] == "pass"
+    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    assert test_result["status"] == "pass"
 
-    params_with_where2 = dict(params_without_where, where="universe = 'DC'")
-    result_with_where2 = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where2
-    )
-    assert result_with_where2["status"] == "fail"
+    params = dict(params, where="universe = 'DC'")
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    assert test_result["status"] == "fail"

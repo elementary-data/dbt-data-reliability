@@ -120,20 +120,20 @@ def test_column_anomalies_with_where_expression(test_id: str, dbt_project: DbtPr
         [],
     )
 
-    params_without_where = DBT_TEST_ARGS
-    result_without_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_without_where, test_column=TEST_COLUMN
+    params = DBT_TEST_ARGS
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, test_column=TEST_COLUMN
     )
-    assert result_without_where["status"] == "fail"
+    assert test_result["status"] == "fail"
 
-    params_with_where = dict(params_without_where, where="universe = 'Marvel'")
-    result_with_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where, test_column=TEST_COLUMN
+    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, test_column=TEST_COLUMN
     )
-    assert result_with_where["status"] == "pass"
+    assert test_result["status"] == "pass"
 
-    params_with_where2 = dict(params_without_where, where="universe = 'DC'")
-    result_with_where2 = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where2, test_column=TEST_COLUMN
+    params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, test_column=TEST_COLUMN
     )
-    assert result_with_where2["status"] == "fail"
+    assert test_result["status"] == "fail"

@@ -32,8 +32,10 @@ def test_anomalyless_all_columns_anomalies(test_id: str, dbt_project: DbtProject
         ],
         [],
     )
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
-    assert test_result["status"] == "pass"
+    test_results = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, multiple_results=True
+    )
+    assert all([res["status"] == "pass" for res in test_results])
 
 
 def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
@@ -60,8 +62,11 @@ def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
         [],
     )
 
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
-    assert test_result["status"] == "fail"
+    test_results = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, multiple_results=True
+    )
+    col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
+    assert col_to_status == {TEST_COLUMN: "fail", TIMESTAMP_COLUMN: "pass"}
 
 
 def test_all_columns_anomalies_with_where_expression(
@@ -119,20 +124,30 @@ def test_all_columns_anomalies_with_where_expression(
         [],
     )
 
-    params_without_where = DBT_TEST_ARGS
-    result_without_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_without_where
+    params = DBT_TEST_ARGS
+    test_results = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, multiple_results=True
     )
-    assert result_without_where["status"] == "fail"
+    col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
+    assert col_to_status == {
+        TEST_COLUMN: "fail",
+        TIMESTAMP_COLUMN: "pass",
+        "universe": "pass",
+    }
 
-    params_with_where = dict(params_without_where, where="universe = 'Marvel'")
-    result_with_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where
+    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
+    test_results = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, multiple_results=True
     )
-    assert result_with_where["status"] == "pass"
+    assert all([res["status"] == "pass" for res in test_results])
 
-    params_with_where2 = dict(params_without_where, where="universe = 'DC'")
-    result_with_where2 = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where2
+    params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
+    test_results = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, multiple_results=True
     )
-    assert result_with_where2["status"] == "fail"
+    col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
+    assert col_to_status == {
+        TEST_COLUMN: "fail",
+        TIMESTAMP_COLUMN: "pass",
+        "universe": "pass",
+    }

@@ -73,20 +73,20 @@ def test_volume_anomalies_with_where_parameter(
         [],
     )
 
-    params_without_where = DBT_TEST_ARGS
-    result_without_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_without_where, as_model=as_model
+    params = DBT_TEST_ARGS
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, as_model=as_model
     )
-    assert result_without_where["status"] == "fail"
+    assert test_result["status"] == "fail"
 
-    params_with_where = dict(params_without_where, where="payback = 'karate'")
-    result_with_where = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where, as_model=as_model
+    params = dict(DBT_TEST_ARGS, where="payback = 'karate'")
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, as_model=as_model
     )
-    assert result_with_where["status"] == "pass"
+    assert test_result["status"] == "pass"
 
-    params_with_where2 = dict(params_without_where, where="payback = 'ka-razy'")
-    result_with_where2 = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params_with_where2, as_model=as_model
+    params = dict(DBT_TEST_ARGS, where="payback = 'ka-razy'")
+    test_result = dbt_project.test(
+        data, test_id, DBT_TEST_NAME, params, as_model=as_model
     )
-    assert result_with_where2["status"] == "fail"
+    assert test_result["status"] == "fail"

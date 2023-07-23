@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional, Union, overload
 
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.dbt_runner import DbtRunner
@@ -67,6 +67,7 @@ class DbtProject:
             )
         return results
 
+    @overload
     def test(
         self,
         data: List[dict],
@@ -75,7 +76,36 @@ class DbtProject:
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
         as_model: bool = False,
+        *,
+        multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
+        ...
+
+    @overload
+    def test(
+        self,
+        data: List[dict],
+        test_id: str,
+        dbt_test_name: str,
+        test_args: Optional[Dict[str, Any]] = None,
+        test_column: Optional[str] = None,
+        as_model: bool = False,
+        *,
+        multiple_results: Literal[True],
+    ) -> List[Dict[str, Any]]:
+        ...
+
+    def test(
+        self,
+        data: List[dict],
+        test_id: str,
+        dbt_test_name: str,
+        test_args: Optional[Dict[str, Any]] = None,
+        test_column: Optional[str] = None,
+        as_model: bool = False,
+        *,
+        multiple_results: bool = False,
+    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {
@@ -112,15 +142,32 @@ class DbtProject:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
                 self.dbt_runner.test(select=str(relative_props_path))
-        return self._read_test_result(test_id)
+
+        if multiple_results:
+            return self._read_test_results(test_id)
+        else:
+            return self._read_single_test_result(test_id)
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
 
-    def _read_test_result(self, table_name: str) -> Dict[str, Any]:
-        return self.read_table(
+    def _read_test_results(self, table_name: str) -> List[Dict[str, Any]]:
+        test_execution_id = self.read_table(
             "elementary_test_results",
             where=f"lower(table_name) = lower('{table_name}')",
             order_by="created_at DESC",
+            column_names=["test_execution_id"],
             limit=1,
-        )[0]
+        )[0]["test_execution_id"]
+        return self.read_table(
+            "elementary_test_results",
+            where=f"test_execution_id = '{test_execution_id}'",
+        )
+
+    def _read_single_test_result(self, table_name: str) -> Dict[str, Any]:
+        results = self._read_test_results(table_name)
+        if len(results) == 0:
+            raise Exception(f"No test result found for table {table_name}")
+        if len(results) > 1:
+            raise Exception(f"Multiple test results found for table {table_name}")
+        return results[0]
