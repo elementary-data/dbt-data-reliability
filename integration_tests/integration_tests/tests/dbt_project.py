@@ -35,11 +35,11 @@ class DbtProject:
     def __init__(self, target: str):
         self.dbt_runner = get_dbt_runner(target)
 
-    def run_query(self, query: str):
+    def run_query(self, prerendered_query: str):
         results = json.loads(
             self.dbt_runner.run_operation(
-                "elementary_tests.run_query",
-                macro_args={"query": query},
+                "elementary_tests.render_run_query",
+                macro_args={"prerendered_query": prerendered_query},
             )[0]
         )
         return results
