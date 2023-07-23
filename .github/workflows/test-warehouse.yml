@@ -121,6 +121,10 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: python run_unit_tests.py -t "${{ inputs.warehouse-type }}"
 
+      - name: Run new integration tests
+        working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
+        run: py.test -vvv
+
       - name: Run E2E tests
         working-directory: ${{ env.TESTS_DIR }}
         run: python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.warehouse-type == 'postgres' || inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"
