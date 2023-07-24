@@ -129,7 +129,6 @@ class DbtProject:
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": "test_seeds",
                         "tables": [table_yaml],
                     }
                 ],
