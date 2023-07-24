@@ -4,7 +4,7 @@
 
 
 {% macro snowflake__get_profile_creation_query(parameters) %}
-CREATE USER {{ parameters["user"] }} PASSWORD = '{{ parameters["password"] }}';
+CREATE OR REPLACE USER {{ parameters["user"] }} PASSWORD = '{{ parameters["password"] }}';
 CREATE OR REPLACE ROLE {{ parameters["role"] }};
 GRANT ROLE {{ parameters["role"] }} TO USER {{ parameters["user"] }};
 GRANT USAGE ON WAREHOUSE {{ parameters["warehouse"] }} TO ROLE {{ parameters["role"] }};
@@ -12,6 +12,8 @@ GRANT USAGE ON DATABASE {{ parameters["database"] }} TO ROLE {{ parameters["role
 GRANT USAGE ON SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON ALL TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON FUTURE TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
+GRANT SELECT ON ALL VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
+GRANT SELECT ON FUTURE VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 {% endmacro %}
 
 
