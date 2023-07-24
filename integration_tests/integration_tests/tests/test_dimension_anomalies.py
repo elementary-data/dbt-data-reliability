@@ -5,9 +5,8 @@ from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
 TIMESTAMP_COLUMN = "updated_at"
-DIMENSION = "superhero"
 DBT_TEST_NAME = "elementary.dimension_anomalies"
-DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": [DIMENSION]}
+DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]}
 
 
 def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
@@ -17,11 +16,11 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
             [
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    DIMENSION: "Superman",
+                    "superhero": "Superman",
                 },
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    DIMENSION: "Batman",
+                    "superhero": "Batman",
                 },
             ]
             for cur_date in dates
@@ -37,30 +36,30 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: test_date,
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
-            DIMENSION: "Batman",
+            "superhero": "Batman",
         },
     ] + sum(
         [
             [
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    DIMENSION: "Superman",
+                    "superhero": "Superman",
                 },
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    DIMENSION: "Batman",
+                    "superhero": "Batman",
                 },
             ]
             for cur_date in training_dates
@@ -79,22 +78,22 @@ def test_dimensions_anomalies_with_where_parameter(
         {
             TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
             "universe": "DC",
-            DIMENSION: "Superman",
+            "superhero": "Superman",
         },
         {
             TIMESTAMP_COLUMN: test_date,
             "universe": "Marvel",
-            DIMENSION: "Spiderman",
+            "superhero": "Spiderman",
         },
     ] + sum(
         [
@@ -102,12 +101,12 @@ def test_dimensions_anomalies_with_where_parameter(
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
                     "universe": "DC",
-                    DIMENSION: "Superman",
+                    "superhero": "Superman",
                 },
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
                     "universe": "Marvel",
-                    DIMENSION: "Spiderman",
+                    "superhero": "Spiderman",
                 },
             ]
             for cur_date in training_dates
