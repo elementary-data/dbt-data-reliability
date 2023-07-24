@@ -129,6 +129,7 @@ class DbtProject:
                 "sources": [
                     {
                         "name": "test_data",
+                        "schema": "{{ target.schema }}",
                         "tables": [table_yaml],
                     }
                 ],
