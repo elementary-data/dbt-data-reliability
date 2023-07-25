@@ -2,6 +2,6 @@ version: 2
 
 sources:
   - name: tests_data
-    schema: test_seeds
+    schema: "{{ target.schema }}"
     tables:
       - name: dummy

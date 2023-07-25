@@ -19,9 +19,6 @@ clean-targets: # directories to be removed by `dbt clean`
 vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
 
-seeds:
-  +schema: test_seeds
-
 models:
   elementary:
     +schema: elementary
