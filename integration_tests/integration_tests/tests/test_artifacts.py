@@ -22,3 +22,10 @@ def test_artifacts_caching(dbt_project: DbtProject):
     dbt_project.dbt_runner.run(select=TEST_MODEL, vars={"one_owner": "ele"})
     second_row = read_model_artifact_row(dbt_project)
     assert first_row != second_row, "Artifacts are not updated at the on-run-end."
+
+
+def test_dbt_invocations(dbt_project: DbtProject):
+    dbt_project.dbt_runner.run(selector="one")
+    dbt_project.read_table(
+        "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
+    )
