@@ -8,12 +8,6 @@ def pytest_addoption(parser):
     parser.addoption("--target", action="store", default="postgres")
 
 
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "skip_targets(targets): skip test for the given targets"
-    )
-
-
 @pytest.fixture(scope="session", autouse=True)
 def init_tests_env(target, tmp_path_factory, worker_id: str):
     # Tests are not multi-threaded.
@@ -35,7 +29,7 @@ def init_tests_env(target, tmp_path_factory, worker_id: str):
 @pytest.fixture(autouse=True)
 def skip_by_targets(request, target):
     if request.node.get_closest_marker("skip_targets"):
-        skipped_targets = request.node.get_closest_marker("skip_targets").args
+        skipped_targets = request.node.get_closest_marker("skip_targets").args[0]
         if target in skipped_targets:
             pytest.skip("Test unsupported for target: {}".format(target))
 
