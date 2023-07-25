@@ -39,3 +39,19 @@ def target(request) -> str:
 @pytest.fixture
 def test_id(request) -> str:
     return request.node.name
+
+
+@pytest.fixture(autouse=True)
+def only_on_targets(target: str, request):
+    if request.node.get_closest_marker('only_on_targets'):
+        requested_targets = request.node.get_closest_marker('only_on_targets').args
+        if target not in requested_targets:
+            pytest.skip(f'Skipped on taret {target} as it is not in requested targets: {requested_targets}')
+
+
+@pytest.fixture(autouse=True)
+def skip_targets(target: str, request):
+    if request.node.get_closest_marker('skip_targets'):
+        skip_targets = request.node.get_closest_marker('skip_targets').args
+        if target in skip_targets:
+            pytest.skip(f'Skipped on taret {target}')
