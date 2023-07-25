@@ -28,3 +28,10 @@ def test_invalid_jsonschema(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: invalid_value}]
     result = dbt_project.test(data, test_id, TEST_NAME, dict(column_name=COLUMN_NAME, **SCHEMA))
     assert result["status"] == "fail"
+
+
+@pytest.mark.skip_targets("snowflake", "bigquery")
+def test_invalid_target_jsonschema(test_id: str, dbt_project: DbtProject):
+    data = [{COLUMN_NAME: str()}]
+    result = dbt_project.test(data, test_id, TEST_NAME, dict(column_name=COLUMN_NAME, **SCHEMA))
+    assert result["status"] == "error"
