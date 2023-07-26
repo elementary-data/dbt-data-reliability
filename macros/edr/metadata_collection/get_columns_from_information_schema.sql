@@ -37,8 +37,8 @@
         upper(column_name) as column_name,
         data_type
     from pg_catalog.svv_columns
-    where upper(table_schema) = upper('{{ schema_name }}')
-
+    where upper(table_catalog) = upper('{{ database_name }}')
+    and upper(table_schema) = upper('{{ schema_name }}')
 {% endmacro %}
 
 {% macro postgres__get_columns_from_information_schema(database_name, schema_name) %}
@@ -50,8 +50,8 @@
         upper(column_name) as column_name,
         data_type
     from information_schema.columns
-    where upper(table_schema) = upper('{{ schema_name }}')
-
+    where upper(table_catalog) = upper('{{ database_name }}')
+    and upper(table_schema) = upper('{{ schema_name }}')
 {% endmacro %}
 
 {% macro spark__get_columns_from_information_schema(database_name, schema_name) %}
