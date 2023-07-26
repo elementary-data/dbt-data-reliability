@@ -8,7 +8,7 @@
             {% if node.resource_type in ['model', 'source', 'snapshot', 'seed'] and node.package_name == root_project %}
                 {% set schema_tuple = (node.database, node.schema) %}
                 {% if schema_tuple not in configured_schemas %}
-                    {% do configured_schemas.append((database_name, schema_name)) %}
+                    {% do configured_schemas.append(schema_tuple) %}
                 {% endif %}
             {% endif %}
         {% endfor %}
