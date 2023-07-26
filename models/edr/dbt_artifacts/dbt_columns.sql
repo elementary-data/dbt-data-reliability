@@ -1,6 +1,7 @@
 {{
   config(
-    materialized = 'view' if not var('sync', false) else 'table',
+    materialized='view' if not var('sync', false) else 'table',
+    post_hook='{{ elementary.make_authorized_view() }}',
   )
 }}
 
