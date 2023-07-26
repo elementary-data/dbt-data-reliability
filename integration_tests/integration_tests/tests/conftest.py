@@ -63,4 +63,6 @@ def target(request) -> str:
 
 @pytest.fixture
 def test_id(request) -> str:
+    if request.cls:
+        return f"{request.cls.__name__}_{request.node.name}"
     return request.node.name
