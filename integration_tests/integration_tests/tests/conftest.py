@@ -26,6 +26,14 @@ def init_tests_env(target, tmp_path_factory, worker_id: str):
             env_ready_indicator_path.touch()
 
 
+@pytest.fixture(autouse=True)
+def skip_by_targets(request, target):
+    if request.node.get_closest_marker("skip_targets"):
+        skipped_targets = request.node.get_closest_marker("skip_targets").args[0]
+        if target in skipped_targets:
+            pytest.skip("Test unsupported for target: {}".format(target))
+
+
 @pytest.fixture
 def dbt_project(target: str) -> DbtProject:
     return DbtProject(target)
