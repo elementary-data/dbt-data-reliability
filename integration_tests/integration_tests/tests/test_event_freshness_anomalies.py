@@ -1,0 +1,80 @@
+from datetime import datetime, timedelta
+
+from dbt_project import DbtProject
+from data_generator import generate_dates, DATE_FORMAT
+
+
+TEST_NAME = "elementary.event_freshness_anomalies"
+EVENT_TIMESTAMP_COLUMN = "event_timestamp"
+UPDATE_TIMESTAMP_COLUMN = "update_timestamp"
+STEP = timedelta(hours=1)
+
+
+def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
+    data = [
+        {
+            EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+            UPDATE_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+        }
+        for date in generate_dates(datetime.now(), step=STEP)
+    ]
+    result = dbt_project.test(
+        data,
+        test_id,
+        TEST_NAME,
+        dict(
+            event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
+            update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
+        ),
+    )
+    assert result["status"] == "pass"
+
+
+def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
+    anomaly_date = datetime.now() - timedelta(days=2)
+    data = [
+        {
+            EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+            UPDATE_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+        }
+        for date in generate_dates(anomaly_date, step=STEP)
+    ]
+    result = dbt_project.test(
+        data,
+        test_id,
+        TEST_NAME,
+        dict(
+            event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
+            update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
+        ),
+    )
+    assert result["status"] == "fail"
+
+
+def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
+    anomaly_date = datetime.now() - timedelta(days=1)
+    data = [
+        {
+            EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+            UPDATE_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+        }
+        for date in generate_dates(anomaly_date, step=STEP)
+    ]
+    slow_data = [
+        {
+            EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+            UPDATE_TIMESTAMP_COLUMN: (date + STEP).strftime(DATE_FORMAT),
+        }
+        for date in generate_dates(datetime.now(), step=STEP, days_back=1)
+    ]
+    data.extend(slow_data)
+    result = dbt_project.test(
+        data,
+        test_id,
+        TEST_NAME,
+        dict(
+            event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
+            update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
+        ),
+    )
+    assert result["status"] == "fail"
