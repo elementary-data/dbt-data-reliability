@@ -12,6 +12,7 @@ on:
           - bigquery
           - redshift
           - databricks
+          - databricks_catalog
           - spark
       elementary-ref:
         type: string

@@ -91,14 +91,21 @@
     {%- set database_name, schema_name = schema_tuple %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
-    {% if schema_relation.database %}
+    {# 
+        Database only exists when using databricks with catalog (it is the catalog).
+        When using databricks without catalog, it is none.
+    #}
+    {% set is_catalog = schema_relation.database is not none %}
+
+    {# Information schema only exists on databricks with catalog #}
+    {% if is_catalog %}
         with information_schema_tables as (
 
             select
                 upper(table_catalog) as database_name,
                 upper(table_schema) as schema_name,
                 upper(table_name) as table_name
-            from {{ database_name }}.information_schema.tables
+            from {{ schema_relation.information_schema('TABLES') }}
             where upper(table_schema) = upper('{{ schema_name }}')
 
         ),
@@ -108,7 +115,7 @@
             select
                 upper(catalog_name) as database_name,
                 upper(schema_name) as schema_name
-            from {{ database_name }}.information_schema.schemata
+            from {{ schema_relation.information_schema('SCHEMATA') }}
             where upper(schema_name) = upper('{{ schema_name }}')
 
         )
@@ -124,6 +131,17 @@
         from information_schema_tables as tables
         full outer join information_schema_schemata as schemas
         on (tables.database_name = schemas.database_name and tables.schema_name = schemas.schema_name)
+    {% else %}
+        {{ elementary.get_empty_tables_from_information_schema_table() }}
     {% endif %}
+{% endmacro %}
 
+{% macro get_empty_tables_from_information_schema_table() %}
+    {{ elementary.empty_table([
+        ('full_table_name', 'string'),
+        ('full_schema_name', 'string'),
+        ('database_name', 'string'),
+        ('schema_name', 'string'),
+        ('table_name', 'string'),
+    ]) }}
 {% endmacro %}
