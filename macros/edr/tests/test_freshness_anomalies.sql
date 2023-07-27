@@ -1,4 +1,4 @@
-{% test freshness_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, sensitivity) %}
+{% test freshness_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
   {{ elementary.test_table_anomalies(
       model=model,
       table_anomalies=["freshness"],
@@ -11,6 +11,7 @@
       days_back=days_back,
       backfill_days=backfill_days,
       mandatory_params=['timestamp_column'],
+      seasonality=seasonality,
       sensitivity=sensitivity
     )
   }}

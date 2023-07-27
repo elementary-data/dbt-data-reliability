@@ -6,7 +6,7 @@
     {% endset %}
 
     {% if is_incremental() %}
-        {% do run_query(query) %}
+        {% do elementary.run_query(query) %}
     {% endif %}
 
 {% endmacro %}

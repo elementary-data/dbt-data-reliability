@@ -69,16 +69,18 @@
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro get_invocation_yaml_selector() -%}
+{% macro get_invocation_yaml_selector() %}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.selector_name -%}
-        {{- return(invocation_args_dict.selector_name) -}}
-    {%- elif config.args and config.args.selector_name -%}
-        {{- return(config.args.selector_name) -}}
-    {%- else -%}
-        {{- return([]) -}}
-    {%- endif -%}
-{%- endmacro -%}
+    {% if invocation_args_dict and invocation_args_dict.selector %}
+        {% do return(invocation_args_dict.selector) %}
+    {% elif invocation_args_dict and invocation_args_dict.selector_name %}
+        {% do return(invocation_args_dict.selector_name) %}
+    {% elif config.args and config.args.selector_name %}
+        {% do return(config.args.selector_name) %}
+    {% else %}
+        {% do return(none) %}
+    {% endif %}
+{% endmacro %}
 
 {% macro get_invocation_vars() %}
     {% set config = elementary.get_runtime_config() %}

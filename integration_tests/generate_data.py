@@ -4,11 +4,13 @@ import random
 import string
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import List
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 EPOCH = datetime.utcfromtimestamp(0)
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 
 def generate_fake_data():
     generate_string_anomalies_training_and_validation_files()
@@ -329,32 +331,73 @@ def generate_dimension_anomalies_training_and_validation_files():
     )
 
 
-def generate_seasonality_volume_anomalies_files():
-    # seasonal_data : should trigger volume anomalies and not trigger 
-    columns = ["updated_at",
-               "user_id"]
-    dates = generate_rows_timestamps(base_date=EPOCH-timedelta(days=7), days_back=210) # 7 * 30 days backwards
+def generate_seasonal_data_files(
+    table_name: str, training_dates: List[datetime], validation_dates: List[datetime]
+):
+    columns = ["updated_at", "user_id"]
     training_rows = []
-    for ix,date in enumerate(dates):
-        if (ix % 7) == 1:
-            training_rows.extend([{"updated_at": date.strftime(DATE_FORMAT),
-                                   "user_id": random.randint(1000,9999)}
-                                  for _ in range(700)])
-        else:
-            continue
-    write_rows_to_csv(csv_path=os.path.join(FILE_DIR, "data", "training", "users_per_day_weekly_seasonal_training.csv"),
-                      rows=training_rows,
-                      header=columns)
+    for date in training_dates:
+        training_rows.extend(
+            [
+                {
+                    "updated_at": date.strftime(DATE_FORMAT),
+                    "user_id": random.randint(1000, 9999),
+                }
+                for _ in range(700)
+            ]
+        )
+    write_rows_to_csv(
+        csv_path=os.path.join(
+            FILE_DIR, "data", "training", f"{table_name}_training.csv"
+        ),
+        rows=training_rows,
+        header=columns,
+    )
 
-    validation_dates = generate_rows_timestamps(base_date=EPOCH, days_back=7) # one week
     validation_rows = []
-    for ix, date in enumerate(validation_dates):
-        validation_rows.extend([{"updated_at": date.strftime(DATE_FORMAT),
-                                   "user_id": random.randint(1000,9999)}
-                                  for _ in range(100)])
-    write_rows_to_csv(csv_path=os.path.join(FILE_DIR, "data", "validation", "users_per_day_weekly_seasonal_validation.csv"),
-                      rows=validation_rows,
-                      header=columns)
+    for date in validation_dates:
+        validation_rows.extend(
+            [
+                {
+                    "updated_at": date.strftime(DATE_FORMAT),
+                    "user_id": random.randint(1000, 9999),
+                }
+                for _ in range(100)
+            ]
+        )
+    write_rows_to_csv(
+        csv_path=os.path.join(
+            FILE_DIR,
+            "data",
+            "validation",
+            f"{table_name}_validation.csv",
+        ),
+        rows=validation_rows,
+        header=columns,
+    )
+
+
+def generate_day_of_week_data():
+    training_dates = generate_rows_timestamps(
+        base_date=EPOCH - timedelta(days=1), period="weeks", days_back=(7 * 30)
+    )
+    validation_dates = generate_rows_timestamps(base_date=EPOCH, days_back=1)
+    generate_seasonal_data_files(
+        "users_per_day_weekly_seasonal", training_dates, validation_dates
+    )
+
+
+def generate_hour_of_day_data():
+    training_dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=1))
+    validation_dates = generate_rows_timestamps(base_date=EPOCH, days_back=1)
+    generate_seasonal_data_files(
+        "users_per_hour_daily_seasonal", training_dates, validation_dates
+    )
+
+
+def generate_seasonality_volume_anomalies_files():
+    generate_day_of_week_data()
+    generate_hour_of_day_data()
 
 
 def generate_backfill_days_training_and_validation_files(rows_count_per_day=100):
@@ -364,7 +407,7 @@ def generate_backfill_days_training_and_validation_files(rows_count_per_day=100)
             "occurred_at": (date - timedelta(hours=1)).strftime(DATE_FORMAT),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(5, 10))
-            )
+            ),
         }
 
     def get_validation_row(date, row_index, rows_count):
@@ -373,14 +416,10 @@ def generate_backfill_days_training_and_validation_files(rows_count_per_day=100)
             "occurred_at": (date - timedelta(hours=7)).strftime(DATE_FORMAT),
             "min_length": "".join(
                 random.choices(string.ascii_lowercase, k=random.randint(1, 10))
-            )
+            ),
         }
 
-    string_columns = [
-        "updated_at",
-        "occurred_at",
-        "min_length"
-    ]
+    string_columns = ["updated_at", "occurred_at", "min_length"]
     dates = generate_rows_timestamps(base_date=EPOCH - timedelta(days=1))
     training_rows = generate_rows(rows_count_per_day, dates, get_training_row)
     write_rows_to_csv(
@@ -397,13 +436,14 @@ def generate_backfill_days_training_and_validation_files(rows_count_per_day=100)
     )
     write_rows_to_csv(
         os.path.join(
-            FILE_DIR, "data", "validation", "backfill_days_column_anomalies_validation.csv"
+            FILE_DIR,
+            "data",
+            "validation",
+            "backfill_days_column_anomalies_validation.csv",
         ),
         validation_rows,
         string_columns,
     )
-    
-
 
 
 def main():

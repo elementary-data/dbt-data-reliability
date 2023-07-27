@@ -37,6 +37,7 @@
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string'),
                                                                  ('metadata_hash', 'string'),
+                                                                 ('quality_dimension', 'string')
                                                                  ]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
@@ -157,7 +158,8 @@
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'quality_dimension': meta_dict.get('quality_dimension') or elementary.get_quality_dimension(test_short_name, test_namespace)
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
@@ -210,84 +212,20 @@
 
 
 {% macro get_default_description(short_name, test_namespace = none) %}
-    {# Relevant for dbt_expectations 0.8.0 #}
-    {% set dbt_expectations_descriptions_map = {
-        "expect_column_to_exist": "Expect the specified column to exist.",
-        "expect_row_values_to_have_recent_data": "Expect the model to have rows that are at least as recent as the defined interval prior to the current timestamp. Optionally gives the possibility to apply filters on the results.",
-        "expect_grouped_row_values_to_have_recent_data": "Expect the model to have grouped rows that are at least as recent as the defined interval prior to the current timestamp. Use this to test whether there is recent data for each grouped row defined by `group_by` (which is a list of columns) and a `timestamp_column`. Optionally gives the possibility to apply filters on the results.",
-        "expect_table_column_count_to_be_between": "Expect the number of columns in a model to be between two values.",
-        "expect_table_column_count_to_equal_other_table": "Expect the number of columns in a model to match another model.",
-        "expect_table_columns_to_not_contain_set": "Expect the columns in a model not to contain a given list.",
-        "expect_table_columns_to_contain_set": "Expect the columns in a model to contain a given list.",
-        "expect_table_column_count_to_equal": "Expect the number of columns in a model to be equal to `expected_number_of_columns`.",
-        "expect_table_columns_to_match_ordered_list": "Expect the columns to exactly match a specified list.",
-        "expect_table_columns_to_match_set": "Expect the columns in a model to match a given list.",
-        "expect_table_row_count_to_be_between": "Expect the number of rows in a model to be between two values.",
-        "expect_table_row_count_to_equal_other_table": "Expect the number of rows in a model match another model.",
-        "expect_table_row_count_to_equal_other_table_times_factor": "Expect the number of rows in a model to match another model times a preconfigured factor.",
-        "expect_table_row_count_to_equal": "Expect the number of rows in a model to be equal to expected_number_of_rows.",
-        "expect_column_values_to_be_unique": "Expect each column value to be unique.",
-        "expect_column_values_to_not_be_null": "Expect column values to not be null.",
-        "expect_column_values_to_be_null": "Expect column values to be null.",
-        "expect_column_values_to_be_of_type": "Expect a column to be of a specified data type.",
-        "expect_column_values_to_be_in_type_list": "Expect a column to be one of a specified type list.",
-        "expect_column_values_to_have_consistent_casing": "Expect a column to have consistent casing. By setting `display_inconsistent_columns` to true, the number of inconsistent values in the column will be displayed in the terminal whereas the inconsistent values themselves will be returned if the SQL compiled test is run.",
-        "expect_column_values_to_be_in_set": "Expect each column value to be in a given set.",
-        "expect_column_values_to_be_between": "Expect each column value to be between two values.",
-        "expect_column_values_to_not_be_in_set": "Expect each column value not to be in a given set.",
-        "expect_column_values_to_be_increasing": "Expect column values to be increasing. If `strictly: True`, then this expectation is only satisfied if each consecutive value is strictly increasing – equal values are treated as failures.",
-        "expect_column_values_to_be_decreasing": "Expect column values to be decreasing. If `strictly=True`, then this expectation is only satisfied if each consecutive value is strictly decreasing – equal values are treated as failures.",
-        "expect_column_value_lengths_to_be_between": "Expect column entries to be strings with length between a min_value value and a max_value value (inclusive).",
-        "expect_column_value_lengths_to_equal": "Expect column entries to be strings with length equal to the provided value.",
-        "expect_column_values_to_match_regex": 'Expect column entries to be strings that match a given regular expression. Valid matches can be found anywhere in the string, for example "[at]+" will identify the following strings as expected: "cat", "hat", "aa", "a", and "t", and the following strings as unexpected: "fish", "dog". Optionally, `is_raw` indicates the `regex` pattern is a "raw" string and should be escaped. The default is `False`.',
-        "expect_column_values_to_not_match_regex": 'Expect column entries to be strings that do NOT match a given regular expression. The regex must not match any portion of the provided string. For example, "[at]+" would identify the following strings as expected: "fish”, "dog”, and the following as unexpected: "cat”, "hat”. Optionally, `is_raw` indicates the `regex` pattern is a "raw" string and should be escaped. The default is `False`.',
-        "expect_column_values_to_match_regex_list": 'Expect the column entries to be strings that can be matched to either any of or all of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are "raw" strings and should be escaped. The default is `False`.',
-        "expect_column_values_to_not_match_regex_list": 'Expect the column entries to be strings that do not match any of a list of regular expressions. Matches can be anywhere in the string. Optionally, `is_raw` indicates the `regex` patterns are "raw" strings and should be escaped. The default is `False`.',
-        "expect_column_values_to_match_like_pattern": "Expect column entries to be strings that match a given SQL like pattern.",
-        "expect_column_values_to_not_match_like_pattern": "Expect column entries to be strings that do not match a given SQL like pattern.",
-        "expect_column_values_to_match_like_pattern_list": "Expect the column entries to be strings that match any of a list of SQL like patterns.",
-        "expect_column_values_to_not_match_like_pattern_list": "Expect the column entries to be strings that do not match any of a list of SQL like patterns.",
-        "expect_column_distinct_count_to_equal": "Expect the number of distinct column values to be equal to a given value.",
-        "expect_column_distinct_count_to_be_greater_than": "Expect the number of distinct column values to be greater than a given value.",
-        "expect_column_distinct_count_to_be_less_than": "Expect the number of distinct column values to be less than a given value.",
-        "expect_column_distinct_values_to_be_in_set": "Expect the set of distinct column values to be contained by a given set.",
-        "expect_column_distinct_values_to_contain_set": "Expect the set of distinct column values to contain a given set. In contrast to `expect_column_values_to_be_in_set` this ensures not that all column values are members of the given set but that values from the set must be present in the column.",
-        "expect_column_distinct_values_to_equal_set": "Expect the set of distinct column values to equal a given set. In contrast to `expect_column_distinct_values_to_contain_set` this ensures not only that a certain set of values are present in the column but that these and only these values are present.",
-        "expect_column_distinct_count_to_equal_other_table": "Expect the number of distinct column values to be equal to number of distinct values in another model.",
-        "expect_column_mean_to_be_between": "Expect the column mean to be between a min_value value and a max_value value (inclusive).",
-        "expect_column_median_to_be_between": "Expect the column median to be between a min_value value and a max_value value (inclusive).",
-        "expect_column_quantile_values_to_be_between": "Expect specific provided column quantiles to be between provided min_value and max_value values.",
-        "expect_column_stdev_to_be_between": "Expect the column standard deviation to be between a min_value value and a max_value value. Uses sample standard deviation (normalized by N-1).",
-        "expect_column_unique_value_count_to_be_between": "Expect the number of unique values to be between a min_value value and a max_value value.",
-        "expect_column_proportion_of_unique_values_to_be_between": "Expect the proportion of unique values to be between a min_value value and a max_value value. For example, in a column containing [1, 2, 2, 3, 3, 3, 4, 4, 4, 4], there are 4 unique values and 10 total values for a proportion of 0.4.",
-        "expect_column_most_common_value_to_be_in_set": "Expect the most common value to be within the designated value set.",
-        "expect_column_max_to_be_between": "Expect the column max to be between a min and max value.",
-        "expect_column_min_to_be_between": "Expect the column min to be between a min and max value.",
-        "expect_column_sum_to_be_between": "Expect the column to sum to be between a min and max value.",
-        "expect_column_pair_values_A_to_be_greater_than_B": "Expect values in column A to be greater than column B.",
-        "expect_column_pair_values_to_be_equal": "Expect the values in column A to be the same as column B.",
-        "expect_column_pair_values_to_be_in_set": "Expect paired values from columns A and B to belong to a set of valid pairs. Note: value pairs are expressed as lists within lists",
-        "expect_select_column_values_to_be_unique_within_record": "Expect the values for each record to be unique across the columns listed. Note that records can be duplicated.",
-        "expect_multicolumn_sum_to_equal": "Expects that sum of all rows for a set of columns is equal to a specific value",
-        "expect_compound_columns_to_be_unique": "Expect that the columns are unique together, e.g. a multi-column primary key.",
-        "expect_column_values_to_be_within_n_moving_stdevs": "A simple anomaly test based on the assumption that differences between periods in a given time series follow a log-normal distribution. Thus, we would expect the logged differences (vs N periods ago) in metric values to be within Z sigma away from a moving average. By applying a list of columns in the `group_by` parameter, you can also test for deviations within a group.",
-        "expect_column_values_to_be_within_n_stdevs": "Expects (optionally grouped & summed) metric values to be within Z sigma away from the column average",
-        "expect_row_values_to_have_data_for_every_n_datepart": "Expects model to have values for every grouped `date_part`."
-    } %}
-
-    {% set dbt_tests_descriptions_map = {
-        "not_null": "This test validates that there are no `null` values present in a column.",
-        "unique": "This test validates that there are no duplicate values present in a field.",
-        "accepted_values": "This test validates that all of the values in a column are present in a supplied list of `values`. If any values other than those provided in the list are present, then the test will fail.",
-        "relationships": 'This test validates that all of the records in a child table have a corresponding record in a parent table. This property is referred to as "referential integrity".'
-    } %}
-
-    {% set default_description = none %}
-    {% if test_namespace == 'dbt_expectations' %}
-        {% set default_description = dbt_expectations_descriptions_map.get(short_name) %}
-    {% elif test_namespace == 'dbt' or test_namespace is none %}
-        {% set default_description = dbt_tests_descriptions_map.get(short_name) %}
+    {% set description = none %}
+    {% set common_test_config = elementary.get_common_test_config_by_namespace_and_name(test_namespace, short_name) %}
+    {% if common_test_config %}
+        {% set description = common_test_config.get("description") %}
     {% endif %}
+    {% do return(description) %}
+{% endmacro %}
 
-    {{ return(default_description) }}
+
+{% macro get_quality_dimension(short_name, test_namespace = none) %}
+    {% set quality_dimension = none %}
+    {% set common_test_config = elementary.get_common_test_config_by_namespace_and_name(test_namespace, short_name) %}
+    {% if common_test_config %}
+        {% set quality_dimension = common_test_config.get("quality_dimension") %}
+    {% endif %}
+    {% do return(quality_dimension) %}
 {% endmacro %}
