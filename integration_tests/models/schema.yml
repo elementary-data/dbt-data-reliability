@@ -533,6 +533,13 @@ sources:
     schema: test_seeds
     tables:
       - name: users_per_hour_daily_seasonal_training
+        columns:
+        - name: "user_id"
+          tests:
+            - relationships:
+                tags: ["regular_tests"]
+                to: source('training', 'users_per_day_weekly_seasonal_training')
+                field: user_id
       - name: any_type_column_anomalies_training
         meta:
           owner: ["@edr", "egk"]
