@@ -28,11 +28,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        warehouse-type: [postgres, snowflake, bigquery, redshift, databricks]
+        warehouse-type:
+          [
+            postgres,
+            snowflake,
+            bigquery,
+            redshift,
+            databricks,
+            databricks_catalog,
+          ]
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
-      dbt-version: ${{ github.event_name != 'workflow_dispatch' && '1.0.2' || inputs.dbt-version }}
+      dbt-version: ${{ github.event_name != 'workflow_dispatch' && ((matrix.warehouse-type == 'databricks_catalog' && '1.1.1') || '1.0.2') || inputs.dbt-version }}
       generate-data: ${{ inputs.generate-data || false }}
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
