@@ -4,6 +4,11 @@
     {% if not execute %}
         {% do return(none) %}
     {% endif %}
+
+    {% if model is string %}
+        {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you provide a 'where' parameter to the test or override 'ref' or 'source')") }}
+    {% endif %}
+
     {% if not elementary.column_exists_in_relation(model, column_name) %}
         {% do exceptions.raise_compiler_error("Column '{}' does not exist in node '{}'!".format(column_name, model.name)) %}
     {% endif %}

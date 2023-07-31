@@ -7,7 +7,7 @@
     {{ return(result) }}
 {% endmacro %}
 
-    {% macro default__get_normalized_data_type(exact_data_type) %}
+{% macro default__get_normalized_data_type(exact_data_type) %}
    {{return (exact_data_type) }}
 {% endmacro %}
 

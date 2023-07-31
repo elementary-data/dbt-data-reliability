@@ -21,7 +21,7 @@
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
     {# All anomaly detection tests #}
-    {%- set timestamp_column = elementary.get_timestamp_column(timestamp_column, model_graph_node, model_relation) %}
+    {%- set timestamp_column = elementary.get_test_argument('timestamp_column', timestamp_column, model_graph_node) %}
     {%- set where_expression = elementary.get_test_argument('where_expression', where_expression, model_graph_node) %}
     {# We had a names mix in sensitivity/anomaly_sensitivity, this keeps backwards competability #}
     {%- set anomaly_sensitivity = sensitivity if sensitivity else elementary.get_test_argument('anomaly_sensitivity', anomaly_sensitivity, model_graph_node) %}

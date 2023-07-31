@@ -100,7 +100,9 @@
     {% else %}
       {% set test_model_jinja = test_kwargs.get('model') %}
       {% if test_model_jinja %}
-        {% set test_model_name_matches = modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) %}
+        {% set test_model_name_matches =
+            modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) +
+            modules.re.findall("source\(['\"]\w+['\"], ['\"](\w+)['\"]\)", test_model_jinja) %}
         {% if test_model_name_matches | length == 1 %}
           {% set test_model_name = test_model_name_matches[0] %}
           {% for test_model_unique_id in test_model_unique_ids %}
@@ -159,7 +161,7 @@
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'quality_dimension': elementary.get_quality_dimension(test_short_name, test_namespace)
+        'quality_dimension': meta_dict.get('quality_dimension') or elementary.get_quality_dimension(test_short_name, test_namespace)
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}

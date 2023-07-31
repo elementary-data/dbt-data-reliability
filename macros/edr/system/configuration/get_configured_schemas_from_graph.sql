@@ -6,19 +6,20 @@
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% for node in nodes %}
             {% if node.resource_type in ['model', 'source', 'snapshot', 'seed'] and node.package_name == root_project %}
-                {% set database_name = node.database %}
-                {% set schema_name = node.schema %}
-                {% do configured_schemas.append((database_name, schema_name)) %}
+                {% set schema_tuple = (node.database, node.schema) %}
+                {% if schema_tuple not in configured_schemas %}
+                    {% do configured_schemas.append(schema_tuple) %}
+                {% endif %}
             {% endif %}
         {% endfor %}
-        {%- set configured_schemas = configured_schemas | unique | list %}
-        {%- for schema_tupple in configured_schemas %}
-            {% set database_name = schema_tupple[0] %}
-            {% set schema_name = schema_tupple[1] %}
+
+        {% for schema_tuple in configured_schemas %}
+            {% set database_name = schema_tuple[0] %}
+            {% set schema_name = schema_tuple[1] %}
             {% if adapter.check_schema_exists(database_name, schema_name) %}
-                {% do existing_schemas.append((database_name, schema_name)) %}
+                {% do existing_schemas.append(schema_tuple) %}
             {% endif %}
-        {%- endfor %}
+        {% endfor %}
     {% endif %}
-    {{ return(existing_schemas | unique | list ) }}
+    {{ return(existing_schemas) }}
 {% endmacro %}
