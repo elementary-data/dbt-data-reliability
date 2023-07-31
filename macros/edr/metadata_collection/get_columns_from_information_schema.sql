@@ -52,15 +52,9 @@
 {% endmacro %}
 
 {% macro databricks__get_columns_from_information_schema(database_name, schema_name) %}
-    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
-    {# 
-        Database only exists when using databricks with catalog (it is the catalog).
-        When using databricks without catalog, it is none.
-    #}
-    {% set is_catalog = schema_relation.database is not none %}
-
-    {# Information schema only exists on databricks with catalog #}
-    {% if is_catalog %}
+    {% if target.catalog is not none %}
+        {# Information schema is only available when using Unity Catalog. #}
+        {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).quote(false, false, false) %}
         select
             upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
             upper(table_catalog) as database_name,
