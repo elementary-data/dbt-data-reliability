@@ -1,7 +1,7 @@
 version: 2
 
 sources:
-  - name: tests_data
+  - name: test_data
     schema: "{{ target.schema }}"
     tables:
       - name: dummy

@@ -145,13 +145,11 @@ class DbtProject:
                 ],
             }
 
-        with self.seed(data, test_id):
-            with NamedTemporaryFile(
-                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
-            ) as props_file:
-                YAML().dump(props_yaml, props_file)
-                relative_props_path = Path(props_file.name).relative_to(PATH)
-                self.dbt_runner.test(select=str(relative_props_path))
+        self.seed(data, test_id)
+        with NamedTemporaryFile(dir=TMP_MODELS_DIR_PATH, suffix=".yaml") as props_file:
+            YAML().dump(props_yaml, props_file)
+            relative_props_path = Path(props_file.name).relative_to(PATH)
+            self.dbt_runner.test(select=str(relative_props_path))
 
         if multiple_results:
             return self._read_test_results(test_id)
