@@ -1,3 +1,6 @@
 selectors:
   - name: one
     definition: one
+
+  - name: metrics
+    definition: metrics_*

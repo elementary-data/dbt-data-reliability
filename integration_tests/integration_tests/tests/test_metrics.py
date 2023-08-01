@@ -18,7 +18,7 @@ def test_metrics(dbt_project: DbtProject):
     ]
     dbt_project.seed(data1, "metrics_seed1")
     dbt_project.seed(data2, "metrics_seed2")
-    dbt_project.dbt_runner.run(select="tag:metrics")
+    dbt_project.dbt_runner.run(selector="metrics")
 
     remaining_models_to_row_count = {
         "metrics_view": len(data1) + len(data2),

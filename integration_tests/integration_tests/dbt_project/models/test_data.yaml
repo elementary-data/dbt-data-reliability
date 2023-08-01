@@ -1,21 +1,5 @@
 version: 2
 
-models:
-  - name: metrics_table
-    config:
-      tags:
-        - metrics
-
-  - name: metrics_incremental
-    config:
-      tags:
-        - metrics
-
-  - name: metrics_view
-    config:
-      tags:
-        - metrics
-
 sources:
   - name: test_data
     schema: "{{ target.schema }}"
