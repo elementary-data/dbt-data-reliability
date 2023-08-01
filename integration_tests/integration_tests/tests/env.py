@@ -15,4 +15,5 @@ class Environment:
         self.dbt_runner.run_operation("elementary_tests.clear_env")
 
     def init(self):
+        self.dbt_runner.run(selector="init")
         self.dbt_runner.run(select="elementary")
