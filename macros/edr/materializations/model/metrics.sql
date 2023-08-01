@@ -13,7 +13,8 @@
       "full_table_name": this | string,
       "column_name": none,
       "metric_name": metric_name,
-      "metric_value": metric_value 
+      "metric_value": metric_value,
+      "updated_at": elementary.datetime_now_utc_as_string()
     }) %}
   {% endfor %}
   {% do return(metrics) %}
