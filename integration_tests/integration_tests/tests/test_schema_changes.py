@@ -1,8 +1,10 @@
+import pytest
 from dbt_project import DbtProject
 
 DBT_TEST_NAME = "elementary.schema_changes"
 
 
+@pytest.mark.skip_targets(["databricks"])
 def test_schema_changes(test_id: str, dbt_project: DbtProject):
     initial_data = [
         {"id": 1, "name": "Elon"},

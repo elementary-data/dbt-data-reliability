@@ -2,7 +2,6 @@
     {% do elementary_tests.edr_drop_schema(elementary.target_database(), target.schema) %}
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {% do elementary_tests.edr_drop_schema(database_name, schema_name) %}
-    {% do elementary_tests.edr_drop_schema(elementary.target_database(), "test_seeds") %}
 {% endmacro %}
 
 {% macro edr_drop_schema(database_name, schema_name) %}
