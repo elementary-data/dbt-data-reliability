@@ -129,13 +129,13 @@ class DbtProject:
                 {"name": test_column, "tests": [{dbt_test_name: test_args}]}
             ]
 
-        temp_model_context: Any
+        temp_table_ctx: Any
         if as_model:
             props_yaml = {
                 "version": 2,
                 "models": [table_yaml],
             }
-            temp_model_context = self.create_temp_model_for_existing_table(test_id)
+            temp_table_ctx = self.create_temp_model_for_existing_table(test_id)
         else:
             props_yaml = {
                 "version": 2,
@@ -147,10 +147,10 @@ class DbtProject:
                     }
                 ],
             }
-            temp_model_context = nullcontext()
+            temp_table_ctx = nullcontext()
 
         self.seed(data, test_id)
-        with temp_model_context:
+        with temp_table_ctx:
             with NamedTemporaryFile(
                 dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
             ) as props_file:
