@@ -3,7 +3,7 @@
   {% if execute and relation %}
     {% set query %}
       create or replace table {{ relation }} as (
-        {{ elementary.get_dbt_columns_query(is_on_run_end=true) }}
+        {{ elementary.get_dbt_columns_query(in_model_build_context=false) }}
       )
     {% endset %}
     {% do run_query(query) %}

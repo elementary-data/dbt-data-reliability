@@ -1,8 +1,8 @@
-{% macro get_dbt_columns_query(is_on_run_end=false) %}
-  {% if is_on_run_end %}
-    {% set get_relation = elementary.get_elementary_relation %}
-  {% else %}
+{% macro get_dbt_columns_query(in_model_build_context=true) %}
+  {% if is_model_build_context %}
     {% set get_relation = ref %}
+  {% else %}
+    {% set get_relation = elementary.get_elementary_relation %}
   {% endif %}
 
   with dbt_models_data as (
