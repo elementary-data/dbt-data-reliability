@@ -26,6 +26,7 @@
         {% do elementary.file_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
+    {% do elementary.upload_dbt_columns() %}  {# dbt_columns upload must come after other artifacts, as it is dependant on them #}
     {% do elementary.file_log("Uploaded dbt artifacts.") %}
   {% endif %}
 {% endmacro %}
