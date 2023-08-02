@@ -1,10 +1,16 @@
-{% macro get_dbt_columns_query() %}
+{% macro get_dbt_columns_query(is_on_run_end=false) %}
+  {% if is_on_run_end %}
+    {% set get_relation = elementary.get_elementary_relation %}
+  {% else %}
+    {% set get_relation = ref %}
+  {% endif %}
+
   with dbt_models_data as (
       select
           database_name,
           schema_name,
           alias as table_name
-      from {{ ref('dbt_models') }}
+      from {{ get_relation('dbt_models') }}
   ),
 
   dbt_snapshots_data as (
@@ -12,7 +18,7 @@
           database_name,
           schema_name,
           alias as table_name
-      from {{ ref('dbt_snapshots') }}
+      from {{ get_relation('dbt_snapshots') }}
   ),
 
   dbt_sources_data as (
@@ -20,7 +26,7 @@
           database_name,
           schema_name,
           name as table_name
-      from {{ ref('dbt_sources') }}
+      from {{ get_relation('dbt_sources') }}
   ),
 
   dbt_seeds_data as (
@@ -28,7 +34,7 @@
           database_name,
           schema_name,
           name as table_name
-      from {{ ref('dbt_seeds') }}
+      from {{ get_relation('dbt_seeds') }}
   ),
 
   tables_information as (
