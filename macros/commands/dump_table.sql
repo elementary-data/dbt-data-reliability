@@ -45,9 +45,14 @@
             {{ elementary.escape_select(column_names) }}, 
             row_number() over (partition by {{ dedup_by_column }} order by {{ order_by_dedup_column }} desc) as row_index
         from {{ relation }}
+    ),
+
+    deduped_relation as (
+        select *
+        from indexed_relation
+        where row_index = 1
     )
 
-    select {{ elementary.escape_select(column_names) }}
-    from indexed_relation
-    where row_index = 1
+    select *
+    from deduped_relation
 {% endmacro %}
