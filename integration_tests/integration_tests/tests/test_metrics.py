@@ -29,7 +29,7 @@ def test_metrics(dbt_project: DbtProject):
     for metric in dbt_project.read_table("data_monitoring_metrics"):
         for model_name, row_count in remaining_models_to_row_count.items():
             if (
-                model_name in metric["full_table_name"]
+                model_name.upper() in metric["full_table_name"]
                 and metric["metric_name"] == "row_count"
             ):
                 assert metric["metric_value"] == row_count
