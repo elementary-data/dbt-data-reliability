@@ -19,7 +19,7 @@
 {%- endmacro %}
 
 {% macro spark__edr_current_timestamp() %}
-    current_timestamp()
+    cast(current_timestamp() as timestamp)
 {% endmacro %}
 
 
@@ -44,5 +44,5 @@
 {%- endmacro %}
 
 {% macro spark__edr_current_timestamp_in_utc() %}
-    unix_timestamp()
+    cast(unix_timestamp() as timestamp)
 {% endmacro %}
