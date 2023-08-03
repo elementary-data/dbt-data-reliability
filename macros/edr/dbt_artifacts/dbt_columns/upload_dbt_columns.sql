@@ -1,5 +1,5 @@
 {% macro upload_dbt_columns() %}
-  {% set relation = elementary.get_elementary_relation('dbt_columns') %}
+  {% set relation = elementary.get_elementary_relation("dbt_columns") %}
   {% if execute and relation %}
     {% set query %}
       create or replace table {{ relation }} as (
