@@ -12,5 +12,5 @@
 
 
 {% macro bigquery__get_dbt_columns_materialization() %}
-  {% do return("table") %}
+  {% do return("incremental") %}
 {% endmacro %}
