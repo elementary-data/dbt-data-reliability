@@ -18,7 +18,7 @@
     {% endif %}
 
     {% set query %}
-        select {{ elementary.escape_select(column_names) }} from {{ relation }}
+        {{ elementary.dedup_by_column_query("unique_id", column_names, relation) }}
         {% if timestamp_column %}
             {% if since %}
                 where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
@@ -30,4 +30,22 @@
     {% set results = elementary.run_query(query) %}
     {% do results.to_csv(output_path) %}
     {% do return(results.column_names) %}
+{% endmacro %}
+
+
+{% macro dedup_by_column_query(dedup_by_column, column_names, relation) %}
+    {% if dedup_by_column in column_names %}
+        with indexed_relation as (
+            select 
+                {{ elementary.escape_select(column_names) }}, 
+                row_number() over (partition by {{ dedup_by_column }} order by generated_at desc) as row_index
+            from {{ relation }}
+        )
+
+        select {{ elementary.escape_select(column_names) }}
+        from indexed_relation
+        where row_index = 1
+    {% else %}
+        select {{ elementary.escape_select(column_names) }} from {{ relation }}
+    {% endif %}
 {% endmacro %}
