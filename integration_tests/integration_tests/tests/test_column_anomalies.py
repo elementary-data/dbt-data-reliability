@@ -13,24 +13,14 @@ DBT_TEST_ARGS = {
 
 
 def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
-    dates = generate_dates(base_date=date.today() - timedelta(1))
-    data: List[Dict[str, Any]] = sum(
-        [
-            [
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "superhero": "Superman",
-                },
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "superhero": "Batman",
-                },
-                {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": None},
-            ]
-            for cur_date in dates
-        ],
-        [],
-    )
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=date.today() - timedelta(1))
+        for superhero in ["Superman", "Batman"]
+    ]
     test_result = dbt_project.test(
         data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, test_column="superhero"
     )
@@ -39,27 +29,19 @@ def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
 
 def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
+
     data: List[Dict[str, Any]] = [
-        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": None},
-        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": None},
-        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": None},
-    ] + sum(
-        [
-            [
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "superhero": "Superman",
-                },
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "superhero": "Batman",
-                },
-                {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": None},
-            ]
-            for cur_date in training_dates
-        ],
-        [],
-    )
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": None}
+        for _ in range(3)
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+    ]
 
     test_result = dbt_project.test(
         data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, test_column="superhero"
@@ -69,55 +51,33 @@ def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
 
 def test_column_anomalies_with_where_expression(test_id: str, dbt_project: DbtProject):
     test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
+
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "universe": "DC",
-            "superhero": None,
-        },
+            "universe": universe,
+            "superhero": superhero,
+        }
+        for universe, superhero in [
+            ("DC", None),
+            ("DC", None),
+            ("DC", None),
+            ("Marvel", "Spiderman"),
+        ]
+    ] + [
         {
-            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "universe": "DC",
-            "superhero": None,
-        },
-        {
-            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "universe": "DC",
-            "superhero": None,
-        },
-        {
-            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "universe": "Marvel",
-            "superhero": "Spiderman",
-        },
-    ] + sum(
-        [
-            [
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "universe": "DC",
-                    "superhero": "Superman",
-                },
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "universe": "DC",
-                    "superhero": "Batman",
-                },
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "universe": "DC",
-                    "superhero": None,
-                },
-                {
-                    TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-                    "universe": "Marvel",
-                    "superhero": "Spiderman",
-                },
-            ]
-            for cur_date in training_dates
-        ],
-        [],
-    )
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "universe": universe,
+            "superhero": superhero,
+        }
+        for cur_date in training_dates
+        for universe, superhero in [
+            ("DC", "Superman"),
+            ("DC", "Batman"),
+            ("DC", None),
+            ("Marvel", "Spiderman"),
+        ]
+    ]
 
     params = DBT_TEST_ARGS
     test_result = dbt_project.test(

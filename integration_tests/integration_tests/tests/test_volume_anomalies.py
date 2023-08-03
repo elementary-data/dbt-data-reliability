@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Any, Dict, List
 
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -55,23 +56,16 @@ def test_volume_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject, as_model: bool
 ):
     test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
-    data = [
-        {TIMESTAMP_COLUMN: test_date, "payback": "karate"},
-        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
-        {TIMESTAMP_COLUMN: test_date, "payback": "ka-razy"},
-    ] + sum(
-        [
-            [
-                {TIMESTAMP_COLUMN: cur_date, "payback": "karate"},
-                {TIMESTAMP_COLUMN: cur_date, "payback": "ka-razy"},
-            ]
-            for cur_date in training_dates
-        ],
-        [],
-    )
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "payback": payback}
+        for payback in ["karate", "ka-razy", "ka-razy", "ka-razy", "ka-razy", "ka-razy"]
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "payback": payback}
+        for cur_date in training_dates
+        for payback in ["karate", "ka-razy"]
+    ]
 
     params = DBT_TEST_ARGS
     test_result = dbt_project.test(

@@ -347,7 +347,7 @@ models:
   - name: groups
     columns:
       - name: group_a
-        data_type: "{{ 'strIng' if target.type == 'bigquery' else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
+        data_type: "{{ 'strIng' if (target.type == 'bigquery' or target.type == 'databricks') else 'CHArACTER varying' if target.type == 'redshift' else 'teXt' }}"
       - name: group_b
         data_type: double
       - name: group_c
@@ -365,7 +365,7 @@ models:
   - name: stats_players
     columns:
       - name: player
-        data_type: "{{ 'STRING' if target.type == 'bigquery' else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+        data_type: "{{ 'STRING' if (target.type == 'bigquery' or target.type == 'databricks') else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
       - name: goals
         data_type: BOOLEAN
       - name: coffee_cups_consumed
@@ -533,6 +533,13 @@ sources:
     schema: test_seeds
     tables:
       - name: users_per_hour_daily_seasonal_training
+        columns:
+          - name: "user_id"
+            tests:
+              - relationships:
+                  tags: ["regular_tests"]
+                  to: source('training', 'users_per_day_weekly_seasonal_training')
+                  field: user_id
       - name: any_type_column_anomalies_training
         meta:
           owner: ["@edr", "egk"]

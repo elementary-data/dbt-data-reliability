@@ -38,7 +38,7 @@ def init_tests_env(target, tmp_path_factory, worker_id: str):
 @pytest.fixture(autouse=True)
 def skip_by_targets(request, target: str):
     if request.node.get_closest_marker("skip_targets"):
-        skipped_targets = request.node.get_closest_marker("skip_targets").args
+        skipped_targets = request.node.get_closest_marker("skip_targets").args[0]
         if target in skipped_targets:
             pytest.skip("Test unsupported for target: {}".format(target))
 
@@ -46,7 +46,7 @@ def skip_by_targets(request, target: str):
 @pytest.fixture(autouse=True)
 def only_on_targets(request, target: str):
     if request.node.get_closest_marker("only_on_targets"):
-        requested_targets = request.node.get_closest_marker("only_on_targets").args
+        requested_targets = request.node.get_closest_marker("only_on_targets").args[0]
         if target not in requested_targets:
             pytest.skip("Test unsupported for target: {}".format(target))
 

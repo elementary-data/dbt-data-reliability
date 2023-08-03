@@ -17,7 +17,7 @@ _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
-    "debug_logs": True
+    "debug_logs": True,
 }
 
 logger = get_logger(__name__)
@@ -45,6 +45,22 @@ class DbtProject:
         )
         return results
 
+    @staticmethod
+    def read_table_query(
+        table_name: str,
+        where: Optional[str] = None,
+        order_by: Optional[str] = None,
+        limit: Optional[int] = None,
+        column_names: Optional[List[str]] = None,
+    ):
+        return f"""
+            SELECT {', '.join(column_names) if column_names else '*'}
+            FROM {{{{ ref('{table_name}') }}}}
+            {f"WHERE {where}" if where else ""}
+            {f"ORDER BY {order_by}" if order_by else ""}
+            {f"LIMIT {limit}" if limit else ""}
+            """
+
     def read_table(
         self,
         table_name: str,
@@ -54,13 +70,7 @@ class DbtProject:
         column_names: Optional[List[str]] = None,
         raise_if_empty: bool = True,
     ) -> List[dict]:
-        query = f"""
-        SELECT {', '.join(column_names) if column_names else '*'}
-        FROM {{{{ ref('{table_name}') }}}}
-        {f"WHERE {where}" if where else ""}
-        {f"ORDER BY {order_by}" if order_by else ""}
-        {f"LIMIT {limit}" if limit else ""}
-        """
+        query = self.read_table_query(table_name, where, order_by, limit, column_names)
         results = self.run_query(query)
         if raise_if_empty and len(results) == 0:
             raise ValueError(
@@ -136,13 +146,11 @@ class DbtProject:
                 ],
             }
 
-        with self.seed(data, test_id):
-            with NamedTemporaryFile(
-                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
-            ) as props_file:
-                YAML().dump(props_yaml, props_file)
-                relative_props_path = Path(props_file.name).relative_to(PATH)
-                self.dbt_runner.test(select=str(relative_props_path))
+        self.seed(data, test_id)
+        with NamedTemporaryFile(dir=TMP_MODELS_DIR_PATH, suffix=".yaml") as props_file:
+            YAML().dump(props_yaml, props_file)
+            relative_props_path = Path(props_file.name).relative_to(PATH)
+            self.dbt_runner.test(select=str(relative_props_path))
 
         if multiple_results:
             return self._read_test_results(test_id)
@@ -153,16 +161,16 @@ class DbtProject:
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
 
     def _read_test_results(self, table_name: str) -> List[Dict[str, Any]]:
-        test_execution_id = self.read_table(
+        test_execution_id_subquery = self.read_table_query(
             "elementary_test_results",
             where=f"lower(table_name) = lower('{table_name}')",
             order_by="created_at DESC",
             column_names=["test_execution_id"],
             limit=1,
-        )[0]["test_execution_id"]
+        )
         return self.read_table(
             "elementary_test_results",
-            where=f"test_execution_id = '{test_execution_id}'",
+            where=f"test_execution_id IN ({test_execution_id_subquery})",
         )
 
     def _read_single_test_result(self, table_name: str) -> Dict[str, Any]:

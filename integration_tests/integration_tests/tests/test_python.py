@@ -9,7 +9,7 @@ COLUMN_NAME = "column_name"
 TEST_NAME = "elementary.python"
 
 
-@pytest.mark.only_on_targets("snowflake", "bigquery")
+@pytest.mark.only_on_targets(["snowflake", "bigquery"])
 @Parametrization.autodetect_parameters()
 @Parametrization.case("successfull", python_result=0, expected_status="pass")
 @Parametrization.case("unsuccessfull", python_result=1, expected_status="fail")
@@ -32,7 +32,7 @@ def test_python_int(
     assert result["status"] == expected_status
 
 
-@pytest.mark.only_on_targets("snowflake", "bigquery")
+@pytest.mark.only_on_targets(["snowflake", "bigquery"])
 def test_python_full_df(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
@@ -47,7 +47,7 @@ def test_python_full_df(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "fail"
 
 
-@pytest.mark.only_on_targets("snowflake", "bigquery")
+@pytest.mark.only_on_targets(["snowflake", "bigquery"])
 def test_python_empty_df(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
@@ -59,7 +59,7 @@ def test_python_empty_df(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "pass"
 
 
-@pytest.mark.skip_targets("snowflake", "bigquery")
+@pytest.mark.skip_targets(["snowflake", "bigquery"])
 def test_invalid_target_python(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
