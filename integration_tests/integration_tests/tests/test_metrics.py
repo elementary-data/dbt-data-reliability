@@ -6,7 +6,7 @@ from dbt_project import DbtProject
 
 
 def test_metrics(dbt_project: DbtProject):
-    dbt_project.dbt_runner.vars = {"collect_metrics": True}
+    dbt_project.dbt_runner.vars["collect_metrics"] = True
     data1 = [
         {"updated_at": date.strftime(DATE_FORMAT)}
         for date in generate_dates(base_date=datetime.now())
