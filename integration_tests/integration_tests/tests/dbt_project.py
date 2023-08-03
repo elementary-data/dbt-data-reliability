@@ -17,6 +17,7 @@ _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
+    "collect_metrics": False,
 }
 
 logger = get_logger(__name__)
