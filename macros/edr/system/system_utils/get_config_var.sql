@@ -54,7 +54,8 @@
     'store_result_rows_in_own_table': true,
     'mute_dbt_upgrade_recommendation': false,
     'calculate_failed_count': true,
-    'tests_use_temp_tables': true
+    'tests_use_temp_tables': true,
+    'upload_dbt_columns': false
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
