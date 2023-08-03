@@ -3,7 +3,7 @@
                                                                                schema=schema_name,
                                                                                identifier=table_name,
                                                                                type='table') -%}
-    {% set temp_table_relation = dbt.make_temp_relation(temp_table_relation) %}
+    {% set temp_table_relation = elementary._make_temp_relation(temp_table_relation) %}
     {% if temp_table_exists %}
         {% do adapter.drop_relation(temp_table_relation) %}
         {% do elementary.run_query(dbt.create_table_as(True, temp_table_relation, sql_query)) %}
