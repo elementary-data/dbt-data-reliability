@@ -1,7 +1,7 @@
 {% macro query_table_metrics() %}
   {% set query %}
     select
-      null as build,
+      {{ modules.datetime.datetime.utcnow().timestamp() }} as build_timestamp,
       count(*) as row_count
     from {{ this }}
   {% endset %}
