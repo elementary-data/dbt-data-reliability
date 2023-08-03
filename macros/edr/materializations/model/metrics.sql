@@ -1,6 +1,8 @@
 {% macro query_table_metrics() %}
   {% set query %}
-    select count(*) as row_count
+    select
+      null as build,
+      count(*) as row_count
     from {{ this }}
   {% endset %}
 
