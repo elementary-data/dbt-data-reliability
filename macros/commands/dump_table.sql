@@ -48,11 +48,11 @@
     ),
 
     deduped_relation as (
-        select {{ elementary.escape_select(column_names) }}
+        select *
         from indexed_relation
         where row_index = 1
     )
 
-    select {{ elementary.escape_select(column_names) }}
+    select *
     from deduped_relation
 {% endmacro %}
