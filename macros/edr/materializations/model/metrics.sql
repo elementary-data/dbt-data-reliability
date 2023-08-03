@@ -12,7 +12,7 @@
     {% set metric_value = metric_column[0] %}
     {% do metrics.append({
       "id": "{}.{}".format(invocation_id, this),
-      "full_table_name": this | string,
+      "full_table_name": elementary.relation_to_full_name(this),
       "column_name": none,
       "metric_name": metric_name,
       "metric_value": metric_value,
