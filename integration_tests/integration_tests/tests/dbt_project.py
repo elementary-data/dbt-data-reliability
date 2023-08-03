@@ -86,6 +86,7 @@ class DbtProject:
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[False] = False,
@@ -100,6 +101,7 @@ class DbtProject:
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[True],
@@ -113,15 +115,21 @@ class DbtProject:
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        if columns and test_column:
+            raise ValueError("You can't specify both 'columns' and 'test_column'.")
+
         test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
-        table_yaml: Dict[str, Any] = {
-            "name": test_id,
-        }
+        table_yaml: Dict[str, Any] = {"name": test_id}
+
+        if columns:
+            table_yaml["columns"] = columns
+
         if test_column is None:
             table_yaml["tests"] = [{dbt_test_name: test_args}]
         else:
