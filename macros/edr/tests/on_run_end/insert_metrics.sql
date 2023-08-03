@@ -9,5 +9,4 @@
 
   {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
   {% do elementary.insert_rows(target_relation, metrics, should_commit=true) %}
-  {% do return(none) %}
 {% endmacro %}
