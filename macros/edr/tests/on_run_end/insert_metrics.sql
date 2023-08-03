@@ -7,6 +7,6 @@
     {% do return(none) %}
   {% endif %}
 
-  {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
+  {{ elementary.file_log("Inserting {} metrics into {}.".format(metrics | length, target_relation)) }}
   {% do elementary.insert_rows(target_relation, metrics, should_commit=true) %}
 {% endmacro %}
