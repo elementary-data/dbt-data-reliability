@@ -27,7 +27,6 @@
       {% endif %}
     {% endfor %}
     {% if elementary.get_dbt_columns_materialization() != "view" and elementary.get_config_var("upload_dbt_columns") %}
-      {% do adapter.commit() %}
       {% do elementary.upload_dbt_columns() %}  {# dbt_columns upload must come after other artifacts, as it is dependant on them #}
     {% endif %}
     {% do elementary.file_log("Uploaded dbt artifacts.") %}
