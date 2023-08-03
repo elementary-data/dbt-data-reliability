@@ -5,7 +5,7 @@
         {% do return("") %}
       {% endif %}
 
-      {% if flags.WHICH in ['run', 'build'] and elementary.get_config_var('collect_metrics') %}
+      {% if flags.WHICH in ['run', 'build'] %}
         {% do elementary.insert_metrics() %}
       {% endif %}
 

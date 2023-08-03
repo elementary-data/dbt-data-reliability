@@ -23,6 +23,10 @@
 {% endmacro %}
 
 {% macro query_metrics() %}
+  {% if not elementary.get_config_var('collect_metrics') %}
+    {% do return([]) %}
+  {% endif %}
+
   {% do return(elementary.query_table_metrics()) %}
 {% endmacro %}
 
