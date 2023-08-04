@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 from dbt_project import DbtProject
 
@@ -21,7 +23,7 @@ EXPECTED_FAILURES = [
 ]
 
 
-def assert_test_results(test_results: list[dict]):
+def assert_test_results(test_results: List[dict]):
     expected_failures = EXPECTED_FAILURES.copy()
     for test_result in test_results:
         test_sub_type = test_result["test_sub_type"]
