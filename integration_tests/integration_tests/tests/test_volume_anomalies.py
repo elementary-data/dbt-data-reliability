@@ -100,3 +100,26 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
     }
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "fail"
+
+
+def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtProject):
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=date.today())
+        if cur_date < cur_date.today() - timedelta(days=1)
+        for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
+    ]
+    test_args = {**DBT_TEST_ARGS, "anomaly_direction": "spike"}
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "pass"
+
+
+def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProject):
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=date.today())
+        for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
+    ]
+    test_args = {**DBT_TEST_ARGS, "anomaly_direction": "drop"}
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "pass"
