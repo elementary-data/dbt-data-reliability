@@ -168,3 +168,22 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
     test_args = {**DBT_TEST_ARGS, "sensitivity": 2}
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "fail"
+
+
+def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
+    data = [{"hello": "world"}]
+    min_training_set_size = 4
+    test_args = {
+        # Using smaller training set size to avoid needing to run many tests.
+        "min_training_set_size": min_training_set_size,
+        # Smaller sensitivity due to smaller training set size.
+        "sensitivity": 1.25,
+    }
+    dbt_project.seed(data, test_id)
+    for _ in range(min_training_set_size):
+        test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+        assert test_result["status"] == "pass"
+
+    dbt_project.seed(data * 2, test_id)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "fail"
