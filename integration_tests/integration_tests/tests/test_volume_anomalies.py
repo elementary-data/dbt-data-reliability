@@ -153,10 +153,10 @@ def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject
 def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject):
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for idx, cur_date in enumerate(generate_dates(base_date=date.today()))
+        for i, cur_date in enumerate(generate_dates(base_date=date.today()))
         for _ in range(
             1
-            if idx % 2 == 0
+            if i % 2 == 0
             else 2
             if cur_date < cur_date.today() - timedelta(days=1)
             else 3
