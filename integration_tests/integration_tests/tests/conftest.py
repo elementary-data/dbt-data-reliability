@@ -1,6 +1,8 @@
 import env
 import pytest
+from dbt.version import __version__ as dbt_version
 from dbt_project import DbtProject
+from packaging import version
 from filelock import FileLock
 
 
@@ -40,6 +42,20 @@ def only_on_targets(request, target: str):
         requested_targets = request.node.get_closest_marker("only_on_targets").args[0]
         if target not in requested_targets:
             pytest.skip("Test unsupported for target: {}".format(target))
+
+
+@pytest.fixture(autouse=True)
+def requires_dbt_version(request):
+    if request.node.get_closest_marker("requires_dbt_version"):
+        required_version = request.node.get_closest_marker("requires_dbt_version").args[
+            0
+        ]
+        if version.parse(dbt_version) < version.parse(required_version):
+            pytest.skip(
+                "Test requires dbt version {} or above, but {} is installed.".format(
+                    required_version, dbt_version
+                )
+            )
 
 
 @pytest.fixture
