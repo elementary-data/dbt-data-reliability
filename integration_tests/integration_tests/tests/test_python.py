@@ -11,8 +11,8 @@ TEST_NAME = "elementary.python"
 
 @pytest.mark.only_on_targets(["snowflake", "bigquery"])
 @Parametrization.autodetect_parameters()
-@Parametrization.case("successfull", python_result=0, expected_status="pass")
-@Parametrization.case("unsuccessfull", python_result=1, expected_status="fail")
+@Parametrization.case("pass", python_result=0, expected_status="pass")
+@Parametrization.case("fail", python_result=1, expected_status="fail")
 def test_python_int(
     test_id: str,
     dbt_project: DbtProject,

@@ -15,7 +15,6 @@
     {% if not kwargs %}
         {% do exceptions.raise_compiler_error("A json schema must be supplied as a part of the test!") %}
     {% endif %}
-    {{ log(kwargs, info=True) }}
 
     {{ elementary.test_python(model, elementary.json_schema_python_test, {'column_name': column_name, 'json_schema': kwargs}, where_expression,
                               packages=['jsonschema']) }}

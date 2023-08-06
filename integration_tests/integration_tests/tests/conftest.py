@@ -8,15 +8,6 @@ def pytest_addoption(parser):
     parser.addoption("--target", action="store", default="postgres")
 
 
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "skip_targets(targets): skip test for the given targets"
-    )
-    config.addinivalue_line(
-        "markers", "only_on_targets(targets): skip test for non given targets"
-    )
-
-
 @pytest.fixture(scope="session", autouse=True)
 def init_tests_env(target, tmp_path_factory, worker_id: str):
     # Tests are not multi-threaded.
