@@ -55,7 +55,9 @@ def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
 def test_volume_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject, as_model: bool
 ):
-    test_date, *training_dates = generate_dates(base_date=date.today() - timedelta(1))
+    test_date, *training_dates = generate_dates(
+        base_date=date.today() - timedelta(days=1)
+    )
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "payback": payback}
@@ -123,3 +125,17 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
     test_args = {**DBT_TEST_ARGS, "anomaly_direction": "drop"}
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "pass"
+
+
+def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
+    dates = generate_dates(
+        base_date=date.today() - timedelta(days=1), period="weeks", days_back=7 * 30
+    )
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in dates
+        if cur_date < cur_date.today() - timedelta(weeks=1)
+    ]
+    test_args = {**DBT_TEST_ARGS, "seasonality": "day_of_week"}
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "fail"
