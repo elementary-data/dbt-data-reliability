@@ -75,7 +75,7 @@ class TestFreshnessAnomalies:
             )
         ]
         result = dbt_project.test(
-            data, test_id, TEST_NAME, self._get_test_config(config), data=data
+            test_id, TEST_NAME, self._get_test_config(config), data=data
         )
         assert result["status"] == "fail"
 
