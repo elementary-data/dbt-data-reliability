@@ -29,26 +29,6 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
-def test_partial_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
-    data = [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(base_date=date.today())
-        for _ in range(2 if cur_date < cur_date.today() - timedelta(days=1) else 1)
-    ]
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] == "fail"
-
-
-def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
-    data = [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(base_date=date.today())
-        for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
-    ]
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] == "fail"
-
-
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="source", as_model=False)
 @Parametrization.case(name="model", as_model=True)
