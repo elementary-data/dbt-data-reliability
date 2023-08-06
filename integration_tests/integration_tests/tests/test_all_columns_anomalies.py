@@ -22,7 +22,7 @@ def test_anomalyless_all_columns_anomalies(test_id: str, dbt_project: DbtProject
         for superhero in ["Superman", "Batman"]
     ]
     test_results = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, multiple_results=True
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, multiple_results=True
     )
     assert all([res["status"] == "pass" for res in test_results])
 
@@ -44,7 +44,7 @@ def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
     ]
 
     test_results = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, multiple_results=True
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, multiple_results=True
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {"superhero": "fail", TIMESTAMP_COLUMN: "pass"}
@@ -84,7 +84,7 @@ def test_all_columns_anomalies_with_where_expression(
 
     params = DBT_TEST_ARGS
     test_results = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, multiple_results=True
+        test_id, DBT_TEST_NAME, params, data=data, multiple_results=True
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {
@@ -95,13 +95,13 @@ def test_all_columns_anomalies_with_where_expression(
 
     params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_results = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, multiple_results=True
+        test_id, DBT_TEST_NAME, params, multiple_results=True
     )
     assert all([res["status"] == "pass" for res in test_results])
 
     params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_results = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, multiple_results=True
+        test_id, DBT_TEST_NAME, params, multiple_results=True
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {

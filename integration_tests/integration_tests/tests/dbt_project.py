@@ -82,12 +82,12 @@ class DbtProject:
     @overload
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
         columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[False] = False,
@@ -97,12 +97,12 @@ class DbtProject:
     @overload
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
         columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[True],
@@ -111,12 +111,12 @@ class DbtProject:
 
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
         columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: bool = False,
@@ -158,7 +158,8 @@ class DbtProject:
             }
             temp_table_ctx = nullcontext()
 
-        self.seed(data, test_id)
+        if data:
+            self.seed(data, test_id)
         with temp_table_ctx:
             with NamedTemporaryFile(
                 dir=TMP_MODELS_DIR_PATH, suffix=".yaml"

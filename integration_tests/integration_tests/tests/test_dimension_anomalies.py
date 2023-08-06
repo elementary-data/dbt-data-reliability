@@ -18,7 +18,7 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
         for cur_date in generate_dates(base_date=date.today() - timedelta(1))
         for superhero in ["Superman", "Spiderman"]
     ]
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "pass"
 
 
@@ -41,7 +41,7 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
         for superhero in ["Superman", "Spiderman"]
     ]
 
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "fail"
 
 
@@ -73,13 +73,13 @@ def test_dimensions_anomalies_with_where_parameter(
     ]
 
     params = DBT_TEST_ARGS
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, params, data=data)
     assert test_result["status"] == "fail"
 
     params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, params)
     assert test_result["status"] == "pass"
 
     params = dict(params, where="universe = 'DC'")
-    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, params)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, params)
     assert test_result["status"] == "fail"
