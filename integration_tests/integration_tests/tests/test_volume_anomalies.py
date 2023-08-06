@@ -139,7 +139,7 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
 
 def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     dates = generate_dates(
-        base_date=date.today() - timedelta(days=1), period="weeks", days_back=7 * 30
+        base_date=date.today() - timedelta(days=1), period="weeks", days_back=7 * 14
     )
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
