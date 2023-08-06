@@ -7,8 +7,9 @@ from dbt_project import DbtProject
 from data_generator import generate_dates, DATE_FORMAT
 
 
-TEST_NAME = 'elementary.freshness_anomalies'
-TIMESTAMP_COLUMN = 'timestamp'
+TEST_NAME = "elementary.freshness_anomalies"
+TIMESTAMP_COLUMN = "timestamp"
+
 
 @dataclass
 class FreshnessAnomaliesConfig:
@@ -17,32 +18,21 @@ class FreshnessAnomaliesConfig:
     days_back: int
     backfill_days: int
 
+
 HOURLY_CONFIG = FreshnessAnomaliesConfig(
-    period="hour",
-    step=timedelta(minutes=10),
-    days_back=14,
-    backfill_days=2
+    period="hour", step=timedelta(minutes=10), days_back=14, backfill_days=2
 )
 
 DAILY_CONFIG = FreshnessAnomaliesConfig(
-    period="day",
-    step=timedelta(hours=2),
-    days_back=30,
-    backfill_days=3
+    period="day", step=timedelta(hours=2), days_back=30, backfill_days=3
 )
 
 WEEKLY_CONFIG = FreshnessAnomaliesConfig(
-    period="week",
-    step=timedelta(hours=12),
-    days_back=7 * 15,
-    backfill_days=14
+    period="week", step=timedelta(hours=12), days_back=7 * 15, backfill_days=14
 )
 
 MONTHLY_CONFIG = FreshnessAnomaliesConfig(
-    period="month",
-    step=timedelta(days=2),
-    days_back=30 * 15,
-    backfill_days=60
+    period="month", step=timedelta(days=2), days_back=30 * 15, backfill_days=60
 )
 
 
@@ -52,62 +42,83 @@ MONTHLY_CONFIG = FreshnessAnomaliesConfig(
 @Parametrization.case(name="weekly", config=WEEKLY_CONFIG)
 @Parametrization.case(name="monthly", config=MONTHLY_CONFIG)
 class TestFreshnessAnomalies:
-
     def _get_test_config(self, config: FreshnessAnomaliesConfig) -> dict:
         return dict(
             timestamp_column=TIMESTAMP_COLUMN,
             days_back=config.days_back,
             backfill_days=config.backfill_days,
-            time_bucket=dict(
-                period=config.period,
-                count=1
-            )
+            time_bucket=dict(period=config.period, count=1),
         )
 
-    def test_anomalyless_table(self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig):
+    def test_anomalyless_table(
+        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+    ):
         data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(datetime.now(), step=config.step, days_back=config.days_back)
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                datetime.now(), step=config.step, days_back=config.days_back
+            )
         ]
-        result = dbt_project.test(data, test_id, TEST_NAME, self._get_test_config(config))
+        result = dbt_project.test(
+            test_id, TEST_NAME, self._get_test_config(config), data=data
+        )
         assert result["status"] == "pass"
-    
-    
-    def test_stop(self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig):
-        anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
-        data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(anomaly_date, step=config.step, days_back=config.days_back)
-        ]
-        result = dbt_project.test(data, test_id, TEST_NAME, self._get_test_config(config))
-        assert result["status"] == "fail"
-    
 
-    def test_slower_rate(self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig):
+    def test_stop(
+        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+    ):
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(anomaly_date, step=config.step, days_back=config.days_back)
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                anomaly_date, step=config.step, days_back=config.days_back
+            )
+        ]
+        result = dbt_project.test(
+            data, test_id, TEST_NAME, self._get_test_config(config), data=data
+        )
+        assert result["status"] == "fail"
+
+    def test_slower_rate(
+        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+    ):
+        anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
+        data = [
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                anomaly_date, step=config.step, days_back=config.days_back
+            )
         ]
         slow_data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(datetime.now(), step=config.step * 4, days_back=config.backfill_days)
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                datetime.now(), step=config.step * 4, days_back=config.backfill_days
+            )
         ]
         data.extend(slow_data)
-        result = dbt_project.test(data, test_id, TEST_NAME, self._get_test_config(config))
+        result = dbt_project.test(
+            test_id, TEST_NAME, self._get_test_config(config), data=data
+        )
         assert result["status"] == "fail"
 
-
-    def test_faster_rate(self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig):
+    def test_faster_rate(
+        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+    ):
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(anomaly_date, step=config.step, days_back=config.days_back)
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                anomaly_date, step=config.step, days_back=config.days_back
+            )
         ]
         fast_data = [
-            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} 
-            for date in generate_dates(datetime.now(), step=config.step / 4, days_back=config.backfill_days)
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                datetime.now(), step=config.step / 4, days_back=config.backfill_days
+            )
         ]
         data.extend(fast_data)
-        result = dbt_project.test(data, test_id, TEST_NAME, self._get_test_config(config))
+        result = dbt_project.test(
+            test_id, TEST_NAME, self._get_test_config(config), data=data
+        )
         assert result["status"] == "pass"

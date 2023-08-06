@@ -19,9 +19,7 @@ def test_python_int(
     python_result: int,
     expected_status: str,
 ):
-    data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
@@ -36,13 +34,13 @@ def test_python_int(
 def test_python_full_df(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
             code_macro="python_return_df",
             macro_args=dict(result=json.dumps(data)),
         ),
+        data=data,
     )
     assert result["status"] == "fail"
 
@@ -51,10 +49,7 @@ def test_python_full_df(test_id: str, dbt_project: DbtProject):
 def test_python_empty_df(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
-        data,
-        test_id,
-        TEST_NAME,
-        dict(code_macro="python_return_empty_df"),
+        test_id, TEST_NAME, dict(code_macro="python_return_empty_df"), data=data
     )
     assert result["status"] == "pass"
 
@@ -63,12 +58,12 @@ def test_python_empty_df(test_id: str, dbt_project: DbtProject):
 def test_invalid_target_python(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: str()}]
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
             code_macro="python_mock_test",
             macro_args=dict(result=True),
         ),
+        data=data,
     )
     assert result["status"] == "error"

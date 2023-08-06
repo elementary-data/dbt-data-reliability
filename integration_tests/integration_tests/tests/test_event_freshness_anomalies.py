@@ -19,13 +19,13 @@ def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
         for date in generate_dates(datetime.now(), step=STEP)
     ]
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
             event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
             update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
         ),
+        data=data,
     )
     assert result["status"] == "pass"
 
@@ -40,13 +40,13 @@ def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
         for date in generate_dates(anomaly_date, step=STEP)
     ]
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
             event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
             update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
         ),
+        data=data,
     )
     assert result["status"] == "fail"
 
@@ -69,12 +69,12 @@ def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
     ]
     data.extend(slow_data)
     result = dbt_project.test(
-        data,
         test_id,
         TEST_NAME,
         dict(
             event_timestamp_column=EVENT_TIMESTAMP_COLUMN,
             update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
         ),
+        data=data,
     )
     assert result["status"] == "fail"
