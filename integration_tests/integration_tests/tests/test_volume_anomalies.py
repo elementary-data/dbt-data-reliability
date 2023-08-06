@@ -187,12 +187,7 @@ def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
             rows = data * 2
         else:
             rows = None
-        test_result = dbt_project.test(
-            test_id,
-            DBT_TEST_NAME,
-            test_args,
-            data=rows,
-        )
+        test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=rows)
         if is_anomaly:
             assert test_result["status"] == "fail"
         else:
