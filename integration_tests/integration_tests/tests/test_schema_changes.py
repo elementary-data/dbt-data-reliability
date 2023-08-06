@@ -35,13 +35,13 @@ def assert_test_results(test_results: List[dict]):
 @pytest.mark.skip_targets(["databricks"])
 def test_schema_changes(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes"
-    test_result = dbt_project.test(DATASET1, test_id, dbt_test_name)
+    test_result = dbt_project.test(test_id, dbt_test_name, data=DATASET1)
     assert test_result["status"] == "pass"
     test_results = dbt_project.test(
-        DATASET2, test_id, dbt_test_name, multiple_results=True
+        test_id, dbt_test_name, data=DATASET2, multiple_results=True
     )
     assert_test_results(test_results)
-    test_result = dbt_project.test(DATASET2, test_id, dbt_test_name)
+    test_result = dbt_project.test(test_id, dbt_test_name)
     assert test_result["status"] == "pass"
 
 
@@ -49,7 +49,6 @@ def test_schema_changes(test_id: str, dbt_project: DbtProject):
 def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes_from_baseline"
     test_results = dbt_project.test(
-        DATASET2,
         test_id,
         dbt_test_name,
         test_args={"fail_on_added": True, "enforce_types": True},
@@ -57,6 +56,7 @@ def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
             {"name": "id", "data_type": "integer"},
             {"name": "name", "data_type": "string"},
         ],
+        data=DATASET2,
         multiple_results=True,
     )
     assert_test_results(test_results)
