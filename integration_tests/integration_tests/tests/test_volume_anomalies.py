@@ -171,24 +171,19 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
 
 
 def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
-    min_training_set_size = (
-        4  # Using smaller training set size to avoid needing to run many tests.
-    )
     data = [{"hello": "world"}]
+    min_training_set_size = 4
     test_args = {
+        # Using smaller training set size to avoid needing to run many tests.
         "min_training_set_size": min_training_set_size,
+        # Smaller sensitivity due to smaller training set size.
         "sensitivity": 1.25,
-    }  # Smaller sensitivity due to smaller training set size.
-    for test_iter_idx in range(1, min_training_set_size + 1):
-        is_anomaly = test_iter_idx == min_training_set_size
-        if test_iter_idx == 1:  # Load data once to avoid unnecessary seeds.
-            rows = data
-        elif is_anomaly:  # Double the data on the last iteration to trigger an anomaly.
-            rows = data * 2
-        else:
-            rows = None
-        test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=rows)
-        if is_anomaly:
-            assert test_result["status"] == "fail"
-        else:
-            assert test_result["status"] == "pass"
+    }
+    dbt_project.seed(data, test_id)
+    for _ in range(min_training_set_size):
+        test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+        assert test_result["status"] == "pass"
+
+    dbt_project.seed(data * 2, test_id)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "fail"
