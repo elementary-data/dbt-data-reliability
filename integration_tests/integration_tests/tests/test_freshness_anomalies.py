@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from parametrization import Parametrization
+import pytest
 
 from dbt_project import DbtProject
 from data_generator import generate_dates, DATE_FORMAT
@@ -50,9 +51,20 @@ class TestFreshnessAnomalies:
             time_bucket=dict(period=config.period, count=1),
         )
 
+    def _skip_redshift_monthly(
+        self, target: str, config: FreshnessAnomaliesConfig
+    ) -> bool:
+        if target == "redshift" and config.period == "month":
+            pytest.skip("Redshift does not support monthly time buckets.")
+
     def test_anomalyless_table(
-        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+        self,
+        test_id: str,
+        dbt_project: DbtProject,
+        config: FreshnessAnomaliesConfig,
+        target: str,
     ):
+        self._skip_redshift_monthly(target, config)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
@@ -65,8 +77,13 @@ class TestFreshnessAnomalies:
         assert result["status"] == "pass"
 
     def test_stop(
-        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+        self,
+        test_id: str,
+        dbt_project: DbtProject,
+        config: FreshnessAnomaliesConfig,
+        target: str,
     ):
+        self._skip_redshift_monthly(target, config)
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
@@ -80,8 +97,13 @@ class TestFreshnessAnomalies:
         assert result["status"] == "fail"
 
     def test_slower_rate(
-        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+        self,
+        test_id: str,
+        dbt_project: DbtProject,
+        config: FreshnessAnomaliesConfig,
+        target: str,
     ):
+        self._skip_redshift_monthly(target, config)
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
@@ -102,8 +124,13 @@ class TestFreshnessAnomalies:
         assert result["status"] == "fail"
 
     def test_faster_rate(
-        self, test_id: str, dbt_project: DbtProject, config: FreshnessAnomaliesConfig
+        self,
+        test_id: str,
+        dbt_project: DbtProject,
+        config: FreshnessAnomaliesConfig,
+        target: str,
     ):
+        self._skip_redshift_monthly(target, config)
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
