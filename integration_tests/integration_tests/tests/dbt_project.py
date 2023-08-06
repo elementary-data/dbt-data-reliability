@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Literal, Optional, Union, overload
@@ -18,6 +19,7 @@ _DEFAULT_VARS = {
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
     "debug_logs": True,
+    "collect_metrics": False,
 }
 
 logger = get_logger(__name__)
@@ -81,11 +83,12 @@ class DbtProject:
     @overload
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[False] = False,
@@ -95,11 +98,12 @@ class DbtProject:
     @overload
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: Literal[True],
@@ -108,20 +112,26 @@ class DbtProject:
 
     def test(
         self,
-        data: List[dict],
         test_id: str,
         dbt_test_name: str,
         test_args: Optional[Dict[str, Any]] = None,
         test_column: Optional[str] = None,
+        columns: Optional[List[dict]] = None,
+        data: Optional[List[dict]] = None,
         as_model: bool = False,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        if columns and test_column:
+            raise ValueError("You can't specify both 'columns' and 'test_column'.")
+
         test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
-        table_yaml: Dict[str, Any] = {
-            "name": test_id,
-        }
+        table_yaml: Dict[str, Any] = {"name": test_id}
+
+        if columns:
+            table_yaml["columns"] = columns
+
         if test_column is None:
             table_yaml["tests"] = [{dbt_test_name: test_args}]
         else:
@@ -129,11 +139,13 @@ class DbtProject:
                 {"name": test_column, "tests": [{dbt_test_name: test_args}]}
             ]
 
+        temp_table_ctx: Any
         if as_model:
             props_yaml = {
                 "version": 2,
                 "models": [table_yaml],
             }
+            temp_table_ctx = self.create_temp_model_for_existing_table(test_id)
         else:
             props_yaml = {
                 "version": 2,
@@ -145,12 +157,17 @@ class DbtProject:
                     }
                 ],
             }
+            temp_table_ctx = nullcontext()
 
-        self.seed(data, test_id)
-        with NamedTemporaryFile(dir=TMP_MODELS_DIR_PATH, suffix=".yaml") as props_file:
-            YAML().dump(props_yaml, props_file)
-            relative_props_path = Path(props_file.name).relative_to(PATH)
-            self.dbt_runner.test(select=str(relative_props_path))
+        if data:
+            self.seed(data, test_id)
+        with temp_table_ctx:
+            with NamedTemporaryFile(
+                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
+            ) as props_file:
+                YAML().dump(props_yaml, props_file)
+                relative_props_path = Path(props_file.name).relative_to(PATH)
+                self.dbt_runner.test(select=str(relative_props_path))
 
         if multiple_results:
             return self._read_test_results(test_id)
@@ -159,6 +176,15 @@ class DbtProject:
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
+
+    @contextmanager
+    def create_temp_model_for_existing_table(self, table_name: str):
+        model_path = TMP_MODELS_DIR_PATH.joinpath(f"{table_name}.sql")
+        model_path.touch()  # Just need the file to exist, the contents doesn't matter
+        try:
+            yield
+        finally:
+            model_path.unlink()
 
     def _read_test_results(self, table_name: str) -> List[Dict[str, Any]]:
         test_execution_id_subquery = self.read_table_query(

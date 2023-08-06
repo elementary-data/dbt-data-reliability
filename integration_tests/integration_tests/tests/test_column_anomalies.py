@@ -22,7 +22,7 @@ def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
         for superhero in ["Superman", "Batman"]
     ]
     test_result = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, test_column="superhero"
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="superhero"
     )
     assert test_result["status"] == "pass"
 
@@ -44,7 +44,7 @@ def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     ]
 
     test_result = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS, test_column="superhero"
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="superhero"
     )
     assert test_result["status"] == "fail"
 
@@ -81,18 +81,18 @@ def test_column_anomalies_with_where_expression(test_id: str, dbt_project: DbtPr
 
     params = DBT_TEST_ARGS
     test_result = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, test_column="superhero"
+        test_id, DBT_TEST_NAME, params, data=data, test_column="superhero"
     )
     assert test_result["status"] == "fail"
 
     params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_result = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, test_column="superhero"
+        test_id, DBT_TEST_NAME, params, test_column="superhero"
     )
     assert test_result["status"] == "pass"
 
     params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_result = dbt_project.test(
-        data, test_id, DBT_TEST_NAME, params, test_column="superhero"
+        test_id, DBT_TEST_NAME, params, test_column="superhero"
     )
     assert test_result["status"] == "fail"

@@ -4,4 +4,5 @@ sources:
   - name: test_data
     schema: "{{ target.schema }}"
     tables:
-      - name: dummy
+      - name: metrics_seed1
+      - name: metrics_seed2
