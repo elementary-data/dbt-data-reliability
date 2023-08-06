@@ -95,6 +95,10 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
         for cur_date in generate_dates(base_date=now, period="hours", days_back=2)
         if cur_date < now - timedelta(hours=1)
     ]
+    # This is a bug. The test should pass, but it fails.
+    # test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    # assert test_result["status"] == "pass"
+
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "hour", "count": 1},
@@ -111,6 +115,9 @@ def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtPro
         if cur_date < cur_date.today() - timedelta(days=1)
         for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
     ]
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    assert test_result["status"] == "fail"
+
     test_args = {**DBT_TEST_ARGS, "anomaly_direction": "spike"}
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "pass"
@@ -122,6 +129,9 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
         for cur_date in generate_dates(base_date=date.today())
         for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
     ]
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    assert test_result["status"] == "fail"
+
     test_args = {**DBT_TEST_ARGS, "anomaly_direction": "drop"}
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "pass"
@@ -136,6 +146,9 @@ def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject
         for cur_date in dates
         if cur_date < cur_date.today() - timedelta(weeks=1)
     ]
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    assert test_result["status"] == "pass"
+
     test_args = {**DBT_TEST_ARGS, "seasonality": "day_of_week"}
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "fail"
@@ -153,6 +166,9 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
             else 3
         )
     ]
+    test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, DBT_TEST_ARGS)
+    assert test_result["status"] == "pass"
+
     test_args = {**DBT_TEST_ARGS, "sensitivity": 2}
     test_result = dbt_project.test(data, test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "fail"
