@@ -9,11 +9,6 @@ on:
         type: string
         required: false
         description: dbt's version to test with
-      generate-data:
-        type: boolean
-        required: false
-        default: false
-        description: Whether to generate new data
       elementary-ref:
         type: string
         required: false
@@ -41,7 +36,6 @@ jobs:
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
       dbt-version: ${{ github.event_name != 'workflow_dispatch' && ((matrix.warehouse-type == 'databricks_catalog' && '1.1.1') || '1.0.2') || inputs.dbt-version }}
-      generate-data: ${{ inputs.generate-data || false }}
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
     secrets: inherit

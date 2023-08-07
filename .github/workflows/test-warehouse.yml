@@ -26,16 +26,6 @@ on:
         type: string
         required: false
         description: dbt's version to test with
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-        description: Whether to clean test environment
-      generate-data:
-        type: boolean
-        required: false
-        default: false
-        description: Whether to generate new data
 
   workflow_call:
     inputs:
@@ -51,14 +41,6 @@ on:
       dbt-version:
         type: string
         required: false
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-      generate-data:
-        type: boolean
-        required: false
-        default: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
