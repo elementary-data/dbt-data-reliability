@@ -130,11 +130,10 @@ jobs:
           py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
       
       - name: Surface failing tests
-        working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: test-results.xml
+          path: ${{ env.TESTS_DIR }}/integration_tests/tests/test-results.xml
           summary: true
           display-options: fEX
           fail-on-empty: true
