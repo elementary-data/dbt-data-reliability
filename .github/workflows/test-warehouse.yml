@@ -130,6 +130,7 @@ jobs:
           py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
       
       - name: Surface failing tests
+        working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
