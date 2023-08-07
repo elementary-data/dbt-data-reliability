@@ -84,6 +84,9 @@ jobs:
         with:
           python-version: "3.8.17"
 
+      - name: Upgrade pip
+        run: pip install -U pip
+
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
         run: sudo apt-get install python-dev libsasl2-dev gcc
