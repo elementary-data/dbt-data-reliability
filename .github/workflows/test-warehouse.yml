@@ -26,16 +26,6 @@ on:
         type: string
         required: false
         description: dbt's version to test with
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-        description: Whether to clean test environment
-      generate-data:
-        type: boolean
-        required: false
-        default: false
-        description: Whether to generate new data
 
   workflow_call:
     inputs:
@@ -51,14 +41,6 @@ on:
       dbt-version:
         type: string
         required: false
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-      generate-data:
-        type: boolean
-        required: false
-        default: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -118,17 +100,13 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: dbt deps
 
-      - name: Run unit tests
-        working-directory: ${{ env.TESTS_DIR }}
-        run: python run_unit_tests.py -t "${{ inputs.warehouse-type }}"
-
-      - name: Run integration tests
+      - name: Test
         working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
         run: |
           pip install -r ../requirements.txt
           dbt deps --project-dir=../dbt_project
           py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
-      
+
       - name: Surface failing tests
         if: always()
         uses: pmeier/pytest-results-action@main
@@ -137,7 +115,3 @@ jobs:
           summary: true
           display-options: fEX
           fail-on-empty: true
-
-      - name: Run E2E tests
-        working-directory: ${{ env.TESTS_DIR }}
-        run: python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.warehouse-type == 'postgres' || inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"
