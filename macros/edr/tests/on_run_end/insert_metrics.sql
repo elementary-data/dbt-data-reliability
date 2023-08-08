@@ -1,5 +1,5 @@
 {% macro insert_metrics() %}
-  {% set metrics = elementary.get_cache("tables").get("metrics") %}
+  {% set metrics = elementary.get_cache("tables").get("metrics").get("rows") %}
   {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
   {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
   {% if not target_relation %}
