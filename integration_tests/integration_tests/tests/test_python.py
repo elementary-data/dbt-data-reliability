@@ -1,9 +1,6 @@
-import json
-from typing import Union
 import pytest
-from parametrization import Parametrization
-
 from dbt_project import DbtProject
+from parametrization import Parametrization
 
 COLUMN_NAME = "column_name"
 TEST_NAME = "elementary.python"
@@ -22,6 +19,7 @@ class TestPython:
         python_result: int,
         expected_status: str,
     ):
+        data = [{COLUMN_NAME: str()}]
         result = dbt_project.test(
             test_id,
             TEST_NAME,
@@ -29,6 +27,7 @@ class TestPython:
                 code_macro="python_mock_test",
                 macro_args=dict(result=python_result),
             ),
+            data=data,
         )
         assert result["status"] == expected_status
 
@@ -38,10 +37,7 @@ class TestPython:
         result = dbt_project.test(
             test_id,
             TEST_NAME,
-            dict(
-                code_macro="python_return_df",
-                macro_args=dict(result=json.dumps(data)),
-            ),
+            dict(code_macro="python_return_df"),
             data=data,
         )
         assert result["status"] == "fail"
@@ -62,7 +58,7 @@ class TestPython:
             TEST_NAME,
             dict(
                 code_macro="python_mock_test",
-                macro_args=dict(result=True),
+                macro_args=dict(result=1),
             ),
             data=data,
         )
