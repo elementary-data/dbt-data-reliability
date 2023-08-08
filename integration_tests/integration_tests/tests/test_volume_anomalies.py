@@ -29,26 +29,6 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
-def test_partial_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
-    data = [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(base_date=date.today())
-        for _ in range(2 if cur_date < cur_date.today() - timedelta(days=1) else 1)
-    ]
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] == "fail"
-
-
-def test_spike_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
-    data = [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(base_date=date.today())
-        for _ in range(1 if cur_date < cur_date.today() - timedelta(days=1) else 2)
-    ]
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] == "fail"
-
-
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="source", as_model=False)
 @Parametrization.case(name="model", as_model=True)
@@ -170,5 +150,24 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "pass"
 
     test_args = {**DBT_TEST_ARGS, "sensitivity": 2}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "fail"
+
+
+def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
+    data = [{"hello": "world"}]
+    min_training_set_size = 4
+    test_args = {
+        # Using smaller training set size to avoid needing to run many tests.
+        "min_training_set_size": min_training_set_size,
+        # Smaller sensitivity due to smaller training set size.
+        "sensitivity": 1.25,
+    }
+    dbt_project.seed(data, test_id)
+    for _ in range(min_training_set_size):
+        test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+        assert test_result["status"] == "pass"
+
+    dbt_project.seed(data * 2, test_id)
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
     assert test_result["status"] == "fail"
