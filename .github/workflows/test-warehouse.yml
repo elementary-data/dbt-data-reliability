@@ -96,6 +96,7 @@ jobs:
           mkdir -p ~/.dbt
           UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | head -c 32 | sed "s/-/_/g")
           echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+          echo $CI_PROFILES_YML
 
       - name: Setup Python
         uses: actions/setup-python@v4
