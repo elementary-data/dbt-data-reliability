@@ -32,25 +32,45 @@
                                                 quoted_full_table_name=quoted_full_table_name) }}
     ),
 
-    metrics_final as (
+    {% if timestamp_column %}
+        metrics_final as (
 
-    select
-        {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
-        {{ elementary.null_string() }} as column_name,
-        metric_name,
-        {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
-        source_value,
-        edr_bucket_start as bucket_start,
-        edr_bucket_end as bucket_end,
-        {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
-        {{ elementary.null_string() }} as dimension,
-        {{ elementary.null_string() }} as dimension_value,
-        {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
-    from
-        metrics
-    where (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
-        metric_value is null
-    )
+        select
+            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.null_string() }} as column_name,
+            metric_name,
+            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
+            source_value,
+            edr_bucket_start as bucket_start,
+            edr_bucket_end as bucket_end,
+            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value,
+            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+        from
+            metrics
+        where (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
+            metric_value is null
+        )
+    {% else %}
+        metrics_final as (
+
+        select
+            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.null_string() }} as column_name,
+            metric_name,
+            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
+            {{ elementary.null_string() }} as source_value,
+            {{ elementary.null_timestamp() }} as bucket_start,
+            {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
+            {{ elementary.null_int() }} as bucket_duration_hours,
+            {{ elementary.null_string() }} as dimension,
+            {{ elementary.null_string() }} as dimension_value,
+            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
+        from metrics
+
+        )
+    {% endif %}
 
     select
        {{ elementary.generate_surrogate_key([
