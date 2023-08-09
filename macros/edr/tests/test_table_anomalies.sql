@@ -40,13 +40,11 @@
         {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
         {%- set table_monitors = elementary.get_final_table_monitors(table_anomalies) %}
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
-        {% if test_configuration.timestamp_column %}
-            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation,
-                                                                                            test_configuration.backfill_days,
-                                                                                            test_configuration.days_back,
-                                                                                            monitors=table_monitors,
-                                                                                            metric_properties=metric_properties) %}
-        {%- endif %}
+        {% set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation,
+                                                                                        test_configuration.backfill_days,
+                                                                                        test_configuration.days_back,
+                                                                                        monitors=table_monitors,
+                                                                                        metric_properties=metric_properties) %}
         {{ elementary.debug_log('min_bucket_start: ' ~ min_bucket_start ~ ' | max_bucket_end: ' ~ min_bucket_start ) }}
 
         {#- execute table monitors and write to temp test table -#}

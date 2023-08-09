@@ -8,14 +8,14 @@
         {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
 
-    {% if timestamp_column %}
-        buckets as (
-            select edr_bucket_start, edr_bucket_end
-            from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
-            where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
-              and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
-        ),
+    buckets as (
+        select edr_bucket_start, edr_bucket_end
+        from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start, max_bucket_end) }}) results
+        where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+            and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
+    ),
 
+    {% if timestamp_column %}
         time_filtered_monitored_table as (
             select *,
                    {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
