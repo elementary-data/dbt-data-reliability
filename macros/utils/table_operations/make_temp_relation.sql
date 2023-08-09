@@ -16,6 +16,16 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
+    {% set tmp_identifier = base_relation.identifier ~ suffix %}
+    {% set tmp_relation = base_relation.incorporate(path = {
+        "schema": none,
+        "identifier": tmp_identifier
+    }) -%}
+
+    {% do return(tmp_relation) %}
+{% endmacro %}
+
 --- VIEWS
 {% macro make_temp_view_relation(base_relation, suffix=none) %}
     {% if not suffix %}
