@@ -1,12 +1,12 @@
-{% macro _make_temp_relation(base_relation, suffix=none) %}
-    {% do return(adapter.dispatch("_make_temp_relation", "elementary")(base_relation, suffix)) %}
+{% macro edr_make_temp_relation(base_relation, suffix=none) %}
+    {% do return(adapter.dispatch("edr_make_temp_relation", "elementary")(base_relation, suffix)) %}
 {% endmacro %}
 
-{% macro default___make_temp_relation(base_relation, suffix) %}
+{% macro default__edr_make_temp_relation(base_relation, suffix) %}
     {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
-{% macro spark___make_temp_relation(base_relation, suffix) %}
+{% macro spark__edr_make_temp_relation(base_relation, suffix) %}
     {% set tmp_identifier = base_relation.identifier ~ suffix %}
     {% set tmp_relation = base_relation.incorporate(path = {
         "schema": none,
@@ -22,7 +22,7 @@
         {% set suffix = modules.datetime.datetime.utcnow().strftime('__tmp_%Y%m%d%H%M%S%f') %}
     {% endif %}
 
-    {% do return(elementary._make_temp_relation(base_relation, suffix)) %}
+    {% do return(elementary.edr_make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
 
@@ -36,7 +36,7 @@
 {% endmacro %}
 
 {% macro default__make_temp_table_relation(base_relation, suffix) %}
-    {% do return(elementary._make_temp_relation(base_relation, suffix)) %}
+    {% do return(elementary.edr_make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
 {% macro databricks__make_temp_table_relation(base_relation, suffix) %}
