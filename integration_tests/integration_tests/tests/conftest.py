@@ -2,8 +2,8 @@ import env
 import pytest
 from dbt.version import __version__ as dbt_version
 from dbt_project import DbtProject
-from packaging import version
 from filelock import FileLock
+from packaging import version
 
 
 def pytest_addoption(parser):
