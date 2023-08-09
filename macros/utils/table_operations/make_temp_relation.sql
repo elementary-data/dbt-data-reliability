@@ -16,6 +16,10 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
+    {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
+{% endmacro %}
+
 --- VIEWS
 {% macro make_temp_view_relation(base_relation, suffix=none) %}
     {% if not suffix %}
