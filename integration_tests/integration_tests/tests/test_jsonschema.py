@@ -1,6 +1,6 @@
 import json
-import pytest
 
+import pytest
 from dbt_project import DbtProject
 
 MIN_LENGTH = 3

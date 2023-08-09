@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from parametrization import Parametrization
 import pytest
-
+from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
-from data_generator import generate_dates, DATE_FORMAT
-
+from parametrization import Parametrization
 
 TEST_NAME = "elementary.freshness_anomalies"
 TIMESTAMP_COLUMN = "timestamp"
