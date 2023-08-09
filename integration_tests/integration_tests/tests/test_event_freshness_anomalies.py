@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
+from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
-from data_generator import generate_dates, DATE_FORMAT
-
 
 TEST_NAME = "elementary.event_freshness_anomalies"
 EVENT_TIMESTAMP_COLUMN = "event_timestamp"
