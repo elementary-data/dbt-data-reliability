@@ -13,7 +13,6 @@
       time_bucket=time_bucket,
       days_back=days_back,
       backfill_days=backfill_days,
-      mandatory_params=['timestamp_column'],
       seasonality=seasonality,
       sensitivity=sensitivity
     )

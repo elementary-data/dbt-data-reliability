@@ -147,3 +147,21 @@ class TestFreshnessAnomalies:
             test_id, TEST_NAME, self._get_test_config(config), data=data
         )
         assert result["status"] == "pass"
+
+
+def test_freshness_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
+    data = [{"hello": "world"}]
+    min_training_set_size = 4
+    test_args = {
+        # Using smaller training set size to avoid needing to run many tests.
+        "min_training_set_size": min_training_set_size,
+        # Smaller sensitivity due to smaller training set size.
+        "sensitivity": 1.25,
+    }
+    dbt_project.seed(data, test_id)
+    for _ in range(min_training_set_size):
+        test_result = dbt_project.test(test_id, TEST_NAME, test_args, as_model=True)
+        assert test_result["status"] == "pass"
+
+    test_result = dbt_project.test(test_id, TEST_NAME, test_args, as_model=True)
+    assert test_result["status"] == "fail"

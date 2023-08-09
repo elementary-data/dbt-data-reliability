@@ -1,6 +1,6 @@
 {% macro table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, days_back, metric_properties) %}
 
-    {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
+    {%- set quoted_full_table_name = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     with monitored_table as (
@@ -28,14 +28,15 @@
 
     metrics as (
         {{ elementary.get_unified_metrics_query(metrics=table_monitors,
-                                                metric_properties=metric_properties) }}
+                                                metric_properties=metric_properties,
+                                                quoted_full_table_name=quoted_full_table_name) }}
     ),
 
     {% if timestamp_column %}
         metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as quoted_full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
@@ -55,7 +56,7 @@
         metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
@@ -95,10 +96,10 @@
 
 {% endmacro %}
 
-{% macro get_unified_metrics_query(metrics, metric_properties) %}
+{% macro get_unified_metrics_query(metrics, metric_properties, quoted_full_table_name) %}
     {%- set included_monitors = {} %}
     {%- for metric_name in metrics %}
-        {%- set metric_query = elementary.get_metric_query(metric_name, metric_properties) %}
+        {%- set metric_query = elementary.get_metric_query(metric_name, metric_properties, quoted_full_table_name) %}
         {%- if metric_query %}
             {% do included_monitors.update({metric_name: metric_query}) %}
         {%- endif %}
@@ -125,7 +126,7 @@
     {%- endfor %}
 {% endmacro %}
 
-{% macro get_metric_query(metric_name, metric_properties) %}
+{% macro get_metric_query(metric_name, metric_properties, quoted_full_table_name) %}
     {%- set metrics_macro_mapping = {
         "row_count": elementary.row_count_metric_query,
         "freshness": elementary.freshness_metric_query,
@@ -137,7 +138,7 @@
         {%- do return(none) %}
     {%- endif %}
 
-    {%- set metric_query = metric_macro(metric_properties) %}
+    {%- set metric_query = metric_macro(metric_properties, quoted_full_table_name) %}
     {%- if not metric_query %}
         {%- do return(none) %}
     {%- endif %}
@@ -145,7 +146,7 @@
     {{ metric_query }}
 {% endmacro %}
 
-{% macro row_count_metric_query(metric_properties) %}
+{% macro row_count_metric_query(metric_properties, quoted_full_table_name) %}
 {% if metric_properties.timestamp_column %}
     with row_count_values as (
         select edr_bucket_start,
@@ -173,7 +174,7 @@
 {% endif %}
 {% endmacro %}
 
-{% macro freshness_metric_query(metric_properties) %}
+{% macro freshness_metric_query(metric_properties, quoted_full_table_name) %}
 {% if metric_properties.timestamp_column %}
     {%- set freshness_column = metric_properties.freshness_column %}
     {%- if not freshness_column %}
@@ -186,6 +187,14 @@
         from monitored_table
         order by 1
     ),
+{% else %}
+    with unique_timestamps as (
+        select distinct metric_value as timestamp_val
+        from {{ ref("data_monitoring_metrics") }}
+        where full_table_name = {{ quoted_full_table_name }} and metric_name = 'build_timestamp'
+        order by 1
+    ),
+{% endif %}
 
     -- compute freshness for every update as the time difference from the previous update
     consecutive_updates_freshness as (
@@ -241,14 +250,9 @@
         freshness as metric_value
     from bucket_freshness_ranked
     where row_number = 1
-{% else %}
-    {% do exceptions.raise_compiler_error("freshness_anomalies test is not supported without timestamp_column.") %}
-    {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
-    {% do return(none) %}
-{% endif %}
 {% endmacro %}
 
-{% macro event_freshness_metric_query(metric_properties) %}
+{% macro event_freshness_metric_query(metric_properties, quoted_full_table_name) %}
 {% set event_timestamp_column = metric_properties.event_timestamp_column %}
 {% set update_timestamp_column = metric_properties.timestamp_column %}
 
