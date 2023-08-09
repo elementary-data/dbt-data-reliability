@@ -189,7 +189,7 @@
     ),
 {% else %}
     with unique_timestamps as (
-        select distinct metric_value as timestamp_val
+        select distinct {{ elementary.unix_to_timestamp('metric_value') }} as timestamp_val
         from {{ ref("data_monitoring_metrics") }}
         where full_table_name = {{ quoted_full_table_name }} and metric_name = 'build_timestamp'
         order by 1
