@@ -160,10 +160,14 @@ def test_freshness_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject)
         "sensitivity": 1.25,
     }
 
+    build_timestamps = generate_dates(
+        # Create an anomaly for today.
+        datetime.now() - timedelta(days=2),
+        step=timedelta(days=1),
+        # A freshness metric is the difference between two timestamps therefore we need one extra day to match the required training set size.
+        days_back=min_training_set_size + 1,
+    )
     with dbt_project.create_temp_model_for_existing_table(test_id) as model_path:
-        build_timestamps = generate_dates(
-            datetime.now(), step=timedelta(days=1), days_back=min_training_set_size + 1
-        )
         for ts in build_timestamps:
             dbt_project.dbt_runner.run(
                 select=str(model_path), vars={"build_timestamp": ts.timestamp()}
