@@ -25,3 +25,23 @@
 {% macro redshift__edr_timeadd(date_part, number, timestamp_expression) %}
     dateadd({{ date_part }}, {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
+
+{% macro spark__edr_timeadd(date_part, number, timestamp_expression) -%}
+    {%- if date_part | lower == 'second' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, 0, 0, 0, 0, 0, {{ number }})
+    {%- elif date_part | lower == 'minute' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, 0, 0, 0, 0, {{ number }}, 0)
+    {%- elif date_part | lower == 'hour' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, 0, 0, 0, {{ number }}, 0, 0)
+    {%- elif date_part | lower == 'day' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, 0, 0, {{ number }}, 0, 0, 0)
+    {%- elif date_part | lower == 'week' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, 0, {{ number }}, 0, 0, 0, 0)
+    {%- elif date_part | lower == 'month' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval(0, {{ number }}, 0, 0, 0, 0, 0)
+    {%- elif date_part | lower == 'year' %}
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + make_interval({{ number }}, 0, 0, 0, 0, 0, 0)
+    {%- else %}
+        {{ exceptions.raise_compiler_error("Unsupported date_part in edr_timeadd: ".format(date_part)) }}
+    {%- endif %}
+{%- endmacro %}

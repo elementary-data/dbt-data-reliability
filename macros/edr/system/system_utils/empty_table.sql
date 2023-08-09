@@ -6,7 +6,7 @@
     ('test_unique_id','long_string'),
     ('model_unique_id','long_string'),
     ('invocation_id', 'string'),
-    ('detected_at','timestamp'),
+    ('detected_at','string'),
     ('created_at','timestamp'),
     ('database_name','string'),
     ('schema_name','string'),

@@ -1,1 +1,1 @@
-select 'a's as string
+select 'a' as string
