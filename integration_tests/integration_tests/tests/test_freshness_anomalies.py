@@ -150,7 +150,8 @@ class TestFreshnessAnomalies:
 
 
 def test_freshness_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
-    data = [{"hello": "world"}]
+    # The no timestamp test uses metrics gathered at build-time of the models.
+    dbt_project.dbt_runner.vars["collect_metrics"] = True
     min_training_set_size = 4
     test_args = {
         # Using smaller training set size to avoid needing to run many tests.
@@ -158,10 +159,15 @@ def test_freshness_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject)
         # Smaller sensitivity due to smaller training set size.
         "sensitivity": 1.25,
     }
-    dbt_project.seed(data, test_id)
-    for _ in range(min_training_set_size):
-        test_result = dbt_project.test(test_id, TEST_NAME, test_args, as_model=True)
-        assert test_result["status"] == "pass"
+
+    with dbt_project.create_temp_model_for_existing_table(test_id) as model_path:
+        build_timestamps = generate_dates(
+            datetime.now(), step=timedelta(days=1), days_back=min_training_set_size + 1
+        )
+        for ts in build_timestamps:
+            dbt_project.dbt_runner.run(
+                select=str(model_path), vars={"build_timestamp": ts.timestamp()}
+            )
 
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, as_model=True)
     assert test_result["status"] == "fail"

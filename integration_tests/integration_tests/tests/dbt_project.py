@@ -180,9 +180,10 @@ class DbtProject:
     @contextmanager
     def create_temp_model_for_existing_table(self, table_name: str):
         model_path = TMP_MODELS_DIR_PATH.joinpath(f"{table_name}.sql")
-        model_path.touch()  # Just need the file to exist, the contents doesn't matter
+        model_path.write_text("SELECT 1")
+        relative_model_path = model_path.relative_to(PATH)
         try:
-            yield
+            yield relative_model_path
         finally:
             model_path.unlink()
 
