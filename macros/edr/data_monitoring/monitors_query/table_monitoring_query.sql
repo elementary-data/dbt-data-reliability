@@ -32,45 +32,30 @@
                                                 quoted_full_table_name=quoted_full_table_name) }}
     ),
 
-    {% if timestamp_column %}
-        metrics_final as (
-
-        select
-            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
-            {{ elementary.null_string() }} as column_name,
-            metric_name,
-            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
-            source_value,
+    metrics_final as (
+    select
+        {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
+        {{ elementary.null_string() }} as column_name,
+        metric_name,
+        {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
+        source_value,
+        {{ elementary.null_string() }} as dimension,
+        {{ elementary.null_string() }} as dimension_value,
+        {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties,
+        {% if timestamp_column %}
             edr_bucket_start as bucket_start,
             edr_bucket_end as bucket_end,
-            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
-            {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value,
-            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
-        from
-            metrics
-        where (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }}) or
-            metric_value is null
-        )
-    {% else %}
-        metrics_final as (
-
-        select
-            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
-            {{ elementary.null_string() }} as column_name,
-            metric_name,
-            {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
-            {{ elementary.null_string() }} as source_value,
+            {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours
+        {% else %}
             {{ elementary.null_timestamp() }} as bucket_start,
-            {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
-            {{ elementary.null_int() }} as bucket_duration_hours,
-            {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value,
-            {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
-        from metrics
-
-        )
-    {% endif %}
+            edr_bucket_end as bucket_end,
+            {{ elementary.null_int() }} as bucket_duration_hours
+        {% endif %}
+    from metrics
+    where
+    (metric_value is not null and cast(metric_value as {{ elementary.edr_type_int() }}) < {{ elementary.get_config_var('max_int') }})
+    or metric_value is null
+    )
 
     select
        {{ elementary.generate_surrogate_key([
@@ -167,8 +152,10 @@
     from row_count_values
 {% else %}
     select
+        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as edr_bucket_end,
         {{ elementary.const_as_string('row_count') }} as metric_name,
-        {{ elementary.row_count() }} as metric_value
+        {{ elementary.row_count() }} as metric_value,
+        {{ elementary.null_string() }} as source_value
     from monitored_table
     group by 1
 {% endif %}
@@ -189,7 +176,7 @@
     ),
 {% else %}
     with unique_timestamps as (
-        select distinct {{ elementary.unix_to_timestamp('metric_value') }} as timestamp_val
+        select {{ elementary.unix_to_timestamp('metric_value') }} as timestamp_val
         from {{ ref("data_monitoring_metrics") }}
         where full_table_name = {{ quoted_full_table_name }} and metric_name = 'build_timestamp'
         order by 1
@@ -243,8 +230,13 @@
     )
 
     select
+        {% if metric_properties.timestamp_column %}
         edr_bucket_start,
         edr_bucket_end,
+        {% else %}
+        null as edr_bucket_start,
+        update_timestamp as edr_bucket_end,
+        {% endif %}
         {{ elementary.const_as_string('freshness') }} as metric_name,
         {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
