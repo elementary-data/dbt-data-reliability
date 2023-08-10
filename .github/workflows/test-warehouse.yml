@@ -97,7 +97,7 @@ jobs:
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
       - name: Install E2E project deps
-        working-directory: ${{ env.TESTS_DIR }}
+        working-directory: ${{ env.TESTS_DIR }}/dbt_project
         run: dbt deps
 
       - name: Test
