@@ -157,7 +157,7 @@ def test_freshness_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject)
         # Using smaller training set size to avoid needing to run many tests.
         "min_training_set_size": min_training_set_size,
         # Smaller sensitivity due to smaller training set size.
-        "sensitivity": 1.25,
+        "sensitivity": 1,
     }
 
     build_timestamps = generate_dates(

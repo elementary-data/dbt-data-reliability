@@ -229,13 +229,8 @@ select
     )
 
     select
-        {% if metric_properties.timestamp_column %}
         edr_bucket_start,
         edr_bucket_end,
-        {% else %}
-        null as edr_bucket_start,
-        update_timestamp as edr_bucket_end,
-        {% endif %}
         {{ elementary.const_as_string('freshness') }} as metric_name,
         {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
