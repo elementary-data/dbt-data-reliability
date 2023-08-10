@@ -97,15 +97,14 @@ jobs:
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
       - name: Install E2E project deps
-        working-directory: ${{ env.TESTS_DIR }}/dbt_project
-        run: dbt deps
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          dbt deps --project-dir dbt_project
+          pip install -r requirements.txt
 
       - name: Test
-        working-directory: ${{ env.TESTS_DIR }}/tests
-        run: |
-          pip install -r ../requirements.txt
-          dbt deps --project-dir=../dbt_project
-          py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
+        working-directory: "${{ env.TESTS_DIR }}/tests"
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
 
       - name: Surface failing tests
         if: always()
