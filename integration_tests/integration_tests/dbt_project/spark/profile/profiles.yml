@@ -1,0 +1,14 @@
+elementary_tests:
+  target: spark
+  outputs:
+    spark:
+      type: spark
+      method: thrift
+      host: 127.0.0.1
+      port: 10000
+      user: dbt
+      schema: edr
+      connect_retries: 10
+      connect_timeout: 5
+      retry_all: true
+      threads: 4

@@ -8,6 +8,9 @@ scripts/
 
 edr.log
 integration_tests/data
+integration_tests/integration_tests/dbt_project/spark/.hive-metastore/
+integration_tests/integration_tests/dbt_project/spark/.spark-warehouse/
+integration_tests/integration_tests/dbt_project/spark/profile/.user.yml
 edr_target
 
 venv/
