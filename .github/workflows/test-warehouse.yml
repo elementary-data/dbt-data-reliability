@@ -96,22 +96,21 @@ jobs:
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
-      - name: Install E2E project deps
+      - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
-        run: dbt deps
+        run: |
+          dbt deps --project-dir dbt_project
+          pip install -r requirements.txt
 
       - name: Test
-        working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
-        run: |
-          pip install -r ../requirements.txt
-          dbt deps --project-dir=../dbt_project
-          py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
+        working-directory: "${{ env.TESTS_DIR }}/tests"
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
 
-      - name: Surface failing tests
+      - name: Upload test results
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: ${{ env.TESTS_DIR }}/integration_tests/tests/test-results.xml
+          path: ${{ env.TESTS_DIR }}/tests/test-results.xml
           summary: true
           display-options: fEX
           fail-on-empty: true

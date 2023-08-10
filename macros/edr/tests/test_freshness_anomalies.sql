@@ -1,6 +1,7 @@
 {% test freshness_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
   -- depends_on: {{ ref('monitors_runs') }}
   -- depends_on: {{ ref('data_monitoring_metrics') }}
+  -- depends_on: {{ ref('dbt_run_results') }}
 
   {{ elementary.test_table_anomalies(
       model=model,
