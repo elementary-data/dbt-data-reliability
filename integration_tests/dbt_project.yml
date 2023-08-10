@@ -27,4 +27,3 @@ seeds:
 models:
   elementary:
     +schema: elementary
-#    +file_format: delta

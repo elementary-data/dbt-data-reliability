@@ -2,4 +2,3 @@ pytest
 pytest-xdist
 pytest-parametrization
 filelock
-dbt-spark[PyHive]
