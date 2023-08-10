@@ -36,7 +36,7 @@
         metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
@@ -56,7 +56,7 @@
         metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(quoted_full_table_name) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
