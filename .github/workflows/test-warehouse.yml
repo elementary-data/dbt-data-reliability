@@ -99,7 +99,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          dbt deps --project-dir $TESTS_DIR/dbt_project
+          dbt deps --project-dir dbt_project
           pip install -r requirements.txt
 
       - name: Test
