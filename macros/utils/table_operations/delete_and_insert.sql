@@ -57,6 +57,7 @@
 {% macro spark__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
+
     {% if delete_relation and relation.is_delta %}
         {% set delete_query %}
             merge into {{ relation }} as source
