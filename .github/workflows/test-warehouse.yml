@@ -110,7 +110,7 @@ jobs:
         if: always()
         uses: pmeier/pytest-results-action@main
         with:
-          path: ${{ env.TESTS_DIR }}/integration_tests/tests/test-results.xml
+          path: ${{ env.TESTS_DIR }}/tests/test-results.xml
           summary: true
           display-options: fEX
           fail-on-empty: true
