@@ -102,6 +102,11 @@ jobs:
           dbt deps --project-dir dbt_project
           pip install -r requirements.txt
 
+      - name: Check DWH connection
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          dbt debug -t "${{ inputs.warehouse-type }}"
+
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
         run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
