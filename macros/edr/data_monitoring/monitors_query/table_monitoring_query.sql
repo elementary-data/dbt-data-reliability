@@ -143,22 +143,21 @@
         from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
         group by 1,2,3
     )
-
-    select edr_bucket_start,
-           edr_bucket_end,
-           {{ elementary.const_as_string('row_count') }} as metric_name,
-           {{ elementary.null_string() }} as source_value,
-           row_count_value as metric_value
-    from row_count_values
-{% else %}
-    select
-        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as edr_bucket_end,
-        {{ elementary.const_as_string('row_count') }} as metric_name,
-        {{ elementary.row_count() }} as metric_value,
-        {{ elementary.null_string() }} as source_value
-    from monitored_table
-    group by 1
 {% endif %}
+
+select
+    {{ elementary.const_as_string('row_count') }} as metric_name,
+    {{ elementary.null_string() }} as source_value,
+    {% if metric_properties.timestamp_column %}
+        edr_bucket_start,
+        edr_bucket_end,
+        row_count_value as metric_value
+        from row_count_values
+    {% else %}
+        {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as edr_bucket_end,
+        {{ elementary.row_count() }} as metric_value
+        from monitored_table
+    {% endif %}
 {% endmacro %}
 
 {% macro freshness_metric_query(metric_properties, quoted_full_table_name) %}
