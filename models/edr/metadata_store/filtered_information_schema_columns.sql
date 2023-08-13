@@ -1,6 +1,7 @@
 {{
   config(
-    materialized = 'view',
+    materialized="incremental",
+    incremental_strategy="delete+insert",
   )
 }}
 
