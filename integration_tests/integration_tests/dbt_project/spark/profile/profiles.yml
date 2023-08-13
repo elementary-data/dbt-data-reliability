@@ -9,6 +9,6 @@ elementary_tests:
       user: dbt
       schema: edr
       connect_retries: 10
-      connect_timeout: 5
+      connect_timeout: 10
       retry_all: true
       threads: 4
