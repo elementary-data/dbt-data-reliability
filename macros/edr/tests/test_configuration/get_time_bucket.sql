@@ -60,9 +60,19 @@
         {% if time_bucket.count <= 0 %}
             {% do exceptions.raise_compiler_error("time_bucket.count has to be larger than 0, got: {})".format(time_bucket.count)) %}
         {% endif %}
-        {% set supported_periods = ['hour','day','week','month'] %}
+        {% set supported_periods = adapter.dispatch("supported_periods", "elementary")() %}
         {% if time_bucket.period and time_bucket.period not in supported_periods %}
             {% do exceptions.raise_compiler_error("time_bucket.period value should be one of {0}, got: {1}".format(supported_periods, time_bucket.period)) %}
         {% endif %}
     {% endif %}
+{% endmacro %}
+
+
+{% macro default__supported_periods() %}
+  {% do return(["hour", "day", "week", "month"]) %}
+{% endmacro %}
+
+
+{% macro redshift__supported_periods() %}
+  {% do return(["hour", "day", "week"]) %}
 {% endmacro %}

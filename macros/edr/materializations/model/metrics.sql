@@ -31,5 +31,5 @@
 {% endmacro %}
 
 {% macro cache_metrics(metrics) %}
-  {% do elementary.get_cache("tables").get("metrics").extend(metrics) %}
+  {% do elementary.get_cache("tables").get("metrics").get("rows").extend(metrics) %}
 {% endmacro %}

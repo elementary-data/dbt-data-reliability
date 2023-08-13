@@ -68,7 +68,9 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
     now = datetime.utcnow()
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(base_date=now, period="hours", days_back=2)
+        for cur_date in generate_dates(
+            base_date=now, step=timedelta(hours=1), days_back=2
+        )
         if cur_date < now - timedelta(hours=1)
     ]
     # This is a bug in the dbt package. The test should pass, but it fails.
@@ -115,7 +117,9 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
 
 def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     dates = generate_dates(
-        base_date=date.today() - timedelta(days=1), period="weeks", days_back=7 * 14
+        base_date=date.today() - timedelta(days=1),
+        step=timedelta(weeks=1),
+        days_back=7 * 14,
     )
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}

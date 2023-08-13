@@ -18,6 +18,7 @@ _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
+    "debug_logs": True,
     "collect_metrics": False,
 }
 
