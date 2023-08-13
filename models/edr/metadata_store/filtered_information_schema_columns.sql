@@ -2,6 +2,7 @@
   config(
     materialized="incremental",
     incremental_strategy="delete+insert",
+    unique_key="full_table_name"
   )
 }}
 
