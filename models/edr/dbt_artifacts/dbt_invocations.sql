@@ -1,6 +1,7 @@
 {{
   config(
     materialized = 'incremental',
+    incremental_strategy='insert_overwrite',
     transient=False,
     unique_key = 'invocation_id',
     on_schema_change = 'append_new_columns',
