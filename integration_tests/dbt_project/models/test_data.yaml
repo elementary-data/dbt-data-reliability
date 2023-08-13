@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: test_data
+    schema: "{{ target.schema }}"
+    tables:
+      - name: metrics_seed1
+      - name: metrics_seed2

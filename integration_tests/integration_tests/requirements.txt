@@ -1,4 +1,0 @@
-pytest
-pytest-xdist
-pytest-parametrization
-filelock
