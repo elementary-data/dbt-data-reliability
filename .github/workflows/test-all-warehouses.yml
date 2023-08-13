@@ -31,7 +31,7 @@ jobs:
             redshift,
             databricks,
             databricks_catalog,
-            spark
+            spark,
           ]
     uses: ./.github/workflows/test-warehouse.yml
     with:
