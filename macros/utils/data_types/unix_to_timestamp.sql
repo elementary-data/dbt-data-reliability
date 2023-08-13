@@ -7,7 +7,7 @@ to_timestamp({{ unix_ts }})
 {% endmacro %}
 
 {% macro snowflake__unix_to_timestamp(unix_ts) %}
-to_timestamp_ntz({{ unix_ts }})
+{{ elementary.edr_cast_as_timestamp("to_timestamp({})".format(unix_ts)) }}
 {% endmacro %}
 
 {% macro redshift__unix_to_timestamp(unix_ts) %}
