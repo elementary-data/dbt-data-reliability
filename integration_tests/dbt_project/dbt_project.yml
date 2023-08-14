@@ -20,5 +20,9 @@ vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
 
 models:
+  elementary_tests:
+    tmp:
+      +materialized: table
+
   elementary:
     +schema: elementary
