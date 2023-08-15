@@ -22,8 +22,20 @@
   {% do return(metrics) %}
 {% endmacro %}
 
-{% macro query_metrics() %}
+{% macro can_query_metrics() %}
   {% if not elementary.get_config_var('collect_metrics') %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% if target.type == "bigquery" and model.config.require_partition_filter == true %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% do return(true) %}
+{% endmacro %}
+
+{% macro query_metrics() %}
+  {% if not elementary.can_query_metrics() %}
     {% do return([]) %}
   {% endif %}
 

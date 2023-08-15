@@ -21,6 +21,7 @@
 {% endmaterialization %}
 
 {% materialization table, adapter="bigquery" %}
+  {% do debug() %}
   {% set relations = dbt.materialization_table_bigquery() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
