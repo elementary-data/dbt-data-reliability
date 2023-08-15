@@ -52,3 +52,14 @@
   {% do elementary.cache_metrics(metrics) %}
   {% do return(relations) %}
 {% endmaterialization %}
+
+{% materialization table, adapter="glue" %}
+  {% set relations = dbt.materialization_table_glue() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(relations) %}
+  {% endif %}
+
+  {% set metrics = elementary.query_metrics() %}
+  {% do elementary.cache_metrics(metrics) %}
+  {% do return(relations) %}
+{% endmaterialization %}
