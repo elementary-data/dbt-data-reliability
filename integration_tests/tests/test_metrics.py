@@ -1,38 +1,69 @@
 import random
+from dataclasses import dataclass
 from datetime import datetime
+from typing import List
 
-from data_generator import DATE_FORMAT, generate_dates
+import pytest
 from dbt_project import DbtProject
 
 
-def test_metrics(dbt_project: DbtProject):
-    now = datetime.utcnow()
-    dbt_project.dbt_runner.vars["collect_metrics"] = True
-    data1 = [
-        {"updated_at": date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=now)
-        for _ in range(random.randint(-5, 20))
-    ]
-    data2 = [
-        {"created_at": date.strftime(DATE_FORMAT)}
-        for date in generate_dates(base_date=now)
-        for _ in range(random.randint(0, 20))
-    ]
-    dbt_project.seed(data1, "metrics_seed1")
-    dbt_project.seed(data2, "metrics_seed2")
-    dbt_project.dbt_runner.run(select="metrics")
+@dataclass
+class MetricSeedTable:
+    data: List[dict]
+    table_name: str
 
+
+def test_metrics_sql_models(dbt_project: DbtProject):
+    seed_tables = [
+        MetricSeedTable(
+            data=[{"hello": "world"} for _ in range(random.randint(5, 10))],
+            table_name="metrics_seed1",
+        ),
+        MetricSeedTable(
+            data=[{"hello": "world"} for _ in range(random.randint(5, 20))],
+            table_name="metrics_seed2",
+        ),
+    ]
+    for seed_table in seed_tables:
+        dbt_project.seed(seed_table.data, seed_table.table_name)
+
+    dbt_project.dbt_runner.run(
+        select="models/metrics/sql", vars={"collect_metrics": True}
+    )
     remaining_models_to_row_count = {
-        "metrics_table": len(data1),
-        "metrics_incremental": len(data2),
+        "metrics_table": len(seed_tables[0].data),
+        "metrics_incremental": len(seed_tables[1].data),
     }
+    validate_metrics(dbt_project, remaining_models_to_row_count)
+
+
+@pytest.mark.requires_dbt_version("1.3.0")
+@pytest.mark.only_on_targets(["snowflake"])
+def test_metrics_python_models(dbt_project: DbtProject):
+    seed_table = MetricSeedTable(
+        data=[{"hello": "world"} for _ in range(random.randint(5, 10))],
+        table_name="metrics_seed3",
+    )
+    dbt_project.seed(seed_table.data, seed_table.table_name)
+    dbt_project.dbt_runner.run(
+        select="models/metrics/python", vars={"collect_metrics": True}
+    )
+    remaining_models_to_row_count = {"metrics_python_table": len(seed_table.data)}
+    validate_metrics(dbt_project, remaining_models_to_row_count)
+
+
+def validate_metrics(
+    dbt_project: DbtProject,
+    remaining_models_to_row_count: dict,
+):
+    now = datetime.utcnow()
     for metric in dbt_project.read_table("data_monitoring_metrics"):
         for model_name, row_count in remaining_models_to_row_count.items():
             if model_name.upper() in metric["full_table_name"]:
                 if metric["metric_name"] == "row_count":
                     assert metric["metric_value"] == row_count
                 elif metric["metric_name"] == "build_timestamp":
-                    assert metric["metric_value"] > now.timestamp()
+                    assert metric["metric_value"] < now.timestamp()
                 remaining_models_to_row_count.pop(model_name)
                 break
 
