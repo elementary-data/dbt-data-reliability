@@ -3,7 +3,7 @@
   We don't want to change the call stack because dbt checks the call stack is only its own materialization.
   References:
     - https://github.com/dbt-labs/dbt-core/blob/00a531d9d644e6bead6a209bc053b05ae02e48f6/core/dbt/clients/jinja.py#L328
-    - https://github.com/dbt-labs/dbt-core/blob/6130a6e1d0d29b257fbcd1b17fcd730383d73ce0/core/dbt/context/providers.py#L1365
+    - https://github.com/dbt-labs/dbt-core/blob/6130a6e1d0d29b257fbcd1b17fcd730383d73ce0/core/dbt/context/providers.py#L1319
 #}
 
 
