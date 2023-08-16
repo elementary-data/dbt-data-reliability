@@ -27,7 +27,7 @@
     {% do return(false) %}
   {% endif %}
 
-  {% if target.type == "bigquery" and model.config.require_partition_filter == true %}
+  {% if model.config.require_partition_filter %}
     {% do return(false) %}
   {% endif %}
 
