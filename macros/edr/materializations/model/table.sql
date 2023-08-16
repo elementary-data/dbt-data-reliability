@@ -9,7 +9,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="snowflake" %}
+{% materialization table, adapter="snowflake", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_table_snowflake() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
@@ -20,7 +20,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="bigquery" %}
+{% materialization table, adapter="bigquery", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_table_bigquery() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
@@ -31,7 +31,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="spark" %}
+{% materialization table, adapter="spark", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_table_spark() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
@@ -42,7 +42,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="databricks" %}
+{% materialization table, adapter="databricks", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_table_databricks() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
