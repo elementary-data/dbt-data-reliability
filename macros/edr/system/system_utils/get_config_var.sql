@@ -17,7 +17,7 @@
 
 {%- macro default__get_default_config() -%}
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
-   of the package are not accesible at on-run-start and on-run-end #}
+   of the package are not accessible at on-run-start and on-run-end #}
   {% set default_config = {
     'days_back': 14,
     'anomaly_sensitivity': 3,
