@@ -341,7 +341,7 @@ models:
 
   - name: dbt_metrics
     description: >
-      Metadata about metics in the project, including configuration and properties from the dbt graph. Each row contains information about a single metric.
+      Metadata about metrics in the project, including configuration and properties from the dbt graph. Each row contains information about a single metric.
       Data is loaded every time this model is executed. It is recommended to execute the model every time a change is merged to the project.
     columns:
       - name: unique_id
