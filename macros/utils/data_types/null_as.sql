@@ -1,6 +1,4 @@
-{%- macro null_int() -%}
-    cast(null as {{ elementary.edr_type_int() }})
-{%- endmacro -%}
+{%- macro null_int() -%} cast(null as {{ elementary.edr_type_int() }}) {%- endmacro -%}
 
 {%- macro null_timestamp() -%}
     cast(null as {{ elementary.edr_type_timestamp() }})

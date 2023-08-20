@@ -5,12 +5,17 @@
         where table_name in ('users_per_day_weekly_seasonal', 'users_per_hour_daily_seasonal')
     {% endset %}
     {% set results = elementary.run_query(query) %}
-    {{ assert_lists_contain_same_items(results, [
-        ('day_of_week_volume_anomalies_no_seasonality', 'fail'),
-        ('day_of_week_volume_anomalies_with_seasonality', 'pass'),
-        ('hour_of_day_volume_anomalies_with_seasonality', 'pass'),
-        ('hour_of_day_volume_anomalies_no_seasonality', 'fail'),
-        ('hour_of_week_volume_anomalies_no_seasonality', 'fail'),
-        ('hour_of_week_volume_anomalies_with_seasonality', 'pass')
-    ]) }}
+    {{
+        assert_lists_contain_same_items(
+            results,
+            [
+                ("day_of_week_volume_anomalies_no_seasonality", "fail"),
+                ("day_of_week_volume_anomalies_with_seasonality", "pass"),
+                ("hour_of_day_volume_anomalies_with_seasonality", "pass"),
+                ("hour_of_day_volume_anomalies_no_seasonality", "fail"),
+                ("hour_of_week_volume_anomalies_no_seasonality", "fail"),
+                ("hour_of_week_volume_anomalies_with_seasonality", "pass"),
+            ],
+        )
+    }}
 {% endmacro %}

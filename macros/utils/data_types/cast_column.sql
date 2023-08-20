@@ -31,7 +31,7 @@
 {%- endmacro -%}
 
 {%- macro edr_cast_as_date(timestamp_field) -%}
-    {{ return(adapter.dispatch('edr_cast_as_date', 'elementary')(timestamp_field)) }}
+    {{ return(adapter.dispatch("edr_cast_as_date", "elementary")(timestamp_field)) }}
 {%- endmacro -%}
 
 {%- macro default__edr_cast_as_date(timestamp_field) -%}
@@ -40,17 +40,18 @@
 
 {# Bigquery (for some reason that is beyond me) can't cast a string as date if it's in timestamp format #}
 {%- macro bigquery__edr_cast_as_date(timestamp_field) -%}
-    cast({{ elementary.edr_cast_as_timestamp(timestamp_field) }} as {{ elementary.edr_type_date() }})
+    cast(
+        {{ elementary.edr_cast_as_timestamp(timestamp_field) }}
+        as {{ elementary.edr_type_date() }}
+    )
 {%- endmacro -%}
 
 {%- macro const_as_text(string) -%}
-    {{ return(adapter.dispatch('const_as_text', 'elementary')(string)) }}
+    {{ return(adapter.dispatch("const_as_text", "elementary")(string)) }}
 {%- endmacro -%}
 
 {%- macro default__const_as_text(string) -%}
     {{ elementary.const_as_string(string) }}
 {%- endmacro -%}
 
-{%- macro redshift__const_as_text(string) -%}
-    '{{ string }}'::text
-{%- endmacro -%}
+{%- macro redshift__const_as_text(string) -%} '{{ string }}'::text {%- endmacro -%}

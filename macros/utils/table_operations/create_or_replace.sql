@@ -1,5 +1,11 @@
 {% macro create_or_replace(temporary, relation, sql_query) %}
-    {{ return(adapter.dispatch('create_or_replace', 'elementary')(temporary, relation, sql_query)) }}
+    {{
+        return(
+            adapter.dispatch("create_or_replace", "elementary")(
+                temporary, relation, sql_query
+            )
+        )
+    }}
 {% endmacro %}
 
 {# Snowflake and Bigquery #}

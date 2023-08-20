@@ -1,19 +1,25 @@
 {%- macro get_anomaly_query(flattened_test=none) -%}
-  {%- set query -%}
+    {%- set query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
-  {%- endset -%}
-  {{- return(query) -}}
+    {%- endset -%}
+    {{- return(query) -}}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(flattened_test=none) %}
     {% if not flattened_test %}
-      {% set flattened_test = elementary.flatten_test(model) %}
+        {% set flattened_test = elementary.flatten_test(model) %}
     {% endif %}
     {%- set test_unique_id = flattened_test.unique_id %}
     {%- set test_configuration = elementary.get_cache(test_unique_id) %}
     {%- if not test_configuration %}
-        {{ exceptions.raise_compiler_error("Failed to load configuration dict from cache for test `{}`".format(test_unique_id)) }}
+        {{
+            exceptions.raise_compiler_error(
+                "Failed to load configuration dict from cache for test `{}`".format(
+                    test_unique_id
+                )
+            )
+        }}
     {%- endif %}
     {%- set backfill_period = "'-" ~ test_configuration.backfill_days ~ "'" %}
 
@@ -89,20 +95,23 @@
 
 
 {%- macro set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) -%}
-    {% if anomaly_direction | lower == 'spike' %}
-        anomaly_score > {{ sensitivity }}
-    {% elif anomaly_direction | lower == 'drop' %}
+    {% if anomaly_direction | lower == "spike" %} anomaly_score > {{ sensitivity }}
+    {% elif anomaly_direction | lower == "drop" %}
         anomaly_score < {{ sensitivity * -1 }}
-    {% else %}
-        abs(anomaly_score) > {{ sensitivity }}
+    {% else %} abs(anomaly_score) > {{ sensitivity }}
     {% endif %}
 {% endmacro %}
 
 {%- macro is_score_anomalous_condition(sensitivity, anomaly_direction) -%}
-    {%- set spikes_only_metrics = ['freshness', 'event_freshness'] -%}
-    case when metric_name IN {{ elementary.strings_list_to_tuple(spikes_only_metrics) }} then
-            anomaly_score > {{ sensitivity }}
-    else
-        {{ elementary.set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) }}
-     end
+    {%- set spikes_only_metrics = ["freshness", "event_freshness"] -%}
+    case
+        when metric_name in {{ elementary.strings_list_to_tuple(spikes_only_metrics) }}
+        then anomaly_score > {{ sensitivity }}
+        else
+            {{
+                elementary.set_directional_anomaly(
+                    anomaly_direction, anomaly_score, sensitivity
+                )
+            }}
+    end
 {%- endmacro -%}

@@ -1,4 +1,13 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, monitors, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(
+    test_metrics_table_relation,
+    model_relation,
+    test_configuration,
+    monitors,
+    column_name=none,
+    columns_only=false,
+    metric_properties=none,
+    data_monitoring_metrics_table=none
+) %}
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -6,29 +15,37 @@
     {%- if not data_monitoring_metrics_table %}
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
-          {%- set data_monitoring_metrics_table = ref('data_monitoring_metrics') %}
+        {%- set data_monitoring_metrics_table = ref("data_monitoring_metrics") %}
     {%- endif %}
-
 
     {%- if elementary.is_incremental_model(model_graph_node) %}
-      {%- set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
-    {%- else %}
-      {%- set latest_full_refresh = none %}
+        {%- set latest_full_refresh = elementary.get_latest_full_refresh(
+            model_graph_node
+        ) %}
+    {%- else %} {%- set latest_full_refresh = none %}
     {%- endif %}
 
-    {%- if test_configuration.seasonality == 'day_of_week' %}
-        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
+    {%- if test_configuration.seasonality == "day_of_week" %}
+        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression(
+            "bucket_end"
+        ) %}
 
-    {%- elif test_configuration.seasonality == 'hour_of_day' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression('bucket_end') %}
+    {%- elif test_configuration.seasonality == "hour_of_day" %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression(
+            "bucket_end"
+        ) %}
 
-    {%- elif test_configuration.seasonality == 'hour_of_week' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression('bucket_end') %}
+    {%- elif test_configuration.seasonality == "hour_of_week" %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression(
+            "bucket_end"
+        ) %}
 
     {%- else %}
-        {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
+        {%- set bucket_seasonality_expr = elementary.const_as_text("no_seasonality") %}
     {%- endif %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, test_configuration.days_back) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
+        metric_properties, test_configuration.days_back
+    ) %}
 
     {%- set anomaly_scores_query %}
 

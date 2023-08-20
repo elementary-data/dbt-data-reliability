@@ -1,3 +1,1 @@
-{% macro row_count() -%}
-    count(*)
-{%- endmacro %}
+{% macro row_count() -%} count(*) {%- endmacro %}

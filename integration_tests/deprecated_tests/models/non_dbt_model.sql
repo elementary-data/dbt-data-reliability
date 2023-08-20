@@ -1,3 +1,5 @@
-{{ config(materialized='non_dbt') }}
-    SELECT 1
--- depends_on: {{ ref('one') }}
+{{ config(materialized="non_dbt") }}
+select
+    1
+    -- depends_on: {{ ref('one') }}
+    

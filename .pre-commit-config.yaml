@@ -22,6 +22,14 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: v0.18.0
+    hooks:
+      - id: sqlfmt
+        language_version: python
+        additional_dependencies: [".[jinjafmt]"]
+        exclude: /dbt_packages/
+
   - repo: https://github.com/crate-ci/typos
     rev: v1.16.6
     hooks:

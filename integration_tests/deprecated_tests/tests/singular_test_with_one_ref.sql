@@ -1,1 +1,1 @@
-select min from {{ ref('numeric_column_anomalies') }} where min < 100
+select min from {{ ref("numeric_column_anomalies") }} where min < 100

@@ -1,9 +1,9 @@
 {{
     config(
-        materialized='table',
-        tags=var('one_tags', []),
-        meta={'owner': var('one_owner', 'egk')}
+        materialized="table",
+        tags=var("one_tags", []),
+        meta={"owner": var("one_owner", "egk")},
     )
 }}
 
-SELECT 1 AS one
+select 1 as one

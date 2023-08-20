@@ -1,4 +1,6 @@
-{% macro create_table_like(relation, like_relation, temporary=False, like_columns=none) %}
+{% macro create_table_like(
+    relation, like_relation, temporary=False, like_columns=none
+) %}
     {% set empty_table_query %}
         SELECT
         {% if like_columns %}
@@ -11,5 +13,7 @@
         FROM {{ like_relation }}
         WHERE 1 = 0
     {% endset %}
-    {% do elementary.run_query(dbt.create_table_as(temporary, relation, empty_table_query)) %}
+    {% do elementary.run_query(
+        dbt.create_table_as(temporary, relation, empty_table_query)
+    ) %}
 {% endmacro %}

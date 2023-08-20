@@ -1,4 +1,6 @@
-{% macro delete_and_insert(relation, insert_rows=none, delete_values=none, delete_column_key=none) %}
+{% macro delete_and_insert(
+    relation, insert_rows=none, delete_values=none, delete_column_key=none
+) %}
     {% do elementary.file_log("Deleting from and inserting to: {}".format(relation)) %}
     {% set delete_rows = [] %}
     {% for delete_val in delete_values %}
@@ -6,38 +8,51 @@
     {% endfor %}
 
     {% if delete_values %}
-        {% set delete_relation = elementary.create_intermediate_relation(relation, delete_rows, temporary=True, like_columns=[delete_column_key]) %}
+        {% set delete_relation = elementary.create_intermediate_relation(
+            relation,
+            delete_rows,
+            temporary=True,
+            like_columns=[delete_column_key],
+        ) %}
     {% endif %}
 
     {% if insert_rows %}
-        {% set insert_relation = elementary.create_intermediate_relation(relation, insert_rows, temporary=True) %}
+        {% set insert_relation = elementary.create_intermediate_relation(
+            relation, insert_rows, temporary=True
+        ) %}
     {% endif %}
 
     {% if not insert_relation and not delete_relation %}
         {% do return(none) %}
     {% endif %}
 
-    {% set queries = elementary.get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
-    {% for query in queries %}
-        {% do elementary.run_query(query) %}
-    {% endfor %}
+    {% set queries = elementary.get_delete_and_insert_queries(
+        relation, insert_relation, delete_relation, delete_column_key
+    ) %}
+    {% for query in queries %} {% do elementary.run_query(query) %} {% endfor %}
 
     {# Make sure we delete the temp tables we created #}
-    {% if delete_relation %}
-        {% do adapter.drop_relation(delete_relation) %}
-    {% endif %}
-    {% if insert_relation %}
-        {% do adapter.drop_relation(insert_relation) %}
-    {% endif %}
+    {% if delete_relation %} {% do adapter.drop_relation(delete_relation) %} {% endif %}
+    {% if insert_relation %} {% do adapter.drop_relation(insert_relation) %} {% endif %}
 
-    {% do elementary.file_log("Finished deleting from and inserting to: {}".format(relation)) %}
+    {% do elementary.file_log(
+        "Finished deleting from and inserting to: {}".format(relation)
+    ) %}
 {% endmacro %}
 
-{% macro get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
-    {% do return(adapter.dispatch("get_delete_and_insert_queries", "elementary")(relation, insert_relation, delete_relation, delete_column_key)) %}
+{% macro get_delete_and_insert_queries(
+    relation, insert_relation, delete_relation, delete_column_key
+) %}
+    {% do return(
+        adapter.dispatch("get_delete_and_insert_queries", "elementary")(
+            relation, insert_relation, delete_relation, delete_column_key
+        )
+    ) %}
 {% endmacro %}
 
-{% macro default__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+{% macro default__get_delete_and_insert_queries(
+    relation, insert_relation, delete_relation, delete_column_key
+) %}
     {% set query %}
         begin transaction;
         {% if delete_relation %}
@@ -54,7 +69,9 @@
     {% do return([query]) %}
 {% endmacro %}
 
-{% macro spark__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+{% macro spark__get_delete_and_insert_queries(
+    relation, insert_relation, delete_relation, delete_column_key
+) %}
     {% set queries = [] %}
 
     {% if delete_relation and relation.is_delta %}

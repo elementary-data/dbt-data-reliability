@@ -1,5 +1,5 @@
 {% macro validate_config_levels() %}
-    {% set alerts_relation = ref('test_alerts_union') %}
+    {% set alerts_relation = ref("test_alerts_union") %}
 
     {% set config_levels_validation_query %}
     with error_tests as (

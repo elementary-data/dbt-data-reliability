@@ -12,61 +12,68 @@
         and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
+    with
+        information_schema_columns as (
 
-    with information_schema_columns as (
+            select *
+            from {{ ref("filtered_information_schema_columns") }}
+            where lower(full_table_name) = lower('{{ full_table_name }}')
 
-        select * from {{ ref('filtered_information_schema_columns') }}
-        where lower(full_table_name) = lower('{{ full_table_name }}')
+        ),
 
-    ),
+        columns_snapshot as (
 
-    columns_snapshot as (
+            select
+                full_table_name,
+                database_name,
+                schema_name,
+                table_name,
+                column_name,
+                cast(data_type as {{ elementary.edr_type_string() }}) as data_type,
+                {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
+                case
+                    when
+                        {{ elementary.full_column_name() }}
+                        not in ({{ known_columns_query }})
+                        and full_table_name in ({{ known_tables_query }})
+                    then true
+                    else false
+                end as is_new
+            from information_schema_columns
 
-        select
-            full_table_name,
-            database_name,
-            schema_name,
-            table_name,
-            column_name,
-            cast(data_type as {{ elementary.edr_type_string() }}) as data_type,
-            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
-            case when
-                    {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
-                    and full_table_name in ({{ known_tables_query }})
-                then true
-                else false
-            end as is_new
-        from information_schema_columns
+        ),
 
-    ),
+        columns_snapshot_with_id as (
 
-    columns_snapshot_with_id as (
+            select
+                {{
+                    elementary.generate_surrogate_key(
+                        [
+                            "full_table_name",
+                            "column_name",
+                            "data_type",
+                        ]
+                    )
+                }} as column_state_id,
+                {{ elementary.full_column_name() }} as full_column_name,
+                full_table_name,
+                column_name,
+                data_type,
+                is_new,
+                detected_at
+            from columns_snapshot
+            group by 1, 2, 3, 4, 5, 6, 7
 
-        select
-            {{ elementary.generate_surrogate_key([
-              'full_table_name',
-              'column_name',
-              'data_type',
-            ]) }} as column_state_id,
-            {{ elementary.full_column_name() }} as full_column_name,
-            full_table_name,
-            column_name,
-            data_type,
-            is_new,
-            detected_at
-        from columns_snapshot
-        group by 1,2,3,4,5,6,7
-
-    )
+        )
 
     select
-        {{ elementary.edr_cast_as_string('column_state_id') }} as column_state_id,
-        {{ elementary.edr_cast_as_string('full_column_name') }} as full_column_name,
-        {{ elementary.edr_cast_as_string('full_table_name') }} as full_table_name,
-        {{ elementary.edr_cast_as_string('column_name') }} as column_name,
-        {{ elementary.edr_cast_as_string('data_type') }} as data_type,
-        {{ elementary.edr_cast_as_bool('is_new') }} as is_new,
-        {{ elementary.edr_cast_as_timestamp('detected_at') }} as detected_at
+        {{ elementary.edr_cast_as_string("column_state_id") }} as column_state_id,
+        {{ elementary.edr_cast_as_string("full_column_name") }} as full_column_name,
+        {{ elementary.edr_cast_as_string("full_table_name") }} as full_table_name,
+        {{ elementary.edr_cast_as_string("column_name") }} as column_name,
+        {{ elementary.edr_cast_as_string("data_type") }} as data_type,
+        {{ elementary.edr_cast_as_bool("is_new") }} as is_new,
+        {{ elementary.edr_cast_as_timestamp("detected_at") }} as detected_at
     from columns_snapshot_with_id
 
 {%- endmacro %}
