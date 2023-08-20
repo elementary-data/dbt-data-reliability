@@ -23,7 +23,7 @@ repos:
       - id: prettier
 
   - repo: https://github.com/tconbeer/sqlfmt
-    rev: v0.18.0
+    rev: v0.19.2
     hooks:
       - id: sqlfmt
         language_version: python
