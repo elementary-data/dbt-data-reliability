@@ -1,5 +1,7 @@
 name: Test all warehouse platforms
 on:
+  schedule:
+    - cron: "0 */8 * * *"
   pull_request:
     branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
@@ -9,11 +11,6 @@ on:
         type: string
         required: false
         description: dbt's version to test with
-      generate-data:
-        type: boolean
-        required: false
-        default: false
-        description: Whether to generate new data
       elementary-ref:
         type: string
         required: false
@@ -28,12 +25,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        warehouse-type: [postgres, snowflake, bigquery, redshift, databricks]
+        warehouse-type:
+          [
+            postgres,
+            snowflake,
+            bigquery,
+            redshift,
+            databricks,
+            databricks_catalog,
+            spark,
+          ]
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
-      dbt-version: ${{ github.event_name != 'workflow_dispatch' && '1.0.2' || inputs.dbt-version }}
-      generate-data: ${{ inputs.generate-data || false }}
+      dbt-version: ${{ github.event_name != 'workflow_dispatch' && '1.3.0' || inputs.dbt-version }}
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
     secrets: inherit

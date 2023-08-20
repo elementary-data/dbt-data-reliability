@@ -100,7 +100,9 @@
     {% else %}
       {% set test_model_jinja = test_kwargs.get('model') %}
       {% if test_model_jinja %}
-        {% set test_model_name_matches = modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) %}
+        {% set test_model_name_matches =
+            modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) +
+            modules.re.findall("source\(['\"]\w+['\"], ['\"](\w+)['\"]\)", test_model_jinja) %}
         {% if test_model_name_matches | length == 1 %}
           {% set test_model_name = test_model_name_matches[0] %}
           {% for test_model_unique_id in test_model_unique_ids %}

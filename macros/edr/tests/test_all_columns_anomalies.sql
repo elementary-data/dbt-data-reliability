@@ -1,6 +1,8 @@
 {% test all_columns_anomalies(model, column_anomalies, exclude_prefix, exclude_regexp, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
+    -- depends_on: {{ ref('dbt_run_results') }}
+
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
