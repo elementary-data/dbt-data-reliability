@@ -61,7 +61,7 @@
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
         'materialization': config_dict.get('materialized'),
-        'adapter_response': run_result_dict.get('adapter_response')
+        'adapter_response': run_result_dict.get('adapter_response', {})
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}

@@ -218,6 +218,10 @@ models:
       - name: thread_id
         data_type: string
         description: Id of the thread of this resource run.
+      
+      - name: adapter_response
+        data_type: string
+        description: Response returned by the adapter (Fields will be different for each adapters).
 
   - name: elementary_test_results
     description: >
