@@ -17,13 +17,14 @@
 {% endmacro %}
 
 {% macro get_failed_row_count_calc(flattened_test) %}
+  {% if "failed_row_count_calc" in flattened_test["meta"] %}
+    {% do return(flattened_test["meta"]["failed_row_count_calc"]) %}
+  {% endif %}
   {% set common_test_config = elementary.get_common_test_config(flattened_test) %}
   {% if common_test_config %}
-    {% if "failed_row_count_calc" in common_test_config %}
-      {% do return(common_test_config["failed_row_count_calc"]) %}
-    {% endif %}
+    {% do return(common_test_config.get("failed_row_count_calc")) %}
   {% endif %}
-  {% do return(flattened_test["meta"].get("failed_row_count_calc")) %}
+  {% do return(none) %}
 {% endmacro %}
 
 {% macro get_failed_row_count_calc_query(failed_row_count_calc) %}

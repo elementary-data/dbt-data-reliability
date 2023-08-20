@@ -1,19 +1,14 @@
 import pytest
-from dbt.version import __version__
 from dbt_project import DbtProject
-from packaging import version
 
 TEST_MODEL = "one"
-DBT_VERSION = version.parse(version.parse(__version__).base_version)
 
 
 def read_model_artifact_row(dbt_project: DbtProject):
     return dbt_project.read_table("dbt_models", where=f"alias = '{TEST_MODEL}'")[0]
 
 
-@pytest.mark.skipif(
-    DBT_VERSION < version.parse("1.4.0"), reason="requires dbt 1.4.0 or above"
-)
+@pytest.mark.requires_dbt_version("1.4.0")
 def test_artifacts_caching(dbt_project: DbtProject):
     # Disabled by default in the tests for performance reasons.
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False

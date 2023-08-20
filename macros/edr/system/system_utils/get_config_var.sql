@@ -17,7 +17,7 @@
 
 {%- macro default__get_default_config() -%}
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
-   of the package are not accesible at on-run-start and on-run-end #}
+   of the package are not accessible at on-run-start and on-run-end #}
   {% set default_config = {
     'days_back': 14,
     'anomaly_sensitivity': 3,
@@ -54,7 +54,7 @@
     'store_result_rows_in_own_table': true,
     'mute_dbt_upgrade_recommendation': false,
     'calculate_failed_count': true,
-    'tests_use_temp_tables': true,
+    'tests_use_temp_tables': false,
     'collect_metrics': true,
     'upload_dbt_columns': false
   } %}

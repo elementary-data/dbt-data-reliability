@@ -22,8 +22,20 @@
   {% do return(metrics) %}
 {% endmacro %}
 
-{% macro query_metrics() %}
+{% macro can_query_metrics() %}
   {% if not elementary.get_config_var('collect_metrics') %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% if model.config.require_partition_filter %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% do return(true) %}
+{% endmacro %}
+
+{% macro query_metrics() %}
+  {% if not elementary.can_query_metrics() %}
     {% do return([]) %}
   {% endif %}
 
@@ -31,5 +43,5 @@
 {% endmacro %}
 
 {% macro cache_metrics(metrics) %}
-  {% do elementary.get_cache("tables").get("metrics").extend(metrics) %}
+  {% do elementary.get_cache("tables").get("metrics").get("rows").extend(metrics) %}
 {% endmacro %}

@@ -25,16 +25,17 @@ elementary_tests:
       threads: 32
 ```
 
-3. Install tests' requirements.
+3. Load data into the database:
 
 ```shell
-pip install -r requirements.txt
+python generate_data.py
+dbt seed
 ```
 
 4. Run the tests.
 
 ```shell
-pytest -vvv -n8
+python run_e2e_tests.py
 ```
 
 ### Web Interface

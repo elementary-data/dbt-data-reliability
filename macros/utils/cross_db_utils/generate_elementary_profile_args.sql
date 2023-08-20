@@ -37,22 +37,22 @@
 {% endmacro %}
 
 {% macro bigquery__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
-  {% set paremeters = [
+  {% set parameters = [
     _parameter("type", target.type),
     _parameter("project", elementary_database),
     _parameter("dataset", elementary_schema)
   ] %}
   {% if method == 'service-account' %}
-    {% do paremeters.append(_parameter("method", "service-account")) %}
-    {% do paremeters.append(_parameter("keyfile", "<KEYFILE>")) %}
+    {% do parameters.append(_parameter("method", "service-account")) %}
+    {% do parameters.append(_parameter("keyfile", "<KEYFILE>")) %}
   {% elif method == "github-actions" %}
-    {% do paremeters.append(_parameter("method", "service-account")) %}
-    {% do paremeters.append(_parameter("keyfile", "/tmp/bigquery_keyfile.json", "Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`")) %}
+    {% do parameters.append(_parameter("method", "service-account")) %}
+    {% do parameters.append(_parameter("keyfile", "/tmp/bigquery_keyfile.json", "Do not change this, supply `bigquery-keyfile` in `.github/workflows/elementary.yml`")) %}
   {% else %}
-    {% do paremeters.append(_parameter("method", "<AUTH_METHOD>", "Configure your auth method and add the required fields according to https://docs.getdbt.com/reference/warehouse-setups/bigquery-setup#authentication-methods")) %}
+    {% do parameters.append(_parameter("method", "<AUTH_METHOD>", "Configure your auth method and add the required fields according to https://docs.getdbt.com/reference/warehouse-setups/bigquery-setup#authentication-methods")) %}
   {% endif %}
-  {% do paremeters.append(_parameter("threads", target.threads)) %}
-  {% do return(paremeters) %}
+  {% do parameters.append(_parameter("threads", target.threads)) %}
+  {% do return(parameters) %}
 {% endmacro %}
 
 {% macro postgres__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
