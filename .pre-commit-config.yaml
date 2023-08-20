@@ -22,6 +22,11 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.16.6
+    hooks:
+      - id: typos
+
   - repo: local
     hooks:
       - id: no_commit

@@ -64,7 +64,7 @@
             select edr_bucket_start, edr_bucket_end, dimension_value
             from training_set_dimensions left join buckets
                 on (buckets.joiner = training_set_dimensions.joiner
-                {# This makes sure we don't create empty buckets for dimensions before their first apperance #}
+                {# This makes sure we don't create empty buckets for dimensions before their first appearance #}
                 and edr_bucket_end >= dimension_min_bucket_end)
             where dimension_value is not null
         ),
@@ -141,7 +141,7 @@
 
     {% else %}
 
-        {# Get all of the dimension anomally metrics that were created for the test until this run #}
+        {# Get all of the dimension anomaly metrics that were created for the test until this run #}
         all_dimension_metrics as (
             select
                 bucket_end,
