@@ -57,6 +57,7 @@
 {% macro spark__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
+    {# Calling `is_delta` raises an error if `metadata` is None - https://github.com/databricks/dbt-databricks/blob/33dca4b66b05f268741030b33659d34ff69591c1/dbt/adapters/databricks/relation.py#L71 #}
     {% if delete_relation and relation.metadata and relation.is_delta %}
         {% set delete_query %}
             merge into {{ relation }} as source
