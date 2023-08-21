@@ -15,7 +15,6 @@ Monitor your data quality, operation and performance directly from your dbt proj
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads"/>
 
-
 ## Quick start
 
 1. Add to your `packages.yml`:
