@@ -9,7 +9,11 @@
 
     {% do elementary.file_log("Deleting temporary Elementary test tables: {}".format(test_table_relations)) %}
     {% set query %}
-        DROP TABLE IF EXISTS {{ test_table_relations | join(", ") }} CASCADE;
+        BEGIN TRANSACTION;
+        {% for test_relation in test_table_relations %}
+            DROP TABLE IF EXISTS {{ test_relation }};
+        {% endfor %}
+        COMMIT;
     {% endset %}
     {% do elementary.run_query(query) %}
 {% endmacro %}
