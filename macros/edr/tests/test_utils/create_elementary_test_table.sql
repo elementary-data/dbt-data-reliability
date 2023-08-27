@@ -7,13 +7,13 @@
                                                                    schema=schema_name,
                                                                    identifier=temp_table_name,
                                                                    type='table') -%}
-        {# Cache the test table for easy access later #}
-        {% set cache_key = "elementary_test_table|" ~ test_name ~ "|" ~ table_type %}
-        {% do elementary.set_cache(cache_key, temp_table_relation) %}
 
         {# Create the table if it doesn't exist #}
         {%- do elementary.create_or_replace(false, temp_table_relation, sql_query) %}
 
+        {# Cache the test table for easy access later #}
+        {% set test_entry = elementary.get_cache("temp_test_table_relations_map").setdefault(test_name, {}) %}
+        {% do test_entry.update({table_type: temp_table_relation}) %}
         {{ return(temp_table_relation) }}
     {% endif %}
     {{ return(none) }}

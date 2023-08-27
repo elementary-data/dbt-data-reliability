@@ -56,7 +56,8 @@
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
     'collect_metrics': true,
-    'upload_dbt_columns': false
+    'upload_dbt_columns': false,
+    'cleanup_elementary_temp_tables': true,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

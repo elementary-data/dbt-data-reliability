@@ -9,6 +9,7 @@
         "rows": []
       },
       "schema_snapshots": []
-    }
+    },
+    "temp_test_table_relations_map": {},
   }) %}
 {% endmacro %}
