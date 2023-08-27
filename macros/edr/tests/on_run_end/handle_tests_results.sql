@@ -13,7 +13,7 @@
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {% do elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {% do elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
-    {% if elementary.get_config_var("cleanup_elementary_temp_tables") %}
+    {% if elementary.get_config_var("clean_elementary_temp_tables") %}
       {% do elementary.clean_elementary_test_tables() %}
     {% endif %}
     {% if test_result_rows %}
