@@ -45,17 +45,16 @@ jobs:
     secrets: inherit
 
   notify_failures:
-      name: Notify Slack
-      secrets: inherit
-      needs: [test]
-      if: |
-        always() &&
-        ! cancelled() &&
-        !contains(needs.test.result, 'success') &&
-        !contains(needs.test.result, 'cancelled')
-      uses: ./.github/workflows/notify_slack.yml
-      with:
-        result: "failure"
-        run_id: ${{ github.run_id }}
-        workflow_name: "Test all warehouse platforms"
-  
+    name: Notify Slack
+    secrets: inherit
+    needs: [test]
+    if: |
+      always() &&
+      ! cancelled() &&
+      !contains(needs.test.result, 'success') &&
+      !contains(needs.test.result, 'cancelled')
+    uses: ./.github/workflows/notify_slack.yml
+    with:
+      result: "failure"
+      run_id: ${{ github.run_id }}
+      workflow_name: "Test all warehouse platforms"
