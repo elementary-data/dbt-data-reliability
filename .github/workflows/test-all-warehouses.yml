@@ -54,7 +54,7 @@ jobs:
       !contains(needs.test.result, 'success') &&
       !contains(needs.test.result, 'cancelled') &&
       ${{ github.event_name == 'schedule' }}
-    uses: ./.github/workflows/notify_slack.yml
+    uses: elementary-data/elementary/.github/workflows/notify_slack.yml
     with:
       result: "failure"
       run_id: ${{ github.run_id }}
