@@ -49,3 +49,7 @@
 {% macro spark__edr_current_timestamp_in_utc() %}
     cast(unix_timestamp() as timestamp)
 {% endmacro %}
+
+{% macro clickhouse__edr_current_timestamp_in_utc() %}
+    toDateTime(toUInt32(toUnixTimestamp(now()) - 7 * 86400))
+{% endmacro %}
