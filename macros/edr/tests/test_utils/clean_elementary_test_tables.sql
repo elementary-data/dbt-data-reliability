@@ -19,6 +19,18 @@
 {% endmacro %}
 
 {% macro default__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% do return(elementary.get_transaction_clean_elementary_test_tables_queries(test_table_relations)) %}
+{% endmacro %}
+
+{% macro bigquery__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
+{% endmacro %}
+
+{% macro spark__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
+{% endmacro %}
+
+{% macro get_transaction_clean_elementary_test_tables_queries(test_table_relations) %}
     {% set query %}
         BEGIN TRANSACTION;
         {% for test_relation in test_table_relations %}
@@ -29,7 +41,7 @@
     {% do return([query]) %}
 {% endmacro %}
 
-{% macro bigquery__get_clean_elementary_test_tables_queries(test_table_relations) %}
+{% macro get_transactionless_clean_elementary_test_tables_queries(test_table_relations) %}
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
         {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation)) %}
