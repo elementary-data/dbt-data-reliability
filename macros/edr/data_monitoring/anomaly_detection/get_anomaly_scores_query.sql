@@ -173,8 +173,8 @@
                 {% endset %}
                 case
                     when training_stddev is null then null
-                    when {{ min_metric_value_expr }} < 0 and metric_name = 'row_count' then 0
-                    else {{ min_metric_value_expr }}
+                    when {{ min_metric_value_expr }} < 0 and metric_name in ('min', 'max', 'average', 'standard_deviation', 'variance', 'sum') then {{ min_metric_value_expr }}
+                    else 0
                 end as min_metric_value,
                 case 
                     when training_stddev is null then null
