@@ -168,9 +168,13 @@
                 bucket_end,
                 bucket_seasonality,
                 metric_value,
+                {% set min_metric_value_expr %}
+                    ((-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+                {% endset %}
                 case
                     when training_stddev is null then null
-                    else (-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
+                    when {{ min_metric_value_expr }} < 0 and metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ min_metric_value_expr }}
+                    else 0
                 end as min_metric_value,
                 case 
                     when training_stddev is null then null
@@ -193,4 +197,8 @@
 
     {% endset %}
     {{ return(anomaly_scores_query) }}
+{% endmacro %}
+
+{% macro get_negative_value_supported_metrics() %}
+    {% do return(["min", "max", "average", "standard_deviation", "variance", "sum"]) %}
 {% endmacro %}
