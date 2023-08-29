@@ -71,3 +71,33 @@ The best pull requests are focused, clearly describe what they're for
 and why they're correct, and contain tests for whatever changes they
 make to the code's behavior. As a bonus these are easiest for someone
 to review, which helps your pull request get merged quickly!
+
+## Running integration tests
+
+For every PR we merge, we require integration tests to pass successfully
+on all supported database platforms (Snowflake, Bigquery, Redshift, Databricks and Postgres).
+
+Clearly you might not have a setup for all of these, so the expectation is that you'll run
+the tests on the platform you're using and make sure everything passes.
+
+Our tests are located under the `integration_tests` directory, and written using the
+[py-test](https://docs.pytest.org/en/stable/) framework.
+In order to run them, please follow these steps:
+
+1. Install dependencies:
+
+```bash
+cd integration_tests
+pip install -r requirements.txt
+dbt deps --project-dir dbt_project
+```
+
+2. Create a dbt profile named `elementary_tests`, with a target corresponding to the database you are using.
+   For more details on how to set a dbt profile please click [here](https://docs.getdbt.com/docs/core/connect-data-platform/connection-profiles).
+
+3. Run the tests:
+
+```bash
+cd tests
+py.test -vvv --target <your_target>
+```
