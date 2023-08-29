@@ -1,4 +1,4 @@
-{% test volume_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
+{% test volume_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, detection_delay_hours) %}
   -- depends_on: {{ ref('monitors_runs') }}
   -- depends_on: {{ ref('data_monitoring_metrics') }}
   -- depends_on: {{ ref('dbt_run_results') }}
@@ -16,7 +16,8 @@
       days_back=days_back,
       backfill_days=backfill_days,
       seasonality=seasonality,
-      sensitivity=sensitivity
+      sensitivity=sensitivity,
+      detection_delay_hours=detection_delay_hours
     )
   }}
 {% endtest %}
