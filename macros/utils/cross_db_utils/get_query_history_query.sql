@@ -1,12 +1,12 @@
 {% macro get_query_history_query(from_time) %}
+  {% if not from_time %}
+    {% do exceptions.raise_compiler_error("from_time variable must be specified") %}
+  {% endif %}
   {% do return(adapter.dispatch("get_query_history_query", "elementary")(from_time)) %}
 {% endmacro %}
 
 
 {% macro bigquery__get_query_history_query(from_time) %}
-{% if not from_time %}
-  {% do exceptions.raise_compiler_error("from_time variable must be specified") %}
-{% endif %}
 {% set region_relation = api.Relation.create(database=target.project, schema="region-" ~ target.location).without_identifier() %}
 {% set jobs_relation = region_relation.information_schema('JOBS') %}
 {% if execute and not elementary.can_query_relation(jobs_relation) %}
