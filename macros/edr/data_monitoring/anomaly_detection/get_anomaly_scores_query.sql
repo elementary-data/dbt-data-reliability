@@ -173,7 +173,7 @@
                 {% endset %}
                 case
                     when training_stddev is null then null
-                    when {{ min_metric_value_expr }} < 0 and metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ min_metric_value_expr }}
+                    when {{ min_metric_value_expr }} > 0 or metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ min_metric_value_expr }}
                     else 0
                 end as min_metric_value,
                 case 
