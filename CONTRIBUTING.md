@@ -1,8 +1,7 @@
-# Contributing guidelines
+# Contribution guidelines
 
-_Note_: This document is for the dbt package.
-For the Python package (`edr`), refer to
-the [Python package contributing guidelines](https://github.com/elementary-data/elementary/blob/master/CONTRIBUTING.md).
+**Note**: This document contains contribution guidelines for the Elementary dbt package. If you wish to contribute
+to the Elementary CLI (`edr`), please refer to the [CLI contribution guidelines](https://github.com/elementary-data/elementary/blob/master/CONTRIBUTING.md).
 
 ## Getting started with development
 
@@ -78,7 +77,7 @@ For every PR we merge, we require integration tests to pass successfully
 on all supported database platforms (Snowflake, Bigquery, Redshift, Databricks and Postgres).
 
 Clearly you might not have a setup for all of these, so the expectation is that you'll run
-the tests on the platform you're using and make sure everything passes.
+the tests on the platform you're using and make sure everything passes. We also encourage you to add new tests for any new non-trivial functionality.
 
 Our tests are located under the `integration_tests` directory, and written using the
 [py-test](https://docs.pytest.org/en/stable/) framework.
