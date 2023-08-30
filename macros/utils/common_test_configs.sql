@@ -312,6 +312,12 @@
         }
       },
       "elementary": {
+        "schema_changes": {
+          "description": "Monitors schema changes on the table of deleted, added, type changed columns over time. The test will fail if the table's schema changed from the previous execution of the test."
+        },
+        "schema_changes_from_baseline": {
+          "description": "Compares the table's schema against a baseline contract of columns defined in the table's configuration."
+        },
         "json_schema": {
           "quality_dimension": "validity",
           "failed_row_count_calc": "count(*)",
