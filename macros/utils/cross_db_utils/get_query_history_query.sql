@@ -19,9 +19,9 @@ select
   start_time,
   end_time,
   state,
-  referenced_table.project_id as source_db,
-  referenced_table.dataset_id as source_schema,
-  referenced_table.table_id as source_table,
+  referenced_table.project_id as src_db,
+  referenced_table.dataset_id as src_schema,
+  referenced_table.table_id as src_table,
   destination_table.project_id as dest_db,
   destination_table.dataset_id as dest_schema,
   destination_table.table_id as dest_table
