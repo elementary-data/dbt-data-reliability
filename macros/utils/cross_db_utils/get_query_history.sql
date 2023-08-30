@@ -5,7 +5,7 @@
 {% macro bigquery__get_query_history(from_time) %}
 select 
   job_id || referenced_table.project_id || referenced_table.dataset_id || referenced_table.table_id as id,
-  job_id as job_id,
+  job_id,
   statement_type,
   start_time,
   end_time,
