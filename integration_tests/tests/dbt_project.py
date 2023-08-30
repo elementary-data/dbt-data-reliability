@@ -90,6 +90,7 @@ class DbtProject:
         columns: Optional[List[dict]] = None,
         data: Optional[List[dict]] = None,
         as_model: bool = False,
+        table_name: Optional[str] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -105,6 +106,7 @@ class DbtProject:
         columns: Optional[List[dict]] = None,
         data: Optional[List[dict]] = None,
         as_model: bool = False,
+        table_name: Optional[str] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -119,11 +121,15 @@ class DbtProject:
         columns: Optional[List[dict]] = None,
         data: Optional[List[dict]] = None,
         as_model: bool = False,
+        table_name: Optional[str] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
+
+        if not table_name:
+            table_name = test_id
 
         test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
@@ -160,7 +166,7 @@ class DbtProject:
             temp_table_ctx = nullcontext()
 
         if data:
-            self.seed(data, test_id)
+            self.seed(data, table_name)
         with temp_table_ctx:
             with NamedTemporaryFile(
                 dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
