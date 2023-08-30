@@ -16,4 +16,4 @@
   {% set from_time = elementary.edr_timeadd('day', -30, elementary.edr_current_timestamp()) %}
 {% endif %}
 
-{{ elementary.get_query_history(from_time) }}
+{{ elementary.get_query_history_query(from_time) }}
