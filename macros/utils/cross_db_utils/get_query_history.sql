@@ -25,7 +25,7 @@ where
   job_type = 'QUERY'
 {% endmacro %}
 
-{# TODO: impement for other DWH types after POC with BigQuery #}
+{# TODO: implement for other DWH types after POC with BigQuery #}
 {% macro default__get_query_history(from_time) %}
   {{ elementary.empty_query_history() }}
 {% endmacro %}
