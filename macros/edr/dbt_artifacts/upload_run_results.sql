@@ -30,7 +30,8 @@
                                                                        ('failures', 'bigint'),
                                                                        ('query_id', 'string'),
                                                                        ('thread_id', 'string'),
-                                                                       ('materialization', 'string')
+                                                                       ('materialization', 'string'),
+                                                                       ('adapter_response', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -59,7 +60,8 @@
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
-        'materialization': config_dict.get('materialized')
+        'materialization': config_dict.get('materialized'),
+        'adapter_response': run_result_dict.get('adapter_response', {})
     }%}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}
