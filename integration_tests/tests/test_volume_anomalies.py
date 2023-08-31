@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
+import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 from parametrization import Parametrization
@@ -170,4 +171,22 @@ def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
 
     dbt_project.seed(data * 2, test_id)
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args)
+    assert test_result["status"] == "fail"
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=date.today())
+        if cur_date < cur_date.today() - timedelta(days=1)
+    ]
+    wildcarded_table_name = test_id[:-1] + "*"
+    test_result = dbt_project.test(
+        wildcarded_table_name,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        table_name=test_id,
+    )
     assert test_result["status"] == "fail"
