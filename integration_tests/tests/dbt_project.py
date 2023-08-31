@@ -128,10 +128,10 @@ class DbtProject:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
 
+        test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
             table_name = test_id
 
-        test_id = test_id.replace("[", "_").replace("]", "_")
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {"name": test_id}
 
