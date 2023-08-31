@@ -312,9 +312,34 @@
         }
       },
       "elementary": {
+        "schema_changes": {
+          "description": "Monitors schema changes on the table of deleted, added, type changed columns over time. The test will fail if the table's schema changed from the previous execution of the test."
+        },
+        "schema_changes_from_baseline": {
+          "description": "Compares the table's schema against a baseline contract of columns defined in the table's configuration."
+        },
         "json_schema": {
           "quality_dimension": "validity",
-          "failed_row_count_calc": "count(*)"
+          "failed_row_count_calc": "count(*)",
+          "description": "This test validates that the data in a column is valid according to a JSON schema."
+        },
+        "volume_anomalies": {
+          "description": "Monitors the row count of your table over time."
+        },
+        "freshness_anomalies": {
+          "description": "Monitors the freshness of your table over time, as the expected time between data updates."
+        },
+        "event_freshness_anomalies": {
+          "description": "Monitors the freshness of event data over time, as the expected time it takes each event to load, that is, the time between when the event actually occurs (the event timestamp), and when it is loaded to the database (the update timestamp)."
+        },
+        "dimension_anomalies": {
+          "description": "Monitors the frequency of values in the configured dimensions over time."
+        },
+        "all_columns_anomalies": {
+          "description": "Column-level anomaly monitors (null_count, null_percent, zero_count, string_length, variance, etc.) on all the columns of the table. The test checks the data type of each column and only executes monitors that are relevant to it."
+        },
+        "column_anomalies": {
+          "description": "Column-level anomaly monitors (null_count, null_percent, zero_count, string_length, variance, etc.) on the column according to its data type."
         }
       }
     } %}

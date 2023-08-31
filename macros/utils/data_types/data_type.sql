@@ -25,8 +25,16 @@
 {%- endmacro -%}
 
 {% macro default__edr_type_string() %}
-    {# Redshift and Postgres #}
+    {# Redshift #}
     {% do return("varchar(4096)") %}
+{% endmacro %}
+
+{% macro postgres__edr_type_string() %}
+    {% if var("sync", false) %}
+        {% do return("text") %}
+    {% else %}
+        {% do return("varchar(4096)") %}
+    {% endif %}
 {% endmacro %}
 
 {% macro snowflake__edr_type_string() %}
