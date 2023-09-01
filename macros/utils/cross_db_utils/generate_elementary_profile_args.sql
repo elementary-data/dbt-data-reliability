@@ -106,10 +106,10 @@
   {% set parameters = [
     _parameter("type", target.type),
     _parameter("s3_staging_dir", target.s3_staging_dir),
-    _parameter("region_name", target.region_name)
-    _parameter("database", target.database)
-    _parameter("aws_profile_name", target.aws_profile_name)
-    _parameter("work_group", target.work_group)
+    _parameter("region_name", target.region_name),
+    _parameter("database", target.database),
+    _parameter("aws_profile_name", target.aws_profile_name),
+    _parameter("work_group", target.work_group),
     _parameter("aws_access_key_id", "<AWS_ACCESS_KEY_ID>"),
     _parameter("aws_secret_access_key", "<AWS_SECRET_ACCESS_KEY>"),
   ] %}
