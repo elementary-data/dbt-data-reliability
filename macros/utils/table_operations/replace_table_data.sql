@@ -39,8 +39,14 @@
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
+{# Glue - truncate and insert (non-atomic) #}
 {% macro glue__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do elementary.create_or_replace(False, relation, 'select * from {}'.format(intermediate_relation)) %}
-    {% do adapter.drop_relation(intermediate_relation) %}
+    {% do dbt.glue_exec_query(dbt.get_insert_overwrite_sql(relation, intermediate_relation)) %}
+
+    {% set query %}
+        drop table if exists {{ intermediate_relation }}
+    {% endset %}
+
+    {% do dbt.glue_exec_query(query) %}
 {% endmacro %}
