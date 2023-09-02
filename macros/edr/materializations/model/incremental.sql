@@ -62,8 +62,8 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization incremental, adapter="glue" %}
-  {% set relations = dbt.materialization_incremental_glue() %}
+{% materialization incremental, adapter="glue", supported_languages=["sql", "python"] %}
+  {% set relations = dbt.materialization_incremental_glue.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
   {% endif %}
