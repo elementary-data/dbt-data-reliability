@@ -42,7 +42,7 @@
 {# Glue - truncate and insert (non-atomic) #}
 {% macro glue__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do dbt.glue_exec_query(dbt.get_insert_overwrite_sql(relation, intermediate_relation)) %}
+    {% do dbt.glue_exec_query(dbt.get_insert_overwrite_sql(intermediate_relation, relation)) %}
 
     {% set query %}
         drop table if exists {{ intermediate_relation }}
