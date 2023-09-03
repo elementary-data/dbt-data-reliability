@@ -22,13 +22,21 @@
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% do elementary.run_query(insert_query) %}
+        {% if target.type == 'glue' %}
+          {% do dbt.glue_exec_query(insert_query) %}
+        {% else %}
+          {% do elementary.run_query(insert_query) %}
+        {% endif %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
       {% for rows_chunk in rows_chunks %}
         {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
-        {% do elementary.run_query(insert_rows_query) %}
+        {% if target.type == 'glue' %}
+          {% do dbt.glue_exec_query(insert_rows_query) %}
+        {% else %}
+          {% do elementary.run_query(insert_rows_query) %}
+        {% endif %}
       {% endfor %}
     {% else %}
       {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
@@ -113,6 +121,10 @@
 {%- endmacro -%}
 
 {%- macro postgres__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
+{%- endmacro -%}
+
+{%- macro glue__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
