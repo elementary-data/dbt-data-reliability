@@ -53,3 +53,12 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro glue__make_temp_table_relation(base_relation, suffix) %}
+    {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
+    {% set tmp_relation = api.Relation.create(
+        identifier=tmp_identifier,
+        schema=base_relation.schema,
+        database=base_relation.database,
+        type='table') %}
+    {% do return(tmp_relation) %}
+{% endmacro %}
