@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, detection_delay_hours) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, detection_delay) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
@@ -33,7 +33,7 @@
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
                                                                                                    sensitivity=sensitivity,
-                                                                                                   detection_delay_hours=detection_delay_hours) %}
+                                                                                                   detection_delay=detection_delay) %}
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
@@ -51,7 +51,7 @@
             {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model_relation,
                                                                                     backfill_days=test_configuration.backfill_days,
                                                                                     days_back=test_configuration.days_back,
-                                                                                    detection_delay_hours=test_configuration.detection_delay_hours,
+                                                                                    detection_delay=test_configuration.detection_delay,
                                                                                     monitors=column_monitors,
                                                                                     column_name=column_name,
                                                                                     metric_properties=metric_properties) %}

@@ -1,6 +1,8 @@
-{% macro get_detection_end(detection_delay_hours) %}
-    {%- set delay_hours = detection_delay_hours or 0 %}
-    {%- set detection_end = elementary.get_run_started_at() - modules.datetime.timedelta(hours=delay_hours) %}
+{% macro get_detection_end(detection_delay) %}
+    {%- set delta = modules.datetime.timedelta(weeks=detection_delay.count) if detection_delay.period == 'week'
+            else modules.datetime.timedelta(days=detection_delay.count) if detection_delay.period == 'day'
+            else modules.datetime.timedelta(hours=detection_delay.count) %}
+    {%- set detection_end = elementary.get_run_started_at() - delta %}
     {{ return(detection_end) }}
 {% endmacro %}
 
@@ -16,9 +18,9 @@
 {% endmacro %}
 
 
-{% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, detection_delay_hours, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
+{% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, detection_delay, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
 
-    {%- set detection_end = elementary.get_detection_end(detection_delay_hours) %}
+    {%- set detection_end = elementary.get_detection_end(detection_delay) %}
     {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) %}
     {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, days_back) %}
     {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_backfill_bucket_start(detection_end, backfill_days))) %}

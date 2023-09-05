@@ -17,7 +17,7 @@
                                           event_timestamp_column,
                                           dimensions,
                                           sensitivity,
-                                          detection_delay_hours) %}
+                                          detection_delay) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -34,7 +34,7 @@
     {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
-    {%- set detection_delay_hours = elementary.get_test_argument('detection_delay_hours', detection_delay_hours, model_graph_node) %}
+    {%- set detection_delay = elementary.get_detection_delay(detection_delay, model_graph_node) %}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
@@ -49,7 +49,7 @@
        'freshness_column': freshness_column,
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
-       'detection_delay_hours': detection_delay_hours
+       'detection_delay': detection_delay
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
