@@ -22,6 +22,16 @@ _DEFAULT_VARS = {
     "collect_metrics": False,
 }
 
+DUMMY_MODEL_FILE_PATTERN = """
+{{{{
+  config (
+    materialized = '{materialization}'
+  )
+}}}}
+
+SELECT 1 AS col
+"""
+
 logger = get_logger(__name__)
 
 
@@ -91,6 +101,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -107,6 +119,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -122,6 +136,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -151,7 +167,9 @@ class DbtProject:
                 "version": 2,
                 "models": [table_yaml],
             }
-            temp_table_ctx = self.create_temp_model_for_existing_table(test_id)
+            temp_table_ctx = self.create_temp_model_for_existing_table(
+                test_id, materialization
+            )
         else:
             props_yaml = {
                 "version": 2,
@@ -173,7 +191,7 @@ class DbtProject:
             ) as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(PATH)
-                self.dbt_runner.test(select=str(relative_props_path))
+                self.dbt_runner.test(select=str(relative_props_path), vars=test_vars)
 
         if multiple_results:
             return self._read_test_results(test_id)
@@ -184,9 +202,13 @@ class DbtProject:
         return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
 
     @contextmanager
-    def create_temp_model_for_existing_table(self, table_name: str):
+    def create_temp_model_for_existing_table(
+        self, table_name: str, materialization: str
+    ):
         model_path = TMP_MODELS_DIR_PATH.joinpath(f"{table_name}.sql")
-        model_path.write_text("SELECT 1 AS col")
+        model_path.write_text(
+            DUMMY_MODEL_FILE_PATTERN.format(materialization=materialization)
+        )
         relative_model_path = model_path.relative_to(PATH)
         try:
             yield relative_model_path
