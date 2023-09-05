@@ -1,8 +1,6 @@
 {% macro get_detection_end(detection_delay) %}
-    {%- set delta = modules.datetime.timedelta(weeks=detection_delay.count) if detection_delay.period == 'week'
-            else modules.datetime.timedelta(days=detection_delay.count) if detection_delay.period == 'day'
-            else modules.datetime.timedelta(hours=detection_delay.count) %}
-    {%- set detection_end = elementary.get_run_started_at() - delta %}
+    {%- set kwargs = {detection_delay.period+'s': detection_delay.count} %}
+    {%- set detection_end = elementary.get_run_started_at() - modules.datetime.timedelta(**kwargs) %}
     {{ return(detection_end) }}
 {% endmacro %}
 
