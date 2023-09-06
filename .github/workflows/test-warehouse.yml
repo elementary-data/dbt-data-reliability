@@ -82,7 +82,7 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        run: pip install --pre
+        run: pip install
           "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
