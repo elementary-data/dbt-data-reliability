@@ -14,7 +14,7 @@
   {% for schema in schemas %}
     {% set db_name, schema_name = schema.split('.') %}
     {% set schema_relation = api.Relation.create(db_name, schema_name).without_identifier() %}
-    {% set relations = list_relations_without_caching(schema_relation) %}
+    {% set relations = dbt.list_relations_without_caching(schema_relation) %}
     {# list_relations_without_caching can return either a list of Relation objects or an agate depending on the adapter #}
     {% if relations.append is defined %}
       {# relations is a list of Relation objects #}
