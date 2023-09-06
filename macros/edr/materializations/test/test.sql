@@ -217,7 +217,7 @@
         'test_execution_id': test_execution_id,
         'test_unique_id': elementary.insensitive_get_dict_value(flattened_test, 'unique_id'),
         'model_unique_id': parent_model_unique_id,
-        'detected_at': elementary.edr_cast_as_timestamp("'" ~ elementary.insensitive_get_dict_value(flattened_test, 'generated_at') ~ "'"),
+        'detected_at': elementary.insensitive_get_dict_value(flattened_test, 'generated_at'),
         'database_name': elementary.insensitive_get_dict_value(flattened_test, 'database_name'),
         'schema_name': elementary.insensitive_get_dict_value(flattened_test, 'schema_name'),
         'table_name': parent_model_name,
