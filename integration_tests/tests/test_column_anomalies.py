@@ -87,12 +87,12 @@ def test_column_anomalies_with_where_expression(test_id: str, dbt_project: DbtPr
 
     params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, test_column="superhero"
+        f"{test_id}_marvel", DBT_TEST_NAME, params, data=data, test_column="superhero"
     )
     assert test_result["status"] == "pass"
 
     params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, test_column="superhero"
+        f"{test_id}_dc", DBT_TEST_NAME, params, data=data, test_column="superhero"
     )
     assert test_result["status"] == "fail"

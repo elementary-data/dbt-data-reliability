@@ -95,13 +95,13 @@ def test_all_columns_anomalies_with_where_expression(
 
     params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_results = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, multiple_results=True
+        f"{test_id}_marvel", DBT_TEST_NAME, params, multiple_results=True
     )
     assert all([res["status"] == "pass" for res in test_results])
 
     params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_results = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, multiple_results=True
+        f"{test_id}_dc", DBT_TEST_NAME, params, multiple_results=True
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {
