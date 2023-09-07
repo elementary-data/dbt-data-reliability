@@ -21,19 +21,35 @@ class FreshnessAnomaliesConfig:
 
 
 HOURLY_CONFIG = FreshnessAnomaliesConfig(
-    period="hour", step=timedelta(minutes=10), days_back=14, backfill_days=2, detection_delay_hours=0
+    period="hour",
+    step=timedelta(minutes=10),
+    days_back=14,
+    backfill_days=2,
+    detection_delay_hours=0,
 )
 
 DAILY_CONFIG = FreshnessAnomaliesConfig(
-    period="day", step=timedelta(hours=2), days_back=30, backfill_days=3, detection_delay_hours=0
+    period="day",
+    step=timedelta(hours=2),
+    days_back=30,
+    backfill_days=3,
+    detection_delay_hours=0,
 )
 
 WEEKLY_CONFIG = FreshnessAnomaliesConfig(
-    period="week", step=timedelta(hours=12), days_back=7 * 15, backfill_days=14, detection_delay_hours=0
+    period="week",
+    step=timedelta(hours=12),
+    days_back=7 * 15,
+    backfill_days=14,
+    detection_delay_hours=0,
 )
 
 MONTHLY_CONFIG = FreshnessAnomaliesConfig(
-    period="month", step=timedelta(days=2), days_back=30 * 15, backfill_days=60, detection_delay_hours=0
+    period="month",
+    step=timedelta(days=2),
+    days_back=30 * 15,
+    backfill_days=60,
+    detection_delay_hours=0,
 )
 
 
@@ -49,7 +65,9 @@ class TestFreshnessAnomalies:
             days_back=config.days_back,
             backfill_days=config.backfill_days,
             time_bucket=dict(period=config.period, count=1),
-            detection_delay_hours=dict(period='hour', count=config.detection_delay_hours)
+            detection_delay=dict(
+                period='hour', count=config.detection_delay_hours
+            ),
         )
 
     def _skip_redshift_monthly(
