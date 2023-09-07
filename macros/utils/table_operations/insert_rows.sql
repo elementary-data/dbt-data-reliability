@@ -65,7 +65,7 @@
           {% do rendered_column_values.append(column_value) %}
         {% else %}
           {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
-          {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+          {% do rendered_column_values.append(elementary.render_value(column_value, column.data_type)) %}
         {% endif %}
       {% endfor %}
       {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
@@ -100,7 +100,7 @@
             {% for row in rows -%}
                 ({%- for column in columns -%}
                     {%- set column_value = elementary.insensitive_get_dict_value(row, column.name, none) -%}
-                    {{ elementary.render_value(column_value) }}
+                    {{ elementary.render_value(column_value, column.data_type) }}
                     {{- "," if not loop.last else "" -}}
                  {%- endfor -%}) {{- "," if not loop.last else "" -}}
             {%- endfor -%}
@@ -125,13 +125,15 @@
 {%- endmacro -%}
 
 {%- macro glue__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("'", "''")) -}}
+    {{- return(string_value | replace("'", '"')) -}}
 {%- endmacro -%}
 
-{%- macro render_value(value) -%}
+{%- macro render_value(value, data_type=none) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}
             {{- value -}}
+        {%- elif target.type == 'glue' and data_type=='timestamp' -%}
+            cast('{{- value -}}' as timestamp)
         {%- elif value is string -%}
             '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}
