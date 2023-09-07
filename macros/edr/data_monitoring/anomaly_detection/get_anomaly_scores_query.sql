@@ -28,7 +28,8 @@
     {%- else %}
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, test_configuration.days_back) %}
+    {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
     {%- set anomaly_scores_query %}
 

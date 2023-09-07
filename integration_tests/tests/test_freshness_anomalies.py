@@ -1,3 +1,4 @@
+from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -16,22 +17,23 @@ class FreshnessAnomaliesConfig:
     step: timedelta
     days_back: int
     backfill_days: int
+    detection_delay_hours: int
 
 
 HOURLY_CONFIG = FreshnessAnomaliesConfig(
-    period="hour", step=timedelta(minutes=10), days_back=14, backfill_days=2
+    period="hour", step=timedelta(minutes=10), days_back=14, backfill_days=2, detection_delay_hours=0
 )
 
 DAILY_CONFIG = FreshnessAnomaliesConfig(
-    period="day", step=timedelta(hours=2), days_back=30, backfill_days=3
+    period="day", step=timedelta(hours=2), days_back=30, backfill_days=3, detection_delay_hours=0
 )
 
 WEEKLY_CONFIG = FreshnessAnomaliesConfig(
-    period="week", step=timedelta(hours=12), days_back=7 * 15, backfill_days=14
+    period="week", step=timedelta(hours=12), days_back=7 * 15, backfill_days=14, detection_delay_hours=0
 )
 
 MONTHLY_CONFIG = FreshnessAnomaliesConfig(
-    period="month", step=timedelta(days=2), days_back=30 * 15, backfill_days=60
+    period="month", step=timedelta(days=2), days_back=30 * 15, backfill_days=60, detection_delay_hours=0
 )
 
 
@@ -47,6 +49,7 @@ class TestFreshnessAnomalies:
             days_back=config.days_back,
             backfill_days=config.backfill_days,
             time_bucket=dict(period=config.period, count=1),
+            detection_delay_hours=dict(period='hour', count=config.detection_delay_hours)
         )
 
     def _skip_redshift_monthly(
@@ -93,6 +96,28 @@ class TestFreshnessAnomalies:
             test_id, TEST_NAME, self._get_test_config(config), data=data
         )
         assert result["status"] == "fail"
+
+    def test_stop_with_delay(
+        self,
+        test_id: str,
+        dbt_project: DbtProject,
+        config: FreshnessAnomaliesConfig,
+        target: str,
+    ):
+        self._skip_redshift_monthly(target, config)
+        anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
+        data = [
+            {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+            for date in generate_dates(
+                anomaly_date, step=config.step, days_back=(config.days_back)
+            )
+        ]
+        delayed_config = copy(config)
+        delayed_config.detection_delay_hours = 24 * config.backfill_days
+        result = dbt_project.test(
+            test_id, TEST_NAME, self._get_test_config(delayed_config), data=data
+        )
+        assert result["status"] == "pass"
 
     def test_slower_rate(
         self,
