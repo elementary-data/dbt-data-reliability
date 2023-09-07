@@ -61,8 +61,8 @@
         {% if detection_delay.count and detection_delay.count is not integer %}
             {% do exceptions.raise_compiler_error("detection_delay.count expects valid integer, got: {} (If it's an integer, try to remove quotes)".format(detection_delay.count)) %}
         {% endif %}
-        {% if detection_delay.count <= 0 %}
-            {% do exceptions.raise_compiler_error("detection_delay.count has to be larger than 0, got: {})".format(detection_delay.count)) %}
+        {% if detection_delay.count < 0 %}
+            {% do exceptions.raise_compiler_error("detection_delay.count can't be negative, got: {})".format(detection_delay.count)) %}
         {% endif %}
         {% set supported_periods = elementary.get_detection_delay_supported_periods() %}
         {% if detection_delay.period and detection_delay.period not in supported_periods %}
