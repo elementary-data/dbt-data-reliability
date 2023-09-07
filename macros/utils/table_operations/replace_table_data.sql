@@ -40,7 +40,8 @@
 {% endmacro %}
 
 {% macro athena__replace_table_data(relation, rows) %}
-    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do elementary.create_or_replace(False, relation, 'select * from {}'.format(intermediate_relation)) %}
-    {% do adapter.drop_relation(intermediate_relation) %}
+     {% call statement('truncate_relation') -%}
+        delete from {{ relation }}
+      {%- endcall %}
+    {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
