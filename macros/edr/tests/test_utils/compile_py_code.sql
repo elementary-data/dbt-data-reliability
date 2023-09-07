@@ -1,11 +1,11 @@
-{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
+{% macro snowflake__compile_py_code(model, py_code, output_table, where_expression, detailed_output, code_type) %}
 import pandas
 import snowflake.snowpark
 
 {{ py_code }}
 
 def write_output_table(session, output_df, target_relation):
-    output_df.write.mode('overwrite').save_as_table(target_relation, table_type='temporary')
+    output_df.write.mode('overwrite').save_as_table(target_relation)
 
 def get_fail_count(test_output):
     if isinstance(test_output, int):
@@ -21,8 +21,23 @@ def get_fail_count(test_output):
 def get_output_df(model_df, code_type, ref, session):
     if code_type == "test":
         test_output = test(model_df, ref, session)
+        
+        {% if detailed_output %}
+        
+        if isinstance(test_output, pandas.DataFrame):
+            return session.createDataFrame(test_output)
+        elif isinstance(test_output, snowflake.snowpark.DataFrame):
+            return test_output
+        else:
+            raise ValueError('Detailed output requires python test macro to return a pandas.DataFrame or snowflake.snowpark.DataFrame.')
+        
+        {% else %}
+
         fail_count = get_fail_count(test_output)
         return session.createDataFrame([[fail_count]], ['fail_count'])
+
+        {% endif %}
+
     elif code_type == "function":
         res = func(model_df, ref, session)
         return session.createDataFrame([[res]], ['result'])
@@ -71,8 +86,23 @@ def get_session():
 def get_output_df(model_df, code_type, ref, session):
     if code_type == "test":
         test_output = test(model_df, ref, session)
+        
+        {% if detailed_output %}
+        
+        if isinstance(test_output, pandas.DataFrame):
+            return session.createDataFrame(test_output)
+        elif isinstance(test_output, pyspark.sql.DataFrame):
+            return test_output
+        else:
+            raise ValueError('Detailed output requires python test macro to return a pandas.Dataframe or pyspark.sql.DataFrame.')
+        
+        {% else %}
+
         fail_count = get_fail_count(test_output)
         return session.createDataFrame([[fail_count]], ['fail_count'])
+
+        {% endif %}
+        
     elif code_type == "function":
         res = func(model_df, ref, session)
         return session.createDataFrame([[res]], ['result'])
@@ -94,6 +124,6 @@ def main():
 main()
 {% endmacro %}
 
-{% macro default__compile_py_code(model, py_code, output_table, where_expression, code_type) %}
+{% macro default__compile_py_code(model, py_code, output_table, where_expression, detailed_output, code_type) %}
   {{ exceptions.raise_compiler_error("Elementary's Python tests are not yet supported on %s." % target.type) }}
 {% endmacro %}

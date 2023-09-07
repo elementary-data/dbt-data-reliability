@@ -1,5 +1,10 @@
-{% test json_schema(model, column_name, where_expression) %}
+{% test json_schema(model, column_name, where_expression, detailed_output) %}
+    
+    {% if detailed_output %}
+    {{ config(fail_calc = 'count(*)') }}
+    {% else %}
     {{ config(fail_calc = 'fail_count') }}
+    {% endif %}
 
     {% if not execute %}
         {% do return(none) %}
@@ -16,7 +21,7 @@
         {% do exceptions.raise_compiler_error("A json schema must be supplied as a part of the test!") %}
     {% endif %}
 
-    {{ elementary.test_python(model, elementary.json_schema_python_test, {'column_name': column_name, 'json_schema': kwargs}, where_expression,
+    {{ elementary.test_python(model, elementary.json_schema_python_test, {'column_name': column_name, 'json_schema': kwargs}, where_expression, detailed_output,
                               packages=['jsonschema']) }}
 {% endtest %}
 
@@ -27,9 +32,9 @@ import jsonschema
 def is_valid_json(val, json_schema):
     try:
         jsonschema.validate(json.loads(val), json_schema)
-        return True
-    except (json.JSONDecodeError, jsonschema.ValidationError):
-        return False
+        return ""
+    except (json.JSONDecodeError, jsonschema.ValidationError) as e:
+        return str(e)
 
 def get_column_name_in_df(df, column_name):
     matching = [col for col in df.columns if col.lower() == column_name.lower()]
@@ -49,5 +54,5 @@ def test(model_df, ref, session):
     column_name = get_column_name_in_df(model_df, "{{ args.column_name }}")
     model_df["is_valid_json"] = model_df[column_name].apply(lambda val: is_valid_json(val, json_schema))
 
-    return model_df[model_df.is_valid_json == False]
+    return model_df[model_df.is_valid_json != ""]
 {% endmacro %}
