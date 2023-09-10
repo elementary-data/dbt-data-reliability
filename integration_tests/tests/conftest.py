@@ -60,7 +60,11 @@ def requires_dbt_version(request):
 
 @pytest.fixture
 def dbt_project(target: str) -> DbtProject:
-    return DbtProject(target)
+    project = DbtProject(target)
+    try:
+        yield project
+    finally:
+        project.delete_temp_project_dir()
 
 
 @pytest.fixture(scope="session")
