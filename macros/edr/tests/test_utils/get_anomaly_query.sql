@@ -118,4 +118,5 @@
         training_percentile > {{ spike_percentile_threshold }}
     {% else %}
         spike_percentile_threshold < {{ drop_percentile_threshold }}
+    {% endif %}
 {%- endmacro -%}
