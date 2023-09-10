@@ -53,7 +53,7 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
        'spike_percentile_threshold': spike_percentile_threshold,
-       'drop_percentile_threshold': drop_percentile_threshold,
+       'drop_percentile_threshold': drop_percentile_threshold
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
