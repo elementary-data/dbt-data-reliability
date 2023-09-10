@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, spike_percentile_threshold=none, drop_percentile_threshold=none) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, spike_mean_percent_deviation=none, drop_mean_percent_deviation=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
@@ -35,8 +35,8 @@
                                                                                                    seasonality=seasonality,
                                                                                                    event_timestamp_column=event_timestamp_column,
                                                                                                    sensitivity=sensitivity,
-                                                                                                   spike_percentile_threshold=spike_percentile_threshold,
-                                                                                                   drop_percentile_threshold=drop_percentile_threshold) %}
+                                                                                                   spike_mean_percent_deviation=spike_mean_percent_deviation,
+                                                                                                   drop_mean_percent_deviation=drop_mean_percent_deviation) %}
                 {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}
