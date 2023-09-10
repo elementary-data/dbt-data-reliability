@@ -139,8 +139,28 @@
                 count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                {# percentile_disc(0.9) within group over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as ninth_per #}
             from grouped_metrics
             {{ dbt_utils.group_by(13) }}
+        ),
+
+        percentiles as (
+            select
+                metric_id,
+                (select percentile_disc(0.9) within group (order by metric_value)
+                    from time_window_aggregation twb
+                    where twb.updated_at < twa.updated_at
+                ) as training_ninth_per
+            from time_window_aggregation twa
+            order by updated_at
+        ),
+
+        time_window_aggregation_with_percentiles as (
+            select 
+                * 
+            from time_window_aggregation
+            join percentiles 
+            on time_window_aggregation.metric_id = percentiles.metric_id
         ),
 
         anomaly_scores as (
@@ -187,7 +207,7 @@
                 training_end,
                 dimension,
                 dimension_value
-            from time_window_aggregation
+            from time_window_aggregation_with_percentiles
             where
                 metric_value is not null
                 and training_avg is not null
