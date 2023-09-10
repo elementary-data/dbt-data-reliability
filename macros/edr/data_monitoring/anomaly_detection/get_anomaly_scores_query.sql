@@ -139,7 +139,6 @@
                 count(metric_value) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
-                {# percentile_disc(0.9) within group over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as ninth_per #}
             from grouped_metrics
             {{ dbt_utils.group_by(13) }}
         ),
@@ -160,7 +159,7 @@
                 * 
             from time_window_aggregation
             join percentiles 
-            on time_window_aggregation.metric_id = percentiles.metric_id
+            using(metric_id)
         ),
 
         anomaly_scores as (
