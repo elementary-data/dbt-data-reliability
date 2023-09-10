@@ -148,7 +148,7 @@
                 metric_id,
                 (select percentile_disc(0.9) within group (order by metric_value)
                     from time_window_aggregation twb
-                    where twb.updated_at < twa.updated_at
+                    where twb.updated_at <= twa.updated_at
                 ) as training_ninth_per
             from time_window_aggregation twa
             order by updated_at
