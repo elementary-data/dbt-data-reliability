@@ -17,7 +17,7 @@ LATEST_METRICS_QUERY = """
             metric_value,
             row_number() over (partition by id order by updated_at desc) as row_number
         from {{{{ ref("data_monitoring_metrics") }}}}
-        where metric_name = 'row_count' and full_table_name ilike '%{test_id}'
+        where metric_name = 'row_count' and lower(full_table_name) like '%{test_id}'
     )
     select bucket_start, metric_value from metrics_ordered
     where row_number = 1
