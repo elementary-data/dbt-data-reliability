@@ -117,6 +117,6 @@
     {% if anomaly_direction | lower == 'spike' %}
         training_percentile > {{ spike_percentile_threshold }}
     {% else %}
-        spike_percentile_threshold < {{ drop_percentile_threshold }}
+        training_percentile < {{ drop_percentile_threshold }}
     {% endif %}
 {%- endmacro -%}
