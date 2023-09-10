@@ -147,7 +147,10 @@
             select
                 metric_id,
                 percent_rank() 
-                    over (order by metric_value range between unbounded preceding and current row)
+                    over (
+                        partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality
+                        order by metric_value range between unbounded preceding and current row
+                    )
                 as training_percentile
             from (
                 select

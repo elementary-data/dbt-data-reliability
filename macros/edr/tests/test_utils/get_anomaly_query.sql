@@ -39,6 +39,7 @@
             max_metric_value,
             training_avg,
             training_stddev,
+            training_percentile,
             training_set_size,
             training_start,
             training_end,
@@ -53,8 +54,8 @@
           *,
           case when
             anomaly_score is not null and
-            {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
-            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
+                          {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
+                          bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ test_configuration.min_training_set_size }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
