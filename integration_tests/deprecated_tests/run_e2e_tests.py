@@ -60,7 +60,7 @@ class TestDbtRunner(DbtRunner):
 def get_row(alias: str, dbt_runner: DbtRunner) -> str:
     rows = json.loads(
         dbt_runner.run_operation(
-            "read_table",
+            "elementary_integration_tests.read_table",
             macro_args={"table": "dbt_models", "where": f"alias = '{alias}'"},
             should_log=False,
         )[0]
@@ -325,7 +325,7 @@ def e2e_tests(
         test_results.extend(results)
 
         dbt_runner.run_operation(
-            macro_name="delete_new_dimension",
+            macro_name="elementary_integration_tests.delete_new_dimension",
             should_log=True,
         )
 
@@ -417,7 +417,7 @@ def e2e_tests(
                 result = TestResult(
                     type="non_dbt_models",
                     message=dbt_runner.run_operation(
-                        "assert_table_doesnt_exist",
+                        "elementary_integration_tests.assert_table_doesnt_exist",
                         macro_args={"model_name": "non_dbt_model"},
                         should_log=False,
                     )[0],
