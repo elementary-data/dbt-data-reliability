@@ -55,7 +55,7 @@
           case when
             anomaly_score is not null and
                           {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
-                          {{ elementary.percentile_anomalous_condition(
+                          {{ elementary.avg_percent_anomalous_condition(
                             test_configuration.spike_percentile_threshold,
                             test_configuration.drop_percentile_threshold,
                             test_configuration.anomaly_direction
@@ -113,12 +113,12 @@
      end
 {%- endmacro -%}
 
-{%- macro percentile_anomalous_condition(spike_percentile_threshold, drop_percentile_threshold, anomaly_direction) -%}
+{%- macro avg_percent_anomalous_condition(spike_percentile_threshold, drop_percentile_threshold, anomaly_direction) -%}
     {% if anomaly_direction | lower == 'spike' %}
-        training_percentile > {{ spike_percentile_threshold }}
+        metric_value > {{ spike_percentile_threshold * training_avg }}
     {% elif anomaly_direction | lower == 'drop' %}
-        training_percentile < {{ drop_percentile_threshold }}
+        metric_value < {{ drop_percentile_threshold * training_avg }}
     {% else %}
-        (training_percentile > {{ spike_percentile_threshold }} or training_percentile < {{ drop_percentile_threshold }})
+        (metric_value > {{ spike_percentile_threshold * training_avg }} or metric_value < {{ drop_percentile_threshold * training_avg }})
     {% endif %}
 {%- endmacro -%}
