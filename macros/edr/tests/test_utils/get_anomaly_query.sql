@@ -39,7 +39,6 @@
             max_metric_value,
             training_avg,
             training_stddev,
-            training_percentile,
             training_set_size,
             training_start,
             training_end,

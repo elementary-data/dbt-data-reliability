@@ -143,31 +143,6 @@
             {{ dbt_utils.group_by(13) }}
         ),
 
-        percentiles as (
-            select
-                metric_id,
-                percent_rank() 
-                    over (
-                        partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality
-                        order by metric_value range between unbounded preceding and current row
-                    )
-                as training_percentile
-            from (
-                select
-                    *
-                from time_window_aggregation
-                order by bucket_end
-            )
-        ),
-
-        time_window_aggregation_with_percentiles as (
-            select 
-                * 
-            from time_window_aggregation
-            join percentiles 
-            using(metric_id)
-        ),
-
         anomaly_scores as (
 
             select
@@ -207,13 +182,12 @@
                 end as max_metric_value,
                 training_avg,
                 training_stddev,
-                training_percentile,
                 training_set_size,
                 training_start,
                 training_end,
                 dimension,
                 dimension_value
-            from time_window_aggregation_with_percentiles
+            from time_window_aggregation
             where
                 metric_value is not null
                 and training_avg is not null
