@@ -48,7 +48,7 @@
     {%- set incremental_bucket_times_query %}
         with bucket_times as (
             select max(last_bucket_end) as max_existing_bucket_end,
-                   {{ elementary.edr_timeadd(metric_properties.time_bucket.period, -1 * metric_properties.time_bucket.count, 'min(first_bucket_end)') }} as min_existing_bucket_start,
+                   {{ elementary.edr_cast_as_timestamp(elementary.edr_timeadd(metric_properties.time_bucket.period, -1 * metric_properties.time_bucket.count, 'min(first_bucket_end)')) }} as min_existing_bucket_start,
                    {{ trunc_min_bucket_start_expr }} as days_back_start,
                    {{ backfill_bucket_start }} as backfill_start,
                    {{ run_start_expr }} as run_started
