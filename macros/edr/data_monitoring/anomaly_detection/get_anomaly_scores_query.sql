@@ -149,7 +149,7 @@
                 (select percentile_disc(0.9) within group (order by metric_value)
                     from time_window_aggregation twb
                     where twb.updated_at <= twa.updated_at
-                ) as training_ninth_per
+                ) as training_percentile
             from time_window_aggregation twa
             order by updated_at
         ),
@@ -201,6 +201,7 @@
                 end as max_metric_value,
                 training_avg,
                 training_stddev,
+                training_percentile,
                 training_set_size,
                 training_start,
                 training_end,
