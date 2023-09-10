@@ -58,6 +58,8 @@
     'collect_metrics': true,
     'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
+    'spike_percentile_threshold': 0.95,
+    'drop_percentile_threshold': 0.2,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
