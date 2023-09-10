@@ -19,6 +19,14 @@ on:
         type: string
         required: false
         description: Branch or tag to checkout for 'dbt-data-reliability' repository
+      include-dbt-pre-releases:
+        description: "If set, the workflow will support installing dbt pre-releases"
+        type: choice
+        required: true
+        default: "false"
+        options:
+          - true
+          - false
 
 jobs:
   test:
@@ -42,6 +50,7 @@ jobs:
       dbt-version: ${{ matrix.dbt-version }}
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
+      include-dbt-pre-releases: ${{ inputs.include-dbt-pre-releases }}
     secrets: inherit
 
   notify_failures:
@@ -58,4 +67,4 @@ jobs:
     with:
       result: "failure"
       run_id: ${{ github.run_id }}
-      workflow_name: "Test all warehouse platforms"
+      workflow_name: ${{ workflow.name }}

@@ -26,6 +26,14 @@ on:
         type: string
         required: false
         description: dbt's version to test with
+      include-dbt-pre-releases:
+        description: "If set, the workflow will support installing dbt pre-releases"
+        type: choice
+        required: true
+        default: "false"
+        options:
+          - true
+          - false
 
   workflow_call:
     inputs:
@@ -82,7 +90,8 @@ jobs:
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
       - name: Install dbt
-        run: pip install
+        run:
+          pip install${{ (inputs.include-dbt-pre-releases == 'true' && ' --pre') || '' }}
           "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
