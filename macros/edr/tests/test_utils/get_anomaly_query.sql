@@ -115,10 +115,10 @@
 
 {%- macro avg_percent_anomalous_condition(spike_percentile_threshold, drop_percentile_threshold, anomaly_direction) -%}
     {% if anomaly_direction | lower == 'spike' %}
-        metric_value > {{ spike_percentile_threshold * training_avg }}
+        metric_value > {{ spike_percentile_threshold }} * training_avg
     {% elif anomaly_direction | lower == 'drop' %}
-        metric_value < {{ drop_percentile_threshold * training_avg }}
+        metric_value < {{ drop_percentile_threshold }} * training_avg
     {% else %}
-        (metric_value > {{ spike_percentile_threshold * training_avg }} or metric_value < {{ drop_percentile_threshold * training_avg }})
+        (metric_value > {{ spike_percentile_threshold }} * training_avg or metric_value < {{ drop_percentile_threshold }} * training_avg)
     {% endif %}
 {%- endmacro -%}
