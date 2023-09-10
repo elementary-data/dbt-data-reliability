@@ -34,7 +34,9 @@
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
                                                                                                    event_timestamp_column=event_timestamp_column,
-                                                                                                   sensitivity=sensitivity) %}
+                                                                                                   sensitivity=sensitivity,
+                                                                                                   spike_percentile_threshold=spike_percentile_threshold,
+                                                                                                   drop_percentile_threshold=drop_percentile_threshold) %}
                 {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}
