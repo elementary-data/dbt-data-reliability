@@ -49,6 +49,10 @@ on:
       dbt-version:
         type: string
         required: false
+      include-dbt-pre-releases:
+        type: string
+        required: true
+        default: "false"
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
