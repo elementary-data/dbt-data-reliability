@@ -116,7 +116,9 @@
 {%- macro percentile_anomalous_condition(spike_percentile_threshold, drop_percentile_threshold, anomaly_direction) -%}
     {% if anomaly_direction | lower == 'spike' %}
         training_percentile > {{ spike_percentile_threshold }}
-    {% else %}
+    {% elif anomaly_direction | lower == 'drop' %}
         training_percentile < {{ drop_percentile_threshold }}
+    {% else %}
+        (training_percentile > {{ spike_percentile_threshold }} or training_percentile < {{ drop_percentile_threshold }})
     {% endif %}
 {%- endmacro -%}
