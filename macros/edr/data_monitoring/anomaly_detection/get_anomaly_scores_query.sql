@@ -146,12 +146,15 @@
         percentiles as (
             select
                 metric_id,
-                (select percentile_disc(0.9) within group (order by metric_value)
-                    from time_window_aggregation twb
-                    where twb.updated_at <= twa.updated_at
-                ) as training_percentile
-            from time_window_aggregation twa
-            order by updated_at
+                percent_rank() 
+                    over (order by metric_value range between unbounded preceding and current row)
+                as training_percentile
+            from (
+                select
+                    *
+                from time_window_aggregation
+                order by bucket_end
+            )
         ),
 
         time_window_aggregation_with_percentiles as (
