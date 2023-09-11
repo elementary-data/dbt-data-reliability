@@ -25,7 +25,7 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
 
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
-    test_date, *training_dates = generate_dates(base_date=utc_today)
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
 
     data: List[Dict[str, Any]] = [
         {

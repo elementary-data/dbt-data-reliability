@@ -51,9 +51,9 @@ def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-def test_column_anomalies_with_where_expression(test_id: str, dbt_project: DbtProject):
+def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
-    test_date, *training_dates = generate_dates(base_date=utc_today)
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
 
     data: List[Dict[str, Any]] = [
         {
