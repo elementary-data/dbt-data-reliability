@@ -114,7 +114,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report.html
 
       - name: Upload test results
         if: always()
@@ -124,3 +124,9 @@ jobs:
           summary: true
           display-options: fEX
           fail-on-empty: true
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: detailed_report
+          path: ${{ env.TESTS_DIR }}/tests/detailed_report.html
