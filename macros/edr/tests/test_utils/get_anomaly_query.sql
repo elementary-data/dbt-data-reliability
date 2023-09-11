@@ -113,11 +113,18 @@
 {%- endmacro -%}
 
 {%- macro avg_percent_anomalous_condition(spike_mean_percent_deviation, drop_mean_percent_deviation, anomaly_direction) -%}
-    {% if anomaly_direction | lower == 'spike' %}
+    {% if not spike_mean_percent_deviation %}
+      {% set spike_mean_percent_deviation = 0 %}
+    {% endif %}
+    {% if not drop_mean_percent_deviation %}
+      {% set drop_mean_percent_deviation = 0 %}
+    {% endif %}
+
+    {% if (anomaly_direction | lower == 'spike') %}
         metric_value > ({{ 1 + spike_mean_percent_deviation/100.0 }} * training_avg)
     {% elif anomaly_direction | lower == 'drop' %}
         metric_value < ({{ 1 + drop_mean_percent_deviation/100.0 }} * training_avg)
     {% else %}
-        (metric_value > {{ spike_mean_percent_deviation }} * training_avg or metric_value < {{ drop_mean_percent_deviation }} * training_avg)
+        metric_value > ({{ 1 + spike_mean_percent_deviation/100.0 }} * training_avg) or metric_value < ({{ 1 + drop_mean_percent_deviation/100.0 }} * training_avg)
     {% endif %}
 {%- endmacro -%}
