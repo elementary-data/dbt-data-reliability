@@ -1,6 +1,4 @@
-import shutil
 from pathlib import Path
-from tempfile import mkdtemp
 
 import env
 import pytest
@@ -18,17 +16,18 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def project_dir_copy():
-    dbt_project_copy_dir = mkdtemp(prefix="integration_tests_project_")
-    try:
-        shutil.copytree(
-            DBT_PROJECT_PATH,
-            dbt_project_copy_dir,
-            dirs_exist_ok=True,
-            symlinks=True,
-        )
-        yield dbt_project_copy_dir
-    finally:
-        shutil.rmtree(dbt_project_copy_dir)
+    return str(DBT_PROJECT_PATH)
+    # dbt_project_copy_dir = mkdtemp(prefix="integration_tests_project_")
+    # try:
+    #     shutil.copytree(
+    #         DBT_PROJECT_PATH,
+    #         dbt_project_copy_dir,
+    #         dirs_exist_ok=True,
+    #         symlinks=True,
+    #     )
+    #     yield dbt_project_copy_dir
+    # finally:
+    #     shutil.rmtree(dbt_project_copy_dir)
 
 
 @pytest.fixture(scope="session", autouse=True)
