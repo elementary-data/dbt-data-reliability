@@ -59,13 +59,21 @@ def test_volume_anomalies_with_where_parameter(
 
     params = dict(DBT_TEST_ARGS, where="payback = 'karate'")
     test_result = dbt_project.test(
-        f"{test_id}_karate", DBT_TEST_NAME, params, data=data, as_model=as_model
+        test_id,
+        DBT_TEST_NAME,
+        params,
+        as_model=as_model,
+        test_vars={"force_metrics_backfill": True},
     )
     assert test_result["status"] == "pass"
 
     params = dict(DBT_TEST_ARGS, where="payback = 'ka-razy'")
     test_result = dbt_project.test(
-        f"{test_id}_karazy", DBT_TEST_NAME, params, data=data, as_model=as_model
+        test_id,
+        DBT_TEST_NAME,
+        params,
+        as_model=as_model,
+        test_vars={"force_metrics_backfill": True},
     )
     assert test_result["status"] == "fail"
 
