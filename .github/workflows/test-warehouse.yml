@@ -128,5 +128,5 @@ jobs:
       - name: Upload HTML report
         uses: actions/upload-artifact@v3
         with:
-          name: detailed_report
+          name: detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}
           path: ${{ env.TESTS_DIR }}/tests/detailed_report.html
