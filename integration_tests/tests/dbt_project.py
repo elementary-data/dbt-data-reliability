@@ -1,16 +1,13 @@
 import json
-import shutil
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
-from tempfile import NamedTemporaryFile, mkdtemp
+from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Literal, Optional, Union, overload
 
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from logger import get_logger
 from ruamel.yaml import YAML
-
-DBT_PROJECT_PATH = Path(__file__).parent.parent / "dbt_project"
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
@@ -33,9 +30,9 @@ SELECT 1 AS col
 logger = get_logger(__name__)
 
 
-def get_dbt_runner(target: str, path: str = str(DBT_PROJECT_PATH)) -> DbtRunner:
+def get_dbt_runner(target: str, project_dir: str) -> DbtRunner:
     return DbtRunner(
-        path,
+        project_dir,
         target=target,
         vars=_DEFAULT_VARS.copy(),
         raise_on_failure=False,
@@ -43,23 +40,13 @@ def get_dbt_runner(target: str, path: str = str(DBT_PROJECT_PATH)) -> DbtRunner:
 
 
 class DbtProject:
-    def __init__(self, target: str):
-        self.dbt_project_copy_dir = Path(mkdtemp(prefix="integration_tests_project_"))
-        shutil.copytree(
-            DBT_PROJECT_PATH,
-            self.dbt_project_copy_dir,
-            dirs_exist_ok=True,
-            symlinks=True,
-        )
-        self.dbt_runner = get_dbt_runner(target, str(self.dbt_project_copy_dir))
+    def __init__(self, target: str, project_dir: str):
+        self.dbt_runner = get_dbt_runner(target, project_dir)
 
-        self.models_dir_path = self.dbt_project_copy_dir / "models"
+        self.project_dir_path = Path(project_dir)
+        self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
-        self.seeds_dir_path = self.dbt_project_copy_dir / "data"
-
-    def delete_temp_project_dir(self):
-        if self.dbt_project_copy_dir.exists():
-            shutil.rmtree(str(self.dbt_project_copy_dir))
+        self.seeds_dir_path = self.project_dir_path / "data"
 
     def run_query(self, prerendered_query: str):
         results = json.loads(
@@ -206,7 +193,7 @@ class DbtProject:
             ) as props_file:
                 YAML().dump(props_yaml, props_file)
                 relative_props_path = Path(props_file.name).relative_to(
-                    self.dbt_project_copy_dir
+                    self.project_dir_path
                 )
                 self.dbt_runner.test(select=str(relative_props_path), vars=test_vars)
 
@@ -217,7 +204,7 @@ class DbtProject:
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(
-            self.dbt_runner, self.dbt_project_copy_dir, self.seeds_dir_path
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         ).seed(data, table_name)
 
     @contextmanager
@@ -228,7 +215,7 @@ class DbtProject:
         model_path.write_text(
             DUMMY_MODEL_FILE_PATTERN.format(materialization=materialization)
         )
-        relative_model_path = model_path.relative_to(self.dbt_project_copy_dir)
+        relative_model_path = model_path.relative_to(self.project_dir_path)
         try:
             yield relative_model_path
         finally:
