@@ -123,8 +123,8 @@
     {% if (anomaly_direction | lower == 'spike') %}
         metric_value > ({{ 1 + spike_mean_percent_deviation/100.0 }} * training_avg)
     {% elif anomaly_direction | lower == 'drop' %}
-        metric_value < ({{ 1 + drop_mean_percent_deviation/100.0 }} * training_avg)
+        metric_value < ({{ 1 - drop_mean_percent_deviation/100.0 }} * training_avg)
     {% else %}
-        metric_value > ({{ 1 + spike_mean_percent_deviation/100.0 }} * training_avg) or metric_value < ({{ 1 + drop_mean_percent_deviation/100.0 }} * training_avg)
+        metric_value > ({{ 1 + spike_mean_percent_deviation/100.0 }} * training_avg) or metric_value < ({{ 1 - drop_mean_percent_deviation/100.0 }} * training_avg)
     {% endif %}
 {%- endmacro -%}
