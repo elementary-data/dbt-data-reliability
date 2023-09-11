@@ -25,15 +25,8 @@ on:
       dbt-version:
         type: string
         required: false
+        default: "latest_official"
         description: dbt's version to test with
-      include-dbt-pre-releases:
-        description: "If set, the workflow will support installing dbt pre-releases"
-        type: choice
-        required: true
-        default: "false"
-        options:
-          - true
-          - false
 
   workflow_call:
     inputs:
@@ -48,11 +41,8 @@ on:
         required: false
       dbt-version:
         type: string
+        default: "latest_official"
         required: false
-      include-dbt-pre-releases:
-        type: string
-        required: true
-        default: "false"
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -95,8 +85,8 @@ jobs:
 
       - name: Install dbt
         run:
-          pip install${{ (inputs.include-dbt-pre-releases == 'true' && ' --pre') || '' }}
-          "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
+          pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
+          "dbt-core${{ !startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version) }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
 
       - name: Install Elementary
