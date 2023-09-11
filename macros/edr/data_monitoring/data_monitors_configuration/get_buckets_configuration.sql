@@ -97,7 +97,11 @@
     {%- endset %}
 
     {# We assume we should also cosider sources as incremental #}
-    {%- set buckets = elementary.agate_to_dicts(elementary.run_query(regular_bucket_times_query))[0] %}
+    {% if not (elementary.is_incremental_model(elementary.get_model_graph_node(model_relation), source_included=true) or unit_test) %}
+        {%- set buckets = elementary.agate_to_dicts(elementary.run_query(regular_bucket_times_query))[0] %}
+    {%- else %}
+        {%- set buckets = elementary.agate_to_dicts(elementary.run_query(incremental_bucket_times_query))[0] %}
+    {% endif %}
 
     {%- if buckets %}
         {%- set min_bucket_start = elementary.edr_quote(buckets.get('min_bucket_start')) %}
