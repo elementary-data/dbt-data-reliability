@@ -191,7 +191,17 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     )
     assert test_result["status"] == "fail"
 
-def test_volume_anomaly_static_data_false_positive(test_id: str, dbt_project: DbtProject):
+@Parametrization.autodetect_parameters()
+@Parametrization.case(name="true_positive", expected_result="fail", drop_mean_percent_deviation=5, metric_value=25)
+@Parametrization.case(name="false_positve", expected_result="fail", drop_mean_percent_deviation=None, metric_value=29)
+@Parametrization.case(name="true_negative", expected_result="pass", drop_mean_percent_deviation=5, metric_value=29)
+def test_volume_anomaly_static_data(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    drop_mean_percent_deviation: int,
+    metric_value: int
+):
     now = datetime.utcnow()
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
@@ -200,40 +210,16 @@ def test_volume_anomaly_static_data_false_positive(test_id: str, dbt_project: Db
         )
         if cur_date < now - timedelta(days=1)
     ] * 30
-    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}]*29
+    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}]*metric_value
 
     ## 30 new rows every day
-    ## 29 new rows in the last day
+    ## 25 new rows in the last day
     ## z-score ~ -3.6
 
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "day", "count": 1},
-        "drop_mean_percent_deviation": None,
-        "spike_mean_percent_deviation": None
+        "drop_mean_percent_deviation": drop_mean_percent_deviation
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
-    assert test_result["status"] == "fail"
-
-def test_volume_anomaly_static_data(test_id: str, dbt_project: DbtProject):
-    now = datetime.utcnow()
-    data = [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
-        for cur_date in generate_dates(
-            base_date=now, step=timedelta(days=1)
-        )
-        if cur_date < now - timedelta(days=1)
-    ] * 30
-    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}]*29
-
-    ## 30 new rows every day
-    ## 29 new rows in the last day
-    ## z-score ~ -3.6
-
-    test_args = {
-        **DBT_TEST_ARGS,
-        "time_bucket": {"period": "day", "count": 1},
-        "drop_mean_percent_deviation": 5
-    }
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
-    assert test_result["status"] == "pass"
+    assert test_result["status"] == expected_result
