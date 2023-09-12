@@ -1,0 +1,12 @@
+name: Test all warehouse platforms on dbt pre-releases
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-all-warehouses.yml
+    secrets: inherit
+    with:
+      dbt-version: latest_pre
