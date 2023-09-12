@@ -9,7 +9,9 @@
       "dedup_by_column": "model_execution_id",
       "timestamp_column": "created_at",
       "prev_timestamp_column": "generated_at",
-      }
+      },
+    table_type="iceberg",
+    incremental_strategy=elementary.get_default_incremental_strategy()
   )
 }}
 

@@ -9,7 +9,7 @@
       "prev_timestamp_column": "detected_at",
       },
     table_type="iceberg",
-    incremental_strategy="merge"
+    incremental_strategy=elementary.get_default_incremental_strategy()
   )
 }}
 
