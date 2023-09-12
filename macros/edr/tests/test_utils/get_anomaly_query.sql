@@ -117,7 +117,7 @@
       (metric_value > (1 + {{ spike_mean_percent_deviation }}/100.0 * training_avg))
     {% endset %}
     {% set drop_query %}
-      (metric_value < (1 - {{ drop_mean_percent_deviation/100.0 }}/100.0 * training_avg))
+      (metric_value < (1 - {{ drop_mean_percent_deviation }}/100.0 * training_avg))
     {% endset %}
     
     {% if (anomaly_direction | lower == 'spike') %}

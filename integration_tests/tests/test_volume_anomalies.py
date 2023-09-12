@@ -191,6 +191,30 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     )
     assert test_result["status"] == "fail"
 
+def test_volume_anomaly_static_data_false_positive(test_id: str, dbt_project: DbtProject):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(
+            base_date=now, step=timedelta(days=1)
+        )
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}]*29
+
+    ## 30 new rows every day
+    ## 29 new rows in the last day
+    ## z-score ~ -3.6
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "drop_mean_percent_deviation": None,
+        "spike_mean_percent_deviation": None
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
 def test_volume_anomaly_static_data(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
