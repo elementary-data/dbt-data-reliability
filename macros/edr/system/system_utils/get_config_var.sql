@@ -48,7 +48,7 @@
     'upload_artifacts_method': 'diff',
     'project_name': none,
     'elementary_full_refresh': false,
-    'min_training_set_size': 14,
+    'min_training_set_size': 7,
     'cache_artifacts': true,
     'anomaly_direction': 'both',
     'store_result_rows_in_own_table': true,
@@ -58,8 +58,9 @@
     'collect_metrics': true,
     'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
+    'force_metrics_backfill': false,
     'spike_mean_percent_deviation': 0,
-    'drop_mean_percent_deviation': 0,
+    'drop_mean_percent_deviation': 0
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

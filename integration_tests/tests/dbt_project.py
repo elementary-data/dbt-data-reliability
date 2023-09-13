@@ -9,11 +9,6 @@ from elementary.clients.dbt.dbt_runner import DbtRunner
 from logger import get_logger
 from ruamel.yaml import YAML
 
-PATH = Path(__file__).parent.parent / "dbt_project"
-MODELS_DIR_PATH = PATH / "models"
-TMP_MODELS_DIR_PATH = MODELS_DIR_PATH / "tmp"
-SEEDS_DIR_PATH = PATH / "data"
-
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
@@ -22,12 +17,22 @@ _DEFAULT_VARS = {
     "collect_metrics": False,
 }
 
+DUMMY_MODEL_FILE_PATTERN = """
+{{{{
+  config (
+    materialized = '{materialization}'
+  )
+}}}}
+
+SELECT 1 AS col
+"""
+
 logger = get_logger(__name__)
 
 
-def get_dbt_runner(target: str) -> DbtRunner:
+def get_dbt_runner(target: str, project_dir: str) -> DbtRunner:
     return DbtRunner(
-        str(PATH),
+        project_dir,
         target=target,
         vars=_DEFAULT_VARS.copy(),
         raise_on_failure=False,
@@ -35,8 +40,13 @@ def get_dbt_runner(target: str) -> DbtRunner:
 
 
 class DbtProject:
-    def __init__(self, target: str):
-        self.dbt_runner = get_dbt_runner(target)
+    def __init__(self, target: str, project_dir: str):
+        self.dbt_runner = get_dbt_runner(target, project_dir)
+
+        self.project_dir_path = Path(project_dir)
+        self.models_dir_path = self.project_dir_path / "models"
+        self.tmp_models_dir_path = self.models_dir_path / "tmp"
+        self.seeds_dir_path = self.project_dir_path / "data"
 
     def run_query(self, prerendered_query: str):
         results = json.loads(
@@ -91,6 +101,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -107,6 +119,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -122,6 +136,8 @@ class DbtProject:
         data: Optional[List[dict]] = None,
         as_model: bool = False,
         table_name: Optional[str] = None,
+        materialization: str = "table",  # Only relevant if as_model=True
+        test_vars: Optional[dict] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -151,7 +167,9 @@ class DbtProject:
                 "version": 2,
                 "models": [table_yaml],
             }
-            temp_table_ctx = self.create_temp_model_for_existing_table(test_id)
+            temp_table_ctx = self.create_temp_model_for_existing_table(
+                test_id, materialization
+            )
         else:
             props_yaml = {
                 "version": 2,
@@ -169,11 +187,15 @@ class DbtProject:
             self.seed(data, table_name)
         with temp_table_ctx:
             with NamedTemporaryFile(
-                dir=TMP_MODELS_DIR_PATH, suffix=".yaml"
+                dir=self.tmp_models_dir_path,
+                prefix="integration_tests_",
+                suffix=".yaml",
             ) as props_file:
                 YAML().dump(props_yaml, props_file)
-                relative_props_path = Path(props_file.name).relative_to(PATH)
-                self.dbt_runner.test(select=str(relative_props_path))
+                relative_props_path = Path(props_file.name).relative_to(
+                    self.project_dir_path
+                )
+                self.dbt_runner.test(select=str(relative_props_path), vars=test_vars)
 
         if multiple_results:
             return self._read_test_results(test_id)
@@ -181,13 +203,19 @@ class DbtProject:
             return self._read_single_test_result(test_id)
 
     def seed(self, data: List[dict], table_name: str):
-        return DbtDataSeeder(self.dbt_runner).seed(data, table_name)
+        return DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, table_name)
 
     @contextmanager
-    def create_temp_model_for_existing_table(self, table_name: str):
-        model_path = TMP_MODELS_DIR_PATH.joinpath(f"{table_name}.sql")
-        model_path.write_text("SELECT 1 AS col")
-        relative_model_path = model_path.relative_to(PATH)
+    def create_temp_model_for_existing_table(
+        self, table_name: str, materialization: str
+    ):
+        model_path = self.tmp_models_dir_path.joinpath(f"{table_name}.sql")
+        model_path.write_text(
+            DUMMY_MODEL_FILE_PATTERN.format(materialization=materialization)
+        )
+        relative_model_path = model_path.relative_to(self.project_dir_path)
         try:
             yield relative_model_path
         finally:
