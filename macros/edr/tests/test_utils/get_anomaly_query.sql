@@ -113,34 +113,17 @@
 {%- endmacro -%}
 
 {%- macro avg_percent_anomalous_condition(spike_mean_percent_deviation, drop_mean_percent_deviation, anomaly_direction) -%}
-    {% set spike_query %}
-      (metric_value > ((1 + {{ spike_mean_percent_deviation }}/100.0) * training_avg))
-    {% endset %}
-    {% set drop_query %}
+  {% if spike_mean_percent_deviation and anomaly_direction | lower in ['spike', 'both'] %}
+    (metric_value > ((1 + {{ spike_mean_percent_deviation }}/100.0) * training_avg))
+  {% else %}
+      (1 = 1)
+  {% endif %}
+
+  and
+
+  {% if drop_mean_percent_deviation and anomaly_direction | lower in ['drop', 'both'] %}
       (metric_value < ((1 - {{ drop_mean_percent_deviation }}/100.0) * training_avg))
-    {% endset %}
-    
-    {% if (anomaly_direction | lower == 'spike') %}
-        {% if not spike_mean_percent_deviation %}
-            (1 = 1)
-        {% else %}
-            {{ spike_query }}
-        {% endif %}
-    {% elif anomaly_direction | lower == 'drop' %}
-        {% if not drop_mean_percent_deviation %}
-            (1 = 1)
-        {% else %}
-            {{ drop_query }}
-        {% endif %}
-    {% else %} {# both #}
-        {% if drop_mean_percent_deviation and spike_mean_percent_deviation %}
-            ({{ spike_query }} or {{ drop_query }})
-        {% elif not drop_mean_percent_deviation and spike_mean_percent_deviation %}
-            {{ spike_query }}
-        {% elif not spike_mean_percent_deviation and drop_mean_percent_deviation %}
-            {{ drop_query }}
-        {% else %}
-            (1 = 1)
-        {% endif %}
-    {% endif %}
+  {% else %}
+      (1 = 1)
+  {% endif %}
 {%- endmacro -%}

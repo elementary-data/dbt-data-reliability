@@ -207,7 +207,7 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
 
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="true_positive", expected_result="fail", drop_mean_percent_deviation=5, metric_value=25)
-@Parametrization.case(name="false_positve", expected_result="fail", drop_mean_percent_deviation=None, metric_value=29)
+@Parametrization.case(name="false_positive", expected_result="fail", drop_mean_percent_deviation=None, metric_value=29)
 @Parametrization.case(name="true_negative", expected_result="pass", drop_mean_percent_deviation=5, metric_value=29)
 def test_volume_anomaly_static_data_drop(
     test_id: str,
@@ -240,7 +240,7 @@ def test_volume_anomaly_static_data_drop(
 
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="true_positive", expected_result="fail", spike_mean_percent_deviation=5, metric_value=35)
-@Parametrization.case(name="false_positve", expected_result="fail", spike_mean_percent_deviation=None, metric_value=31)
+@Parametrization.case(name="false_positive", expected_result="fail", spike_mean_percent_deviation=None, metric_value=31)
 @Parametrization.case(name="true_negative", expected_result="pass", spike_mean_percent_deviation=5, metric_value=31)
 def test_volume_anomaly_static_data_spike(
     test_id: str,
