@@ -208,8 +208,11 @@
     {%- endset -%}
 
     {% if test_configuration.drop_mean_percent_deviation %}
+      {%- set drop_avg_threshold -%}
+        ((1 + {{ test_configuration.drop_mean_percent_deviation }}/100.0) * training_avg)
+      {%- endset -%}
       {%- set min_val -%}
-        min({{ min_val }},{{ test_configuration.drop_mean_percent_deviation }})
+        {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
       {%- endset -%}
     {% endif %}
 
@@ -218,8 +221,11 @@
     {%- endset -%}
 
     {% if test_configuration.spike_mean_percent_deviation %}
+      {%- set spike_avg_threshold -%}
+        ((1 + {{ test_configuration.spike_mean_percent_deviation }}/100.0) * training_avg)
+      {%- endset -%}
       {%- set max_val -%}
-        max({{max_val}}, {{ test_configuration.spike_mean_percent_deviation }})
+        {{ elementary.arithmetic_max(spike_avg_threshold, max_val) }}
       {%- endset -%}
     {% endif %}
 
@@ -227,6 +233,5 @@
 {% endmacro %}
 
 {% macro check(test_configuration) %}
-  {% set values = elementary.get_limit_metric_values(test_configuration) %}  
-  {{ log(values, true)}}
+    {{ log(get_limit_metric_values(test_configuration), true) }}
 {% endmacro %}
