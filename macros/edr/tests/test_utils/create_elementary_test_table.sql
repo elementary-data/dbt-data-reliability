@@ -3,7 +3,7 @@
         {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()).replace("*", "") %}
         
         {% set default_identifier_quoting = api.Relation.get_default_quote_policy().get_part("identifier") %}        
-        {% if not adapter.config.quoting.get("identifier",default_identifier_quoting) %}
+        {% if not adapter.config.quoting.get("identifier", default_identifier_quoting) %}
             {% set temp_table_name = adapter.quote(temp_table_name) %}
         {% endif %}
 
