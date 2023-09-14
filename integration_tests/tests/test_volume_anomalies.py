@@ -210,26 +210,26 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
 @Parametrization.case(
     name="true_positive",
     expected_result="fail",
-    drop_mean_percent_deviation=5,
+    drop_failure_percent_threshold=5,
     metric_value=25,
 )
 @Parametrization.case(
     name="false_positive",
     expected_result="fail",
-    drop_mean_percent_deviation=None,
+    drop_failure_percent_threshold=None,
     metric_value=29,
 )
 @Parametrization.case(
     name="true_negative",
     expected_result="pass",
-    drop_mean_percent_deviation=5,
+    drop_failure_percent_threshold=5,
     metric_value=29,
 )
 def test_volume_anomaly_static_data_drop(
     test_id: str,
     dbt_project: DbtProject,
     expected_result: str,
-    drop_mean_percent_deviation: int,
+    drop_failure_percent_threshold: int,
     metric_value: int,
 ):
     now = datetime.utcnow()
@@ -249,7 +249,9 @@ def test_volume_anomaly_static_data_drop(
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "day", "count": 1},
-        "drop_mean_percent_deviation": drop_mean_percent_deviation,
+        "ignore_small_changes": {
+            "drop_failure_percent_threshold": drop_failure_percent_threshold
+        },
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == expected_result
@@ -259,26 +261,26 @@ def test_volume_anomaly_static_data_drop(
 @Parametrization.case(
     name="true_positive",
     expected_result="fail",
-    spike_mean_percent_deviation=5,
+    spike_failure_percent_threshold=5,
     metric_value=35,
 )
 @Parametrization.case(
     name="false_positive",
     expected_result="fail",
-    spike_mean_percent_deviation=None,
+    spike_failure_percent_threshold=None,
     metric_value=31,
 )
 @Parametrization.case(
     name="true_negative",
     expected_result="pass",
-    spike_mean_percent_deviation=5,
+    spike_failure_percent_threshold=5,
     metric_value=31,
 )
 def test_volume_anomaly_static_data_spike(
     test_id: str,
     dbt_project: DbtProject,
     expected_result: str,
-    spike_mean_percent_deviation: int,
+    spike_failure_percent_threshold: int,
     metric_value: int,
 ):
     now = datetime.utcnow()
@@ -298,7 +300,9 @@ def test_volume_anomaly_static_data_spike(
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "day", "count": 1},
-        "spike_mean_percent_deviation": spike_mean_percent_deviation,
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": spike_failure_percent_threshold
+        },
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == expected_result

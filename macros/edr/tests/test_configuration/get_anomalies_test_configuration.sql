@@ -17,8 +17,7 @@
                                           event_timestamp_column,
                                           dimensions,
                                           sensitivity,
-                                          spike_mean_percent_deviation,
-                                          drop_mean_percent_deviation) %}
+                                          ignore_small_changes) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -36,8 +35,7 @@
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
-    {%- set spike_mean_percent_deviation = elementary.get_test_argument('spike_mean_percent_deviation', spike_mean_percent_deviation, model_graph_node) %}
-    {%- set drop_mean_percent_deviation = elementary.get_test_argument('drop_mean_percent_deviation', drop_mean_percent_deviation, model_graph_node) %}
+    {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
@@ -52,8 +50,7 @@
        'freshness_column': freshness_column,
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
-       'spike_mean_percent_deviation': spike_mean_percent_deviation,
-       'drop_mean_percent_deviation': drop_mean_percent_deviation
+       'ignore_small_changes': ignore_small_changes
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

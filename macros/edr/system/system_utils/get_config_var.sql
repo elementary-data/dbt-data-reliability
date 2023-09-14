@@ -59,8 +59,10 @@
     'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
     'force_metrics_backfill': false,
-    'spike_mean_percent_deviation': 0,
-    'drop_mean_percent_deviation': 0
+    'ignore_small_changes': {
+      'spike_failure_percent_threshold': none,
+      'drop_failure_percent_threshold': none
+    }
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

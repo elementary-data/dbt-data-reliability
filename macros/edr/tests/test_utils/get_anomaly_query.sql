@@ -55,8 +55,8 @@
             anomaly_score is not null and
                           {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
                           {{ elementary.avg_percent_anomalous_condition(
-                            test_configuration.spike_mean_percent_deviation,
-                            test_configuration.drop_mean_percent_deviation,
+                            test_configuration.ignore_small_changes.spike_failure_percent_threshold,
+                            test_configuration.ignore_small_changes.drop_failure_percent_threshold,
                             test_configuration.anomaly_direction
                           ) }} and
                           bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
@@ -112,17 +112,17 @@
      end
 {%- endmacro -%}
 
-{%- macro avg_percent_anomalous_condition(spike_mean_percent_deviation, drop_mean_percent_deviation, anomaly_direction) -%}
-  {% if spike_mean_percent_deviation and anomaly_direction | lower in ['spike', 'both'] %}
-    (metric_value > ((1 + {{ spike_mean_percent_deviation }}/100.0) * training_avg))
+{%- macro avg_percent_anomalous_condition(spike_failure_percent_threshold, drop_failure_percent_threshold, anomaly_direction) -%}
+  {% if spike_failure_percent_threshold and anomaly_direction | lower in ['spike', 'both'] %}
+    (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
   {% else %}
       (1 = 1)
   {% endif %}
 
   and
 
-  {% if drop_mean_percent_deviation and anomaly_direction | lower in ['drop', 'both'] %}
-      (metric_value < ((1 - {{ drop_mean_percent_deviation }}/100.0) * training_avg))
+  {% if drop_failure_percent_threshold and anomaly_direction | lower in ['drop', 'both'] %}
+      (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
   {% else %}
       (1 = 1)
   {% endif %}

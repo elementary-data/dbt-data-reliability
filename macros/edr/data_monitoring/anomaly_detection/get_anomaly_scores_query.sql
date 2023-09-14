@@ -207,9 +207,9 @@
       ((-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
     {%- endset -%}
 
-    {% if test_configuration.drop_mean_percent_deviation %}
+    {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
       {%- set drop_avg_threshold -%}
-        ((1 + {{ test_configuration.drop_mean_percent_deviation }}/100.0) * training_avg)
+        ((1 + {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
       {%- endset -%}
       {%- set min_val -%}
         {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
@@ -220,9 +220,9 @@
       {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
     {%- endset -%}
 
-    {% if test_configuration.spike_mean_percent_deviation %}
+    {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}
       {%- set spike_avg_threshold -%}
-        ((1 + {{ test_configuration.spike_mean_percent_deviation }}/100.0) * training_avg)
+        ((1 + {{ test_configuration.ignore_small_changes.spike_failure_percent_threshold }}/100.0) * training_avg)
       {%- endset -%}
       {%- set max_val -%}
         {{ elementary.arithmetic_max(spike_avg_threshold, max_val) }}
