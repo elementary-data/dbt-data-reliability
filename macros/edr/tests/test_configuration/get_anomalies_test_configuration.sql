@@ -36,6 +36,7 @@
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
 
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
+    {# Validate ignore_small_changes #}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
@@ -54,6 +55,7 @@
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
+    {%- do elementary.validate_ignore_small_changes(test_configuration) -%}
 
   {# Changes in these configs impact the metric id of the test. #}
   {# If these configs change, we ignore the old metrics and recalculate. #}
@@ -95,4 +97,18 @@
     {%- if missing_mandatory_params | length > 0 %}
         {% do exceptions.raise_compiler_error('Missing mandatory configuration: {}'.format(missing_mandatory_params)) %}
     {%- endif %}
+{% endmacro %}
+
+{% macro validate_ignore_small_changes(test_configuration) %}
+    {% for key, value in test_configuration.ignore_small_changes.items() %}
+        {% if key not in ['spike_failure_percent_threshold', 'drop_failure_percent_threshold'] %}
+          {% do exceptions.raise_compiler_error('Illegal configuration key: {}'.format(key)) %}
+        {% endif %}
+
+        {% if (value is not none) and (value | int) and (value >= 0) %}
+          {% if (value | int) == 0 or value < 0 %}
+            {% do exceptions.raise_compiler_error('Illegal value for ignore_small_changes config: {}'.format(value)) %}
+          {% endif %}
+        {% endif %}
+    {% endfor %}
 {% endmacro %}

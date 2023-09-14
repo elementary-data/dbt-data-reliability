@@ -231,7 +231,3 @@
 
     {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
 {% endmacro %}
-
-{% macro check(test_configuration) %}
-    {{ log(get_limit_metric_values(test_configuration), true) }}
-{% endmacro %}
