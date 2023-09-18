@@ -58,7 +58,8 @@
     'collect_metrics': true,
     'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
-    'force_metrics_backfill': false
+    'force_metrics_backfill': false,
+    'fail_on_zero': false
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, fail_on_zero=false) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
@@ -34,7 +34,8 @@
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
                                                                                                    event_timestamp_column=event_timestamp_column,
-                                                                                                   sensitivity=sensitivity) %}
+                                                                                                   sensitivity=sensitivity,
+                                                                                                   fail_on_zero=fail_on_zero) %}
         {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {% endif %}
