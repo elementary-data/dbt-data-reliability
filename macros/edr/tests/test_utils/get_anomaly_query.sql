@@ -55,7 +55,7 @@
             anomaly_score is not null and
             (
               {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} or
-              (metric_value = 0 and {{ test_configuration.fail_on_zero }})
+              (metric_value = 0 and {{ test_configuration.fail_on_zero if test_configuration.fail_on_zero else '1 = 2' }})
             )
             and
             bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
