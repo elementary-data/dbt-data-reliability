@@ -22,3 +22,5 @@ __pycache__/
 # Python notebooks
 .ipynb
 
+# vscode
+.vscode/
