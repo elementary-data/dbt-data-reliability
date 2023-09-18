@@ -205,6 +205,7 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     )
     assert test_result["status"] == "fail"
 
+
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
     name="true_positive",
@@ -305,7 +306,8 @@ def test_volume_anomaly_static_data_spike(
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == expected_result
-    
+
+
 def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
