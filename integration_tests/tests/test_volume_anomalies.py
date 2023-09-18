@@ -205,7 +205,107 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     )
     assert test_result["status"] == "fail"
 
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="true_positive",
+    expected_result="fail",
+    drop_failure_percent_threshold=5,
+    metric_value=25,
+)
+@Parametrization.case(
+    name="false_positive",
+    expected_result="fail",
+    drop_failure_percent_threshold=None,
+    metric_value=29,
+)
+@Parametrization.case(
+    name="true_negative",
+    expected_result="pass",
+    drop_failure_percent_threshold=5,
+    metric_value=29,
+)
+def test_volume_anomaly_static_data_drop(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    drop_failure_percent_threshold: int,
+    metric_value: int,
+):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [
+        {TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}
+    ] * metric_value
 
+    # 30 new rows every day
+    # 25 new rows in the last day
+    # z-score ~ -3.6
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "ignore_small_changes": {
+            "drop_failure_percent_threshold": drop_failure_percent_threshold
+        },
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == expected_result
+
+
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="true_positive",
+    expected_result="fail",
+    spike_failure_percent_threshold=5,
+    metric_value=35,
+)
+@Parametrization.case(
+    name="false_positive",
+    expected_result="fail",
+    spike_failure_percent_threshold=None,
+    metric_value=31,
+)
+@Parametrization.case(
+    name="true_negative",
+    expected_result="pass",
+    spike_failure_percent_threshold=5,
+    metric_value=31,
+)
+def test_volume_anomaly_static_data_spike(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    spike_failure_percent_threshold: int,
+    metric_value: int,
+):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [
+        {TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}
+    ] * metric_value
+
+    # 30 new rows every day
+    # 35 new rows in the last day
+    # z-score ~ -3.6
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": spike_failure_percent_threshold
+        },
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == expected_result
+    
 def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
