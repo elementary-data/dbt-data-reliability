@@ -9,7 +9,7 @@
     {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
   {% endif %}
   {% set source_freshness_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
-  {% do elementary.upload_artifacts_to_table(SOURCE_FRESHNESS_RESULTS_RELATION, source_freshness_results_dicts, elementary.flatten_source_freshness, append=True, should_commit=True) %}
+  {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshness_results_dicts, elementary.flatten_source_freshness, append=True, should_commit=True) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}
