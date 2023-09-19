@@ -62,8 +62,7 @@ case when
                     test_configuration.anomaly_direction
                   ) 
                 }}
-              ) or
-              (metric_value = 0 and {{ test_configuration.fail_on_zero if test_configuration.fail_on_zero else '1 = 2' }})
+              ) or {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }}
             ) and
             bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ test_configuration.min_training_set_size }}
@@ -133,3 +132,14 @@ case when
       (1 = 1)
   {% endif %}
 {%- endmacro -%}
+
+{% macro fail_on_zero(fail_on_zero) %}
+  (
+    metric_value = 0 and 
+    {% if fail_on_zero %}
+      1 = 1
+    {% else %}
+      1 = 2
+    {% endif %}
+  )
+{% endmacro %}
