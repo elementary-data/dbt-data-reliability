@@ -62,7 +62,8 @@
     'ignore_small_changes': {
       'spike_failure_percent_threshold': none,
       'drop_failure_percent_threshold': none
-    }
+    },
+    'include_other_warehouse_specific_columns': false,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
