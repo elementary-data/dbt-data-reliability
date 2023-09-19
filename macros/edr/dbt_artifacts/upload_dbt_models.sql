@@ -28,7 +28,7 @@
         ('generated_at', 'string'),
         ('metadata_hash', 'string'),
     ] %}
-    {% if target.type == "bigquery" %}
+    {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
         {% do columns.extend([('partition_by_field', 'string')]) %}
     {% endif %}
 
