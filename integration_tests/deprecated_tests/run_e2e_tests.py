@@ -452,7 +452,7 @@ def print_failed_test_results(e2e_target: str, failed_test_results: List[TestRes
     "--e2e-type",
     "-e",
     type=str,
-    default="all",
+    default="default",
     help="The type of e2e tests to run.",
 )
 @click.option(
@@ -474,7 +474,7 @@ def main(target, e2e_type, generate_data, clear_tests):
 
     e2e_targets = [target]
 
-    if e2e_type == "all":
+    if e2e_type == "default":
         e2e_types = [
             "seasonal_volume",
             "table",
@@ -483,7 +483,6 @@ def main(target, e2e_type, generate_data, clear_tests):
             "backfill_days",
             "schema",
             "regular",
-            "config_levels",
             "artifacts",
             "error_test",
             "error_model",
