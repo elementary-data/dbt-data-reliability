@@ -65,7 +65,7 @@ class TestFreshnessAnomalies:
             days_back=config.days_back,
             backfill_days=config.backfill_days,
             time_bucket=dict(period=config.period, count=1),
-            detection_delay=dict(period='hour', count=config.detection_delay_hours),
+            detection_delay=dict(period="hour", count=config.detection_delay_hours),
         )
 
     def _skip_redshift_monthly(
@@ -121,6 +121,7 @@ class TestFreshnessAnomalies:
         target: str,
     ):
         self._skip_redshift_monthly(target, config)
+        now = datetime.utcnow()
         anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
@@ -131,7 +132,11 @@ class TestFreshnessAnomalies:
         delayed_config = copy(config)
         delayed_config.detection_delay_hours = 24 * config.backfill_days
         result = dbt_project.test(
-            test_id, TEST_NAME, self._get_test_config(delayed_config), data=data
+            test_id,
+            TEST_NAME,
+            self._get_test_config(delayed_config),
+            data=data,
+            test_vars={"custom_run_started_at": now.isoformat()},
         )
         assert result["status"] == "pass"
 
