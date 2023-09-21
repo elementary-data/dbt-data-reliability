@@ -46,7 +46,10 @@
     ('compile_completed_at', 'string'),
     ('execute_started_at', 'string'),
     ('execute_completed_at', 'string'),
-    ('invocation_id', 'string')
+    ('invocation_id', 'string'),
+    ('warn_after', 'string'),
+    ('error_after', 'string'),
+    ('filter', 'long_string')
     ]) }}
 {% endmacro %}
 
