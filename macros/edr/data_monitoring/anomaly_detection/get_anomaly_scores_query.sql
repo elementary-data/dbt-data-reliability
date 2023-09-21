@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, monitors, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, monitors, min_bucket_start, max_bucket_end, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -28,8 +28,6 @@
     {%- else %}
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
-    {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
     {%- set anomaly_scores_query %}
 
@@ -52,7 +50,7 @@
             from {{ data_monitoring_metrics_table }}
             {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
             where
-                bucket_end > {{ min_bucket_start_expr }}
+                bucket_end > {{ min_bucket_start }} and bucket_end <= {{ max_bucket_end }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
