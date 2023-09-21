@@ -46,6 +46,17 @@
                 {%- endif -%}
             {%- endfor -%}
         {%- endif -%}
+
+        {%- if enforce_config_params | length > 0 -%}
+            {%- for config_param in enforce_config_params -%}
+                {%- if flattened_node.config is not none -%}
+                    {%- if config_param not in flattened_node.config -%}
+                        {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required config param " ~ config_param) %}
+                        {% do validation_result.update({{'success': false}}) %}
+                    {%- endif -%}
+                {%- endif -%}
+            {%- endfor -%}
+        {%- endif -%}
     {%- endfor -%}
     {{- return(validation_result['success']) -}}
 {%- endmacro -%}
