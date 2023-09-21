@@ -21,20 +21,20 @@
         {% set flattened_node = flatten_callback(node) %}
         {%- if enforce_owners and flattened_node.owner | length == 0 -%}
             {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have an owner") %}
-            {% do validation_result.update({{'success': false}}) %}
+            {% do validation_result.update({'success': false}) %}
         {%- endif -%}
 
         {%- if enforce_tags | legnth > 0 -%}
             {%- if flattened_node.tags | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required tags") %}
-                {% do validation_result.update({{'success': false}}) %}
+                {% do validation_result.update({'success': false}) %}
             {%- endif -%}
 
             {% set flattened_node_tags_set = set(flattened_node.tags) %}
             {% set enforced_node_tags_set = set(enforce_node_tags) %}
             {%- if flattened_node_tags_set.intersect(enforced_node_tags_set) | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required tags") %}
-                {% do validation_result.update({{'success': false}}) %}
+                {% do validation_result.update({'success': false}) %}
             {%- endif -%}
         {%- endif -%}
 
@@ -42,7 +42,7 @@
             {%- for meta_param in enforce_meta_params -%}
                 {%- if meta_param not in flattened_node.meta -%}
                     {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required meta param " ~ meta_param) %}
-                    {% do validation_result.update({{'success': false}}) %}
+                    {% do validation_result.update({'success': false}) %}
                 {%- endif -%}
             {%- endfor -%}
         {%- endif -%}
@@ -52,7 +52,7 @@
                 {%- if flattened_node.config is not none -%}
                     {%- if config_param not in flattened_node.config -%}
                         {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required config param " ~ config_param) %}
-                        {% do validation_result.update({{'success': false}}) %}
+                        {% do validation_result.update({'success': false}) %}
                     {%- endif -%}
                 {%- endif -%}
             {%- endfor -%}
