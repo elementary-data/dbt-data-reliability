@@ -122,7 +122,7 @@ class TestFreshnessAnomalies:
     ):
         self._skip_redshift_monthly(target, config)
         now = datetime.utcnow()
-        anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
+        anomaly_date = now - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
