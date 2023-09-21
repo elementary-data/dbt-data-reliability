@@ -2,11 +2,11 @@
     {%- if execute -%}
         {# enforcing source params #}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_source_owners, enforce_source_tags, enforce_source_meta_params, enforce_source_config_params)
+        {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_source_owners, enforce_source_tags, enforce_source_meta_params, enforce_source_config_params) %}
 
         {# enforcing model params #}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_model_owners, enforce_model_tags, enforce_model_meta_params, enforce_model_config_params)
+        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_model_owners, enforce_model_tags, enforce_model_meta_params, enforce_model_config_params)%}
 
         {%- if models_result or sources_result -%}
             {{ exceptions.raise_compiler_error("Found issues in projdct configurations") }}
