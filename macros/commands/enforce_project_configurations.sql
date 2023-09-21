@@ -24,7 +24,7 @@
             {% do validation_result.update({'success': false}) %}
         {%- endif -%}
 
-        {%- if enforce_tags | legnth > 0 -%}
+        {%- if enforce_tags | length > 0 -%}
             {%- if flattened_node.tags | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ "does not have required tags") %}
                 {% do validation_result.update({'success': false}) %}
