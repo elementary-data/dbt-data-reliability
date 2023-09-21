@@ -130,7 +130,7 @@ class TestFreshnessAnomalies:
             )
         ]
         delayed_config = copy(config)
-        delayed_config.detection_delay_hours = 24 * config.backfill_days
+        delayed_config.detection_delay_hours = 24 * config.backfill_days + 1
         result = dbt_project.test(
             test_id,
             TEST_NAME,
