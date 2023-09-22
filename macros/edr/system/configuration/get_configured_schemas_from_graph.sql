@@ -3,9 +3,9 @@
     {% set existing_schemas = [] %}
     {% if execute %}
         {% set root_project = context["project_name"] %}
-        {{ log("============================================") }}
-        {{ log("root_project: " ~ root_project) }}
-        {{ log("============================================") }}
+        {{ print("============================================") }}
+        {{ print("root_project: " ~ root_project) }}
+        {{ print("============================================") }}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% for node in nodes %}
             {% if node.resource_type in ['model', 'source', 'snapshot', 'seed'] and node.package_name == root_project %}

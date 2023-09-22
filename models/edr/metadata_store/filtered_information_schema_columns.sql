@@ -6,9 +6,9 @@
 
 {% set configured_schemas = elementary.get_configured_schemas_from_graph() %}
 
-{{ log("============================================") }}
-{{ log("configured_schemas: " ~ toyaml(configured_schemas)) }}
-{{ log("============================================") }}
+{{ print("============================================") }}
+{{ print("configured_schemas: " ~ toyaml(configured_schemas)) }}
+{{ print("============================================") }}
 
 with filtered_information_schema_columns as (
     {{ elementary.get_columns_by_schemas(configured_schemas) }}
