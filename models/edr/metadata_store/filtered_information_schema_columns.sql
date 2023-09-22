@@ -10,6 +10,10 @@
 {{ print("configured_schemas: " ~ toyaml(configured_schemas)) }}
 {{ print("============================================") }}
 
+{{ print("============================================") }}
+{{ print("columns" ~ elementary.get_columns_by_schemas(configured_schemas)) }}
+{{ print("============================================") }}
+
 with filtered_information_schema_columns as (
     {{ elementary.get_columns_by_schemas(configured_schemas) }}
 )

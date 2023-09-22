@@ -14,6 +14,8 @@
                 {{ print("condition2: " ~ node.resource_type in ['model', 'source', 'snapshot', 'seed'] and node.package_name == root_project ) }}
                 {% set schema_tuple = (node.database, node.schema) %}
                 {% if schema_tuple not in configured_schemas %}
+                    {{ print("node.resource_type: " ~ node.resource_type) }}
+                    {{ print("node.pacakge_name:: " ~ node.package_name) }}
                     {{ print("schema_tuple: " ~ toyaml(schema_tuple)) }}
                     {% do configured_schemas.append(schema_tuple) %}
                 {% endif %}
