@@ -38,7 +38,7 @@
     {% endif %}
 
     {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
-    {% set artifacts_hash_relation = adapter.get_relation(database_name, schema_name, "dbt_artifacts_hashes") %}
+    {% set artifacts_hash_relation = elementary.get_elementary_relation(database_name, schema_name, "dbt_artifacts_hashes") %}
     {% if not artifacts_hash_relation %}
         {% do return(none) %}
     {% endif %}

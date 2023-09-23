@@ -10,7 +10,7 @@
           database_name,
           schema_name,
           alias as table_name
-      from {{ get_relation('dbt_models') }}
+      from {{ elementary.get_elementary_relation('dbt_models') }}
   ),
 
   dbt_snapshots_data as (
@@ -18,7 +18,7 @@
           database_name,
           schema_name,
           alias as table_name
-      from {{ get_relation('dbt_snapshots') }}
+      from {{ elementary.get_elementary_relation('dbt_snapshots') }}
   ),
 
   dbt_sources_data as (
@@ -26,7 +26,7 @@
           database_name,
           schema_name,
           name as table_name
-      from {{ get_relation('dbt_sources') }}
+      from {{ elementary.get_elementary_relation('dbt_sources') }}
   ),
 
   dbt_seeds_data as (
@@ -34,7 +34,7 @@
           database_name,
           schema_name,
           name as table_name
-      from {{ get_relation('dbt_seeds') }}
+      from {{ elementary.get_elementary_relation('dbt_seeds') }}
   ),
 
   tables_information as (
