@@ -111,6 +111,9 @@
         {%- set buckets = elementary.agate_to_dicts(elementary.run_query(incremental_bucket_times_query))[0] %}
     {% endif %}
 
+    {{ log("Hey", true) }}
+    {{ log(regular_bucket_times_query, true) }}
+    {{ log(incremental_bucket_times_query, true) }}
     {%- if buckets %}
         {%- set min_bucket_start = elementary.edr_quote(buckets.get('min_bucket_start')) %}
         {%- set max_bucket_end = elementary.edr_quote(buckets.get('max_bucket_end')) %}
