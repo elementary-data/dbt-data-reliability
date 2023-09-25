@@ -19,7 +19,7 @@
     {% set validation_result = {'success': true} %}
     {% for node in nodes -%}
         {% set flattened_node = flatten_callback(node) %}
-        {%- if flattened_node.package_name == context[project_name] -%}
+        {%- if flattened_node.package_name == project_name -%}
             {%- if enforce_owners and flattened_node.owner | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have an owner") %}
                 {% do validation_result.update({'success': false}) %}
