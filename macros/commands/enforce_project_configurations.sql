@@ -1,4 +1,4 @@
-{%- macro enforce_project_configurations(enforce_owners=false, enforce_tags=[], enforce_meta_params=[], enforce_config_params=[], exclude_sources=false) -%}
+{%- macro enforce_project_configurations(enforce_owners=true, enforce_tags=false, enforce_meta_params=[], enforce_config_params=[], exclude_sources=false) -%}
     {%- if execute -%}
         {# enforcing source params #}
         {%- if not exclude_sources -%}
@@ -8,7 +8,7 @@
 
         {# enforcing model params #}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params)%}
+        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) %}
 
         {%- if models_result or sources_result -%}
             {{ exceptions.raise_compiler_error("Found issues in projdct configurations") }}
@@ -17,11 +17,11 @@
 {%- endmacro -%}
 
 {%- macro get_enforcement_param(flattened_node, enforcement_param_name, enforcement_param_arg_value) -%}
-    {% set node_enforcement_param = flattened_node.meta.get(enforcement_param_name) or flattened_node.config.get(enforcement_param_name) or elementary.elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value %}
+    {% set node_enforcement_param = flattened_node.meta.get(enforcement_param_name) or flattened_node.config.get(enforcement_param_name) or elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value %}
     {{- return(node_enforcement_param) -}}
 {%- endmacro -%}
 
-{%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags=[], enforce_meta_params=[], enforce_config_params=[]) -%}
+{%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) -%}
     {% set validation_result = {'success': true} %}
     {% for node in nodes -%}
         {% set flattened_node = flatten_callback(node) %}
@@ -36,18 +36,9 @@
                 {% do validation_result.update({'success': false}) %}
             {%- endif -%}
 
-            {%- if enforce_tags | length > 0 -%}
-                {%- if flattened_node.tags | length == 0 -%}
-                    {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required tags") %}
-                    {% do validation_result.update({'success': false}) %}
-                {%- endif -%}
-
-                {% set flattened_node_tags_set = set(flattened_node.tags) %}
-                {% set enforced_node_tags_set = set(enforce_node_tags) %}
-                {%- if flattened_node_tags_set.intersect(enforced_node_tags_set) | length == 0 -%}
-                    {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required tags") %}
-                    {% do validation_result.update({'success': false}) %}
-                {%- endif -%}
+            {%- if enforce_tags and flattened_node.tags | length == 0 -%}
+                {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required tags") %}
+                {% do validation_result.update({'success': false}) %}
             {%- endif -%}
 
             {%- if enforce_meta_params | length > 0 -%}
