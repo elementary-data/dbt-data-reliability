@@ -10,7 +10,7 @@
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
         {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) %}
 
-        {%- if models_result or sources_result -%}
+        {%- if not models_result or not sources_result -%}
             {{ exceptions.raise_compiler_error("Found issues in projdct configurations") }}
         {%- endif -%}
     {%- endif -%}
@@ -37,7 +37,7 @@
             {%- endif -%}
 
             {%- if enforce_tags and flattened_node.tags | length == 0 -%}
-                {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required tags") %}
+                {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have tags") %}
                 {% do validation_result.update({'success': false}) %}
             {%- endif -%}
 
