@@ -29,9 +29,3 @@ models:
       In order to compare current schema to previous state, we must store the previous state.
       The data is from a view that queries the data warehouse information schema.
       This is an incremental table.
-
-  - name: filtered_information_schema_columns
-    description: >
-      Queries the columns view from the information schema of the schemas in the project.
-      This view is generated using an adapter specific macro, as information schema is different between platforms.
-      This is a view to make the work with the information schema more convenient.
