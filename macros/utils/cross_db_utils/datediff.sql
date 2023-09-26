@@ -2,7 +2,7 @@
     {{ return(adapter.dispatch('edr_datediff', 'elementary')(first_date, second_date, date_part)) }}
 {% endmacro %}
 
-{# For Snowflake, Databricks, Redshift, Postgres & Spark #}
+{# For Snowflake, Databricks, Redshift, Postgres #}
 {# the dbt adapter implementation supports both timestamp and dates #}
 {% macro default__edr_datediff(first_date, second_date, date_part) %}
     {% set macro = dbt.datediff or dbt_utils.datediff %}
@@ -26,7 +26,8 @@
     {%- endif %}
 {% endmacro %}
 
-
+{# dbt-spark implementation has an off by one for datepart == "hour" #}
+{# because it uses CEIL instead of FLOOR #}
 {% macro spark__edr_datediff(first_date, second_date, datepart) %}
     {%- if datepart in ['day', 'week', 'month', 'quarter', 'year'] -%}
 
