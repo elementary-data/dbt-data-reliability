@@ -12,7 +12,7 @@
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
-  {% if elementary.did_test_pass() %} {# performance: no need to run a sql if the test passed #}
+  {% if elementary.did_test_pass() %}
     {% do elementary.debug_log("Skipping sample query because the test passed.") %}
     {% do return([]) %}
   {% endif %}
