@@ -8,11 +8,11 @@
   {% do return(new_sql) %}
 {% endmacro %}
 
-{% macro query_test_result_rows(sample_limit=none) %}
+{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
-  {% if elementary.did_test_pass() %}
+  {% if ignore_passed_tests and elementary.did_test_pass() %}
     {% do elementary.debug_log("Skipping sample query because the test passed.") %}
     {% do return([]) %}
   {% endif %}
@@ -71,7 +71,8 @@
 {% endmacro %}
 
 {% macro handle_dbt_test(flattened_test) %}
-  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count')) %}
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
+                                                         ignore_passed_tests=true) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
 {% endmacro %}
