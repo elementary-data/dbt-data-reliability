@@ -124,7 +124,7 @@ def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str)
         for _ in range(5)
         if cur_date < utc_today - timedelta(date_gap_size)
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -137,6 +137,7 @@ def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str)
             ).isoformat()
         },
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 5
         for cur_date in data_dates
@@ -148,7 +149,7 @@ def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str)
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)} for cur_date in data_dates
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -156,6 +157,7 @@ def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str)
         as_model=True,
         materialization="incremental",
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 5 if cur_date < utc_today - timedelta(date_gap_size) else 1
         for cur_date in data_dates
@@ -176,7 +178,7 @@ def test_full_backfill_if_metric_not_updated_for_a_long_time(
         for _ in range(5)
         if cur_date < utc_today - timedelta(date_gap_size)
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -189,6 +191,7 @@ def test_full_backfill_if_metric_not_updated_for_a_long_time(
             ).isoformat()
         },
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 5
         for cur_date in data_dates
@@ -200,7 +203,7 @@ def test_full_backfill_if_metric_not_updated_for_a_long_time(
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)} for cur_date in data_dates
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -208,6 +211,7 @@ def test_full_backfill_if_metric_not_updated_for_a_long_time(
         as_model=True,
         materialization="incremental",
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 5 if cur_date < utc_today - timedelta(DAYS_BACK) else 1
         for cur_date in data_dates
@@ -231,7 +235,7 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
         for cur_date in data_dates
         for _ in range(5)
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -239,6 +243,7 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
         as_model=True,
         materialization="incremental",
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 5
         for cur_date in data_dates
@@ -248,7 +253,7 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)} for cur_date in data_dates
     ]
-    dbt_project.test(
+    test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
@@ -257,6 +262,7 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
         materialization="incremental",
         test_vars={"days_back": 21},
     )
+    assert test_result["status"] != "error"
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 1 for cur_date in data_dates if cur_date >= utc_today - timedelta(21)
     }
