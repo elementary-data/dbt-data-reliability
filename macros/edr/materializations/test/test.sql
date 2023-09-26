@@ -12,6 +12,10 @@
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
+  {% if elementary.did_test_pass() %} {# performance: no need to run a sql if the test passed #}
+    {% do elementary.debug_log("Skipping sample query because the test passed.") %}
+    {% do return([]) %}
+  {% endif %}
   {% set query %}
     with test_results as (
       {{ sql }}
@@ -86,7 +90,7 @@
   {% do return(test_type_handler) %}
 {% endmacro %}
 
-{% macro materialize_test() %}
+{% macro setup_test() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
   {% endif %}
@@ -95,6 +99,13 @@
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
     {% do context.update({"sql": temp_table_sql}) %}
   {% endif %}
+{% endmacro %}
+
+{% macro materialize_test() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(none) %}
+  {% endif %}
+
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type_handler = elementary.get_test_type_handler(flattened_test) %}
   {% do test_type_handler(flattened_test) %}
@@ -107,17 +118,21 @@
 {% endmacro %}
 
 {% materialization test, default %}
+  {% do elementary.setup_test() %}
+  {% set result = dbt.materialization_test_default() %}
   {% do elementary.materialize_test() %}
-  {{ return(dbt.materialization_test_default()) }}
+  {% do return(result) %}
 {% endmaterialization %}
 
 {% materialization test, adapter="snowflake" %}
-  {% do elementary.materialize_test() %}
+  {% do elementary.setup_test() %}
   {%- if dbt.materialization_test_snowflake -%}
-    {{ return(dbt.materialization_test_snowflake()) }}
+    {% set result = dbt.materialization_test_snowflake() %}
   {%- else -%}
-    {{ return(dbt.materialization_test_default()) }}
+    {% set result = dbt.materialization_test_default() %}
   {%- endif -%}
+  {% do elementary.materialize_test() %}
+  {% do return(result) %}
 {% endmaterialization %}
 
 
