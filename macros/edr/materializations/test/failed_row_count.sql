@@ -1,7 +1,7 @@
 {% macro get_failed_row_count(flattened_test) %}
   {% set test_result = elementary.get_test_result() %}
   {% if config.get("fail_calc").strip() == elementary.get_failed_row_count_calc(flattened_test) %}
-    {% do elementary.debug_log("Using test failures as faild_rows value.") %}
+    {% do elementary.debug_log("Using test failures as failed_rows value.") %}
     {% do return(test_result.failures) %}
   {% endif %}
   {% if elementary.did_test_pass(test_result) %}
