@@ -17,7 +17,8 @@
                                           event_timestamp_column,
                                           dimensions,
                                           sensitivity,
-                                          ignore_small_changes) %}
+                                          ignore_small_changes,
+                                          fail_on_zero) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -29,6 +30,7 @@
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
     {%- set min_training_set_size = elementary.get_test_argument('min_training_set_size', min_training_set_size, model_graph_node) %}
     {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
+    {%- set fail_on_zero = elementary.get_test_argument('fail_on_zero', fail_on_zero, model_graph_node) %}
 
     {# timestamp_column anomaly detection tests #}
     {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
@@ -51,7 +53,8 @@
        'freshness_column': freshness_column,
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
-       'ignore_small_changes': ignore_small_changes
+       'ignore_small_changes': ignore_small_changes,
+       'fail_on_zero': fail_on_zero
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

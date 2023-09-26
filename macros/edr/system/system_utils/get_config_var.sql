@@ -64,6 +64,7 @@
       'drop_failure_percent_threshold': none
     },
     'include_other_warehouse_specific_columns': false,
+    'fail_on_zero': false
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

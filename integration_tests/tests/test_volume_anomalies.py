@@ -306,3 +306,29 @@ def test_volume_anomaly_static_data_spike(
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == expected_result
+
+
+def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ]
+
+    test_args = {**DBT_TEST_ARGS, "fail_on_zero": False, "anomaly_sensitivity": 1000}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
+def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ]
+
+    test_args = {**DBT_TEST_ARGS, "fail_on_zero": True, "anomaly_sensitivity": 1000}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
