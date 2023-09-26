@@ -54,6 +54,7 @@
 case when
             anomaly_score is not null and
             (
+              {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
               (
                 {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
                 {{ elementary.avg_percent_anomalous_condition(
@@ -62,7 +63,7 @@ case when
                     test_configuration.anomaly_direction
                   ) 
                 }}
-              ) or {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }}
+              )
             ) and
             bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ test_configuration.min_training_set_size }}
