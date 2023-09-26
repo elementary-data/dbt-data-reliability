@@ -82,14 +82,19 @@ class TestFreshnessAnomalies:
         target: str,
     ):
         self._skip_redshift_monthly(target, config)
+        now = datetime.now()
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
-                datetime.now(), step=config.step, days_back=config.days_back
+                now, step=config.step, days_back=config.days_back
             )
         ]
         result = dbt_project.test(
-            test_id, TEST_NAME, self._get_test_config(config), data=data
+            test_id,
+            TEST_NAME,
+            self._get_test_config(config),
+            data=data,
+            test_vars={"custom_run_started_at": now.isoformat()},
         )
         assert result["status"] == "pass"
 
@@ -175,7 +180,8 @@ class TestFreshnessAnomalies:
         target: str,
     ):
         self._skip_redshift_monthly(target, config)
-        anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
+        now = datetime.now()
+        anomaly_date = now - timedelta(days=config.backfill_days)
         data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
@@ -185,7 +191,10 @@ class TestFreshnessAnomalies:
         fast_data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
-                datetime.now(), step=config.step / 4, days_back=config.backfill_days
+                now,
+                step=config.step / 4,
+                days_back=config.backfill_days,
+                test_vars={"custom_run_started_at": now.isoformat()},
             )
         ]
         data.extend(fast_data)
