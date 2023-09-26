@@ -29,7 +29,7 @@
         ('metadata_hash', 'string'),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
-        {% do columns.extend([('bigquery_partition_by_field', 'string')]) %}
+        {% do columns.extend([('bigquery_partition_by', 'string')]) %}
     {% endif %}
 
     {% set dbt_models_empty_table_query = elementary.empty_table(columns) %}
@@ -78,7 +78,7 @@
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'bigquery_partition_by_field': config_dict.get("partition_by", {}).get("field"),
+        'bigquery_partition_by': config_dict.get("partition_by"),
     } %}
     {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
