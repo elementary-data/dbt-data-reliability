@@ -16,10 +16,10 @@
 
     with table_info as (
         select
-            '{{ full_table_name }}' as full_table_name,
-            '{{ model_relation.database }}' as database_name,
-            '{{ model_relation.schema }}' as schema_name,
-            '{{ model_relation.identifier }}' as table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(full_table_name)) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.database)) }} as database_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.schema)) }} as schema_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.identifier)) }} as table_name,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
     ),
 
@@ -37,8 +37,8 @@
             (
                 {% for column in columns %}
                     select
-                        '{{ column.name }}' as column_name,
-                        '{{ column.data_type }}' as data_type
+                        {{ elementary.edr_cast_as_string(elementary.edr_quote(column.name)) }} as column_name,
+                        {{ elementary.edr_cast_as_string(elementary.edr_quote(column.data_type)) }} as data_type
                     {% if not loop.last %}
                         union all
                     {% endif %}
