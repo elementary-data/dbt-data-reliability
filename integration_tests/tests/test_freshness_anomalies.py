@@ -191,14 +191,15 @@ class TestFreshnessAnomalies:
         fast_data = [
             {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
             for date in generate_dates(
-                now,
-                step=config.step / 4,
-                days_back=config.backfill_days,
-                test_vars={"custom_run_started_at": now.isoformat()},
+                now, step=config.step / 4, days_back=config.backfill_days
             )
         ]
         data.extend(fast_data)
         result = dbt_project.test(
-            test_id, TEST_NAME, self._get_test_config(config), data=data
+            test_id,
+            TEST_NAME,
+            self._get_test_config(config),
+            data=data,
+            test_vars={"custom_run_started_at": now.isoformat()},
         )
         assert result["status"] == "pass"
