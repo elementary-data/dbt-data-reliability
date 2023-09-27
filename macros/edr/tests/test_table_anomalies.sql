@@ -48,8 +48,8 @@
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {% if test_configuration.timestamp_column %}
             {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation,
-                                                                                            elementaru.convert_period(test_configuration.detection_period, "day"),
-                                                                                            elementaru.convert_period(test_configuration.training_period, "day"),
+                                                                                            test_configuration.backfill_days,
+                                                                                            test_configuration.days_back,
                                                                                             monitors=table_monitors,
                                                                                             metric_properties=metric_properties) %}
         {%- endif %}
