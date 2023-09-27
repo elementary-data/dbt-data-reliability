@@ -4,7 +4,7 @@
     {% endif %}
 
     {% if not table_relation %}
-        {{ elementary.edr_log('Unable to insert rows to non-existent table. Please run "dbt run -s elementary --target ' ~ target.name ~ '"') }}
+        {% do exceptions.warn("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
         {{ return(none) }}
     {% endif %}
 
