@@ -18,7 +18,9 @@
                                           dimensions,
                                           sensitivity,
                                           ignore_small_changes,
-                                          fail_on_zero) %}
+                                          fail_on_zero,
+                                          detection_period,
+                                          training_period) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -31,11 +33,13 @@
     {%- set min_training_set_size = elementary.get_test_argument('min_training_set_size', min_training_set_size, model_graph_node) %}
     {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
     {%- set fail_on_zero = elementary.get_test_argument('fail_on_zero', fail_on_zero, model_graph_node) %}
+    {%- set detection_period = elementary.get_detection_period_var(detection_period, model_graph_node) -%}
 
     {# timestamp_column anomaly detection tests #}
     {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
+    {%- set training_period = elementary.get_training_period_var(detection_period, model_graph_node) -%}
 
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
@@ -54,7 +58,9 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
        'ignore_small_changes': ignore_small_changes,
-       'fail_on_zero': fail_on_zero
+       'fail_on_zero': fail_on_zero,
+       'detection_period': detection_period,
+       'training_period': training_period
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

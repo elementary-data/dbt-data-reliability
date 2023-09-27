@@ -1,4 +1,4 @@
-{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, ignore_small_changes={"spike_failure_percent_threshold": none, "drop_failure_percent_threshold": none}, fail_on_zero=false) %}
+{% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, ignore_small_changes={"spike_failure_percent_threshold": none, "drop_failure_percent_threshold": none}, fail_on_zero=false, detection_period=none, training_period=none) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
@@ -36,7 +36,9 @@
                                                                                                    event_timestamp_column=event_timestamp_column,
                                                                                                    sensitivity=sensitivity,
                                                                                                    ignore_small_changes=ignore_small_changes,
-                                                                                                   fail_on_zero=fail_on_zero) %}
+                                                                                                   fail_on_zero=fail_on_zero,
+                                                                                                   detection_period=detection_period,
+                                                                                                   training_period=training_period) %}
 
         {% if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
@@ -46,8 +48,8 @@
         {{ elementary.debug_log('table_monitors - ' ~ table_monitors) }}
         {% if test_configuration.timestamp_column %}
             {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation,
-                                                                                            test_configuration.backfill_days,
-                                                                                            test_configuration.days_back,
+                                                                                            elementaru.convert_period(test_configuration.detection_period, "day"),
+                                                                                            elementaru.convert_period(test_configuration.training_period, "day"),
                                                                                             monitors=table_monitors,
                                                                                             metric_properties=metric_properties) %}
         {%- endif %}
@@ -60,7 +62,6 @@
                                                                            min_bucket_start,
                                                                            max_bucket_end,
                                                                            table_monitors,
-                                                                           test_configuration.days_back,
                                                                            metric_properties=metric_properties) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
