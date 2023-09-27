@@ -22,6 +22,8 @@ EXPECTED_FAILURES = [
     ("name", "column_removed"),
 ]
 
+STRING_JINJA = r"{{ 'STRING' if (target.type == 'bigquery' or target.type == 'databricks') else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+
 
 def assert_test_results(test_results: List[dict]):
     expected_failures = EXPECTED_FAILURES.copy()
@@ -61,8 +63,8 @@ def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
         test_args={"fail_on_added": True, "enforce_types": True},
         columns=[
             {"name": "id", "data_type": "integer"},
-            {"name": "name", "data_type": "string"},
-            {"name": "nick", "data_type": "string"},
+            {"name": "name", "data_type": STRING_JINJA},
+            {"name": "nick", "data_type": STRING_JINJA},
         ],
         data=DATASET2,
         multiple_results=True,
