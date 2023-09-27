@@ -1,5 +1,4 @@
 {% macro detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) %}
-  {{ debug() }}
   {% if detection_period %}
     {{ return(elementary.convert_period(detection_period, "day").count) }}
   {% endif %}

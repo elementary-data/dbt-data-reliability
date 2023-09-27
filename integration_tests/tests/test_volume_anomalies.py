@@ -332,3 +332,26 @@ def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     test_args = {**DBT_TEST_ARGS, "fail_on_zero": True, "anomaly_sensitivity": 1000}
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
+
+
+def test_anomalyless_table_volume_anomalies_periods_params(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date() - timedelta(days=4)
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=utc_today)
+    ]
+    data += [{TIMESTAMP_COLUMN: utc_today.strftime(DATE_FORMAT)}]
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "training_period": {"unit": "day", "count": 30},
+        "detection_period": {"unit": "day", "count": 1},
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+    test_args = {**test_args, "detection_period": {"unit": "day", "count": 4}}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
