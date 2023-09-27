@@ -66,13 +66,30 @@
                       ('updated_at','timestamp'),
                       ('dimension','string'),
                       ('dimension_value','string'),
-                      ('metric_properties','string')] 
+                      ('metric_properties','string')]
     %}
     {% if with_created_at %}
         {% do columns.append(('created_at','timestamp')) %}
     {% endif %}
     {{ elementary.empty_table(columns) }}
 {% endmacro %}
+
+{% macro empty_elementary_exposures() %}
+    {% set columns = [('id','string'),
+                      ('label','string'),
+                      ('url','string'),
+                      ('type','string'),
+                      ('maturity','float'),
+                      ('depends_on','longstring'),
+                      ('owner_name','string'),
+                      ('owner_email','string'),
+                      ('created_at', 'timestamp'),
+                      ('updated_at','timestamp'),
+                      ('raw_queries','longstring')]
+    %}
+    {{ elementary.empty_table(columns) }}
+{% endmacro %}
+
 
 {% macro empty_schema_columns_snapshot() %}
     {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp'),('created_at','timestamp')]) }}
