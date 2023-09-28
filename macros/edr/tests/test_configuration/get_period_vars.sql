@@ -3,12 +3,7 @@
     {{ return(elementary.convert_period(detection_period, "day").count) }}
   {% endif %}
 
-  {% if backfill_days %}
-    {{ return(backfill_days) }}
-  {% endif %}
-
-  {% set detection_period = elementary.get_test_argument('detection_period', detection_period, model_graph_node) %}
-  {{ return(elementary.convert_period(detection_period, "day").count) }}
+  {{ return(elementary.get_test_argument('backfill_days', backfill_days, model_graph_node)) }}
 {% endmacro %}
 
 {% macro training_period_to_days_back(training_period, days_back, model_graph_node) %}
@@ -16,12 +11,7 @@
     {{ return(elementary.convert_period(training_period, "day").count) }}
   {% endif %}
 
-  {% if days_back %}
-    {{ return(days_back) }}
-  {% endif %}
-
-  {% set training_period = elementary.get_test_argument('training_period', training_period, model_graph_node) %}
-  {{ return(elementary.convert_period(training_period, "day").count) }}
+  {{ return(elementary.get_test_argument('days_back', days_back, model_graph_node)) }}
 {% endmacro %}
 
 {% macro get_period_default_var(unit, count) %}
