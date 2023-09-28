@@ -53,7 +53,6 @@
                 min(bucket_end) as dimension_min_bucket_end,
                 sum(metric_value)
             from all_dimension_metrics
-            where row_number <= {{ test_configuration.min_training_set_size }}
             group by 1,2
             {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0
@@ -159,7 +158,6 @@
                 dimension_value,
                 sum(metric_value)
             from all_dimension_metrics
-            where row_number <= {{ test_configuration.min_training_set_size }}
             group by 1
             {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0
