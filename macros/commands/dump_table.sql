@@ -17,7 +17,7 @@
         {% set column_names = column_names | reject("in", deprecated_column_names) | list %}
     {% endif %}
 
-    {% set dedup_by_column = "unique_id" %}
+    {% set dedup_by_column = node.meta.id_column or "unique_id" %}
     {% set order_by_dedup_column = "generated_at" %}
     {% set query %}
         {% if dedup and (dedup_by_column in column_names) and (order_by_dedup_column in column_names) %}
