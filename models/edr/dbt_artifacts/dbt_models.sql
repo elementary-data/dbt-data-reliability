@@ -1,6 +1,7 @@
 {{
   config(
     materialized='incremental',
+    incremental_strategy='insert_overwrite',
     transient=False,
     post_hook='{{ elementary.upload_dbt_models() }}',
     unique_key='unique_id',

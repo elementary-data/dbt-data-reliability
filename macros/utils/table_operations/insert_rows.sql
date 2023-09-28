@@ -22,13 +22,21 @@
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% do elementary.run_query(insert_query) %}
+        {% if target.type == 'glue' %}
+          {% do dbt.glue_exec_query(insert_query) %}
+        {% else %}
+          {% do elementary.run_query(insert_query) %}
+        {% endif %}
       {% endfor %}
     {% elif insert_rows_method == 'chunk' %}
       {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
       {% for rows_chunk in rows_chunks %}
         {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
-        {% do elementary.run_query(insert_rows_query) %}
+        {% if target.type == 'glue' %}
+          {% do dbt.glue_exec_query(insert_rows_query) %}
+        {% else %}
+          {% do elementary.run_query(insert_rows_query) %}
+        {% endif %}
       {% endfor %}
     {% else %}
       {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
@@ -57,7 +65,7 @@
           {% do rendered_column_values.append(column_value) %}
         {% else %}
           {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
-          {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+          {% do rendered_column_values.append(elementary.render_value(column_value, column.data_type)) %}
         {% endif %}
       {% endfor %}
       {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
@@ -92,7 +100,7 @@
             {% for row in rows -%}
                 ({%- for column in columns -%}
                     {%- set column_value = elementary.insensitive_get_dict_value(row, column.name, none) -%}
-                    {{ elementary.render_value(column_value) }}
+                    {{ elementary.render_value(column_value, column.data_type) }}
                     {{- "," if not loop.last else "" -}}
                  {%- endfor -%}) {{- "," if not loop.last else "" -}}
             {%- endfor -%}
@@ -116,10 +124,16 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{%- macro render_value(value) -%}
+{%- macro glue__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", '"')) -}}
+{%- endmacro -%}
+
+{%- macro render_value(value, data_type=none) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}
             {{- value -}}
+        {%- elif target.type == 'glue' and data_type=='timestamp' -%}
+            cast('{{- value -}}' as timestamp)
         {%- elif value is string -%}
             '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}
