@@ -30,7 +30,6 @@
     {# We had a names mix in sensitivity/anomaly_sensitivity, this keeps backwards competability #}
     {%- set anomaly_sensitivity = sensitivity if sensitivity else elementary.get_test_argument('anomaly_sensitivity', anomaly_sensitivity, model_graph_node) %}
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
-    {%- set min_training_set_size = elementary.get_test_argument('min_training_set_size', min_training_set_size, model_graph_node) %}
     {%- set backfill_days = elementary.detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) -%}
     {%- set fail_on_zero = elementary.get_test_argument('fail_on_zero', fail_on_zero, model_graph_node) %}
     
@@ -49,7 +48,6 @@
        'where_expression': where_expression,
        'anomaly_sensitivity': anomaly_sensitivity,
        'anomaly_direction': anomaly_direction,
-       'min_training_set_size': min_training_set_size,
        'time_bucket': time_bucket,
        'days_back': days_back,
        'backfill_days': backfill_days,
@@ -85,7 +83,7 @@
 
 
 {% macro validate_mandatory_configuration(test_configuration, mandatory_params) %}
-    {%- set mandatory_configuration = ['anomaly_sensitivity', 'anomaly_direction', 'min_training_set_size', 'backfill_days'] %}
+    {%- set mandatory_configuration = ['anomaly_sensitivity', 'anomaly_direction', 'backfill_days'] %}
     {%- set with_timestamp_mandatory_configuration = ['time_bucket', 'days_back'] %}
     {%- set missing_mandatory_params = [] %}
 
