@@ -340,6 +340,9 @@
         },
         "column_anomalies": {
           "description": "Column-level anomaly monitors (null_count, null_percent, zero_count, string_length, variance, etc.) on the column according to its data type."
+        },
+        "exposure_schema_validity": {
+            "description": "Column level exposure validation according to the meta.columns property in exposures.yml"
         }
       }
     } %}

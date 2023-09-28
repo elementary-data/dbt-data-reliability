@@ -82,7 +82,8 @@
   {% set test_type_handler_map = {
     "anomaly_detection": elementary.handle_anomaly_test,
     "schema_change": elementary.handle_schema_changes_test,
-    "dbt_test": elementary.handle_dbt_test
+    "dbt_test": elementary.handle_dbt_test,
+    "integrity": elementary.handle_dbt_test
   } %}
   {% set test_type_handler = test_type_handler_map.get(test_type) %}
   {% if not test_type_handler %}
