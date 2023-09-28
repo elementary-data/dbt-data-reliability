@@ -4,31 +4,40 @@ import pytest
 from dbt_project import DbtProject
 
 DATASET1 = [
-    {"id": 1, "name": "Elon"},
+    {"id": 1, "name": "Elon", "nick": "EGK"},
     {"id": 2, "name": "Itamar"},
     {"id": 3, "name": "Ofek"},
 ]
 
 DATASET2 = [
-    {"id": "a", "first_name": "Elon", "age": 22},
+    {"id": "a", "first_name": "Elon", "age": 22, "nick": "EGK"},
     {"id": "b", "first_name": "Itamar", "age": None},
     {"id": "c", "first_name": "Ofek", "age": None},
 ]
 
 EXPECTED_FAILURES = [
-    "column_added",  # first_name
-    "column_added",  # age
-    "type_changed",  # id
-    "column_removed",  # name
+    ("first_name", "column_added"),
+    ("age", "column_added"),
+    ("id", "type_changed"),
+    ("name", "column_removed"),
 ]
+
+STRING_JINJA = r"{{ 'STRING' if (target.type == 'bigquery' or target.type == 'databricks') else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
 
 
 def assert_test_results(test_results: List[dict]):
     expected_failures = EXPECTED_FAILURES.copy()
-    for test_result in test_results:
-        test_sub_type = test_result["test_sub_type"]
-        assert test_result["status"] == "fail" and test_sub_type in expected_failures
-        expected_failures.remove(test_sub_type)
+    failed_test_results = [
+        test_result for test_result in test_results if test_result["status"] == "fail"
+    ]
+    assert len(failed_test_results) == len(expected_failures)
+
+    for test_result in failed_test_results:
+        test_failure = (
+            test_result["column_name"].lower(),
+            test_result["test_sub_type"].lower(),
+        )
+        expected_failures.remove(test_failure)
     assert not expected_failures
 
 
@@ -54,7 +63,8 @@ def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
         test_args={"fail_on_added": True, "enforce_types": True},
         columns=[
             {"name": "id", "data_type": "integer"},
-            {"name": "name", "data_type": "string"},
+            {"name": "name", "data_type": STRING_JINJA},
+            {"name": "nick", "data_type": STRING_JINJA},
         ],
         data=DATASET2,
         multiple_results=True,

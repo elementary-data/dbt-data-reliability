@@ -51,15 +51,21 @@
       anomaly_scores_with_is_anomalous as (
         select
           *,
-          case when
+case when
             anomaly_score is not null and
-                          {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
-                          {{ elementary.avg_percent_anomalous_condition(
-                            test_configuration.ignore_small_changes.spike_failure_percent_threshold,
-                            test_configuration.ignore_small_changes.drop_failure_percent_threshold,
-                            test_configuration.anomaly_direction
-                          ) }} and
-                          bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
+            (
+              {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
+              (
+                {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
+                {{ elementary.avg_percent_anomalous_condition(
+                    test_configuration.ignore_small_changes.spike_failure_percent_threshold,
+                    test_configuration.ignore_small_changes.drop_failure_percent_threshold,
+                    test_configuration.anomaly_direction
+                  ) 
+                }}
+              )
+            ) and
+            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
             training_set_size >= {{ test_configuration.min_training_set_size }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
@@ -127,3 +133,14 @@
       (1 = 1)
   {% endif %}
 {%- endmacro -%}
+
+{% macro fail_on_zero(fail_on_zero) %}
+  (
+    metric_value = 0 and 
+    {% if fail_on_zero %}
+      1 = 1
+    {% else %}
+      1 = 2
+    {% endif %}
+  )
+{% endmacro %}

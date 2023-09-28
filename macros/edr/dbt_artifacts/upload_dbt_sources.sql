@@ -20,6 +20,7 @@
                                                                    ('freshness_warn_after', 'string'),
                                                                    ('freshness_error_after', 'string'),
                                                                    ('freshness_filter', 'long_string'),
+                                                                   ('freshness_description', 'long_string'),
                                                                    ('relation_name', 'string'),
                                                                    ('tags', 'long_string'),
                                                                    ('meta', 'long_string'),
@@ -69,6 +70,7 @@
          'freshness_warn_after': freshness_dict.get('warn_after', {}),
          'freshness_error_after': freshness_dict.get('error_after', {}),
          'freshness_filter': freshness_dict.get('filter'),
+         'freshness_description': elementary.get_source_freshness_description(),
          'relation_name': node_dict.get('relation_name'),
          'tags': elementary.filter_none_and_sort(tags),
          'meta': meta_dict,
@@ -82,4 +84,8 @@
      }%}
     {% do flatten_source_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_source_metadata_dict)}) %}
     {{ return(flatten_source_metadata_dict) }}
+{% endmacro %}
+
+{% macro get_source_freshness_description() %}
+    {% do return("dbt source freshness validates if the data in a table is not updated by calculating if the time elapsed between the test execution to the latest record is above an acceptable SLA threshold.") %}
 {% endmacro %}
