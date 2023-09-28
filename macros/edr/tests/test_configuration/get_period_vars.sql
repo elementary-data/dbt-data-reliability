@@ -1,5 +1,9 @@
 {% macro detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) %}
   {% if detection_period %}
+    {% if not detection_period.unit %}
+      {{ return(detection_period.count) }}
+    {% endif %}
+
     {{ return(elementary.convert_period(detection_period, "day").count) }}
   {% endif %}
 
@@ -8,6 +12,10 @@
 
 {% macro training_period_to_days_back(training_period, days_back, model_graph_node) %}
   {% if training_period %}
+    {% if not training_period.unit %}
+      {{ return(training_period.count) }}
+    {% endif %}
+
     {{ return(elementary.convert_period(training_period, "day").count) }}
   {% endif %}
 
