@@ -168,13 +168,16 @@
                 bucket_end,
                 bucket_seasonality,
                 metric_value,
+                
+                {% set limit_values =  elementary.get_limit_metric_values(test_configuration) %}
                 case
                     when training_stddev is null then null
-                    else (-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
+                    when {{ limit_values.min_metric_value }} > 0 or metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ limit_values.min_metric_value }}
+                    else 0
                 end as min_metric_value,
                 case 
                     when training_stddev is null then null
-                    else {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
+                    else {{ limit_values.max_metric_value }}
                 end as max_metric_value,
                 training_avg,
                 training_stddev,
@@ -193,4 +196,38 @@
 
     {% endset %}
     {{ return(anomaly_scores_query) }}
+{% endmacro %}
+
+{% macro get_negative_value_supported_metrics() %}
+    {% do return(["min", "max", "average", "standard_deviation", "variance", "sum"]) %}
+{% endmacro %}
+
+{% macro get_limit_metric_values(test_configuration) %}
+    {%- set min_val -%}
+      ((-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+    {%- endset -%}
+
+    {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
+      {%- set drop_avg_threshold -%}
+        ((1 + {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
+      {%- endset -%}
+      {%- set min_val -%}
+        {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
+      {%- endset -%}
+    {% endif %}
+
+    {%- set max_val -%}
+      {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
+    {%- endset -%}
+
+    {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}
+      {%- set spike_avg_threshold -%}
+        ((1 + {{ test_configuration.ignore_small_changes.spike_failure_percent_threshold }}/100.0) * training_avg)
+      {%- endset -%}
+      {%- set max_val -%}
+        {{ elementary.arithmetic_max(spike_avg_threshold, max_val) }}
+      {%- endset -%}
+    {% endif %}
+
+    {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
 {% endmacro %}

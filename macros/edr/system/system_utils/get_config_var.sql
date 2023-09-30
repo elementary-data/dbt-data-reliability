@@ -48,7 +48,7 @@
     'upload_artifacts_method': 'diff',
     'project_name': none,
     'elementary_full_refresh': false,
-    'min_training_set_size': 14,
+    'min_training_set_size': 7,
     'cache_artifacts': true,
     'anomaly_direction': 'both',
     'store_result_rows_in_own_table': true,
@@ -56,7 +56,15 @@
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
     'collect_metrics': true,
-    'upload_dbt_columns': false
+    'upload_dbt_columns': false,
+    'clean_elementary_temp_tables': true,
+    'force_metrics_backfill': false,
+    'ignore_small_changes': {
+      'spike_failure_percent_threshold': none,
+      'drop_failure_percent_threshold': none
+    },
+    'include_other_warehouse_specific_columns': false,
+    'fail_on_zero': false
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

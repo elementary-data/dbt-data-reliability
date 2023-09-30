@@ -6,7 +6,7 @@
     {%- if elementary_test_type and elementary_test_type != "python_test" %}
         {{ return(elementary_test_type) }}
     {%- else %}
-        {{ return("dbt_test") }}
+        {{ return("integrity") }}
     {%- endif %}
 {% endmacro %}
 
@@ -23,12 +23,15 @@
     {%- set schema_changes_tests = [
         'schema_changes',
         'schema_changes_from_baseline',
-        'json_schema'
+        'json_schema',
     ] %}
     {%- set python_tests = [
         'python',
         'json_schema'
-    ]   %}
+    ] %}
+    {%- set integrity_tests = [
+        'exposure_schema_validity'
+    ] %}
 
   {% if flattened_test.test_namespace == "elementary" %}
     {% if flattened_test.short_name | lower in anomaly_detection_tests %}
@@ -37,6 +40,8 @@
       {% do return("schema_change") %}
     {% elif flattened_test.short_name | lower in python_tests %}
         {% do return("python_test") %}
+    {% elif flattened_test.short_name | lower in integrity_tests %}
+        {% do return("integrity") %}
     {% endif %}
   {% endif %}
 {% endmacro %}

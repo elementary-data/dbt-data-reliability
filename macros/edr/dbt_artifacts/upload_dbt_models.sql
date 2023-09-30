@@ -8,25 +8,31 @@
 {%- endmacro -%}
 
 {% macro get_dbt_models_empty_table_query() %}
-    {% set dbt_models_empty_table_query = elementary.empty_table([('unique_id', 'string'),
-                                                                  ('alias', 'string'),
-                                                                  ('checksum', 'string'),
-                                                                  ('materialization', 'string'),
-                                                                  ('tags', 'long_string'),
-                                                                  ('meta', 'long_string'),
-                                                                  ('owner', 'string'),
-                                                                  ('database_name', 'string'),
-                                                                  ('schema_name', 'string'),
-                                                                  ('depends_on_macros', 'long_string'),
-                                                                  ('depends_on_nodes', 'long_string'),
-                                                                  ('description', 'long_string'),
-                                                                  ('name', 'string'),
-                                                                  ('package_name', 'string'),
-                                                                  ('original_path', 'long_string'),
-                                                                  ('path', 'string'),
-                                                                  ('generated_at', 'string'),
-                                                                  ('metadata_hash', 'string'),
-                                                                  ]) %}
+    {% set columns = [
+        ('unique_id', 'string'),
+        ('alias', 'string'),
+        ('checksum', 'string'),
+        ('materialization', 'string'),
+        ('tags', 'long_string'),
+        ('meta', 'long_string'),
+        ('owner', 'string'),
+        ('database_name', 'string'),
+        ('schema_name', 'string'),
+        ('depends_on_macros', 'long_string'),
+        ('depends_on_nodes', 'long_string'),
+        ('description', 'long_string'),
+        ('name', 'string'),
+        ('package_name', 'string'),
+        ('original_path', 'long_string'),
+        ('path', 'string'),
+        ('generated_at', 'string'),
+        ('metadata_hash', 'string'),
+    ] %}
+    {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
+        {% do columns.extend([('bigquery_partition_by', 'string')]) %}
+    {% endif %}
+
+    {% set dbt_models_empty_table_query = elementary.empty_table(columns) %}
     {{ return(dbt_models_empty_table_query) }}
 {% endmacro %}
 
@@ -71,8 +77,9 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
-    }%}
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'bigquery_partition_by': config_dict.get("partition_by"),
+    } %}
     {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
 {% endmacro %}

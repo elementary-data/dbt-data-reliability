@@ -20,11 +20,27 @@ on:
         required: false
         description: Branch or tag to checkout for 'dbt-data-reliability' repository
 
+  workflow_call:
+    inputs:
+      dbt-version:
+        type: string
+        required: false
+      elementary-ref:
+        type: string
+        required: false
+      dbt-data-reliability-ref:
+        type: string
+        required: false
+
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
+        dbt-version:
+          ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
+          ! contains(github.event_name, 'pull_request') && fromJSON('["1.3.0", "latest_official"]') ||
+          fromJSON('["latest_official"]') }}
         warehouse-type:
           [
             postgres,
@@ -35,10 +51,30 @@ jobs:
             databricks_catalog,
             spark,
           ]
+        include:
+          # If we're not running on a specific dbt version, then always add postgres on 1.3.0
+          - dbt-version: "${{ inputs.dbt-version || '1.3.0' }}"
+            warehouse-type: postgres
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
-      dbt-version: ${{ github.event_name != 'workflow_dispatch' && '1.3.0' || inputs.dbt-version }}
+      dbt-version: ${{ matrix.dbt-version }}
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref }}
     secrets: inherit
+
+  notify_failures:
+    name: Notify Slack
+    secrets: inherit
+    needs: [test]
+    if: |
+      always() &&
+      ! contains(needs.test.result, 'success') &&
+      ! contains(needs.test.result, 'cancelled') &&
+      contains(github.event_name, 'schedule') &&
+      ! cancelled()
+    uses: elementary-data/elementary/.github/workflows/notify_slack.yml@master
+    with:
+      result: "failure"
+      run_id: ${{ github.run_id }}
+      workflow_name: ${{ github.workflow }}

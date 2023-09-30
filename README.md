@@ -1,62 +1,34 @@
 <p align="center">
-<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/header_git.png"/ width="1000">
+<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/github_banner.png"/ width="1000">
 </p>
 
 <h2 align="center">
- Data observability for analytics & data engineers
+ dbt native data observability for analytics & data engineers
 </h2>
 <h4 align="center">
 Monitor your data quality, operation and performance directly from your dbt project.
 </h4>
 
-<div align="center">
-
-To learn more, refer to our [main repo »](https://github.com/elementary-data/elementary) | [Demo »](https://bit.ly/3IXKShW)
-
-</div>
+<p align="center">
+<a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
+<a href="https://docs.elementary-data.com/quickstart"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
+<img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
+<img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads"/>
 
 ## Quick start
 
-Add to your `packages.yml` according to your dbt version:
-
-**For dbt >1.3.0:**
+1. Add to your `packages.yml`:
 
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.9.4
+    version: 0.10.3
     ## Docs: https://docs.elementary-data.com
 ```
 
-**For dbt >=1.2.0, <1.3.0:**
+2. Run `dbt deps`
 
-```yml packages.yml
-packages:
-  - package: elementary-data/elementary
-    version: 0.9.4
-    ## Docs: https://docs.elementary-data.com
-
-    ## !! Important !! For dbt >=1.2.0 \<1.3.0 ##
-    ## (Prevents dbt_utils versions exceptions) ##
-  - package: dbt-labs/dbt_utils
-    version: [">=0.8.0", "<1.0.0"]
-```
-
-**For dbt >=1.0.0, <1.2.0:**
-
-```yml packages.yml
-packages:
-  - package: elementary-data/elementary
-    version: 0.9.4
-    ## Docs: https://docs.elementary-data.com
-
-    ## !! Important !! For dbt <1.2.0 ##
-    ## (Prevents dbt_utils versions exceptions) ##
-  - package: dbt-labs/dbt_utils
-    version: [">=0.8.0", "<0.9.0"]
-```
-
-After adding to `packages.yml` and running `dbt deps`, add to your `dbt_project.yml`:
+3. Add to your `dbt_project.yml`:
 
 ```yml
 models:
@@ -66,7 +38,7 @@ models:
     +schema: "elementary"
 ```
 
-And run `dbt run --select elementary`.
+4. Run `dbt run --select elementary`
 
 Check out the [full documentation](https://docs.elementary-data.com/) for generating the UI, alerts and adding anomaly detection tests.
 
