@@ -6,7 +6,7 @@
     {%- if elementary_test_type and elementary_test_type != "python_test" %}
         {{ return(elementary_test_type) }}
     {%- else %}
-        {{ return("integrity") }}
+        {{ return("dbt_test") }}
     {%- endif %}
 {% endmacro %}
 
