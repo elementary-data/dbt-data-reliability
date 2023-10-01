@@ -30,7 +30,7 @@
 {% endmacro %}
 
 
-{% macro handle_anomaly_test(flattened_test) %}
+{% macro handle_anomaly_test(flattened_test, materialization_macro) %}
   {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics").get("relations") %}
   {% set metrics_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'metrics') %}
   {% if metrics_table %}
@@ -53,9 +53,10 @@
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
+  {% do return(materialization_macro()) %}
 {% endmacro %}
 
-{% macro handle_schema_changes_test(flattened_test) %}
+{% macro handle_schema_changes_test(flattened_test, materialization_macro) %}
   {% set schema_snapshots_tables_cache = elementary.get_cache("tables").get("schema_snapshots") %}
   {% set schema_snapshots_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'schema_changes') %}
   {% if schema_snapshots_table %}
@@ -68,13 +69,16 @@
     {% do elementary_test_results_rows.append(elementary.get_schema_changes_test_result_row(flattened_test, schema_changes_row, schema_changes_rows)) %}
   {% endfor %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
+  {% do return(materialization_macro()) %}
 {% endmacro %}
 
-{% macro handle_dbt_test(flattened_test) %}
+{% macro handle_dbt_test(flattened_test, materialization_macro) %}
+  {% set result = materialization_macro() %}
   {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
                                                          ignore_passed_tests=true) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
+  {% do return(result) %}
 {% endmacro %}
 
 {% macro get_test_type_handler(flattened_test) %}
@@ -92,7 +96,8 @@
   {% do return(test_type_handler) %}
 {% endmacro %}
 
-{% macro setup_test() %}
+
+{% macro materialize_test(materialization_macro) %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(none) %}
   {% endif %}
@@ -101,39 +106,31 @@
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
     {% do context.update({"sql": temp_table_sql}) %}
   {% endif %}
-{% endmacro %}
-
-{% macro materialize_test() %}
-  {% if not elementary.is_elementary_enabled() %}
-    {% do return(none) %}
-  {% endif %}
 
   {% set flattened_test = elementary.flatten_test(model) %}
   {% set test_type_handler = elementary.get_test_type_handler(flattened_test) %}
-  {% do test_type_handler(flattened_test) %}
+  {% set result = test_type_handler(flattened_test, materialization_macro) %}
   {% if elementary.get_config_var("calculate_failed_count") %}
     {% set failed_row_count = elementary.get_failed_row_count(flattened_test) %}
     {% if failed_row_count is not none %}
       {% do elementary.get_cache("elementary_test_failed_row_counts").update({model.unique_id: failed_row_count}) %}
     {% endif %}
   {% endif %}
+  {% do return(result) %}
 {% endmacro %}
 
 {% materialization test, default %}
-  {% do elementary.setup_test() %}
-  {% set result = dbt.materialization_test_default() %}
-  {% do elementary.materialize_test() %}
+  {% set result = elementary.materialize_test(dbt.materialization_test_default) %}
   {% do return(result) %}
 {% endmaterialization %}
 
 {% materialization test, adapter="snowflake" %}
-  {% do elementary.setup_test() %}
   {%- if dbt.materialization_test_snowflake -%}
-    {% set result = dbt.materialization_test_snowflake() %}
+    {% set materialization_macro = dbt.materialization_test_snowflake %}
   {%- else -%}
-    {% set result = dbt.materialization_test_default() %}
+    {% set materialization_macro = dbt.materialization_test_default %}
   {%- endif -%}
-  {% do elementary.materialize_test() %}
+  {% set result = elementary.materialize_test(materialization_macro) %}
   {% do return(result) %}
 {% endmaterialization %}
 
