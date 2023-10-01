@@ -1,12 +1,10 @@
 {{
   config(
     materialized='incremental',
-    unique_key='id',
-    on_schema_change='append_new_columns',
+    transient=False,
+    unique_key='unique_id',
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
-    meta={
-      "timestamp_column": "created_at",
-    }
+    on_schema_change='sync_all_columns',
   )
 }}
 

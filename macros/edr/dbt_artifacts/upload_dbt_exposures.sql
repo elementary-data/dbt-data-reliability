@@ -28,6 +28,7 @@
                                                                      ('generated_at', 'string'),
                                                                      ('metadata_hash', 'string'),
                                                                      ('label', 'string'),
+                                                                     ('raw_queries', 'long_string'),
                                                                      ]) %}
     {{ return(dbt_exposures_empty_table_query) }}
 {% endmacro %}
