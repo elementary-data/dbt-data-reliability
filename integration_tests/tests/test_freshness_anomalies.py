@@ -65,7 +65,7 @@ class TestFreshnessAnomalies:
             days_back=config.days_back,
             backfill_days=config.backfill_days,
             time_bucket=dict(period=config.period, count=1),
-            detection_delay=dict(period='hour', count=config.detection_delay_hours),
+            detection_delay=dict(period="hour", count=config.detection_delay_hours),
         )
 
     def _skip_redshift_monthly(
