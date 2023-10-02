@@ -43,7 +43,7 @@
     'long_string_size': 65535,
     'collect_model_sql': true,
     'model_sql_max_size': 10240,
-    'query_max_size': 1000000,
+    'query_max_size': 500000,
     'insert_rows_method': 'max_query_size',
     'upload_artifacts_method': 'diff',
     'project_name': none,
