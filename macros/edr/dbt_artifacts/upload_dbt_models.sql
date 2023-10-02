@@ -14,7 +14,6 @@
                                                                   ('materialization', 'string'),
                                                                   ('tags', 'long_string'),
                                                                   ('meta', 'long_string'),
-                                                                  ('config', 'long_string'),
                                                                   ('owner', 'string'),
                                                                   ('database_name', 'string'),
                                                                   ('schema_name', 'string'),

@@ -23,7 +23,6 @@
                                                                    ('relation_name', 'string'),
                                                                    ('tags', 'long_string'),
                                                                    ('meta', 'long_string'),
-                                                                   ('config', 'long_string'),
                                                                    ('owner', 'string'),
                                                                    ('package_name', 'string'),
                                                                    ('original_path', 'long_string'),
