@@ -1,20 +1,27 @@
-{% macro get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
-    {%- set untruncated_min = (elementary.get_run_started_at() - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00") %}
+{% macro get_detection_end(detection_delay) %}
+    {%- set kwargs = {detection_delay.period+'s': detection_delay.count} %}
+    {%- set detection_end = elementary.get_run_started_at() - modules.datetime.timedelta(**kwargs) %}
+    {{ return(detection_end) }}
+{% endmacro %}
+
+{% macro get_trunc_min_bucket_start_expr(detection_end, metric_properties, days_back) %}
+    {%- set untruncated_min = (detection_end - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00") %}
     {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(untruncated_min)))%}
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
 {# This macro can't be used without truncating to full buckets #}
-{% macro get_backfill_bucket_start(backfill_days, metric_properties) %}
-    {% do return((elementary.get_run_started_at() - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
+{% macro get_backfill_bucket_start(detection_end, backfill_days) %}
+    {% do return((detection_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
 
 
-{% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
+{% macro get_test_buckets_min_and_max(model_relation, backfill_days, days_back, detection_delay, monitors=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
 
-    {%- set run_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) %}
-    {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, days_back) %}
-    {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_backfill_bucket_start(backfill_days))) %}
+    {%- set detection_end = elementary.get_detection_end(detection_delay) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) %}
+    {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, days_back) %}
+    {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.get_backfill_bucket_start(detection_end, backfill_days))) %}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
     {%- set force_metrics_backfill = elementary.get_config_var('force_metrics_backfill') %}
 
@@ -32,11 +39,11 @@
         with bucket_times as (
             select
             {{ trunc_min_bucket_start_expr }} as days_back_start
-           , {{ run_start_expr }} as run_started
+           , {{ detection_end_expr }} as detection_end
         ),
         full_buckets_calc as (
             select *,
-                floor({{ elementary.edr_datediff('days_back_start', 'run_started', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }} as periods_until_max
+                floor({{ elementary.edr_datediff('days_back_start', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }} as periods_until_max
             from bucket_times
         )
         select
@@ -52,7 +59,7 @@
                    {{ elementary.edr_cast_as_timestamp(elementary.edr_timeadd(metric_properties.time_bucket.period, -1 * metric_properties.time_bucket.count, 'min(first_bucket_end)')) }} as min_existing_bucket_start,
                    {{ trunc_min_bucket_start_expr }} as days_back_start,
                    {{ backfill_bucket_start }} as backfill_start,
-                   {{ run_start_expr }} as run_started
+                   {{ detection_end_expr }} as detection_end
             from {{ monitors_runs_relation }}
             where upper(full_table_name) = upper('{{ full_table_name }}')
               and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
@@ -74,8 +81,8 @@
                 {# How many periods we need to add to last run time to get only full time buckets #}
                 case
                     when max_existing_bucket_end is not null and max_existing_bucket_end > days_back_start and min_existing_bucket_start <= days_back_start
-                    then floor({{ elementary.edr_datediff('max_existing_bucket_end', 'run_started', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }}
-                    else floor({{ elementary.edr_datediff('days_back_start', 'run_started', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }}
+                    then floor({{ elementary.edr_datediff('max_existing_bucket_end', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }}
+                    else floor({{ elementary.edr_datediff('days_back_start', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }}
                 end as periods_until_max
             from bucket_times
         )
