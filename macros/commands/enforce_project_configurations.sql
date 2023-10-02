@@ -9,14 +9,14 @@
     {# enforcing source params #}
     {%- if include_sources -%}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-        {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
+        {% set sources_succeed = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
     {%- endif -%}
 
     {# enforcing model params #}
     {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-    {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
+    {% set models_succeed = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
 
-    {%- if not models_result or (include_sources and not sources_result) -%}
+    {%- if not models_succeed or (include_sources and not sources_succeed) -%}
         {{ exceptions.raise_compiler_error("Found issues in project configurations") }}
     {%- endif -%}
 {%- endmacro -%}
