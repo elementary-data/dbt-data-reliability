@@ -17,8 +17,10 @@
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro get_enforcement_param(flattened_node, enforcement_param_name, enforcement_param_arg_value) -%}
-    {% set node_enforcement_param = flattened_node.meta.get(enforcement_param_name) or flattened_node.config.get(enforcement_param_name) or elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value %}
+{%- macro get_enforcement_param(node, enforcement_param_name, enforcement_param_arg_value) -%}
+    {# flattened node doesnt have a config yet, using node instead #}
+    {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
+    {% set node_enforcement_param = node.meta.get(enforcement_param_name) or config_dict.get(enforcement_param_name) or elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value %}
     {{- return(node_enforcement_param) -}}
 {%- endmacro -%}
 
