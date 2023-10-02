@@ -30,13 +30,7 @@
 {% endmacro %}
 
 
-{% macro handle_anomaly_test(flattened_test, materialization_macro) %}
-  {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics").get("relations") %}
-  {% set metrics_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'metrics') %}
-  {% if metrics_table %}
-    {% do metrics_tables_cache.append(metrics_table) %}
-  {% endif %}
-
+{% macro get_anomaly_test_results_rows(flattened_test) %}
   {% set anomaly_scores_groups_rows = {} %}
   {% set anomaly_scores_rows = elementary.query_test_result_rows() %}
   {% for anomaly_scores_row in anomaly_scores_rows %}
@@ -50,6 +44,19 @@
     {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
     {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, anomaly_scores_rows)) %}
   {% endfor %}
+
+  {% do return(elementary_test_results_rows) %}
+{% endmacro %}
+
+
+{% macro handle_anomaly_test(flattened_test, materialization_macro) %}
+  {% set metrics_tables_cache = elementary.get_cache("tables").get("metrics").get("relations") %}
+  {% set metrics_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'metrics') %}
+  {% if metrics_table %}
+    {% do metrics_tables_cache.append(metrics_table) %}
+  {% endif %}
+
+  {% set elementary_test_results_rows = elementary.get_anomaly_test_results_rows(flattened_test) %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}

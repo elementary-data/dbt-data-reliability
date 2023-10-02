@@ -3,7 +3,7 @@
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
 
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+    {%- if elementary_force or (execute and flags.WHICH in ['test', 'build']) %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("The test has unsupported configuration, please contact Elementary support") }}
@@ -62,6 +62,7 @@
                                                                            table_monitors,
                                                                            test_configuration.days_back,
                                                                            metric_properties=metric_properties) %}
+        {% do print(table_monitoring_query) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
 
@@ -71,6 +72,7 @@
                                                                           test_configuration=test_configuration,
                                                                           metric_properties=metric_properties,
                                                                           monitors=table_monitors) %}
+        {% do print(anomaly_scores_query) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
