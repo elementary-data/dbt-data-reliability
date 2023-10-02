@@ -1,6 +1,6 @@
 {% macro detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) %}
   {% if detection_period %}
-    {% if not detection_period.unit %}
+    {% if not detection_period.period %}
       {{ return(detection_period.count) }}
     {% endif %}
 
@@ -12,7 +12,7 @@
 
 {% macro training_period_to_days_back(training_period, days_back, model_graph_node) %}
   {% if training_period %}
-    {% if not training_period.unit %}
+    {% if not training_period.period %}
       {{ return(training_period.count) }}
     {% endif %}
 
@@ -22,12 +22,12 @@
   {{ return(elementary.get_test_argument('days_back', days_back, model_graph_node)) }}
 {% endmacro %}
 
-{% macro get_period_default_var(unit, count) %}
-  {{ return({'unit': unit, 'count': count}) }}
+{% macro get_period_default_var(period, count) %}
+  {{ return({'period': period, 'count': count}) }}
 {% endmacro %}
 
 {% macro get_unit_of_period(period) %}
-  {{ return(period.unit) }}
+  {{ return(period.period) }}
 {% endmacro %}
 
 {% macro get_count_of_period(period) %}
@@ -76,7 +76,7 @@
   {% endif %}
 
   {% set period_count = period_count | int %}
-  {{ return({'unit': convert_to, 'count': period_count}) }}
+  {{ return({'period': convert_to, 'count': period_count}) }}
 {% endmacro %}
 
 {% macro months_to_days(count_of_months, end_datetime) %}
@@ -87,6 +87,6 @@
 {% macro check() %}
   {{ log("### Start Check ###", true) }}
   {# {{ log(get_count_of_period({"count": 4}), true) }} #}
-  {{ log(convert_period({"unit": "month", "count": 1}, "day"), true) }}
+  {{ log(convert_period({"period": "month", "count": 1}, "day"), true) }}
   {{ log("### End Check ###", true) }}
 {% endmacro %}

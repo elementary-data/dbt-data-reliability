@@ -346,12 +346,12 @@ def test_anomalyless_table_volume_anomalies_periods_params(
 
     test_args = {
         **DBT_TEST_ARGS,
-        "training_period": {"unit": "day", "count": 30},
-        "detection_period": {"unit": "day", "count": 1},
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 1},
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "pass"
 
-    test_args = {**test_args, "detection_period": {"unit": "day", "count": 4}}
+    test_args = {**test_args, "detection_period": {"period": "day", "count": 4}}
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"

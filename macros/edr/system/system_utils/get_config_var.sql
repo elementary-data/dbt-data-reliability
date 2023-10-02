@@ -19,8 +19,8 @@
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
    of the package are not accessible at on-run-start and on-run-end #}
   {% set default_config = {
-    'detection_period': elementary.get_period_default_var(unit='days', count=2),
-    'training_period': elementary.get_period_default_var(unit='days', count=14),
+    'detection_period': elementary.get_period_default_var(period='day', count=2),
+    'training_period': elementary.get_period_default_var(period='day', count=14),
     'days_back': 14,
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
