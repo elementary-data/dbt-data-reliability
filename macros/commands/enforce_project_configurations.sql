@@ -1,19 +1,23 @@
-{%- macro enforce_project_configurations(enforce_owners=true, enforce_tags=false, enforce_description=false, required_meta_keys=[], required_config_keys=[], include_sources=true) -%}
-    {%- if execute -%}
-        {% set sources_result = true %}
-        {# enforcing source params #}
-        {%- if include_sources -%}
-            {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-            {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
-        {%- endif -%}
+{%- macro enforce_project_configurations(enforce_owners=true, enforce_tags=false, enforce_description=false, required_meta_keys=none, required_config_keys=none, include_sources=true) -%}
+    {% if not required_meta_keys %}
+        {% set required_meta_keys = [] %}
+    {% endif %}
+    {% if not required_config_keys %}
+        {% set required_config_keys = [] %}
+    {% endif %}
 
-        {# enforcing model params #}
-        {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
+    {# enforcing source params #}
+    {%- if include_sources -%}
+        {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
+        {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
+    {%- endif -%}
 
-        {%- if not models_result or not sources_result -%}
-            {{ exceptions.raise_compiler_error("Found issues in project configurations") }}
-        {%- endif -%}
+    {# enforcing model params #}
+    {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
+    {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
+
+    {%- if not models_result or (include_sources and not sources_result) -%}
+        {{ exceptions.raise_compiler_error("Found issues in project configurations") }}
     {%- endif -%}
 {%- endmacro -%}
 
