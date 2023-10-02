@@ -21,9 +21,8 @@
     {%- endif -%}
 {%- endmacro -%}
 
-{%- macro get_enforcement_param(flattened_node, enforcement_param_name, enforcement_param_arg_value) -%}
-    {% set node_enforcement_param = flattened_node.meta.get(enforcement_param_name) or flattened_node.config.get(enforcement_param_name) or elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value %}
-    {{- return(node_enforcement_param) -}}
+{%- macro get_enforcement_param(node, enforcement_param_name, enforcement_param_arg_value) -%}
+    {% do return(node.meta.get(enforcement_param_name) or node.config.get(enforcement_param_name) or elementary.get_config_var(enforcement_param_name) or enforcement_param_arg_value) %}
 {%- endmacro -%}
 
 {%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) -%}
@@ -31,10 +30,10 @@
     {% for node in nodes -%}
         {% set flattened_node = flatten_callback(node) %}
         {%- if flattened_node.package_name == project_name -%}
-            {% set enforce_owners = elementary.get_enforcement_param(flattened_node, 'enforce_owners', enforce_owners) %}
-            {% set enforce_tags = elementary.get_enforcement_param(flattened_node, 'enforce_tags', enforce_tags) %}
-            {% set enforce_description = elementary.get_enforcement_param(flattened_node, 'enforce_description', enforce_description) %}
-            {% set required_meta_keys = elementary.get_enforcement_param(flattened_node, 'required_meta_keys', required_meta_keys) %}
+            {% set enforce_owners = elementary.get_enforcement_param(node, 'enforce_owners', enforce_owners) %}
+            {% set enforce_tags = elementary.get_enforcement_param(node, 'enforce_tags', enforce_tags) %}
+            {% set enforce_description = elementary.get_enforcement_param(node, 'enforce_description', enforce_description) %}
+            {% set required_meta_keys = elementary.get_enforcement_param(node, 'required_meta_keys', required_meta_keys) %}
             {# flattened node doesnt have a config yet, using node instead #}
             {% set required_config_keys = elementary.get_enforcement_param(node, 'required_config_keys', required_config_keys) %}
 
