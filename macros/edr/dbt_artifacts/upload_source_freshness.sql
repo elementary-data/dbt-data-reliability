@@ -23,6 +23,7 @@
     {% endif %}
   {% endfor %}
   {% set metadata_dict = elementary.safe_get_with_default(node_dict, 'metadata', {}) %}
+  {% set criteria_dict = elementary.safe_get_with_default(node_dict, 'criteria', {}) %}
   {% set source_freshness_invocation_id = metadata_dict.get('invocation_id', invocation_id) %}
   {% set flatten_source_freshness_dict = {
        'source_freshness_execution_id': [source_freshness_invocation_id, node_dict.get('unique_id')] | join('.'),
@@ -32,6 +33,9 @@
        'max_loaded_at_time_ago_in_s': node_dict.get('max_loaded_at_time_ago_in_s'),
        'status': node_dict.get('status'),
        'error': node_dict.get('error'),
+       'warn_after': criteria_dict.get('warn_after'),
+       'error_after': criteria_dict.get('error_after'),
+       'filter': criteria_dict.get('filter'),
        'generated_at': elementary.datetime_now_utc_as_string(),
        'invocation_id': source_freshness_invocation_id,
        'compile_started_at': compile_timing.get('started_at'),

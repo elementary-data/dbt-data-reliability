@@ -19,6 +19,7 @@
                                           sensitivity,
                                           ignore_small_changes,
                                           fail_on_zero,
+                                          detection_delay,
                                           detection_period,
                                           training_period) %}
 
@@ -39,6 +40,7 @@
     {%- set days_back = elementary.training_period_to_days_back(training_period, days_back, model_graph_node) -%}
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
+    {%- set detection_delay = elementary.get_detection_delay(detection_delay, model_graph_node) %}
 
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
@@ -56,7 +58,8 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
        'ignore_small_changes': ignore_small_changes,
-       'fail_on_zero': fail_on_zero
+       'fail_on_zero': fail_on_zero,
+       'detection_delay': detection_delay
         } %}
     {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

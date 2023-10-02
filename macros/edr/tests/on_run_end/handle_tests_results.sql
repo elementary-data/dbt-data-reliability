@@ -70,7 +70,7 @@
 
     {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
     {% if not target_relation %}
-      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
     {% endif %}
 
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
@@ -126,7 +126,7 @@
 
     {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
     {% if not target_relation %}
-      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models. Please run `dbt run -s elementary`.") %}
+      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
     {% endif %}
 
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
