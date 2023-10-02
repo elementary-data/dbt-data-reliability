@@ -36,7 +36,7 @@
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
     {% set formatted_owner = [] %}
-    {% set raw_owner = meta_dict.get('owner') %}
+    {% set raw_owner = meta_dict.get('owner') or config_dict.get('owner') %}
     {% if raw_owner is string %}
         {% set owners = raw_owner.split(',') %}
         {% for owner in owners %}
