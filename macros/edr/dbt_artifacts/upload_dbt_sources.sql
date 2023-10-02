@@ -73,7 +73,6 @@
          'relation_name': node_dict.get('relation_name'),
          'tags': elementary.filter_none_and_sort(tags),
          'meta': meta_dict,
-         'config': config_dict,
          'owner': formatted_owner,
          'package_name': node_dict.get('package_name'),
          'original_path': node_dict.get('original_file_path'),

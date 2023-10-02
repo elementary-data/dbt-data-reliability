@@ -1,14 +1,15 @@
-{%- macro enforce_project_configurations(enforce_owners=true, enforce_tags=false, enforce_meta_params=[], enforce_config_params=[], exclude_sources=false) -%}
+{%- macro enforce_project_configurations(enforce_owners=true, enforce_tags=false, enforce_description=false, required_meta_keys=[], required_config_keys=[], include_sources=true) -%}
     {%- if execute -%}
+        {% set sources_result = true %}
         {# enforcing source params #}
-        {%- if not exclude_sources -%}
+        {%- if include_sources -%}
             {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
-            {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) %}
+            {% set sources_result = elementary.enforce_configuration(sources, elementary.flatten_source, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
         {%- endif -%}
 
         {# enforcing model params #}
         {% set models = graph.nodes.values() | selectattr('resource_type', '==', 'model') %}
-        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) %}
+        {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
 
         {%- if not models_result or not sources_result -%}
             {{ exceptions.raise_compiler_error("Found issues in projdct configurations") }}
@@ -21,15 +22,16 @@
     {{- return(node_enforcement_param) -}}
 {%- endmacro -%}
 
-{%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags, enforce_meta_params, enforce_config_params) -%}
+{%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) -%}
     {% set validation_result = {'success': true} %}
     {% for node in nodes -%}
         {% set flattened_node = flatten_callback(node) %}
         {%- if flattened_node.package_name == project_name -%}
             {% set enforce_owners = elementary.get_enforcement_param(flattened_node, 'enforce_owners', enforce_owners) %}
             {% set enforce_tags = elementary.get_enforcement_param(flattened_node, 'enforce_tags', enforce_tags) %}
-            {% set enforce_meta_params = elementary.get_enforcement_param(flattened_node, 'enforce_meta_params', enforce_meta_params) %}
-            {% set enforce_config_params = elementary.get_enforcement_param(flattened_node, 'enforce_config_params', enforce_config_params) %}
+            {% set enforce_description = elementary.get_enforcement_param(flattened_node, 'enforce_description', enforce_description) %}
+            {% set required_meta_keys = elementary.get_enforcement_param(flattened_node, 'required_meta_keys', required_meta_keys) %}
+            {% set required_config_keys = elementary.get_enforcement_param(flattened_node, 'required_config_keys', required_config_keys) %}
 
             {%- if enforce_owners and flattened_node.owner | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have an owner") %}
@@ -41,8 +43,13 @@
                 {% do validation_result.update({'success': false}) %}
             {%- endif -%}
 
-            {%- if enforce_meta_params | length > 0 -%}
-                {%- for meta_param in enforce_meta_params -%}
+            {%- if enforce_description and not flattened_node.description -%}
+                {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have a description") %}
+                {% do validation_result.update({'success': false}) %}
+            {%- endif -%}
+
+            {%- if required_meta_keys | length > 0 -%}
+                {%- for meta_param in required_meta_keys -%}
                     {%- if meta_param not in flattened_node.meta -%}
                         {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required meta param " ~ meta_param) %}
                         {% do validation_result.update({'success': false}) %}
@@ -50,8 +57,8 @@
                 {%- endfor -%}
             {%- endif -%}
 
-            {%- if enforce_config_params | length > 0 -%}
-                {%- for config_param in enforce_config_params -%}
+            {%- if required_config_keys | length > 0 -%}
+                {%- for config_param in required_config_keys -%}
                     {%- if flattened_node.config is not none -%}
                         {%- if config_param not in flattened_node.config -%}
                             {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required config param " ~ config_param) %}

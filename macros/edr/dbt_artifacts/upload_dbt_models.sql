@@ -62,7 +62,6 @@
         'materialization': config_dict.get('materialized'),
         'tags': elementary.filter_none_and_sort(tags),
         'meta': meta_dict,
-        'config': config_dict,
         'owner': elementary.filter_none_and_sort(formatted_owner),
         'database_name': node_dict.get('database'),
         'schema_name': node_dict.get('schema'),
