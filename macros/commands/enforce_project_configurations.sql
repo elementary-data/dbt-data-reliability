@@ -12,7 +12,7 @@
         {% set models_result = elementary.enforce_configuration(models, elementary.flatten_model, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) %}
 
         {%- if not models_result or not sources_result -%}
-            {{ exceptions.raise_compiler_error("Found issues in projdct configurations") }}
+            {{ exceptions.raise_compiler_error("Found issues in project configurations") }}
         {%- endif -%}
     {%- endif -%}
 {%- endmacro -%}
@@ -59,8 +59,9 @@
 
             {%- if required_config_keys | length > 0 -%}
                 {%- for config_param in required_config_keys -%}
-                    {%- if flattened_node.config is not none -%}
-                        {%- if config_param not in flattened_node.config -%}
+                    {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
+                    {%- if config_dict is not none -%}
+                        {%- if config_param not in config_dict -%}
                             {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required config param " ~ config_param) %}
                             {% do validation_result.update({'success': false}) %}
                         {%- endif -%}
