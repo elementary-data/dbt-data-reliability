@@ -16,4 +16,4 @@ elementary_exposures as (
 
 {# Union without duplicates where elementary_exposures has prio #}
 select * from dbt_exposures where not exists (select 1 from elementary_exposures where dbt_exposures.unique_id = elementary_exposures.unique_id)
-{{ elementary_exposure.normalize_union_prefix() }} select * from elementary_exposures
+union select * from elementary_exposures
