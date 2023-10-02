@@ -31,7 +31,8 @@
             {% set enforce_tags = elementary.get_enforcement_param(flattened_node, 'enforce_tags', enforce_tags) %}
             {% set enforce_description = elementary.get_enforcement_param(flattened_node, 'enforce_description', enforce_description) %}
             {% set required_meta_keys = elementary.get_enforcement_param(flattened_node, 'required_meta_keys', required_meta_keys) %}
-            {% set required_config_keys = elementary.get_enforcement_param(flattened_node, 'required_config_keys', required_config_keys) %}
+            {# flattened node doesnt have a config yet, using node instead #}
+            {% set required_config_keys = elementary.get_enforcement_param(node, 'required_config_keys', required_config_keys) %}
 
             {%- if enforce_owners and flattened_node.owner | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have an owner") %}
@@ -59,6 +60,7 @@
 
             {%- if required_config_keys | length > 0 -%}
                 {%- for config_param in required_config_keys -%}
+                    {# flattened node doesnt have a config yet, using node instead #}
                     {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
                     {%- if config_dict is not none -%}
                         {%- if config_param not in config_dict -%}
