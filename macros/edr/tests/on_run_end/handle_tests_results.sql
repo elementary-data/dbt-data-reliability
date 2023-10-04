@@ -28,9 +28,8 @@
     {% do return(results) %}
 {% endmacro %}
 
-{% macro handle_tests_results() %}
+{% macro handle_tests_results(results) %}
   {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-  {% set results = elementary.get_tests_results() %}
   {% if results.test_result_rows %}
     {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
     {% do elementary.insert_rows(test_result_rows_relation, results.test_result_rows, should_commit=True) %}
