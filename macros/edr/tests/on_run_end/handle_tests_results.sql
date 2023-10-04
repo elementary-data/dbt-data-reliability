@@ -7,15 +7,6 @@
     {% if store_result_rows_in_own_table %}
       {% set test_result_rows = elementary.pop_test_result_rows(elementary_test_results) %}
     {% endif %}
-    {% set tables_cache = elementary.get_cache("tables") %}
-    {% set test_metrics_tables = tables_cache.get("metrics").get("relations") %}
-    {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {% do elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
-    {% do elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
-    {% if elementary.get_config_var("clean_elementary_temp_tables") %}
-      {% do elementary.clean_elementary_test_tables() %}
-    {% endif %}
 
     {% set results = {} %}
     {% if test_result_rows %}
@@ -29,6 +20,17 @@
 {% endmacro %}
 
 {% macro handle_tests_results(results) %}
+  {% set tables_cache = elementary.get_cache("tables") %}
+  {% set test_metrics_tables = tables_cache.get("metrics").get("relations") %}
+  {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
+  {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+  {% do elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
+  {% do elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
+
+  {% if elementary.get_config_var("clean_elementary_temp_tables") %}
+    {% do elementary.clean_elementary_test_tables() %}
+  {% endif %}
+
   {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
   {% if results.test_result_rows %}
     {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
