@@ -103,6 +103,7 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -121,6 +122,7 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -138,11 +140,15 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
+
+        test_vars = test_vars or {}
+        test_vars["elementary_enabled"] = elementary_enabled
 
         test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
@@ -185,6 +191,7 @@ class DbtProject:
 
         if data:
             self.seed(data, table_name)
+
         with temp_table_ctx:
             with NamedTemporaryFile(
                 dir=self.tmp_models_dir_path,
@@ -195,12 +202,22 @@ class DbtProject:
                 relative_props_path = Path(props_file.name).relative_to(
                     self.project_dir_path
                 )
-                self.dbt_runner.test(select=str(relative_props_path), vars=test_vars)
+                test_process_success = self.dbt_runner.test(
+                    select=str(relative_props_path), vars=test_vars
+                )
 
-        if multiple_results:
-            return self._read_test_results(test_id)
+        if elementary_enabled:
+            if multiple_results:
+                return self._read_test_results(test_id)
+            else:
+                return self._read_single_test_result(test_id)
         else:
-            return self._read_single_test_result(test_id)
+            # If we disabled elementary, elementary_test_results will also be empty. So we'll simulate the result
+            # based on the process status (which means we can't differentiate between fail and error)
+            test_result = {
+                "status": "pass" if test_process_success else "fail_or_error"
+            }
+            return [test_result] if multiple_results else test_result
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(

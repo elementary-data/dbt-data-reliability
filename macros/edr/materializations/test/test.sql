@@ -99,7 +99,7 @@
 
 {% macro materialize_test(materialization_macro) %}
   {% if not elementary.is_elementary_enabled() %}
-    {% do return(none) %}
+    {% do return(materialization_macro()) %}
   {% endif %}
 
   {% if elementary.get_config_var("tests_use_temp_tables") %}
