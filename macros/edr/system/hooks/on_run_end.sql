@@ -18,7 +18,8 @@
       {% endif %}
 
       {% if flags.WHICH in ['test', 'build'] and not elementary.get_config_var('disable_tests_results') %}
-        {% do elementary.handle_tests_results() %}
+        {% set results = elementary.get_tests_results() %}
+        {% do elementary.handle_tests_results(results) %}
       {% endif %}
 
       {% if not elementary.get_config_var('disable_dbt_invocation_autoupload') %}
