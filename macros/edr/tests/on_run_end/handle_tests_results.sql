@@ -32,8 +32,7 @@
   {% endif %}
 
   {% if results.test_result_rows  %}
-    {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
-    {% do elementary.insert_rows(test_result_rows_relation, results.test_result_rows, should_commit=True) %}
+    {% do elementary.insert_elementary_rows(results.elementary_test_results, 'test_result_rows') %}
   {% endif %}
   {% if results.elementary_test_results %}
     {% do elementary.insert_elementary_rows(results.elementary_test_results, 'elementary_test_results') %}
@@ -193,10 +192,4 @@
     {% do return(test_result_rows) %}
   {% endif %}
   {% do return(none) %}
-{% endmacro %}
-
-{% macro insert_elementary_rows(rows, identifier) %}
-  {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-  {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=identifier) %}
-  {% do elementary.insert_rows(elementary_test_results_relation, rows, should_commit=True) %}
 {% endmacro %}
