@@ -7,10 +7,10 @@
 {% endmacro %}
 
 {% macro redshift__get_compiled_code(node) %}
-    {% set compilde_code = node.get('compiled_code') or node.get('compiled_sql') %}
-    {% if not compilde_code %}
+    {% set compiled_code = node.get('compiled_code') or node.get('compiled_sql') %}
+    {% if not compiled_code %}
         {% do return(none) %}
     {% else %}
-        {% do return(compilde_code.replace("%", "%%")) %}
+        {% do return(compiled_code.replace("%", "%%")) %}
     {% endif %}
 {% endmacro %}

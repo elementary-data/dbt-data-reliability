@@ -5,8 +5,8 @@ from dbt_project import DbtProject
 @pytest.mark.skip_targets(["postgres"])
 def test_long_string(test_id: str, dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
-    column_size = (
-        int(dbt_project.dbt_runner.run_operation("elementary.get_column_size")[0]) - 1
+    column_size = int(
+        dbt_project.dbt_runner.run_operation("elementary.get_column_size")[0]
     )
     query_start = "SELECT '"
     query_end = "' as col"
