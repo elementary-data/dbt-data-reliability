@@ -1,4 +1,4 @@
-{% macro insert_rows(table_relation, rows, should_commit=false, chunk_size=5000) %}
+{% macro insert_rows(table_relation, rows, should_commit=false, chunk_size=5000, on_query_exceed=none) %}
     {% if not rows %}
       {{ return(none) }}
     {% endif %}
@@ -18,7 +18,7 @@
     {{ elementary.file_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
     {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
     {% if insert_rows_method == 'max_query_size' %}
-      {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows) %}
+      {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows, on_query_exceed=on_query_exceed) %}
       {% set queries_len = insert_rows_queries | length %}
       {% for insert_query in insert_rows_queries %}
         {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
@@ -39,7 +39,11 @@
     {% endif %}
 {% endmacro %}
 
-{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=elementary.get_config_var('query_max_size')) -%}
+{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none, on_query_exceed=none) -%}
+    {% if not query_max_size %}
+      {% set query_max_size = elementary.get_config_var('query_max_size') %}
+    {% endif %}
+
     {% set insert_queries = [] %}
     {% set insert_query %}
        insert into {{ table_relation }}
@@ -67,8 +71,11 @@
         {% set new_insert_query = insert_query + row_sql %}
         {# Check if row is too large to fit into an insert query. #}
         {% if new_insert_query | length > query_max_size %}
-          {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
-          {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
+          {% set new_insert_query = on_query_exceed(row) %}
+          {% if new_insert_query | length > query_max_size %}
+            {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
+            {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
+          {% endif %}
         {% endif %}
         {% do insert_queries.append(current_query.data) %}
         {% set current_query.data = new_insert_query %}
