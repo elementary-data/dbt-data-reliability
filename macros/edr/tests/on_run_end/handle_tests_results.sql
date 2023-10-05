@@ -32,10 +32,10 @@
   {% endif %}
 
   {% if results.test_result_rows  %}
-    {% do elementary.insert_elementary_rows(results.elementary_test_results, 'test_result_rows') %}
+    {% do elementary.get_relation_and_insert_rows(results.elementary_test_results, 'test_result_rows') %}
   {% endif %}
   {% if results.elementary_test_results %}
-    {% do elementary.insert_elementary_rows(results.elementary_test_results, 'elementary_test_results') %}
+    {% do elementary.get_relation_and_insert_rows(results.elementary_test_results, 'elementary_test_results') %}
   {% endif %}
 
   {% do elementary.file_log("Handled test results successfully.") %}
