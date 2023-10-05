@@ -4,9 +4,7 @@
         {{ return(none) }}
     {% endif %}
 
-    {% set model_sql_max_size = elementary.get_config_var('model_sql_max_size') %}
-    {% set long_string_size = elementary.get_config_var('long_string_size') %}
-    {% set model_sql_size_limit = [model_sql_max_size, long_string_size] | min %}
+    {% set model_sql_size_limit = elementary.get_column_size() %}
     {% set model_code = elementary.get_compiled_code(node) %}
 
     {# Seeds do not have compiled code. #}
@@ -14,7 +12,7 @@
         {{ return(none) }}
     {% endif %}
 
-    {% if model_sql_size_limit < model_code | length %}
+    {% if model_code | length > model_sql_size_limit %}
         {{ return('Model code is too long - over ' ~ model_sql_size_limit ~ ' bytes') }}
     {% else %}
         {{ return(model_code) }}
