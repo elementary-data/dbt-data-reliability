@@ -64,7 +64,7 @@
                                                                            table_monitors,
                                                                            test_configuration.days_back,
                                                                            metric_properties=metric_properties) %}
-        {% do print(table_monitoring_query) %}
+        {% do print("table_monitoring_query " ~ table_monitoring_query) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
 

@@ -22,6 +22,7 @@
     )
     select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
+  {% do print("test_result_rows_query " ~ query) %}
   {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
