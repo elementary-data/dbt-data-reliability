@@ -45,40 +45,39 @@
     {% endif %}
 
     {% set insert_queries = [] %}
-    {% set insert_query %}
+    {% set base_insert_query %}
        insert into {{ table_relation }}
          ({%- for column in columns -%}
            {{- column.name -}} {{- "," if not loop.last else "" -}}
          {%- endfor -%}) values
     {% endset %}
 
-    {% set current_query = namespace(data=insert_query) %}
+    {% set current_query = namespace(data=base_insert_query) %}
     {% for row in rows %}
-      {% set rendered_column_values = [] %}
-      {% for column in columns %}
-        {% if column.name.lower() == "created_at" %}
-          {% set column_value = elementary.edr_current_timestamp() %}
-          {% do rendered_column_values.append(column_value) %}
-        {% else %}
-          {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
-          {% do rendered_column_values.append(elementary.render_value(column_value)) %}
-        {% endif %}
-      {% endfor %}
-      {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
+      {% set row_sql = elementary.render_row_to_sql(row, columns) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
       {% if query_with_row | length > query_max_size %}
-        {% set new_insert_query = insert_query + row_sql %}
+        {% set new_insert_query = base_insert_query + row_sql %}
+
         {# Check if row is too large to fit into an insert query. #}
         {% if new_insert_query | length > query_max_size %}
-          {% set new_insert_query = on_query_exceed(row) %}
+          {% if on_query_exceed %}
+            {% do on_query_exceed(row) %}
+            {% set row_sql = elementary.render_row_to_sql(row, columns) %}
+            {% set new_insert_query = base_insert_query + row_sql %}
+          {% endif %}
+
           {% if new_insert_query | length > query_max_size %}
             {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
             {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
           {% endif %}
+
+          {% if current_query.data != base_insert_query %}
+            {% do insert_queries.append(current_query.data) %}
+          {% endif %}
+          {% set current_query.data = new_insert_query %}
         {% endif %}
-        {% do insert_queries.append(current_query.data) %}
-        {% set current_query.data = new_insert_query %}
       {% else %}
         {% set current_query.data = query_with_row %}
       {% endif %}
@@ -89,6 +88,21 @@
 
     {{ return(insert_queries) }}
 {%- endmacro %}
+
+{% macro render_row_to_sql(row, columns) %}
+  {% set rendered_column_values = [] %}
+  {% for column in columns %}
+    {% if column.name.lower() == "created_at" %}
+      {% set column_value = elementary.edr_current_timestamp() %}
+      {% do rendered_column_values.append(column_value) %}
+    {% else %}
+      {% set column_value = elementary.insensitive_get_dict_value(row, column.name) %}
+      {% do rendered_column_values.append(elementary.render_value(column_value)) %}
+    {% endif %}
+  {% endfor %}
+  {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
+  {% do return(row_sql) %}
+{% endmacro %}
 
 {% macro get_chunk_insert_query(table_relation, columns, rows) -%}
     {% set insert_rows_query %}

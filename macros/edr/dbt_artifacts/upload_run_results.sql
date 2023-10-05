@@ -2,7 +2,7 @@
     {% set relation = elementary.get_elementary_relation('dbt_run_results') %}
     {% if execute and relation %}
         {{ elementary.file_log("Uploading run results.") }}
-        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, append=True, should_commit=True, elementary.on_run_result_query_exceed) %}
+        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, append=True, should_commit=True, on_query_exceed=elementary.on_run_result_query_exceed) %}
         {{ elementary.file_log("Uploaded run results successfully.") }}
     {% endif %}
     {{ return ('') }}
