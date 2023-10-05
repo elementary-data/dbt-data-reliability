@@ -17,15 +17,7 @@ _DEFAULT_VARS = {
     "collect_metrics": False,
 }
 
-DUMMY_MODEL_FILE_PATTERN = """
-{{{{
-  config (
-    materialized = '{materialization}'
-  )
-}}}}
-
-SELECT 1 AS col
-"""
+DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
 
 logger = get_logger(__name__)
 
@@ -226,12 +218,18 @@ class DbtProject:
 
     @contextmanager
     def create_temp_model_for_existing_table(
-        self, table_name: str, materialization: str
+        self,
+        table_name: str,
+        materialization: Optional[str] = None,
+        raw_code: Optional[str] = None,
     ):
         model_path = self.tmp_models_dir_path.joinpath(f"{table_name}.sql")
-        model_path.write_text(
-            DUMMY_MODEL_FILE_PATTERN.format(materialization=materialization)
-        )
+        code = raw_code or DEFAULT_DUMMY_CODE
+        model_text = ""
+        if materialization:
+            model_text += f"{{{{ config(materialized='{materialization}') }}}}\n"
+        model_text += code
+        model_path.write_text(model_text)
         relative_model_path = model_path.relative_to(self.project_dir_path)
         try:
             yield relative_model_path
