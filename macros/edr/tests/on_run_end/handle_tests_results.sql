@@ -19,7 +19,7 @@
     {% do return(results) %}
 {% endmacro %}
 
-{% macro handle_tests_results(results, is_cloud=false) %}
+{% macro handle_tests_results(results) %}
   {% set tables_cache = elementary.get_cache("tables") %}
   {% set test_metrics_tables = tables_cache.get("metrics").get("relations") %}
   {% set test_columns_snapshot_tables = tables_cache.get("schema_snapshots") %}
@@ -36,14 +36,7 @@
     {% do elementary.insert_rows(test_result_rows_relation, results.test_result_rows, should_commit=True) %}
   {% endif %}
   {% if results.elementary_test_results %}
-    {% if is_cloud %}
-      {% set schema_name = schema_name + "_cloud" %}
-      {% set identifier = 'cloud_test_results' %}
-    {% else %}
-      {% set identifier = 'elementary_test_results' %}
-    {% endif %}
-    {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=identifier) %}
-    {% do elementary.insert_rows(elementary_test_results_relation, results.elementary_test_results, should_commit=True) %}
+    {% do elementary.insert_elementary_rows(results.elementary_test_results, 'elementary_test_results') %}
   {% endif %}
 
   {% do elementary.file_log("Handled test results successfully.") %}
@@ -200,4 +193,10 @@
     {% do return(test_result_rows) %}
   {% endif %}
   {% do return(none) %}
+{% endmacro %}
+
+{% macro insert_elementary_rows(rows, identifier) %}
+  {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
+  {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier=identifier) %}
+  {% do elementary.insert_rows(elementary_test_results_relation, rows, should_commit=True) %}
 {% endmacro %}
