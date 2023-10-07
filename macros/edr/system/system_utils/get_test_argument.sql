@@ -11,8 +11,5 @@
         {%- endif %}
     {% endif %}
   {% endif %}
-  {%- if elementary.get_config_var(argument_name) %}
-    {{ return(elementary.get_config_var(argument_name)) }}
-  {% endif %}
-  {{ return(none) }}
+  {% do return(elementary.get_config_var(argument_name)) %}
 {% endmacro %}
