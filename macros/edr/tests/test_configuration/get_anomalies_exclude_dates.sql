@@ -14,8 +14,14 @@
         {% if value is string %}
             {% do dates_in_config.append(value) %}
         {% elif value is mapping %}
+            {# Don't allow ranges without "before" #}
+            {% if "before" not in value %}
+                {% do elementary.raise_anomalies_exclusion_dates_invalid_format_error() %}
+            {% endif %}
+
+            {# Make sure "after" and "before" are the only allowed keys #}
             {% for key, val in value.items() %}
-                {% if key not in ["before", "after"] %}
+                {% if key not in ["after", "before"] %}
                     {% do elementary.raise_anomalies_exclusion_dates_invalid_format_error() %}
                 {% endif %}
                 {% do dates_in_config.append(val) %}
@@ -35,7 +41,8 @@
 {% macro raise_anomalies_exclusion_dates_invalid_format_error() %}
     {% do exceptions.raise_compiler_error(
     "
-Invalid detection_delay format. Expected format is a list of either dates or date ranges, for example:
+Invalid detection_delay format. Expected format is a list of either dates or date ranges. Below are
+examples of the supported options:
 
    anomalies_exclude_dates:
      - 2023-10-01                   # Specific date

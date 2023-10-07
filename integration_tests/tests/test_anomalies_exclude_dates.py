@@ -151,3 +151,9 @@ def test_invalid_configurations(test_id: str, dbt_project: DbtProject):
         test_id, DBT_TEST_NAME, test_args, test_column="metric"
     )
     assert test_result["status"] == "error"
+
+    test_args = {**DBT_TEST_ARGS, "anomalies_exclude_dates": {"after": "2023-10-01"}}
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, test_column="metric"
+    )
+    assert test_result["status"] == "error"
