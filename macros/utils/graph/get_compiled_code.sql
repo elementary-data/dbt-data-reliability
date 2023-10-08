@@ -1,7 +1,8 @@
 {% macro get_compiled_code(node, as_column_value=false) %}
     {% set compiled_code = adapter.dispatch("get_compiled_code", "elementary")(node) %}
     
-    {% if as_column_value and compiled_code | length > elementary.get_column_size() %}
+    {% set max_column_size = elementary.get_column_size() %}
+    {% if as_column_value and max_column_size and compiled_code | length > max_column_size %}
         {% do return(elementary.get_compiled_code_too_long_err_msg()) %}
     {% endif %}
     
