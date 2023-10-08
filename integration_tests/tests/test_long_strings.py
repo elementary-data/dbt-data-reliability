@@ -1,6 +1,6 @@
 from dbt_project import DbtProject
 
-SAFE_QUERY_SIZE = 100000
+SAFE_QUERY_SIZE = 10000
 
 
 def generate_query(query_size: int) -> str:
