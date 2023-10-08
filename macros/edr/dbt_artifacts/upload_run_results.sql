@@ -80,5 +80,5 @@
 {% endmacro %}
 
 {% macro on_run_result_query_exceed(flattened_node) %}
-    {% do flattened_node.update({"compiled_code": "Compiled code is too long."}) %}
+    {% do flattened_node.update({"compiled_code": elementary.get_compiled_code_too_long_err_msg()}) %}
 {% endmacro %}

@@ -1,5 +1,11 @@
-{% macro get_compiled_code(node) %}
-    {% do return(adapter.dispatch("get_compiled_code", "elementary")(node)) %}
+{% macro get_compiled_code(node, as_column_value=false) %}
+    {% set compiled_code = adapter.dispatch("get_compiled_code", "elementary")(node) %}
+    
+    {% if as_column_value and compiled_code | length > elementary.get_column_size() %}
+        {% do return(elementary.get_compiled_code_too_long_err_msg()) %}
+    {% endif %}
+    
+    {% do return(compiled_code) %}
 {% endmacro %}
 
 {% macro default__get_compiled_code(node) %}
@@ -13,4 +19,8 @@
     {% else %}
         {% do return(compiled_code.replace("%", "%%")) %}
     {% endif %}
+{% endmacro %}
+
+{% macro get_compiled_code_too_long_err_msg() %}
+    {% do return("Compiled code is too long.") %}
 {% endmacro %}
