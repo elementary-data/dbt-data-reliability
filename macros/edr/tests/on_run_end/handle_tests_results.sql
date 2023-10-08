@@ -31,11 +31,13 @@
     {% do elementary.clean_elementary_test_tables() %}
   {% endif %}
 
-  {% if results.test_result_rows  %}
-    {% do elementary.get_relation_and_insert_rows(results.elementary_test_results, 'test_result_rows') %}
+  {% if results.test_result_rows %}
+    {% set test_result_rows_relation = elementary.get_elementary_relation('test_result_rows') %}
+    {% do elementary.insert_rows(test_result_rows_relation, results.test_result_rows, should_commit=True) %}
   {% endif %}
   {% if results.elementary_test_results %}
-    {% do elementary.get_relation_and_insert_rows(results.elementary_test_results, 'elementary_test_results') %}
+    {% set elementary_test_results_relation = elementary.get_elementary_relation('elementary_test_results') %}
+    {% do elementary.insert_rows(elementary_test_results_relation, results.elementary_test_results, should_commit=True) %}
   {% endif %}
 
   {% do elementary.file_log("Handled test results successfully.") %}
