@@ -56,7 +56,7 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_code': elementary.get_compiled_code(node),
+        'compiled_code': elementary.get_compiled_code(node, as_column_value=true),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
