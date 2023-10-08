@@ -32,7 +32,7 @@
     {% endfor %}
 
     {% for cur_date in dates_in_config %}
-        {% if not modules.re.match("\d{4}-\d{2}-\d{2}", cur_date) %}
+        {% if not modules.re.match("^\d{4}-\d{2}-\d{2}$", cur_date) %}
             {% do elementary.raise_anomalies_exclusion_dates_invalid_format_error() %}
         {% endif %}
     {% endfor %}

@@ -32,7 +32,10 @@ def test_exclude_specific_dates(
         base_date=utc_now - timedelta(1), step=dates_step
     )
 
-    exclude_dates = [str(utc_now - timedelta(3)), str(utc_now - timedelta(5))]
+    exclude_dates = [
+        str((utc_now - timedelta(5)).date()),
+        str((utc_now - timedelta(3)).date()),
+    ]
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: test_bucket.strftime(DATE_FORMAT), "metric": 10}

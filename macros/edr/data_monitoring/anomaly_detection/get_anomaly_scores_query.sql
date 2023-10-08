@@ -272,14 +272,14 @@
     {% endif %}
 
     {# Using bucket_start would be better, but non-timestamped tests only have bucket_end #}
-    {% do return('({} > {})'.format(elementary.edr_date_trunc('day', 'bucket_end'), filter_date)) %}
+    {% do return('(bucket_end > {})'.format(filter_date)) %}
 {% endmacro %}
 
 {% macro get_before_date_filter(filter_date, skip_cast=false) %}
     {% if not skip_cast %}
         {% set filter_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(filter_date)) %}
     {% endif %}
-    {% do return('({} <= {})'.format(elementary.edr_date_trunc('day', 'bucket_end'), filter_date)) %}
+    {% do return('(bucket_end <= {})'.format(filter_date)) %}
 {% endmacro %}
 
 {% macro get_range_date_filter(after_date, before_date, skip_cast=false) %}
