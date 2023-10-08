@@ -254,7 +254,7 @@
     {% endfor %}
 
     {% if filter_exprs | length == 0 %}
-        {% do return("TRUE") %}
+        {% do return("FALSE") %}
     {% endif %}
 
     {% set expr -%}
