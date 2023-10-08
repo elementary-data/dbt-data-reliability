@@ -1,7 +1,8 @@
 {% macro on_run_end() %}
   {%- if execute and flags.WHICH not in ['generate', 'serve'] %}
       {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
-      {% if not execute or edr_cli_run %}
+      {% set dismiss_on_run_end = elementary.get_config_var('dismiss_on_run_end') %}
+      {% if not execute or edr_cli_run or dismiss_on_run_end %}
         {% do return("") %}
       {% endif %}
 
