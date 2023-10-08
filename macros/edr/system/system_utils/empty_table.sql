@@ -74,30 +74,6 @@
     {{ elementary.empty_table(columns) }}
 {% endmacro %}
 
-{% macro empty_elementary_exposures() %}
-    {% set columns = [('unique_id', 'string'),
-                      ('name', 'string'),
-                      ('maturity', 'string'),
-                      ('type', 'string'),
-                      ('owner_email', 'string'),
-                      ('owner_name', 'string'),
-                      ('url', 'long_string'),
-                      ('depends_on_macros', 'long_string'),
-                      ('depends_on_nodes', 'long_string'),
-                      ('description', 'long_string'),
-                      ('tags', 'long_string'),
-                      ('meta', 'long_string'),
-                      ('package_name', 'string'),
-                      ('original_path', 'long_string'),
-                      ('path', 'string'),
-                      ('generated_at', 'string'),
-                      ('metadata_hash', 'string'),
-                      ('label', 'string'),
-                      ('raw_queries', 'long_string'),
-                     ] %}
-    {{ elementary.empty_table(columns) }}
-{% endmacro %}
-
 
 {% macro empty_schema_columns_snapshot() %}
     {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp'),('created_at','timestamp')]) }}
