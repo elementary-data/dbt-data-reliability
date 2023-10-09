@@ -56,7 +56,7 @@
         'data_type': column_node.get('data_type'),
         'tags': elementary.filter_none_and_sort(tags),
         'meta': meta_dict,
-        'description': column_node.get('description'),
+        'description': column_node.get('description') or none,
         'database_name': table_node.get('database'),
         'schema_name': table_node.get('schema'),
         'table_name': table_node.get('alias'),
