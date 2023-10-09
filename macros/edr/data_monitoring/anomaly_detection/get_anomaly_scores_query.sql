@@ -31,8 +31,6 @@
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
-    {%- set is_excluded_expr = elementary.get_anomaly_exclude_metrics_condition(test_configuration) %}
-
     {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
@@ -241,23 +239,4 @@
     {% endif %}
 
     {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
-{% endmacro %}
-
-{% macro get_anomaly_exclude_metrics_condition(test_configuration) %}
-    {% if not test_configuration.anomaly_exclude_metrics %}
-        {% do return("FALSE") %}
-    {% endif %}
-
-    {% set metric_time_bucket_expr = 'case when grouped_metrics_duplicates.bucket_start is not null then grouped_metrics_duplicates.bucket_start else grouped_metrics_duplicates.bucket_end end' %}
-    {% set expr -%}
-        (
-        select {{ test_configuration.anomaly_exclude_metrics }}
-        from (select
-                {{ metric_time_bucket_expr }} as metric_time_bucket,
-                {{ elementary.edr_date_trunc('day', metric_time_bucket_expr)}} as metric_date,
-                grouped_metrics_duplicates.metric_value as metric_value
-             ) m
-        )
-    {%- endset %}
-    {% do return(expr) %}
 {% endmacro %}
