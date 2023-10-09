@@ -1,4 +1,4 @@
-{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, sensitivity, detection_delay, anomalies_exclude_dates) %}
+{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, sensitivity, detection_delay, anomaly_exclude_metrics) %}
   -- depends_on: {{ ref('monitors_runs') }}
   -- depends_on: {{ ref('data_monitoring_metrics') }}
   -- depends_on: {{ ref('dbt_run_results') }}
@@ -31,7 +31,7 @@
       mandatory_params=['event_timestamp_column'],
       sensitivity=sensitivity,
       detection_delay=detection_delay,
-      anomalies_exclude_dates=anomalies_exclude_dates
+      anomaly_exclude_metrics=anomaly_exclude_metrics
     )
   }}
 {% endtest %}

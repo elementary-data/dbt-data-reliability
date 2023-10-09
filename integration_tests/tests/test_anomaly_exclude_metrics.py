@@ -33,8 +33,8 @@ def test_exclude_specific_dates(
     )
 
     exclude_dates = [
-        str((utc_now - timedelta(5)).date()),
-        str((utc_now - timedelta(3)).date()),
+        (utc_now - timedelta(5)).date(),
+        (utc_now - timedelta(3)).date(),
     ]
 
     data: List[Dict[str, Any]] = [
@@ -43,7 +43,7 @@ def test_exclude_specific_dates(
     data += [
         {
             TIMESTAMP_COLUMN: cur_bucket.strftime(DATE_FORMAT),
-            "metric": 1 if str(cur_bucket.date()) not in exclude_dates else 10,
+            "metric": 1 if cur_bucket.date() not in exclude_dates else 10,
         }
         for cur_bucket in training_buckets
     ]
@@ -54,9 +54,10 @@ def test_exclude_specific_dates(
     )
     assert test_result["status"] == "pass"
 
+    excluded_dates_str = ", ".join([f"'{cur_date}'" for cur_date in exclude_dates])
     test_args = {
         **DBT_TEST_ARGS,
-        "anomalies_exclude_dates": exclude_dates,
+        "anomaly_exclude_metrics": f"metric_date in ({excluded_dates_str})",
         "time_bucket": time_bucket,
     }
     test_result = dbt_project.test(
@@ -65,13 +66,64 @@ def test_exclude_specific_dates(
     assert test_result["status"] == "fail"
 
 
-def test_exclude_range_with_after_and_before(test_id: str, dbt_project: DbtProject):
+def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
+    # To avoid races, set the "custom_started_at" to the beginning of the hour
+    test_started_at = datetime.utcnow().replace(minute=0, second=0)
+
+    test_bucket, *training_buckets = generate_dates(
+        base_date=test_started_at - timedelta(hours=1),
+        step=timedelta(hours=1),
+        days_back=1,
+    )
+
+    excluded_buckets = [
+        test_started_at - timedelta(hours=22),
+        test_started_at - timedelta(hours=20),
+    ]
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: test_bucket.strftime(DATE_FORMAT), "metric": 10}
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: cur_bucket.strftime(DATE_FORMAT),
+            "metric": 1 if cur_bucket not in excluded_buckets else 10,
+        }
+        for cur_bucket in training_buckets
+    ]
+
+    time_bucket = {"period": "hour", "count": 1}
+    test_args = {**DBT_TEST_ARGS, "time_bucket": time_bucket, "days_back": 1}
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="metric"
+    )
+    assert test_result["status"] == "pass"
+
+    excluded_buckets_str = ", ".join(
+        ["'%s'" % cur_ts.strftime(DATE_FORMAT) for cur_ts in excluded_buckets]
+    )
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": time_bucket,
+        "days_back": 1,
+        "anomaly_exclude_metrics": f"metric_time_bucket in ({excluded_buckets_str})",
+    }
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        test_column="metric",
+        test_vars={"custom_run_started_at": test_started_at.isoformat()},
+    )
+    assert test_result["status"] == "fail"
+
+
+def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
 
-    after_date = utc_today - timedelta(6)
-    before_date = utc_today - timedelta(3)
-    exclude_dates = [{"after": str(after_date), "before": str(before_date)}]
+    start_date = utc_today - timedelta(6)
+    end_date = utc_today - timedelta(3)
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "metric": 10}
@@ -79,7 +131,7 @@ def test_exclude_range_with_after_and_before(test_id: str, dbt_project: DbtProje
     data += [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "metric": 1 if cur_date < after_date or cur_date >= before_date else 10,
+            "metric": 1 if cur_date < start_date or cur_date > end_date else 10,
         }
         for cur_date in training_dates
     ]
@@ -92,7 +144,7 @@ def test_exclude_range_with_after_and_before(test_id: str, dbt_project: DbtProje
 
     test_args = {
         **DBT_TEST_ARGS,
-        "anomalies_exclude_dates": exclude_dates,
+        "anomaly_exclude_metrics": f"metric_date >= '{start_date}' and metric_date <= '{end_date}'",
         "days_back": 30,
     }
     test_result = dbt_project.test(
@@ -101,12 +153,9 @@ def test_exclude_range_with_after_and_before(test_id: str, dbt_project: DbtProje
     assert test_result["status"] == "fail"
 
 
-def test_exclude_range_with_before_only(test_id: str, dbt_project: DbtProject):
+def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
-
-    before_date = utc_today - timedelta(14)
-    exclude_dates = [{"before": str(before_date)}]
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "metric": 10}
@@ -114,7 +163,7 @@ def test_exclude_range_with_before_only(test_id: str, dbt_project: DbtProject):
     data += [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "metric": 1 if cur_date >= before_date else 10,
+            "metric": 1 if cur_date.day % 3 == 0 else 10,
         }
         for cur_date in training_dates
     ]
@@ -127,36 +176,10 @@ def test_exclude_range_with_before_only(test_id: str, dbt_project: DbtProject):
 
     test_args = {
         **DBT_TEST_ARGS,
-        "anomalies_exclude_dates": exclude_dates,
+        "anomaly_exclude_metrics": f"metric_date < '{test_date}' and metric_value >= 5",
         "days_back": 30,
     }
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, test_column="metric"
     )
     assert test_result["status"] == "fail"
-
-
-def test_invalid_configurations(test_id: str, dbt_project: DbtProject):
-    test_args = {**DBT_TEST_ARGS, "anomalies_exclude_dates": 123}
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, data=[], test_column="metric"
-    )
-    assert test_result["status"] == "error"
-
-    test_args = {**DBT_TEST_ARGS, "anomalies_exclude_dates": {"pasten": 5}}
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, test_column="metric"
-    )
-    assert test_result["status"] == "error"
-
-    test_args = {**DBT_TEST_ARGS, "anomalies_exclude_dates": {"before": "not_a_date"}}
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, test_column="metric"
-    )
-    assert test_result["status"] == "error"
-
-    test_args = {**DBT_TEST_ARGS, "anomalies_exclude_dates": {"after": "2023-10-01"}}
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, test_column="metric"
-    )
-    assert test_result["status"] == "error"

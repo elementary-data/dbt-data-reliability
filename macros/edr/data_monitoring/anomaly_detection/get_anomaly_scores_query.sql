@@ -31,7 +31,9 @@
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
-    {%- set is_excluded_expr = elementary.get_metric_date_excluded_expression(test_configuration) %}
+    {%- set is_excluded_expr = elementary.get_anomaly_exclude_metrics_condition(test_configuration) %}
+
+    {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
 
@@ -95,6 +97,11 @@
                 updated_at,
                 dimension,
                 dimension_value,
+
+                -- Fields added for the anomaly_exclude_metrics expression used below
+                {{ metric_time_bucket_expr }} as metric_time_bucket,
+                {{ elementary.edr_date_trunc('day', metric_time_bucket_expr)}} as metric_date,
+
                 row_number() over (partition by id order by updated_at desc) as row_number
             from union_metrics
 
@@ -114,7 +121,7 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
-                {{ is_excluded_expr }} as is_excluded,
+                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -236,68 +243,21 @@
     {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
 {% endmacro %}
 
-{% macro get_metric_date_excluded_expression(test_configuration) %}
-    {% set filter_exprs = [] %}
-    {% for date_filter in test_configuration.anomalies_exclude_dates %}
-        {% if date_filter is string %}
-            {% do filter_exprs.append(elementary.get_specific_date_filter(date_filter)) %}
-        {% elif date_filter is mapping %}
-            {% if "before" in date_filter and "after" in date_filter %}
-                {% do filter_exprs.append(elementary.get_range_date_filter(date_filter["after"],
-                                                                           date_filter["before"])) %}
-            {% elif "before" in date_filter %}
-                {% do filter_exprs.append(elementary.get_before_date_filter(date_filter["before"])) %}
-            {% elif "after" in date_filter %}
-                {% do filter_exprs.append(elementary.get_after_date_filter(date_filter["after"])) %}
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-
-    {% if filter_exprs | length == 0 %}
+{% macro get_anomaly_exclude_metrics_condition(test_configuration) %}
+    {% if not test_configuration.anomaly_exclude_metrics %}
         {% do return("FALSE") %}
     {% endif %}
 
+    {% set metric_time_bucket_expr = 'case when grouped_metrics_duplicates.bucket_start is not null then grouped_metrics_duplicates.bucket_start else grouped_metrics_duplicates.bucket_end end' %}
     {% set expr -%}
-        ({{ filter_exprs[0] }})
-        {%- for cur_expr in filter_exprs[1:] %}
-            or ({{ cur_expr }})
-        {%- endfor -%}
+        (
+        select {{ test_configuration.anomaly_exclude_metrics }}
+        from (select
+                {{ metric_time_bucket_expr }} as metric_time_bucket,
+                {{ elementary.edr_date_trunc('day', metric_time_bucket_expr)}} as metric_date,
+                grouped_metrics_duplicates.metric_value as metric_value
+             ) m
+        )
     {%- endset %}
     {% do return(expr) %}
-{% endmacro %}
-
-{% macro get_after_date_filter(filter_date, skip_cast=false) %}
-    {% if not skip_cast %}
-        {% set filter_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(filter_date)) %}
-    {% endif %}
-
-    {# Using bucket_start would be better, but non-timestamped tests only have bucket_end #}
-    {% do return('(bucket_end > {})'.format(filter_date)) %}
-{% endmacro %}
-
-{% macro get_before_date_filter(filter_date, skip_cast=false) %}
-    {% if not skip_cast %}
-        {% set filter_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(filter_date)) %}
-    {% endif %}
-    {% do return('(bucket_end <= {})'.format(filter_date)) %}
-{% endmacro %}
-
-{% macro get_range_date_filter(after_date, before_date, skip_cast=false) %}
-    {% if not skip_cast %}
-        {% set after_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(after_date)) %}
-        {% set before_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(before_date)) %}
-    {% endif %}
-    {% do return('({} and {})'.format(
-        elementary.get_after_date_filter(after_date, skip_cast=true),
-        elementary.get_before_date_filter(before_date, skip_cast=true)
-    )) %}
-{% endmacro %}
-
-{% macro get_specific_date_filter(filter_date) %}
-    {% set filter_date = elementary.edr_cast_as_timestamp(elementary.edr_quote(filter_date)) %}
-    {% do return(elementary.get_range_date_filter(
-        filter_date,
-        elementary.edr_timeadd('day', 1, filter_date),
-        skip_cast=true
-    )) %}
 {% endmacro %}

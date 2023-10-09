@@ -20,7 +20,7 @@
                                           ignore_small_changes,
                                           fail_on_zero,
                                           detection_delay,
-                                          anomalies_exclude_dates) %}
+                                          anomaly_exclude_metrics) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -43,7 +43,7 @@
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
 
-    {% set anomalies_exclude_dates = elementary.get_anomalies_exclude_dates(anomalies_exclude_dates, model_graph_node) %}
+    {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
@@ -61,7 +61,7 @@
        'ignore_small_changes': ignore_small_changes,
        'fail_on_zero': fail_on_zero,
        'detection_delay': detection_delay,
-       'anomalies_exclude_dates': anomalies_exclude_dates
+       'anomaly_exclude_metrics': anomaly_exclude_metrics
         } %}
     {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

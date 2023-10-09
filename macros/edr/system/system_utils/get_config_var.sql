@@ -64,7 +64,7 @@
     },
     'include_other_warehouse_specific_columns': false,
     'fail_on_zero': false,
-    'anomalies_exclude_dates': []
+    'anomaly_exclude_metrics': none
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
