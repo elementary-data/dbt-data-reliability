@@ -19,6 +19,7 @@
         ('schema_name', 'string'),
         ('table_name', 'string'),
         ('description', 'long_string'),
+        ('resource_type', 'string'),
         ('generated_at', 'string'),
         ('metadata_hash', 'string'),
     ] %}
@@ -60,6 +61,7 @@
         'database_name': table_node.get('database'),
         'schema_name': table_node.get('schema'),
         'table_name': table_node.get('alias'),
+        'resource_type': table_node.get('resource_type'),
         'generated_at': elementary.datetime_now_utc_as_string(),
     } %}
     {% do flatten_column_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_column_metadata_dict)}) %}
