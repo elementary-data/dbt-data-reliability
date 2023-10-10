@@ -31,6 +31,8 @@
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
+    {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
+       bucket end (which is the actual time of the test) #}
     {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
