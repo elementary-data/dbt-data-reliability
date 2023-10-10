@@ -163,7 +163,7 @@ def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
     data += [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "metric": 1 if cur_date.day % 3 == 0 else 10,
+            "metric": 1 if cur_date.day % 3 > 0 else 10,
         }
         for cur_date in training_dates
     ]

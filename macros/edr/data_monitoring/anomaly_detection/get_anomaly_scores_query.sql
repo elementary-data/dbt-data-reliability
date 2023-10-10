@@ -100,7 +100,7 @@
 
                 -- Fields added for the anomaly_exclude_metrics expression used below
                 {{ metric_time_bucket_expr }} as metric_time_bucket,
-                {{ elementary.edr_date_trunc('day', metric_time_bucket_expr)}} as metric_date,
+                {{ elementary.edr_cast_as_date(elementary.edr_date_trunc('day', metric_time_bucket_expr))}} as metric_date,
 
                 row_number() over (partition by id order by updated_at desc) as row_number
             from union_metrics

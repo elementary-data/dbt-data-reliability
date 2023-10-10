@@ -123,9 +123,5 @@
 {% endmacro %}
 
 {% macro default__edr_type_date() %}
-    {{ elementary.edr_type_timestamp() }}
-{% endmacro %}
-
-{% macro bigquery__edr_type_date() %}
     date
 {% endmacro %}
