@@ -129,7 +129,8 @@
     {%- set metrics_macro_mapping = {
         "row_count": elementary.row_count_metric_query,
         "freshness": elementary.freshness_metric_query,
-        "event_freshness": elementary.event_freshness_metric_query
+        "event_freshness": elementary.event_freshness_metric_query,
+        "update_freshness": elementary.update_freshness_query
     } %}
 
     {%- set metric_macro = metrics_macro_mapping.get(metric_name) %}
@@ -270,5 +271,61 @@
         {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max({})".format(event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
     from monitored_table
     group by 1
+{% endif %}
+{% endmacro %}
+
+
+{% macro update_freshness_query(metric_properties) %}
+{% if metric_properties.timestamp_column %}
+    {%- set freshness_column = metric_properties.freshness_column %}
+    {%- if not freshness_column %}
+        {%- set freshness_column = metric_properties.timestamp_column %}
+    {%- endif %}
+
+    -- get ordered consecutive update timestamps in the source data
+    with unique_timestamps as (
+        select distinct {{ elementary.edr_cast_as_timestamp(freshness_column) }} as timestamp_val
+        from monitored_table
+        order by 1
+    ),
+
+    -- compute freshness for every update as the time difference from the previous update
+    consecutive_updates_freshness as (
+        select
+            timestamp_val as update_timestamp,
+            {{ elementary.timediff('second', 'lag(timestamp_val) over (order by timestamp_val)', 'timestamp_val') }} as freshness
+        from unique_timestamps
+        where timestamp_val >= (select min(edr_bucket_start) from buckets)
+    ),
+
+    -- divide the freshness metrics above to buckets
+    bucketed_consecutive_updates_freshness as (
+        select
+            edr_bucket_start, edr_bucket_end, update_timestamp, freshness
+        from buckets cross join consecutive_updates_freshness
+        where update_timestamp >= edr_bucket_start AND update_timestamp < edr_bucket_end
+    ),
+
+    -- get all the freshness values, ranked by size (we use partition by and not group by, because we also want to have
+    -- the associated timestamp as source value)
+    bucket_freshness_ranked as (
+        select
+            *,
+            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_number
+        from bucketed_consecutive_updates_freshness
+    )
+
+    select
+        edr_bucket_start,
+        edr_bucket_end,
+        {{ elementary.const_as_string('update_freshness') }} as metric_name,
+        {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
+        freshness as metric_value
+    from bucket_freshness_ranked
+    where row_number = 1
+{% else %}
+    {% do exceptions.raise_compiler_error("freshness_anomalies test is not supported without timestamp_column.") %}
+    {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
+    {% do return(none) %}
 {% endif %}
 {% endmacro %}
