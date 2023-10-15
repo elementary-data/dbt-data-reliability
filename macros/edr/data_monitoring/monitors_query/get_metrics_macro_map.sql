@@ -6,7 +6,6 @@
     {% do return({
         "row_count": elementary.row_count_metric_query,
         "freshness": elementary.freshness_metric_query,
-        "event_freshness": elementary.event_freshness_metric_query,
-        "update_freshness": elementary.update_freshness_query
+        "event_freshness": elementary.event_freshness_metric_query
     }) %}
 {% endmacro %}
