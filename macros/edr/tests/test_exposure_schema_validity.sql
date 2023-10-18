@@ -1,5 +1,5 @@
 {% test exposure_schema_validity(model, exposures, node, columns) %}
-    {%- if not execute -%}
+    {%- if not execute or flags.WHICH not in ['test', 'build'] -%}
         {%- do return(none) -%}
     {%- endif -%}
 
