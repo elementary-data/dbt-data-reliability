@@ -22,7 +22,6 @@ dbt_columns as (
         lower(schema_name) as schema_name,
         lower(table_name) as table_name,
         lower(name) as name,
-        data_type,
         description
     from {{ ref("dbt_columns") }}
 )
