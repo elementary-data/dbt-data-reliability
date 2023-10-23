@@ -119,7 +119,7 @@
         TO_DATE('20231023', 'YYYYMMDD') as date_col,
         sysdate as timestamp_col,
         TO_TIMESTAMP(sysdate, 'YYYY-MM-DD HH24:MI:SS') as timestampptz_col,
-        ST_GeomFromText('POLYGON((0 2,1 1,0 -1,0 2))') as geomtry_col,
+        ST_GeomFromText('POLYGON((0 2,1 1,0 -1,0 2))') as geometry_col,
         ST_GeogFromText('SRID=4324;POLYGON((0 0,0 1,1 1,10 10,1 0,0 0))') as geography_col,
         JSON_PARSE('{"data_type": "super"}') as super_col
     {% endset %}
@@ -215,13 +215,13 @@
     {% endfor %}
     {% do elementary.edr_log(information_schema_column_types) %}
 
-    {% set unmached_types = [] %}
+    {% set unmatched_types = [] %}
     {% for col, relation_value in relation_column_types.items() %}
       {% set info_schema_value = information_schema_column_types[col] %}
       {% if relation_value != info_schema_value %}
-        {% do unmached_types.append('Column "{}" types do not match: {} != {} '.format(col, relation_value, info_schema_value)) %}
+        {% do unmatched_types.append('Column "{}" types do not match: {} != {} '.format(col, relation_value, info_schema_value)) %}
       {% endif %}
     {% endfor %}
-    {% do elementary.edr_log(unmached_types) %}
-    {% do return(unmached_types) %}
+    {% do elementary.edr_log(unmatched_types) %}
+    {% do return(unmatched_types) %}
 {% endmacro %}
