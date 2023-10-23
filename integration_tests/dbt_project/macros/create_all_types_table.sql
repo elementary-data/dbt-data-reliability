@@ -1,3 +1,7 @@
+{# 
+  Those macros are used to generate a table with all of the supported data types for each DWH.
+#}
+
 {% macro create_all_types_table() %}
     {% do return(adapter.dispatch('create_all_types_table','elementary')()) %}
 {% endmacro %}
