@@ -27,9 +27,6 @@
         {% do elementary.file_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
-    {% if elementary.get_information_schema_columns_materialized() != "view" and elementary.get_config_var("upload_information_schema_columns") %}
-      {% do elementary.upload_information_schema_columns() %}  {# information_schema_columns upload must come after other artifacts, as it is dependant on them #}
-    {% endif %}
     {% do elementary.file_log("Uploaded dbt artifacts.") %}
   {% endif %}
 {% endmacro %}
