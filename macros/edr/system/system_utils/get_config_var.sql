@@ -55,7 +55,6 @@
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
     'collect_metrics': true,
-    'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
     'force_metrics_backfill': false,
     'ignore_small_changes': {
@@ -63,7 +62,8 @@
       'drop_failure_percent_threshold': none
     },
     'include_other_warehouse_specific_columns': false,
-    'fail_on_zero': false
+    'fail_on_zero': false,
+    'anomaly_exclude_metrics': none
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}

@@ -11,8 +11,9 @@
         {%- endif %}
     {% endif %}
   {% endif %}
-  {%- if elementary.get_config_var(argument_name) %}
-    {{ return(elementary.get_config_var(argument_name)) }}
+  {% set config_value = elementary.get_config_var(argument_name) %}
+  {% if config_value is defined %}
+    {% do return(config_value) %}
   {% endif %}
-  {{ return(none) }}
+  {% do return(none) %}
 {% endmacro %}

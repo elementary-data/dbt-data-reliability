@@ -8,6 +8,7 @@
       "dbt_metrics": elementary.upload_dbt_metrics,
       "dbt_exposures": elementary.upload_dbt_exposures,
       "dbt_seeds": elementary.upload_dbt_seeds,
+      "dbt_columns": elementary.upload_dbt_columns,
       }
     %}
 
@@ -26,9 +27,6 @@
         {% do elementary.file_log('[{}] Artifacts already ran.'.format(artifacts_model)) %}
       {% endif %}
     {% endfor %}
-    {% if elementary.get_dbt_columns_materialized() != "view" and elementary.get_config_var("upload_dbt_columns") %}
-      {% do elementary.upload_dbt_columns() %}  {# dbt_columns upload must come after other artifacts, as it is dependant on them #}
-    {% endif %}
     {% do elementary.file_log("Uploaded dbt artifacts.") %}
   {% endif %}
 {% endmacro %}

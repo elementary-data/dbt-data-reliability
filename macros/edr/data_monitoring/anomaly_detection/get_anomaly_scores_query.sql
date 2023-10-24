@@ -31,6 +31,10 @@
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
+    {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
+       bucket end (which is the actual time of the test) #}
+    {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
+
     {%- set anomaly_scores_query %}
 
         with data_monitoring_metrics as (
@@ -93,6 +97,11 @@
                 updated_at,
                 dimension,
                 dimension_value,
+
+                -- Fields added for the anomaly_exclude_metrics expression used below
+                {{ metric_time_bucket_expr }} as metric_time_bucket,
+                {{ elementary.edr_cast_as_date(elementary.edr_date_trunc('day', metric_time_bucket_expr))}} as metric_date,
+
                 row_number() over (partition by id order by updated_at desc) as row_number
             from union_metrics
 
@@ -112,11 +121,11 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
+                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
             where row_number = 1
-
         ),
 
         time_window_aggregation as (
@@ -141,6 +150,7 @@
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
+            where not is_excluded
             {{ dbt_utils.group_by(13) }}
         ),
 

@@ -19,7 +19,8 @@
                                           sensitivity,
                                           ignore_small_changes,
                                           fail_on_zero,
-                                          detection_delay) %}
+                                          detection_delay,
+                                          anomaly_exclude_metrics) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -42,6 +43,8 @@
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
 
+    {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
+
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
        'where_expression': where_expression,
@@ -57,9 +60,10 @@
        'dimensions': dimensions,
        'ignore_small_changes': ignore_small_changes,
        'fail_on_zero': fail_on_zero,
-       'detection_delay': detection_delay
+       'detection_delay': detection_delay,
+       'anomaly_exclude_metrics': anomaly_exclude_metrics
         } %}
-    {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
+    {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
     {%- do elementary.validate_ignore_small_changes(test_configuration) -%}
 
@@ -73,7 +77,7 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions
         } %}
-    {%- set metric_properties = elementary.empty_dict_keys_to_none(metric_properties) -%}
+    {%- set metric_properties = elementary.undefined_dict_keys_to_none(metric_properties) -%}
 
   {# Adding to cache so test configuration will be available outside the test context #}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
