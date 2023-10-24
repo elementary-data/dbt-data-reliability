@@ -4,9 +4,9 @@
 {% endmacro %}
 
 {% macro default__get_column_data_type(column_relation) %}
-   {{return (column_relation.dtype) }}
+   {{return (column_relation["dtype"]) }}
 {% endmacro %}
 
 {% macro bigquery__get_column_data_type(column_relation) %}
-   {{return (column_relation.data_type) }}
+   {{return (column_relation["data_type"]) }}
 {% endmacro %}
