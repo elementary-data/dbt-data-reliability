@@ -105,7 +105,7 @@ jobs:
         run: |
           mkdir -p ~/.dbt
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
-          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | head -c 32 | sed "s/-/_/g")
+          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | head -c 40 | sed "s/-/_/g")
           echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Check DWH connection
@@ -115,7 +115,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report.html --self-contained-html
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html
 
       - name: Upload test results
         if: always()
@@ -131,4 +131,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}
-          path: ${{ env.TESTS_DIR }}/tests/detailed_report.html
+          path: ${{ env.TESTS_DIR }}/tests/detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html

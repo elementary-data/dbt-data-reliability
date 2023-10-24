@@ -51,7 +51,10 @@ def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
 
 
 def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
-    anomaly_date = datetime.now() - timedelta(days=1)
+    # To avoid races, set the "custom_started_at" to the beginning of the hour
+    test_started_at = datetime.utcnow().replace(minute=0, second=0)
+
+    anomaly_date = test_started_at - timedelta(days=1)
     data = [
         {
             EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
@@ -64,7 +67,7 @@ def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
             EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
             UPDATE_TIMESTAMP_COLUMN: (date + STEP).strftime(DATE_FORMAT),
         }
-        for date in generate_dates(datetime.now(), step=STEP, days_back=1)
+        for date in generate_dates(test_started_at, step=STEP, days_back=1)
     ]
     data.extend(slow_data)
     result = dbt_project.test(
@@ -75,5 +78,6 @@ def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
             update_timestamp_column=UPDATE_TIMESTAMP_COLUMN,
         ),
         data=data,
+        test_vars={"custom_run_started_at": test_started_at.isoformat()},
     )
     assert result["status"] == "fail"

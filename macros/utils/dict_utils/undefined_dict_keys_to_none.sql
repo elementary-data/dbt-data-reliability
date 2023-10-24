@@ -1,6 +1,6 @@
-{% macro empty_dict_keys_to_none(dict) %}
+{% macro undefined_dict_keys_to_none(dict) %}
     {% for key in dict %}
-        {% if not dict[key] %}
+        {% if dict[key] is not defined %}
             {% do dict.update({key: none}) %}
         {% endif %}
     {% endfor %}
