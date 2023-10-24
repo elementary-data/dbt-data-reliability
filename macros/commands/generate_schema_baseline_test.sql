@@ -58,7 +58,7 @@
     columns:
     {%- for column in columns %}
       - name: {{ column.name }}
-        data_type: {{ column.dtype }}
+        data_type: {{ elementary.get_column_data_type(column) }}
     {% endfor %}
     tests:
       - elementary.schema_changes_from_baseline

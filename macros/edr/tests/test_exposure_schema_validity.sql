@@ -35,7 +35,7 @@
     {%- if matching_exposures | length > 0 -%}
         {%- set columns_dict = {} -%}
         {%- for column in columns -%}
-            {%- do columns_dict.update({ column['name'].strip('"').strip("'") | upper : elementary.normalize_data_type(column['dtype']) }) -%}
+            {%- do columns_dict.update({ column['name'].strip('"').strip("'") | upper : elementary.normalize_data_type(elementary.get_column_data_type(column)) }) -%}
         {%- endfor -%}
         {%- set invalid_exposures = [] -%}
         {%- for exposure in matching_exposures -%}
