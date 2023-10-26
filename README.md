@@ -22,7 +22,7 @@ Monitor your data quality, operation and performance directly from your dbt proj
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.11.2
+    version: 0.12.0
     ## Docs: https://docs.elementary-data.com
 ```
 
