@@ -72,12 +72,13 @@
             {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
             {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
           {% endif %}
-
-          {% if current_query.data != base_insert_query %}
-            {% do insert_queries.append(current_query.data) %}
-          {% endif %}
-          {% set current_query.data = new_insert_query %}
         {% endif %}
+
+        {% if current_query.data != base_insert_query %}
+          {% do insert_queries.append(current_query.data) %}
+        {% endif %}
+        {% set current_query.data = new_insert_query %}
+
       {% else %}
         {% set current_query.data = query_with_row %}
       {% endif %}
