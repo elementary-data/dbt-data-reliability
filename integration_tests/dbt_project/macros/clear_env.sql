@@ -1,5 +1,5 @@
 {% macro clear_env() %}
-    {% do elementary_tests.edr_drop_schema(elementary.target_database(), target.schema) %}
+    {% do elementary_tests.edr_drop_schema(elementary.target_database(), generate_schema_name()) %}
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {% do elementary_tests.edr_drop_schema(database_name, schema_name) %}
 {% endmacro %}
