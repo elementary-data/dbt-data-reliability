@@ -10,7 +10,8 @@ from elementary.clients.dbt.dbt_runner import DbtRunner
 from logger import get_logger
 from ruamel.yaml import YAML
 
-SCHEMA_NAME_SUFFIX = os.environ.get("PYTEST_XDIST_WORKER", None)
+PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
+SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
