@@ -179,8 +179,7 @@ class DbtProject:
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": "{{ target.schema }}"
-                        + (f"_{SCHEMA_NAME_SUFFIX}" if SCHEMA_NAME_SUFFIX else ""),
+                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
                         "tables": [table_yaml],
                     }
                 ],
