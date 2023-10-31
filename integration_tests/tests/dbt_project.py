@@ -1,4 +1,5 @@
 import json
+import os
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -9,12 +10,16 @@ from elementary.clients.dbt.dbt_runner import DbtRunner
 from logger import get_logger
 from ruamel.yaml import YAML
 
+PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
+SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
+
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
     "disable_run_results": True,
     "debug_logs": True,
     "collect_metrics": False,
+    "schema_name_suffix": SCHEMA_NAME_SUFFIX,
 }
 
 DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
@@ -174,7 +179,7 @@ class DbtProject:
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": "{{ target.schema }}",
+                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
                         "tables": [table_yaml],
                     }
                 ],

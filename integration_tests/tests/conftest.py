@@ -6,7 +6,6 @@ import env
 import pytest
 from dbt.version import __version__ as dbt_version
 from dbt_project import DbtProject
-from filelock import FileLock
 from packaging import version
 
 DBT_PROJECT_PATH = Path(__file__).parent.parent / "dbt_project"
@@ -32,21 +31,8 @@ def project_dir_copy():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def init_tests_env(target, tmp_path_factory, worker_id: str, project_dir_copy: str):
-    # Tests are not multi-threaded.
-    if worker_id == "master":
-        env.init(target, project_dir_copy)
-        return
-
-    # Temp dir shared by all workers.
-    tmp_dir = tmp_path_factory.getbasetemp().parent
-    env_ready_indicator_path = tmp_dir / ".wait_env_ready"
-    with FileLock(str(env_ready_indicator_path) + ".lock"):
-        if env_ready_indicator_path.is_file():
-            return
-        else:
-            env.init(target, project_dir_copy)
-            env_ready_indicator_path.touch()
+def init_tests_env(target, project_dir_copy: str):
+    env.init(target, project_dir_copy)
 
 
 @pytest.fixture(autouse=True)
