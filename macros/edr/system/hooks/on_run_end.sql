@@ -13,6 +13,10 @@
         {% do elementary.upload_dbt_artifacts() %}
       {% endif %}
 
+      {% if not elementary.get_config_var('disable_dbt_columns_autoupload') %}
+        {% do elementary.upload_dbt_columns() %}
+      {% endif %}
+
       {% if not elementary.get_config_var('disable_run_results') %}
         {% do elementary.upload_run_results() %}
       {% endif %}
