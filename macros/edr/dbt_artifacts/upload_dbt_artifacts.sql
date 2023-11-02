@@ -11,6 +11,10 @@
       }
     %}
 
+    {% if not elementary.get_config_var('disable_dbt_columns_autoupload') %}
+      {% do model_upload_func_map.update({"dbt_columns": elementary.upload_dbt_columns}) %}
+    {% endif %}
+
     {% set artifacts_hashes = elementary.get_artifacts_hashes() %}
     {% do elementary.file_log("Uploading dbt artifacts.") %}
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
