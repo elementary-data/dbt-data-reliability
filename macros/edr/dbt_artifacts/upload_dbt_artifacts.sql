@@ -8,9 +8,12 @@
       "dbt_metrics": elementary.upload_dbt_metrics,
       "dbt_exposures": elementary.upload_dbt_exposures,
       "dbt_seeds": elementary.upload_dbt_seeds,
-      "dbt_columns": elementary.upload_dbt_columns,
       }
     %}
+
+    {% if not elementary.get_config_var('disable_dbt_columns_autoupload') %}
+      {% do model_upload_func_map.update({"dbt_columns": elementary.upload_dbt_columns}) %}
+    {% endif %}
 
     {% set artifacts_hashes = elementary.get_artifacts_hashes() %}
     {% do elementary.file_log("Uploading dbt artifacts.") %}
