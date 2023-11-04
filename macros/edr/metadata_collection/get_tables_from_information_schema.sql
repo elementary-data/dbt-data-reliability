@@ -91,7 +91,7 @@
     {%- set database_name, schema_name = schema_tuple %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
-    {# 
+    {#
         Database only exists when using databricks with catalog (it is the catalog).
         When using databricks without catalog, it is none.
     #}
@@ -144,23 +144,4 @@
         ('schema_name', 'string'),
         ('table_name', 'string'),
     ]) }}
-{% endmacro %}
-
-{% macro athena__get_tables_from_information_schema(schema_tuple) %}
-    {%- set database_name, schema_name = schema_tuple %}
-
-    select
-        {{ elementary.full_table_name() }} as full_table_name,
-        upper(database_name || '.' || schema_name) as full_schema_name,
-        database_name,
-        schema_name,
-        table_name
-    from (
-        select
-            upper(table_catalog) as database_name,
-            upper(table_schema) as schema_name,
-            upper(table_name) as table_name
-        from information_schema.tables
-        where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
-    )
 {% endmacro %}
