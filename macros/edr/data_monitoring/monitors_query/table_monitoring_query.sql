@@ -126,11 +126,7 @@
 {% endmacro %}
 
 {% macro get_metric_query(metric_name, metric_properties) %}
-    {%- set metrics_macro_mapping = {
-        "row_count": elementary.row_count_metric_query,
-        "freshness": elementary.freshness_metric_query,
-        "event_freshness": elementary.event_freshness_metric_query
-    } %}
+    {%- set metrics_macro_mapping = elementary.get_metrics_macro_map() %}
 
     {%- set metric_macro = metrics_macro_mapping.get(metric_name) %}
     {%- if not metric_macro %}
