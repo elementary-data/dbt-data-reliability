@@ -30,6 +30,10 @@ GRANT REFERENCES ON FUTURE TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE 
 GRANT REFERENCES ON ALL VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 GRANT REFERENCES ON FUTURE VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 {% endfor -%}
+
+-- Needed for access to query history
+GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE {{ parameters["role"] }};
+GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE {{ parameters["role"] }};
 {% endmacro %}
 
 
