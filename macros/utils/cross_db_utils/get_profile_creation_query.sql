@@ -23,7 +23,7 @@ GRANT SELECT ON FUTURE TABLES IN SCHEMA {{ parameters["database"] }}.{{ paramete
 GRANT SELECT ON ALL VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON FUTURE VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 
--- Metadata access to rest of dbt project
+-- Metadata access to rest of the schemas used within the dbt project
 {% for database, schema in schema_tuples -%}
 GRANT REFERENCES ON ALL TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 GRANT REFERENCES ON FUTURE TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
