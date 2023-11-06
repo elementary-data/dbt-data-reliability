@@ -17,7 +17,7 @@ GRANT USAGE,MONITOR ON DATABASE {{ database }} TO ROLE {{ parameters["role"] }};
 GRANT USAGE,MONITOR ON SCHEMA {{ schema_tuple[0] }}.{{ schema_tuple[1] }} TO ROLE {{ parameters["role"] }};
 {%- endfor %}
 
--- Data access to elementary schema
+-- Read access to elementary schema
 GRANT SELECT ON ALL TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON FUTURE TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON ALL VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
