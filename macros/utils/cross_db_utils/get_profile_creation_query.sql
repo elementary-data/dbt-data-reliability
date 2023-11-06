@@ -17,13 +17,13 @@ GRANT USAGE,MONITOR ON DATABASE {{ database }} TO ROLE {{ parameters["role"] }};
 GRANT USAGE,MONITOR ON SCHEMA {{ schema_tuple[0] }}.{{ schema_tuple[1] }} TO ROLE {{ parameters["role"] }};
 {%- endfor %}
 
-// Data access to elementary schema
+-- Data access to elementary schema
 GRANT SELECT ON ALL TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON FUTURE TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON ALL VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 GRANT SELECT ON FUTURE VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
 
-// Metadata access to rest of dbt project
+-- Metadata access to rest of dbt project
 {% for database, schema in schema_tuples -%}
 GRANT REFERENCES ON ALL TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 GRANT REFERENCES ON FUTURE TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
