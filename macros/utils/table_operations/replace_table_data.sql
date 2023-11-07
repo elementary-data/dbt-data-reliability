@@ -38,3 +38,9 @@
 
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
+
+{# Clickhouse - truncate and insert (non-atomic) #}
+{% macro clickhouse__replace_table_data(relation, rows) %}
+    {% do dbt.truncate_relation(relation) %}
+    {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
+{% endmacro %}
