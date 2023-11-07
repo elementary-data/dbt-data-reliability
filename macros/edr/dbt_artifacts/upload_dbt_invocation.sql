@@ -43,10 +43,26 @@
       'job_url': elementary.get_job_url(orchestrator, job_id),
       'job_run_url': elementary.get_job_run_url(orchestrator, job_id, job_run_id),
       'account_id': elementary.get_var("account_id", ["DBT_ACCOUNT_ID"]),
+      'adapter_connection': elementary.get_adapter_connection()
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
+
+{% macro get_adapter_connection() %}
+    {{ return(adapter.dispatch('get_adapter_connection', 'elementary')) }}
+{% endmacro %}
+
+{% macro default__get_adapter_connection() %}
+    {{ return('') }}
+{% endmacro %}
+
+{% macro databricks__get_adapter_connection() %}
+    {%- set connection_dict = {"http_path": target.http_path }%}
+    {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
+    {{ return(json_value) }}
+{% endmacro %}
+
 
 {% macro get_project_name() %}
     {% set project_name = elementary.get_config_var("project_name") %}
@@ -214,6 +230,7 @@
       ('dbt_user', 'string'),
       ('job_url', 'string'),
       ('job_run_url', 'string'),
-      ('account_id', 'string')
+      ('account_id', 'string'),
+      ('adapter_connection', 'long_string')
     ])) }}
 {% endmacro %}
