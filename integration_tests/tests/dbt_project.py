@@ -4,6 +4,7 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Literal, Optional, Union, overload
+from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.dbt_runner import DbtRunner
@@ -262,3 +263,12 @@ class DbtProject:
         if len(results) > 1:
             raise Exception(f"Multiple test results found for table {table_name}")
         return results[0]
+
+    @contextmanager
+    def write_yaml(self, content: dict, name: Optional[str] = None):
+        name = name or f"{uuid4()}.yaml"
+        path = self.models_dir_path / name
+        with open(path, "w") as f:
+            YAML().dump(content, f)
+        yield path
+        path.unlink()
