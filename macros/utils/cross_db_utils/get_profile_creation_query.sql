@@ -29,11 +29,25 @@ GRANT REFERENCES ON ALL TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ 
 GRANT REFERENCES ON FUTURE TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 GRANT REFERENCES ON ALL VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
 GRANT REFERENCES ON FUTURE VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
-{% endfor -%}
-
--- Needed for access to query history
+{% endfor %}
+-- Query history views access
 GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE {{ parameters["role"] }};
 GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE {{ parameters["role"] }};
+
+-- Query history access per warehouse (so Elementary can query history for queries ran by different warehouses)
+USE DATABASE {{ database }};
+CREATE OR REPLACE PROCEDURE GRANT_MONITOR_ON_ALL_WAREHOUSES(_role VARCHAR) RETURNS VARCHAR
+    LANGUAGE javascript
+EXECUTE AS CALLER
+AS
+$$
+var all_warehouses = snowflake.createStatement({sqlText: `SHOW WAREHOUSES`}).execute();
+while(all_warehouses.next()) {
+  cur_warehouse = all_warehouses.getColumnValue("name");
+  snowflake.createStatement({ sqlText:`GRANT MONITOR ON WAREHOUSE ${cur_warehouse} TO ROLE ${_role}`}).execute();
+}
+$$;
+CALL GRANT_MONITOR_ON_ALL_WAREHOUSES('{{ parameters["role"] }}');
 {% endmacro %}
 
 
