@@ -36,7 +36,7 @@ GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE {{ parameters["role"] }}
 
 -- Query history access per warehouse (so Elementary can query history for queries ran by different warehouses)
 USE DATABASE {{ database }};
-CREATE OR REPLACE PROCEDURE GRANT_MONITOR_ON_ALL_WAREHOUSES(_role VARCHAR) RETURNS VARCHAR
+CREATE OR REPLACE PROCEDURE GRANT_MONITOR_ON_ALL_WAREHOUSES(_ROLE VARCHAR) RETURNS VARCHAR
     LANGUAGE javascript
 EXECUTE AS CALLER
 AS
@@ -44,7 +44,7 @@ $$
 var all_warehouses = snowflake.createStatement({sqlText: `SHOW WAREHOUSES`}).execute();
 while(all_warehouses.next()) {
   cur_warehouse = all_warehouses.getColumnValue("name");
-  snowflake.createStatement({ sqlText:`GRANT MONITOR ON WAREHOUSE ${cur_warehouse} TO ROLE ${_role}`}).execute();
+  snowflake.createStatement({ sqlText:`GRANT MONITOR ON WAREHOUSE ${cur_warehouse} TO ROLE ${_ROLE}`}).execute();
 }
 $$;
 CALL GRANT_MONITOR_ON_ALL_WAREHOUSES('{{ parameters["role"] }}');
