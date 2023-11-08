@@ -30,6 +30,9 @@
         {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
         {% do elementary.run_query(insert_rows_query) %}
       {% endfor %}
+    {% elif insert_rows_method == 'gcp-cloud-function' %}
+      {% set insert_rows_query = elementary.get_cloud_function_insert_query(table_relation, columns, rows) %}
+      {% do elementary.run_query(insert_rows_query) %}
     {% else %}
       {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
     {% endif %}
@@ -120,6 +123,10 @@
             {%- endfor -%}
     {% endset %}
     {{ return(insert_rows_query) }}
+{%- endmacro %}
+
+{% macro get_cloud_function_insert_query(table_relation, columns, rows) -%}
+    
 {%- endmacro %}
 
 {% macro escape_special_chars(string_value) %}
