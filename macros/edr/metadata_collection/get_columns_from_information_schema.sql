@@ -17,7 +17,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from {{ columns_schema }}
+    from {{ column_relation }}
     where upper(table_schema) = upper('{{ schema_name }}')
     {% if table_name %}
       and upper(table_name) = upper('{{ table_name }}')
