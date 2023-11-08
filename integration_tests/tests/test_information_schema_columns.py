@@ -3,7 +3,7 @@ from dbt_project import DbtProject
 
 REGULAR_SOURCE = {
     "name": "regular_source",
-    "schema": '"{{ target.schema }}"',
+    "schema": "{{ target.schema }}",
     "tables": [
         {
             "name": "test_table",
