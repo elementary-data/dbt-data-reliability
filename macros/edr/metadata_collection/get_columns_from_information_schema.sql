@@ -69,11 +69,7 @@
         {# Information schema is only available when using Unity Catalog. #}
         {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
     {% endif %}
-    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).quote(false, false, false) %}
-    {% set column_relation = schema_relation.information_schema('COLUMNS') %}
-    {% if not elementary.schema_exists(column_relation.database, column_relation.schema) %}
-        {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
-    {% endif %}
+    {% set column_relation = api.Relation.create('system', 'information_schema', 'columns') %}
     select
         upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
         upper(table_catalog) as database_name,
@@ -81,7 +77,7 @@
         upper(table_name) as table_name,
         upper(column_name) as column_name,
         data_type
-    from {{ schema_relation.information_schema('COLUMNS') }}
+    from {{ column_relation }}
     where upper(table_schema) = upper('{{ schema_name }}')
     {% if table_name %}
         and upper(table_name) = upper('{{ table_name }}')
