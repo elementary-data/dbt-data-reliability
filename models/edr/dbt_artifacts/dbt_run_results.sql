@@ -10,7 +10,7 @@
       "timestamp_column": "created_at",
       "prev_timestamp_column": "generated_at",
       },
-    table_type="iceberg",
+    table_type=elementary.get_default_table_type(),
     incremental_strategy=elementary.get_default_incremental_strategy()
   )
 }}
