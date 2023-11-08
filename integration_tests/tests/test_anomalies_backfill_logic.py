@@ -266,3 +266,68 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
     assert get_row_count_metrics(dbt_project, test_id) == {
         cur_date: 1 for cur_date in data_dates if cur_date >= utc_today - timedelta(21)
     }
+
+
+def test_backfill_with_middle_buckets_gap(dbt_project: DbtProject, test_id: str):
+    utc_today = datetime.utcnow().date()
+    data_start = utc_today - timedelta(21)
+    date_gap_start = utc_today - timedelta(14)
+    date_gap_end = utc_today - timedelta(7)
+    data_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in data_dates
+        for _ in range(5)
+    ]
+
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        as_model=True,
+        materialization="incremental",
+        test_vars={
+            "custom_run_started_at": date_gap_start.isoformat(),
+            "days_back": (date_gap_start - data_start).days,
+        },
+    )
+    assert test_result["status"] != "error"
+
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        as_model=True,
+        materialization="incremental",
+        test_vars={"days_back": (utc_today - date_gap_end).days - 1},
+    )
+    assert test_result["status"] != "error"
+
+    assert get_row_count_metrics(dbt_project, test_id) == {
+        cur_date: 5
+        for cur_date in data_dates
+        if (data_start <= cur_date < date_gap_start)
+        or (date_gap_end < cur_date <= utc_today)
+    }
+
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)} for cur_date in data_dates
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        as_model=True,
+        materialization="incremental",
+        test_vars={"days_back": 21},
+    )
+    assert test_result["status"] != "error"
+    assert get_row_count_metrics(dbt_project, test_id) == {
+        cur_date: 5 if cur_date < date_gap_start else 1
+        for cur_date in data_dates
+        if cur_date >= data_start
+    }
