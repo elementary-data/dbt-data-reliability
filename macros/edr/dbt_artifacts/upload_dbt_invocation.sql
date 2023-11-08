@@ -43,22 +43,35 @@
       'job_url': elementary.get_job_url(orchestrator, job_id),
       'job_run_url': elementary.get_job_run_url(orchestrator, job_id, job_run_id),
       'account_id': elementary.get_var("account_id", ["DBT_ACCOUNT_ID"]),
-      'adapter_connection': elementary.get_adapter_connection()
+      'target_adapter_specific_fields': elementary.get_target_adapter_specific_fields()
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 
-{% macro get_adapter_connection() %}
-    {{ return(adapter.dispatch('get_adapter_connection', 'elementary')) }}
+
+{% macro get_target_adapter_specific_fields() %}
+    {{ return(adapter.dispatch('get_target_adapter_specific_fields', 'elementary')) }}
 {% endmacro %}
 
-{% macro default__get_adapter_connection() %}
+{% macro default__target_adapter_specific_fields() %}
     {{ return('') }}
 {% endmacro %}
 
-{% macro databricks__get_adapter_connection() %}
+{% macro databricks__target_adapter_specific_fields() %}
     {%- set connection_dict = {"http_path": target.http_path }%}
+    {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
+    {{ return(json_value) }}
+{% endmacro %}
+
+{% macro snowflake__target_adapter_specific_fields() %}
+    {%- set connection_dict = {"warehouse": target.warehouse, "user": target.user, "role": target.role}%}
+    {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
+    {{ return(json_value) }}
+{% endmacro %}
+
+{% macro postgres__target_adapter_specific_fields() %}
+    {%- set connection_dict = {"user": target.user} %}
     {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
     {{ return(json_value) }}
 {% endmacro %}
@@ -231,6 +244,6 @@
       ('job_url', 'string'),
       ('job_run_url', 'string'),
       ('account_id', 'string'),
-      ('adapter_connection', 'long_string')
+      ('target_adapter_specific_fields', 'long_string')
     ])) }}
 {% endmacro %}
