@@ -54,23 +54,23 @@
     {{ return(adapter.dispatch('get_target_adapter_specific_fields', 'elementary')) }}
 {% endmacro %}
 
-{% macro default__target_adapter_specific_fields() %}
+{% macro default__get_target_adapter_specific_fields() %}
     {{ return('') }}
 {% endmacro %}
 
-{% macro databricks__target_adapter_specific_fields() %}
+{% macro databricks__get_target_adapter_specific_fields() %}
     {%- set connection_dict = {"http_path": target.http_path }%}
     {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
     {{ return(json_value) }}
 {% endmacro %}
 
-{% macro snowflake__target_adapter_specific_fields() %}
+{% macro snowflake__get_target_adapter_specific_fields() %}
     {%- set connection_dict = {"warehouse": target.warehouse, "user": target.user, "role": target.role}%}
     {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
     {{ return(json_value) }}
 {% endmacro %}
 
-{% macro postgres__target_adapter_specific_fields() %}
+{% macro postgres__get_target_adapter_specific_fields() %}
     {%- set connection_dict = {"user": target.user} %}
     {%- set json_value = elementary.dict_to_quoted_json(connection_dict) %}
     {{ return(json_value) }}
