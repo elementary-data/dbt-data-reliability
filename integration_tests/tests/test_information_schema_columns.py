@@ -59,7 +59,11 @@ def test_information_schema_non_existing_schema(dbt_project: DbtProject):
         assert success
 
 
-@pytest.mark.skip_targets(["postgres"])
+@pytest.mark.skip_targets(
+    [
+        "bigquery"  # Cannot check for non-existing database in bigquery through sql (only api)
+    ]
+)
 def test_information_schema_non_existing_database(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [NON_EXISTING_DATABASE_SOURCE]}
     with dbt_project.write_yaml(sources):

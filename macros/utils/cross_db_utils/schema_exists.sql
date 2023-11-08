@@ -13,6 +13,14 @@
   {% do return(adapter.check_schema_exists(database, schema)) %}
 {% endmacro %}
 
+{% macro postgres__schema_exists(database, schema) %}
+  {% if database != target.database %}
+    {# Cross db operations not supported in postgres #}
+    {% do return(false) %}
+  {% endif %}
+  {% do return(adapter.check_schema_exists(database, schema)) %}
+{% endmacro %}
+
 {% macro default__schema_exists(database, schema) %}
   {% do return(adapter.check_schema_exists(database, schema)) %}
 {% endmacro %}
