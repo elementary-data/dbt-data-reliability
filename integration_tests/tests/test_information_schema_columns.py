@@ -1,4 +1,3 @@
-import pytest
 from dbt_project import DbtProject
 
 REGULAR_SOURCE = {
