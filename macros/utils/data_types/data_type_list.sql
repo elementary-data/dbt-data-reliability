@@ -26,6 +26,7 @@
     {% set string_list = ['STRING'] | list %}
     {% set numeric_list = ['INT64','NUMERIC','BIGNUMERIC','FLOAT64','INTEGER'] | list %}
     {% set timestamp_list = ['DATE','DATETIME','TIMESTAMP'] | list %}
+    {% set boolean_list = ["BOOL", "BOOLEAN"] | list %}
 
     {%- if data_type == 'string' %}
         {{ return(string_list) }}
@@ -33,6 +34,8 @@
         {{ return(numeric_list) }}
     {%- elif data_type == 'timestamp' %}
         {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %} 
+        {{ return(boolean_list) }}
     {%- else %}
         {{ return([]) }}
     {%- endif %}
@@ -74,5 +77,3 @@
     {%- else %}
         {{ return([]) }}
     {%- endif %}
-
-{% endmacro %}

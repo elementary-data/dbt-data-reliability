@@ -43,6 +43,9 @@
     {% elif normalized_data_type == 'string' %}
         {% set string_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_string"]) %}
         {% do monitors.extend(string_monitors) %}
+    {% elif normalized_data_type == 'boolean' %}
+        {% set boolean_monitors = elementary.lists_intersection(chosen_monitors, available_monitors["column_boolean"]) %}
+        {% do monitors.extend(boolean_monitors) %}
     {% endif %}
     {{ return(monitors | unique | list) }}
 {% endmacro %}
@@ -57,5 +60,6 @@
     {% do agg_column_monitors.extend(monitors['column_any_type']) %}
     {% do agg_column_monitors.extend(monitors['column_string']) %}
     {% do agg_column_monitors.extend(monitors['column_numeric']) %}
+    {% do agg_column_monitors.extend(monitors['column_boolean']) %}
     {{ return(agg_column_monitors) }}
 {% endmacro %}

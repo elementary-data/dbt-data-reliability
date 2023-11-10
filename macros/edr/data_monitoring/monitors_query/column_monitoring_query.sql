@@ -61,7 +61,9 @@
                     {%- if 'average_length' in column_monitors -%} {{ elementary.average_length(column) }} {%- else -%} null {% endif %} as average_length,
                     {%- if 'missing_count' in column_monitors -%} {{ elementary.missing_count(column) }} {%- else -%} null {% endif %} as missing_count,
                     {%- if 'missing_percent' in column_monitors -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent,
-                    {%- if 'sum' in column_monitors -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum
+                    {%- if 'sum' in column_monitors -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum,
+                    {%- if 'count_true' in column_monitors -%} {{ elementary.count_true(column) }} {%- else -%} null {% endif %} as count_true,
+                    {%- if 'count_false' in column_monitors -%} {{ elementary.count_false(column) }} {%- else -%} null {% endif %} as count_false
                 from filtered_monitored_table
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
