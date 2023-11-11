@@ -5,7 +5,7 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def generate_dates(base_date, step=None, days_back=31):
     step = step or timedelta(days=1)
-    if isinstance(base_date, date) and step.days == 0:
+    if type(base_date) is date and step.days == 0:
         # This is needed to avoid an infinite loop
         base_date = datetime.combine(base_date, time.min)
 
