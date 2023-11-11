@@ -54,7 +54,9 @@ def test_exclude_specific_dates(
     )
     assert test_result["status"] == "pass"
 
-    excluded_dates_str = ", ".join([f"cast('{cur_date}' as date)" for cur_date in exclude_dates])
+    excluded_dates_str = ", ".join(
+        [f"cast('{cur_date}' as date)" for cur_date in exclude_dates]
+    )
     test_args = {
         **DBT_TEST_ARGS,
         "anomaly_exclude_metrics": f"metric_date in ({excluded_dates_str})",
@@ -100,7 +102,10 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
     excluded_buckets_str = ", ".join(
-        ["cast('%s' as timestamp)" % cur_ts.strftime(DATE_FORMAT) for cur_ts in excluded_buckets]
+        [
+            "cast('%s' as timestamp)" % cur_ts.strftime(DATE_FORMAT)
+            for cur_ts in excluded_buckets
+        ]
     )
     test_args = {
         **DBT_TEST_ARGS,
