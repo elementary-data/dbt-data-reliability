@@ -63,7 +63,7 @@ with error_models as (
 
 select model_execution_id as alert_id,
        unique_id,
-       generated_at as detected_at,
+       {{ elementary.edr_cast_as_timestamp("generated_at") }} as detected_at,
        database_name,
        materialization,
        path,

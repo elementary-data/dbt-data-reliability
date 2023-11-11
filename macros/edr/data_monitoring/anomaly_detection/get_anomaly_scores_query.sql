@@ -175,8 +175,8 @@
                 end as anomaly_score,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
-                bucket_start,
-                bucket_end,
+                {{ elementary.edr_cast_as_timestamp('bucket_start') }} as bucket_start,
+                {{ elementary.edr_cast_as_timestamp('bucket_end') }} as bucket_end,
                 bucket_seasonality,
                 metric_value,
                 
@@ -193,8 +193,8 @@
                 training_avg,
                 training_stddev,
                 training_set_size,
-                training_start,
-                training_end,
+                {{ elementary.edr_cast_as_timestamp('training_start') }} as training_start,
+                {{ elementary.edr_cast_as_timestamp('training_end') }} as training_end,
                 dimension,
                 dimension_value
             from time_window_aggregation

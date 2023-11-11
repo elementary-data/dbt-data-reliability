@@ -18,3 +18,7 @@
 {% macro bigquery__target_database() %}
     {% do return(target.project) %}
 {% endmacro %}
+
+{% macro athena__target_database() %}
+    {% do return(target.database) %}
+{% endmacro %}
