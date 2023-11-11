@@ -46,8 +46,8 @@ def get_row_count_metrics(dbt_project: DbtProject, test_id: str):
     results = dbt_project.run_query(LATEST_METRICS_QUERY.format(test_id=test_id))
     return {
         (
-            dateutil.parser.parse(result["bucket_start"]),
-            dateutil.parser.parse(result["bucket_end"]),
+            dateutil.parser.parse(result["bucket_start"]).replace(tzinfo=None),
+            dateutil.parser.parse(result["bucket_end"]).replace(tzinfo=None),
         ): result["metric_value"]
         for result in results
     }
@@ -66,8 +66,8 @@ def get_latest_anomaly_test_metrics(dbt_project: DbtProject, test_id: str):
     result_rows = [json.loads(result["result_row"]) for result in results]
     return {
         (
-            dateutil.parser.parse(result["bucket_start"]),
-            dateutil.parser.parse(result["bucket_end"]),
+            dateutil.parser.parse(result["bucket_start"]).replace(tzinfo=None),
+            dateutil.parser.parse(result["bucket_end"]).replace(tzinfo=None),
         ): result["metric_value"]
         for result in result_rows
     }
