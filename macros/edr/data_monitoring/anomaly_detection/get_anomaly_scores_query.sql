@@ -70,10 +70,11 @@
                 {% if test_configuration.timestamp_column %}
                     -- For timestamped tests, verify that the bucket we got from the history is actually
                     -- a valid one (this check is important for buckets that are not aligned with a day).
-                    -- Note - using concat because BQ can't handle IN with multiple values.
-                    and {{ elementary.edr_concat('bucket_start', 'bucket_end') }} in (
-                        select {{ elementary.edr_concat('edr_bucket_start', 'edr_bucket_end') }} from buckets
-                    )
+                    and {{ elementary.edr_multi_value_in(
+                        [elementary.edr_cast_as_timestamp('bucket_start'), elementary.edr_cast_as_timestamp('bucket_end')],
+                        ['edr_bucket_start', 'edr_bucket_end'],
+                        'buckets'
+                    ) }}
                 {% endif %}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
