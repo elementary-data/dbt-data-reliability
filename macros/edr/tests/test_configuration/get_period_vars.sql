@@ -1,9 +1,9 @@
 {% macro detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) %}
-  {% if elementary.get_count_of_period(detection_period) != (elementary.get_count_of_period(detection_period) | int) %}
-    {%- do elementary.edr_log_warning("Got a float number value in detection_period count. Rounding it down...") -%}
-  {% endif %}
-
   {% if detection_period %}
+    {% if elementary.get_count_of_period(detection_period) != (elementary.get_count_of_period(detection_period) | int) %}
+      {%- do elementary.edr_log_warning("Got a float number value in detection_period count. Rounding it down...") -%}
+    {% endif %}
+
     {% if not detection_period.period %}
       {{ return(detection_period.count) }}
     {% endif %}
@@ -15,11 +15,11 @@
 {% endmacro %}
 
 {% macro training_period_to_days_back(training_period, days_back, model_graph_node) %}
-  {% if elementary.get_count_of_period(training_period) != (elementary.get_count_of_period(training_period) | int) %}
-    {%- do elementary.edr_log_warning("Got a float number value in training_period count. Rounding it down...") -%}
-  {% endif %}
-
   {% if training_period %}
+    {% if elementary.get_count_of_period(training_period) != (elementary.get_count_of_period(training_period) | int) %}
+      {%- do elementary.edr_log_warning("Got a float number value in training_period count. Rounding it down...") -%}
+    {% endif %}
+
     {% if not training_period.period %}
       {{ return(training_period.count) }}
     {% endif %}
