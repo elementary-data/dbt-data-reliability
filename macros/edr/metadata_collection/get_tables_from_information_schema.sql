@@ -91,7 +91,7 @@
     {%- set database_name, schema_name = schema_tuple %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
 
-    {# 
+    {#
         Database only exists when using databricks with catalog (it is the catalog).
         When using databricks without catalog, it is none.
     #}

@@ -4,7 +4,7 @@
     {% set freshness_validation_query %}
         select distinct table_name
         from {{ alerts_relation }}
-        where sub_type = 'event_freshness' and detected_at >= {{ max_bucket_end }}
+        where sub_type = 'event_freshness' and detected_at >= {{elementary.edr_cast_as_timestamp(max_bucket_end) }}
     {% endset %}
 
     {% set results = elementary.result_column_to_list(freshness_validation_query) %}

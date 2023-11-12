@@ -17,7 +17,7 @@ select
   results.source_freshness_execution_id as alert_id,
   results.max_loaded_at,
   results.snapshotted_at,
-  results.generated_at as detected_at,
+  {{ elementary.edr_cast_as_timestamp("results.generated_at") }} as detected_at,
   results.max_loaded_at_time_ago_in_s,
   results.status,
   results.error,

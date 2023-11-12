@@ -87,5 +87,5 @@
 {% endmacro %}
 
 {% macro get_source_freshness_description() %}
-    {% do return("dbt source freshness validates if the data in a table is not updated by calculating if the time elapsed between the test execution to the latest record is above an acceptable SLA threshold.") %}
+    {% do return("Source freshness validates if the time elapsed between the test execution to the latest record is above an acceptable SLA threshold.") %}
 {% endmacro %}

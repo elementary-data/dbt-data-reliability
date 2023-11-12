@@ -22,3 +22,7 @@
 {% macro spark__get_relation_max_name_length(temporary, relation, sql_query) %}
     {{ return(127) }}
 {% endmacro %}
+
+{% macro athena__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {{ return(255) }}
+{% endmacro %}

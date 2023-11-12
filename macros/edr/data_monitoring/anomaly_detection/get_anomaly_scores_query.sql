@@ -36,8 +36,18 @@
     {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
-
-        with data_monitoring_metrics as (
+        {% if test_configuration.timestamp_column %}
+            with buckets as (
+                select edr_bucket_start, edr_bucket_end
+                from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start_expr,
+                                                         elementary.edr_quote(detection_end)) }}) results
+                where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start_expr) }}
+                  and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) }}
+            ),
+        {% else %}
+            with
+        {% endif %}
+        data_monitoring_metrics as (
 
             select
                 id,
@@ -54,9 +64,17 @@
                 dimension_value,
                 metric_properties
             from {{ data_monitoring_metrics_table }}
-            {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
+            -- We use bucket_end because non-timestamp tests have only bucket_end field.
             where
                 bucket_end > {{ min_bucket_start_expr }}
+                {% if test_configuration.timestamp_column %}
+                    -- For timestamped tests, verify that the bucket we got from the history is actually
+                    -- a valid one (this check is important for buckets that are not aligned with a day).
+                    -- Note - using concat because BQ can't handle IN with multiple values.
+                    and {{ elementary.edr_concat('bucket_start', 'bucket_end') }} in (
+                        select {{ elementary.edr_concat('edr_bucket_start', 'edr_bucket_end') }} from buckets
+                    )
+                {% endif %}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
@@ -175,8 +193,8 @@
                 end as anomaly_score,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
-                bucket_start,
-                bucket_end,
+                {{ elementary.edr_cast_as_timestamp('bucket_start') }} as bucket_start,
+                {{ elementary.edr_cast_as_timestamp('bucket_end') }} as bucket_end,
                 bucket_seasonality,
                 metric_value,
                 
@@ -193,8 +211,8 @@
                 training_avg,
                 training_stddev,
                 training_set_size,
-                training_start,
-                training_end,
+                {{ elementary.edr_cast_as_timestamp('training_start') }} as training_start,
+                {{ elementary.edr_cast_as_timestamp('training_end') }} as training_end,
                 dimension,
                 dimension_value
             from time_window_aggregation

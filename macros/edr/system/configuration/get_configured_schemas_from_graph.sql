@@ -16,7 +16,7 @@
         {% for schema_tuple in configured_schemas %}
             {% set database_name = schema_tuple[0] %}
             {% set schema_name = schema_tuple[1] %}
-            {% if adapter.check_schema_exists(database_name, schema_name) %}
+            {% if elementary.schema_exists(database_name, schema_name) %}
                 {% do existing_schemas.append(schema_tuple) %}
             {% endif %}
         {% endfor %}
