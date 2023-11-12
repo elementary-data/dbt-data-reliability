@@ -26,3 +26,4 @@ models:
 
   elementary:
     +schema: elementary
+    +enabled: "{{ var('elementary_enabled', True) }}"

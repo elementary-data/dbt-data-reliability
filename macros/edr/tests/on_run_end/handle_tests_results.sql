@@ -17,11 +17,11 @@
       {% do elementary.clean_elementary_test_tables() %}
     {% endif %}
     {% if test_result_rows %}
-      {% set test_result_rows_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='test_result_rows') %}
+      {% set test_result_rows_relation = elementary.get_elementary_relation('test_result_rows') %}
       {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
     {% endif %}
     {% if elementary_test_results %}
-      {% set elementary_test_results_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='elementary_test_results') %}
+      {% set elementary_test_results_relation = elementary.get_elementary_relation('elementary_test_results') %}
       {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
     {% endif %}
     {% do elementary.file_log("Handled test results successfully.") %}
@@ -68,7 +68,7 @@
       {% do return(none) %}
     {% endif %}
 
-    {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='data_monitoring_metrics') -%}
+    {%- set target_relation = elementary.get_elementary_relation('data_monitoring_metrics') -%}
     {% if not target_relation %}
       {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
     {% endif %}
@@ -124,7 +124,7 @@
       {% do return(none) %}
     {% endif %}
 
-    {%- set target_relation = adapter.get_relation(database=database_name, schema=schema_name, identifier='schema_columns_snapshot') -%}
+    {%- set target_relation = elementary.get_elementary_relation('schema_columns_snapshot') -%}
     {% if not target_relation %}
       {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
     {% endif %}

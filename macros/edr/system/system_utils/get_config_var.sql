@@ -33,6 +33,8 @@
     'disable_run_results': false,
     'disable_tests_results': false,
     'disable_dbt_artifacts_autoupload': false,
+    'disable_dbt_columns_autoupload': false,
+    'upload_only_columns_with_descriptions': false,
     'disable_dbt_invocation_autoupload': false,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
@@ -44,7 +46,6 @@
     'edr_monitors': elementary.get_default_monitors(),
     'long_string_size': 65535,
     'collect_model_sql': true,
-    'model_sql_max_size': 10240,
     'query_max_size': 1000000,
     'insert_rows_method': 'max_query_size',
     'upload_artifacts_method': 'diff',
@@ -58,7 +59,6 @@
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
     'collect_metrics': true,
-    'upload_dbt_columns': false,
     'clean_elementary_temp_tables': true,
     'force_metrics_backfill': false,
     'ignore_small_changes': {
@@ -66,12 +66,19 @@
       'drop_failure_percent_threshold': none
     },
     'include_other_warehouse_specific_columns': false,
-    'fail_on_zero': false
+    'fail_on_zero': false,
+    'anomaly_exclude_metrics': none
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro bigquery__get_default_config() -%}
+    {% set default_config = elementary.default__get_default_config() %}
+    {% do default_config.update({'query_max_size': 250000}) %}
+    {{- return(default_config) -}}
+{%- endmacro -%}
+
+{%- macro athena__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({'query_max_size': 250000}) %}
     {{- return(default_config) -}}

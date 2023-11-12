@@ -76,16 +76,16 @@ case when
         {# when there is an anomaly we would want to use the last value of the metric (lag), otherwise visually the expectations would look out of bounds #}
         case
         when is_anomalous = TRUE and '{{ test_configuration.anomaly_direction }}' = 'spike' then
-         lag(metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+         lag(metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
         when is_anomalous = TRUE and '{{ test_configuration.anomaly_direction }}' != 'spike' then
-         lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+         lag(min_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
         when '{{ test_configuration.anomaly_direction }}' = 'spike' then metric_value
         else min_metric_value end as min_value,
         case
         when is_anomalous = TRUE and '{{ test_configuration.anomaly_direction }}' = 'drop' then
-         lag(metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+         lag(metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
         when is_anomalous = TRUE and '{{ test_configuration.anomaly_direction }}' != 'drop' then
-         lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value order by bucket_end)
+         lag(max_metric_value) over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
         when '{{ test_configuration.anomaly_direction }}' = 'drop' then metric_value
         else max_metric_value end as max_value,
         bucket_start as start_time,

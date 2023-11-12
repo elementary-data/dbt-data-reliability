@@ -6,9 +6,10 @@
     - https://github.com/dbt-labs/dbt-core/blob/6130a6e1d0d29b257fbcd1b17fcd730383d73ce0/core/dbt/context/providers.py#L1319
 #}
 
-
-{% materialization table, default %}
-  {% set relations = dbt.materialization_table_default.call_macro() %}
+{% macro materialize_table(adapter_name) %}
+  {% set original_name = 'materialization_table_' ~ adapter_name %}
+  {% set original = dbt.get(original_name, dbt.materialization_table_default) %}
+  {% set relations = original.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
   {% endif %}
@@ -16,43 +17,35 @@
   {% set metrics = elementary.query_metrics() %}
   {% do elementary.cache_metrics(metrics) %}
   {% do return(relations) %}
+{% endmacro %}
+
+
+{% materialization table, default %}
+  {% do return(elementary.materialize_table.call_macro('default')) %}
 {% endmaterialization %}
 
 {% materialization table, adapter="snowflake", supported_languages=["sql", "python"] %}
-  {% set relations = dbt.materialization_table_snowflake.call_macro() %}
-  {% if not elementary.is_elementary_enabled() %}
-    {% do return(relations) %}
-  {% endif %}
-
-  {% set metrics = elementary.query_metrics() %}
-  {% do elementary.cache_metrics(metrics) %}
-  {% do return(relations) %}
+  {% do return(elementary.materialize_table.call_macro('snowflake')) %}
 {% endmaterialization %}
 
 {% materialization table, adapter="bigquery", supported_languages=["sql", "python"] %}
-  {% set relations = dbt.materialization_table_bigquery.call_macro() %}
-  {% if not elementary.is_elementary_enabled() %}
-    {% do return(relations) %}
-  {% endif %}
-
-  {% set metrics = elementary.query_metrics() %}
-  {% do elementary.cache_metrics(metrics) %}
-  {% do return(relations) %}
+  {% do return(elementary.materialize_table.call_macro('bigquery')) %}
 {% endmaterialization %}
 
 {% materialization table, adapter="spark", supported_languages=["sql", "python"] %}
-  {% set relations = dbt.materialization_table_spark.call_macro() %}
-  {% if not elementary.is_elementary_enabled() %}
-    {% do return(relations) %}
-  {% endif %}
-
-  {% set metrics = elementary.query_metrics() %}
-  {% do elementary.cache_metrics(metrics) %}
-  {% do return(relations) %}
+  {% do return(elementary.materialize_table.call_macro('spark')) %}
 {% endmaterialization %}
 
 {% materialization table, adapter="databricks", supported_languages=["sql", "python"] %}
-  {% set relations = dbt.materialization_table_databricks.call_macro() %}
+  {% do return(elementary.materialize_table.call_macro('databricks')) %}
+{% endmaterialization %}
+
+{% materialization table, adapter="redshift", supported_languages=["sql", "python"] %}
+  {% do return(elementary.materialize_table.call_macro('redshift')) %}
+{% endmaterialization %}
+
+{% materialization table, adapter="athena", supported_languages=["sql"] %}
+  {% set relations = dbt.materialization_table_athena.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
   {% endif %}
