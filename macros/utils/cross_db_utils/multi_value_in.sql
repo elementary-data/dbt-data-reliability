@@ -19,10 +19,6 @@
 
 {%- macro bigquery__edr_multi_value_in(source_cols, target_cols, target_table) -%}
     -- BigQuery doesn't support multi-value IN, so we emulate it with CONCAT
-    {% do return(elementary.multi_value_in_with_concat(source_cols, target_cols, target_table)) %}
-{%- endmacro -%}
-
-{%- macro multi_value_in_with_concat(source_cols, target_cols, target_table) -%}
     concat(
         {%- for val in source_cols -%}
             {{ elementary.edr_cast_as_string(val) -}}
