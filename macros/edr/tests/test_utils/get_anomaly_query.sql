@@ -65,8 +65,7 @@ case when
                 }}
               )
             ) and
-            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }} and
-            training_set_size >= {{ test_configuration.min_training_set_size }}
+            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
       )
