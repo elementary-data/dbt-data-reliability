@@ -1,4 +1,8 @@
 {% macro detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) %}
+  {% if elementary.get_count_of_period(detection_period) != (elementary.get_count_of_period(detection_period) | int) %}
+    {%- do elementary.edr_log_warning("Got a float number value in detection_period count. Rounding it down...") -%}
+  {% endif %}
+
   {% if detection_period %}
     {% if not detection_period.period %}
       {{ return(detection_period.count) }}
@@ -11,6 +15,10 @@
 {% endmacro %}
 
 {% macro training_period_to_days_back(training_period, days_back, model_graph_node) %}
+  {% if elementary.get_count_of_period(training_period) != (elementary.get_count_of_period(training_period) | int) %}
+    {%- do elementary.edr_log_warning("Got a float number value in training_period count. Rounding it down...") -%}
+  {% endif %}
+
   {% if training_period %}
     {% if not training_period.period %}
       {{ return(training_period.count) }}
@@ -26,17 +34,17 @@
   {{ return({'period': period, 'count': count}) }}
 {% endmacro %}
 
-{% macro get_unit_of_period(period) %}
-  {{ return(period.period) }}
+{% macro get_unit_of_period(period_dict) %}
+  {{ return(period_dict.period) }}
 {% endmacro %}
 
-{% macro get_count_of_period(period) %}
-  {{ return(period.count) }}
+{% macro get_count_of_period(period_dict) %}
+  {{ return(period_dict.count) }}
 {% endmacro %}
 
-{% macro convert_period(period, convert_to) %}
-    {% set convert_from = elementary.get_unit_of_period(period) %}
-  {% set period_count = elementary.get_count_of_period(period) %}
+{% macro convert_period(period_dict, convert_to) %}
+  {% set convert_from = elementary.get_unit_of_period(period_dict) %}
+  {% set period_count = elementary.get_count_of_period(period_dict) %}
   
   {% if convert_from == 'week' %}
     {% if convert_to == 'day' %}
@@ -77,16 +85,4 @@
 
   {% set period_count = period_count | int %}
   {{ return({'period': convert_to, 'count': period_count}) }}
-{% endmacro %}
-
-{% macro months_to_days(count_of_months, end_datetime) %}
-  {% set diff = value %}
-  {{ return(end_datetime - modules.datetime.timedelta(months=count_of_months)) }}
-{% endmacro %}
-
-{% macro check() %}
-  {{ log("### Start Check ###", true) }}
-  {# {{ log(get_count_of_period({"count": 4}), true) }} #}
-  {{ log(convert_period({"period": "month", "count": 1}, "day"), true) }}
-  {{ log("### End Check ###", true) }}
 {% endmacro %}
