@@ -334,8 +334,21 @@ def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="day",
+    period="day",
+    fail_value=4,
+    pass_value=1,
+)
+@Parametrization.case(
+    name="hour",
+    period="hour",
+    fail_value=4 * 24,
+    pass_value=24,
+)
 def test_anomalyless_table_volume_anomalies_periods_params(
-    test_id: str, dbt_project: DbtProject
+    test_id: str, dbt_project: DbtProject, period: str, fail_value: int, pass_value: int
 ):
     utc_today = datetime.utcnow().date() - timedelta(days=4)
     data = [
@@ -347,11 +360,14 @@ def test_anomalyless_table_volume_anomalies_periods_params(
     test_args = {
         **DBT_TEST_ARGS,
         "training_period": {"period": "day", "count": 30},
-        "detection_period": {"period": "day", "count": 1},
+        "detection_period": {"period": period, "count": pass_value},
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "pass"
 
-    test_args = {**test_args, "detection_period": {"period": "day", "count": 4}}
+    test_args = {
+        **test_args,
+        "detection_period": {"period": period, "count": fail_value},
+    }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
