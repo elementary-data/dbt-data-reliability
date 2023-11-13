@@ -51,8 +51,8 @@ def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
 
 
 def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
-    # To avoid races, set the "custom_started_at" to the beginning of the hour
-    test_started_at = datetime.utcnow().replace(minute=0, second=0)
+    # To avoid races, set the "custom_started_at" to the beginning of the day
+    test_started_at = datetime.utcnow().replace(hour=0, minute=0, second=0)
 
     anomaly_date = test_started_at - timedelta(days=1)
     data = [

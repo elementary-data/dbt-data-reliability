@@ -73,7 +73,7 @@
                     {%- endif -%}
                 {%- endfor -%}
             {%- else -%}
-                {%- do elementary.edr_log("Warning - missing meta property for the exposure: " ~ exposure['name'] ~ ", We're not able to verify the column level dependencies of this exposure") -%}
+                {%- do elementary.edr_log_warning("missing meta property for the exposure: " ~ exposure['name'] ~ ", We're not able to verify the column level dependencies of this exposure") -%}
             {%- endif -%}
         {%- endfor -%}
         {%- if invalid_exposures | length > 0 -%}

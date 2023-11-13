@@ -77,3 +77,24 @@
     {%- else %}
         {{ return([]) }}
     {%- endif %}
+    
+{% endmacro %}
+
+
+{% macro athena__data_type_list(data_type) %}
+
+    {% set string_list = ['string', 'varchar', 'char'] | list %}
+    {% set numeric_list = ['int','integer','bigint','smallint','tinyint','float','real','double','decimal'] | list %}
+    {% set timestamp_list = ['timestamp','date'] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}

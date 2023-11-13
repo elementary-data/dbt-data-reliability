@@ -54,7 +54,9 @@ def test_exclude_specific_dates(
     )
     assert test_result["status"] == "pass"
 
-    excluded_dates_str = ", ".join([f"'{cur_date}'" for cur_date in exclude_dates])
+    excluded_dates_str = ", ".join(
+        [f"cast('{cur_date}' as date)" for cur_date in exclude_dates]
+    )
     test_args = {
         **DBT_TEST_ARGS,
         "anomaly_exclude_metrics": f"metric_date in ({excluded_dates_str})",
@@ -100,7 +102,10 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
     excluded_buckets_str = ", ".join(
-        ["'%s'" % cur_ts.strftime(DATE_FORMAT) for cur_ts in excluded_buckets]
+        [
+            "cast('%s' as timestamp)" % cur_ts.strftime(DATE_FORMAT)
+            for cur_ts in excluded_buckets
+        ]
     )
     test_args = {
         **DBT_TEST_ARGS,
@@ -144,7 +149,7 @@ def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
 
     test_args = {
         **DBT_TEST_ARGS,
-        "anomaly_exclude_metrics": f"metric_date >= '{start_date}' and metric_date <= '{end_date}'",
+        "anomaly_exclude_metrics": f"metric_date >= cast('{start_date}' as date) and metric_date <= cast('{end_date}' as date)",
         "days_back": 30,
     }
     test_result = dbt_project.test(
@@ -176,7 +181,7 @@ def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
 
     test_args = {
         **DBT_TEST_ARGS,
-        "anomaly_exclude_metrics": f"metric_date < '{test_date}' and metric_value >= 5",
+        "anomaly_exclude_metrics": f"metric_date < cast('{test_date}' as date) and metric_value >= 5",
         "days_back": 30,
     }
     test_result = dbt_project.test(
