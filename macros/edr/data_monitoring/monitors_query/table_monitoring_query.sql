@@ -4,7 +4,7 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     with monitored_table as (
-        select * from {{ monitored_table }}
+        select timestamp_column from {{ monitored_table }}
         {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
 
