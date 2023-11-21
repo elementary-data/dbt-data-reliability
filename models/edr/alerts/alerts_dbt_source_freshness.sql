@@ -11,7 +11,7 @@ with results as (
 
 sources as (
   select * from {{ ref('dbt_sources') }}
-)
+),
 
 select
   results.source_freshness_execution_id as alert_id,
@@ -33,7 +33,10 @@ select
   sources.meta,
   sources.owner,
   sources.package_name,
-  sources.path
+  sources.path,
+  null as freshness_error_after,
+  null as freshness_warn_after,
+  null as freshness_filter
 from results
 join sources on results.unique_id = sources.unique_id
 where {{ not elementary.get_config_var('disable_source_freshness_alerts') }} and lower(status) != 'pass'
