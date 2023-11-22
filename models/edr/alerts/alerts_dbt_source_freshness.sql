@@ -11,7 +11,7 @@ with results as (
 
 sources as (
   select * from {{ ref('dbt_sources') }}
-),
+)
 
 select
   results.source_freshness_execution_id as alert_id,
