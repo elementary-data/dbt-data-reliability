@@ -23,6 +23,8 @@
             where
                 {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
                 and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} < (select max(edr_bucket_end) from buckets)
+                {# To avoid adding buckets before the table first timestamp #}
+                and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min({{ elementary.edr_cast_as_timestamp(timestamp_column) }}) from monitored_table)
         ),
     {% endif %}
 

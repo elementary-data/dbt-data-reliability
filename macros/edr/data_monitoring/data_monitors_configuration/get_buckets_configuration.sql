@@ -1,3 +1,4 @@
+-- TODO: This might be a bug as the detection end can be an end of an unfull bucket
 {% macro get_detection_end(detection_delay) %}
     {%- set kwargs = {detection_delay.period+'s': detection_delay.count} %}
     {%- set detection_end = elementary.get_run_started_at() - modules.datetime.timedelta(**kwargs) %}
@@ -48,18 +49,21 @@
         )
         select
              days_back_start as min_bucket_start,
-             {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start') }} {# Add full buckets to last_max_bucket_end #}
+             {# Add full buckets to last_max_bucket_end #}
+             {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start') }}
         as max_bucket_end
         from full_buckets_calc
     {%- endset %}
 
     {%- set incremental_bucket_times_query %}
+        {# Every full bucket within the days_back, regardless of collected metrics and table content #}
         with all_buckets as (
             select edr_bucket_start as bucket_start, edr_bucket_end as bucket_end
             from ({{ elementary.complete_buckets_cte(metric_properties, trunc_min_bucket_start_expr, detection_end_expr) }}) results
             where edr_bucket_start >= {{ trunc_min_bucket_start_expr }}
             and edr_bucket_end <= {{ detection_end_expr }}
         ),
+        {# Buckets with metrics that were allready collected in previous runs of the test #}
         buckets_with_existing_metrics as (
             select distinct bucket_start, bucket_end
             from {{ data_monitoring_metrics_relation }}
@@ -74,6 +78,7 @@
             and upper(column_name) = upper('{{ column_name }}')
             {%- endif %}
         ),
+        {# Buckets without collected metrics #}
         missing_bucket_starts as (
             select all_buckets.bucket_start
             from all_buckets
