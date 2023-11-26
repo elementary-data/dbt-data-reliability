@@ -63,7 +63,7 @@
             where edr_bucket_start >= {{ trunc_min_bucket_start_expr }}
             and edr_bucket_end <= {{ detection_end_expr }}
         ),
-        {# Buckets with metrics that were allready collected in previous runs of the test #}
+        {# Buckets with metrics that were already collected in previous runs of the test #}
         buckets_with_existing_metrics as (
             select distinct bucket_start, bucket_end
             from {{ data_monitoring_metrics_relation }}
