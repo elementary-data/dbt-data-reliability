@@ -4,7 +4,7 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     with monitored_table as (
-       {{ get_monitored_table_query(monitored_table, metric_properties, timestamp_column, min_bucket_start) }}
+       {{ elementary.get_monitored_table_query(monitored_table, metric_properties, timestamp_column, min_bucket_start) }}
     ),
 
     {% if timestamp_column %}
