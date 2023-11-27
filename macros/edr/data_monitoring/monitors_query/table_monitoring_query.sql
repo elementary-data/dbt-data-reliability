@@ -4,7 +4,8 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     with monitored_table as (
-       {{ elementary.get_monitored_table_query(monitored_table, metric_properties, timestamp_column, min_bucket_start) }}
+        select * from {{ monitored_table }}
+        {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
     ),
 
     {% if timestamp_column %}
@@ -92,22 +93,6 @@
         metric_properties
     from metrics_final
 
-{% endmacro %}
-
-{% macro get_monitored_table_query(monitored_table, metric_properties, timestamp_column, min_bucket_start) %}
-    select
-        {%- if timestamp_column %}
-            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as {{ timestamp_column }}
-        {%- else %}
-            *
-        {%- endif %}
-        {%- if metric_properties.event_timestamp_column %}
-            , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as {{ metric_properties.event_timestamp_column }}
-        {%- endif %}
-    from {{ monitored_table }}
-    where 1=1
-    {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
-    {% if timestamp_column %} and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }} {% endif %}
 {% endmacro %}
 
 {% macro get_unified_metrics_query(metrics, metric_properties) %}
