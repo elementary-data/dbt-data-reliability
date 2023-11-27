@@ -199,14 +199,14 @@
         {%- set freshness_column = metric_properties.timestamp_column %}
     {%- endif %}
 
-    {#- get ordered consecutive update timestamps in the source data #}
+    -- get ordered consecutive update timestamps in the source data
     with unique_timestamps as (
         select distinct {{ elementary.edr_cast_as_timestamp(freshness_column) }} as timestamp_val
         from monitored_table
         order by 1
     ),
 
-    {#- compute freshness for every update as the time difference from the previous update #}
+    -- compute freshness for every update as the time difference from the previous update
     consecutive_updates_freshness as (
         select
             timestamp_val as update_timestamp,
@@ -215,7 +215,7 @@
         where timestamp_val >= (select min(edr_bucket_start) from buckets)
     ),
 
-    {#- divide the freshness metrics above to buckets #}
+    -- divide the freshness metrics above to buckets
     bucketed_consecutive_updates_freshness as (
         select
             edr_bucket_start, edr_bucket_end, update_timestamp, freshness
@@ -223,8 +223,8 @@
         where update_timestamp >= edr_bucket_start AND update_timestamp < edr_bucket_end
     ),
 
-    {#- we also want to record the freshness at the end of each bucket as an additional point. By this we mean #}
-    {#- the time that passed since the last update in the bucket and the end of the bucket. #}
+    -- we also want to record the freshness at the end of each bucket as an additional point. By this we mean
+    -- the time that passed since the last update in the bucket and the end of the bucket.
     bucket_end_freshness as (
         select
             edr_bucket_start,
@@ -236,15 +236,15 @@
         group by 1,2
     ),
 
-    {#- create a single table with all the freshness values #}
+    -- create a single table with all the freshness values
     bucket_all_freshness_metrics as (
         select * from bucketed_consecutive_updates_freshness
         union all
         select * from bucket_end_freshness
     ),
 
-    {#- get all the freshness values, ranked by size (we use partition by and not group by, because we also want to have #}
-    {#- the associated timestamp as source value) #}
+    -- get all the freshness values, ranked by size (we use partition by and not group by, because we also want to have
+    -- the associated timestamp as source value)
     bucket_freshness_ranked as (
         select
             *,
