@@ -34,6 +34,9 @@
         {{ elementary.get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str) }}
     {%- elif table_monitors == ["row_count"]  %}
         {{ elementary.get_no_timestamp_volume_query(monitored_table, metric_properties, full_table_name_str) }}
+    {%- elif table_monitors == ["event_freshness"]  %}
+        {# Event freshness with only event_timestamp and not update_timestamp #}
+        {{ elementary.get_timestamp_table_query(monitored_table, metric_properties, metric_properties.event_timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str) }}
     {%- else %}
         {% do exceptions.raise_compiler_error("freshness_anomalies test is not supported without timestamp_column.") %}
         {# TODO: We can enhance this test for models to use model_run_results in case a timestamp column is not defined #}
@@ -71,7 +74,7 @@
     with monitored_table as (
         select
             {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as {{ timestamp_column }}
-            {%- if metric_properties.event_timestamp_column %}
+            {%- if metric_properties.timestamp_column and metric_properties.event_timestamp_column %}
             , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as {{ metric_properties.event_timestamp_column }}
             {%- endif %}
         from {{ monitored_table }}
