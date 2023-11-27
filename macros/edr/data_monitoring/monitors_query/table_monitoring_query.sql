@@ -75,8 +75,8 @@
             , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as {{ metric_properties.event_timestamp_column }}
             {%- endif %}
         from {{ monitored_table }}
-        {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
-
+        where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+        {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
     ),
 
     buckets as (
