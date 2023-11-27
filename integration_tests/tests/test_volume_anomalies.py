@@ -79,24 +79,33 @@ def test_volume_anomalies_with_where_parameter(
 
 
 def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProject):
-    now = datetime.utcnow()
+    now = datetime.utcnow() - timedelta(hours=2)
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
         for cur_date in generate_dates(
-            base_date=now, step=timedelta(hours=1), days_back=2
+            base_date=now, step=timedelta(hours=1), days_back=7
         )
         if cur_date < now - timedelta(hours=1)
     ]
-    # This is a bug in the dbt package. The test should pass, but it fails.
-    # test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    # assert test_result["status"] == "pass"
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_vars={"days_back": 7}
+    )
+    assert test_result["status"] == "pass"
 
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "hour", "count": 1},
-        "days_back": 1,
+        "days_back": 2,
     }
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_vars={
+            "custom_run_started_at": now.isoformat(),
+        },
+    )
     assert test_result["status"] == "fail"
 
 
