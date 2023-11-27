@@ -1,3 +1,4 @@
+import pytest
 from dbt_project import DbtProject
 
 REGULAR_SOURCE = {
@@ -44,6 +45,7 @@ NON_EXISTING_DATABASE_SOURCE = {
 }
 
 
+@pytest.mark.skip_targets(["athena", "databricks"])
 def test_information_schema_columns(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [REGULAR_SOURCE]}
     with dbt_project.write_yaml(sources):
@@ -51,6 +53,7 @@ def test_information_schema_columns(dbt_project: DbtProject):
         assert success
 
 
+@pytest.mark.skip_targets(["athena", "databricks"])
 def test_information_schema_non_existing_schema(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [NON_EXISTING_SCHEMA_SOURCE]}
     with dbt_project.write_yaml(sources):
@@ -58,6 +61,7 @@ def test_information_schema_non_existing_schema(dbt_project: DbtProject):
         assert success
 
 
+@pytest.mark.skip_targets(["athena", "databricks"])
 def test_information_schema_non_existing_database(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [NON_EXISTING_DATABASE_SOURCE]}
     with dbt_project.write_yaml(sources):

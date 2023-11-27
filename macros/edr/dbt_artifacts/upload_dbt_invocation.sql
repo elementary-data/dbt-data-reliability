@@ -43,10 +43,33 @@
       'job_url': elementary.get_job_url(orchestrator, job_id),
       'job_run_url': elementary.get_job_run_url(orchestrator, job_id, job_run_id),
       'account_id': elementary.get_var("account_id", ["DBT_ACCOUNT_ID"]),
+      'target_adapter_specific_fields': elementary.get_target_adapter_specific_fields()
   } %}
   {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
   {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
+
+
+{% macro get_target_adapter_specific_fields() %}
+    {{ return(adapter.dispatch('get_target_adapter_specific_fields', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__get_target_adapter_specific_fields() %}
+    {{ return('') }}
+{% endmacro %}
+
+{% macro databricks__get_target_adapter_specific_fields() %}
+    {{ return({"http_path": target.http_path}) }}
+{% endmacro %}
+
+{% macro snowflake__get_target_adapter_specific_fields() %}
+    {{ return({"warehouse": target.warehouse, "user": target.user, "role": target.role}) }}
+{% endmacro %}
+
+{% macro postgres__get_target_adapter_specific_fields() %}
+    {{ return({"user": target.user}) }}
+{% endmacro %}
+
 
 {% macro get_project_name() %}
     {% set project_name = elementary.get_config_var("project_name") %}
@@ -214,6 +237,7 @@
       ('dbt_user', 'string'),
       ('job_url', 'string'),
       ('job_run_url', 'string'),
-      ('account_id', 'string')
+      ('account_id', 'string'),
+      ('target_adapter_specific_fields', 'long_string')
     ])) }}
 {% endmacro %}

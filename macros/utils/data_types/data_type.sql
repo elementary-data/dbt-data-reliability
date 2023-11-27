@@ -51,6 +51,11 @@
     {% do return("string") %}
 {% endmacro %}
 
+{% macro athena__edr_type_string() %}
+    {% do return("varchar") %}
+{% endmacro %}
+
+
 
 
 {%- macro edr_type_long_string() -%}
@@ -101,6 +106,10 @@
 
 
 {% macro edr_type_timestamp() %}
+    {{ return(adapter.dispatch('edr_type_timestamp', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__edr_type_timestamp() %}
     {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
@@ -124,4 +133,14 @@
 
 {% macro default__edr_type_date() %}
     date
+{% endmacro %}
+
+{% macro athena__edr_type_timestamp() %}
+  {%- set config = model.get('config', {}) -%}
+  {%- set table_type = config.get('table_type', 'hive') -%}
+  {%- if table_type == 'iceberg' -%}
+    timestamp(6)
+  {%- else -%}
+    timestamp
+  {%- endif -%}
 {% endmacro %}

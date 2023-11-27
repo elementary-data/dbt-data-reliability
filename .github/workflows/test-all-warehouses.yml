@@ -49,11 +49,15 @@ jobs:
             redshift,
             databricks,
             databricks_catalog,
+            athena,
           ]
         include:
           # If we're not running on a specific dbt version, then always add postgres on 1.3.0
           - dbt-version: "${{ inputs.dbt-version || '1.3.0' }}"
             warehouse-type: postgres
+        exclude:
+          - dbt-version: "1.3.0"
+            warehouse-type: athena
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}

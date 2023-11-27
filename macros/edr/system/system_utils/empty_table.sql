@@ -93,13 +93,12 @@
 {% macro empty_table(column_name_and_type_list) %}
 
     {%- set empty_table_query -%}
-        with empty_table as (
+        select * from (
             select
             {% for column in column_name_and_type_list %}
                 {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
             {%- endfor %}
-            )
-        select * from empty_table
+        ) as empty_table
         where 1 = 0
     {%- endset -%}
 
