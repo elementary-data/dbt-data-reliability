@@ -5,14 +5,18 @@
         {% do return("") %}
       {% endif %}
 
+      {# comment
       {% if flags.WHICH in ['run', 'build'] %}
         {% do elementary.insert_metrics() %}
       {% endif %}
+      #}
 
+      {# Update metadata for all dbt artifacts. #}
       {% if not elementary.get_config_var('disable_dbt_artifacts_autoupload') %}
         {% do elementary.upload_dbt_artifacts() %}
       {% endif %}
 
+      {# Update run results of dbt invocations. #}
       {% if not elementary.get_config_var('disable_run_results') %}
         {% do elementary.upload_run_results() %}
       {% endif %}
@@ -21,6 +25,7 @@
         {% do elementary.handle_tests_results() %}
       {% endif %}
 
+      {# Attributes associated with each dbt invocation. #}
       {% if not elementary.get_config_var('disable_dbt_invocation_autoupload') %}
         {% do elementary.upload_dbt_invocation() %}
       {% endif %}

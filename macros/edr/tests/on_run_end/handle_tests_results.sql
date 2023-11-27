@@ -74,40 +74,73 @@
     {% endif %}
 
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
-    {% set insert_query %}
-      INSERT INTO {{ target_relation }} (
-        id,
-        full_table_name,
-        column_name,
-        metric_name,
-        metric_value,
-        source_value,
-        bucket_start,
-        bucket_end,
-        bucket_duration_hours,
-        updated_at,
-        dimension,
-        dimension_value,
-        metric_properties,
-        created_at
-      )
-      SELECT
-        id,
-        full_table_name,
-        column_name,
-        metric_name,
-        metric_value,
-        source_value,
-        bucket_start,
-        bucket_end,
-        bucket_duration_hours,
-        updated_at,
-        dimension,
-        dimension_value,
-        metric_properties,
-        {{ elementary.edr_current_timestamp() }} as created_at
-      FROM {{ temp_relation }}
-    {% endset %}
+
+    {% if elementary.get_config_var("insert_rows_method") == "gcp-cloud-function" %}
+        {{ elementary.file_log("Sending to UDF") }}
+        {% set log_udf_name = "`" + elementary.get_config_var("insert_rows_udf") + "`" %}
+        {% set insert_query %}
+            SELECT {{ log_udf_name }} (
+                '{{ elementary.get_config_var("insert_rows_topics")["data_monitoring_metrics"] }}',
+                TO_JSON_STRING(
+                    STRUCT(
+                        id,
+                        COALESCE(full_table_name, '') AS full_table_name,
+                        COALESCE(column_name, '') AS column_name,
+                        COALESCE(metric_name, '') AS metric_name,
+                        metric_value,
+                        COALESCE(source_value, '') AS source_value,
+                        bucket_start,
+                        bucket_end,
+                        bucket_duration_hours,
+                        updated_at,
+                        COALESCE(dimension, '') AS dimension,
+                        COALESCE(dimension_value, '') AS dimension_value,
+                        COALESCE(metric_properties, '') AS metric_properties,
+                        {{ elementary.edr_current_timestamp() }} as created_at
+                    )
+                ),
+                '{}'
+            )
+            FROM {{ temp_relation }}
+            ;
+        {% endset %}
+
+    {% else %}
+        {% set insert_query %}
+        INSERT INTO {{ target_relation }} (
+            id,
+            full_table_name,
+            column_name,
+            metric_name,
+            metric_value,
+            source_value,
+            bucket_start,
+            bucket_end,
+            bucket_duration_hours,
+            updated_at,
+            dimension,
+            dimension_value,
+            metric_properties,
+            created_at
+        )
+        SELECT
+            id,
+            full_table_name,
+            column_name,
+            metric_name,
+            metric_value,
+            source_value,
+            bucket_start,
+            bucket_end,
+            bucket_duration_hours,
+            updated_at,
+            dimension,
+            dimension_value,
+            metric_properties,
+            {{ elementary.edr_current_timestamp() }} as created_at
+        FROM {{ temp_relation }}
+        {% endset %}
+    {% endif %}
 
     {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
     {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
