@@ -5,12 +5,10 @@
         {% do return("") %}
       {% endif %}
 
-      {# comment
       {% if flags.WHICH in ['run', 'build'] %}
         {% do elementary.insert_metrics() %}
       {% endif %}
-      #}
-
+      
       {# Update metadata for all dbt artifacts. #}
       {% if not elementary.get_config_var('disable_dbt_artifacts_autoupload') %}
         {% do elementary.upload_dbt_artifacts() %}
