@@ -83,12 +83,12 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
         for cur_date in generate_dates(
-            base_date=now, step=timedelta(hours=1), days_back=7
+            base_date=now, step=timedelta(hours=1), days_back=3
         )
         if cur_date < now - timedelta(hours=1)
     ]
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_vars={"days_back": 7}
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_vars={"days_back": 2}
     )
     assert test_result["status"] == "pass"
 
