@@ -84,6 +84,10 @@ jobs:
         if: inputs.warehouse-type == 'spark'
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
+      - name: Install compatible databricks connector (not limited in older dbt-databricks versions)
+        if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
+        run: pip install databricks-sql-connector==2.9.3
+
       - name: Install dbt
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
