@@ -98,7 +98,7 @@
 
 
 {% macro materialize_test(materialization_macro) %}
-  {% if not elementary.is_elementary_enabled() or elementary.did_test_pass() %}
+  {% if not elementary.is_elementary_enabled() %}
     {% do return(materialization_macro()) %}
   {% endif %}
 
@@ -114,7 +114,7 @@
   {% do elementary.debug_log(test_unique_id ~ ": flattened test node") %}
   {% set test_type_handler = elementary.get_test_type_handler(flattened_test) %}
   {% set result = test_type_handler(flattened_test, materialization_macro) %}
-  {% do elementary.debug_log(test_unique_id ~ ": called " ~ test_type_handler) %}
+  {% do elementary.debug_log(test_unique_id ~ ": handler called by test type - " ~ elementary.get_test_type(flattened_test)) %}
   {% if elementary.get_config_var("calculate_failed_count") %}
     {% set failed_row_count = elementary.get_failed_row_count(flattened_test) %}
     {% if failed_row_count is not none %}
