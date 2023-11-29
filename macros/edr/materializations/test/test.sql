@@ -122,7 +122,7 @@
       {% do elementary.debug_log(test_unique_id ~ ": calculated failed row count") %}
     {% endif %}
   {% endif %}
-  {% do elementary.debug_log(test_unique_id ~ ": finished test materilization hook") %}
+  {% do elementary.debug_log(test_unique_id ~ ": finished test materialization hook") %}
   {% do return(result) %}
 {% endmacro %}
 
