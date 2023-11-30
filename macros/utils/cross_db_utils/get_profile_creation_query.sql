@@ -4,50 +4,80 @@
 
 
 {% macro snowflake__get_profile_creation_query(parameters) %}
-{%- set schema_tuples = elementary.get_configured_schemas_from_graph() -%}
-{%- set databases = schema_tuples | map(attribute=0) | unique %}
-CREATE OR REPLACE USER {{ parameters["user"] }} PASSWORD = '{{ parameters["password"] }}';
-CREATE OR REPLACE ROLE {{ parameters["role"] }};
-GRANT ROLE {{ parameters["role"] }} TO USER {{ parameters["user"] }};
-GRANT USAGE ON WAREHOUSE {{ parameters["warehouse"] }} TO ROLE {{ parameters["role"] }};
-{% for database in databases -%}
-GRANT USAGE,MONITOR ON DATABASE {{ database }} TO ROLE {{ parameters["role"] }};
-{%- endfor %}
-{% for schema_tuple in schema_tuples -%}
-GRANT USAGE,MONITOR ON SCHEMA {{ schema_tuple[0] }}.{{ schema_tuple[1] }} TO ROLE {{ parameters["role"] }};
-{%- endfor %}
+-- Set credentials as variables
+SET elementary_database = '{{ parameters["database"] }}';
+SET elementary_schema = '{{ parameters["schema"] }}';
+SET elementary_warehouse = '{{ parameters["warehouse"] }}';
+SET elementary_role = '{{ parameters["role"] }}';
+SET elementary_username = '{{ parameters["user"] }}';
+SET elementary_password = '{{ parameters["password"] }}';
+
+-- Account admin role required to set up permissions below
+USE ROLE ACCOUNTADMIN;
+
+-- Create elementary user and role
+CREATE OR REPLACE USER IDENTIFIER($elementary_username) PASSWORD = $elementary_password;
+CREATE OR REPLACE ROLE IDENTIFIER($elementary_role);
+GRANT ROLE IDENTIFIER($elementary_role) TO USER IDENTIFIER($elementary_username);
+
+-- Grant elementary role access to the supplied warehouse
+GRANT USAGE ON WAREHOUSE IDENTIFIER($elementary_warehouse) TO ROLE IDENTIFIER($elementary_role);
 
 -- Read access to elementary schema
-GRANT SELECT ON ALL TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
-GRANT SELECT ON FUTURE TABLES IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
-GRANT SELECT ON ALL VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
-GRANT SELECT ON FUTURE VIEWS IN SCHEMA {{ parameters["database"] }}.{{ parameters["schema"] }} TO ROLE {{ parameters["role"] }};
+SET elementary_schema_fqn = $elementary_database || '.' || $elementary_schema;
+GRANT SELECT ON ALL TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
+GRANT SELECT ON FUTURE TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
+GRANT SELECT ON ALL VIEWS IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
+GRANT SELECT ON FUTURE VIEWS IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 
--- Metadata access to rest of the schemas used within the dbt project
-{% for database, schema in schema_tuples -%}
-GRANT REFERENCES ON ALL TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
-GRANT REFERENCES ON FUTURE TABLES IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
-GRANT REFERENCES ON ALL VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
-GRANT REFERENCES ON FUTURE VIEWS IN SCHEMA {{ database }}.{{ schema }} TO ROLE {{ parameters["role"] }};
+-- Information schema access
+CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS(database_name STRING, role_name STRING)
+  RETURNS VARCHAR
+  LANGUAGE SQL
+  AS
+  $$
+    BEGIN
+      GRANT USAGE,MONITOR ON DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT USAGE,MONITOR ON ALL SCHEMAS IN DATABASE {{ database }} TO ROLE IDENTIFIER(:role_name);
+      GRANT USAGE,MONITOR ON FUTURE SCHEMAS IN DATABASE {{ database }} TO ROLE identifier(:role_name);
+
+      GRANT REFERENCES ON ALL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT REFERENCES ON ALL VIEWS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT REFERENCES ON ALL EXTERNAL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+
+      GRANT REFERENCES ON FUTURE TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT REFERENCES ON FUTURE VIEWS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT REFERENCES ON FUTURE EXTERNAL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+    END;
+  $$
+;
+
+{%- set databases = elementary.get_configured_databases_from_graph() %}
+{% for database in databases -%}
+CALL ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS('{{ database }}', $elementary_role);
 {% endfor %}
--- Query history views access
-GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE {{ parameters["role"] }};
-GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE {{ parameters["role"] }};
 
--- Query history access per warehouse (so Elementary can query history for queries ran by different warehouses)
-USE DATABASE {{ database }};
-CREATE OR REPLACE PROCEDURE GRANT_MONITOR_ON_ALL_WAREHOUSES(_ROLE VARCHAR) RETURNS VARCHAR
-    LANGUAGE javascript
-EXECUTE AS CALLER
-AS
-$$
-var all_warehouses = snowflake.createStatement({sqlText: `SHOW WAREHOUSES`}).execute();
-while(all_warehouses.next()) {
-  cur_warehouse = all_warehouses.getColumnValue("name");
-  snowflake.createStatement({ sqlText:`GRANT MONITOR ON WAREHOUSE ${cur_warehouse} TO ROLE ${_ROLE}`}).execute();
-}
-$$;
-CALL GRANT_MONITOR_ON_ALL_WAREHOUSES('{{ parameters["role"] }}');
+-- Query history access
+CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_QUERY_HISTORY_ACCESS(role_name STRING)
+  RETURNS VARCHAR
+  LANGUAGE SQL
+  AS
+  $$
+    BEGIN
+      GRANT DATABASE ROLE SNOWFLAKE.OBJECT_VIEWER TO ROLE IDENTIFIER(:role_name);
+      GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE IDENTIFIER(:role_name);
+      GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE IDENTIFIER(:role_name);
+
+      LET warehouses_rs RESULTSET := (SHOW WAREHOUSES);
+      LET warehouses_cur CURSOR FOR warehouses_rs;
+      FOR warehouse_row IN warehouses_cur DO
+        LET warehouse_name VARCHAR := warehouse_row."name";
+        GRANT MONITOR ON WAREHOUSE IDENTIFIER(:warehouse_name) TO ROLE IDENTIFIER(:role_name);
+      END FOR;
+    END;
+  $$
+;
+CALL ELEMENTARY_GRANT_QUERY_HISTORY_ACCESS($elementary_role);
 {% endmacro %}
 
 
