@@ -19,5 +19,5 @@
 {% endmacro %}
 
 {% macro not_missing_percent(column_name) %}
-    {{ elementary.edr_percent(elementary.row_count() - elementary.missing_count(column_name), elementary.row_count()) }}
+    {{ elementary.edr_not_percent(elementary.missing_count(column_name), elementary.row_count()) }}
 {% endmacro %}

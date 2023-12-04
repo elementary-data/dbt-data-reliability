@@ -7,5 +7,5 @@
 {% endmacro %}
 
 {% macro not_null_percent(column_name) %}
-    {{ elementary.edr_percent(elementary.row_count() - elementary.null_count(column_name), elementary.row_count()) }}
+    {{ elementary.edr_not_percent(elementary.null_count(column_name), elementary.row_count()) }}
 {% endmacro %}

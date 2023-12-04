@@ -19,7 +19,7 @@
 {% endmacro %}
 
 {% macro not_zero_percent(column_name) %}
-    {{ elementary.edr_percent(elementary.row_count() - elementary.zero_count(column_name), elementary.row_count()) }}
+    {{ elementary.edr_not_percent(elementary.zero_count(column_name), elementary.row_count()) }}
 {% endmacro %}
 
 {% macro standard_deviation(column_name) -%}
