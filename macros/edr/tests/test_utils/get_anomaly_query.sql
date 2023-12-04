@@ -118,18 +118,24 @@ case when
 {%- endmacro -%}
 
 {%- macro avg_percent_anomalous_condition(spike_failure_percent_threshold, drop_failure_percent_threshold, anomaly_direction) -%}
-  {% if spike_failure_percent_threshold and anomaly_direction | lower in ['spike', 'both'] %}
-    (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
-  {% else %}
-      (1 = 1)
-  {% endif %}
-
-  and
-
-  {% if drop_failure_percent_threshold and anomaly_direction | lower in ['drop', 'both'] %}
+  {% if spike_failure_percent_threshold and drop_failure_percent_threshold and (anomaly_direction | lower) == 'both' %}
+      (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
+      or
       (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
   {% else %}
-      (1 = 1)
+    {% if spike_failure_percent_threshold and anomaly_direction | lower in ['spike', 'both'] %}
+      (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
+    {% else %}
+        (1 = 1)
+    {% endif %}
+
+    and
+
+    {% if drop_failure_percent_threshold and anomaly_direction | lower in ['drop', 'both'] %}
+        (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
+    {% else %}
+        (1 = 1)
+    {% endif %}
   {% endif %}
 {%- endmacro -%}
 
