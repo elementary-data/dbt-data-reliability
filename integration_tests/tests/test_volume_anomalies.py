@@ -303,7 +303,7 @@ def test_volume_anomaly_static_data_spike(
     ] * metric_value
 
     # 30 new rows every day
-    # 35 new rows in the last day
+    # (metric_value) new rows in the last day
     # z-score ~ -3.6
 
     test_args = {
@@ -377,6 +377,31 @@ def test_anomalyless_table_volume_anomalies_periods_params(
     test_args = {
         **test_args,
         "detection_period": {"period": period, "count": fail_value},
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+
+def test_ignore_small_changes_both(test_id: str, dbt_project: DbtProject):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}] * 14
+
+    # 30 new rows every day
+    # 14 new rows in the last day, which is less than 50% of 30.
+    # Therefore test should fail.
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": 2,
+            "drop_failure_percent_threshold": 50,
+        },
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
