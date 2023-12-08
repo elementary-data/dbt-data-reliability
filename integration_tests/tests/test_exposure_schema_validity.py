@@ -142,6 +142,37 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 
 
 @pytest.mark.skip_targets(["spark"])
+def test_exposure_schema_validity_invalid_type_name_present_in_error(
+    test_id: str, dbt_project: DbtProject
+):
+    DBT_TEST_ARGS = {
+        "node": "models.exposures_test",
+        "columns": [{"name": "order_id", "dtype": "numeric", "data_type": "numeric"}],
+        "exposures": {
+            "ZOMG": {
+                "meta": {
+                    "referenced_columns": [
+                        {"column_name": "order_id", "data_type": "string"}
+                    ]
+                },
+                "url": "http://bla.com",
+                "name": "ZOMG",
+                "depends_on": {"nodes": ["models.exposures_test"]},
+            }
+        },
+    }
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, columns=[dict(name="bla")], as_model=True
+    )
+
+    assert (
+        "different data type for the column order_id string vs numeric"
+        in test_result["test_results_query"]
+    )
+    assert test_result["status"] == "fail"
+
+
+@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_correct_columns_and_missing_type(
     test_id: str, dbt_project: DbtProject
 ):
