@@ -1,6 +1,7 @@
 from copy import copy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from itertools import chain
 
 import pytest
 from data_generator import DATE_FORMAT, generate_dates
@@ -186,5 +187,37 @@ class TestFreshnessAnomalies:
         data.extend(fast_data)
         result = dbt_project.test(
             test_id, TEST_NAME, self._get_test_config(config), data=data
+        )
+        assert result["status"] == "pass"
+
+
+def test_first_metric_null(test_id, dbt_project: DbtProject):
+    config = dict(
+        timestamp_column=TIMESTAMP_COLUMN,
+        days_back=3,
+        backfill_days=2,
+        time_bucket=dict(period="day", count=1),
+        sensitivity=1,
+    )
+    new_data = list(
+        chain.from_iterable(
+            [
+                [
+                    {TIMESTAMP_COLUMN: datetime(2000, 1, d, h, 0).strftime(DATE_FORMAT)}
+                    for h in range(8, 23)
+                ]
+                for d in range(1, 6)
+            ]
+        )
+    )
+    for i in [3, 4]:
+        result = dbt_project.test(
+            test_id,
+            TEST_NAME,
+            config,
+            data=new_data,
+            test_vars={"custom_run_started_at": datetime(2000, 1, i).isoformat()},
+            as_model=True,
+            materialization="incremental",
         )
         assert result["status"] == "pass"
