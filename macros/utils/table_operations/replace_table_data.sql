@@ -9,9 +9,17 @@
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 
-{# Spark / Databricks - truncate and insert (non-atomic) #}
-{% macro spark__replace_table_data(relation, rows) %}
+{# Databricks - truncate and insert (non-atomic) #}
+{% macro databricks__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
+    {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
+{% endmacro %}
+
+{# Spark - truncate and insert (non-atomic) #}
+{% macro spark__replace_table_data(relation, rows) %}
+     {% call statement('truncate_relation') -%}
+        delete from {{ relation }} where 1=1
+      {%- endcall %}
     {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
 
@@ -29,4 +37,11 @@
     {% do elementary.run_query(query) %}
 
     {% do adapter.drop_relation(intermediate_relation) %}
+{% endmacro %}
+
+{% macro athena__replace_table_data(relation, rows) %}
+     {% call statement('truncate_relation') -%}
+        delete from {{ relation }}
+      {%- endcall %}
+    {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}

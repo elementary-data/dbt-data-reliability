@@ -46,7 +46,10 @@
     ('compile_completed_at', 'string'),
     ('execute_started_at', 'string'),
     ('execute_completed_at', 'string'),
-    ('invocation_id', 'string')
+    ('invocation_id', 'string'),
+    ('warn_after', 'string'),
+    ('error_after', 'string'),
+    ('filter', 'long_string')
     ]) }}
 {% endmacro %}
 
@@ -63,13 +66,14 @@
                       ('updated_at','timestamp'),
                       ('dimension','string'),
                       ('dimension_value','string'),
-                      ('metric_properties','string')] 
+                      ('metric_properties','string')]
     %}
     {% if with_created_at %}
         {% do columns.append(('created_at','timestamp')) %}
     {% endif %}
     {{ elementary.empty_table(columns) }}
 {% endmacro %}
+
 
 {% macro empty_schema_columns_snapshot() %}
     {{ elementary.empty_table([('column_state_id','string'),('full_column_name','string'),('full_table_name','string'),('column_name','string'),('data_type','string'),('is_new','boolean'),('detected_at','timestamp'),('created_at','timestamp')]) }}
@@ -89,13 +93,12 @@
 {% macro empty_table(column_name_and_type_list) %}
 
     {%- set empty_table_query -%}
-        with empty_table as (
+        select * from (
             select
             {% for column in column_name_and_type_list %}
                 {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
             {%- endfor %}
-            )
-        select * from empty_table
+        ) as empty_table
         where 1 = 0
     {%- endset -%}
 

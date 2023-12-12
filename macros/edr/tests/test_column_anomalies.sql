@@ -1,6 +1,8 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, detection_delay, anomaly_exclude_metrics, detection_period, training_period) %}
     -- depends_on: {{ ref('monitors_runs') }}
     -- depends_on: {{ ref('data_monitoring_metrics') }}
+    -- depends_on: {{ ref('dbt_run_results') }}
+
     {%- if execute and flags.WHICH in ['test', 'build'] %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
@@ -30,7 +32,12 @@
                                                                                                    days_back=days_back,
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
-                                                                                                   sensitivity=sensitivity) %}
+                                                                                                   sensitivity=sensitivity,
+                                                                                                   detection_delay=detection_delay,
+                                                                                                   anomaly_exclude_metrics=anomaly_exclude_metrics,
+                                                                                                   detection_period=detection_period,
+                                                                                                   training_period=training_period) %}
+
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
@@ -48,6 +55,7 @@
             {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model_relation,
                                                                                     backfill_days=test_configuration.backfill_days,
                                                                                     days_back=test_configuration.days_back,
+                                                                                    detection_delay=test_configuration.detection_delay,
                                                                                     monitors=column_monitors,
                                                                                     column_name=column_name,
                                                                                     metric_properties=metric_properties) %}

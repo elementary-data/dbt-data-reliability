@@ -53,7 +53,6 @@
                 min(bucket_end) as dimension_min_bucket_end,
                 sum(metric_value)
             from all_dimension_metrics
-            where row_number <= {{ test_configuration.min_training_set_size }}
             group by 1,2
             {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0
@@ -64,7 +63,7 @@
             select edr_bucket_start, edr_bucket_end, dimension_value
             from training_set_dimensions left join buckets
                 on (buckets.joiner = training_set_dimensions.joiner
-                {# This makes sure we don't create empty buckets for dimensions before their first apperance #}
+                {# This makes sure we don't create empty buckets for dimensions before their first appearance #}
                 and edr_bucket_end >= dimension_min_bucket_end)
             where dimension_value is not null
         ),
@@ -141,7 +140,7 @@
 
     {% else %}
 
-        {# Get all of the dimension anomally metrics that were created for the test until this run #}
+        {# Get all of the dimension anomaly metrics that were created for the test until this run #}
         all_dimension_metrics as (
             select
                 bucket_end,
@@ -159,7 +158,6 @@
                 dimension_value,
                 sum(metric_value)
             from all_dimension_metrics
-            where row_number <= {{ test_configuration.min_training_set_size }}
             group by 1
             {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
             having sum(metric_value) > 0

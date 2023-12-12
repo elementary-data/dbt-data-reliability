@@ -2,7 +2,7 @@
     {% set relation = elementary.get_elementary_relation('dbt_run_results') %}
     {% if execute and relation %}
         {{ elementary.file_log("Uploading run results.") }}
-        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, append=True, should_commit=True) %}
+        {% do elementary.upload_artifacts_to_table(relation, results, elementary.flatten_run_result, append=True, should_commit=True, on_query_exceed=elementary.on_run_result_query_exceed) %}
         {{ elementary.file_log("Uploaded run results successfully.") }}
     {% endif %}
     {{ return ('') }}
@@ -30,7 +30,8 @@
                                                                        ('failures', 'bigint'),
                                                                        ('query_id', 'string'),
                                                                        ('thread_id', 'string'),
-                                                                       ('materialization', 'string')
+                                                                       ('materialization', 'string'),
+                                                                       ('adapter_response', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -55,12 +56,13 @@
         'compile_started_at': none,
         'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_code': elementary.get_compiled_model_code_text(node),
+        'compiled_code': elementary.get_compiled_code(node, as_column_value=true),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
-        'materialization': config_dict.get('materialized')
-    }%}
+        'materialization': config_dict.get('materialized'),
+        'adapter_response': run_result_dict.get('adapter_response', {})
+    } %}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}
     {% if timings %}
@@ -75,4 +77,8 @@
         {% endfor %}
     {% endif %}
     {{ return(flatten_run_result_dict) }}
+{% endmacro %}
+
+{% macro on_run_result_query_exceed(flattened_node) %}
+    {% do flattened_node.update({"compiled_code": elementary.get_compiled_code_too_long_err_msg()}) %}
 {% endmacro %}

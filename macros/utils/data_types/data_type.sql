@@ -25,8 +25,16 @@
 {%- endmacro -%}
 
 {% macro default__edr_type_string() %}
-    {# Redshift and Postgres #}
+    {# Redshift #}
     {% do return("varchar(4096)") %}
+{% endmacro %}
+
+{% macro postgres__edr_type_string() %}
+    {% if var("sync", false) %}
+        {% do return("text") %}
+    {% else %}
+        {% do return("varchar(4096)") %}
+    {% endif %}
 {% endmacro %}
 
 {% macro snowflake__edr_type_string() %}
@@ -42,6 +50,11 @@
 {% macro spark__edr_type_string() %}
     {% do return("string") %}
 {% endmacro %}
+
+{% macro athena__edr_type_string() %}
+    {% do return("varchar") %}
+{% endmacro %}
+
 
 
 
@@ -93,6 +106,10 @@
 
 
 {% macro edr_type_timestamp() %}
+    {{ return(adapter.dispatch('edr_type_timestamp', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__edr_type_timestamp() %}
     {% set macro = dbt.type_timestamp or dbt_utils.type_timestamp %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `type_timestamp` macro.") }}
@@ -115,9 +132,15 @@
 {% endmacro %}
 
 {% macro default__edr_type_date() %}
-    {{ elementary.edr_type_timestamp() }}
+    date
 {% endmacro %}
 
-{% macro bigquery__edr_type_date() %}
-    date
+{% macro athena__edr_type_timestamp() %}
+  {%- set config = model.get('config', {}) -%}
+  {%- set table_type = config.get('table_type', 'hive') -%}
+  {%- if table_type == 'iceberg' -%}
+    timestamp(6)
+  {%- else -%}
+    timestamp
+  {%- endif -%}
 {% endmacro %}

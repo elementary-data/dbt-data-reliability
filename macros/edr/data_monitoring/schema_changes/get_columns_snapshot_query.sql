@@ -1,4 +1,4 @@
-{% macro get_columns_snapshot_query(full_table_name) %}
+{% macro get_columns_snapshot_query(model_relation, full_table_name) %}
 
     {%- set known_columns_query %}
         select full_column_name from {{ ref('schema_columns_snapshot') }}
@@ -12,36 +12,59 @@
         and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
+    {% set columns = adapter.get_columns_in_relation(model_relation) %}
 
-    with information_schema_columns as (
-
-        select * from {{ ref('filtered_information_schema_columns') }}
-        where lower(full_table_name) = lower('{{ full_table_name }}')
-
+    with table_info as (
+        select
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(full_table_name)) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.database)) }} as database_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.schema)) }} as schema_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(model_relation.identifier)) }} as table_name,
+            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
     ),
 
-    columns_snapshot as (
-
+    columns_info as (
         select
             full_table_name,
             database_name,
             schema_name,
             table_name,
             column_name,
-            cast(data_type as {{ elementary.edr_type_string() }}) as data_type,
-            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at,
+            data_type,
+            detected_at
+        from table_info
+        cross join
+            (
+                {% for column in columns %}
+                    select
+                        {{ elementary.edr_cast_as_string(elementary.edr_quote(column.name)) }} as column_name,
+                        {{ elementary.edr_cast_as_string(elementary.edr_quote(elementary.get_normalized_data_type(elementary.get_column_data_type(column)))) }} as data_type
+                    {% if not loop.last %}
+                        union all
+                    {% endif %}
+                {% endfor %}
+            ) rt
+    ),
+
+    columns_snapshot as (
+        select
+            full_table_name,
+            database_name,
+            schema_name,
+            table_name,
+            column_name,
+            data_type,
+            detected_at,
             case when
                     {{ elementary.full_column_name() }} not in ({{ known_columns_query }})
                     and full_table_name in ({{ known_tables_query }})
                 then true
                 else false
             end as is_new
-        from information_schema_columns
-
+        from columns_info
     ),
 
     columns_snapshot_with_id as (
-
         select
             {{ elementary.generate_surrogate_key([
               'full_table_name',
@@ -56,7 +79,6 @@
             detected_at
         from columns_snapshot
         group by 1,2,3,4,5,6,7
-
     )
 
     select

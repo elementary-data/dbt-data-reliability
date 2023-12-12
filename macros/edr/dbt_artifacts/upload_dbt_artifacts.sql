@@ -11,6 +11,10 @@
       }
     %}
 
+    {% if not elementary.get_config_var('disable_dbt_columns_autoupload') %}
+      {% do model_upload_func_map.update({"dbt_columns": elementary.upload_dbt_columns}) %}
+    {% endif %}
+
     {% set artifacts_hashes = elementary.get_artifacts_hashes() %}
     {% do elementary.file_log("Uploading dbt artifacts.") %}
     {% for artifacts_model, upload_artifacts_func in model_upload_func_map.items() %}
@@ -36,8 +40,7 @@
         {% do return(none) %}
     {% endif %}
 
-    {% set database_name, schema_name = elementary.get_package_database_and_schema() %}
-    {% set artifacts_hash_relation = adapter.get_relation(database_name, schema_name, "dbt_artifacts_hashes") %}
+    {% set artifacts_hash_relation = elementary.get_elementary_relation('dbt_artifacts_hashes') %}
     {% if not artifacts_hash_relation %}
         {% do return(none) %}
     {% endif %}

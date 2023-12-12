@@ -25,17 +25,8 @@ on:
       dbt-version:
         type: string
         required: false
+        default: "latest_official"
         description: dbt's version to test with
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-        description: Whether to clean test environment
-      generate-data:
-        type: boolean
-        required: false
-        default: false
-        description: Whether to generate new data
 
   workflow_call:
     inputs:
@@ -50,15 +41,8 @@ on:
         required: false
       dbt-version:
         type: string
+        default: "latest_official"
         required: false
-      clear-tests:
-        type: boolean
-        required: false
-        default: true
-      generate-data:
-        type: boolean
-        required: false
-        default: false
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
@@ -68,7 +52,8 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     concurrency:
-      group: tests-${{ inputs.warehouse-type }}-${{ github.head_ref || github.ref_name }}
+      # This is what eventually defines the schema name in the data platform.
+      group: tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: Checkout Elementary
@@ -89,46 +74,65 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: docker-compose up -d postgres
 
-      - name: Write dbt profiles
-        env:
-          CI_PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
-        run: |
-          mkdir -p ~/.dbt
-          UNDERSCORED_REF_NAME=$(echo "${{ env.BRANCH_NAME }}" | head -c 32 | sed "s/-/_/g")
-          echo "$CI_PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8.17"
+          python-version: "3.8"
+          cache: "pip"
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
         run: sudo apt-get install python-dev libsasl2-dev gcc
 
+      - name: Install compatible databricks connector (not limited in older dbt-databricks versions)
+        if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
+        run: pip install databricks-sql-connector==2.9.3
+
       - name: Install dbt
-        run: pip install --pre
-          "dbt-core${{ inputs.dbt-version && format('=={0}', inputs.dbt-version) }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}${{ inputs.dbt-version && format('<={0}', inputs.dbt-version) }}"
+        run:
+          pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
+          "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
+          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('<={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
-      - name: Install E2E project deps
+      - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
-        run: dbt deps
-
-      - name: Run unit tests
-        working-directory: ${{ env.TESTS_DIR }}
-        run: python run_unit_tests.py -t "${{ inputs.warehouse-type }}"
-
-      - name: Run integration tests
-        working-directory: ${{ env.TESTS_DIR }}/integration_tests/tests
         run: |
-          pip install -r ../requirements.txt
-          dbt deps --project-dir=../dbt_project
-          py.test -n8 -vvv --target "${{ inputs.warehouse-type }}"
+          dbt deps --project-dir dbt_project
+          pip install -r requirements.txt
 
-      - name: Run E2E tests
+      - name: Write dbt profiles
+        env:
+          PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
+        run: |
+          mkdir -p ~/.dbt
+          DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
+          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/-/_/g")
+          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+
+      - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
-        run: python run_e2e_tests.py -t "${{ inputs.warehouse-type }}" -g "${{ inputs.warehouse-type == 'postgres' || inputs.generate-data }}" --clear-tests "${{ inputs.clear-tests }}"
+        run: |
+          dbt debug -t "${{ inputs.warehouse-type }}"
+
+      - name: Test
+        working-directory: "${{ env.TESTS_DIR }}/tests"
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html
+
+      - name: Upload test results
+        if: always()
+        uses: pmeier/pytest-results-action@main
+        with:
+          path: ${{ env.TESTS_DIR }}/tests/test-results.xml
+          summary: true
+          display-options: fEX
+          fail-on-empty: true
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}
+          path: ${{ env.TESTS_DIR }}/tests/detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html

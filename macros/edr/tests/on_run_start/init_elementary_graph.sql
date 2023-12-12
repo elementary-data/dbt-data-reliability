@@ -4,8 +4,12 @@
     "elementary_test_failed_row_counts": {},
     "tests_schema_name": none,
     "tables": {
-      "metrics": [],
+      "metrics": {
+        "relations": [],
+        "rows": []
+      },
       "schema_snapshots": []
-    }
+    },
+    "temp_test_table_relations_map": {},
   }) %}
 {% endmacro %}

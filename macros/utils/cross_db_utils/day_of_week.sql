@@ -32,3 +32,7 @@
     0 , 'Sunday'
     )
 {% endmacro %}
+
+{% macro athena__edr_day_of_week_expression(date_expr) %}
+    DATE_FORMAT({{ date_expr }}, '%W')
+{% endmacro %}

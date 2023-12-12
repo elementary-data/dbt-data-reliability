@@ -29,6 +29,7 @@ SELECT
     run_results.compile_started_at,
     run_results.compile_completed_at,
     run_results.compiled_code,
+    run_results.adapter_response,
     run_results.thread_id,
     snapshots.database_name,
     snapshots.schema_name,
