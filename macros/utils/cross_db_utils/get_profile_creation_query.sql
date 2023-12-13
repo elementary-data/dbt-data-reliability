@@ -38,8 +38,8 @@ CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS(database_name ST
   $$
     BEGIN
       GRANT USAGE,MONITOR ON DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT USAGE,MONITOR ON ALL SCHEMAS IN DATABASE {{ database }} TO ROLE IDENTIFIER(:role_name);
-      GRANT USAGE,MONITOR ON FUTURE SCHEMAS IN DATABASE {{ database }} TO ROLE identifier(:role_name);
+      GRANT USAGE,MONITOR ON ALL SCHEMAS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
+      GRANT USAGE,MONITOR ON FUTURE SCHEMAS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
 
       GRANT REFERENCES ON ALL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
       GRANT REFERENCES ON ALL VIEWS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
@@ -52,8 +52,16 @@ CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS(database_name ST
   $$
 ;
 
-{%- set databases = elementary.get_configured_databases_from_graph() %}
-{% for database in databases -%}
+{%- set databases = elementary.get_configured_databases_from_graph()%}
+{% for database in databases %}
+{#
+  'snowflake' database is excluded because it does not support granting individual privileges (we ask for relevant access to it 
+  via the database roles below)
+  see: https://docs.snowflake.com/en/sql-reference/account-usage#enabling-the-snowflake-database-usage-for-other-roles
+#}
+  {%- if database | lower == 'snowflake' -%}
+    {%- continue -%}
+  {%- endif -%}
 CALL ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS('{{ database }}', $elementary_role);
 {% endfor %}
 
