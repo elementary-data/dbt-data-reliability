@@ -1,7 +1,7 @@
 {% test json_schema(model, column_name, where_expression) %}
     {{ config(fail_calc = 'fail_count') }}
 
-    {% if not execute or flags.WHICH not in ['test', 'build'] %}
+    {% if not execute or not elementary.is_test_command(flags.WHICH) %}
         {% do return(none) %}
     {% endif %}
 

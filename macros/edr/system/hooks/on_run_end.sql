@@ -1,11 +1,11 @@
 {% macro on_run_end() %}
-  {%- if execute and flags.WHICH not in ['generate', 'serve'] %}
+  {%- if execute and not elementary.is_docs_command(flags.WHICH) %}
       {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
       {% if not execute or edr_cli_run %}
         {% do return("") %}
       {% endif %}
 
-      {% if flags.WHICH in ['run', 'build'] %}
+      {% if elementary.is_run_command(flags.WHICH) %}
         {% do elementary.insert_metrics() %}
       {% endif %}
 
@@ -17,7 +17,7 @@
         {% do elementary.upload_run_results() %}
       {% endif %}
 
-      {% if flags.WHICH in ['test', 'build'] and not elementary.get_config_var('disable_tests_results') %}
+      {% if elementary.is_test_command(flags.WHICH) and not elementary.get_config_var('disable_tests_results') %}
         {% do elementary.handle_tests_results() %}
       {% endif %}
 
