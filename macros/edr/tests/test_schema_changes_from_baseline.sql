@@ -1,7 +1,7 @@
 {% test schema_changes_from_baseline(model, fail_on_added=False, enforce_types=False) %}
     -- depends_on: {{ ref('schema_columns_snapshot') }}
 
-    {%- if execute and elementary.is_test_command(flags.WHICH) %}
+    {%- if execute and elementary.is_test_command() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source)") }}

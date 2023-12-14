@@ -7,7 +7,7 @@
   {% do recommend_dbt_core_artifacts_upgrade() %}
   {% do elementary.init_elementary_graph() %}
 
-  {% if elementary.is_test_command(flags.WHICH) %}
+  {% if elementary.is_test_command() %}
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
 {% endmacro %}

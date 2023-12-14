@@ -3,7 +3,7 @@
     -- depends_on: {{ ref('data_monitoring_metrics') }}
     -- depends_on: {{ ref('dbt_run_results') }}
 
-    {%- if execute and elementary.is_test_command(flags.WHICH) %}
+    {%- if execute and elementary.is_test_command() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("The test has unsupported configuration, please contact Elementary support") }}
