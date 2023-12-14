@@ -1,9 +1,9 @@
 {% macro is_test_command(command) %}
-    {% do return(command in ['test', 'build']) %}
+    {% do return(command in ['test', 'build', 'retry']) %}
 {% endmacro %}
 
 {% macro is_run_command(command) %}
-    {% do return(command in ['run', 'build']) %}
+    {% do return(command in ['run', 'build', 'retry']) %}
 {% endmacro %}
 
 {% macro is_docs_command(command) %}
