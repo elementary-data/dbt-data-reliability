@@ -1,5 +1,5 @@
 {% test exposure_schema_validity(model, exposures, node, columns) %}
-    {%- if not execute or flags.WHICH not in ['test', 'build'] -%}
+    {%- if not execute or not elementary.is_test_command() -%}
         {%- do return(none) -%}
     {%- endif -%}
 
