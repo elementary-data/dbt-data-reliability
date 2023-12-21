@@ -73,9 +73,9 @@
 {% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str) %}
     with partially_time_filtered_monitored_table as (
         select
-            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as {{ timestamp_column }}
+            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as monitored_table_timestamp_column
             {%- if metric_properties.timestamp_column and metric_properties.event_timestamp_column %}
-            , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as {{ metric_properties.event_timestamp_column }}
+            , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as monitored_table_event_timestamp_column
             {%- endif %}
         from {{ monitored_table }}
         -- Freshness metric calculated differences between consecutive buckets, thus the first diff
@@ -88,7 +88,7 @@
         select
             *
         from partially_time_filtered_monitored_table
-        where {{ timestamp_column }} >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
+        where monitored_table_timestamp_column >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
     ),
     buckets as (
         select edr_bucket_start, edr_bucket_end
@@ -99,13 +99,13 @@
 
     time_filtered_monitored_table as (
         select *,
-               {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
+               {{ elementary.get_start_bucket_in_data('monitored_table_timestamp_column', min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
         from monitored_table
         where
-            {{ timestamp_column }} >= (select min(edr_bucket_start) from buckets)
-            and {{ timestamp_column }} < (select max(edr_bucket_end) from buckets)
+            monitored_table_timestamp_column >= (select min(edr_bucket_start) from buckets)
+            and monitored_table_timestamp_column < (select max(edr_bucket_end) from buckets)
             {# To avoid adding buckets before the table first timestamp #}
-            and {{ timestamp_column }} >= (select min({{ timestamp_column }}) from monitored_table)
+            and monitored_table_timestamp_column >= (select min(monitored_table_timestamp_column) from monitored_table)
     ),
 
     metrics as (
@@ -205,14 +205,9 @@
 {% endmacro %}
 
 {% macro freshness_metric_query(metric_properties) %}
-    {%- set freshness_column = metric_properties.freshness_column %}
-    {%- if not freshness_column %}
-        {%- set freshness_column = metric_properties.timestamp_column %}
-    {%- endif %}
-
     -- get ordered consecutive update timestamps in the source data
     with unique_timestamps as (
-        select distinct {{ elementary.edr_cast_as_timestamp(freshness_column) }} as timestamp_val
+        select distinct monitored_table_timestamp_column as timestamp_val
         from partially_time_filtered_monitored_table
         order by 1
     ),
@@ -277,16 +272,14 @@
     where row_number = 1
 {% endmacro %}
 
-{% macro event_freshness_metric_query(metric_properties) %}
-{% set event_timestamp_column = metric_properties.event_timestamp_column %}
-{% set update_timestamp_column = metric_properties.timestamp_column %}
+{% macro event_freshness_metric_query() %}
     select
         edr_bucket_start,
         edr_bucket_end,
         {{ elementary.const_as_string('event_freshness') }} as metric_name,
-        {{ elementary.edr_cast_as_string('max({})'.format(event_timestamp_column)) }} as source_value,
+        {{ elementary.edr_cast_as_string('max({})'.format('monitored_table_event_timestamp_column')) }} as source_value,
         {{ 'coalesce(max({}), {})'.format(
-                elementary.timediff('second', elementary.edr_cast_as_timestamp(event_timestamp_column), elementary.edr_cast_as_timestamp(update_timestamp_column)),
+                elementary.timediff('second', elementary.edr_cast_as_timestamp('monitored_table_event_timestamp_column'), elementary.edr_cast_as_timestamp('monitored_table_timestamp_column')),
                 elementary.timediff('second', 'edr_bucket_start', 'edr_bucket_end')
             ) }} as metric_value
     from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
