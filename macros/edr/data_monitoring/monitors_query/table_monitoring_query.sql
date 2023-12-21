@@ -272,7 +272,7 @@
     where row_number = 1
 {% endmacro %}
 
-{% macro event_freshness_metric_query() %}
+{% macro event_freshness_metric_query(metric_properties) %}
     select
         edr_bucket_start,
         edr_bucket_end,
