@@ -22,7 +22,8 @@
                                           detection_delay,
                                           anomaly_exclude_metrics,
                                           detection_period,
-                                          training_period) %}
+                                          training_period,
+                                          fail_on_new_dimension) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -63,7 +64,8 @@
        'ignore_small_changes': ignore_small_changes,
        'fail_on_zero': fail_on_zero,
        'detection_delay': detection_delay,
-       'anomaly_exclude_metrics': anomaly_exclude_metrics
+       'anomaly_exclude_metrics': anomaly_exclude_metrics,
+       'fail_on_new_dimension': fail_on_new_dimension
         } %}
     {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
