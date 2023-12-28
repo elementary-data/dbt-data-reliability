@@ -219,7 +219,7 @@
         column_name,
         metric_name,
         metric_value,
-        source_value,
+        {{ elementary.detect_new_dimension(test_configuration) }} as source_value,
         bucket_start,
         bucket_end,
         bucket_duration_hours,
@@ -229,4 +229,20 @@
         metric_properties
     from metrics_final
 
+{% endmacro %}
+
+{% macro detect_new_dimension(test_configuration) %}
+    {%- if test_configuration.fail_on_new_dimension %}
+        case
+            when not exists (
+                select 1 from all_dimension_metrics
+                where all_dimension_metrics.dimension_value = metrics_final.dimension_value
+                or (all_dimension_metrics.dimension_value is null and metrics_final.dimension_value is null)
+                )
+            then 'new_dimension'
+            else {{ elementary.null_string() }}
+        end
+    {%- else %}
+        {{ elementary.null_string() }}
+    {%- endif %}
 {% endmacro %}

@@ -1,5 +1,6 @@
 {% macro anomaly_detection_description() %}
     case
+        when anomalous_value = 'new_dimension' then {{ elementary.new_dimension_description() }}
         when dimension is not null then {{ elementary.dimension_metric_description() }}
         when metric_name = 'freshness' then {{ elementary.freshness_description() }}
         when column_name is null then {{ elementary.table_metric_description() }}
@@ -26,4 +27,9 @@
     'The last ' || metric_name || ' value for dimension ' || dimension || ' - ' ||
     case when dimension_value is null then 'NULL' else dimension_value end || ' is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('metric_value') ~ ', 3)') }} ||
     '. The average for this metric is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('training_avg') ~ ', 3)') }} || '.'
+{% endmacro %}
+
+{% macro new_dimension_description() %}
+    'A new dimension found in: ' || dimension || ' : "' ||
+    case when dimension_value is null then 'NULL' else dimension_value end || '".'
 {% endmacro %}

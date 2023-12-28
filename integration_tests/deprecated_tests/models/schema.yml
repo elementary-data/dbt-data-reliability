@@ -140,6 +140,14 @@ models:
             - platform
           tags: ["dimension_anomalies"]
           alias: "dimension_anomalies_no_timestamp"
+      - elementary.dimension_anomalies:
+          alias: "dimension_anomalies_platform_new_dimension_should_fail"
+          tags: ["dimension_anomalies", "should_fail", "debug"]
+          timestamp_column: updated_at
+          dimensions:
+            - platform
+          fail_on_new_dimension: True
+          where_expression: "platform = 'windows'"
 
   - name: error_model
     description: We use this model to create error runs and tests

@@ -2,6 +2,8 @@
   {%- set query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
+    {# This is only for fail_on_new_dimension flag in dimension anomalies #}
+    or anomalous_value = 'new_dimension'
   {%- endset -%}
   {{- return(query) -}}
 {%- endmacro -%}
@@ -51,8 +53,7 @@
       anomaly_scores_with_is_anomalous as (
         select
           *,
-case when
-            anomaly_score is not null and
+            case when anomaly_score is not null and
             (
               {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
               (
