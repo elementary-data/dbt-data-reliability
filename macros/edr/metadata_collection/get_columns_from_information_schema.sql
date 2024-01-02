@@ -7,9 +7,6 @@
 {% macro default__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
     {% set column_relation = schema_relation.information_schema('COLUMNS') %}
-    {% if not elementary.schema_exists(column_relation.database, column_relation.schema) %}
-        {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
-    {% endif %}
     select
         upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
         upper(table_catalog) as database_name,
