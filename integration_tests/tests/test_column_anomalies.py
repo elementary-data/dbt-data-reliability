@@ -107,3 +107,20 @@ def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
         test_vars={"force_metrics_backfill": True},
     )
     assert test_result["status"] == "fail"
+
+def test_column_anomalies_with_timestamp_as_sql_expression(test_id: str, dbt_project: DbtProject):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Batman"]
+    ]
+    test_args = {"timestamp_column": "trim(updated_at)", "column_anomalies": ["null_count"]}
+
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+    assert test_result["status"] == "pass"
