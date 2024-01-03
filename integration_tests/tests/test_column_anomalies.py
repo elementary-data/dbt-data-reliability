@@ -122,7 +122,7 @@ def test_column_anomalies_with_timestamp_as_sql_expression(
         for superhero in ["Superman", "Batman"]
     ]
     test_args = {
-        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end as timestamp_column",
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end",
         "column_anomalies": ["null_count"],
     }
 

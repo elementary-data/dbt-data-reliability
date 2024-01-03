@@ -36,7 +36,7 @@ def test_dimension_anomalies_with_timestamp_as_sql_expression(
         for superhero in ["Superman", "Spiderman"]
     ]
     test_args = {
-        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end as timestamp_column",
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end",
         "dimensions": ["superhero"],
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)

@@ -30,7 +30,7 @@ def test_table_volume_anomalies_with_timestamp_as_sql_expression(
         for cur_date in generate_dates(base_date=utc_today)
     ]
     test_args = {
-        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end as timestamp_column"
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end"
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "pass"
