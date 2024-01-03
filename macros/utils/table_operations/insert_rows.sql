@@ -70,7 +70,7 @@
 
           {% if new_insert_query | length > query_max_size %}
             {% do elementary.file_log("Oversized row for insert_rows: {}".format(query_with_row)) %}
-            {% do exceptions.raise_compiler_error("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
+            {% do exceptions.warn("Row to be inserted exceeds var('query_max_size'). Consider increasing its value.") %}
           {% endif %}
         {% endif %}
 
