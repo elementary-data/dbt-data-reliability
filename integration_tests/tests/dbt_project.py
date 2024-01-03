@@ -1,31 +1,30 @@
 import json
+import os
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, List, Literal, Optional, Union, overload
+from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.dbt_runner import DbtRunner
 from logger import get_logger
 from ruamel.yaml import YAML
 
+PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
+SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
+
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
+    "disable_dbt_columns_autoupload": True,
     "disable_run_results": True,
     "debug_logs": True,
     "collect_metrics": False,
+    "schema_name_suffix": SCHEMA_NAME_SUFFIX,
 }
 
-DUMMY_MODEL_FILE_PATTERN = """
-{{{{
-  config (
-    materialized = '{materialization}'
-  )
-}}}}
-
-SELECT 1 AS col
-"""
+DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
 
 logger = get_logger(__name__)
 
@@ -51,7 +50,7 @@ class DbtProject:
     def run_query(self, prerendered_query: str):
         results = json.loads(
             self.dbt_runner.run_operation(
-                "elementary_tests.render_run_query",
+                "elementary.render_run_query",
                 macro_args={"prerendered_query": prerendered_query},
             )[0]
         )
@@ -103,6 +102,7 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -121,6 +121,7 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -138,11 +139,15 @@ class DbtProject:
         table_name: Optional[str] = None,
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
+        elementary_enabled: bool = True,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
+
+        test_vars = test_vars or {}
+        test_vars["elementary_enabled"] = elementary_enabled
 
         test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
@@ -176,7 +181,7 @@ class DbtProject:
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": "{{ target.schema }}",
+                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
                         "tables": [table_yaml],
                     }
                 ],
@@ -185,6 +190,7 @@ class DbtProject:
 
         if data:
             self.seed(data, table_name)
+
         with temp_table_ctx:
             with NamedTemporaryFile(
                 dir=self.tmp_models_dir_path,
@@ -195,12 +201,22 @@ class DbtProject:
                 relative_props_path = Path(props_file.name).relative_to(
                     self.project_dir_path
                 )
-                self.dbt_runner.test(select=str(relative_props_path), vars=test_vars)
+                test_process_success = self.dbt_runner.test(
+                    select=str(relative_props_path), vars=test_vars
+                )
 
-        if multiple_results:
-            return self._read_test_results(test_id)
+        if elementary_enabled:
+            if multiple_results:
+                return self._read_test_results(test_id)
+            else:
+                return self._read_single_test_result(test_id)
         else:
-            return self._read_single_test_result(test_id)
+            # If we disabled elementary, elementary_test_results will also be empty. So we'll simulate the result
+            # based on the process status (which means we can't differentiate between fail and error)
+            test_result = {
+                "status": "pass" if test_process_success else "fail_or_error"
+            }
+            return [test_result] if multiple_results else test_result
 
     def seed(self, data: List[dict], table_name: str):
         return DbtDataSeeder(
@@ -209,12 +225,18 @@ class DbtProject:
 
     @contextmanager
     def create_temp_model_for_existing_table(
-        self, table_name: str, materialization: str
+        self,
+        table_name: str,
+        materialization: Optional[str] = None,
+        raw_code: Optional[str] = None,
     ):
         model_path = self.tmp_models_dir_path.joinpath(f"{table_name}.sql")
-        model_path.write_text(
-            DUMMY_MODEL_FILE_PATTERN.format(materialization=materialization)
-        )
+        code = raw_code or DEFAULT_DUMMY_CODE
+        model_text = ""
+        if materialization:
+            model_text += f"{{{{ config(materialized='{materialization}') }}}}\n"
+        model_text += code
+        model_path.write_text(model_text)
         relative_model_path = model_path.relative_to(self.project_dir_path)
         try:
             yield relative_model_path
@@ -241,3 +263,12 @@ class DbtProject:
         if len(results) > 1:
             raise Exception(f"Multiple test results found for table {table_name}")
         return results[0]
+
+    @contextmanager
+    def write_yaml(self, content: dict, name: Optional[str] = None):
+        name = name or f"{uuid4()}.yaml"
+        path = self.models_dir_path / name
+        with open(path, "w") as f:
+            YAML().dump(content, f)
+        yield path
+        path.unlink()

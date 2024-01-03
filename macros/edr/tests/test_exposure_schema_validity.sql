@@ -1,5 +1,5 @@
 {% test exposure_schema_validity(model, exposures, node, columns) %}
-    {%- if not execute -%}
+    {%- if not execute or not elementary.is_test_command() -%}
         {%- do return(none) -%}
     {%- endif -%}
 
@@ -35,7 +35,7 @@
     {%- if matching_exposures | length > 0 -%}
         {%- set columns_dict = {} -%}
         {%- for column in columns -%}
-            {%- do columns_dict.update({ column['name'].strip('"').strip("'") | upper : elementary.normalize_data_type(column['dtype']) }) -%}
+            {%- do columns_dict.update({ column['name'].strip('"').strip("'") | upper : elementary.normalize_data_type(elementary.get_column_data_type(column)) }) -%}
         {%- endfor -%}
         {%- set invalid_exposures = [] -%}
         {%- for exposure in matching_exposures -%}
@@ -54,7 +54,9 @@
                         'node' - the ref to the source node of the specific column used in the exposure
 
                     #}
-                    {%- if matching_exposures | length == 1 or (context['render'](exposure_column['node'] or '')) == node -%}
+                    {%- if matching_exposures | length > 1 and 'node' not in exposure_column -%}
+                        {%- do elementary.edr_log_warning("missing node property for the exposure: " ~ exposure['name'] ~ " which not the only exposure depending on " ~ model ~ ", We're not able to verify the column level dependencies of this exposure") -%}
+                    {%- elif matching_exposures | length == 1 or (context['render'](elementary.get_rendered_ref((exposure_column['node'] or ''))) == context['render'](model | lower)) -%}
                         {%- if exposure_column['column_name'] | upper not in columns_dict.keys() -%}
                             {%- do invalid_exposures.append({
                                     'exposure': exposure['name'],
@@ -73,7 +75,7 @@
                     {%- endif -%}
                 {%- endfor -%}
             {%- else -%}
-                {%- do elementary.edr_log("Warning - missing meta property for the exposure: " ~ exposure['name'] ~ ", We're not able to verify the column level dependencies of this exposure") -%}
+                {%- do elementary.edr_log_warning("missing meta property for the exposure: " ~ exposure['name'] ~ ", We're not able to verify the column level dependencies of this exposure") -%}
             {%- endif -%}
         {%- endfor -%}
         {%- if invalid_exposures | length > 0 -%}

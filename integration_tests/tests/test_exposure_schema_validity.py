@@ -87,7 +87,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
     )
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
-        "columns": [{"name": "order_id", "dtype": "string"}],
+        "columns": [{"name": "order_id", "dtype": "string", "data_type": "string"}],
         "exposures": {
             "ZOMG": {
                 "meta": {
@@ -116,7 +116,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 ):
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
-        "columns": [{"name": "order_id", "dtype": "numeric"}],
+        "columns": [{"name": "order_id", "dtype": "numeric", "data_type": "numeric"}],
         "exposures": {
             "ZOMG": {
                 "meta": {
@@ -147,7 +147,7 @@ def test_exposure_schema_validity_correct_columns_and_missing_type(
 ):
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
-        "columns": [{"name": "order_id", "dtype": "numeric"}],
+        "columns": [{"name": "order_id", "dtype": "numeric", "data_type": "numeric"}],
         "exposures": {
             "ZOMG": {
                 "meta": {"referenced_columns": [{"column_name": "order_id"}]},
@@ -170,7 +170,7 @@ def test_exposure_schema_validity_missing_columns(
 ):
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
-        "columns": [{"name": "order", "dtype": "numeric"}],
+        "columns": [{"name": "order", "dtype": "numeric", "data_type": "numeric"}],
         "exposures": {
             "ZOMG": {
                 "meta": {

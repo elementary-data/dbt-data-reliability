@@ -18,7 +18,11 @@
                                           dimensions,
                                           sensitivity,
                                           ignore_small_changes,
-                                          fail_on_zero) %}
+                                          fail_on_zero,
+                                          detection_delay,
+                                          anomaly_exclude_metrics,
+                                          detection_period,
+                                          training_period) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -28,24 +32,27 @@
     {# We had a names mix in sensitivity/anomaly_sensitivity, this keeps backwards competability #}
     {%- set anomaly_sensitivity = sensitivity if sensitivity else elementary.get_test_argument('anomaly_sensitivity', anomaly_sensitivity, model_graph_node) %}
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
-    {%- set min_training_set_size = elementary.get_test_argument('min_training_set_size', min_training_set_size, model_graph_node) %}
-    {%- set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
+    {%- set backfill_days = elementary.detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) -%}
     {%- set fail_on_zero = elementary.get_test_argument('fail_on_zero', fail_on_zero, model_graph_node) %}
+    
 
     {# timestamp_column anomaly detection tests #}
     {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
+    {%- set days_back = elementary.training_period_to_days_back(training_period, days_back, model_graph_node) -%}
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
     {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
+    {%- set detection_delay = elementary.get_detection_delay(detection_delay, model_graph_node) %}
 
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
+
+    {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
        'where_expression': where_expression,
        'anomaly_sensitivity': anomaly_sensitivity,
        'anomaly_direction': anomaly_direction,
-       'min_training_set_size': min_training_set_size,
        'time_bucket': time_bucket,
        'days_back': days_back,
        'backfill_days': backfill_days,
@@ -54,9 +61,11 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions,
        'ignore_small_changes': ignore_small_changes,
-       'fail_on_zero': fail_on_zero
+       'fail_on_zero': fail_on_zero,
+       'detection_delay': detection_delay,
+       'anomaly_exclude_metrics': anomaly_exclude_metrics
         } %}
-    {%- set test_configuration = elementary.empty_dict_keys_to_none(test_configuration) -%}
+    {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
     {%- do elementary.validate_ignore_small_changes(test_configuration) -%}
 
@@ -70,7 +79,7 @@
        'event_timestamp_column': event_timestamp_column,
        'dimensions': dimensions
         } %}
-    {%- set metric_properties = elementary.empty_dict_keys_to_none(metric_properties) -%}
+    {%- set metric_properties = elementary.undefined_dict_keys_to_none(metric_properties) -%}
 
   {# Adding to cache so test configuration will be available outside the test context #}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
@@ -81,7 +90,7 @@
 
 
 {% macro validate_mandatory_configuration(test_configuration, mandatory_params) %}
-    {%- set mandatory_configuration = ['anomaly_sensitivity', 'anomaly_direction', 'min_training_set_size', 'backfill_days'] %}
+    {%- set mandatory_configuration = ['anomaly_sensitivity', 'anomaly_direction', 'backfill_days'] %}
     {%- set with_timestamp_mandatory_configuration = ['time_bucket', 'days_back'] %}
     {%- set missing_mandatory_params = [] %}
 

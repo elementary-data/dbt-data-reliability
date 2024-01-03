@@ -38,7 +38,7 @@
                 {% for column in columns %}
                     select
                         {{ elementary.edr_cast_as_string(elementary.edr_quote(column.name)) }} as column_name,
-                        {{ elementary.edr_cast_as_string(elementary.edr_quote(elementary.get_normalized_data_type(column.dtype))) }} as data_type
+                        {{ elementary.edr_cast_as_string(elementary.edr_quote(elementary.get_normalized_data_type(elementary.get_column_data_type(column)))) }} as data_type
                     {% if not loop.last %}
                         union all
                     {% endif %}

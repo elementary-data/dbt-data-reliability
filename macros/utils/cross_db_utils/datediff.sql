@@ -134,3 +134,11 @@
     {%- endif -%}
 
 {% endmacro %}
+
+{% macro athena__edr_datediff(first_date, second_date, date_part) %}
+    {% set macro = dbt.datediff or dbt_utils.datediff %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}
+    {% endif %}
+    {{ return(macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part)) }}
+{% endmacro %}

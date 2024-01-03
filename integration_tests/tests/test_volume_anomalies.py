@@ -79,24 +79,33 @@ def test_volume_anomalies_with_where_parameter(
 
 
 def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProject):
-    now = datetime.utcnow()
+    now = datetime.utcnow() - timedelta(hours=2)
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
         for cur_date in generate_dates(
-            base_date=now, step=timedelta(hours=1), days_back=2
+            base_date=now, step=timedelta(hours=1), days_back=3
         )
         if cur_date < now - timedelta(hours=1)
     ]
-    # This is a bug in the dbt package. The test should pass, but it fails.
-    # test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    # assert test_result["status"] == "pass"
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_vars={"days_back": 2}
+    )
+    assert test_result["status"] == "pass"
 
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "hour", "count": 1},
-        "days_back": 1,
+        "days_back": 2,
     }
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_vars={
+            "custom_run_started_at": now.isoformat(),
+        },
+    )
     assert test_result["status"] == "fail"
 
 
@@ -294,7 +303,7 @@ def test_volume_anomaly_static_data_spike(
     ] * metric_value
 
     # 30 new rows every day
-    # 35 new rows in the last day
+    # (metric_value) new rows in the last day
     # z-score ~ -3.6
 
     test_args = {
@@ -330,5 +339,69 @@ def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     ]
 
     test_args = {**DBT_TEST_ARGS, "fail_on_zero": True, "anomaly_sensitivity": 1000}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="day",
+    period="day",
+    fail_value=4,
+    pass_value=1,
+)
+@Parametrization.case(
+    name="hour",
+    period="hour",
+    fail_value=4 * 24,
+    pass_value=24,
+)
+def test_anomalyless_table_volume_anomalies_periods_params(
+    test_id: str, dbt_project: DbtProject, period: str, fail_value: int, pass_value: int
+):
+    utc_today = datetime.utcnow().date() - timedelta(days=4)
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=utc_today)
+    ]
+    data += [{TIMESTAMP_COLUMN: utc_today.strftime(DATE_FORMAT)}]
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": period, "count": pass_value},
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+    test_args = {
+        **test_args,
+        "detection_period": {"period": period, "count": fail_value},
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+
+def test_ignore_small_changes_both(test_id: str, dbt_project: DbtProject):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}] * 14
+
+    # 30 new rows every day
+    # 14 new rows in the last day, which is less than 50% of 30.
+    # Therefore test should fail.
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": 2,
+            "drop_failure_percent_threshold": 50,
+        },
+    }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
