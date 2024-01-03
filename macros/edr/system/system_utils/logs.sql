@@ -4,6 +4,12 @@
     {%- endif %}
 {% endmacro %}
 
+{% macro edr_log_warning(msg, info=True) %}
+    {%- if execute %}
+        {% do elementary.edr_log("Warning - " ~ msg, info=info) %}
+    {%- endif %}
+{% endmacro %}
+
 {% macro file_log(msg) %}
     {% if execute %}
         {% do elementary.edr_log(msg, info=false) %}

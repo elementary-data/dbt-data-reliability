@@ -12,6 +12,7 @@ models:
         description: This is a unique identifier for a customer
 
       - name: name
+        data_type: string
         description: Customer's name.
 
   - name: orders

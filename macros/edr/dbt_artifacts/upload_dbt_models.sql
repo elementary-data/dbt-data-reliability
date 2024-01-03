@@ -25,6 +25,7 @@
         ('package_name', 'string'),
         ('original_path', 'long_string'),
         ('path', 'string'),
+        ('patch_path', 'string'),
         ('generated_at', 'string'),
         ('metadata_hash', 'string'),
     ] %}
@@ -45,7 +46,7 @@
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
     {% set formatted_owner = [] %}
-    {% set raw_owner = meta_dict.get('owner') %}
+    {% set raw_owner = meta_dict.get('owner') or config_dict.get('owner') %}
     {% if raw_owner is string %}
         {% set owners = raw_owner.split(',') %}
         {% for owner in owners %}
@@ -77,6 +78,7 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
+        'patch_path': node_dict.get('patch_path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
         'bigquery_partition_by': config_dict.get("partition_by"),
     } %}

@@ -28,11 +28,26 @@
     {%- else %}
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(metric_properties, test_configuration.days_back) %}
+    {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
+
+    {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
+       bucket end (which is the actual time of the test) #}
+    {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
-
-        with data_monitoring_metrics as (
+        {% if test_configuration.timestamp_column %}
+            with buckets as (
+                select edr_bucket_start, edr_bucket_end
+                from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start_expr,
+                                                         elementary.edr_quote(detection_end)) }}) results
+                where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start_expr) }}
+                  and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) }}
+            ),
+        {% else %}
+            with
+        {% endif %}
+        data_monitoring_metrics as (
 
             select
                 id,
@@ -49,9 +64,18 @@
                 dimension_value,
                 metric_properties
             from {{ data_monitoring_metrics_table }}
-            {# We use bucket_end because non-timestamp tests have only bucket_end field. #}
+            -- We use bucket_end because non-timestamp tests have only bucket_end field.
             where
                 bucket_end > {{ min_bucket_start_expr }}
+                {% if test_configuration.timestamp_column %}
+                    -- For timestamped tests, verify that the bucket we got from the history is actually
+                    -- a valid one (this check is important for buckets that are not aligned with a day).
+                    and {{ elementary.edr_multi_value_in(
+                        [elementary.edr_cast_as_timestamp('bucket_start'), elementary.edr_cast_as_timestamp('bucket_end')],
+                        ['edr_bucket_start', 'edr_bucket_end'],
+                        'buckets'
+                    ) }}
+                {% endif %}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 {% if latest_full_refresh %}
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
@@ -92,6 +116,11 @@
                 updated_at,
                 dimension,
                 dimension_value,
+
+                -- Fields added for the anomaly_exclude_metrics expression used below
+                {{ metric_time_bucket_expr }} as metric_time_bucket,
+                {{ elementary.edr_cast_as_date(elementary.edr_date_trunc('day', metric_time_bucket_expr))}} as metric_date,
+
                 row_number() over (partition by id order by updated_at desc) as row_number
             from union_metrics
 
@@ -111,11 +140,11 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
+                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
             where row_number = 1
-
         ),
 
         time_window_aggregation as (
@@ -140,6 +169,7 @@
                 last_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
+            where not is_excluded
             {{ dbt_utils.group_by(13) }}
         ),
 
@@ -164,8 +194,8 @@
                 end as anomaly_score,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
-                bucket_start,
-                bucket_end,
+                {{ elementary.edr_cast_as_timestamp('bucket_start') }} as bucket_start,
+                {{ elementary.edr_cast_as_timestamp('bucket_end') }} as bucket_end,
                 bucket_seasonality,
                 metric_value,
                 
@@ -182,8 +212,8 @@
                 training_avg,
                 training_stddev,
                 training_set_size,
-                training_start,
-                training_end,
+                {{ elementary.edr_cast_as_timestamp('training_start') }} as training_start,
+                {{ elementary.edr_cast_as_timestamp('training_end') }} as training_end,
                 dimension,
                 dimension_value
             from time_window_aggregation

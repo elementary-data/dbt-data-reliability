@@ -7,5 +7,6 @@
         {% endfor %}
         {% set query_result = query_result.rename(lowercased_column_names) %}
     {% endif %}
+
     {% do return(query_result) %}
 {% endmacro %}

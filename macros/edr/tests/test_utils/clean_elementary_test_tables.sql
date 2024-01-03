@@ -30,6 +30,14 @@
     {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
 {% endmacro %}
 
+{% macro athena__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% set queries = [] %}
+    {% for test_relation in test_table_relations %}
+        {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation.render_pure())) %}
+    {% endfor %}
+    {% do return(queries) %}
+{% endmacro %}
+
 {% macro get_transaction_clean_elementary_test_tables_queries(test_table_relations) %}
     {% set query %}
         BEGIN TRANSACTION;
