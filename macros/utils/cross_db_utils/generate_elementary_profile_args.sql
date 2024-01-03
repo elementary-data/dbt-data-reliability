@@ -102,6 +102,30 @@
   {% do return(parameters) %}
 {% endmacro %}
 
+{% macro athena__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+  {% set parameters = [
+    _parameter("type", target.type),
+    _parameter("s3_staging_dir", target.s3_staging_dir),
+    _parameter("region_name", target.region_name),
+    _parameter("database", target.database),
+    _parameter("aws_profile_name", target.aws_profile_name),
+    _parameter("work_group", target.work_group),
+    _parameter("aws_access_key_id", "<AWS_ACCESS_KEY_ID>"),
+    _parameter("aws_secret_access_key", "<AWS_SECRET_ACCESS_KEY>"),
+  ] %}
+
+  {% if elementary_database %}
+    {% do parameters.append(_parameter("catalog", elementary_database)) %}
+  {% endif %}
+
+  {% do parameters.extend([
+    _parameter("schema", elementary_schema),
+    _parameter("token", "<TOKEN>"),
+    _parameter("threads", target.threads),
+  ]) %}
+  {% do return(parameters) %}
+{% endmacro %}
+
 {% macro default__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}

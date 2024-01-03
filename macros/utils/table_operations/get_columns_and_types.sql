@@ -20,7 +20,7 @@
     {%- set columns_from_relation = adapter.get_columns_in_relation(relation) -%}
 
     {% for column in columns_from_relation %}
-        {%- set column_item = {'column_name': column['column'], 'data_type': elementary.normalize_data_type(column['dtype'])} %}
+        {%- set column_item = {'column_name': column['column'], 'data_type': elementary.normalize_data_type(elementary.get_column_data_type(column))} %}
         {%- do columns.append(column_item) -%}
     {% endfor %}
 

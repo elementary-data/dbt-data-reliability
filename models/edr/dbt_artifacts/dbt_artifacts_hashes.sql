@@ -13,6 +13,7 @@
   "dbt_metrics",
   "dbt_exposures",
   "dbt_seeds",
+  "dbt_columns",
 ] %}
 
 {% for artifact_model in artifact_models %}

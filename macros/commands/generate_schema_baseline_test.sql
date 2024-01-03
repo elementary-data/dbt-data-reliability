@@ -94,9 +94,9 @@ models:
     {%- for column in columns %}
       - name: {{ column.name }}
         {%- if convert_to_lower %}
-        data_type: {{ column.dtype|lower }}
+        data_type: {{ elementary.get_column_data_type(column) | lower }}
         {% else %}
-        data_type: {{ column.dtype }}
+        data_type: {{ elementary.get_column_data_type(column) }}
         {% endif -%}
     {% endfor %}
     tests:

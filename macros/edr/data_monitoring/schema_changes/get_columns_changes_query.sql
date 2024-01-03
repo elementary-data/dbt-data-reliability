@@ -21,7 +21,7 @@
     {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
 {% endmacro %}
 
-{% macro get_column_changes_from_baseline_query(full_table_name, model_baseline_relation, include_added=False) %}
+{% macro get_column_changes_from_baseline_query(model_relation, full_table_name, model_baseline_relation, include_added=False) %}
     {% set cur %}
         with baseline as (
             select lower(column_name) as column_name, data_type
@@ -29,16 +29,16 @@
         )
 
         select
-            info_schema.full_table_name,
-            lower(info_schema.column_name) as column_name,
-            info_schema.data_type,
+            columns_snapshot.full_table_name,
+            lower(columns_snapshot.column_name) as column_name,
+            columns_snapshot.data_type,
             (baseline.column_name IS NULL) as is_new,
             {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
-        from {{ ref('filtered_information_schema_columns') }} info_schema
+        from ({{ elementary.get_columns_snapshot_query(model_relation, full_table_name) }}) columns_snapshot
         left join baseline on (
-            lower(info_schema.column_name) = lower(baseline.column_name)
+            lower(columns_snapshot.column_name) = lower(baseline.column_name)
         )
-        where lower(info_schema.full_table_name) = lower('{{ full_table_name }}')
+        where lower(columns_snapshot.full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
     {% set pre %}

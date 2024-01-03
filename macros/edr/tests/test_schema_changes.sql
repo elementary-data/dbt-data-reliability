@@ -1,8 +1,7 @@
 {% test schema_changes(model) %}
     -- depends_on: {{ ref('schema_columns_snapshot') }}
-    -- depends_on: {{ ref('filtered_information_schema_columns') }}
 
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+    {%- if execute and elementary.is_test_command() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
@@ -22,7 +21,7 @@
 
         {#- query current schema and write to temp test table -#}
         {{ elementary.edr_log('Started testing schema changes on:' ~ full_table_name) }}
-        {%- set column_snapshot_query = elementary.get_columns_snapshot_query(full_table_name) %}
+        {%- set column_snapshot_query = elementary.get_columns_snapshot_query(model_relation, full_table_name) %}
         {{ elementary.debug_log('column_snapshot_query - \n' ~ column_snapshot_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'schema_changes', column_snapshot_query) %}

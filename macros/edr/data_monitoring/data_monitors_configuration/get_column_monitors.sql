@@ -4,7 +4,7 @@
     {% set column_objects = adapter.get_columns_in_relation(model_relation) %}
     {% for column_obj in column_objects %}
         {% if column_obj.name | lower == column_name | lower %}
-            {% set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
+            {% set column_monitors = elementary.column_monitors_by_type(elementary.get_column_data_type(column_obj), column_tests) %}
             {% set column_item = {'column': column_obj, 'monitors': column_monitors} %}
             {{ return(column_item) }}
         {% endif %}
@@ -20,7 +20,7 @@
     {% set column_objects = adapter.get_columns_in_relation(model_relation) %}
 
     {% for column_obj in column_objects %}
-        {% set column_monitors = elementary.column_monitors_by_type(column_obj.dtype, column_tests) %}
+        {% set column_monitors = elementary.column_monitors_by_type(elementary.get_column_data_type(column_obj), column_tests) %}
         {% set column_item = {'column': column_obj, 'monitors': column_monitors} %}
         {% do column_obj_and_monitors.append(column_item) %}
     {% endfor %}

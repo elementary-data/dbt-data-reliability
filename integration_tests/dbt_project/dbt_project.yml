@@ -6,7 +6,7 @@ profile: "elementary_tests"
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
-seed-paths: ["data"]
+seed-paths: ["data", "seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
@@ -26,3 +26,4 @@ models:
 
   elementary:
     +schema: elementary
+    +enabled: "{{ var('elementary_enabled', True) }}"

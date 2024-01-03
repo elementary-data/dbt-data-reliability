@@ -1,4 +1,4 @@
-{% macro get_dbt_columns_query(is_model_build_context=true) %}
+{% macro get_information_schema_columns_query(is_model_build_context=true) %}
   {% if is_model_build_context %}
     {% set get_relation = ref %}
   {% else %}
@@ -51,7 +51,7 @@
       {{ elementary.get_columns_in_project() }}
   ),
 
-  dbt_columns as (
+  information_schema_columns as (
       select col_info.*
       from tables_information tbl_info
       join columns_information col_info
@@ -62,5 +62,5 @@
   )
 
   select *
-  from dbt_columns
+  from information_schema_columns
 {% endmacro %}
