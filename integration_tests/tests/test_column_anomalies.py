@@ -108,7 +108,10 @@ def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
     )
     assert test_result["status"] == "fail"
 
-def test_column_anomalies_with_timestamp_as_sql_expression(test_id: str, dbt_project: DbtProject):
+
+def test_column_anomalies_with_timestamp_as_sql_expression(
+    test_id: str, dbt_project: DbtProject
+):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
@@ -118,7 +121,10 @@ def test_column_anomalies_with_timestamp_as_sql_expression(test_id: str, dbt_pro
         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
         for superhero in ["Superman", "Batman"]
     ]
-    test_args = {"timestamp_column": "case when updated_at is not null then updated_at else updated_at end as timestamp_column", "column_anomalies": ["null_count"]}
+    test_args = {
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end as timestamp_column",
+        "column_anomalies": ["null_count"],
+    }
 
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
