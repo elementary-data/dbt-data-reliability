@@ -1,7 +1,5 @@
 name: Test all warehouse platforms
 on:
-  schedule:
-    - cron: "0 1 * * *"
   pull_request:
     branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
