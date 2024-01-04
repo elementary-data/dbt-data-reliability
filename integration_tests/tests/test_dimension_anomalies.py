@@ -23,6 +23,26 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
+def test_dimension_anomalies_with_timestamp_as_sql_expression(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Spiderman"]
+    ]
+    test_args = {
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end",
+        "dimensions": ["superhero"],
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
