@@ -91,8 +91,7 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
                 }
             ],
         }
-    ) as source_freshness_file:
-        print(source_freshness_file.read_text())
+    ):
         dbt_project.dbt_runner.source_freshness()
         dbt_project.read_table(
             "dbt_source_freshness_results",
