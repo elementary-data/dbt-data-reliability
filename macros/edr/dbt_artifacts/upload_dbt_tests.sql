@@ -94,28 +94,32 @@
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
 
     {% set primary_test_model_id = namespace(data=none) %}
-    {% if test_model_unique_ids | length == 1 %}
-        {# if only one parent model for this test, simply use this model #}
-        {% set primary_test_model_id.data = test_model_unique_ids[0] %}
-    {% else %}
-      {% set test_model_jinja = test_kwargs.get('model') %}
-      {% if test_model_jinja %}
-        {% set test_model_name_matches =
-            modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) +
-            modules.re.findall("source\(['\"]\w+['\"], ['\"](\w+)['\"]\)", test_model_jinja) %}
-        {% if test_model_name_matches | length == 1 %}
-          {% set test_model_name = test_model_name_matches[0] %}
-          {% for test_model_unique_id in test_model_unique_ids %}
-              {% set split_test_model_unique_id = test_model_unique_id.split('.') %}
-              {% if split_test_model_unique_id and split_test_model_unique_id | length > 0 %}
-                  {% set test_node_model_name = split_test_model_unique_id[-1] %}
-                  {% if test_node_model_name == test_model_name %}
-                    {% set primary_test_model_id.data = test_model_unique_id %}
-                  {% endif %}
-              {% endif %}
-          {% endfor %}
+    {% set original_file_path = node_dict.get('original_file_path') %}
+    {% set test_sub_type = elementary.get_test_sub_type(original_file_path, test_namespace) %}
+    {% if test_sub_type != "singular" %}
+        {% if test_model_unique_ids | length == 1 %}
+            {# if only one parent model for this test, simply use this model #}
+            {% set primary_test_model_id.data = test_model_unique_ids[0] %}
+        {% else %}
+            {% set test_model_jinja = test_kwargs.get('model') %}
+            {% if test_model_jinja %}
+                {% set test_model_name_matches =
+                    modules.re.findall("ref\(['\"](\w+)['\"]\)", test_model_jinja) +
+                    modules.re.findall("source\(['\"]\w+['\"], ['\"](\w+)['\"]\)", test_model_jinja) %}
+                {% if test_model_name_matches | length == 1 %}
+                    {% set test_model_name = test_model_name_matches[0] %}
+                    {% for test_model_unique_id in test_model_unique_ids %}
+                        {% set split_test_model_unique_id = test_model_unique_id.split('.') %}
+                        {% if split_test_model_unique_id and split_test_model_unique_id | length > 0 %}
+                            {% set test_node_model_name = split_test_model_unique_id[-1] %}
+                            {% if test_node_model_name == test_model_name %}
+                                {% set primary_test_model_id.data = test_model_unique_id %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
         {% endif %}
-      {% endif %}
     {% endif %}
 
     {% set primary_test_model_database = none %}
@@ -133,7 +137,6 @@
         {% set primary_test_model_database, primary_test_model_schema = elementary.get_model_database_and_schema_from_test_node(node_dict) %}
     {%- endif -%}
 
-    {% set original_file_path = node_dict.get('original_file_path') %}
     {% set flatten_test_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_short_name,
@@ -156,7 +159,7 @@
         'description': meta_dict.get('description'),
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
-        'type': elementary.get_test_sub_type(original_file_path, test_namespace),
+        'type': test_sub_type,
         'original_path': original_file_path,
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),

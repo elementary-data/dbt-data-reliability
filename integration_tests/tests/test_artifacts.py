@@ -49,3 +49,12 @@ def test_dbt_invocations(dbt_project: DbtProject):
     dbt_project.read_table(
         "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
     )
+
+
+def test_dbt_test_types(dbt_project: DbtProject):
+    row = dbt_project.read_table(
+        "dbt_tests",
+        where="alias = 'singular'",
+        raise_if_empty=True,
+    )[0]
+    assert row["type"] == "singular"
