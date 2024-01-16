@@ -4,6 +4,7 @@
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(dimensions, '; ') %}
     {% set timestamp_column = metric_properties.timestamp_column %}
+    {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation('data_monitoring_metrics') %}
 
     with filtered_monitored_table as (
         select *,
@@ -40,7 +41,7 @@
                 dimension_value,
                 metric_value,
                 row_number () over (partition by dimension_value order by bucket_end desc) as row_number
-            from {{ ref('data_monitoring_metrics') }}
+            from {{ data_monitoring_metrics_relation }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
@@ -147,7 +148,7 @@
                 dimension_value,
                 metric_value,
                 row_number () over (partition by dimension_value order by bucket_end desc) as row_number
-            from {{ ref('data_monitoring_metrics') }}
+            from {{ data_monitoring_metrics_relation }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
