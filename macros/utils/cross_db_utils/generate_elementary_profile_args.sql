@@ -126,6 +126,29 @@
   {% do return(parameters) %}
 {% endmacro %}
 
+
+{% macro trino__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+  {% set parameters = [
+    _parameter("type", target.type),
+    _parameter("host", target.host),
+    _parameter("port", target.port),
+    _parameter("user", target.user),
+    _parameter("database", target.database),
+  ] %}
+
+  {% if elementary_database %}
+    {% do parameters.append(_parameter("catalog", elementary_database)) %}
+  {% endif %}
+
+  {% do parameters.extend([
+    _parameter("schema", elementary_schema),
+    _parameter("password", "<PASSWORD>"),
+    _parameter("threads", target.threads),
+  ]) %}
+  {% do return(parameters) %}
+{% endmacro %}
+
+
 {% macro default__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}
