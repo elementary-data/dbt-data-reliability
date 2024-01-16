@@ -96,7 +96,7 @@
     {%- else %}
 
         {#- test must run an sql query -#}
-        {{ elementary.no_results_query() }}
+        select * from {{ model }} limit 0
 
     {%- endif %}
 {% endtest %}
