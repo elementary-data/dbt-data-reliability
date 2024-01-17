@@ -127,24 +127,43 @@
 {% endmacro %}
 
 
-{% macro trino__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+{% macro trino__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
   {% set parameters = [
     _parameter("type", target.type),
     _parameter("host", target.host),
     _parameter("port", target.port),
-    _parameter("user", target.user),
-    _parameter("database", target.database),
+    _parameter("database", elementary_database),
+    _parameter("schema", elementary_schema),
+    _parameter("threads", target.threads),
   ] %}
 
-  {% if elementary_database %}
-    {% do parameters.append(_parameter("catalog", elementary_database)) %}
+  {% if method == "ldap" %}
+    {% do parameters.append(_parameter("method", "ldap")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+    {% do parameters.append(_parameter("password", "<PASSWORD>")) %}
+  {% elif method == "kerberos" %}
+    {% do parameters.append(_parameter("method", "kerberos")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+    {% do parameters.append(_parameter("keytab", target.keytab)) %}
+    {% do parameters.append(_parameter("krb5_config", target.krb5_config)) %}
+    {% do parameters.append(_parameter("principal", target.principal)) %}
+  {% elif method == "jwt" %}
+    {% do parameters.append(_parameter("method", "jwt")) %}
+    {% do parameters.append(_parameter("jwt_token", target.jwt_token)) %}
+  {% elif method == "certificate" %}
+    {% do parameters.append(_parameter("method", "certificate")) %}
+    {% do parameters.append(_parameter("client_certificate", target.client_certificate)) %}
+    {% do parameters.append(_parameter("client_private_key", target.client_private_key)) %}
+    {% do parameters.append(_parameter("cert", target.cert)) %}
+  {% elif method == "oauth" %}
+    {% do parameters.append(_parameter("method", "oauth")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+  {% elif method == "oauth_console" %}
+    {% do parameters.append(_parameter("method", "oauth_console")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+  {% else %}
+    {% do parameters.append(_parameter("method", "<AUTH_METHOD>", "Configure your auth method and add the required fields according to https://docs.getdbt.com/docs/core/connect-data-platform/trino-setup#authentication-parameters")) %}
   {% endif %}
-
-  {% do parameters.extend([
-    _parameter("schema", elementary_schema),
-    _parameter("password", "<PASSWORD>"),
-    _parameter("threads", target.threads),
-  ]) %}
   {% do return(parameters) %}
 {% endmacro %}
 
