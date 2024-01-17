@@ -1,14 +1,14 @@
 {% macro get_columns_snapshot_query(model_relation, full_table_name) %}
-
+    {%- set schema_columns_snapshot_relation = elementary.get_elementary_relation('schema_columns_snapshot') %}
     {%- set known_columns_query %}
-        select full_column_name from {{ ref('schema_columns_snapshot') }}
-        where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
+        select full_column_name from {{ schema_columns_snapshot_relation }}
+        where detected_at = (select max(detected_at) from {{ schema_columns_snapshot_relation }} where lower(full_table_name) = lower('{{ full_table_name }}'))
         and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
     {%- set known_tables_query %}
-        select distinct full_table_name from {{ ref('schema_columns_snapshot') }}
-        where detected_at = (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
+        select distinct full_table_name from {{ schema_columns_snapshot_relation }}
+        where detected_at = (select max(detected_at) from {{ schema_columns_snapshot_relation }} where lower(full_table_name) = lower('{{ full_table_name }}'))
         and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 

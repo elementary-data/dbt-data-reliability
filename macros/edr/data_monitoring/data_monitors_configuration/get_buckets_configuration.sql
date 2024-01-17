@@ -32,7 +32,7 @@
     {%- if unit_test %}
         {%- set data_monitoring_metrics_relation = dbt.load_relation(unit_test_relation) %}
     {%- else %}
-        {%- set data_monitoring_metrics_relation = ref('data_monitoring_metrics') %}
+        {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation('data_monitoring_metrics') %}
     {%- endif %}
 
     {%- set regular_bucket_times_query %}
