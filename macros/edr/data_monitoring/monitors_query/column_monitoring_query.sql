@@ -1,4 +1,4 @@
-{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties) %}
+{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, dbt_model_id) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
@@ -92,7 +92,7 @@
     metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(dbt_model_id)) }} as full_table_name,
             edr_column_name as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
