@@ -4,7 +4,7 @@
     {% endif %}
 
     {% if not table_relation %}
-        {% do exceptions.warn("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
+        {% do elementary.warn_missing_elementary_models() %}
         {{ return(none) }}
     {% endif %}
 
