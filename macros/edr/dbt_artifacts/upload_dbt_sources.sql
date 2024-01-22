@@ -1,4 +1,8 @@
 {%- macro upload_dbt_sources(should_commit=false, metadata_hashes=none) -%}
+    {% if not ((elementary.is_run_command() or elementary.is_test_command())) %}
+        {{- return('') -}}
+    {%- endif -%}
+
     {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% if execute and relation %}
         {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
