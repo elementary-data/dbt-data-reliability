@@ -1,4 +1,8 @@
 {% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, metadata_hashes=None, on_query_exceed=none) %}
+    {% if not ((elementary.is_run_command() or elementary.is_test_command())) %}
+        {{- return('') -}}
+    {%- endif -%}
+
     {% set flatten_artifact_dicts = [] %}
     {% do elementary.file_log("[{}] Flattening the artifacts.".format(table_relation.identifier)) %}
     {% for artifact in artifacts %}
