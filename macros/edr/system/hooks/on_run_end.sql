@@ -5,7 +5,7 @@
         {% do return("") %}
       {% endif %}
 
-      {% if elementary.is_run_command() %}
+      {% if elementary.is_run_command() or elementary.is_test_command() %}
         {% do elementary.insert_metrics() %}
       {% endif %}
 
