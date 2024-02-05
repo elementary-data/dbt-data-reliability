@@ -5,19 +5,354 @@ models:
     description: >
       A view that is used by the Elementary CLI to generate models alerts, including all the fields the alert will include such as owner, tags, error message, etc.
       It joins data about models and snapshots run results, and filters alerts according to configuration.
+    columns:
+      - name: alert_id
+        data_type: string
+        description: ""
+
+      - name: alias
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: string
+        description: ""
+
+      - name: full_refresh
+        data_type: boolean
+        description: ""
+
+      - name: materialization
+        data_type: string
+        description: ""
+
+      - name: message
+        data_type: string
+        description: ""
+
+      - name: original_path
+        data_type: string
+        description: ""
+
+      - name: owners
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: unique_id
+        data_type: string
+        description: ""
+
 
   - name: alerts_dbt_tests
     description: >
       A view that is used by the Elementary CLI to generate dbt tests alerts, including all the fields the alert will include such as owner, tags, error message, etc.
       This view includes data about all dbt tests except elementary tests.
       It filters alerts according to configuration.
+    columns:
+      - name: alert_description
+        data_type: string
+        description: ""
+
+      - name: alert_id
+        data_type: string
+        description: ""
+
+      - name: alert_results_query
+        data_type: string
+        description: ""
+
+      - name: alert_type
+        data_type: string
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: data_issue_id
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: model_unique_id
+        data_type: string
+        description: ""
+
+      - name: other
+        data_type: string
+        description: ""
+
+      - name: owners
+        data_type: string
+        description: ""
+
+      - name: result_rows
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: severity
+        data_type: string
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: sub_type
+        data_type: string
+        description: ""
+
+      - name: table_name
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: test_execution_id
+        data_type: string
+        description: ""
+
+      - name: test_name
+        data_type: string
+        description: ""
+
+      - name: test_params
+        data_type: string
+        description: ""
+
+      - name: test_short_name
+        data_type: string
+        description: ""
+
+      - name: test_unique_id
+        data_type: string
+        description: ""
+
 
   - name: alerts_anomaly_detection
     description: >
       A view that is used by the Elementary CLI to generate alerts on data anomalies detected using the elementary anomaly detection tests.
       The view filters alerts according to configuration.
+    columns:
+      - name: alert_description
+        data_type: string
+        description: ""
+
+      - name: alert_id
+        data_type: string
+        description: ""
+
+      - name: alert_results_query
+        data_type: string
+        description: ""
+
+      - name: alert_type
+        data_type: string
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: data_issue_id
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: model_unique_id
+        data_type: string
+        description: ""
+
+      - name: other
+        data_type: string
+        description: ""
+
+      - name: owners
+        data_type: string
+        description: ""
+
+      - name: result_rows
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: severity
+        data_type: string
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: sub_type
+        data_type: string
+        description: ""
+
+      - name: table_name
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: test_execution_id
+        data_type: string
+        description: ""
+
+      - name: test_name
+        data_type: string
+        description: ""
+
+      - name: test_params
+        data_type: string
+        description: ""
+
+      - name: test_short_name
+        data_type: string
+        description: ""
+
+      - name: test_unique_id
+        data_type: string
+        description: ""
+
 
   - name: alerts_schema_changes
     description: >
       A view that is used by the Elementary CLI to generate alerts on schema changes detected using elementary tests.
       The view filters alerts according to configuration.
+    columns:
+      - name: alert_description
+        data_type: string
+        description: ""
+
+      - name: alert_id
+        data_type: string
+        description: ""
+
+      - name: alert_results_query
+        data_type: string
+        description: ""
+
+      - name: alert_type
+        data_type: string
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: data_issue_id
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: model_unique_id
+        data_type: string
+        description: ""
+
+      - name: other
+        data_type: string
+        description: ""
+
+      - name: owners
+        data_type: string
+        description: ""
+
+      - name: result_rows
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: severity
+        data_type: string
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: sub_type
+        data_type: string
+        description: ""
+
+      - name: table_name
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: test_execution_id
+        data_type: string
+        description: ""
+
+      - name: test_name
+        data_type: string
+        description: ""
+
+      - name: test_params
+        data_type: string
+        description: ""
+
+      - name: test_short_name
+        data_type: string
+        description: ""
+
+      - name: test_unique_id
+        description: ""
+        data_type: string
