@@ -118,6 +118,7 @@ case when
 {%- endmacro -%}
 
 {%- macro avg_percent_anomalous_condition(spike_failure_percent_threshold, drop_failure_percent_threshold, anomaly_direction) -%}
+  (
   {% set spike_filter %}
     (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
   {% endset %}
@@ -142,6 +143,7 @@ case when
         (1 = 1)
     {% endif %}
   {% endif %}
+  )
 {%- endmacro -%}
 
 {% macro fail_on_zero(fail_on_zero) %}
