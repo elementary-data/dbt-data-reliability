@@ -13,6 +13,7 @@ DBT_PROJECT_PATH = Path(__file__).parent.parent / "dbt_project"
 
 def pytest_addoption(parser):
     parser.addoption("--target", action="store", default="postgres")
+    parser.addoption("--skip-init", action="store_true", default=False)
 
 
 @pytest.fixture(scope="session")
@@ -31,8 +32,9 @@ def project_dir_copy():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def init_tests_env(target, project_dir_copy: str):
-    env.init(target, project_dir_copy)
+def init_tests_env(target, skip_init, project_dir_copy: str):
+    if not skip_init:
+        env.init(target, project_dir_copy)
 
 
 @pytest.fixture(autouse=True)
@@ -73,6 +75,11 @@ def dbt_project(target: str, project_dir_copy: str) -> DbtProject:
 @pytest.fixture(scope="session")
 def target(request) -> str:
     return request.config.getoption("--target")
+
+
+@pytest.fixture(scope="session")
+def skip_init(request) -> str:
+    return request.config.getoption("--skip-init")
 
 
 @pytest.fixture
