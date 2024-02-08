@@ -1,8 +1,9 @@
 import json
 from dataclasses import dataclass
-from typing import Generic, Literal, TypeVar
+from typing import Generic, Literal, Optional, TypeVar
 
 from dbt_project import DbtProject
+from parametrization import Parametrization
 
 T = TypeVar("T")
 
@@ -61,42 +62,6 @@ PARAM_VALUES = {
 }
 
 
-def test_anomaly_test_configuration_vars(dbt_project: DbtProject):
-    elementary_vars = {key: value.vars for key, value in PARAM_VALUES.items()}
-    dbt_project.dbt_runner.vars.update(elementary_vars)
-    result = dbt_project.dbt_runner.run_operation(
-        "elementary_tests.get_anomaly_config",
-        macro_args={"model_config": {}, "config": {}},
-    )
-    adapted_config = json.loads(result[0])
-    assert adapted_config == _get_expected_adapted_config("vars")
-
-
-def test_anomaly_test_configuration_model(dbt_project: DbtProject):
-    elementary_vars = {key: value.vars for key, value in PARAM_VALUES.items()}
-    model_config = {key: value.model for key, value in PARAM_VALUES.items()}
-    dbt_project.dbt_runner.vars.update(elementary_vars)
-    result = dbt_project.dbt_runner.run_operation(
-        "elementary_tests.get_anomaly_config",
-        macro_args={"model_config": model_config, "config": {}},
-    )
-    adapted_config = json.loads(result[0])
-    assert adapted_config == _get_expected_adapted_config("model")
-
-
-def test_anomaly_test_configuration_test(dbt_project: DbtProject):
-    elementary_vars = {key: value.vars for key, value in PARAM_VALUES.items()}
-    model_config = {key: value.model for key, value in PARAM_VALUES.items()}
-    test_config = {key: value.test for key, value in PARAM_VALUES.items()}
-    dbt_project.dbt_runner.vars.update(elementary_vars)
-    result = dbt_project.dbt_runner.run_operation(
-        "elementary_tests.get_anomaly_config",
-        macro_args={"model_config": model_config, "config": test_config},
-    )
-    adapted_config = json.loads(result[0])
-    assert adapted_config == _get_expected_adapted_config("test")
-
-
 def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
     def get_value(key: str):
         return PARAM_VALUES[key].__dict__[values_type]
@@ -121,3 +86,41 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "freshness_column": None,  # Deprecated
         "dimensions": None,  # should only be set at the test level
     }
+
+
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="vars",
+    vars_config={key: value.vars for key, value in PARAM_VALUES.items()},
+    model_config={},
+    test_config={},
+    expected_config=_get_expected_adapted_config("vars"),
+)
+@Parametrization.case(
+    name="model",
+    vars_config={key: value.vars for key, value in PARAM_VALUES.items()},
+    model_config={key: value.model for key, value in PARAM_VALUES.items()},
+    test_config={},
+    expected_config=_get_expected_adapted_config("model"),
+)
+@Parametrization.case(
+    name="test",
+    vars_config={key: value.vars for key, value in PARAM_VALUES.items()},
+    model_config={key: value.model for key, value in PARAM_VALUES.items()},
+    test_config={key: value.test for key, value in PARAM_VALUES.items()},
+    expected_config=_get_expected_adapted_config("test"),
+)
+def test_anomaly_test_configuration(
+    dbt_project: DbtProject,
+    vars_config: dict,
+    model_config: dict,
+    test_config: dict,
+    expected_config: dict,
+):
+    dbt_project.dbt_runner.vars.update(vars_config)
+    result = dbt_project.dbt_runner.run_operation(
+        "elementary_tests.get_anomaly_config",
+        macro_args={"model_config": model_config, "config": test_config},
+    )
+    adapted_config = json.loads(result[0])
+    assert adapted_config == expected_config
