@@ -5,6 +5,14 @@
         {% do return("") %}
       {% endif %}
 
+      {# 
+        Elementary temp tables are not realy temp and should be cleaned on the end of the run.
+        We want to make sure we clean the temp tables even if elementary on run end hooks are disabled.
+      #}
+      {% if elementary.get_config_var("clean_elementary_temp_tables") %}
+        {% do elementary.clean_elementary_temp_tables() %}
+      {% endif %}
+
       {% if elementary.is_run_command() %}
         {% do elementary.insert_metrics() %}
       {% endif %}
