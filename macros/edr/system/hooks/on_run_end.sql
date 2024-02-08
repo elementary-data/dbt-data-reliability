@@ -6,7 +6,7 @@
       {% endif %}
 
       {# 
-        Elementary temp tables are not realy temp and should be cleaned on the end of the run.
+        Elementary temp tables are not really temp and should be cleaned on the end of the run.
         We want to make sure we clean the temp tables even if elementary on run end hooks are disabled.
       #}
       {% if elementary.get_config_var("clean_elementary_temp_tables") %}
