@@ -58,7 +58,7 @@
     'mute_dbt_upgrade_recommendation': false,
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
-    'collect_metrics': true,
+    'collect_metrics': false,
     'clean_elementary_temp_tables': true,
     'force_metrics_backfill': false,
     'ignore_small_changes': {
