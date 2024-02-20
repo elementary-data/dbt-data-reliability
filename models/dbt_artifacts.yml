@@ -488,3 +488,69 @@ models:
       - name: generated_at
         data_type: string
         description: ""
+
+  - name: dbt_seeds
+    description: >
+      Metadata about seed in the project, with each record representing each declared seed.
+      Data is loaded every time this model is executed.
+      It is recommended to execute the model every time a change is merged to the project.
+    columns:
+      - name: alias
+        data_type: string
+        description: ""
+
+      - name: checksum
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: description
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: metadata_hash
+        data_type: string
+        description: ""
+
+      - name: name
+        data_type: string
+        description: ""
+
+      - name: original_path
+        data_type: string
+        description: ""
+
+      - name: owner
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: unique_id
+        data_type: string
+        description: ""
