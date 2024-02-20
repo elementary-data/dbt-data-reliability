@@ -589,3 +589,63 @@ models:
       - name: run_started_at
         description: ""
         data_type: timestamp_ntz
+
+  - name: dbt_source_freshness_results
+    description: >
+      Run results of dbt freshness checks.
+    columns:
+      - name: compile_completed_at
+        data_type: string
+        description: ""
+
+      - name: compile_started_at
+        data_type: string
+        description: ""
+
+      - name: created_at
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: error
+        data_type: string
+        description: ""
+
+      - name: execute_completed_at
+        data_type: string
+        description: ""
+
+      - name: execute_started_at
+        data_type: string
+        description: ""
+
+      - name: generated_at
+        data_type: string
+        description: ""
+
+      - name: invocation_id
+        data_type: string
+        description: ""
+
+      - name: max_loaded_at
+        data_type: string
+        description: ""
+
+      - name: max_loaded_at_time_ago_in_s
+        data_type: float
+        description: ""
+
+      - name: snapshotted_at
+        data_type: string
+        description: ""
+
+      - name: source_freshness_execution_id
+        data_type: string
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: unique_id
+        data_type: string
+        description: ""
