@@ -554,3 +554,32 @@ models:
       - name: unique_id
         data_type: string
         description: ""
+
+  - name: dbt_columns
+    description: >
+      View of all columns in dbt models.
+      Each row is the description of a single column.
+    columns:
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: table_name
+        data_type: string
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: data_type
+        data_type: string
+        description: ""
