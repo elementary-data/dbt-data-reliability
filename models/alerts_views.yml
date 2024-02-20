@@ -356,3 +356,84 @@ models:
       - name: test_unique_id
         description: ""
         data_type: string
+
+  - name: alerts_dbt_source_freshness
+      - name: alert_id
+        data_type: string
+        description: ""
+
+      - name: max_loaded_at
+        data_type: string
+        description: ""
+
+      - name: snapshotted_at
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: string
+        description: ""
+
+      - name: max_loaded_at_time_ago_in_s
+        data_type: float
+        description: ""
+
+      - name: status
+        data_type: string
+        description: ""
+
+      - name: error
+        data_type: string
+        description: ""
+
+      - name: unique_id
+        data_type: string
+        description: ""
+
+      - name: database_name
+        data_type: string
+        description: ""
+
+      - name: schema_name
+        data_type: string
+        description: ""
+
+      - name: source_name
+        data_type: string
+        description: ""
+
+      - name: identifier
+        data_type: string
+        description: ""
+
+      - name: freshness_error_after
+        data_type: string
+        description: ""
+
+      - name: freshness_warn_after
+        data_type: string
+        description: ""
+
+      - name: freshness_filter
+        data_type: string
+        description: ""
+
+      - name: tags
+        data_type: string
+        description: ""
+
+      - name: meta
+        data_type: string
+        description: ""
+
+      - name: owner
+        data_type: string
+        description: ""
+
+      - name: package_name
+        data_type: string
+        description: ""
+
+      - name: path
+        data_type: string
+        description: ""
