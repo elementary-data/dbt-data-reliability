@@ -1,5 +1,5 @@
 {% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, sensitivity, detection_delay, anomaly_exclude_metrics) %}
-  {{ config(tags = ['elementary-monitor']) }}
+  {{ config(tags = ['elementary-tests']) }}
   {% if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
     {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
     {% if not model_relation %}

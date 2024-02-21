@@ -1,5 +1,5 @@
 {% test exposure_schema_validity(model, exposures, node, columns) %}
-    {{ config(tags = ['elementary-monitor']) }}
+    {{ config(tags = ['elementary-tests']) }}
     {%- if not execute or not elementary.is_test_command() or not elementary.is_elementary_enabled() -%}
         {%- do return(none) -%}
     {%- endif -%}

@@ -1,5 +1,5 @@
 {% test schema_changes(model) %}
-    {{ config(tags = ['elementary-monitor']) }}
+    {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
