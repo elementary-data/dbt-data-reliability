@@ -1,6 +1,6 @@
 {% macro clean_elementary_test_tables() %}
     {% set test_table_relations = [] %}
-    {% set temp_test_table_relations_map = elementary.get_cache("temp_test_table_relations_map", {}) %}
+    {% set temp_test_table_relations_map = elementary.get_cache("temp_test_table_relations_map") %}
     {% if temp_test_table_relations_map %}
         {% for test_entry in temp_test_table_relations_map.values() %}
             {% for test_relation in test_entry.values() %}
