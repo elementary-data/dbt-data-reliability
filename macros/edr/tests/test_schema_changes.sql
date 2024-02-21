@@ -1,5 +1,6 @@
 {% test schema_changes(model) %}
-    {%- if execute and elementary.is_test_command() %}
+    {{ config(tags = ['elementary-monitor']) }}
+    {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
