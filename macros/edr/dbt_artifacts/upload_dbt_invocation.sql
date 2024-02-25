@@ -45,7 +45,7 @@
       'account_id': elementary.get_var("account_id", ["DBT_ACCOUNT_ID"]),
       'target_adapter_specific_fields': elementary.get_target_adapter_specific_fields()
   } %}
-  {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true) %}
+  {% do elementary.insert_rows(relation, [dbt_invocation], should_commit=true, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
   {% do elementary.file_log("Uploaded dbt invocation successfully.") %}
 {% endmacro %}
 

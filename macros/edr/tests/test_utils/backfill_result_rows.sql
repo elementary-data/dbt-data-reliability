@@ -31,6 +31,6 @@
             }) %}
         {% endfor %}
     {% endfor %}
-    {% do elementary.insert_rows(this, test_result_rows_rows) %}
+    {% do elementary.insert_rows(this, test_result_rows_rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% do return('') %}
 {% endmacro %}
