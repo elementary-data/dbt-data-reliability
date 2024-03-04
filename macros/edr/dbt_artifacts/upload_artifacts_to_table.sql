@@ -1,6 +1,10 @@
 {% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, metadata_hashes=None, on_query_exceed=none) %}
+    {% set context_name = 'upload_artifacts_to_table[' ~ table_relation.name ~ ']'%}
+    {% do elementary.begin_duration_measure_context(context_name) %}
+
     {% set flatten_artifact_dicts = [] %}
     {% do elementary.file_log("[{}] Flattening the artifacts.".format(table_relation.identifier)) %}
+    {% do elementary.begin_duration_measure_context('artifacts_flatten') %}
     {% for artifact in artifacts %}
         {% set flatten_artifact = flatten_artifact_callback(artifact) %}
         {% if flatten_artifact is mapping %}
@@ -9,6 +13,7 @@
             {% do flatten_artifact_dicts.extend(flatten_artifact) %}
         {% endif %}
     {% endfor %}
+    {% do elementary.end_duration_measure_context('artifacts_flatten') %}
     {% do elementary.file_log("[{}] Flattened {} artifacts.".format(table_relation.identifier, flatten_artifact_dicts | length)) %}
 
     {% if append %}
@@ -31,6 +36,8 @@
             {% do elementary.replace_table_data(table_relation, flatten_artifact_dicts) %}
         {% endif %}
     {% endif %}
+
+    {% do elementary.end_duration_measure_context(context_name, log_durations=true) %}
 {% endmacro %}
 
 {% macro get_upload_artifact_method(table_relation, metadata_hashes) %}
