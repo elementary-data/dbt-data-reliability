@@ -25,8 +25,8 @@
 {% macro bigquery__query_table_metrics() %}
     select
       {{ modules.datetime.datetime.utcnow().timestamp() }} as build_timestamp,
-      row_count
-    from {{ this.schema }}.__TABLES__
+      total_rows AS row_count
+    from {{ this.database }}.{{ this.schema }}.INFORMATION_SCHEMA.TABLE_STORAGE
     where table_id = '{{ this.name }}'
   {% endset %}
 
