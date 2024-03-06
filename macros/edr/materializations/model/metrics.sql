@@ -33,7 +33,11 @@
   {% set metrics = [] %}
   {% for metric_column in elementary.run_query(query).columns %}
     {% set metric_name = metric_column.name %}
-    {% set metric_value = metric_column[0] %}
+    {% if metric_column | length == 0 %}
+      {% set metric_value = none %} {# this shouldn't happen, but mainly to avoid edge cases / never fail here #}
+    {% else %}
+      {% set metric_value = metric_column[0] %}
+    {% endif %}
     {% do metrics.append({
       "id": "{}.{}".format(invocation_id, this),
       "full_table_name": elementary.relation_to_full_name(this),
