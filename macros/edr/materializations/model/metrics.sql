@@ -23,6 +23,7 @@
 {% endmacro %}
 
 {% macro bigquery__query_table_metrics() %}
+  {% set query %}
     select
       {{ modules.datetime.datetime.utcnow().timestamp() }} as build_timestamp,
       total_rows AS row_count
