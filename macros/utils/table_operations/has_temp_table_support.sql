@@ -9,3 +9,8 @@
 {% macro spark__has_temp_table_support() %}
     {% do return(false) %}
 {% endmacro %}
+
+{% macro trino__has_temp_table_support() %}
+    {% do return(false) %}
+{% endmacro %}
+

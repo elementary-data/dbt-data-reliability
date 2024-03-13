@@ -55,6 +55,10 @@
     {% do return("varchar") %}
 {% endmacro %}
 
+{% macro trino__edr_type_string() %}
+    {% do return("varchar") %}
+{% endmacro %}
+
 
 
 
@@ -143,4 +147,8 @@
   {%- else -%}
     timestamp
   {%- endif -%}
+{% endmacro %}
+
+{% macro trino__edr_type_timestamp() %}
+    timestamp(6)
 {% endmacro %}

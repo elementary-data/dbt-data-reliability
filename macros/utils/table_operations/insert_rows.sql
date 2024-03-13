@@ -1,4 +1,8 @@
 {% macro insert_rows(table_relation, rows, should_commit=false, chunk_size=5000, on_query_exceed=none) %}
+    {{ return(adapter.dispatch('insert_rows', 'elementary')(table_relation, rows, should_commit, chunk_size, on_query_exceed)) }}
+{% endmacro %}
+
+{% macro default__insert_rows(table_relation, rows, should_commit=false, chunk_size=5000, on_query_exceed=none) %}
     {% if not rows %}
       {{ return(none) }}
     {% endif %}
@@ -37,6 +41,10 @@
     {% if should_commit %}
       {% do adapter.commit() %}
     {% endif %}
+{% endmacro %}
+
+{% macro trino__insert_rows(table_relation, rows, should_commit=false, chunk_size=5000, on_query_exceed=none) %}
+    {{ return(default__insert_rows(table_relation, rows, false, chunk_size, on_query_exceed)) }}
 {% endmacro %}
 
 {% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none, on_query_exceed=none) -%}
@@ -141,6 +149,10 @@
 {%- endmacro -%}
 
 {%- macro athena__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
+{%- endmacro -%}
+
+{%- macro trino__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 

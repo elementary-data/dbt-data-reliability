@@ -22,3 +22,7 @@
 {% macro athena__target_database() %}
     {% do return(target.database) %}
 {% endmacro %}
+
+{% macro trino__target_database() %}
+    {% do return(target.database) %}
+{% endmacro %}

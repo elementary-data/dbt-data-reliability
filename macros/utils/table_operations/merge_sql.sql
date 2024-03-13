@@ -45,3 +45,29 @@
     {% endset %}
     {% do return(query) %}
 {% endmacro %}
+
+{% macro trino__merge_sql(target_relation, tmp_relation, unique_key, dest_columns, incremental_predicates) %}
+
+    {% set query %}
+      merge into {{ target_relation }} as target using {{ tmp_relation }} as src
+      ON (target.{{unique_key}} = src.{{ unique_key}})
+      when matched
+      then update set
+      {%- for col in dest_columns %}
+          {{ col.column }} = src.{{ col.column }} {{ ", " if not loop.last }}
+      {%- endfor %}
+      when not matched
+        then insert (
+        {%- for col in dest_columns %}
+            {{ col.column }} {{ ", " if not loop.last }}
+        {%- endfor %}
+
+        )
+        values (
+        {%- for col in dest_columns %}
+            src.{{ col.column }} {{ ", " if not loop.last }}
+        {%- endfor %}
+        )
+    {% endset %}
+    {% do return(query) %}
+{% endmacro %}
