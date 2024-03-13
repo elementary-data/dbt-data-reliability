@@ -50,6 +50,22 @@
     {% do elementary.debug_log("Found {} anomaly scores for group {}.".format(anomaly_scores_rows | length, anomaly_scores_group)) %}
     {% do elementary_test_results_rows.append(elementary.get_anomaly_test_result_row(flattened_test, anomaly_scores_rows)) %}
   {% endfor %}
+  {% if not elementary_test_results_rows and "dimensions" in flattened_test.test_params %}
+    {# 
+      This code exists due to the fact that while other anomaly tests return all of their metrics during "query_test_result_rows()",
+      the dimension anomaly test does not. This is because the visualization of the dimension anomaly test is a table, and the
+      table is not able to display all of the metrics on a graph.
+      Once we change the visualization of the dimensions anomaly test to a graph, we can (and should) remove this code.
+    #}
+    {# this means that this is a dimension test that has passed #}
+    {% set elementary_test_result_row = elementary.get_dbt_test_result_row(flattened_test) %}
+    {% do elementary_test_result_row.update({
+      'test_type': 'anomaly_detection',
+      'test_sub_type': 'dimension',
+      'test_results_description': "No anomaly found in any dimension in the given time range."
+    }) %}
+    {% do elementary_test_results_rows.append(elementary_test_result_row) %}
+  {% endif %}
   {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 
   {% do context.update({"sql": elementary.get_anomaly_query(flattened_test)}) %}
