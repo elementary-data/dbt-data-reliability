@@ -1,4 +1,6 @@
 {% macro split_list_to_chunks(item_list, chunk_size=50) %}
+    {% do elementary.begin_duration_measure_context('split_list_to_chunks') %}
+
     {% set chunks = [] %}
     {% set current_chunk = [] %}
     {% for item in item_list %}
@@ -12,5 +14,7 @@
     {% if current_chunk %}
         {% do chunks.append(current_chunk) %}
     {% endif %}
+
+    {% do elementary.end_duration_measure_context('split_list_to_chunks') %}
     {{ return(chunks) }}
 {% endmacro %}
