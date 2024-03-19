@@ -52,9 +52,9 @@ def test_flatten_table_columns(
     expected_columns: List[str],
 ) -> None:
     if only_with_description is not None:
-        dbt_project.dbt_runner.vars["upload_only_columns_with_descriptions"] = (
-            only_with_description
-        )
+        dbt_project.dbt_runner.vars[
+            "upload_only_columns_with_descriptions"
+        ] = only_with_description
     flattened_columns = json.loads(
         dbt_project.dbt_runner.run_operation(
             "elementary.flatten_table_columns", macro_args={"table_node": TABLE_NODE}
