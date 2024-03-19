@@ -4,9 +4,6 @@ from typing import List, Optional
 from dbt_project import DbtProject
 from parametrization import Parametrization
 
-TEST_MODEL = "one"
-
-
 TABLE_NODE = {
     "columns": {
         "with_description": {
