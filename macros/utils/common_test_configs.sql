@@ -312,7 +312,7 @@
         },
         "unique_combination_of_columns": {
           "quality_dimension": "uniqueness",
-          "failed_row_count_calc": "sum(num_rows)"
+          "failed_row_count_calc": "count(*)"
         }
       },
       "elementary": {
