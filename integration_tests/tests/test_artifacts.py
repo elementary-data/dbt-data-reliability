@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from dbt_project import DbtProject
 
@@ -49,3 +51,45 @@ def test_dbt_invocations(dbt_project: DbtProject):
     dbt_project.read_table(
         "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
     )
+
+
+def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
+    dbt_project.dbt_runner.vars["disable_freshness_results"] = False
+    dbt_project.seed(
+        [
+            {
+                "UPDATE_TIME": datetime.now(),
+            }
+        ],
+        test_id,
+    )
+    with dbt_project.write_yaml(
+        content={
+            "version": 2,
+            "sources": [
+                {
+                    "name": "test_source",
+                    "database": "{{target.database}}",
+                    "schema": "{{target.schema}}",
+                    "tables": [
+                        {
+                            "name": test_id,
+                            "loaded_at_field": '"UPDATE_TIME"::timestamp',
+                            "freshness": {
+                                "warn_after": {
+                                    "count": 1,
+                                    "period": "hour",
+                                },
+                            },
+                        }
+                    ],
+                }
+            ],
+        }
+    ):
+        dbt_project.dbt_runner.source_freshness()
+        dbt_project.read_table(
+            "dbt_source_freshness_results",
+            where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
+            raise_if_empty=True,
+        )
