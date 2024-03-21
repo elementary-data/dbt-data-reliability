@@ -69,7 +69,7 @@
                             {%- do invalid_exposures.append({
                                     'exposure': exposure['name'],
                                     'url': exposure['url'],
-                                    'error': 'different data type for the column ' ~ exposure_column['column_name'] ~ ' ' ~ exposure_column['data_type'] ~ ' vs ' ~ columns_dict[exposure_column['name'] | upper]
+                                    'error': 'different data type for the column ' ~ exposure_column['column_name'] ~ ' ' ~ exposure_column['data_type'] ~ ' vs ' ~ columns_dict[exposure_column['column_name'] | upper]
                                     })
                             -%}
                         {%- endif -%}
