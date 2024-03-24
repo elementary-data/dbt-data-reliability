@@ -3,10 +3,10 @@
 </p>
 
 <h2 align="center">
- dbt native data observability for analytics & data engineers
+ [dbt native data observability for analytics & data engineers](https://docs.elementary-data.com/introduction)
 </h2>
 <h4 align="center">
-Monitor your data quality, operation and performance directly from your dbt project.
+Monitor your data pipelines in minutes. Available as self-hosted or cloud service with premium features.
 </h4>
 
 <p align="center">
@@ -15,7 +15,15 @@ Monitor your data quality, operation and performance directly from your dbt proj
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads"/>
 
-## Quick start
+## Get more out of Elementary 
+
+Elementary has 3 offerings: This dbt package, Elementary Community (OSS) and Elementary (cloud service).
+
+- **dbt package:** For basic data monitoring and dbt artifacts collection, Elementary offers a dbt package. The package adds logging, artifacts uploading, and Elementary tests (anomaly detection and schema) to your project.
+- **Elementary Community:** An open-source CLI tool you can deploy and orchestrate to send alerts and self-host the Elementary report. Best for data and analytics engineers that require basic observability capabilities or for evaluating features without vendor approval. Our community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
+- **Elementary Cloud:**  Ideal for teams monitoring mission-critical data pipelines, requiring guaranteed uptime and reliability, short-time-to-value, advanced features, collaboration, and professional support. The solution is secure by design, and requires no access to your data from cloud. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github) or [start a trial](https://www.elementary-data.com/signup).
+
+## Quick start - dbt package
 
 1. Add to your `packages.yml`:
 
@@ -40,11 +48,11 @@ models:
 
 4. Run `dbt run --select elementary`
 
-Check out the [full documentation](https://docs.elementary-data.com/) for generating the UI, alerts and adding anomaly detection tests.
+Check out the [full documentation](https://docs.elementary-data.com/).
 
 ## Run Results and dbt artifacts
 
-The package automatically uploads the dbt artifacts and run results to tables in your data warehouse:
+The package automatically uploads dbt artifacts and run results to tables in your data warehouse:
 
 Run results tables:
 
@@ -65,7 +73,7 @@ Metadata tables:
 
 Here you can find [additional details about the tables](https://docs.elementary-data.com/guides/modules-overview/dbt-package).
 
-## Data anomalies detection as dbt tests
+## Data anomaly detection as dbt tests
 
 Elementary dbt tests collect metrics and metadata over time, such as freshness, volume, schema changes, distribution, cardinality, etc.
 Executed as any other dbt tests, the Elementary tests alert on anomalies and outliers.
@@ -85,29 +93,17 @@ models:
       - elementary.all_columns_anomalies
 ```
 
-## Data observability report
+Read about the available [Elementary tests and configuration](https://docs.elementary-data.com/data-tests/introduction).
+
+## How Elementary works?
+
+Elementary dbt package creates tables of metadata and test results in your data warehouse, as part of your dbt runs. 
+
+The cloud service or the CLI tool read the data from these tables, send alerts and present the results in the UI.
 
 <kbd align="center">
         <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
 </kbd>
-
-## Slack alerts
-
-<img alt="UI" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/Slack_alert_elementary.png" width="600">
-
-## How it works?
-
-Elementary dbt package creates tables of metadata and test results in your data warehouse, as part of your dbt runs. The [CLI tool](https://github.com/elementary-data/elementary) reads the data from these tables, and is used to generate the UI and alerts.
-
-<img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/how_elementary_works.png">
-
-## Data warehouse support
-
-- [x] **Snowflake** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/snowflake-16.png)
-- [x] **BigQuery** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/bigquery-16.svg)
-- [x] **Redshift** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/redshift-16.png)
-- [x] **Databricks SQL** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/databricks-16.png)
-- [x] **Postgres** ![](https://raw.githubusercontent.com/elementary-data/elementary/master/static/postgres-16.png)
 
 ## Community & Support
 
