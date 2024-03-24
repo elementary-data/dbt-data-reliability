@@ -1,5 +1,5 @@
 <p align="center">
-[<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/github_banner.png"/ width="1000">](https://www.elementary-data.com/)
+<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/github_banner.png"/ width="1000">
 </p>
 
 <p align="center">
