@@ -5,9 +5,6 @@
 <h2 align="center">
  [dbt native data observability for analytics & data engineers](https://docs.elementary-data.com/introduction)
 </h2>
-<h4 align="center">
-Monitor your data pipelines in minutes. Available as self-hosted or cloud service with premium features.
-</h4>
 
 <p align="center">
 <a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
@@ -15,7 +12,24 @@ Monitor your data pipelines in minutes. Available as self-hosted or cloud servic
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads"/>
 
-## Get more out of Elementary 
+## What is Elementary?
+
+This dbt package is part of Elementary, the dbt-native data observability solution for data and analytics engineers.
+Set up in minutes, gain immediate visibility, detect data issues, send actionable alerts, and understand impact and root cause.
+Available as self-hosted or Cloud service with premium features.
+
+#### Table of Contents
+
+- [Get more out of Elementary](#get-more-out-of-elementary-dbt-package)
+- [Quick start - dbt package](#quick-start---dbt-package)
+- [Run results and dbt artifacts](#run-results-and-dbt-artifacts)
+- [Data anomaly detection as dbt tests](#data-anomaly-detection-as-dbt-tests)
+- [How Elementary works?](#how-elementary-works)
+- [Community & Support](#community--support)
+- [Contribution](#contributions)
+
+
+## Get more out of Elementary dbt package 
 
 Elementary has 3 offerings: This dbt package, Elementary Community (OSS) and Elementary (cloud service).
 
