@@ -2,7 +2,7 @@
 <img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/github_banner.png"/ width="1000">
 </p>
 
-# [dbt native data observability](https://docs.elementary-data.com/introduction)
+# [dbt native data observability](https://www.elementary-data.com/)
 
 <p align="center">
 <a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
