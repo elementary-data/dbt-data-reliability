@@ -5,7 +5,7 @@
 {% macro bigquery__validate_query_history_permissions() %}
     {% set relevant_databases = elementary.get_relevant_databases() %}
     {% for relevant_database in relevant_databases %}
-        {% do print('\nValidating access to INFORMATION_SCHEMA.JOBS for the project {} - required role "roles/bigquery.resourceViewer"'.format(relevant_database)) %}
+        {% do print('\nValidating access to INFORMATION_SCHEMA.JOBS for the project {} datasets - required role "roles/bigquery.resourceViewer"'.format(relevant_database)) %}
         {% set query = "select 1 from {}.region-{}.INFORMATION_SCHEMA.JOBS limit 1" .format(relevant_database, target.location)%}
         {% do elementary.run_query(query) %}
     {% endfor %}
@@ -22,7 +22,7 @@
 
 {% macro bigquery__get_required_query_history_permissions() %}
     {% set relevant_databases = elementary.get_relevant_databases() %}
-    {% do print('\nPlease make sure you provide the role "roles/bigquery.resourceViewer" to the following projects:') %}
+    {% do print('\nPlease make sure you provide the role "roles/bigquery.resourceViewer" to the following projects` datasets:') %}
     {% for relevant_database in relevant_databases %}
       {% do print(' - {}'.format(relevant_database)) %}
     {% endfor %}

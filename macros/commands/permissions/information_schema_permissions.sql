@@ -5,7 +5,7 @@
 {% macro bigquery__validate_information_schema_permissions() %}
     {% set relevant_databases = elementary.get_relevant_databases() %}
     {% for relevant_database in relevant_databases %}
-        {% do print('\nValidating access to INFORMATION_SCHEMA.SCHEMATA for the project {} - required role "roles/bigquery.dataViewer" / "roles/bigquery.metadataViewer"'.format(relevant_database)) %}
+        {% do print('\nValidating access to INFORMATION_SCHEMA.SCHEMATA for the project {} datasets - required role "roles/bigquery.dataViewer" / "roles/bigquery.metadataViewer"'.format(relevant_database)) %}
         {% set query = "select catalog_name, schema_name from {}.region-{}.INFORMATION_SCHEMA.SCHEMATA limit 1" .format(relevant_database, target.location)%}
         {% do print(query) %}
         {% do elementary.run_query(query) %}
@@ -23,7 +23,7 @@
 
 {% macro bigquery__get_required_information_schema_permissions() %}
     {% set relevant_databases = elementary.get_relevant_databases() %}
-    {% do print('\nPlease make sure you provide one of the following roles: "roles/bigquery.dataViewer" / "roles/bigquery.metadataViewer" to the following projects:') %}
+    {% do print('\nPlease make sure you provide one of the following roles: "roles/bigquery.dataViewer" / "roles/bigquery.metadataViewer" to the following projects` datasets:') %}
     {% for relevant_database in relevant_databases %}
       {% do print(' - {}'.format(relevant_database)) %}
     {% endfor %}
