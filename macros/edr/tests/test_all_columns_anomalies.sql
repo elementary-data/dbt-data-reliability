@@ -80,7 +80,8 @@
                                                                            test_configuration=test_configuration,
                                                                            monitors=all_columns_monitors,
                                                                            columns_only=true,
-                                                                           metric_properties=metric_properties) %}
+                                                                           metric_properties=metric_properties,
+                                                                           dbt_model_id=dbt_model_id) %}
 
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 

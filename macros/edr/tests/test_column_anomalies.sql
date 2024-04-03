@@ -1,4 +1,4 @@
-{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period) %}
+{% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, dbt_model_id) %}
     {%- if execute and elementary.is_test_command() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
@@ -68,7 +68,8 @@
                                                                              test_configuration.days_back,
                                                                              column_obj,
                                                                              column_monitors,
-                                                                             metric_properties) %}
+                                                                             metric_properties,
+                                                                             dbt_model_id) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', column_monitoring_query) %}
 
@@ -79,7 +80,8 @@
                                                                           test_configuration=test_configuration,
                                                                           monitors=column_monitors,
                                                                           column_name=column_name,
-                                                                          metric_properties=metric_properties
+                                                                          metric_properties=metric_properties,
+                                                                          dbt_model_id=dbt_model_id
                                                                           ) %}
 
         {{ elementary.debug_log('anomaly_score_query - \n' ~ anomaly_scores_query) }}
