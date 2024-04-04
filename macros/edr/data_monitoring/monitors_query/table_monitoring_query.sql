@@ -1,6 +1,6 @@
-{% macro table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties) %}
+{% macro table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties, dbt_model_id) %}
 
-    {{ elementary.get_table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties) }}
+    {{ elementary.get_table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties, dbt_model_id=dbt_model_id) }}
 
     select
        {{ elementary.generate_surrogate_key([
@@ -26,14 +26,14 @@
 
 {% endmacro %}
 
-{% macro get_table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties) %}
+{% macro get_table_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, table_monitors, metric_properties, dbt_model_id) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
 
     {%- if timestamp_column %}
-        {{ elementary.get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str) }}
+        {{ elementary.get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str, dbt_model_id=dbt_model_id) }}
     {%- elif table_monitors == ["row_count"]  %}
-        {{ elementary.get_no_timestamp_volume_query(monitored_table, metric_properties, full_table_name_str) }}
+        {{ elementary.get_no_timestamp_volume_query(monitored_table, metric_properties, full_table_name_str, dbt_model_id=dbt_model_id) }}
     {%- elif table_monitors == ["event_freshness"]  %}
         {# Event freshness with only event_timestamp and not update_timestamp #}
         {{ elementary.get_no_timestamp_event_freshness_query(monitored_table, metric_properties, full_table_name_str) }}
@@ -44,7 +44,7 @@
     {%- endif %}
 {% endmacro %}
 
-{% macro get_no_timestamp_volume_query(monitored_table, metric_properties, full_table_name_str) %}
+{% macro get_no_timestamp_volume_query(monitored_table, metric_properties, full_table_name_str, dbt_model_id) %}
     with monitored_table_metrics as (
         select
             {{ elementary.const_as_string('row_count') }} as metric_name,
@@ -55,7 +55,7 @@
     ),
     metrics_final as (
     select
-        {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+        {{ elementary.edr_cast_as_string(elementary.edr_quote(dbt_model_id)) }} as full_table_name,
         {{ elementary.null_string() }} as column_name,
         metric_name,
         {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
@@ -70,7 +70,7 @@
     )
 {% endmacro %}
 
-{% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str) %}
+{% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_monitors, min_bucket_start, max_bucket_end, full_table_name_str, dbt_model_id) %}
     with partially_time_filtered_monitored_table as (
         select
             {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as monitored_table_timestamp_column
@@ -115,7 +115,7 @@
 
     metrics_final as (
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(dbt_model_id)) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
