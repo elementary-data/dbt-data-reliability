@@ -1,6 +1,7 @@
 {% macro get_columns_changes_from_last_run_query(full_table_name, temp_columns_snapshot_relation) %}
+    {%- set schema_columns_snapshot_relation = elementary.get_elementary_relation('schema_columns_snapshot') %}
     {%- set previous_schema_time_query -%}
-        (select max(detected_at) from {{ ref('schema_columns_snapshot') }} where lower(full_table_name) = lower('{{ full_table_name }}'))
+        (select max(detected_at) from {{ schema_columns_snapshot_relation }} where lower(full_table_name) = lower('{{ full_table_name }}'))
     {%- endset %}
 
     {% set cur %}
@@ -12,7 +13,7 @@
     {% set pre %}
         {# This is the previous snapshot of the columns. #}
         select full_table_name, column_name, data_type, detected_at
-        from {{ ref('schema_columns_snapshot') }}
+        from {{ schema_columns_snapshot_relation }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
             and detected_at = {{ previous_schema_time_query }}
         order by detected_at desc

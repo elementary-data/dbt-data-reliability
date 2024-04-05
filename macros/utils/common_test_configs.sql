@@ -309,6 +309,10 @@
         "accepted_range": {
           "quality_dimension": "validity",
           "failed_row_count_calc": "count(*)"
+        },
+        "unique_combination_of_columns": {
+          "quality_dimension": "uniqueness",
+          "failed_row_count_calc": "count(*)"
         }
       },
       "elementary": {

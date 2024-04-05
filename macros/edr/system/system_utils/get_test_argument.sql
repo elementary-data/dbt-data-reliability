@@ -1,13 +1,12 @@
 {% macro get_test_argument(argument_name, value, model_graph_node) %}
-  {% if value %}
-    {{ return(value) }}
+  {% if value is defined %}
+    {% do return(value) %}
   {%- endif %}
   {%- if model_graph_node %}
     {% set elementary_config = elementary.get_elementary_config_from_node(model_graph_node) %}
     {% if elementary_config and elementary_config is mapping %}
-        {%- set model_config_value = elementary_config.get(argument_name) %}
-        {%- if model_config_value %}
-            {{ return(model_config_value) }}
+        {%- if argument_name in elementary_config %}
+            {% do return(elementary_config.get(argument_name)) %}
         {%- endif %}
     {% endif %}
   {% endif %}
