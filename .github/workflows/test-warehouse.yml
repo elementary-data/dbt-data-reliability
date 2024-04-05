@@ -14,6 +14,8 @@ on:
           - databricks
           - databricks_catalog
           - spark
+          - athena
+          - trino
       elementary-ref:
         type: string
         required: false
@@ -73,6 +75,11 @@ jobs:
         if: inputs.warehouse-type == 'postgres'
         working-directory: ${{ env.TESTS_DIR }}
         run: docker-compose up -d postgres
+
+      - name: Start Trino
+        if: inputs.warehouse-type == 'trino'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker-compose up -d -f docker-compose-trino.yml
 
       - name: Setup Python
         uses: actions/setup-python@v4
