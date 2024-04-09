@@ -19,8 +19,6 @@
 {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
    of the package are not accessible at on-run-start and on-run-end #}
   {% set default_config = {
-    'detection_period': elementary.get_period_default_var(period='day', count=2),
-    'training_period': elementary.get_period_default_var(period='day', count=14),
     'days_back': 14,
     'anomaly_sensitivity': 3,
     'backfill_days': 2,
@@ -34,7 +32,7 @@
     'disable_tests_results': false,
     'disable_dbt_artifacts_autoupload': false,
     'disable_dbt_columns_autoupload': false,
-    'upload_only_columns_with_descriptions': false,
+    'upload_only_columns_with_descriptions': true,
     'disable_dbt_invocation_autoupload': false,
     'disable_skipped_model_alerts': true,
     'disable_skipped_test_alerts': true,
@@ -58,7 +56,7 @@
     'mute_dbt_upgrade_recommendation': false,
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
-    'collect_metrics': true,
+    'collect_metrics': false,
     'clean_elementary_temp_tables': true,
     'force_metrics_backfill': false,
     'ignore_small_changes': {

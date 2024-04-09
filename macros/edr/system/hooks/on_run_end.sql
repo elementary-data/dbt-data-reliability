@@ -24,5 +24,15 @@
       {% if not elementary.get_config_var('disable_dbt_invocation_autoupload') %}
         {% do elementary.upload_dbt_invocation() %}
       {% endif %}
+
+      {# 
+        Elementary temp tables are not really temp and should be cleaned on the end of the run.
+        We want to make sure we clean the temp tables even if elementary on run end hooks are disabled.
+
+        IMPORTANT! - This must be running last because other hooks are relaying on the temp tables.
+      #}
+      {% if elementary.get_config_var("clean_elementary_temp_tables") %}
+        {% do elementary.clean_elementary_temp_tables() %}
+      {% endif %}
   {% endif %}
 {% endmacro %}

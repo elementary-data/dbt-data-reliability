@@ -13,16 +13,13 @@
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {% do elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {% do elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
-    {% if elementary.get_config_var("clean_elementary_temp_tables") %}
-      {% do elementary.clean_elementary_test_tables() %}
-    {% endif %}
     {% if test_result_rows %}
       {% set test_result_rows_relation = elementary.get_elementary_relation('test_result_rows') %}
-      {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
+      {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% endif %}
     {% if elementary_test_results %}
       {% set elementary_test_results_relation = elementary.get_elementary_relation('elementary_test_results') %}
-      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
+      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% endif %}
     {% do elementary.file_log("Handled test results successfully.") %}
     {% do return('') %}

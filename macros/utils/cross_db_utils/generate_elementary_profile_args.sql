@@ -1,7 +1,7 @@
 {% macro generate_elementary_profile_args(method=none, overwrite_values=none) %}
   {#
     Returns a list of parameters for elementary profile.
-    Each parameter consists of a dict consisting of: 
+    Each parameter consists of a dict consisting of:
       name
       value
       comment
@@ -102,7 +102,7 @@
   {% do return(parameters) %}
 {% endmacro %}
 
-{% macro athena__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+{% macro athena__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
   {% set parameters = [
     _parameter("type", target.type),
     _parameter("s3_staging_dir", target.s3_staging_dir),
