@@ -1,11 +1,11 @@
 {% macro on_run_end() %}
-  {%- if execute and not elementary.is_docs_command() %}
+  {%- if execute and (elementary.is_run_command() or elementary.is_test_command()) %}
       {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
       {% if not execute or edr_cli_run %}
         {% do return("") %}
       {% endif %}
 
-      {% if elementary.is_run_command() %}
+      {% if elementary.is_run_command() or elementary.is_test_command() %}
         {% do elementary.insert_metrics() %}
       {% endif %}
 

@@ -62,7 +62,7 @@ metrics_anomaly_score as (
         where
             metric_value is not null
             and training_avg is not null
-            and bucket_end >= {{ elementary.edr_timeadd('day', '-7', elementary.edr_date_trunc('day', elementary.edr_current_timestamp())) }}
+            and bucket_end >= {{ elementary.edr_timeadd('day', '-60', elementary.edr_date_trunc('day', elementary.edr_current_timestamp())) }}
     {{ dbt_utils.group_by(15) }}
     order by bucket_end desc
 

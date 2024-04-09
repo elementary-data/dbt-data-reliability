@@ -214,7 +214,7 @@
       {% set result_rows = [] %}
     {% endif %}
 
-    {% set test_execution_id = elementary.get_node_execution_id(flattened_test) %}
+    {% set test_execution_id = var('y42_job_id') %}
     {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
     {% set parent_model = elementary.get_node(parent_model_unique_id) %}
     {% set parent_model_name = elementary.get_table_name_from_node(parent_model) %}

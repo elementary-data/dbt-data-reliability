@@ -1,4 +1,4 @@
-{% macro dimension_monitoring_query(monitored_table, monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties) %}
+{% macro dimension_monitoring_query(monitored_table, monitored_table_relation, dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties, dbt_model_id) %}
     {% set metric_name = 'dimension' %}
     {% set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {% set dimensions_string = elementary.join_list(dimensions, '; ') %}
@@ -123,7 +123,7 @@
         metrics_final as (
 
         select
-            {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+            {{ elementary.edr_cast_as_string(elementary.edr_quote(dbt_model_id)) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
@@ -192,7 +192,7 @@
 
         metrics_final as (
             select
-                {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
+                {{ elementary.edr_cast_as_string(elementary.edr_quote(dbt_model_id)) }} as full_table_name,
                 {{ elementary.null_string() }} as column_name,
                 {{ elementary.const_as_string(metric_name) }} as metric_name,
                 {{ elementary.edr_cast_as_float('row_count_value') }} as metric_value,
