@@ -68,7 +68,7 @@ case when
             bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
-      )
+      ),
 
       final_results as (
           select
