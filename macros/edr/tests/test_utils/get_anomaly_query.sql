@@ -3,7 +3,6 @@
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
   {%- endset -%}
-  {{ debug() }}
   {{- return(query) -}}
 {%- endmacro -%}
 
