@@ -23,7 +23,8 @@
                                           anomaly_exclude_metrics,
                                           detection_period,
                                           training_period,
-                                          exclude_final_results) %}
+                                          exclude_final_results,
+                                          fail_on_new_dimension) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
 
@@ -52,6 +53,7 @@
     {% set event_timestamp_column = elementary.get_test_argument('event_timestamp_column', event_timestamp_column, model_graph_node) %}
     {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
     {% set exclude_final_results = elementary.get_exclude_final_results(exclude_final_results) %}
+    {% set fail_on_new_dimension = fail_on_new_dimension or false %}
 
     {% set test_configuration =
       {'timestamp_column': timestamp_column,
@@ -70,6 +72,7 @@
        'detection_delay': detection_delay,
        'anomaly_exclude_metrics': anomaly_exclude_metrics,
        'exclude_final_results': exclude_final_results,
+       'fail_on_new_dimension': fail_on_new_dimension,
         } %}
     {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}

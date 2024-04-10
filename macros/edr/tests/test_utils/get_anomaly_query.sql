@@ -55,7 +55,7 @@
 case when
           (
             {{ elementary.anomaly_score_condition(test_configuration) }} or
-            {{ elementary.fail_on_new_dimension(backfill_period) }}
+            {{ elementary.fail_on_new_dimension(test_configuration, backfill_period) }}
           )
           and bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
           then TRUE else FALSE end as is_anomalous
@@ -170,9 +170,10 @@ case when
   ))
 {% endmacro %}
 
-{% macro fail_on_new_dimension(backfill_period) %}
+{% macro fail_on_new_dimension(test_configuration, backfill_period) %}
   (
+    {{ test_configuration.fail_on_new_dimension }} and
     dimension_value is not null and 
-    first_dimension_value_bucket >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
+    (first_dimension_value_bucket >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }})
   )
 {% endmacro %}
