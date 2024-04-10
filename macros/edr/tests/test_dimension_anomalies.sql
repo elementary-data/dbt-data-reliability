@@ -72,8 +72,7 @@
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
-        {% set final_results_query = elementary.get_anomaly_query() %}
-        {{ elementary.filter_final_dimension_results(final_results_query, test_configuration.exclude_final_results) }}
+        {{ elementary.get_anomaly_query() }}
 
     {% else %}
 
@@ -83,14 +82,3 @@
     {% endif %}
 
 {% endtest %}
-
-{% macro filter_final_dimension_results(results_query, exclude_final_results) %}
-    {% set query %}
-        with final_results_query as (
-            {{ results_query }}
-        )
-        select * from final_results_query
-        where {{ exclude_final_results }}
-    {% endset %}
-    {{ return(query) }}
-{% endmacro %}
