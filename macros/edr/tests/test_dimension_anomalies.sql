@@ -92,6 +92,5 @@
         select * from final_results_query
         where {{ exclude_final_results }}
     {% endset %}
-    {{ debug() }}
     {{ return(query) }}
 {% endmacro %}
