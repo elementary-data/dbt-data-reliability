@@ -62,7 +62,7 @@
 {% endmacro %}
 
 {% macro trino__insert_rows(table_relation, rows, should_commit=false, chunk_size=5000, on_query_exceed=none) %}
-    {{ return(default__insert_rows(table_relation, rows, false, chunk_size, on_query_exceed)) }}
+    {{ return(elementary.default__insert_rows(table_relation, rows, false, chunk_size, on_query_exceed)) }}
 {% endmacro %}
 
 {% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none, on_query_exceed=none) -%}
