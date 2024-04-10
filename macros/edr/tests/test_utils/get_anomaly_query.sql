@@ -3,6 +3,7 @@
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
   {%- endset -%}
+  {{ debug() }}
   {{- return(query) -}}
 {%- endmacro -%}
 
@@ -44,6 +45,7 @@
             training_end,
             dimension,
             dimension_value,
+            min(bucket_end) over (partition by dimension_value) as first_dimension_value_bucket,
             {{ elementary.anomaly_detection_description() }},
             max(bucket_end) over (partition by test_execution_id) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
@@ -52,20 +54,11 @@
         select
           *,
 case when
-            anomaly_score is not null and
-            (
-              {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
-              (
-                {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
-                {{ elementary.avg_percent_anomalous_condition(
-                    test_configuration.ignore_small_changes.spike_failure_percent_threshold,
-                    test_configuration.ignore_small_changes.drop_failure_percent_threshold,
-                    test_configuration.anomaly_direction
-                  ) 
-                }}
-              )
-            ) and
-            bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
+          (
+            {{ elementary.anomaly_score_condition(test_configuration) }} or
+            {{ elementary.fail_on_new_dimension(backfill_period) }}
+          )
+          and bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
       ),
@@ -159,5 +152,28 @@ case when
     {% else %}
       1 = 2
     {% endif %}
+  )
+{% endmacro %}
+
+{% macro anomaly_score_condition(test_configuration) %}
+  (anomaly_score is not null and
+  (
+    {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
+    (
+      {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
+      {{ elementary.avg_percent_anomalous_condition(
+          test_configuration.ignore_small_changes.spike_failure_percent_threshold,
+          test_configuration.ignore_small_changes.drop_failure_percent_threshold,
+          test_configuration.anomaly_direction
+        ) 
+      }}
+    )
+  ))
+{% endmacro %}
+
+{% macro fail_on_new_dimension(backfill_period) %}
+  (
+    dimension_value is not null and 
+    first_dimension_value_bucket >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
   )
 {% endmacro %}
