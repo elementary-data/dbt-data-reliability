@@ -4,9 +4,6 @@
     materialized = 'incremental',
     unique_key = 'elementary_test_results_id',
     on_schema_change = 'append_new_columns',
-    indexes=[
-          {'columns': ['created_at']},
-    ],
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
     meta={
       "timestamp_column": "created_at",
