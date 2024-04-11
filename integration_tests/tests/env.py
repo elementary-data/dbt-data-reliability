@@ -16,4 +16,6 @@ class Environment:
 
     def init(self):
         self.dbt_runner.run(selector="init", capture_output=True)
-        self.dbt_runner.run(select="elementary", capture_output=True)
+        s, output = self.dbt_runner.run(select="elementary", capture_output=True)
+        for log in output:
+            open("/tmp/dbt.log", "a").write(log)
