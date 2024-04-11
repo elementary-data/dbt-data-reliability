@@ -55,20 +55,25 @@
 
 {% macro end_duration_measure_context(context_name, log_durations=false) %}
     {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% do elementary.debug_log('### duration_context_stack' ~ duration_context_stack) %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
     {% endif %}
 
     {% set context_index = elementary.get_duration_context_index(context_name) %}
+    {% do elementary.debug_log('### context_index' ~ (context_index | str)) %}
     {% if context_index is none %}
         {% do elementary.debug_log('warning - end_duration_measure_context called without matching start_duration_measure_context') %}
         {% do return(none) %}
     {% endif %}
 
     {% set cur_context = namespace(data=none) %}
+    {% do elementary.debug_log('### context_index' ~ (cur_context | str)) %}
     {% for _ in range(context_index) %}
-        {% set cur_context.data = elementary.pop_duration_context() %}
+        {% set dur_context = elementary.pop_duration_context() %}
+        {% do elementary.debug_log('### dur_context' ~ (dur_context | str)) %}
+        {% set cur_context.data = dur_context %}
     {% endfor %}
 
     {% if log_durations %}
