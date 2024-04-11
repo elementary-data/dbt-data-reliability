@@ -70,7 +70,7 @@ def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
 def test_anomaly_ranges_are_valid_with_seasonality(
     test_id: str, dbt_project: DbtProject
 ):
-    dbt_project.dbt_runner.run()
+    dbt_project.dbt_runner.run(capture_output=True)
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(
         base_date=utc_today - timedelta(1), days_back=7 * 14
