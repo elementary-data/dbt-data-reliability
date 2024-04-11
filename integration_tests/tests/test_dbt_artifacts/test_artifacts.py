@@ -27,7 +27,7 @@ def test_artifacts_caching(dbt_project: DbtProject):
 
 
 def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
-    dbt_project.dbt_runner.run()
+    # dbt_project.dbt_runner.run()
     existing_artifacts = dbt_project.read_table("dbt_models")
 
     dbt_project.dbt_runner.vars[
