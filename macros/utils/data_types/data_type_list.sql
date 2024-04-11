@@ -48,6 +48,7 @@
     {% set string_list = ['VARCHAR','CHAR','CHARACTER','STRING','TEXT'] | list %}
     {% set numeric_list = ['NUMBER','DECIMAL','NUMERIC','INT','INTEGER','BIGINT','SMALLINT','TINYINT','BYTEINT','FLOAT','FLOAT4','FLOAT8','DOUBLE','DOUBLE PRECISION','REAL'] | list %}
     {% set timestamp_list = ['DATE','DATETIME','TIME','TIMESTAMP','TIMESTAMP_LTZ','TIMESTAMP_NTZ','TIMESTAMP_TZ'] | list %}
+    {% set boolean_list = ["BOOLEAN"] | list %}
 
     {%- if data_type == 'string' %}
         {{ return(string_list) }}
@@ -55,6 +56,8 @@
         {{ return(numeric_list) }}
     {%- elif data_type == 'timestamp' %}
         {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %}
+        {{ return(boolean_list) }}
     {%- else %}
         {{ return([]) }}
     {%- endif %}
