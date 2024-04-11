@@ -386,6 +386,7 @@ def test_bucket_size_not_aligned_with_days(dbt_project: DbtProject, test_id: str
 
     We also want to see that the "stale" buckets are not included in the computation
     """
+    dbt_project.dbt_runner.run()
     utc_today = datetime.utcnow().date()
     data_dates = generate_dates(
         base_date=utc_today, step=timedelta(hours=1), days_back=4
