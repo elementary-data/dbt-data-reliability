@@ -126,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dbt-logs-${{ inputs.warehouse-type }}-${{ input.dbt-version }}
-          path: /tmp/dbt.log
+          path: /tmp/dbt_worker*.log
 
       - name: Upload test results
         if: always()

@@ -1,4 +1,8 @@
+import os
+
 import dbt_project
+
+PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", "")
 
 
 def init(target: str, project_dir: str):
@@ -25,4 +29,4 @@ class Environment:
             capture_output=True,
         )
         for log in output:
-            open("/tmp/dbt.log", "a").write(log)
+            open(f"/tmp/dbt_worker_{PYTEST_XDIST_WORKER}.log", "a").write(log)
