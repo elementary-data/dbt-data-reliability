@@ -122,6 +122,7 @@ jobs:
         run: py.test -n8 -vvv --log-cli-level=DEBUG --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html
 
       - name: upload dbt logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dbt-logs
