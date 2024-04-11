@@ -22,7 +22,7 @@ class Environment:
         self.dbt_runner.run(selector="init", capture_output=True)
         command_args = ["run"]
         command_args.extend(["-s", "elementary"])
-        s, output = self.dbt_runner._run_command(
+        ss, output = self.dbt_runner._run_command(
             command_args=command_args,
             vars=None,
             quiet=False,
