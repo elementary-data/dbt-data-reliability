@@ -95,7 +95,7 @@ case when
       order by bucket_end, dimension_value
     {%- endset -%}
     {{- return(anomaly_query) -}}
-{% endmacro %}
+{% endmacro %} 
 
 
 {%- macro set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) -%}
