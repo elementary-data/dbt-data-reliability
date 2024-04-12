@@ -11,6 +11,6 @@
       "schema_snapshots": []
     },
     "temp_test_table_relations_map": {},
-    "duration_context_stack": [elementary.init_duration_context_dict('main')],
+    "duration_context_stack": {thread_id: [elementary.init_duration_context_dict('main')]},
   }) %}
 {% endmacro %}

@@ -44,7 +44,7 @@
 {% endmacro %}
 
 {% macro begin_duration_measure_context(context_name) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
@@ -54,7 +54,7 @@
 {% endmacro %}
 
 {% macro end_duration_measure_context(context_name, log_durations=false) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
@@ -89,8 +89,22 @@
     }) %}
 {% endmacro %}
 
+{% macro get_duration_context_stack() %}
+  {% set global_duration_context_stack = elementary.get_cache('duration_context_stack') %}
+  {% if global_duration_context_stack is none %}
+        {# If the duration stack is not initialized, it means we're not called from the package #}
+        {% do return(none) %}
+    {% endif %}
+
+  {% set thread_stack = global_duration_context_stack.get(thread_id) %}
+  {% if not thread_stack %}
+    {% do global_duration_context_stack.get("elementary", {}).update({thread_id: []}) %}
+  {% endif %}
+  {{ return(global_duration_context_stack.get(thread_id)) }}
+{% endmacro %}
+
 {% macro get_duration_context_index(context_name) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% for context in duration_context_stack | reverse %}
         {% if context.name == context_name %}
             {% do return(loop.index) %}
@@ -100,7 +114,7 @@
 {% endmacro %}
 
 {% macro pop_duration_context() %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
 
     {# Pop current context and calculate total duration for it #}
     {% set cur_context = duration_context_stack.pop() %}
@@ -136,7 +150,7 @@
 {% endmacro %}
 
 {% macro get_stack_contexts() %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% set names = []%}
     {% for context in duration_context_stack %}
         {% do names.append(context.name) %}
