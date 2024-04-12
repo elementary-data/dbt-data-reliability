@@ -68,9 +68,7 @@
 
     {% set cur_context = namespace(data=none) %}
     {% for _ in range(context_index) %}
-        {% set dur_context = elementary.pop_duration_context() %}
-        {% endif %}
-        {% set cur_context.data = dur_context %}
+        {% set cur_context.data = elementary.pop_duration_context() %}
     {% endfor %}
 
     {% if log_durations %}
