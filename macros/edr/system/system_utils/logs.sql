@@ -55,24 +55,21 @@
 
 {% macro end_duration_measure_context(context_name, log_durations=false) %}
     {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
-    {% do elementary.debug_log('### duration_context_stack' ~ duration_context_stack) %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
     {% endif %}
 
     {% set context_index = elementary.get_duration_context_index(context_name) %}
-    {% do elementary.debug_log('### context_index' ~ (context_index | str)) %}
     {% if context_index is none %}
         {% do elementary.debug_log('warning - end_duration_measure_context called without matching start_duration_measure_context') %}
         {% do return(none) %}
     {% endif %}
 
     {% set cur_context = namespace(data=none) %}
-    {% do elementary.debug_log('### context_index' ~ (cur_context | str)) %}
     {% for _ in range(context_index) %}
         {% set dur_context = elementary.pop_duration_context() %}
-        {% do elementary.debug_log('### dur_context' ~ (dur_context | str)) %}
+        {% endif %}
         {% set cur_context.data = dur_context %}
     {% endfor %}
 
@@ -117,23 +114,25 @@
     }) %}
 
     {# Merge durations and num runs to parent context #}
-    {% set parent_context = duration_context_stack[-1] %}
-    {% for sub_context_name, sub_context_duration in cur_context.durations.items() %}
-        {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
-        {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
+    {% if duration_context_stack | length > 0 %}
+        {% set parent_context = duration_context_stack[-1] %}
+        {% for sub_context_name, sub_context_duration in cur_context.durations.items() %}
+            {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
+            {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
 
-        {% do parent_context.durations.update({
-            full_sub_context_name: existing_duration + sub_context_duration,
-        }) %}
-    {% endfor %}
-    {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
-        {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
-        {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
+            {% do parent_context.durations.update({
+                full_sub_context_name: existing_duration + sub_context_duration,
+            }) %}
+        {% endfor %}
+        {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
+            {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
+            {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
 
-        {% do parent_context.num_runs.update({
-            full_sub_context_name: existing_num_runs + sub_context_num_runs
-        }) %}
-    {% endfor %}
+            {% do parent_context.num_runs.update({
+                full_sub_context_name: existing_num_runs + sub_context_num_runs
+            }) %}
+        {% endfor %}
+    {% endif %}
 
     {% do return(cur_context) %}
 {% endmacro %}
