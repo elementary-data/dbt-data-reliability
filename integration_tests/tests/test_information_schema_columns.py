@@ -49,7 +49,6 @@ NON_EXISTING_DATABASE_SOURCE = {
 def test_information_schema_columns(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [REGULAR_SOURCE]}
     with dbt_project.write_yaml(sources):
-        # dbt_project.dbt_runner.run()
         success = dbt_project.dbt_runner.run(select="information_schema_columns")
         assert success
 
@@ -58,7 +57,6 @@ def test_information_schema_columns(dbt_project: DbtProject):
 def test_information_schema_non_existing_schema(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [NON_EXISTING_SCHEMA_SOURCE]}
     with dbt_project.write_yaml(sources):
-        # dbt_project.dbt_runner.run()
         success = dbt_project.dbt_runner.run(select="information_schema_columns")
         assert success
 
@@ -67,6 +65,5 @@ def test_information_schema_non_existing_schema(dbt_project: DbtProject):
 def test_information_schema_non_existing_database(dbt_project: DbtProject):
     sources = {"version": 2, "sources": [NON_EXISTING_DATABASE_SOURCE]}
     with dbt_project.write_yaml(sources):
-        # dbt_project.dbt_runner.run()
         success = dbt_project.dbt_runner.run(select="information_schema_columns")
         assert success
