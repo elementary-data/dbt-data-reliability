@@ -110,3 +110,59 @@ def test_dimensions_anomalies_with_where_parameter(
         test_id, DBT_TEST_NAME, params, test_vars={"force_metrics_backfill": True}
     )
     assert test_result["status"] == "fail"
+
+
+def test_dimension_anomalies_with_timestamp_exclude_final_results(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(3))
+        for superhero in ["Superman", "Spiderman"]
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1), days_back=2)
+        for superhero in ["Spiderman"]
+    ] * 30
+    data += [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1), days_back=2)
+        for superhero in ["Superman"]
+    ] * 15
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        # "exclude_final_results": "average > 0.2"
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 2
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        "exclude_final_results": "value > 15",
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 1
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        "exclude_final_results": "average > 3",
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 1
