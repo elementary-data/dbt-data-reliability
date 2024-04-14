@@ -98,7 +98,7 @@
 
   {% set thread_stack = global_duration_context_stack.get(thread_id) %}
   {% if not thread_stack %}
-    {% do global_duration_context_stack.get("elementary", {}).update({thread_id: [elementary.init_duration_context_dict('main')]}) %}
+    {% do global_duration_context_stack.update({thread_id: [elementary.init_duration_context_dict('main')]}) %}
   {% endif %}
   {{ return(global_duration_context_stack.get(thread_id)) }}
 {% endmacro %}
