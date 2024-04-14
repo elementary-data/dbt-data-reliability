@@ -44,7 +44,7 @@
 {% endmacro %}
 
 {% macro begin_duration_measure_context(context_name) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
@@ -54,7 +54,7 @@
 {% endmacro %}
 
 {% macro end_duration_measure_context(context_name, log_durations=false) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% if duration_context_stack is none %}
         {# If the duration stack is not initialized, it means we're not called from the package #}
         {% do return(none) %}
@@ -89,8 +89,22 @@
     }) %}
 {% endmacro %}
 
+{% macro get_duration_context_stack() %}
+  {% set global_duration_context_stack = elementary.get_cache('duration_context_stack') %}
+  {% if global_duration_context_stack is none %}
+        {# If the duration stack is not initialized, it means we're not called from the package #}
+        {% do return(none) %}
+    {% endif %}
+
+  {% set thread_stack = global_duration_context_stack.get(thread_id) %}
+  {% if not thread_stack %}
+    {% do global_duration_context_stack.update({thread_id: [elementary.init_duration_context_dict('main')]}) %}
+  {% endif %}
+  {{ return(global_duration_context_stack.get(thread_id)) }}
+{% endmacro %}
+
 {% macro get_duration_context_index(context_name) %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% for context in duration_context_stack | reverse %}
         {% if context.name == context_name %}
             {% do return(loop.index) %}
@@ -100,7 +114,7 @@
 {% endmacro %}
 
 {% macro pop_duration_context() %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
 
     {# Pop current context and calculate total duration for it #}
     {% set cur_context = duration_context_stack.pop() %}
@@ -112,29 +126,31 @@
     }) %}
 
     {# Merge durations and num runs to parent context #}
-    {% set parent_context = duration_context_stack[-1] %}
-    {% for sub_context_name, sub_context_duration in cur_context.durations.items() %}
-        {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
-        {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
+    {% if duration_context_stack | length > 0 %}
+        {% set parent_context = duration_context_stack[-1] %}
+        {% for sub_context_name, sub_context_duration in cur_context.durations.items() %}
+            {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
+            {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
 
-        {% do parent_context.durations.update({
-            full_sub_context_name: existing_duration + sub_context_duration,
-        }) %}
-    {% endfor %}
-    {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
-        {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
-        {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
+            {% do parent_context.durations.update({
+                full_sub_context_name: existing_duration + sub_context_duration,
+            }) %}
+        {% endfor %}
+        {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
+            {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
+            {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
 
-        {% do parent_context.num_runs.update({
-            full_sub_context_name: existing_num_runs + sub_context_num_runs
-        }) %}
-    {% endfor %}
+            {% do parent_context.num_runs.update({
+                full_sub_context_name: existing_num_runs + sub_context_num_runs
+            }) %}
+        {% endfor %}
+    {% endif %}
 
     {% do return(cur_context) %}
 {% endmacro %}
 
 {% macro get_stack_contexts() %}
-    {% set duration_context_stack = elementary.get_cache('duration_context_stack') %}
+    {% set duration_context_stack = elementary.get_duration_context_stack() %}
     {% set names = []%}
     {% for context in duration_context_stack %}
         {% do names.append(context.name) %}
