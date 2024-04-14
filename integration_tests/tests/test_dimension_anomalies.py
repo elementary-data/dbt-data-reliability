@@ -164,32 +164,32 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     assert test_result["failures"] == 1
 
 
-# def test_dimension_anomalies_with_timestamp_new_dimension(
-#     test_id: str, dbt_project: DbtProject
-# ):
-#     utc_today = datetime.utcnow().date()
-#     data: List[Dict[str, Any]] = [
-#         {
-#             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-#             "superhero": superhero,
-#         }
-#         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
-#         for superhero in ["Superman", "Spiderman"]
-#     ]
-#     data += [
-#         {
-#             TIMESTAMP_COLUMN: (utc_today - timedelta(1)).strftime(DATE_FORMAT),
-#             "superhero": "CaptainAmerica",
-#         }
-#     ]
-#     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-#     assert test_result["status"] == "pass"
+def test_dimension_anomalies_with_timestamp_new_dimension(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Spiderman"]
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: (utc_today - timedelta(1)).strftime(DATE_FORMAT),
+            "superhero": "CaptainAmerica",
+        }
+    ]
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
+    assert test_result["status"] == "pass"
 
-#     test_args = {
-#         "timestamp_column": TIMESTAMP_COLUMN,
-#         "dimensions": ["superhero"],
-#         "fail_on_new_dimension": True
-#     }
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        "fail_on_new_dimension": True,
+    }
 
-#     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
-#     assert test_result["status"] == "fail"
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"

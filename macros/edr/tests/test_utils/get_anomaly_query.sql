@@ -44,7 +44,7 @@
             training_end,
             dimension,
             dimension_value,
-            min(bucket_end) over (partition by dimension_value) as first_dimension_value_bucket,
+            min(bucket_end) over (partition by dimension_value, test_execution_id) as first_dimension_value_bucket,
             {{ elementary.anomaly_detection_description() }},
             max(bucket_end) over (partition by test_execution_id) as max_bucket_end
         from {{ elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'anomaly_scores') }}
@@ -172,7 +172,7 @@ case when
 
 {% macro fail_on_new_dimension(test_configuration, backfill_period) %}
   (
-    {{ test_configuration.fail_on_new_dimension }} and
+    {{ test_configuration.fail_on_new_dimension }} = TRUE and
     dimension_value is not null and 
     (first_dimension_value_bucket >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }})
   )

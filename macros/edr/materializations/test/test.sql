@@ -160,7 +160,7 @@
   {%- set test_results_query -%}
       select * from ({{ sql }}) results
       where
-        anomaly_score is not null and
+        (anomaly_score is not null or (anomaly_score is null and is_anomalous)) and
         upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }}) and
         metric_name = {{ elementary.const_as_string(metric_name) }}
         {%- if column_name %}
