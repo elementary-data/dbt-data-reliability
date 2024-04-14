@@ -59,6 +59,8 @@ PARAM_VALUES = {
         {"count": 60, "period": "day"},
         {"count": 90, "period": "day"},
     ),
+    "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
+    "fail_on_new_dimension": ParamValues(*([False] * 3)),
 }
 
 
@@ -84,7 +86,9 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "detection_delay": get_value("detection_delay"),
         "anomaly_exclude_metrics": get_value("anomaly_exclude_metrics"),
         "freshness_column": None,  # Deprecated
-        "dimensions": None,  # should only be set at the test level
+        "dimensions": None,  # should only be set at the test level,
+        "exclude_final_results": get_value("exclude_final_results"),
+        "fail_on_new_dimension": get_value("fail_on_new_dimension"),
     }
 
 
