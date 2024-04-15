@@ -88,7 +88,6 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "freshness_column": None,  # Deprecated
         "dimensions": None,  # should only be set at the test level,
         "exclude_final_results": get_value("exclude_final_results"),
-        "fail_on_new_dimension": get_value("fail_on_new_dimension"),
     }
 
 
