@@ -12,6 +12,8 @@
             {{ return('numeric') }}
         {%- elif data_type in elementary.data_type_list('timestamp') %}
             {{ return('timestamp') }}
+        {%- elif data_type in elementary.data_type_list("boolean") %}
+            {{ return("boolean") }}
         {%- else %}
             {{ return('other') }}
         {% endif %}

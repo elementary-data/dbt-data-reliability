@@ -13,3 +13,7 @@
 {% macro null_string() %}
     cast(null as {{ elementary.edr_type_string() }})
 {% endmacro %}
+
+{% macro null_boolean() %} 
+    cast(null as {{ elementary.edr_type_bool() }}) 
+{% endmacro %}
