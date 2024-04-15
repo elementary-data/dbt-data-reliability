@@ -72,3 +72,14 @@
   {% do elementary.cache_metrics(metrics) %}
   {% do return(relations) %}
 {% endmaterialization %}
+
+{% materialization incremental, adapter="trino", supported_languages=["sql"] %}
+  {% set relations = dbt.materialization_incremental_trino.call_macro() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return(relations) %}
+  {% endif %}
+
+  {% set metrics = elementary.query_metrics() %}
+  {% do elementary.cache_metrics(metrics) %}
+  {% do return(relations) %}
+{% endmaterialization %}

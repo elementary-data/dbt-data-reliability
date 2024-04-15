@@ -6,6 +6,10 @@
   {% do return("merge") %}
 {% endmacro %}
 
+{%- macro trino__get_default_incremental_strategy() %}
+  {% do return("merge") %}
+{% endmacro %}
+
 {% macro default__get_default_incremental_strategy() %}
   {% do return(none) %}
 {% endmacro %}

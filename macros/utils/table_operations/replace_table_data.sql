@@ -45,3 +45,9 @@
       {%- endcall %}
     {% do elementary.insert_rows(relation, rows, should_commit=false, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
+
+{% macro trino__replace_table_data(relation, rows) %}
+    {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
+    {% do elementary.run_query(adapter.dispatch('create_table_as')(False, relation, 'select * from {}'.format(intermediate_relation), replace=true)) %}
+    {% do adapter.drop_relation(intermediate_relation) %}
+{% endmacro %}

@@ -54,3 +54,7 @@
   {% do elementary.cache_metrics(metrics) %}
   {% do return(relations) %}
 {% endmaterialization %}
+
+{% materialization table, adapter="trino", supported_languages=["sql"] %}
+  {% do return(elementary.materialize_table.call_macro('trino')) %}
+{% endmaterialization %}
