@@ -60,7 +60,6 @@ PARAM_VALUES = {
         {"count": 90, "period": "day"},
     ),
     "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
-    "fail_on_new_dimension": ParamValues(*([False] * 3)),
 }
 
 
