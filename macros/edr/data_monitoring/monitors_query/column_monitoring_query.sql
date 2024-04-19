@@ -97,7 +97,7 @@
                     bucket_end,
                     bucket_duration_hours,
                     {% if group_by | length > 0 %}
-                      {{ elementary.edr_quote(elementary.select_group_by_columns(group_by)) }} as dimension,
+                      {{ elementary.const_as_string(elementary.join_list(group_by, '; ')) }} as dimension,
                       {{ elementary.concat_dimension_value(group_by, as_prefix="group_by") }} as dimension_value,
                     {% else %}
                       {{ elementary.null_string() }} as dimension,
@@ -182,12 +182,12 @@
     {% endfor %}
     {{ return(elementary.edr_list_concat(
       group_by_columns_with_prefix["list"],
-      separator=";"
+      separator="; "
     )) }}
   {% endif %}
 
   {{ return(elementary.edr_list_concat(
       group_by_columns,
-      separator=";"
+      separator="; "
     )) }}
 {% endmacro %}

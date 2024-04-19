@@ -36,6 +36,7 @@
                                                                                                    anomaly_exclude_metrics=anomaly_exclude_metrics,
                                                                                                    detection_period=detection_period,
                                                                                                    training_period=training_period,
+                                                                                                   dimensions=group_by,
                                                                                                    group_by=group_by) %}
 
         {%- if not test_configuration %}
