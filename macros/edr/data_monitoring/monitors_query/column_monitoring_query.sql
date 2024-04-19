@@ -18,8 +18,8 @@
 
          filtered_monitored_table as (
             select {{ column_obj.quoted }},
-                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data,
-                   {{ elementary.select_group_by_columns(group_by, "group_by") }}
+                   {%- if group_by -%} {{ elementary.select_group_by_columns(group_by, "group_by") }}, {%- endif -%}
+                   {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             from monitored_table
             where
                 {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= (select min(edr_bucket_start) from buckets)
@@ -28,8 +28,8 @@
     {%- else %}
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
+                   {%- if group_by -%} {{ elementary.select_group_by_columns(group_by, "group_by") }}, {%- endif -%}
                    {{ elementary.null_timestamp() }} as start_bucket_in_data,
-                   {{ elementary.select_group_by_columns(group_by, "group_by") }}
             from monitored_table
         ),
     {% endif %}
