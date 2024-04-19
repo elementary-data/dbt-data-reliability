@@ -175,15 +175,19 @@
 {% endmacro %}
 
 {% macro concat_dimension_value(group_by_columns, as_prefix="") %}
-  {% if group_by_columns | length == 1 %}
-    {{ return(as_prefix ~ "_" ~ group_by_columns[0]) }}
+  {% set group_by_columns_with_prefix = {"list": []} %}
+  {% if as_prefix %}
+    {% for column in group_by_columns %}
+      {% do group_by_columns_with_prefix.update({"list": group_by_columns_with_prefix["list"] + [as_prefix ~ "_" ~ column]}) %}
+    {% endfor %}
+    {{ return(elementary.edr_list_concat(
+      group_by_columns_with_prefix["list"],
+      separator=";"
+    )) }}
   {% endif %}
 
-  {% set concat_stmt = {"result": as_prefix ~ "_" ~ group_by_columns[0]} %}
-  {% for dimension in group_by_columns %}
-    {% if not loop.first %}
-      {% do concat_stmt.update({"result": elementary.edr_concat(concat_stmt["result"], as_prefix ~ "_" ~ dimension)}) %}
-    {% endif %}
-  {% endfor %}
-  {{ return(concat_stmt["result"]) }}
+  {{ return(elementary.edr_list_concat(
+      group_by_columns,
+      separator=";"
+    )) }}
 {% endmacro %}
