@@ -137,6 +137,8 @@
             'full_table_name',
             'column_name',
             'metric_name',
+            'dimension',
+            'dimension_value',
             'bucket_end',
             'metric_properties'
         ]) }} as id,

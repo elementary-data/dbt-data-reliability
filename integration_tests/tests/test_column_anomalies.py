@@ -229,9 +229,28 @@ def test_anomalyless_column_anomalies_group_by_fail(
             "dimension": dim,
         }
         for cur_date in training_dates
-        for superhero in [None]
+        for superhero in ["Superman", "Batman"]
         for dim in ["dim1", "dim2"]
     ]
+
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension": "dim1",
+        }
+        for _ in range(100)
+    ]
+
+    test_args = DBT_TEST_ARGS.copy()
+    test_args["group_by"] = ["dimension"]
+    test_args["anomaly_sensitivity"] = 1
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 1
 
     data += [
         {
@@ -244,22 +263,10 @@ def test_anomalyless_column_anomalies_group_by_fail(
 
     test_args = DBT_TEST_ARGS.copy()
     test_args["group_by"] = ["dimension"]
-    test_args["anomaly_sensitivity"] = 1
+    test_args["anomaly_sensitivity"] = 3
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
     )
-    assert test_result["status"] == "fail"
-    assert test_result["failures"] == 1
 
-    data += [
-        {
-            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "superhero": None,
-            "dimension": "dim1",
-        }
-        for _ in range(100)
-    ]
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
-    )
+    assert test_result["status"] == "fail"
     assert test_result["failures"] == 2
