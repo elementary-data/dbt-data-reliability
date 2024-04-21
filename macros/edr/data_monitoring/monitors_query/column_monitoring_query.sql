@@ -1,6 +1,10 @@
 {% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, group_by) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
+    {% set prefixed_group_by = [] %}
+    {% for group_by_column in group_by %}
+      {% do prefixed_group_by.append("group_by_" ~ group_by_column) %}
+    {% endfor %}
 
 
     with monitored_table as (
@@ -50,7 +54,7 @@
                     {%- endif %}
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
                     {% if group_by | length > 0 %}
-                      {{ elementary.select_group_by_columns(group_by, col_prefix="group_by") }},
+                      {{ elementary.select_group_by_columns(prefixed_group_by) }},
                     {% endif %}
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
@@ -77,7 +81,7 @@
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
                 {% if group_by | length > 0 %}
-                    group by 1,2,3,4,{{ elementary.select_group_by_columns(group_by, col_prefix="group_by") }}
+                    group by 1,2,3,4,{{ elementary.select_group_by_columns(prefixed_group_by) }}
                 {% else %}
                     group by 1,2,3,4
                 {% endif %}
@@ -97,8 +101,8 @@
                     bucket_end,
                     bucket_duration_hours,
                     {% if group_by | length > 0 %}
-                      {{ elementary.const_as_string(elementary.join_list(group_by, '; ')) }} as dimension,
-                      {{ elementary.concat_dimension_value(group_by, as_prefix="group_by") }} as dimension_value,
+                      {{ elementary.const_as_string(elementary.join_list(group_by, separator='; ')) }} as dimension,
+                      {{ elementary.list_concat_with_separator(prefixed_group_by, separator='; ') }} as dimension_value,
                     {% else %}
                       {{ elementary.null_string() }} as dimension,
                       {{ elementary.null_string() }} as dimension_value,
@@ -158,7 +162,7 @@
 
 {% endmacro %}
 
-{% macro select_group_by_columns(group_by_columns, as_prefix="", col_prefix="") %}
+{% macro select_group_by_columns(group_by_columns, as_prefix="") %}
   {% set select_statements %}
     {%- for column in group_by_columns -%}
       {%- if col_prefix -%}
@@ -174,22 +178,4 @@
     {%- endfor -%}
   {% endset %}
   {{ return(select_statements) }}
-{% endmacro %}
-
-{% macro concat_dimension_value(group_by_columns, as_prefix="") %}
-  {% set group_by_columns_with_prefix = {"list": []} %}
-  {% if as_prefix %}
-    {% for column in group_by_columns %}
-      {% do group_by_columns_with_prefix.update({"list": group_by_columns_with_prefix["list"] + [as_prefix ~ "_" ~ column]}) %}
-    {% endfor %}
-    {{ return(elementary.edr_list_concat(
-      group_by_columns_with_prefix["list"],
-      separator="; "
-    )) }}
-  {% endif %}
-
-  {{ return(elementary.edr_list_concat(
-      group_by_columns,
-      separator="; "
-    )) }}
 {% endmacro %}
