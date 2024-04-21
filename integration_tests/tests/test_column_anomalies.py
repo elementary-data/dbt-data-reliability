@@ -204,13 +204,14 @@ def test_anomalyless_column_anomalies_group_by_pass(
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
             "superhero": superhero,
-            "dimension": "dim1",
+            "dimension1": "dim1",
+            "dimension2": "dim2",
         }
         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
         for superhero in ["Superman", "Batman"]
     ]
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension"]
+    test_args["group_by"] = ["dimension1", "dimension2"]
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
     )
