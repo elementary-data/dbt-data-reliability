@@ -12,7 +12,7 @@
 {% endmacro %}
 
 {% macro redshift__get_relation_max_name_length(temporary, relation, sql_query) %}
-    {{ return(127) }}
+    {{ return(125) }}
 {% endmacro %}
 
 {% macro postgres__get_relation_max_name_length(temporary, relation, sql_query) %}
