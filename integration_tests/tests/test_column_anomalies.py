@@ -271,3 +271,98 @@ def test_anomalyless_column_anomalies_group_by_fail(
 
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 2
+
+
+def test_anomalyless_column_anomalies_group_by_none_dimension(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+            "dimension": dim,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+        for dim in [None, "dim2"]
+    ]
+
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension": None,
+        }
+        for _ in range(100)
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension": "dim2",
+        }
+        for _ in range(100)
+    ]
+
+    test_args = DBT_TEST_ARGS.copy()
+    test_args["group_by"] = ["dimension"]
+    test_args["anomaly_sensitivity"] = 3
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 2
+
+
+def test_anomalyless_column_anomalies_group_by_multi(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+            "dimension1": dim1,
+            "dimension2": dim2,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+        for dim1 in ["dim1", "dim2"]
+        for dim2 in ["hey", "bye"]
+    ]
+
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension1": dim1,
+            "dimension2": dim2,
+        }
+        for _ in range(100)
+        for dim1 in ["dim1", "dim2"]
+        for dim2 in ["hey"]
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension1": dim1,
+            "dimension2": dim2,
+        }
+        for _ in range(100)
+        for dim1 in ["dim1"]
+        for dim2 in ["bye"]
+    ]
+
+    test_args = DBT_TEST_ARGS.copy()
+    test_args["group_by"] = ["dimension1", "dimension2"]
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 3
