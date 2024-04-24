@@ -366,3 +366,37 @@ def test_anomalyless_column_anomalies_group_by_multi(
 
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 3
+
+
+def test_anomalyless_column_anomalies_group_by_description(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+            "dimension": "dim",
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension": dim,
+        }
+        for _ in range(100)
+        for dim in ["dim_new", "dim"]
+    ]
+    test_args = DBT_TEST_ARGS.copy()
+    test_args["group_by"] = ["dimension"]
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+
+    assert test_result["status"] == "fail"
+    assert test_result["failures"] == 1
+    assert "not enough data" not in test_result["test_results_description"].lower()
