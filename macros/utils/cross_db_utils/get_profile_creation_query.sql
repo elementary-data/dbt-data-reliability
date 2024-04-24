@@ -23,6 +23,9 @@ GRANT ROLE IDENTIFIER($elementary_role) TO USER IDENTIFIER($elementary_username)
 -- Grant elementary role access to the supplied warehouse
 GRANT USAGE ON WAREHOUSE IDENTIFIER($elementary_warehouse) TO ROLE IDENTIFIER($elementary_role);
 
+-- Account usage access
+GRANT IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE TO ROLE IDENTIFIER($elementary_role);
+
 -- Read access to elementary schema
 SET elementary_schema_fqn = $elementary_database || '.' || $elementary_schema;
 GRANT SELECT ON ALL TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
