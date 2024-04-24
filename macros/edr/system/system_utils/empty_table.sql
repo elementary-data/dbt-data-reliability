@@ -27,7 +27,8 @@
     ('test_short_name', 'string'),
     ('test_alias', 'string'),
     ('result_rows', 'long_string'),
-    ('failed_row_count', 'bigint')
+    ('failed_row_count', 'bigint'),
+    ('execution_time', 'float')
     ]) }}
 {% endmacro %}
 

@@ -43,7 +43,7 @@
       {% set failures = elementary_test_results_row.get("failures", result.failures) %}
       {% set status = "pass" if failures == 0 else result.status %}
       {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
-                                                'failed_row_count': elementary_test_failed_row_count}) %}
+                                                'failed_row_count': elementary_test_failed_row_count, 'execution_time': result.execution_time}) %}
       {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
       {% if render_result_rows %}
         {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
