@@ -377,7 +377,7 @@ def test_anomalyless_column_anomalies_group_by_description(
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
             "superhero": superhero,
-            "dimension": "dim",
+            "dimension": "super_dimension",
         }
         for cur_date in training_dates
         for superhero in ["Superman", "Batman"]
@@ -389,7 +389,7 @@ def test_anomalyless_column_anomalies_group_by_description(
             "dimension": dim,
         }
         for _ in range(100)
-        for dim in ["dim_new", "dim"]
+        for dim in ["dim_new", "super_dimension"]
     ]
     test_args = DBT_TEST_ARGS.copy()
     test_args["group_by"] = ["dimension"]

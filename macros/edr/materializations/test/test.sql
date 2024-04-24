@@ -144,6 +144,7 @@
 
 {% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
   {%- set latest_row = anomaly_scores_rows[-1] %}
+  {%- set rows_with_score = anomaly_scores_rows | rejectattr("anomaly_score", "none") | list %}
   {%- set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
   {%- set test_unique_id = flattened_test.unique_id %}
   {%- set test_configuration = elementary.get_cache(test_unique_id) %}
@@ -170,6 +171,8 @@
   {% set test_results_description %}
       {% if has_anomaly_score %}
           {{ elementary.insensitive_get_dict_value(latest_row, 'anomaly_description') }}
+      {% elif rows_with_score %}
+          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
       {% else %}
           Not enough data to calculate anomaly score.
       {% endif %}
