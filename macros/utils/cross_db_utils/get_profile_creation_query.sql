@@ -103,6 +103,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA {{ parameters["schema"] }} GRANT SELECT ON TA
 
 -- Grant metadata access to tables in the warehouse
 GRANT SELECT ON svv_table_info to {{ parameters["user"] }};
+
+-- Grant access to columns information (svv_columns) in the warehouse
+GRANT SELECT ON pg_catalog.svv_columns to {{ parameters["user"] }};
 {% endmacro %}
 
 
