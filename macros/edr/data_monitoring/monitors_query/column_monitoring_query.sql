@@ -53,7 +53,7 @@
                         {{ elementary.null_int() }} as bucket_duration_hours,
                     {%- endif %}
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
-                    {% if dimensions, "dimension" | length > 0 %}
+                    {% if dimensions | length > 0 %}
                       {{ elementary.select_dimensions_columns(prefixed_dimensions) }},
                     {% endif %}
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
