@@ -1,9 +1,9 @@
-{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, group_by) %}
+{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, dimensions) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
-    {% set prefixed_group_by = [] %}
-    {% for group_by_column in group_by %}
-      {% do prefixed_group_by.append("group_by_" ~ group_by_column) %}
+    {% set prefixed_dimensions = [] %}
+    {% for dimension_column in dimensions %}
+      {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
     {% endfor %}
 
 
@@ -22,7 +22,7 @@
 
          filtered_monitored_table as (
             select {{ column_obj.quoted }},
-                   {%- if group_by -%} {{ elementary.select_group_by_columns(group_by, "group_by") }}, {%- endif -%}
+                   {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
                    {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             from monitored_table
             where
@@ -32,7 +32,7 @@
     {%- else %}
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
-                   {%- if group_by -%} {{ elementary.select_group_by_columns(group_by, "group_by") }}, {%- endif -%}
+                   {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
                    {{ elementary.null_timestamp() }} as start_bucket_in_data,
             from monitored_table
         ),
@@ -53,8 +53,8 @@
                         {{ elementary.null_int() }} as bucket_duration_hours,
                     {%- endif %}
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
-                    {% if group_by | length > 0 %}
-                      {{ elementary.select_group_by_columns(prefixed_group_by) }},
+                    {% if dimensions, "dimension" | length > 0 %}
+                      {{ elementary.select_dimensions_columns(prefixed_dimensions) }},
                     {% endif %}
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
@@ -80,8 +80,8 @@
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
-                {% if group_by | length > 0 %}
-                    group by 1,2,3,4,{{ elementary.select_group_by_columns(prefixed_group_by) }}
+                {% if dimensions | length > 0 %}
+                    group by 1,2,3,4,{{ elementary.select_dimensions_columns(prefixed_dimensions) }}
                 {% else %}
                     group by 1,2,3,4
                 {% endif %}
@@ -100,9 +100,9 @@
                     bucket_start,
                     bucket_end,
                     bucket_duration_hours,
-                    {% if group_by | length > 0 %}
-                      {{ elementary.const_as_string(elementary.join_list(group_by, separator='; ')) }} as dimension,
-                      {{ elementary.list_concat_with_separator(prefixed_group_by, separator='; ') }} as dimension_value,
+                    {% if dimensions | length > 0 %}
+                      {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
+                      {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
                     {% else %}
                       {{ elementary.null_string() }} as dimension,
                       {{ elementary.null_string() }} as dimension_value,
@@ -162,9 +162,9 @@
 
 {% endmacro %}
 
-{% macro select_group_by_columns(group_by_columns, as_prefix="") %}
+{% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
   {% set select_statements %}
-    {%- for column in group_by_columns -%}
+    {%- for column in dimension_columns -%}
       {%- if col_prefix -%}
         {{ col_prefix ~ "_" }}
       {%- endif -%}

@@ -211,7 +211,7 @@ def test_anomalyless_column_anomalies_group_by_pass(
         for superhero in ["Superman", "Batman"]
     ]
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension1", "dimension2"]
+    test_args["dimensions"] = ["dimension1", "dimension2"]
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
     )
@@ -244,7 +244,7 @@ def test_anomalyless_column_anomalies_group_by_fail(
     ]
 
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension"]
+    test_args["dimensions"] = ["dimension"]
     test_args["anomaly_sensitivity"] = 1
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
@@ -263,7 +263,7 @@ def test_anomalyless_column_anomalies_group_by_fail(
     ]
 
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension"]
+    test_args["dimensions"] = ["dimension"]
     test_args["anomaly_sensitivity"] = 3
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
@@ -307,7 +307,7 @@ def test_anomalyless_column_anomalies_group_by_none_dimension(
     ]
 
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension"]
+    test_args["dimensions"] = ["dimension"]
     test_args["anomaly_sensitivity"] = 3
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
@@ -359,7 +359,7 @@ def test_anomalyless_column_anomalies_group_by_multi(
     ]
 
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension1", "dimension2"]
+    test_args["dimensions"] = ["dimension1", "dimension2"]
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
     )
@@ -392,7 +392,7 @@ def test_anomalyless_column_anomalies_group_by_description(
         for dim in ["dim_new", "super_dimension"]
     ]
     test_args = DBT_TEST_ARGS.copy()
-    test_args["group_by"] = ["dimension"]
+    test_args["dimensions"] = ["dimension"]
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
     )
