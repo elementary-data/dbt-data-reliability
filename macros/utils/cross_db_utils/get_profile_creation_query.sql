@@ -25,6 +25,8 @@ GRANT USAGE ON WAREHOUSE IDENTIFIER($elementary_warehouse) TO ROLE IDENTIFIER($e
 
 -- Read access to elementary schema
 SET elementary_schema_fqn = $elementary_database || '.' || $elementary_schema;
+GRANT USAGE ON DATABASE IDENTIFIER($elementary_database) TO ROLE IDENTIFIER($elementary_role);
+GRANT USAGE ON SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON ALL TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON FUTURE TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON ALL VIEWS IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
