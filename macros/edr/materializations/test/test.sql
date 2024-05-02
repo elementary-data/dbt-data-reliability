@@ -144,6 +144,7 @@
 
 {% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
   {%- set latest_row = anomaly_scores_rows[-1] %}
+  {%- set rows_with_score = anomaly_scores_rows | rejectattr("anomaly_score", "none") | list %}
   {%- set full_table_name = elementary.insensitive_get_dict_value(latest_row, 'full_table_name') %}
   {%- set test_unique_id = flattened_test.unique_id %}
   {%- set test_configuration = elementary.get_cache(test_unique_id) %}
@@ -153,8 +154,7 @@
   {%- set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
   {%- set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
   {%- set test_unique_id = elementary.insensitive_get_dict_value(latest_row, 'test_unique_id') %}
-  {%- set has_anomaly_score = elementary.insensitive_get_dict_value(latest_row, 'anomaly_score') is not none %}
-  {%- if not has_anomaly_score %}
+  {%- if not rows_with_score %}
     {% do elementary.edr_log("Not enough data to calculate anomaly scores on `{}`".format(test_unique_id)) %}
   {% endif %}
   {%- set test_results_query -%}
@@ -168,8 +168,8 @@
         {%- endif %}
   {%- endset -%}
   {% set test_results_description %}
-      {% if has_anomaly_score %}
-          {{ elementary.insensitive_get_dict_value(latest_row, 'anomaly_description') }}
+      {% if rows_with_score %}
+          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
       {% else %}
           Not enough data to calculate anomaly score.
       {% endif %}

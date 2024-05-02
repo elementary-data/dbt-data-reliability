@@ -1,6 +1,10 @@
-{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties) %}
+{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, dimensions) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
+    {% set prefixed_dimensions = [] %}
+    {% for dimension_column in dimensions %}
+      {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
+    {% endfor %}
 
 
     with monitored_table as (
@@ -18,6 +22,7 @@
 
          filtered_monitored_table as (
             select {{ column_obj.quoted }},
+                   {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
                    {{ elementary.get_start_bucket_in_data(timestamp_column, min_bucket_start, metric_properties.time_bucket) }} as start_bucket_in_data
             from monitored_table
             where
@@ -27,7 +32,8 @@
     {%- else %}
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
-                   {{ elementary.null_timestamp() }} as start_bucket_in_data
+                   {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
+                   {{ elementary.null_timestamp() }} as start_bucket_in_data,
             from monitored_table
         ),
     {% endif %}
@@ -47,6 +53,9 @@
                         {{ elementary.null_int() }} as bucket_duration_hours,
                     {%- endif %}
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
+                    {% if dimensions | length > 0 %}
+                      {{ elementary.select_dimensions_columns(prefixed_dimensions) }},
+                    {% endif %}
                     {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
                     {%- if 'not_null_percent' in column_monitors -%} {{ elementary.not_null_percent(column) }} {%- else -%} null {% endif %} as not_null_percent,
@@ -71,7 +80,11 @@
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
-                group by 1,2,3,4
+                {% if dimensions | length > 0 %}
+                    group by 1,2,3,4,{{ elementary.select_dimensions_columns(prefixed_dimensions) }}
+                {% else %}
+                    group by 1,2,3,4
+                {% endif %}
         {%- else %}
             {{ elementary.empty_column_monitors_cte() }}
         {%- endif %}
@@ -82,7 +95,21 @@
 
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
-                select edr_column_name, bucket_start, bucket_end, bucket_duration_hours, {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name, {{ elementary.edr_cast_as_float(monitor) }} as metric_value from column_monitors where {{ monitor }} is not null
+                select
+                    edr_column_name,
+                    bucket_start,
+                    bucket_end,
+                    bucket_duration_hours,
+                    {% if dimensions | length > 0 %}
+                      {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
+                      {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
+                    {% else %}
+                      {{ elementary.null_string() }} as dimension,
+                      {{ elementary.null_string() }} as dimension_value,
+                    {% endif %}
+                    {{ elementary.edr_cast_as_float(monitor) }} as metric_value,
+                    {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name
+                from column_monitors where {{ monitor }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
@@ -102,8 +129,8 @@
             bucket_start,
             bucket_end,
             bucket_duration_hours,
-            {{ elementary.null_string() }} as dimension,
-            {{ elementary.null_string() }} as dimension_value,
+            dimension,
+            dimension_value,
             {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
         from column_monitors_unpivot
 
@@ -114,6 +141,8 @@
             'full_table_name',
             'column_name',
             'metric_name',
+            'dimension',
+            'dimension_value',
             'bucket_end',
             'metric_properties'
         ]) }} as id,
@@ -131,4 +160,22 @@
         metric_properties
     from metrics_final
 
+{% endmacro %}
+
+{% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
+  {% set select_statements %}
+    {%- for column in dimension_columns -%}
+      {%- if col_prefix -%}
+        {{ col_prefix ~ "_" }}
+      {%- endif -%}
+      {{ column }}
+      {%- if as_prefix -%}
+        {{ " as " ~ as_prefix ~ "_" ~ column }}
+      {%- endif -%}
+      {%- if not loop.last -%}
+        {{ ", " }}
+      {%- endif -%}
+    {%- endfor -%}
+  {% endset %}
+  {{ return(select_statements) }}
 {% endmacro %}
