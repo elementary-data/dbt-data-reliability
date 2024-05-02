@@ -113,7 +113,7 @@
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
-            {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('metric_name','string'),('metric_value','float')]) }}
+            {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('dimension','string'),('dimension_value','string'),('metric_name','string'),('metric_value','float')]) }}
         {%- endif %}
 
     ),
