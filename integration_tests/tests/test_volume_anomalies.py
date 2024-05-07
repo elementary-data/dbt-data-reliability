@@ -484,7 +484,9 @@ def test_ignore_small_changes_both(
 def test_anomalyless_vol_anomalies_with_test_materialization(
     test_id: str, dbt_project: DbtProject
 ):
-    # Tests run by default without the test materialization, but do a sanity to check that we don't mess things up when it's enabled.
+    # Anomaly tests don't require the test materialization anymore, but this test serves as a sanity check that the test materialization
+    # doesn't interfere with them when it's enabled.
+
     utc_today = datetime.utcnow().date()
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
