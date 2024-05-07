@@ -14,7 +14,8 @@
     {% set minor = minor | int %}
     {% if major > 1 or major == 1 and minor >= 8 %}
         {%- set msg %}
-IMPORTANT - Starting from dbt 1.8, users must explicitly allow packages to override materializations. Elementary requires this ability to support collection of samples and failed row count for dbt tests.
+IMPORTANT - Starting from dbt 1.8, users must explicitly allow packages to override materializations. 
+Elementary requires this ability to support collection of samples and failed row count for dbt tests.
 Please add the following flag to dbt_project.yml to allow it:
 
 flags:
