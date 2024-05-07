@@ -1,4 +1,4 @@
-{% macro ensure_materialization_override() %}
+{% macro ensure_materialize_override() %}
     {% if elementary.get_config_var("mute_ensure_materialization_override") %}
         {% do return(none) %}
     {% endif %}
