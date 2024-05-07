@@ -54,6 +54,7 @@
     'anomaly_direction': 'both',
     'store_result_rows_in_own_table': true,
     'mute_dbt_upgrade_recommendation': false,
+    'mute_ensure_materialization_override': false,
     'calculate_failed_count': true,
     'tests_use_temp_tables': false,
     'collect_metrics': false,

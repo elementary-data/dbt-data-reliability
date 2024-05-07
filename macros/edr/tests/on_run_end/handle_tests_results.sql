@@ -29,7 +29,7 @@
   {% set elementary_test_results = [] %}
 
   {% for result in results | selectattr('node.resource_type', '==', 'test') %}
-    {% set result = result.to_dict() %}
+    {% set result = elementary.get_run_result_dict(result) %}
     {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
     {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(result.node.unique_id) %}
 

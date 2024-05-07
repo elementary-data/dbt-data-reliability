@@ -7,7 +7,11 @@ def test_count_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
     test_result = dbt_project.test(
-        test_id, "not_null", dict(column_name=COLUMN_NAME), data=data
+        test_id,
+        "not_null",
+        dict(column_name=COLUMN_NAME),
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
     )
     assert test_result["status"] == "fail"
     assert test_result["failed_row_count"] == null_count
@@ -20,7 +24,11 @@ def test_sum_failed_row_count(test_id: str, dbt_project: DbtProject):
     non_unique_count = 50
     data = [{COLUMN_NAME: 5} for _ in range(non_unique_count)]
     test_result = dbt_project.test(
-        test_id, "unique", dict(column_name=COLUMN_NAME), data=data
+        test_id,
+        "unique",
+        dict(column_name=COLUMN_NAME),
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
     )
     assert test_result["status"] == "fail"
     assert test_result["failed_row_count"] == non_unique_count
@@ -42,6 +50,7 @@ def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
             meta=dict(failed_row_count_calc=failed_row_count_calc),
         ),
         data=data,
+        test_vars={"enable_elementary_test_materialization": True},
     )
     assert test_result["status"] == "fail"
     assert test_result["failed_row_count"] == overwrite_failed_row_count

@@ -88,7 +88,12 @@
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
 
-        {{ elementary.get_read_anomaly_scores_query() }}
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
+        {% do elementary.store_metrics_table_in_cache() %}
+        {% do elementary.store_anomaly_test_results(flattened_test, anomaly_scores_sql) %}
+
+        {{ elementary.get_anomaly_query(flattened_test) }}
 
     {%- else %}
 

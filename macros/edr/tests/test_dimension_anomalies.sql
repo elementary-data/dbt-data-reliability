@@ -72,7 +72,12 @@
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
 
-        {{ elementary.get_anomaly_query() }}
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
+        {% do elementary.store_metrics_table_in_cache() %}
+        {% do elementary.store_anomaly_test_results(flattened_test, anomaly_scores_sql) %}
+
+        {{ elementary.get_anomaly_query(flattened_test) }}
 
     {% else %}
 
