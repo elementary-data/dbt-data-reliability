@@ -20,6 +20,11 @@
 
         {% set full_table_name = elementary.relation_to_full_name(model_relation) %}
         {% set changes_from_baseline_query = elementary.get_column_changes_from_baseline_query(model_relation, full_table_name, baseline_table_relation, include_added=fail_on_added) %}
+
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% do elementary.store_schema_snapshot_tables_in_cache() %}
+        {% do elementary.store_schema_test_results(flattened_test, changes_from_baseline_query) %}
+
         {{ changes_from_baseline_query }}
     {% else %}
         {# test must run an sql query #}
