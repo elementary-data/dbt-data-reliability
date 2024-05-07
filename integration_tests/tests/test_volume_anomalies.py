@@ -479,3 +479,22 @@ def test_ignore_small_changes_both(
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == expected_result
+
+
+def test_anomalyless_vol_anomalies_with_test_materialization(
+    test_id: str, dbt_project: DbtProject
+):
+    # Tests run by default without the test materialization, but do a sanity to check that we don't mess things up when it's enabled.
+    utc_today = datetime.utcnow().date()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=utc_today)
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
+    )
+    assert test_result["status"] == "pass"
