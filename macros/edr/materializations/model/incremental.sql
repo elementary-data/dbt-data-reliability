@@ -62,7 +62,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization incremental, adapter="athena", supported_languages=["sql"] %}
+{% materialization incremental, adapter="athena", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_incremental_athena.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
@@ -73,7 +73,7 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization incremental, adapter="trino", supported_languages=["sql"] %}
+{% materialization incremental, adapter="trino", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_incremental_trino.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}

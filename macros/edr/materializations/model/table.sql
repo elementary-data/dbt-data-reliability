@@ -44,7 +44,7 @@
   {% do return(elementary.materialize_table.call_macro('redshift')) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="athena", supported_languages=["sql"] %}
+{% materialization table, adapter="athena", supported_languages=["sql", "python"] %}
   {% set relations = dbt.materialization_table_athena.call_macro() %}
   {% if not elementary.is_elementary_enabled() %}
     {% do return(relations) %}
@@ -55,6 +55,6 @@
   {% do return(relations) %}
 {% endmaterialization %}
 
-{% materialization table, adapter="trino", supported_languages=["sql"] %}
+{% materialization table, adapter="trino", supported_languages=["sql", "python"] %}
   {% do return(elementary.materialize_table.call_macro('trino')) %}
 {% endmaterialization %}
