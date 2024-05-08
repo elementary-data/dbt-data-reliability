@@ -56,13 +56,13 @@ Check out the [full documentation](https://docs.elementary-data.com/).
 
 ## Get more out of Elementary dbt package
 
-Elementary has 3 offerings: This dbt package, Elementary Community (OSS) and Elementary (cloud service).
+Elementary has 2 offerings: Elementary OSS package and Elementary Cloud Platform.
 
-- **dbt package**
-  - For basic data monitoring and dbt artifacts collection, Elementary offers a dbt package. The package adds logging, artifacts uploading, and Elementary tests (anomaly detection and schema) to your project.
-- **Elementary Community**
+- **Elementary dbt package**
+  - For basic data monitoring and dbt artifacts collection, Elementary offers this dbt package. The package adds logging, artifacts uploading, and Elementary tests (anomaly detection and schema) to your project.
+- **Elementary python package**
   - An open-source CLI tool you can deploy and orchestrate to send alerts and self-host the Elementary report. Best for data and analytics engineers that require basic observability capabilities or for evaluating features without vendor approval. Our community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
-- **Elementary Cloud**
+- **Elementary Cloud Platform**
   - Ideal for teams monitoring mission-critical data pipelines, requiring guaranteed uptime and reliability, short-time-to-value, advanced features, collaboration, and professional support. The solution is secure by design, and requires no access to your data from cloud. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
 ## Run Results and dbt artifacts
