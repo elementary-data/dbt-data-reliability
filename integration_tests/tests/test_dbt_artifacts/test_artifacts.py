@@ -19,6 +19,11 @@ def test_artifacts_caching(dbt_project: DbtProject):
     second_row = read_model_artifact_row(dbt_project)
     assert first_row == second_row, "Artifacts are not cached at the on-run-end."
 
+
+def test_artifacts_updating(dbt_project: DbtProject):
+    # Disabled by default in the tests for performance reasons.
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+
     dbt_project.dbt_runner.run(select=TEST_MODEL)
     first_row = read_model_artifact_row(dbt_project)
     dbt_project.dbt_runner.run(select=TEST_MODEL, vars={"one_owner": "ele"})
