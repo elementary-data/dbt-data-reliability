@@ -400,3 +400,43 @@ def test_anomalyless_column_anomalies_group_by_description(
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 1
     assert "not enough data" not in test_result["test_results_description"].lower()
+
+
+def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProject):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero_has_flown": False,
+        }
+        for _ in range(3)
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero_has_flown": True,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+    ]
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["count_true", "count_false"],
+    }
+    test_results = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_column="superhero_has_flown",
+        multiple_results=True,
+    )
+    assert len(test_results) == 2
+    assert {res["status"] for res in test_results} == {"fail"}
+    assert {res["test_sub_type"] for res in test_results} == {
+        "count_true",
+        "count_false",
+    }
