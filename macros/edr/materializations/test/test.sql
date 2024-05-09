@@ -1,58 +1,17 @@
-{% macro create_test_result_temp_table() %}
-  {% set database, schema = elementary.get_package_database_and_schema() %}
-  {% set test_id = model["alias"] %}
-  {% set relation = elementary.create_temp_table(database, schema, test_id, sql) %}
-  {% set new_sql %}
-    select * from {{ relation }}
-  {% endset %}
-  {% do return(new_sql) %}
-{% endmacro %}
-
-{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
-  {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
-    {% do return([]) %}
-  {% endif %}
-  {% if ignore_passed_tests and elementary.did_test_pass() %}
-    {% do elementary.debug_log("Skipping sample query because the test passed.") %}
-    {% do return([]) %}
-  {% endif %}
-  {% set query %}
-    with test_results as (
-      {{ sql }}
-    )
-    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
-  {% endset %}
-  {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
-{% endmacro %}
-
-{% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
-  {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}
-{% endmacro %}
-
-{% macro handle_schema_changes_test(flattened_test, materialization_macro) %}
-  {% set schema_snapshots_tables_cache = elementary.get_cache("tables").get("schema_snapshots") %}
-  {% set schema_snapshots_table = elementary.get_elementary_test_table(elementary.get_elementary_test_table_name(), 'schema_changes') %}
-  {% if schema_snapshots_table %}
-    {% do schema_snapshots_tables_cache.append(schema_snapshots_table) %}
-  {% endif %}
-
-  {% set elementary_test_results_rows = [] %}
-  {% set schema_changes_rows = elementary.query_test_result_rows() %}
-  {% for schema_changes_row in schema_changes_rows %}
-    {% do elementary_test_results_rows.append(elementary.get_schema_changes_test_result_row(flattened_test, schema_changes_row, schema_changes_rows)) %}
-  {% endfor %}
-  {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
-  {% do return(materialization_macro()) %}
-{% endmacro %}
-
-{% macro handle_dbt_test(flattened_test, materialization_macro) %}
-  {% set result = materialization_macro() %}
-  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
-                                                         ignore_passed_tests=true) %}
-  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
-  {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
+{% materialization test, default %}
+  {% set result = elementary.materialize_test(dbt.materialization_test_default) %}
   {% do return(result) %}
-{% endmacro %}
+{% endmaterialization %}
+
+{% materialization test, adapter="snowflake" %}
+  {%- if dbt.materialization_test_snowflake -%}
+    {% set materialization_macro = dbt.materialization_test_snowflake %}
+  {%- else -%}
+    {% set materialization_macro = dbt.materialization_test_default %}
+  {%- endif -%}
+  {% set result = elementary.materialize_test(materialization_macro) %}
+  {% do return(result) %}
+{% endmaterialization %}
 
 {% macro materialize_test(materialization_macro) %}
   {% if not elementary.is_elementary_enabled() %}
@@ -89,20 +48,14 @@
   {% do return(result) %}
 {% endmacro %}
 
-{% materialization test, default %}
-  {% set result = elementary.materialize_test(dbt.materialization_test_default) %}
+{% macro handle_dbt_test(flattened_test, materialization_macro) %}
+  {% set result = materialization_macro() %}
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
+                                                         ignore_passed_tests=true) %}
+  {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
+  {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
   {% do return(result) %}
-{% endmaterialization %}
-
-{% materialization test, adapter="snowflake" %}
-  {%- if dbt.materialization_test_snowflake -%}
-    {% set materialization_macro = dbt.materialization_test_snowflake %}
-  {%- else -%}
-    {% set materialization_macro = dbt.materialization_test_default %}
-  {%- endif -%}
-  {% set result = elementary.materialize_test(materialization_macro) %}
-  {% do return(result) %}
-{% endmaterialization %}
+{% endmacro %}
 
 {% macro get_dbt_test_result_row(flattened_test, result_rows=none) %}
     {% if not result_rows %}
@@ -138,4 +91,35 @@
         'result_rows': result_rows
     }%}
     {% do return(test_result_dict) %}
+{% endmacro %}
+
+{% macro create_test_result_temp_table() %}
+  {% set database, schema = elementary.get_package_database_and_schema() %}
+  {% set test_id = model["alias"] %}
+  {% set relation = elementary.create_temp_table(database, schema, test_id, sql) %}
+  {% set new_sql %}
+    select * from {{ relation }}
+  {% endset %}
+  {% do return(new_sql) %}
+{% endmacro %}
+
+{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+  {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
+    {% do return([]) %}
+  {% endif %}
+  {% if ignore_passed_tests and elementary.did_test_pass() %}
+    {% do elementary.debug_log("Skipping sample query because the test passed.") %}
+    {% do return([]) %}
+  {% endif %}
+  {% set query %}
+    with test_results as (
+      {{ sql }}
+    )
+    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
+  {% endset %}
+  {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
+{% endmacro %}
+
+{% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
+  {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}
 {% endmacro %}
