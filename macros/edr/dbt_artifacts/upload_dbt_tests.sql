@@ -142,7 +142,7 @@
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_short_name,
         'alias': node_dict.get('alias'),
-        'test_column_name': node_dict.get('column_name'),
+        'test_column_name': node_dict.get('column_name') or test_kwargs.get('column_name'),
         'severity': config_dict.get('severity'),
         'warn_if': config_dict.get('warn_if'),
         'error_if': config_dict.get('error_if'),
