@@ -112,7 +112,7 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do adapter.drop_relation(temp_relation) %}
-        {% do adapter.clean_up_table(relation) %}
+        {% do adapter.clean_up_table(temp_relation) %}
     {% endif %}
 {% endmacro %}
 
@@ -161,7 +161,7 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do adapter.drop_relation(temp_relation) %}
-        {% do adapter.clean_up_table(relation) %}
+        {% do adapter.clean_up_table(temp_relation) %}
     {% endif %}
 {% endmacro %}
 
