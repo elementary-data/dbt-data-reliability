@@ -112,6 +112,7 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do adapter.drop_relation(temp_relation) %}
+        {% do adapter.clean_up_table(relation) %}
     {% endif %}
 {% endmacro %}
 
