@@ -36,6 +36,7 @@
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
         {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation.render_pure())) %}
+        {% do adapter.clean_up_table(test_relation) %}
     {% endfor %}
     {% do return(queries) %}
 {% endmacro %}
