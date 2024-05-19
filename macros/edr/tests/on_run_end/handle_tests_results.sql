@@ -111,8 +111,7 @@
     {% do elementary.run_query(insert_query) %}
 
     {% if not elementary.has_temp_table_support() %}
-        {% do adapter.drop_relation(temp_relation) %}
-        {% do adapter.clean_up_table(temp_relation) %}
+        {% do elementary.fully_drop_relation(temp_relation) %}
     {% endif %}
 {% endmacro %}
 
