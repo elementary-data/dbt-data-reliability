@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from dbt_flags import set_flags
 from dbt_project import DbtProject
 
 TEST_MODEL = "one"
@@ -60,53 +61,44 @@ def test_dbt_invocations(dbt_project: DbtProject):
 
 @pytest.mark.requires_dbt_version("1.8.0")
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
-    dbt_project_yaml_path = dbt_project.project_dir_path / "dbt_project.yml"
-    original_dbt_project_yaml = dbt_project_yaml_path.read_text()
-    try:
-        dbt_project.dbt_runner.vars["disable_freshness_results"] = False
-        # a very ugly hack to enable source freshness hooks
-        # seting the flags in the dbt_project.yml in lower version of dbt causes all dbt commands to fail
-        dbt_project_yaml_path.write_text(
-            original_dbt_project_yaml
-            + "\nflags:\n  source_freshness_run_project_hooks: true"
-        )
-        dbt_project.seed(
-            [
-                {
-                    "UPDATE_TIME": datetime.now(),
-                }
-            ],
-            test_id,
-        )
-        with dbt_project.write_yaml(
-            content={
-                "version": 2,
-                "sources": [
+    source_config = {
+        "version": 2,
+        "sources": [
+            {
+                "name": "test_source",
+                "database": "{{target.database}}",
+                "schema": "{{target.schema}}",
+                "tables": [
                     {
-                        "name": "test_source",
-                        "database": "{{target.database}}",
-                        "schema": "{{target.schema}}",
-                        "tables": [
-                            {
-                                "name": test_id,
-                                "loaded_at_field": '"UPDATE_TIME"::timestamp',
-                                "freshness": {
-                                    "warn_after": {
-                                        "count": 1,
-                                        "period": "hour",
-                                    },
-                                },
-                            }
-                        ],
+                        "name": test_id,
+                        "loaded_at_field": '"UPDATE_TIME"::timestamp',
+                        "freshness": {
+                            "warn_after": {
+                                "count": 1,
+                                "period": "hour",
+                            },
+                        },
                     }
                 ],
             }
-        ):
-            dbt_project.dbt_runner.source_freshness()
-            dbt_project.read_table(
-                "dbt_source_freshness_results",
-                where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
-                raise_if_empty=True,
-            )
-    finally:
-        dbt_project_yaml_path.write_text(original_dbt_project_yaml)
+        ],
+    }
+    dbt_project.seed(
+        [
+            {
+                "UPDATE_TIME": datetime.now(),
+            }
+        ],
+        test_id,
+    )
+
+    dbt_project.dbt_runner.vars["disable_freshness_results"] = False
+    with dbt_project.write_yaml(content=source_config), set_flags(
+        dbt_project, {"source_freshness_run_project_hooks": True}
+    ):
+        dbt_project.dbt_runner.source_freshness()
+        dbt_project.read_table(
+            "dbt_source_freshness_results",
+            where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
+            raise_if_empty=True,
+        )
