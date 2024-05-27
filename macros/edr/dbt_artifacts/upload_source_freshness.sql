@@ -1,15 +1,33 @@
 {% macro upload_source_freshness() %}
-  {% if not flags.Path %}
-    {% do exceptions.raise_compiler_error("Unable to upload source freshness using this operation on dbt 1.3.2 onwards.") %}
-  {% endif %}
-
-  {% set source_freshness_results_relation = ref('dbt_source_freshness_results') %}
-  {% set sources_json_path = flags.Path(elementary.get_runtime_config().target_path).joinpath('sources.json') %}
-  {% if not sources_json_path.exists() %}
-    {% do exceptions.raise_compiler_error('Source freshness artifact (sources.json) does not exist, please run `dbt source freshness`.') %}
-  {% endif %}
-  {% set source_freshness_results_dicts = fromjson(sources_json_path.read_text())['results'] %}
+  {% set source_freshness_results_relation = elementary.get_elementary_relation('dbt_source_freshness_results') %}
+  {% set source_freshness_results_dicts = [] %}
+  {% for result in results %}
+    {% do source_freshness_results_dicts.append(elementary.process_freshness_result(result)) %}
+  {% endfor %}
   {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshness_results_dicts, elementary.flatten_source_freshness, append=True, should_commit=True) %}
+{% endmacro %}
+
+{% macro process_freshness_result(result) %}
+  {% set result_dict = result.to_dict() %}
+  {% if result_dict.status == "runtime error" %}
+    {% do return({
+      "unique_id": result_dict.node.unique_id,
+      "status": result_dict.status,
+      "error": result_dict.message,
+    }) %}
+  {% endif %}
+  {% do return({
+    "unique_id": result_dict.node.unique_id,
+    "status": result_dict.status,
+    "max_loaded_at": result_dict.max_loaded_at,
+    "snapshotted_at": result_dict.snapshotted_at,
+    "max_loaded_at_time_ago_in_s": result_dict.age,
+    "criteria": result_dict.node.get('freshness', {}),
+    "adapter_response": result_dict.adapter_response,
+    "timing": result_dict.timing,
+    "thread_id": result_dict.thread_id,
+    "execution_time": result_dict.execution_time,
+  }) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}

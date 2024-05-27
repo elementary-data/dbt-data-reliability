@@ -9,3 +9,7 @@
 {% macro is_docs_command() %}
     {% do return(flags.WHICH in ['generate', 'serve']) %}
 {% endmacro %}
+
+{% macro is_freshness_command() %}
+  {% do return(flags.WHICH in ['freshness']) %}
+{% endmacro %}
