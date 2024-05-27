@@ -2,7 +2,7 @@
   {% set source_freshness_results_relation = elementary.get_elementary_relation('dbt_source_freshness_results') %}
   {% set source_freshness_results_dicts = [] %}
   {% for result in results %}
-    {% do source_freshness_results_dicts.append(process_freshness_result(result)) %}
+    {% do source_freshness_results_dicts.append(elementary.process_freshness_result(result)) %}
   {% endfor %}
   {% do elementary.upload_artifacts_to_table(source_freshness_results_relation, source_freshness_results_dicts, elementary.flatten_source_freshness, append=True, should_commit=True) %}
 {% endmacro %}

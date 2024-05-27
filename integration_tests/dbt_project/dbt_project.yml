@@ -28,3 +28,6 @@ models:
   elementary:
     +schema: elementary
     +enabled: "{{ var('elementary_enabled', True) }}"
+
+flags:
+  source_freshness_run_project_hooks: true
