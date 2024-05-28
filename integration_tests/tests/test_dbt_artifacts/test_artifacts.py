@@ -102,3 +102,13 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
             where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
             raise_if_empty=True,
         )
+
+
+def test_timings(dbt_project: DbtProject):
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+    dbt_project.dbt_runner.vars["disable_run_results"] = False
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    results = dbt_project.run_query('select * from {{ ref("dbt_run_results") }}')
+
+    assert len(results) == 1
+    assert results[0]["execute_started_at"]
