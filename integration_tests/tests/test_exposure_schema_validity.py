@@ -151,6 +151,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
         "bigquery": "NUMERIC",
         "spark": "int",
         "databricks": "int",
+        "databricks_catalog": "int",
         "athena": "int",
         "trino": "int",
     }.get(dbt_project.dbt_runner.target, "numeric")
