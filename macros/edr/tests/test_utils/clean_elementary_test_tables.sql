@@ -8,6 +8,9 @@
             {% endfor %}
         {% endfor %}
 
+        {# Extra entry-point to clean up tables before dropping the relation #}
+        {% do elementary.clean_up_tables(test_table_relations) %}
+
         {% do elementary.file_log("Deleting temporary Elementary test tables: {}".format(test_table_relations)) %}
         {% set queries = elementary.get_clean_elementary_test_tables_queries(test_table_relations) %}
         {% for query in queries %}
