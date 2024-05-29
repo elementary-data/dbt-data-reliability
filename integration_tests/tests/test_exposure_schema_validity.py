@@ -145,9 +145,19 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_id: str, dbt_project: DbtProject
 ):
+    # Specify valid type per target
+    data_type = {
+        "snowflake": "NUMERIC",
+        "bigquery": "NUMERIC",
+        "spark": "int",
+        "databricks": "int",
+        "databricks_catalog": "int",
+        "athena": "int",
+        "trino": "int",
+    }.get(dbt_project.dbt_runner.target, "numeric")
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
-        "columns": [{"name": "order_id", "dtype": "numeric", "data_type": "numeric"}],
+        "columns": [{"name": "order_id", "dtype": data_type, "data_type": data_type}],
         "exposures": {
             "ZOMG": {
                 "meta": {
