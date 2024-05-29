@@ -258,5 +258,5 @@
       {%- endset -%}
     {% endif %}
 
-{{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
+    {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}
 {% endmacro %}
