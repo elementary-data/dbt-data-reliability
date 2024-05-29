@@ -62,7 +62,7 @@
 {% endmacro %}
 
 {% macro databricks__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
-    {% if target.catalog is none %}
+    {% if target.catalog is none or target.catalog.lower() == 'hive_metastore' %}
         {# Information schema is only available when using Unity Catalog. #}
         {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
     {% endif %}
