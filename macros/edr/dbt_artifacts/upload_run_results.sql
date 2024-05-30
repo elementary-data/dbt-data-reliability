@@ -37,7 +37,7 @@
 {% endmacro %}
 
 {% macro flatten_run_result(run_result) %}
-    {% set run_result_dict = run_result.to_dict() %}
+    {% set run_result_dict = elementary.get_run_result_dict(run_result) %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
     {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
     {% set flatten_run_result_dict = {

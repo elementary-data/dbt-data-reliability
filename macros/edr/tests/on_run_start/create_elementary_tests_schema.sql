@@ -1,5 +1,5 @@
 {% macro create_elementary_tests_schema() %}
-    {% if execute and flags.WHICH in ['test', 'build'] %}
+    {% if execute and elementary.is_test_command() %}
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {%- if tests_schema_name != schema_name and not adapter.check_schema_exists(database_name, tests_schema_name) %}

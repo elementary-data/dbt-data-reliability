@@ -1,9 +1,6 @@
 {% test table_anomalies(model, table_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, mandatory_params=none, event_timestamp_column=none, freshness_column=none, sensitivity=none, ignore_small_changes={"spike_failure_percent_threshold": none, "drop_failure_percent_threshold": none}, fail_on_zero=false, detection_delay=none, anomaly_exclude_metrics=none, detection_period=none, training_period=none) %}
-    -- depends_on: {{ ref('monitors_runs') }}
-    -- depends_on: {{ ref('data_monitoring_metrics') }}
-    -- depends_on: {{ ref('dbt_run_results') }}
-
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+    {{ config(tags = ['elementary-tests']) }}
+    {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("The test has unsupported configuration, please contact Elementary support") }}
@@ -79,7 +76,13 @@
         
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name) }}
-        {{ elementary.get_read_anomaly_scores_query() }}
+
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
+        {% do elementary.store_metrics_table_in_cache() %}
+        {% do elementary.store_anomaly_test_results(flattened_test, anomaly_scores_sql) %}
+
+        {{ elementary.get_anomaly_query(flattened_test) }}
     {% else %}
 
         {# test must run an sql query #}

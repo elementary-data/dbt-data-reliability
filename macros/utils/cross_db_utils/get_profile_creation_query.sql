@@ -25,59 +25,17 @@ GRANT USAGE ON WAREHOUSE IDENTIFIER($elementary_warehouse) TO ROLE IDENTIFIER($e
 
 -- Read access to elementary schema
 SET elementary_schema_fqn = $elementary_database || '.' || $elementary_schema;
+GRANT USAGE ON DATABASE IDENTIFIER($elementary_database) TO ROLE IDENTIFIER($elementary_role);
+GRANT USAGE ON SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON ALL TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON FUTURE TABLES IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON ALL VIEWS IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 GRANT SELECT ON FUTURE VIEWS IN SCHEMA IDENTIFIER($elementary_schema_fqn) TO ROLE IDENTIFIER($elementary_role);
 
--- Information schema access
-CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS(database_name STRING, role_name STRING)
-  RETURNS VARCHAR
-  LANGUAGE SQL
-  AS
-  $$
-    BEGIN
-      GRANT USAGE,MONITOR ON DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT USAGE,MONITOR ON ALL SCHEMAS IN DATABASE {{ database }} TO ROLE IDENTIFIER(:role_name);
-      GRANT USAGE,MONITOR ON FUTURE SCHEMAS IN DATABASE {{ database }} TO ROLE identifier(:role_name);
-
-      GRANT REFERENCES ON ALL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT REFERENCES ON ALL VIEWS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT REFERENCES ON ALL EXTERNAL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-
-      GRANT REFERENCES ON FUTURE TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT REFERENCES ON FUTURE VIEWS IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-      GRANT REFERENCES ON FUTURE EXTERNAL TABLES IN DATABASE IDENTIFIER(:database_name) TO ROLE IDENTIFIER(:role_name);
-    END;
-  $$
-;
-
-{%- set databases = elementary.get_configured_databases_from_graph() %}
-{% for database in databases -%}
-CALL ELEMENTARY_GRANT_INFO_SCHEMA_ACCESS('{{ database }}', $elementary_role);
-{% endfor %}
-
--- Query history access
-CREATE OR REPLACE PROCEDURE ELEMENTARY_GRANT_QUERY_HISTORY_ACCESS(role_name STRING)
-  RETURNS VARCHAR
-  LANGUAGE SQL
-  AS
-  $$
-    BEGIN
-      GRANT DATABASE ROLE SNOWFLAKE.OBJECT_VIEWER TO ROLE IDENTIFIER(:role_name);
-      GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE IDENTIFIER(:role_name);
-      GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE IDENTIFIER(:role_name);
-
-      LET warehouses_rs RESULTSET := (SHOW WAREHOUSES);
-      LET warehouses_cur CURSOR FOR warehouses_rs;
-      FOR warehouse_row IN warehouses_cur DO
-        LET warehouse_name VARCHAR := warehouse_row."name";
-        GRANT MONITOR ON WAREHOUSE IDENTIFIER(:warehouse_name) TO ROLE IDENTIFIER(:role_name);
-      END FOR;
-    END;
-  $$
-;
-CALL ELEMENTARY_GRANT_QUERY_HISTORY_ACCESS($elementary_role);
+-- Account usage access (these permissions allow Elementary to access table & column metadata and query history)
+GRANT DATABASE ROLE SNOWFLAKE.OBJECT_VIEWER TO ROLE IDENTIFIER($elementary_role);
+GRANT DATABASE ROLE SNOWFLAKE.USAGE_VIEWER TO ROLE IDENTIFIER($elementary_role);
+GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE IDENTIFIER($elementary_role);
 {% endmacro %}
 
 
@@ -93,6 +51,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA {{ parameters["schema"] }} GRANT SELECT ON TA
 
 -- Grant metadata access to tables in the warehouse
 GRANT SELECT ON svv_table_info to {{ parameters["user"] }};
+
+-- Grant access to columns information (svv_columns) in the warehouse
+GRANT SELECT ON pg_catalog.svv_columns to {{ parameters["user"] }};
 {% endmacro %}
 
 

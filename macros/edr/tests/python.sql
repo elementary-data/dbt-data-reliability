@@ -1,7 +1,7 @@
 {% test python(model, code_macro, macro_args, where_expression) %}
-  {{ config(fail_calc = 'fail_count') }}
+  {{ config(fail_calc = 'fail_count', tags = ['elementary-tests']) }}
 
-  {% if not execute %}
+  {% if not execute or not elementary.is_elementary_enabled() %}
     {% do return(none) %}
   {% endif %}
 

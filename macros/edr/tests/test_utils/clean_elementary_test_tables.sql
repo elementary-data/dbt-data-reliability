@@ -1,17 +1,22 @@
 {% macro clean_elementary_test_tables() %}
     {% set test_table_relations = [] %}
     {% set temp_test_table_relations_map = elementary.get_cache("temp_test_table_relations_map") %}
-    {% for test_entry in temp_test_table_relations_map.values() %}
-        {% for test_relation in test_entry.values() %}
-            {% do test_table_relations.append(test_relation) %}
+    {% if temp_test_table_relations_map %}
+        {% for test_entry in temp_test_table_relations_map.values() %}
+            {% for test_relation in test_entry.values() %}
+                {% do test_table_relations.append(test_relation) %}
+            {% endfor %}
         {% endfor %}
-    {% endfor %}
 
-    {% do elementary.file_log("Deleting temporary Elementary test tables: {}".format(test_table_relations)) %}
-    {% set queries = elementary.get_clean_elementary_test_tables_queries(test_table_relations) %}
-    {% for query in queries %}
-        {% do elementary.run_query(query) %}
-    {% endfor %}
+        {# Extra entry-point to clean up tables before dropping the relation #}
+        {% do elementary.clean_up_tables(test_table_relations) %}
+
+        {% do elementary.file_log("Deleting temporary Elementary test tables: {}".format(test_table_relations)) %}
+        {% set queries = elementary.get_clean_elementary_test_tables_queries(test_table_relations) %}
+        {% for query in queries %}
+            {% do elementary.run_query(query) %}
+        {% endfor %}
+    {% endif %}
 {% endmacro %}
 
 {% macro get_clean_elementary_test_tables_queries(test_table_relations) %}
@@ -34,6 +39,14 @@
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
         {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation.render_pure())) %}
+    {% endfor %}
+    {% do return(queries) %}
+{% endmacro %}
+
+{% macro trino__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% set queries = [] %}
+    {% for test_relation in test_table_relations %}
+        {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation)) %}
     {% endfor %}
     {% do return(queries) %}
 {% endmacro %}

@@ -1,9 +1,6 @@
-{% test all_columns_anomalies(model, column_anomalies, exclude_prefix, exclude_regexp, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, detection_delay, anomaly_exclude_metrics, detection_period, training_period) %}
-    -- depends_on: {{ ref('monitors_runs') }}
-    -- depends_on: {{ ref('data_monitoring_metrics') }}
-    -- depends_on: {{ ref('dbt_run_results') }}
-
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+{% test all_columns_anomalies(model, column_anomalies, exclude_prefix, exclude_regexp, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, dimensions) %}
+    {{ config(tags = ['elementary-tests']) }}
+    {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
@@ -35,10 +32,13 @@
                                                                                                    backfill_days=backfill_days,
                                                                                                    seasonality=seasonality,
                                                                                                    sensitivity=sensitivity,
+                                                                                                   ignore_small_changes=ignore_small_changes,
+                                                                                                   fail_on_zero=fail_on_zero,
                                                                                                    detection_delay=detection_delay,
                                                                                                    anomaly_exclude_metrics=anomaly_exclude_metrics,
                                                                                                    detection_period=detection_period,
-                                                                                                   training_period=training_period) %}
+                                                                                                   training_period=training_period,
+                                                                                                   dimensions=dimensions) %}
 
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
@@ -68,7 +68,7 @@
                     {%- endif %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model, model_relation, min_bucket_start, max_bucket_end, test_configuration.days_back, column_obj, column_monitors, metric_properties) %}
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model, model_relation, min_bucket_start, max_bucket_end, test_configuration.days_back, column_obj, column_monitors, metric_properties, dimensions) %}
                     {%- do elementary.run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
@@ -88,7 +88,12 @@
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
 
-        {{ elementary.get_read_anomaly_scores_query() }}
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
+        {% do elementary.store_metrics_table_in_cache() %}
+        {% do elementary.store_anomaly_test_results(flattened_test, anomaly_scores_sql) %}
+
+        {{ elementary.get_anomaly_query(flattened_test) }}
 
     {%- else %}
 

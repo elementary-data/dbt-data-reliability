@@ -94,7 +94,11 @@
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
 
     {% set primary_test_model_id = namespace(data=none) %}
-    {% if test_model_unique_ids | length == 1 %}
+    {% set override_primary_test_model_id = elementary.safe_get_with_default(config_dict, 'override_primary_test_model_id')%}
+
+    {% if override_primary_test_model_id %}
+        {% set primary_test_model_id.data = override_primary_test_model_id %}
+    {% elif test_model_unique_ids | length == 1 %}
         {# if only one parent model for this test, simply use this model #}
         {% set primary_test_model_id.data = test_model_unique_ids[0] %}
     {% else %}
@@ -138,7 +142,7 @@
         'unique_id': node_dict.get('unique_id'),
         'short_name': test_short_name,
         'alias': node_dict.get('alias'),
-        'test_column_name': node_dict.get('column_name'),
+        'test_column_name': node_dict.get('column_name') or test_kwargs.get('column_name'),
         'severity': config_dict.get('severity'),
         'warn_if': config_dict.get('warn_if'),
         'error_if': config_dict.get('error_if'),

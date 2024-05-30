@@ -1,5 +1,5 @@
 {% test config_levels(model, expected_config, timestamp_column, time_bucket, where_expression, anomaly_sensitivity, anomaly_direction, days_back, backfill_days, seasonality, min_training_set_size) %}
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+    {%- if execute and elementary.is_test_command() %}
         {%- set unexpected_config = [] %}
         {%- set model_relation = dbt.load_relation(model) %}
 

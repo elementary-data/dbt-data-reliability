@@ -19,6 +19,7 @@ _DEFAULT_VARS = {
     "disable_dbt_artifacts_autoupload": True,
     "disable_dbt_columns_autoupload": True,
     "disable_run_results": True,
+    "disable_freshness_results": True,
     "debug_logs": True,
     "collect_metrics": False,
     "schema_name_suffix": SCHEMA_NAME_SUFFIX,

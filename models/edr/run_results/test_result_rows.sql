@@ -1,10 +1,11 @@
+-- indexes are not supported in all warehouses, relevant to postgres only
 {{
   config(
     materialized = 'incremental',
     unique_key = 'elementary_test_results_id',
     on_schema_change = 'append_new_columns',
+    indexes=[{'columns': ['created_at']}] if target.type == "postgres" else [],
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
-    post_hook='{{ elementary.backfill_result_rows() }}',
     meta={
       "timestamp_column": "created_at",
       "prev_timestamp_column": "detected_at",

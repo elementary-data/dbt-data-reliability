@@ -1,6 +1,7 @@
 {% macro anomaly_detection_description() %}
     case
-        when dimension is not null then {{ elementary.dimension_metric_description() }}
+        when dimension is not null and column_name is null then {{ elementary.dimension_metric_description() }}
+        when dimension is not null and column_name is not null then {{ elementary.column_dimension_metric_description() }}
         when metric_name = 'freshness' then {{ elementary.freshness_description() }}
         when column_name is null then {{ elementary.table_metric_description() }}
         when column_name is not null then {{ elementary.column_metric_description() }}
@@ -19,6 +20,11 @@
 
 {% macro column_metric_description() %}
     'In column ' || column_name || ', the last ' || metric_name || ' value is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('metric_value') ~ ', 3)') }} ||
+    '. The average for this metric is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('training_avg') ~ ', 3)') }} || '.'
+{% endmacro %}
+
+{% macro column_dimension_metric_description() %}
+    'In column ' || column_name || ', the last ' || metric_name || ' value for dimension ' || dimension || ' is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('metric_value') ~ ', 3)') }} ||
     '. The average for this metric is ' || {{ elementary.edr_cast_as_string('round(' ~ elementary.edr_cast_as_numeric('training_avg') ~ ', 3)') }} || '.'
 {% endmacro %}
 

@@ -1,7 +1,6 @@
 {% test schema_changes(model) %}
-    -- depends_on: {{ ref('schema_columns_snapshot') }}
-
-    {%- if execute and flags.WHICH in ['test', 'build'] %}
+    {{ config(tags = ['elementary-tests']) }}
+    {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
@@ -30,9 +29,15 @@
         {% set schema_changes_alert_query = elementary.get_columns_changes_from_last_run_query(full_table_name, temp_table_relation) %}
         {{ elementary.debug_log('schema_changes_alert_query - \n' ~ schema_changes_alert_query) }}
         {% set alerts_temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'schema_changes_alerts', schema_changes_alert_query) %}
-        {# return schema changes query as standard test query #}
-        select * from {{ alerts_temp_table_relation }}
 
+        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set schema_changes_sql = 'select * from {}'.format(alerts_temp_table_relation) %}
+        {% do elementary.store_schema_snapshot_tables_in_cache() %}
+        {% do elementary.store_schema_test_results(flattened_test, schema_changes_sql) %}
+
+        {# return schema changes query as standard test query #}
+        {{ schema_changes_sql}}
+        
     {% else %}
 
         {# test must run an sql query #}

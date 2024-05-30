@@ -13,16 +13,13 @@
     {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
     {% do elementary.insert_data_monitoring_metrics(database_name, schema_name, test_metrics_tables) %}
     {% do elementary.insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
-    {% if elementary.get_config_var("clean_elementary_temp_tables") %}
-      {% do elementary.clean_elementary_test_tables() %}
-    {% endif %}
     {% if test_result_rows %}
       {% set test_result_rows_relation = elementary.get_elementary_relation('test_result_rows') %}
-      {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True) %}
+      {% do elementary.insert_rows(test_result_rows_relation, test_result_rows, should_commit=True, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% endif %}
     {% if elementary_test_results %}
       {% set elementary_test_results_relation = elementary.get_elementary_relation('elementary_test_results') %}
-      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True) %}
+      {% do elementary.insert_rows(elementary_test_results_relation, elementary_test_results, should_commit=True, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
     {% endif %}
     {% do elementary.file_log("Handled test results successfully.") %}
     {% do return('') %}
@@ -32,7 +29,7 @@
   {% set elementary_test_results = [] %}
 
   {% for result in results | selectattr('node.resource_type', '==', 'test') %}
-    {% set result = result.to_dict() %}
+    {% set result = elementary.get_run_result_dict(result) %}
     {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
     {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(result.node.unique_id) %}
 
@@ -70,7 +67,7 @@
 
     {%- set target_relation = elementary.get_elementary_relation('data_monitoring_metrics') -%}
     {% if not target_relation %}
-      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
+      {% do elementary.raise_missing_elementary_models() %}
     {% endif %}
 
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
@@ -112,6 +109,10 @@
     {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
     {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
     {% do elementary.run_query(insert_query) %}
+
+    {% if not elementary.has_temp_table_support() %}
+        {% do elementary.fully_drop_relation(temp_relation) %}
+    {% endif %}
 {% endmacro %}
 
 {% macro insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
@@ -126,7 +127,7 @@
 
     {%- set target_relation = elementary.get_elementary_relation('schema_columns_snapshot') -%}
     {% if not target_relation %}
-      {% do exceptions.raise_compiler_error("Couldn't find Elementary's models in `" ~ elementary.target_database() ~ "." ~ target.schema ~ "`. Please run `dbt run -s elementary --target " ~ target.name ~ "`.") %}
+      {% do elementary.raise_missing_elementary_models() %}
     {% endif %}
 
     {%- set temp_relation = elementary.make_temp_view_relation(target_relation) -%}
@@ -156,6 +157,10 @@
     {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
     {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
     {% do elementary.run_query(insert_query) %}
+
+    {% if not elementary.has_temp_table_support() %}
+        {% do elementary.fully_drop_relation(temp_relation) %}
+    {% endif %}
 {% endmacro %}
 
 {% macro pop_test_result_rows(elementary_test_results) %}

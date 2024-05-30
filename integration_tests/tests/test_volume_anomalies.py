@@ -21,6 +21,21 @@ def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "pass"
 
 
+def test_table_volume_anomalies_with_timestamp_as_sql_expression(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=utc_today)
+    ]
+    test_args = {
+        "timestamp_column": "case when updated_at is not null then updated_at else updated_at end"
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
 def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -382,26 +397,106 @@ def test_anomalyless_table_volume_anomalies_periods_params(
     assert test_result["status"] == "fail"
 
 
-def test_ignore_small_changes_both(test_id: str, dbt_project: DbtProject):
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="dont_ignore_drop",
+    expected_result="fail",
+    spike_failure_percent_threshold=2,
+    drop_failure_percent_threshold=50,
+    anomaly_sensitivity=3,
+    metric_value=14,
+)
+@Parametrization.case(
+    name="ignore_drop",
+    expected_result="pass",
+    spike_failure_percent_threshold=2,
+    drop_failure_percent_threshold=50,
+    anomaly_sensitivity=3,
+    metric_value=16,
+)
+@Parametrization.case(
+    name="non_anomalous_drop",
+    expected_result="pass",
+    spike_failure_percent_threshold=2,
+    drop_failure_percent_threshold=50,
+    anomaly_sensitivity=3000,
+    metric_value=14,
+)
+@Parametrization.case(
+    name="ignore_spike",
+    expected_result="pass",
+    spike_failure_percent_threshold=50,
+    drop_failure_percent_threshold=2,
+    anomaly_sensitivity=3,
+    metric_value=46,
+)
+@Parametrization.case(
+    name="dont_ignore_spike",
+    expected_result="fail",
+    spike_failure_percent_threshold=20,
+    drop_failure_percent_threshold=2,
+    anomaly_sensitivity=3,
+    metric_value=44,
+)
+@Parametrization.case(
+    name="non_anomalous_spike",
+    expected_result="pass",
+    spike_failure_percent_threshold=20,
+    drop_failure_percent_threshold=2,
+    anomaly_sensitivity=3000,
+    metric_value=44,
+)
+def test_ignore_small_changes_both(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    spike_failure_percent_threshold: int,
+    drop_failure_percent_threshold: int,
+    anomaly_sensitivity: int,
+    metric_value: int,
+):
     now = datetime.utcnow()
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
         for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
         if cur_date < now - timedelta(days=1)
     ] * 30
-    data += [{TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}] * 14
+    data += [
+        {TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}
+    ] * metric_value
 
     # 30 new rows every day
-    # 14 new rows in the last day, which is less than 50% of 30.
-    # Therefore test should fail.
+    # (metric_value) new rows in the last day
 
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "day", "count": 1},
         "ignore_small_changes": {
-            "spike_failure_percent_threshold": 2,
-            "drop_failure_percent_threshold": 50,
+            "spike_failure_percent_threshold": spike_failure_percent_threshold,
+            "drop_failure_percent_threshold": drop_failure_percent_threshold,
         },
+        "sensitivity": anomaly_sensitivity,
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
-    assert test_result["status"] == "fail"
+    assert test_result["status"] == expected_result
+
+
+def test_anomalyless_vol_anomalies_with_test_materialization(
+    test_id: str, dbt_project: DbtProject
+):
+    # Anomaly tests don't require the test materialization anymore, but this test serves as a sanity check that the test materialization
+    # doesn't interfere with them when it's enabled.
+
+    utc_today = datetime.utcnow().date()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=utc_today)
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
+    )
+    assert test_result["status"] == "pass"

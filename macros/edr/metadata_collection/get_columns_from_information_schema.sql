@@ -7,9 +7,6 @@
 {% macro default__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name).without_identifier() %}
     {% set column_relation = schema_relation.information_schema('COLUMNS') %}
-    {% if not elementary.schema_exists(column_relation.database, column_relation.schema) %}
-        {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
-    {% endif %}
     select
         upper(table_catalog || '.' || table_schema || '.' || table_name) as full_table_name,
         upper(table_catalog) as database_name,
@@ -65,7 +62,7 @@
 {% endmacro %}
 
 {% macro databricks__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
-    {% if target.catalog is none %}
+    {% if target.catalog is none or target.catalog.lower() == 'hive_metastore' %}
         {# Information schema is only available when using Unity Catalog. #}
         {% do return(elementary.get_empty_columns_from_information_schema_table()) %}
     {% endif %}
@@ -94,4 +91,8 @@
 
 {% macro athena__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
     {{ elementary.empty_table([('full_table_name', 'string'), ('database_name', 'string'), ('schema_name', 'string'), ('table_name', 'string'), ('column_name', 'string'), ('data_type', 'string')]) }}
+{% endmacro %}
+
+{% macro trino__get_columns_from_information_schema(database_name, schema_name, table_name = none) %}
+    {{ elementary.get_empty_columns_from_information_schema_table() }}
 {% endmacro %}

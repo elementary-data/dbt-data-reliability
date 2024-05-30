@@ -6,9 +6,8 @@
     {%- if not data_monitoring_metrics_table %}
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
-          {%- set data_monitoring_metrics_table = ref('data_monitoring_metrics') %}
+        {%- set data_monitoring_metrics_table = elementary.get_elementary_relation('data_monitoring_metrics') %}
     {%- endif %}
-
 
     {%- if elementary.is_incremental_model(model_graph_node) %}
       {%- set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
@@ -239,7 +238,7 @@
 
     {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
       {%- set drop_avg_threshold -%}
-        ((1 + {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
+        ((1 - {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
       {%- endset -%}
       {%- set min_val -%}
         {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
@@ -247,7 +246,7 @@
     {% endif %}
 
     {%- set max_val -%}
-      {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg
+      ({{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}

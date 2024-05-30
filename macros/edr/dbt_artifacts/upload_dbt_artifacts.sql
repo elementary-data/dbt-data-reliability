@@ -57,3 +57,18 @@
     {% endfor %}
     {% do return(artifacts_hashes) %}
 {% endmacro %}
+
+{% macro get_artifacts_hashes_for_model(model_name) %}
+    {% if not local_md5 %}
+        {% do return(none) %}
+    {% endif %}
+
+    {% set stored_artifacts_query %}
+    select metadata_hash 
+    from {{ elementary.get_elementary_relation(model_name) }}
+    order by metadata_hash
+    {% endset %}
+
+    {% set artifacts_hashes_results = elementary.run_query(stored_artifacts_query) %}
+    {% do return(artifacts_hashes_results.columns["metadata_hash"]) %}
+{% endmacro %}

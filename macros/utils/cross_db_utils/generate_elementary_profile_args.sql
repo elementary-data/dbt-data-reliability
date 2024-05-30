@@ -1,7 +1,7 @@
 {% macro generate_elementary_profile_args(method=none, overwrite_values=none) %}
   {#
     Returns a list of parameters for elementary profile.
-    Each parameter consists of a dict consisting of: 
+    Each parameter consists of a dict consisting of:
       name
       value
       comment
@@ -102,7 +102,7 @@
   {% do return(parameters) %}
 {% endmacro %}
 
-{% macro athena__generate_elementary_cli_profile(method, elementary_database, elementary_schema) %}
+{% macro athena__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
   {% set parameters = [
     _parameter("type", target.type),
     _parameter("s3_staging_dir", target.s3_staging_dir),
@@ -125,6 +125,48 @@
   ]) %}
   {% do return(parameters) %}
 {% endmacro %}
+
+
+{% macro trino__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
+  {% set parameters = [
+    _parameter("type", target.type),
+    _parameter("host", target.host),
+    _parameter("port", target.port),
+    _parameter("database", elementary_database),
+    _parameter("schema", elementary_schema),
+    _parameter("threads", target.threads),
+  ] %}
+
+  {% if method == "ldap" %}
+    {% do parameters.append(_parameter("method", "ldap")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+    {% do parameters.append(_parameter("password", "<PASSWORD>")) %}
+  {% elif method == "kerberos" %}
+    {% do parameters.append(_parameter("method", "kerberos")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+    {% do parameters.append(_parameter("keytab", target.keytab)) %}
+    {% do parameters.append(_parameter("krb5_config", target.krb5_config)) %}
+    {% do parameters.append(_parameter("principal", target.principal)) %}
+  {% elif method == "jwt" %}
+    {% do parameters.append(_parameter("method", "jwt")) %}
+    {% do parameters.append(_parameter("jwt_token", target.jwt_token)) %}
+  {% elif method == "certificate" %}
+    {% do parameters.append(_parameter("method", "certificate")) %}
+    {% do parameters.append(_parameter("client_certificate", target.client_certificate)) %}
+    {% do parameters.append(_parameter("client_private_key", target.client_private_key)) %}
+    {% do parameters.append(_parameter("cert", target.cert)) %}
+  {% elif method == "oauth" %}
+    {% do parameters.append(_parameter("method", "oauth")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+  {% elif method == "oauth_console" %}
+    {% do parameters.append(_parameter("method", "oauth_console")) %}
+    {% do parameters.append(_parameter("user", target.user)) %}
+  {% else %}
+    {% do parameters.append(_parameter("method", "<AUTH_METHOD>", "Configure your auth method and add the required fields according to https://docs.getdbt.com/docs/core/connect-data-platform/trino-setup#authentication-parameters")) %}
+  {% endif %}
+  {% do return(parameters) %}
+{% endmacro %}
+
 
 {% macro default__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.

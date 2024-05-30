@@ -11,5 +11,6 @@
       "schema_snapshots": []
     },
     "temp_test_table_relations_map": {},
+    "duration_context_stack": {},
   }) %}
 {% endmacro %}

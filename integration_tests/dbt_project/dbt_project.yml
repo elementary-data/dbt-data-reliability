@@ -18,6 +18,7 @@ clean-targets: # directories to be removed by `dbt clean`
 
 vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
+  mute_ensure_materialization_override: true
 
 models:
   elementary_tests:
