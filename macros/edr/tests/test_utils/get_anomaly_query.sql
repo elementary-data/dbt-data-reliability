@@ -55,7 +55,7 @@ case when
           (
             {{ elementary.anomaly_score_condition(test_configuration) }}
           )
-          and bucket_end >= {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
+          and bucket_end > {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
           then TRUE else FALSE end as is_anomalous
         from anomaly_scores
       ),
