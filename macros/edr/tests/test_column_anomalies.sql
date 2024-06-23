@@ -52,7 +52,7 @@
         {{ elementary.debug_log('column_monitors - ' ~ column_monitors) }}
 
         {% if test_configuration.timestamp_column %}
-            {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model_relation,
+            {%- set min_bucket_start, max_bucket_end = elementary.get_metric_buckets_min_and_max(model_relation=model_relation,
                                                                                     backfill_days=test_configuration.backfill_days,
                                                                                     days_back=test_configuration.days_back,
                                                                                     detection_delay=test_configuration.detection_delay,
@@ -76,7 +76,6 @@
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', column_monitoring_query) %}
 
         {#- calculate anomaly scores for metrics -#}
-        {%- set temp_table_name = elementary.relation_to_full_name(temp_table_relation) %}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
                                                                           model_relation=model_relation,
                                                                           test_configuration=test_configuration,

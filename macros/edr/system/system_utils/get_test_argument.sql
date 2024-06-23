@@ -1,5 +1,5 @@
 {% macro get_test_argument(argument_name, value, model_graph_node) %}
-  {% if value is defined %}
+  {% if value %}
     {% do return(value) %}
   {%- endif %}
   {%- if model_graph_node %}
