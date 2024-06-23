@@ -21,7 +21,6 @@ _DEFAULT_VARS = {
     "disable_run_results": True,
     "disable_freshness_results": True,
     "debug_logs": True,
-    "collect_metrics": False,
     "schema_name_suffix": SCHEMA_NAME_SUFFIX,
 }
 
