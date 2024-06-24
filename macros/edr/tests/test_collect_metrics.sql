@@ -25,7 +25,6 @@
     {% if column_name %}
         {% do elementary.collect_column_metrics(model, model_relation, column_name, timestamp_column, time_bucket, days_back, backfill_days, where_expression) %}
     {% else %}
-        {% do exceptions.raise_compiler_error("Table metrics are not yet supported.") %}
+        {% do elementary.collect_table_metrics(model, model_relation, column_name, timestamp_column, time_bucket, days_back, backfill_days, where_expression) %}
     {% endif %}
-
 {% endtest %}
