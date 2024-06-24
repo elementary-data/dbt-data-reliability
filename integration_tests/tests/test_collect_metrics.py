@@ -11,7 +11,7 @@ DBT_TEST_ARGS = {
 }
 
 
-def test_collect_metrics(test_id: str, dbt_project: DbtProject):
+def test_collect_column_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
@@ -24,4 +24,18 @@ def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="superhero"
     )
+    assert test_result["status"] == "pass"
+
+
+def test_collect_table_metrics(test_id: str, dbt_project: DbtProject):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Batman"]
+    ]
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "pass"
