@@ -33,7 +33,7 @@
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
                    {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
-                   {{ elementary.null_timestamp() }} as start_bucket_in_data,
+                   {{ elementary.null_timestamp() }} as start_bucket_in_data
             from monitored_table
         ),
     {% endif %}
