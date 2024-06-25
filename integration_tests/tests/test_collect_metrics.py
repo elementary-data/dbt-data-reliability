@@ -154,3 +154,53 @@ def test_collect_no_timestamp_table_metrics(test_id: str, dbt_project: DbtProjec
     assert any(
         row["metric_name"] == "row_count" for row in metrics
     ), "No metric found for name 'row_count'"
+
+
+def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+            "dimension": dim,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+        for dim in ["dim1", "dim2"]
+    ]
+
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "superhero": None,
+            "dimension": "dim1",
+        }
+        for _ in range(100)
+    ]
+
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        {**DBT_TEST_ARGS, "dimensions": ["dimension"]},
+        data=data,
+        test_column="superhero",
+    )
+
+    assert test_result["status"] == "pass"
+
+    metrics = {
+        row["dimension_value"]: row["sum_metric_value"]
+        for row in dbt_project.read_table(
+            METRICS_TABLE,
+            where="metric_name = 'null_count'",
+            group_by="dimension_value, metric_name",
+            column_names=[
+                "dimension_value",
+                "metric_name",
+                "sum(metric_value) as sum_metric_value",
+            ],
+        )
+    }
+    assert metrics["dim1"] == 100
+    assert metrics["dim2"] == 0

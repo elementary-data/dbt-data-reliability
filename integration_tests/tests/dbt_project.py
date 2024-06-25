@@ -60,6 +60,7 @@ class DbtProject:
     def read_table_query(
         table_name: str,
         where: Optional[str] = None,
+        group_by: Optional[str] = None,
         order_by: Optional[str] = None,
         limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
@@ -68,6 +69,7 @@ class DbtProject:
             SELECT {', '.join(column_names) if column_names else '*'}
             FROM {{{{ ref('{table_name}') }}}}
             {f"WHERE {where}" if where else ""}
+            {f"GROUP BY {group_by}" if group_by else ""}
             {f"ORDER BY {order_by}" if order_by else ""}
             {f"LIMIT {limit}" if limit else ""}
             """
@@ -76,12 +78,15 @@ class DbtProject:
         self,
         table_name: str,
         where: Optional[str] = None,
+        group_by: Optional[str] = None,
         order_by: Optional[str] = None,
         limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
         raise_if_empty: bool = True,
     ) -> List[dict]:
-        query = self.read_table_query(table_name, where, order_by, limit, column_names)
+        query = self.read_table_query(
+            table_name, where, group_by, order_by, limit, column_names
+        )
         results = self.run_query(query)
         if raise_if_empty and len(results) == 0:
             raise ValueError(
