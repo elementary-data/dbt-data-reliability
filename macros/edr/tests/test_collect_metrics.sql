@@ -9,7 +9,10 @@
     dimensions=none
 ) %}
 
-    {{ config(tags=['elementary-tests']) }}
+    {{ config(
+        tags=['elementary-tests'],
+        meta={"elementary": {"include": false}}
+    ) }}
 
     {# This test always passes. #}
     {{ elementary.no_results_query() }}
