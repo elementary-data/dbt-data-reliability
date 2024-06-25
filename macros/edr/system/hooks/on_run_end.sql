@@ -5,10 +5,6 @@
         {% do return("") %}
       {% endif %}
 
-      {% if elementary.is_run_command() %}
-        {% do elementary.insert_metrics() %}
-      {% endif %}
-
       {% if not elementary.get_config_var('disable_dbt_artifacts_autoupload') %}
         {% do elementary.upload_dbt_artifacts() %}
       {% endif %}
