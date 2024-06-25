@@ -9,7 +9,10 @@
     dimensions=none
 ) %}
 
-    {{ config(tags=['elementary-tests']) }}
+    {{ config(
+        tags=['elementary-tests'],
+        meta={"elementary": {"include": false}}
+    ) }}
 
     {% if not execute or not elementary.is_test_command() or not elementary.is_elementary_enabled() %}
         {% do return(elementary.no_results_query()) %}
