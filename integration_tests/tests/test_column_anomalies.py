@@ -216,9 +216,7 @@ def test_volume_anomaly_static_data_drop(
     assert test_result["status"] == expected_result
 
 
-def test_anomalyless_column_anomalies_group_by_pass(
-    test_id: str, dbt_project: DbtProject
-):
+def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
@@ -238,9 +236,7 @@ def test_anomalyless_column_anomalies_group_by_pass(
     assert test_result["status"] == "pass"
 
 
-def test_anomalyless_column_anomalies_group_by_fail(
-    test_id: str, dbt_project: DbtProject
-):
+def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
     data: List[Dict[str, Any]] = [
