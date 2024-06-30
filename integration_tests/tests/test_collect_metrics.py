@@ -101,7 +101,6 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
         DBT_TEST_NAME,
         {
             **DBT_TEST_ARGS,
-            "metrics": [m for m in DBT_TEST_ARGS["metrics"] if m["column"]],
             "dimensions": ["dimension"],
         },
         data=data,
@@ -109,12 +108,12 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
 
     assert test_result["status"] == "pass"
 
-    col_only_to_metric_names = COL_TO_METRIC_NAMES.copy()
-    col_only_to_metric_names.pop(None)
-
+    # Unfortunately, the dimension's metric name is 'dimension' rather than 'row_count'.
+    col_to_metric_names = {**COL_TO_METRIC_NAMES, None: {"dimension"}}
     expected_dim_to_col_to_metric_names = {
-        "dim1": col_only_to_metric_names,
-        "dim2": col_only_to_metric_names,
+        "dim1": col_to_metric_names,
+        "dim2": col_to_metric_names,
+        None: {None: {"dimension"}},
     }
     metrics = dbt_project.read_table(
         METRICS_TABLE,

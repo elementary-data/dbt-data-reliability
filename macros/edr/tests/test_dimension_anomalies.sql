@@ -56,7 +56,7 @@
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
 
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}

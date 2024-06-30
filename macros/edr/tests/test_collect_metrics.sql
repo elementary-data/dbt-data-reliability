@@ -35,16 +35,12 @@
         {% if metric.get("column") %}
             {% do col_to_metrics.setdefault(metric.column, []).append(metric) %}
         {% else %}
-            {% if dimensions %}
-                {% do exceptions.raise_compiler_error("collect_metrics test does not support dimensional table metrics.") %}
-            {% endif %}
-
             {% do table_metrics.append(metric) %}
         {% endif %}
     {% endfor %}
 
     {% if table_metrics %}
-        {% do elementary.collect_table_metrics(table_metrics, model, model_relation, timestamp_column, time_bucket, days_back, backfill_days, where_expression) %}
+        {% do elementary.collect_table_metrics(table_metrics, model, model_relation, timestamp_column, time_bucket, days_back, backfill_days, where_expression, dimensions) %}
     {% endif %}
 
     {% for col_name, col_metrics in col_to_metrics.items() %}

@@ -11,7 +11,7 @@
     dimensions
 ) %}
     {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
-    {% set metric_props = elementary.get_metric_properties(model_graph_node, timestamp_column, where_expression, time_bucket) %}
+    {% set metric_props = elementary.get_metric_properties(model_graph_node, timestamp_column, where_expression, time_bucket, dimensions) %}
     {% set days_back = elementary.get_test_argument('days_back', days_back, model_graph_node) %}
     {% set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
 
