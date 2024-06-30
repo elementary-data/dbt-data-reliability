@@ -19,6 +19,9 @@
         {% do metric_names.append(metric.name) %}
     {% endfor %}
     {% set table_monitors = elementary.get_final_table_monitors(monitors=metric_names) %}
+    {% if not table_monitors %}
+        {% do exceptions.raise_compiler_error("Unable to collect metrics for: '{}'.".format(metric_names)) %}
+    {% endif %}
 
     {% if dimensions and table_monitors != ["row_count"] %}
         {% do exceptions.raise_compiler_error("collect_metrics test does not support non row_count dimensional table metrics.") %}

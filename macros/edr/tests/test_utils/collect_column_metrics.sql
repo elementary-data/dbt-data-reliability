@@ -25,6 +25,10 @@
         {% do exceptions.raise_compiler_error("Unable to find column `{}` in `{}`".format(column_name, model_relation)) %}
     {% endif %}
     {% set column_monitors = column_obj_and_monitors.monitors %}
+    {% if not column_monitors %}
+        {% do exceptions.raise_compiler_error("Unable to collect metrics for: '{}'.".format(metric_names)) %}
+    {% endif %}
+
     {% set column_obj = column_obj_and_monitors.column %}
 
     {% if metric_props.timestamp_column %}
