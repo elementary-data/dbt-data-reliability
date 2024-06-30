@@ -1,4 +1,5 @@
 {% macro collect_column_metrics(
+    column_metrics,
     model_expr,
     model_relation,
     column_name,
@@ -14,7 +15,12 @@
     {% set days_back = elementary.get_test_argument('days_back', days_back, model_graph_node) %}
     {% set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
 
-    {% set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model_relation, column_name) %}
+    {% set metric_names = [] %}
+    {% for metric in column_metrics %}
+        {% do metric_names.append(metric.name) %}
+    {% endfor %}
+
+    {% set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model_relation, column_name, monitors=metric_names) %}
     {% if not column_obj_and_monitors %}
         {% do exceptions.raise_compiler_error("Unable to find column `{}` in `{}`".format(column_name, model_relation)) %}
     {% endif %}

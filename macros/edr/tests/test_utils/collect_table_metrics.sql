@@ -1,4 +1,5 @@
 {% macro collect_table_metrics(
+    table_metrics,
     model_expr,
     model_relation,
     timestamp_column,
@@ -12,7 +13,11 @@
     {% set days_back = elementary.get_test_argument('days_back', days_back, model_graph_node) %}
     {% set backfill_days = elementary.get_test_argument('backfill_days', backfill_days, model_graph_node) %}
 
-    {% set table_monitors = elementary.get_final_table_monitors(monitors=none if metric_props.timestamp_column else ["row_count"]) %}
+    {% set metric_names = [] %}
+    {% for metric in table_metrics %}
+        {% do metric_names.append(metric.name) %}
+    {% endfor %}
+    {% set table_monitors = elementary.get_final_table_monitors(monitors=metric_names) %}
 
     {% if metric_props.timestamp_column %}
         {% set min_bucket_start, max_bucket_end = elementary.get_metric_buckets_min_and_max(

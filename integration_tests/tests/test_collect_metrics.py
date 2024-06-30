@@ -1,4 +1,4 @@
-import json
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
@@ -8,12 +8,25 @@ from dbt_project import DbtProject
 METRICS_TABLE = "data_monitoring_metrics"
 TIMESTAMP_COLUMN = "updated_at"
 DBT_TEST_NAME = "elementary.collect_metrics"
-DBT_TEST_ARGS = {
-    "timestamp_column": TIMESTAMP_COLUMN,
+
+COL_TO_METRIC_NAMES = {
+    None: {"row_count"},
+    "id": {"average"},
+    "name": {"average_length"},
 }
 
 
-def test_collect_numeric_column_metrics(test_id: str, dbt_project: DbtProject):
+DBT_TEST_ARGS = {
+    "timestamp_column": TIMESTAMP_COLUMN,
+    "metrics": [
+        {"name": metric_name, "column": col_name}
+        for col_name, metric_names in COL_TO_METRIC_NAMES.items()
+        for metric_name in metric_names
+    ],
+}
+
+
+def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
@@ -23,187 +36,98 @@ def test_collect_numeric_column_metrics(test_id: str, dbt_project: DbtProject):
         }
         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
         for id, name in [(1, "Superman"), (2, "Batman")]
-    ]
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="id"
-    )
-    assert test_result["status"] == "pass"
-
-    expected_metrics = json.loads(
-        dbt_project.dbt_runner.run_operation(
-            "elementary.column_monitors_by_type", macro_args={"data_type": "numeric"}
-        )[0]
-    )
-
-    metrics = dbt_project.read_table(
-        METRICS_TABLE,
-        where=f"full_table_name LIKE '%{test_id.upper()}' AND LOWER(column_name) = 'id'",
-    )
-    for metric_name in expected_metrics:
-        assert any(
-            row["metric_name"] == metric_name for row in metrics
-        ), f"No metric found for name '{metric_name}'"
-
-
-def test_collect_string_column_metrics(test_id: str, dbt_project: DbtProject):
-    utc_today = datetime.utcnow().date()
-    data: List[Dict[str, Any]] = [
-        {
-            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "id": id,
-            "name": name,
-        }
-        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
-        for id, name in [(1, "Superman"), (2, "Batman")]
-    ]
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="name"
-    )
-    assert test_result["status"] == "pass"
-
-    expected_metrics = json.loads(
-        dbt_project.dbt_runner.run_operation(
-            "elementary.column_monitors_by_type", macro_args={"data_type": "string"}
-        )[0]
-    )
-
-    metrics = dbt_project.read_table(
-        METRICS_TABLE,
-        where=f"full_table_name LIKE '%{test_id.upper()}' AND LOWER(column_name) = 'name'",
-    )
-    for metric_name in expected_metrics:
-        assert any(
-            row["metric_name"] == metric_name for row in metrics
-        ), f"No metric found for name '{metric_name}'"
-
-
-def test_collect_table_metrics(test_id: str, dbt_project: DbtProject):
-    utc_today = datetime.utcnow().date()
-    data: List[Dict[str, Any]] = [
-        {
-            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "name": name,
-        }
-        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
-        for name in ["Superman", "Batman"]
     ]
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "pass"
 
-    expected_metrics = json.loads(
-        dbt_project.dbt_runner.run_operation("elementary.get_default_table_monitors")[0]
-    )
     metrics = dbt_project.read_table(
         METRICS_TABLE,
         where=f"full_table_name LIKE '%{test_id.upper()}'",
     )
-    for metric_name in expected_metrics:
-        assert any(
-            row["metric_name"] == metric_name for row in metrics
-        ), f"No metric found for name '{metric_name}'"
+    col_to_metric_names = defaultdict(set)
+    for metric in metrics:
+        col_name = metric["column_name"].lower() if metric["column_name"] else None
+        metric_name = metric["metric_name"]
+        col_to_metric_names[col_name].add(metric_name)
+
+    assert col_to_metric_names == COL_TO_METRIC_NAMES
 
 
-def test_collect_no_timestamp_column_metrics(test_id: str, dbt_project: DbtProject):
+def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "id": id,
             "name": name,
         }
         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
-        for name in ["Superman", "Batman"]
+        for id, name in [(1, "Superman"), (2, "Batman")]
     ]
-    test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, {}, data=data, test_column="name"
-    )
-    assert test_result["status"] == "pass"
-
-    expected_metrics = json.loads(
-        dbt_project.dbt_runner.run_operation(
-            "elementary.column_monitors_by_type", macro_args={"data_type": "string"}
-        )[0]
-    )
-
-    metrics = dbt_project.read_table(
-        METRICS_TABLE,
-        where=f"full_table_name LIKE '%{test_id.upper()}' AND LOWER(column_name) = 'name'",
-    )
-    for metric_name in expected_metrics:
-        assert any(
-            row["metric_name"] == metric_name for row in metrics
-        ), f"No metric found for name '{metric_name}'"
-
-
-def test_collect_no_timestamp_table_metrics(test_id: str, dbt_project: DbtProject):
-    utc_today = datetime.utcnow().date()
-    data: List[Dict[str, Any]] = [
-        {
-            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "name": name,
-        }
-        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
-        for name in ["Superman", "Batman"]
-    ]
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, {}, data=data)
+    test_args = DBT_TEST_ARGS.copy()
+    test_args.pop("timestamp_column")
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "pass"
 
     metrics = dbt_project.read_table(
         METRICS_TABLE,
         where=f"full_table_name LIKE '%{test_id.upper()}'",
     )
-    assert any(
-        row["metric_name"] == "row_count" for row in metrics
-    ), "No metric found for name 'row_count'"
+    col_to_metric_names = defaultdict(set)
+    for metric in metrics:
+        col_name = metric["column_name"].lower() if metric["column_name"] else None
+        metric_name = metric["metric_name"]
+        col_to_metric_names[col_name].add(metric_name)
+
+    assert col_to_metric_names == COL_TO_METRIC_NAMES
 
 
 def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
-    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
-            "superhero": superhero,
+            "id": id,
+            "name": name,
             "dimension": dim,
         }
-        for cur_date in training_dates
-        for superhero in ["Superman", "Batman"]
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for id, name in [(1, "Superman"), (2, "Batman")]
         for dim in ["dim1", "dim2"]
-    ]
-
-    data += [
-        {
-            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "superhero": None,
-            "dimension": "dim1",
-        }
-        for _ in range(100)
     ]
 
     test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
-        {**DBT_TEST_ARGS, "dimensions": ["dimension"]},
+        {
+            **DBT_TEST_ARGS,
+            "metrics": [m for m in DBT_TEST_ARGS["metrics"] if m["column"]],
+            "dimensions": ["dimension"],
+        },
         data=data,
-        test_column="superhero",
     )
 
     assert test_result["status"] == "pass"
 
-    metrics = {
-        row["dimension_value"]: row["sum_metric_value"]
-        for row in dbt_project.read_table(
-            METRICS_TABLE,
-            where="metric_name = 'null_count'",
-            group_by="dimension_value, metric_name",
-            column_names=[
-                "dimension_value",
-                "metric_name",
-                "sum(metric_value) as sum_metric_value",
-            ],
-        )
+    col_only_to_metric_names = COL_TO_METRIC_NAMES.copy()
+    col_only_to_metric_names.pop(None)
+
+    expected_dim_to_col_to_metric_names = {
+        "dim1": col_only_to_metric_names,
+        "dim2": col_only_to_metric_names,
     }
-    assert metrics["dim1"] == 100
-    assert metrics["dim2"] == 0
+    metrics = dbt_project.read_table(
+        METRICS_TABLE,
+        where=f"full_table_name LIKE '%{test_id.upper()}'",
+    )
+    dim_to_col_to_metric_names = defaultdict(lambda: defaultdict(set))
+    for metric in metrics:
+        dim_val = metric["dimension_value"]
+        col_name = metric["column_name"].lower() if metric["column_name"] else None
+        metric_name = metric["metric_name"]
+        dim_to_col_to_metric_names[dim_val][col_name].add(metric_name)
+
+    assert dim_to_col_to_metric_names == expected_dim_to_col_to_metric_names
 
 
 def test_collect_metrics_elementary_disabled(test_id: str, dbt_project: DbtProject):
@@ -222,7 +146,6 @@ def test_collect_metrics_elementary_disabled(test_id: str, dbt_project: DbtProje
         DBT_TEST_NAME,
         DBT_TEST_ARGS,
         data=data,
-        test_column="id",
         elementary_enabled=False,
     )
     assert test_result["status"] == "pass"
