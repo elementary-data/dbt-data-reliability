@@ -13,13 +13,21 @@ COL_TO_METRIC_NAMES = {
     None: {"row_count"},
     "id": {"average"},
     "name": {"average_length"},
+    "*": {"null_count"},
+    ("id", "name"): {"zero_count"},  # Shouldn't do anything on 'name'.
+}
+EXPECTED_COL_TO_METRIC_NAMES = {
+    None: {"row_count"},
+    "id": {"average", "null_count", "zero_count"},
+    "name": {"average_length", "null_count"},
+    "updated_at": {"null_count"},
 }
 
 
 DBT_TEST_ARGS = {
     "timestamp_column": TIMESTAMP_COLUMN,
     "metrics": [
-        {"name": metric_name, "column": col_name}
+        {"name": metric_name, "columns": col_name}
         for col_name, metric_names in COL_TO_METRIC_NAMES.items()
         for metric_name in metric_names
     ],
@@ -50,7 +58,7 @@ def test_collect_metrics(test_id: str, dbt_project: DbtProject):
         metric_name = metric["metric_name"]
         col_to_metric_names[col_name].add(metric_name)
 
-    assert col_to_metric_names == COL_TO_METRIC_NAMES
+    assert col_to_metric_names == EXPECTED_COL_TO_METRIC_NAMES
 
 
 def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
@@ -79,7 +87,7 @@ def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
         metric_name = metric["metric_name"]
         col_to_metric_names[col_name].add(metric_name)
 
-    assert col_to_metric_names == COL_TO_METRIC_NAMES
+    assert col_to_metric_names == EXPECTED_COL_TO_METRIC_NAMES
 
 
 def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
@@ -109,10 +117,14 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
     # Unfortunately, the dimension's metric name is 'dimension' rather than 'row_count'.
-    col_to_metric_names = {**COL_TO_METRIC_NAMES, None: {"dimension"}}
+    expected_col_to_metric_names = {
+        **EXPECTED_COL_TO_METRIC_NAMES,
+        "dimension": {"null_count"},
+        None: {"dimension"},
+    }
     expected_dim_to_col_to_metric_names = {
-        "dim1": col_to_metric_names,
-        "dim2": col_to_metric_names,
+        "dim1": expected_col_to_metric_names,
+        "dim2": expected_col_to_metric_names,
         None: {None: {"dimension"}},
     }
     metrics = dbt_project.read_table(

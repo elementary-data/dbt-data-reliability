@@ -32,8 +32,23 @@
     {% set table_metrics = [] %}
     {% set col_to_metrics = {} %}
     {% for metric in metrics %}
-        {% if metric.get("column") %}
-            {% do col_to_metrics.setdefault(metric.column, []).append(metric) %}
+        {% if metric.get("columns") %}
+            {% if metric.columns is string %}
+                {% if metric.columns == "*" %}
+                    {% set columns = adapter.get_columns_in_relation(model_relation) %}
+                    {% for col in columns %}
+                        {% do col_to_metrics.setdefault(col.name.strip('"'), []).append(metric) %}
+                    {% endfor %}
+                {% else %}
+                    {% do col_to_metrics.setdefault(metric.columns, []).append(metric) %}
+                {% endif %}
+            {% elif metric.columns is sequence %}
+                {% for col in metric.columns %}
+                    {% do col_to_metrics.setdefault(col, []).append(metric) %}
+                {% endfor %}
+            {% else %}
+                {% do exceptions.raise_compiler_error("Unexpected value provided for 'columns' argument.") %}
+            {% endif %}
         {% else %}
             {% do table_metrics.append(metric) %}
         {% endif %}

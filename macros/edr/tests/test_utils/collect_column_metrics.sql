@@ -26,7 +26,7 @@
     {% endif %}
     {% set column_monitors = column_obj_and_monitors.monitors %}
     {% if not column_monitors %}
-        {% do exceptions.raise_compiler_error("Unable to collect metrics for: '{}'.".format(metric_names)) %}
+        {% do return(none) %}
     {% endif %}
 
     {% set column_obj = column_obj_and_monitors.column %}
