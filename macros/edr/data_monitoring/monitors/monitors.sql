@@ -17,3 +17,17 @@
       'column_boolean': ['count_true', 'count_false']
     }) %}
 {% endmacro %}
+
+{% macro get_available_table_monitors() %}
+    {% do return(elementary.get_available_monitors()["table"]) %}
+{% endmacro %}
+
+{% macro get_available_column_monitors() %}
+    {% set available_col_monitors = [] %}
+    {% for monitor_type, monitors in elementary.get_available_monitors().items() %}
+        {% if monitor_type.startswith("column") %}
+            {% do available_col_monitors.extend(monitors) %}
+        {% endif %}
+    {% endfor %}
+    {% do return(available_col_monitors) %}
+{% endmacro %}
