@@ -46,7 +46,7 @@
         {%- endif %}
         {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
 
-        {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model_relation,
+        {%- set min_bucket_start, max_bucket_end = elementary.get_metric_buckets_min_and_max(model_relation=model_relation,
                                                                                 backfill_days=test_configuration.backfill_days,
                                                                                 days_back=test_configuration.days_back,
                                                                                 detection_delay=test_configuration.detection_delay,
@@ -56,7 +56,7 @@
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
 
-        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, test_configuration, metric_properties) %}
+        {%- set dimension_monitoring_query = elementary.dimension_monitoring_query(model, model_relation, metric_properties.dimensions, min_bucket_start, max_bucket_end, metric_properties) %}
         {{ elementary.debug_log('dimension_monitoring_query - \n' ~ dimension_monitoring_query) }}
 
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', dimension_monitoring_query) %}

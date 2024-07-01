@@ -58,7 +58,7 @@
                 {%- if not ignore_column -%}
                     {%- do monitors.extend(column_monitors) -%}
                     {% if test_configuration.timestamp_column %}
-                        {%- set min_bucket_start, max_bucket_end = elementary.get_test_buckets_min_and_max(model_relation=model_relation,
+                        {%- set min_bucket_start, max_bucket_end = elementary.get_metric_buckets_min_and_max(model_relation=model_relation,
                                                                                                 backfill_days=test_configuration.backfill_days,
                                                                                                 days_back=test_configuration.days_back,
                                                                                                 detection_delay=test_configuration.detection_delay,

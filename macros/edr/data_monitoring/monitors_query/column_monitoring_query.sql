@@ -33,7 +33,7 @@
         filtered_monitored_table as (
             select {{ column_obj.quoted }},
                    {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
-                   {{ elementary.null_timestamp() }} as start_bucket_in_data,
+                   {{ elementary.null_timestamp() }} as start_bucket_in_data
             from monitored_table
         ),
     {% endif %}
@@ -46,13 +46,10 @@
                     {%- if timestamp_column %}
                         edr_bucket_start as bucket_start,
                         edr_bucket_end as bucket_end,
-                        {{ elementary.timediff("hour", "edr_bucket_start", "edr_bucket_end") }} as bucket_duration_hours,
                     {%- else %}
                         {{ elementary.null_timestamp() }} as bucket_start,
                         {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }} as bucket_end,
-                        {{ elementary.null_int() }} as bucket_duration_hours,
                     {%- endif %}
-                    {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
                     {% if dimensions | length > 0 %}
                       {{ elementary.select_dimensions_columns(prefixed_dimensions) }},
                     {% endif %}
@@ -81,9 +78,9 @@
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
                 {% if dimensions | length > 0 %}
-                    group by 1,2,3,4,{{ elementary.select_dimensions_columns(prefixed_dimensions) }}
+                    group by 1,2,{{ elementary.select_dimensions_columns(prefixed_dimensions) }}
                 {% else %}
-                    group by 1,2,3,4
+                    group by 1,2
                 {% endif %}
         {%- else %}
             {{ elementary.empty_column_monitors_cte() }}
@@ -96,10 +93,14 @@
         {%- if column_monitors %}
             {% for monitor in column_monitors %}
                 select
-                    edr_column_name,
+                    {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
                     bucket_start,
                     bucket_end,
-                    bucket_duration_hours,
+                    {% if timestamp_column %}
+                        {{ elementary.timediff("hour", "bucket_start", "bucket_end") }} as bucket_duration_hours,
+                    {% else %}
+                        {{ elementary.null_int() }} as bucket_duration_hours,
+                    {% endif %}
                     {% if dimensions | length > 0 %}
                       {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
                       {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,

@@ -29,6 +29,26 @@ def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
+def test_anomalyless_no_timestamp_column_anomalies(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Batman"]
+    ]
+    test_args = DBT_TEST_ARGS.copy()
+    test_args.pop("timestamp_column")
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+    assert test_result["status"] == "pass"
+
+
 def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -196,9 +216,7 @@ def test_volume_anomaly_static_data_drop(
     assert test_result["status"] == expected_result
 
 
-def test_anomalyless_column_anomalies_group_by_pass(
-    test_id: str, dbt_project: DbtProject
-):
+def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
@@ -218,9 +236,7 @@ def test_anomalyless_column_anomalies_group_by_pass(
     assert test_result["status"] == "pass"
 
 
-def test_anomalyless_column_anomalies_group_by_fail(
-    test_id: str, dbt_project: DbtProject
-):
+def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
     data: List[Dict[str, Any]] = [

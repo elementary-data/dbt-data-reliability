@@ -26,10 +26,13 @@
                                           exclude_final_results) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+    {# Changes in these configs impact the metric id of the test. #}
+    {# If these configs change, we ignore the old metrics and recalculate. #}
+    {% set metric_props = elementary.get_metric_properties(model_graph_node, timestamp_column, where_expression, time_bucket, dimensions, freshness_column, event_timestamp_column) %}
+    {% set metric_props = elementary.undefined_dict_keys_to_none(metric_props) %}
+
 
     {# All anomaly detection tests #}
-    {%- set timestamp_column = elementary.get_test_argument('timestamp_column', timestamp_column, model_graph_node) %}
-    {%- set where_expression = elementary.get_test_argument('where_expression', where_expression, model_graph_node) %}
     {# We had a names mix in sensitivity/anomaly_sensitivity, this keeps backwards competability #}
     {%- set anomaly_sensitivity = sensitivity if sensitivity else elementary.get_test_argument('anomaly_sensitivity', anomaly_sensitivity, model_graph_node) %}
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
@@ -39,8 +42,7 @@
     
 
     {# timestamp_column anomaly detection tests #}
-    {%- set time_bucket = elementary.get_time_bucket(time_bucket, model_graph_node) %}
-    {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, time_bucket, timestamp_column) %}
+    {%- set seasonality = elementary.get_seasonality(seasonality, model_graph_node, metric_props.time_bucket, metric_props.timestamp_column) %}
     {%- set training_period = elementary.get_test_argument('training_period', training_period, model_graph_node) -%}
     {%- set days_back = elementary.training_period_to_days_back(training_period, days_back, model_graph_node) -%}
     {%- set days_back = elementary.get_days_back(days_back, model_graph_node, seasonality) %}
@@ -49,22 +51,22 @@
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
     {# Validate ignore_small_changes #}
 
-    {% set event_timestamp_column = elementary.get_test_argument('event_timestamp_column', event_timestamp_column, model_graph_node) %}
     {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
     {% set exclude_final_results = elementary.get_exclude_final_results(exclude_final_results) %}
 
     {% set test_configuration =
-      {'timestamp_column': timestamp_column,
-       'where_expression': where_expression,
-       'anomaly_sensitivity': anomaly_sensitivity,
-       'anomaly_direction': anomaly_direction,
-       'time_bucket': time_bucket,
+      {'timestamp_column': metric_props.timestamp_column,
+       'where_expression': metric_props.where_expression,
+       'time_bucket': metric_props.time_bucket,
+       'freshness_column': metric_props.freshness_column,
+       'event_timestamp_column': metric_props.event_timestamp_column,
+       'dimensions': metric_props.dimensions,
+
        'days_back': days_back,
        'backfill_days': backfill_days,
+       'anomaly_sensitivity': anomaly_sensitivity,
+       'anomaly_direction': anomaly_direction,
        'seasonality': seasonality,
-       'freshness_column': freshness_column,
-       'event_timestamp_column': event_timestamp_column,
-       'dimensions': dimensions,
        'ignore_small_changes': ignore_small_changes,
        'fail_on_zero': fail_on_zero,
        'detection_delay': detection_delay,
@@ -75,24 +77,11 @@
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
     {%- do elementary.validate_ignore_small_changes(test_configuration) -%}
 
-  {# Changes in these configs impact the metric id of the test. #}
-  {# If these configs change, we ignore the old metrics and recalculate. #}
-    {% set metric_properties =
-      {'timestamp_column': timestamp_column,
-       'where_expression': where_expression,
-       'time_bucket': time_bucket,
-       'freshness_column': freshness_column,
-       'event_timestamp_column': event_timestamp_column,
-       'dimensions': dimensions
-        } %}
-    {%- set metric_properties = elementary.undefined_dict_keys_to_none(metric_properties) -%}
-
   {# Adding to cache so test configuration will be available outside the test context #}
     {%- set test_unique_id = elementary.get_test_unique_id() %}
     {%- do elementary.set_cache(test_unique_id, test_configuration) -%}
-    {{ return([test_configuration, metric_properties]) }}
+    {{ return([test_configuration, metric_props]) }}
 {% endmacro %}
-
 
 {% macro validate_mandatory_configuration(test_configuration, mandatory_params) %}
     {%- set mandatory_configuration = ['anomaly_sensitivity', 'anomaly_direction', 'backfill_days'] %}
