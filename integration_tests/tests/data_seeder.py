@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 from typing import List
 
-from elementary.clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from logger import get_logger
 
 # TODO: Write more performant data seeders per adapter.
@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 class DbtDataSeeder:
     def __init__(
-        self, dbt_runner: DbtRunner, dbt_project_path: Path, seeds_dir_path: Path
+        self, dbt_runner: BaseDbtRunner, dbt_project_path: Path, seeds_dir_path: Path
     ):
         self.dbt_runner = dbt_runner
         self.dbt_project_path = dbt_project_path

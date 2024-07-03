@@ -7,7 +7,8 @@ from typing import List
 
 import click
 from dbt.version import __version__
-from elementary.clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
+from elementary.clients.dbt.factory import create_dbt_runner
 from generate_data import generate_fake_data
 from packaging import version
 
@@ -53,11 +54,7 @@ class TestResults:
         return [result for result in self.results if not result.success]
 
 
-class TestDbtRunner(DbtRunner):
-    pass
-
-
-def get_row(alias: str, dbt_runner: DbtRunner) -> str:
+def get_row(alias: str, dbt_runner: BaseDbtRunner) -> str:
     rows = json.loads(
         dbt_runner.run_operation(
             "elementary_integration_tests.read_table",
@@ -70,7 +67,7 @@ def get_row(alias: str, dbt_runner: DbtRunner) -> str:
     return rows[0]
 
 
-def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
+def test_artifacts_cache(dbt_runner: BaseDbtRunner) -> TestResult:
     test_model = "one"
     dbt_runner.run(test_model, vars={"one_tags": ["hello", "world"]})
     first_row = get_row(test_model, dbt_runner)
@@ -86,7 +83,7 @@ def test_artifacts_cache(dbt_runner: TestDbtRunner) -> TestResult:
     )
 
 
-def test_artifacts_update(dbt_runner: TestDbtRunner) -> TestResult:
+def test_artifacts_update(dbt_runner: BaseDbtRunner) -> TestResult:
     test_model = "one"
     dbt_runner.run(test_model)
     first_row = get_row(test_model, dbt_runner)
@@ -110,7 +107,7 @@ def e2e_tests(
 ) -> TestResults:
     test_results = TestResults()
 
-    dbt_runner = TestDbtRunner(
+    dbt_runner = create_dbt_runner(
         project_dir=FILE_DIR,
         target=target,
         raise_on_failure=False,

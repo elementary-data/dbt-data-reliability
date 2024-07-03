@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
-from elementary.clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
+from elementary.clients.dbt.factory import create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
 
@@ -29,8 +30,8 @@ DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
 logger = get_logger(__name__)
 
 
-def get_dbt_runner(target: str, project_dir: str) -> DbtRunner:
-    return DbtRunner(
+def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
+    return create_dbt_runner(
         project_dir,
         target=target,
         vars=_DEFAULT_VARS.copy(),
