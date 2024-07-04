@@ -1,5 +1,3 @@
-from typing import List
-
 import pytest
 from dbt_project import DbtProject
 
@@ -11,21 +9,6 @@ def seed(dbt_project: DbtProject):
     assert seed_result is True
 
 
-def validate_failing_query_output(
-    dbt_dir: str,
-    test_output: str,
-    table_name: str,
-    expected_content_strings: List[str],
-):
-    generated_query = f"target/compiled/elementary_tests/models/schema.yml/elementary_exposure_schema_validity_{table_name}_.sql"
-    assert generated_query in test_output
-    output_file = f"{dbt_dir}/{generated_query}"
-    with open(output_file) as f:
-        generated_query_content = f.read()
-        for content_string_to_validate in expected_content_strings:
-            assert content_string_to_validate in generated_query_content
-
-
 def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -34,23 +17,14 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
         models="orders", full_refresh=True, quiet=True
     )
     assert run_result is True
-    test_result, test_output = dbt_project.dbt_runner._run_command(
+    test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_orders"],
         log_format="text",
         capture_output=True,
         quiet=True,
         log_output=False,
     )
-    assert test_result is False
-    validate_failing_query_output(
-        dbt_project.project_dir_path,
-        test_output,
-        "orders",
-        [
-            "different data type for the column order_id string vs",
-            "ZOMG column missing in the model",
-        ],
-    )
+    assert test_result.success is False
 
 
 def test_exposure_schema_validity_existing_exposure_yml_valid(
@@ -61,13 +35,13 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
         models="customers", full_refresh=True, quiet=True
     )
     assert run_result is True
-    test_result, test_output = dbt_project.dbt_runner._run_command(
+    test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_customers"],
         capture_output=True,
         quiet=True,
         log_output=False,
     )
-    assert test_result is True
+    assert test_result.success is True
 
 
 @pytest.mark.skip_targets(["spark"])

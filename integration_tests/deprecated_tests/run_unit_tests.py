@@ -3,7 +3,7 @@ import os
 from os.path import expanduser
 
 import click
-from elementary.clients.dbt.dbt_runner import DbtRunner
+from elementary.clients.dbt.factory import create_dbt_runner
 
 FILE_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -32,7 +32,7 @@ def print_unit_test_results(unit_test, unit_test_results):
 
 
 def run_unit_tests(test_file, target="snowflake"):
-    dbt_runner = DbtRunner(
+    dbt_runner = create_dbt_runner(
         project_dir=FILE_DIR,
         profiles_dir=os.path.join(expanduser("~"), ".dbt"),
         target=target,
