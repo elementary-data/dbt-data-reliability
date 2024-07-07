@@ -13,6 +13,6 @@
     {% endif %}
     {% set results = macro(**macro_args) %}
     {% if results is not none %}
-        {% do elementary.edr_log(tojson(results)) %}
+        {% do elementary.edr_log('--ELEMENTARY-MACRO-OUTPUT-START--' ~ tojson(results) ~ '--ELEMENTARY-MACRO-OUTPUT-END--') %}
     {% endif %}
 {% endmacro %}
