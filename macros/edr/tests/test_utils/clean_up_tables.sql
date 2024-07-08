@@ -11,3 +11,9 @@
         {% do adapter.clean_up_table(relation) %}
     {% endfor %}
 {% endmacro %}
+
+{% macro trino__clean_up_tables(relations) %}
+    {% for relation in relations %}
+        {% do adapter.clean_up_table(relation) %}
+    {% endfor %}
+{% endmacro %}
