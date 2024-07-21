@@ -62,13 +62,19 @@
                                                                                                 backfill_days=test_configuration.backfill_days,
                                                                                                 days_back=test_configuration.days_back,
                                                                                                 detection_delay=test_configuration.detection_delay,
-                                                                                                monitors=column_monitors,
+                                                                                                metric_names=column_monitors,
                                                                                                 column_name=column_name,
                                                                                                 metric_properties=metric_properties) %}
                     {%- endif %}
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
-                    {%- set column_monitoring_query = elementary.column_monitoring_query(model, model_relation, min_bucket_start, max_bucket_end, test_configuration.days_back, column_obj, column_monitors, metric_properties, dimensions) %}
+
+                    {% set metrics = [] %}
+                    {% for monitor in column_monitors %}
+                        {% do metrics.append({"name": monitor, "type": monitor}) %}
+                    {% endfor %}
+
+                    {%- set column_monitoring_query = elementary.column_monitoring_query(model, model_relation, min_bucket_start, max_bucket_end, test_configuration.days_back, column_obj, metrics, metric_properties, dimensions) %}
                     {%- do elementary.run_query(elementary.insert_as_select(temp_table_relation, column_monitoring_query)) -%}
                 {%- else -%}
                     {{ elementary.debug_log('column ' ~ column_name ~ ' is excluded') }}
@@ -80,7 +86,7 @@
         {%- set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
                                                                            model_relation=model_relation,
                                                                            test_configuration=test_configuration,
-                                                                           monitors=all_columns_monitors,
+                                                                           metric_names=all_columns_monitors,
                                                                            columns_only=true,
                                                                            metric_properties=metric_properties) %}
 

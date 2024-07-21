@@ -18,34 +18,31 @@
     {% for metric in table_metrics %}
         {% do metric_names.append(metric.name) %}
     {% endfor %}
-    {% set table_monitors = elementary.get_final_table_monitors(monitors=metric_names) %}
-    {% if not table_monitors %}
-        {% do return(none) %}
-    {% endif %}
-
-    {% if dimensions and table_monitors != ["row_count"] %}
-        {% do exceptions.raise_compiler_error("collect_metrics test does not support non row_count dimensional table metrics.") %}
-    {% endif %}
 
     {% if metric_props.timestamp_column %}
         {% set min_bucket_start, max_bucket_end = elementary.get_metric_buckets_min_and_max(
             model_relation=model_relation,
             backfill_days=backfill_days,
             days_back=days_back,
-            monitors=table_monitors,
+            metric_names=metric_names,
             metric_properties=metric_props
         ) %}
     {% endif %}
 
 
     {% if dimensions %}
+        {% if table_metrics | length != 1 %}
+            {% do exceptions.raise_compiler_error("collect_metrics test with 'dimensions' expects a single row_count metric.") %}
+        {% endif %}
+        {% set dim_metric = table_metrics[0] %}
         {% set monitoring_query = elementary.dimension_monitoring_query(
             model_expr,
             model_relation,
             dimensions,
             min_bucket_start,
             max_bucket_end,
-            metric_properties=metric_props
+            metric_properties=metric_props,
+            metric_name=dim_metric.name
         ) %}
     {% else %}
         {% set monitoring_query = elementary.table_monitoring_query(
@@ -53,7 +50,7 @@
             model_relation,
             min_bucket_start,
             max_bucket_end,
-            table_monitors,
+            table_metrics,
             metric_properties=metric_props
         ) %}
     {% endif %}

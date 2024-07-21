@@ -1,9 +1,16 @@
-{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_monitors, metric_properties, dimensions) %}
+{% macro column_monitoring_query(monitored_table, monitored_table_relation, min_bucket_start, max_bucket_end, days_back, column_obj, column_metrics, metric_properties, dimensions) %}
     {%- set full_table_name_str = elementary.edr_quote(elementary.relation_to_full_name(monitored_table_relation)) %}
     {%- set timestamp_column = metric_properties.timestamp_column %}
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
       {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
+    {% endfor %}
+
+    {% set metric_types = [] %}
+    {% set metric_name_to_type = {} %}
+    {% for metric in column_metrics %}
+        {% do metric_types.append(metric.type) %}
+        {% do metric_name_to_type.update({metric.name: metric.type}) %}
     {% endfor %}
 
 
@@ -38,9 +45,9 @@
         ),
     {% endif %}
 
-    column_monitors as (
+    column_metrics as (
 
-        {%- if column_monitors %}
+        {%- if column_metrics %}
             {%- set column = column_obj.quoted -%}
                 select
                     {%- if timestamp_column %}
@@ -53,26 +60,26 @@
                     {% if dimensions | length > 0 %}
                       {{ elementary.select_dimensions_columns(prefixed_dimensions) }},
                     {% endif %}
-                    {%- if 'null_count' in column_monitors -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
-                    {%- if 'null_percent' in column_monitors -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
-                    {%- if 'not_null_percent' in column_monitors -%} {{ elementary.not_null_percent(column) }} {%- else -%} null {% endif %} as not_null_percent,
-                    {%- if 'max' in column_monitors -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as max,
-                    {%- if 'min' in column_monitors -%} {{ elementary.min(column) }} {%- else -%} null {% endif %} as min,
-                    {%- if 'average' in column_monitors -%} {{ elementary.average(column) }} {%- else -%} null {% endif %} as average,
-                    {%- if 'zero_count' in column_monitors -%} {{ elementary.zero_count(column) }} {%- else -%} null {% endif %} as zero_count,
-                    {%- if 'zero_percent' in column_monitors -%} {{ elementary.zero_percent(column) }} {%- else -%} null {% endif %} as zero_percent,
-                    {%- if 'not_zero_percent' in column_monitors -%} {{ elementary.not_zero_percent(column) }} {%- else -%} null {% endif %} as not_zero_percent,
-                    {%- if 'standard_deviation' in column_monitors -%} {{ elementary.standard_deviation(column) }} {%- else -%} null {% endif %} as standard_deviation,
-                    {%- if 'variance' in column_monitors -%} {{ elementary.variance(column) }} {%- else -%} null {% endif %} as variance,
-                    {%- if 'max_length' in column_monitors -%} {{ elementary.max_length(column) }} {%- else -%} null {% endif %} as max_length,
-                    {%- if 'min_length' in column_monitors -%} {{ elementary.min_length(column) }} {%- else -%} null {% endif %} as min_length,
-                    {%- if 'average_length' in column_monitors -%} {{ elementary.average_length(column) }} {%- else -%} null {% endif %} as average_length,
-                    {%- if 'missing_count' in column_monitors -%} {{ elementary.missing_count(column) }} {%- else -%} null {% endif %} as missing_count,
-                    {%- if 'missing_percent' in column_monitors -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent,
-                    {%- if 'count_true' in column_monitors -%} {{ elementary.count_true(column) }} {%- else -%} null {% endif %} as count_true,
-                    {%- if 'count_false' in column_monitors -%} {{ elementary.count_false(column) }} {%- else -%} null {% endif %} as count_false,
-                    {%- if 'not_missing_percent' in column_monitors -%} {{ elementary.not_missing_percent(column) }} {%- else -%} null {% endif %} as not_missing_percent,
-                    {%- if 'sum' in column_monitors -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum
+                    {%- if 'null_count' in metric_types -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
+                    {%- if 'null_percent' in metric_types -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
+                    {%- if 'not_null_percent' in metric_types -%} {{ elementary.not_null_percent(column) }} {%- else -%} null {% endif %} as not_null_percent,
+                    {%- if 'max' in metric_types -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as max,
+                    {%- if 'min' in metric_types -%} {{ elementary.min(column) }} {%- else -%} null {% endif %} as min,
+                    {%- if 'average' in metric_types -%} {{ elementary.average(column) }} {%- else -%} null {% endif %} as average,
+                    {%- if 'zero_count' in metric_types -%} {{ elementary.zero_count(column) }} {%- else -%} null {% endif %} as zero_count,
+                    {%- if 'zero_percent' in metric_types -%} {{ elementary.zero_percent(column) }} {%- else -%} null {% endif %} as zero_percent,
+                    {%- if 'not_zero_percent' in metric_types -%} {{ elementary.not_zero_percent(column) }} {%- else -%} null {% endif %} as not_zero_percent,
+                    {%- if 'standard_deviation' in metric_types -%} {{ elementary.standard_deviation(column) }} {%- else -%} null {% endif %} as standard_deviation,
+                    {%- if 'variance' in metric_types -%} {{ elementary.variance(column) }} {%- else -%} null {% endif %} as variance,
+                    {%- if 'max_length' in metric_types -%} {{ elementary.max_length(column) }} {%- else -%} null {% endif %} as max_length,
+                    {%- if 'min_length' in metric_types -%} {{ elementary.min_length(column) }} {%- else -%} null {% endif %} as min_length,
+                    {%- if 'average_length' in metric_types -%} {{ elementary.average_length(column) }} {%- else -%} null {% endif %} as average_length,
+                    {%- if 'missing_count' in metric_types -%} {{ elementary.missing_count(column) }} {%- else -%} null {% endif %} as missing_count,
+                    {%- if 'missing_percent' in metric_types -%} {{ elementary.missing_percent(column) }} {%- else -%} null {% endif %} as missing_percent,
+                    {%- if 'count_true' in metric_types -%} {{ elementary.count_true(column) }} {%- else -%} null {% endif %} as count_true,
+                    {%- if 'count_false' in metric_types -%} {{ elementary.count_false(column) }} {%- else -%} null {% endif %} as count_false,
+                    {%- if 'not_missing_percent' in metric_types -%} {{ elementary.not_missing_percent(column) }} {%- else -%} null {% endif %} as not_missing_percent,
+                    {%- if 'sum' in metric_types -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum
                 from filtered_monitored_table
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
@@ -88,10 +95,10 @@
 
     ),
 
-    column_monitors_unpivot as (
+    column_metrics_unpivot as (
 
-        {%- if column_monitors %}
-            {% for monitor in column_monitors %}
+        {%- if column_metrics %}
+            {% for metric_name, metric_type in metric_name_to_type.items() %}
                 select
                     {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
                     bucket_start,
@@ -108,9 +115,9 @@
                       {{ elementary.null_string() }} as dimension,
                       {{ elementary.null_string() }} as dimension_value,
                     {% endif %}
-                    {{ elementary.edr_cast_as_float(monitor) }} as metric_value,
-                    {{ elementary.edr_cast_as_string(elementary.edr_quote(monitor)) }} as metric_name
-                from column_monitors where {{ monitor }} is not null
+                    {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
+                    {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_name)) }} as metric_name
+                from column_metrics where {{ metric_type }} is not null
                 {% if not loop.last %} union all {% endif %}
             {%- endfor %}
         {%- else %}
@@ -133,7 +140,7 @@
             dimension,
             dimension_value,
             {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
-        from column_monitors_unpivot
+        from column_metrics_unpivot
 
     )
 
