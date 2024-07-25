@@ -69,7 +69,6 @@
         {{ elementary.const_as_string(metric.name) }} as metric_name,
         {{ elementary.row_count() }} as metric_value
     from monitored_table
-    group by 1
 {% endmacro %}
 
 {% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_metrics, min_bucket_start, max_bucket_end, full_table_name_str) %}
@@ -297,5 +296,4 @@
         {{ elementary.const_as_string(metric.name) }} as metric_name,
         {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max({})".format(metric_properties.event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
     from {{ monitored_table }}
-    group by 1
 {% endmacro %}
