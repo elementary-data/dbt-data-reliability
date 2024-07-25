@@ -173,9 +173,6 @@
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
   {% set select_statements %}
     {%- for column in dimension_columns -%}
-      {%- if col_prefix -%}
-        {{ col_prefix ~ "_" }}
-      {%- endif -%}
       {{ column }}
       {%- if as_prefix -%}
         {{ " as " ~ as_prefix ~ "_" ~ column }}
