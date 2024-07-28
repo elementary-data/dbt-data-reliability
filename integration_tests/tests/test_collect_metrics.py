@@ -139,6 +139,26 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     assert dim_to_col_to_metric_names == expected_dim_to_col_to_metric_names
 
 
+def test_collect_metrics_unique_metric_name(test_id: str, dbt_project: DbtProject):
+    args = DBT_TEST_ARGS.copy()
+    args["metrics"].append(args["metrics"][0])
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        args,
+    )
+    assert test_result["status"] == "error"
+
+    args = DBT_TEST_ARGS.copy()
+    args["metrics"][0].pop("name")
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        args,
+    )
+    assert test_result["status"] == "error"
+
+
 def test_collect_metrics_elementary_disabled(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [

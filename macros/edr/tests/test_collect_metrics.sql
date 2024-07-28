@@ -18,6 +18,7 @@
         {% do return(elementary.no_results_query()) %}
     {% endif %}
 
+    {% do elementary.validate_unique_metric_names(metrics) %}
     {% do elementary.debug_log("Metrics: {}".format(metrics)) %}
 
     {% if not dimensions %}
@@ -35,10 +36,6 @@
     {% set table_metrics = [] %}
     {% set col_to_metrics = {} %}
     {% for metric in metrics %}
-        {% if not metric.name %}
-            {% do exceptions.raise_compiler_error("The 'name' argument is required for each metric.") %}
-        {% endif %}
-
         {% if metric.get("columns") %}
             {% if metric.type not in available_col_monitors %}
                 {% if metric.type in available_table_monitors %}
