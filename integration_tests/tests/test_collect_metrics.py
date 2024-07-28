@@ -109,6 +109,11 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
         DBT_TEST_NAME,
         {
             **DBT_TEST_ARGS,
+            "metrics": [
+                metric
+                for metric in DBT_TEST_ARGS["metrics"]
+                if metric["type"] == "row_count"
+            ],
             "dimensions": ["dimension"],
         },
         data=data,
@@ -116,13 +121,9 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
 
     assert test_result["status"] == "pass"
 
-    expected_col_to_metric_names = {
-        **EXPECTED_COL_TO_METRIC_NAMES,
-        "dimension": {"custom_null_count"},
-    }
     expected_dim_to_col_to_metric_names = {
-        "dim1": expected_col_to_metric_names,
-        "dim2": expected_col_to_metric_names,
+        "dim1": {None: {"custom_row_count"}},
+        "dim2": {None: {"custom_row_count"}},
         None: {None: {"custom_row_count"}},
     }
     metrics = dbt_project.read_table(

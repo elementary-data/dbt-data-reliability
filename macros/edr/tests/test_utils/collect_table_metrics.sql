@@ -32,9 +32,13 @@
 
     {% if dimensions %}
         {% if table_metrics | length != 1 %}
-            {% do exceptions.raise_compiler_error("collect_metrics test with 'dimensions' expects a single row_count metric.") %}
+            {% do exceptions.raise_compiler_error("collect_metrics test with 'dimensions' expects a single 'row_count' metric.") %}
         {% endif %}
         {% set dim_metric = table_metrics[0] %}
+        {% if dim_metric.type != "row_count" %}
+            {% do exceptions.raise_compiler_error("collect_metrics test does not support non-'row_count' dimensional table metrics.") %}
+        {% endif %}
+
         {% set monitoring_query = elementary.dimension_monitoring_query(
             model_expr,
             model_relation,
