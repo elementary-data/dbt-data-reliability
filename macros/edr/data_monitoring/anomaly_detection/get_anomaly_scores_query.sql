@@ -1,4 +1,4 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, monitors, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, metric_names, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -53,6 +53,7 @@
                 full_table_name,
                 column_name,
                 metric_name,
+                metric_type,
                 metric_value,
                 source_value,
                 bucket_start,
@@ -80,7 +81,7 @@
                     and updated_at > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(latest_full_refresh)) }}
                 {% endif %}
                 and upper(full_table_name) = upper('{{ full_table_name }}')
-                and metric_name in {{ elementary.strings_list_to_tuple(monitors) }}
+                and metric_name in {{ elementary.strings_list_to_tuple(metric_names) }}
                 {%- if column_name %}
                     and upper(column_name) = upper('{{ column_name }}')
                 {%- endif %}

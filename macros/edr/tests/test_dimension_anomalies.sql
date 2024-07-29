@@ -65,7 +65,7 @@
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
                                                                           model_relation=model_relation,
                                                                           test_configuration=test_configuration,
-                                                                          monitors=['dimension'],
+                                                                          metric_names=['dimension'],
                                                                           metric_properties=metric_properties) %}
 
         {{ elementary.debug_log('dimension monitors anomaly scores query - \n' ~ anomaly_scores_query) }}

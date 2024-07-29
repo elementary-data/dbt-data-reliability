@@ -18,6 +18,7 @@
         {% do return(elementary.no_results_query()) %}
     {% endif %}
 
+    {% do elementary.validate_unique_metric_names(metrics) %}
     {% do elementary.debug_log("Metrics: {}".format(metrics)) %}
 
     {% if not dimensions %}
@@ -36,11 +37,11 @@
     {% set col_to_metrics = {} %}
     {% for metric in metrics %}
         {% if metric.get("columns") %}
-            {% if metric.name not in available_col_monitors %}
-                {% if metric.name in available_table_monitors %}
-                    {% do exceptions.raise_compiler_error("The metric '{}' is a table metric and shouldn't receive 'columns' argument.".format(metric.name)) %}
+            {% if metric.type not in available_col_monitors %}
+                {% if metric.type in available_table_monitors %}
+                    {% do exceptions.raise_compiler_error("The metric '{}' is a table metric and shouldn't receive 'columns' argument.".format(metric.type)) %}
                 {% endif %}
-                {% do exceptions.raise_compiler_error("Unsupported column metric: '{}'.".format(metric.name)) %}
+                {% do exceptions.raise_compiler_error("Unsupported column metric: '{}'.".format(metric.type)) %}
             {% endif %}
 
             {% if metric.columns is string %}
@@ -60,11 +61,11 @@
                 {% do exceptions.raise_compiler_error("Unexpected value provided for 'columns' argument.") %}
             {% endif %}
         {% else %}
-            {% if metric.name not in available_table_monitors %}
-                {% if metric.name in available_col_monitors %}
-                    {% do exceptions.raise_compiler_error("The metric '{}' is a column metric and should receive 'columns' argument.".format(metric.name)) %}
+            {% if metric.type not in available_table_monitors %}
+                {% if metric.type in available_col_monitors %}
+                    {% do exceptions.raise_compiler_error("The metric '{}' is a column metric and should receive 'columns' argument.".format(metric.type)) %}
                 {% endif %}
-                {% do exceptions.raise_compiler_error("Unsupported table metric: '{}'.".format(metric.name)) %}
+                {% do exceptions.raise_compiler_error("Unsupported table metric: '{}'.".format(metric.type)) %}
             {% endif %}
 
             {% do table_metrics.append(metric) %}
