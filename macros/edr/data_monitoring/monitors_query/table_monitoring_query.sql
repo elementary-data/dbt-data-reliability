@@ -7,12 +7,14 @@
                   'full_table_name',
                   'column_name',
                   'metric_name',
+                  'metric_type',
                   'bucket_end',
                   'metric_properties'
                   ]) }}  as id,
         full_table_name,
         column_name,
         metric_name,
+        metric_type,
         metric_value,
         source_value,
         bucket_start,
@@ -52,6 +54,7 @@
         {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
         {{ elementary.null_string() }} as column_name,
         metric_name,
+        metric_type,
         {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
         {{ elementary.null_string() }} as source_value,
         {{ elementary.null_timestamp() }} as bucket_start,
@@ -67,6 +70,7 @@
 {% macro get_no_timestamp_volume_query(metric, metric_properties) %}
     select
         {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("row_count") }} as metric_type,
         {{ elementary.row_count() }} as metric_value
     from monitored_table
 {% endmacro %}
@@ -118,6 +122,7 @@
             {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
             {{ elementary.null_string() }} as column_name,
             metric_name,
+            metric_type,
             {{ elementary.edr_cast_as_float('metric_value') }} as metric_value,
             source_value,
             edr_bucket_start as bucket_start,
@@ -143,9 +148,9 @@
 
     {% if not metric_name_to_query %}
         {% if metric_properties.timestamp_column %}
-            {% do return(elementary.empty_table([('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('source_value','string'),('metric_value','int')])) %}
+            {% do return(elementary.empty_table([('edr_bucket_start','timestamp'),('edr_bucket_end','timestamp'),('metric_name','string'),('metric_type','string'),('source_value','string'),('metric_value','int')])) %}
         {% else %}
-            {% do return(elementary.empty_table([('metric_name','string'),('metric_value','int')])) %}
+            {% do return(elementary.empty_table([('metric_name','string'),('metric_type','string'),('metric_value','int')])) %}
         {% endif %}
     {% endif %}
 
@@ -204,6 +209,7 @@
     select edr_bucket_start,
            edr_bucket_end,
            {{ elementary.const_as_string(metric.name) }} as metric_name,
+            {{ elementary.const_as_string("row_count") }} as metric_type,
            {{ elementary.null_string() }} as source_value,
            row_count_value as metric_value
     from row_count_values
@@ -271,6 +277,7 @@
         edr_bucket_start,
         edr_bucket_end,
         {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("freshness") }} as metric_type,
         {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
@@ -282,6 +289,7 @@
         edr_bucket_start,
         edr_bucket_end,
         {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("event_freshness") }} as metric_type,
         {{ elementary.edr_cast_as_string('max({})'.format('monitored_table_event_timestamp_column')) }} as source_value,
         {{ 'coalesce(max({}), {})'.format(
                 elementary.timediff('second', elementary.edr_cast_as_timestamp('monitored_table_event_timestamp_column'), elementary.edr_cast_as_timestamp('monitored_table_timestamp_column')),
@@ -294,6 +302,7 @@
 {% macro get_no_timestamp_event_freshness_query(monitored_table, metric_properties, full_table_name_str) %}
     select
         {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("event_freshness") }} as metric_type,
         {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max({})".format(metric_properties.event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
     from {{ monitored_table }}
 {% endmacro %}

@@ -54,6 +54,7 @@ def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     )
     col_to_metric_names = defaultdict(set)
     for metric in metrics:
+        assert metric["metric_type"] is not None
         col_name = metric["column_name"].lower() if metric["column_name"] else None
         metric_name = metric["metric_name"]
         col_to_metric_names[col_name].add(metric_name)

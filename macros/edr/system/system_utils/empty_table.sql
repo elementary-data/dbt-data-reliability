@@ -58,6 +58,7 @@
                       ('full_table_name','string'),
                       ('column_name','string'),
                       ('metric_name','string'),
+                      ('metric_type','string'),
                       ('metric_value','float'),
                       ('source_value','string'),
                       ('bucket_start','timestamp'),
