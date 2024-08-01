@@ -1,5 +1,5 @@
 {% macro get_common_test_config(flattened_test) %}
-  {% set test_name = flattened_test["short_name"] %}
+  {% set test_name = flattened_test["test_original_name"] %}
   {% set test_namespace = flattened_test["test_namespace"] %}
   {% do return(elementary.get_common_test_config_by_namespace_and_name(test_namespace, test_name)) %}
 {% endmacro %}
