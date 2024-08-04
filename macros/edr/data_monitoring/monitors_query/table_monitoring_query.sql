@@ -299,10 +299,10 @@
     group by 1,2
 {% endmacro %}
 
-{% macro get_no_timestamp_event_freshness_query(monitored_table, metric_properties, full_table_name_str) %}
+{% macro get_no_timestamp_event_freshness_query(metric, metric_properties) %}
     select
         {{ elementary.const_as_string(metric.name) }} as metric_name,
         {{ elementary.const_as_string("event_freshness") }} as metric_type,
         {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max({})".format(metric_properties.event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
-    from {{ monitored_table }}
+    from monitored_table
 {% endmacro %}
