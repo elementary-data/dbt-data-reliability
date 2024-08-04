@@ -74,12 +74,12 @@ jobs:
       - name: Start Postgres
         if: inputs.warehouse-type == 'postgres'
         working-directory: ${{ env.TESTS_DIR }}
-        run: docker-compose up -d postgres
+        run: docker compose up -d postgres
 
       - name: Start Trino
         if: inputs.warehouse-type == 'trino'
         working-directory: ${{ env.TESTS_DIR }}
-        run: docker-compose -f docker-compose-trino.yml up -d
+        run: docker compose -f docker-compose-trino.yml up -d
 
       - name: Setup Python
         uses: actions/setup-python@v4
