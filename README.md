@@ -34,7 +34,7 @@ Available as self-hosted or Cloud service with premium features.
 ```yml packages.yml
 packages:
   - package: elementary-data/elementary
-    version: 0.15.2
+    version: 0.16.0
     ## Docs: https://docs.elementary-data.com
 ```
 
