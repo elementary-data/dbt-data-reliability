@@ -6,7 +6,8 @@
     days_back=64,
     backfill_days=none,
     where_expression=none,
-    dimensions=none
+    dimensions=none,
+    cloud_monitored=false           {# Not directly used in the test, read as configuration in Elementary Cloud #}
 ) %}
 
     {{ config(
