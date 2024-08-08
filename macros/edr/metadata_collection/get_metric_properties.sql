@@ -25,5 +25,5 @@
     {% if collected_by %}
       {% do metric_props.update({'collected_by': collected_by}) %}
     {% endif %}
-    {% do return() %}
+    {% do return(metric_props) %}
 {% endmacro %}

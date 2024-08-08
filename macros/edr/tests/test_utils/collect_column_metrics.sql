@@ -9,7 +9,7 @@
     backfill_days,
     where_expression,
     dimensions,
-    collected_by=null
+    collected_by=none
 ) %}
     {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {% set metric_props = elementary.get_metric_properties(model_graph_node, timestamp_column, where_expression, time_bucket, dimensions, collected_by=collected_by) %}
