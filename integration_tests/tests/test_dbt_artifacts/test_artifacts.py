@@ -59,6 +59,38 @@ def test_dbt_invocations(dbt_project: DbtProject):
     )
 
 
+def test_seed_run_results(dbt_project: DbtProject):
+    dbt_project.read_table("seed_run_results", raise_if_empty=False)
+
+
+def test_job_run_results(dbt_project: DbtProject):
+    dbt_project.read_table("job_run_results", raise_if_empty=False)
+
+
+def test_model_run_results(dbt_project: DbtProject):
+    dbt_project.read_table("model_run_results", raise_if_empty=False)
+
+
+def test_snapshot_run_results(dbt_project: DbtProject):
+    dbt_project.read_table("snapshot_run_results", raise_if_empty=False)
+
+
+def test_monitors_runs(dbt_project: DbtProject):
+    dbt_project.read_table("monitors_runs", raise_if_empty=False)
+
+
+def test_dbt_artifacts_hashes(dbt_project: DbtProject):
+    dbt_project.read_table("dbt_artifacts_hashes", raise_if_empty=False)
+
+
+def test_anomaly_threshold_sensitivity(dbt_project: DbtProject):
+    dbt_project.read_table("anomaly_threshold_sensitivity", raise_if_empty=False)
+
+
+def test_metrics_anomaly_score(dbt_project: DbtProject):
+    dbt_project.read_table("metrics_anomaly_score", raise_if_empty=False)
+
+
 @pytest.mark.requires_dbt_version("1.8.0")
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     source_config = {
