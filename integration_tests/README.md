@@ -31,7 +31,15 @@ elementary_tests:
 pip install -r requirements.txt
 ```
 
-4. Run the tests.
+4. Install elementary-data
+
+`elementary-data` is required for testing. Install specific version if latest doesn't fit your needs.
+
+```shell
+pip install elementary-data
+```
+
+5. Run the tests.
 
 ```shell
 pytest -vvv -n8
