@@ -73,11 +73,11 @@
     {% endfor %}
 
     {% if table_metrics %}
-        {% do elementary.collect_table_metrics(table_metrics, model, model_relation, timestamp_column, time_bucket, days_back, backfill_days, where_expression, dimensions) %}
+        {% do elementary.collect_table_metrics(table_metrics, model, model_relation, timestamp_column, time_bucket, days_back, backfill_days, where_expression, dimensions, collected_by="collect_metrics") %}
     {% endif %}
 
     {% for col_name, col_metrics in col_to_metrics.items() %}
-        {% do elementary.collect_column_metrics(col_metrics, model, model_relation, col_name, timestamp_column, time_bucket, days_back, backfill_days, where_expression, dimensions) %}
+        {% do elementary.collect_column_metrics(col_metrics, model, model_relation, col_name, timestamp_column, time_bucket, days_back, backfill_days, where_expression, dimensions, collected_by="collect_metrics") %}
     {% endfor %}
 
     {# This test always passes. #}
