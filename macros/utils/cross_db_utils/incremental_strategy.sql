@@ -13,3 +13,7 @@
 {% macro default__get_default_incremental_strategy() %}
   {% do return(none) %}
 {% endmacro %}
+
+{%- macro glue__get_default_incremental_strategy() %}
+  {% do return("merge") %}
+{% endmacro %}
