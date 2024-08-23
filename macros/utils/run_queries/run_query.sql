@@ -20,7 +20,9 @@
     -- We need to check if the query is a DDL or DML statement and run it using the `run_query_statement` statement
     -- There are other statements that should not get query results, but keeping it simple for now
 
-    {% set should_not_get_query_results_statements = ["create table", "create or replace table", "insert into"] %}
+    {#{{ log("want to run "~query, info=true) }}#}
+
+    {% set should_not_get_query_results_statements = ["create table", "create or replace table", "insert into", "create view", "create temporary view", "create or replace temporary view"] %}
 
     {% set should_not_get_query_results = [] %}
     {% for statement in should_not_get_query_results_statements %}
