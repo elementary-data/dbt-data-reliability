@@ -9,7 +9,7 @@ METRICS_TABLE = "data_monitoring_metrics"
 TIMESTAMP_COLUMN = "updated_at"
 DBT_TEST_NAME = "elementary.collect_metrics"
 
-COL_TO_METRIC_NAMES = {
+COL_TO_METRIC_TYPES = {
     None: {"row_count"},
     "id": {"average"},
     "name": {"average_length"},
@@ -17,19 +17,19 @@ COL_TO_METRIC_NAMES = {
     ("id", "name"): {"zero_count"},  # Shouldn't do anything on 'name'.
 }
 EXPECTED_COL_TO_METRIC_NAMES = {
-    None: {"row_count"},
-    "id": {"average", "null_count", "zero_count"},
-    "name": {"average_length", "null_count"},
-    "updated_at": {"null_count"},
+    None: {"custom_row_count"},
+    "id": {"custom_average", "custom_null_count", "custom_zero_count"},
+    "name": {"custom_average_length", "custom_null_count"},
+    "updated_at": {"custom_null_count"},
 }
 
 
 DBT_TEST_ARGS = {
     "timestamp_column": TIMESTAMP_COLUMN,
     "metrics": [
-        {"name": metric_name, "columns": col_name}
-        for col_name, metric_names in COL_TO_METRIC_NAMES.items()
-        for metric_name in metric_names
+        {"type": metric_type, "name": f"custom_{metric_type}", "columns": col_name}
+        for col_name, metric_types in COL_TO_METRIC_TYPES.items()
+        for metric_type in metric_types
     ],
 }
 
@@ -54,6 +54,7 @@ def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     )
     col_to_metric_names = defaultdict(set)
     for metric in metrics:
+        assert metric["metric_type"] is not None
         col_name = metric["column_name"].lower() if metric["column_name"] else None
         metric_name = metric["metric_name"]
         col_to_metric_names[col_name].add(metric_name)
@@ -109,6 +110,11 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
         DBT_TEST_NAME,
         {
             **DBT_TEST_ARGS,
+            "metrics": [
+                metric
+                for metric in DBT_TEST_ARGS["metrics"]
+                if metric["type"] == "row_count"
+            ],
             "dimensions": ["dimension"],
         },
         data=data,
@@ -116,16 +122,10 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
 
     assert test_result["status"] == "pass"
 
-    # Unfortunately, the dimension's metric name is 'dimension' rather than 'row_count'.
-    expected_col_to_metric_names = {
-        **EXPECTED_COL_TO_METRIC_NAMES,
-        "dimension": {"null_count"},
-        None: {"dimension"},
-    }
     expected_dim_to_col_to_metric_names = {
-        "dim1": expected_col_to_metric_names,
-        "dim2": expected_col_to_metric_names,
-        None: {None: {"dimension"}},
+        "dim1": {None: {"custom_row_count"}},
+        "dim2": {None: {"custom_row_count"}},
+        None: {None: {"custom_row_count"}},
     }
     metrics = dbt_project.read_table(
         METRICS_TABLE,
@@ -139,6 +139,26 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
         dim_to_col_to_metric_names[dim_val][col_name].add(metric_name)
 
     assert dim_to_col_to_metric_names == expected_dim_to_col_to_metric_names
+
+
+def test_collect_metrics_unique_metric_name(test_id: str, dbt_project: DbtProject):
+    args = DBT_TEST_ARGS.copy()
+    args["metrics"].append(args["metrics"][0])
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        args,
+    )
+    assert test_result["status"] == "error"
+
+    args = DBT_TEST_ARGS.copy()
+    args["metrics"][0].pop("name")
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        args,
+    )
+    assert test_result["status"] == "error"
 
 
 def test_collect_metrics_elementary_disabled(test_id: str, dbt_project: DbtProject):

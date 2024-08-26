@@ -50,18 +50,24 @@
                                                                                             backfill_days=test_configuration.backfill_days,
                                                                                             days_back=test_configuration.days_back,
                                                                                             detection_delay=test_configuration.detection_delay,
-                                                                                            monitors=table_monitors,
+                                                                                            metric_names=table_monitors,
                                                                                             metric_properties=metric_properties) %}
         {%- endif %}
         {{ elementary.debug_log('min_bucket_start: ' ~ min_bucket_start ~ ' | max_bucket_end: ' ~ max_bucket_end ) }}
 
         {#- execute table monitors and write to temp test table -#}
         {{ elementary.test_log('start', full_table_name) }}
+
+        {% set table_metrics = [] %}
+        {% for table_monitor in table_monitors %}
+            {% do table_metrics.append({"type": table_monitor, "name": table_monitor}) %}
+        {% endfor %}
+
         {%- set table_monitoring_query = elementary.table_monitoring_query(model,
                                                                            model_relation,
                                                                            min_bucket_start,
                                                                            max_bucket_end,
-                                                                           table_monitors,
+                                                                           table_metrics,
                                                                            metric_properties=metric_properties) %}
         {{ elementary.debug_log('table_monitoring_query - \n' ~ table_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', table_monitoring_query) %}
@@ -71,7 +77,7 @@
                                                                           model_relation,
                                                                           test_configuration=test_configuration,
                                                                           metric_properties=metric_properties,
-                                                                          monitors=table_monitors) %}
+                                                                          metric_names=table_monitors) %}
         {{ elementary.debug_log('table monitors anomaly scores query - \n' ~ anomaly_scores_query) }}
         
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
