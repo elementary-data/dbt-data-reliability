@@ -19,25 +19,33 @@
 
     {% set dedup_by_column = node.meta.dedup_by_column or "unique_id" %}
     {% set order_by_dedup_column = "generated_at" %}
-    {% set query %}
-        {% if dedup and (dedup_by_column in column_names) and (order_by_dedup_column in column_names) %}
-            {{ elementary.dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation) }}
-        {% else %}
-            select {{ elementary.escape_select(column_names) }} from {{ relation }}
-        {% endif %}
-        {% if timestamp_column %}
-            {% if since %}
-                where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
-                {% if until %}
-                  and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(until)) }}
-                {% endif %}
+    {% set batch_size = 200000 %}
+    {% for item in range(50) %}
+        {% set query %}
+            {% if dedup and (dedup_by_column in column_names) and (order_by_dedup_column in column_names) %}
+                {{ elementary.dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation) }}
             {% else %}
-                where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
+                select {{ elementary.escape_select(column_names) }} from {{ relation }}
             {% endif %}
+            {% if timestamp_column %}
+                {% if since %}
+                    where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
+                    {% if until %}
+                    and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(until)) }}
+                    {% endif %}
+                {% else %}
+                    where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
+                {% endif %}
+            {% endif %}
+            limit {{ batch_size }}
+            offset {{ batch_size * item }}
+        {% endset %}
+        {% set results = elementary.run_query(query) %}
+        {% do results.to_csv(output_path.split(".")[:-1] | join(".") ~ "_" ~ item ~ "." ~ output_path.split(".")[-1]) %}
+        {% if (results | length) < 200000 %}
+          {% break %}
         {% endif %}
-    {% endset %}
-    {% set results = elementary.run_query(query) %}
-    {% do results.to_csv(output_path) %}
+    {% endfor %}
     {% do return(results.column_names) %}
 {% endmacro %}
 
