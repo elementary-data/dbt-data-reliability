@@ -42,7 +42,7 @@
         {% endset %}
         {% set results = elementary.run_query(query) %}
         {% do results.to_csv(output_path.split(".")[:-1] | join(".") ~ "_" ~ item ~ "." ~ output_path.split(".")[-1]) %}
-        {% if (results | length) < 200000 %}
+        {% if (results | length) < batch_size %}
           {% break %}
         {% endif %}
     {% endfor %}
