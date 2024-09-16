@@ -69,7 +69,9 @@ BEGIN
         WHERE nspname NOT IN ('pg_catalog', 'information_schema') -- Exclude system schemas
     LOOP
         -- Grant USAGE privilege on each schema to the specified user
-        EXECUTE 'GRANT USAGE ON SCHEMA ' || schema_name.nspname || ' TO ' || user_name;
+        IF schema_name.nspname NOT IN ('pg_automv', 'pg_auto_copy', 'pg_s3', 'pg_mv') AND NOT CHARINDEX('/', schema_name.nspname) THEN
+            EXECUTE 'GRANT USAGE ON SCHEMA ' || schema_name.nspname || ' TO ' || user_name;
+        END IF;
     END LOOP;
 END;
 $$;
