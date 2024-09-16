@@ -54,6 +54,28 @@ GRANT SELECT ON svv_table_info to {{ parameters["user"] }};
 
 -- Grant access to columns information (svv_columns) in the warehouse
 GRANT SELECT ON pg_catalog.svv_columns to {{ parameters["user"] }};
+
+-- Create stored procedure for granting USAGE privilege for all schemas for metadata access
+CREATE OR REPLACE PROCEDURE elementary_grant_usage_on_all_schemas(user_name VARCHAR)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    schema_name RECORD;
+BEGIN
+    -- Loop through all schemas in the current database
+    FOR schema_name IN 
+        SELECT nspname 
+        FROM pg_namespace 
+        WHERE nspname NOT IN ('pg_catalog', 'information_schema') -- Exclude system schemas
+    LOOP
+        -- Grant USAGE privilege on each schema to the specified user
+        EXECUTE 'GRANT USAGE ON SCHEMA ' || schema_name.nspname || ' TO ' || user_name;
+    END LOOP;
+END;
+$$;
+
+-- Call the procedure to grant USAGE on all schemas to the specified user
+CALL elementary_grant_usage_on_all_schemas('{{ parameters["user"] }}');
 {% endmacro %}
 
 
