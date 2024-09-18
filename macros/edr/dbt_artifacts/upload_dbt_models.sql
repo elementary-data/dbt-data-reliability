@@ -30,7 +30,7 @@
         ('metadata_hash', 'string'),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
-        {% do columns.extend([('bigquery_partition_by', 'string')]) %}
+        {% do columns.extend([('bigquery_partition_by', 'string'), ('bigquery_unique_key', 'string'), ('bigquery_cluster_by', 'string'), ('bigquery_incremental_strategy', 'string')]) %}
     {% endif %}
 
     {% set dbt_models_empty_table_query = elementary.empty_table(columns) %}
