@@ -8,7 +8,7 @@
   {% set now_str = elementary.datetime_now_utc_as_string() %}
   {% set orchestrator = elementary.get_orchestrator() %}
   {% set job_id = elementary.get_var("job_id", ["JOB_ID", "DBT_JOB_ID", "DBT_CLOUD_JOB_ID"]) %}
-  {% set job_run_id = elementary.get_var("job_run_id", ["DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]) %}
+  {% set job_run_id = elementary.get_var("job_run_id", ["JOB_RUN_ID","DBT_JOB_RUN_ID", "DBT_CLOUD_RUN_ID", "GITHUB_RUN_ID"]) %}
   {% set dbt_invocation = {
       'invocation_id': invocation_id,
       'run_started_at': elementary.run_started_at_as_string(),
