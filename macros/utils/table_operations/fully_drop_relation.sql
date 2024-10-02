@@ -10,3 +10,8 @@
     {% do adapter.clean_up_table(relation) %}
     {% do adapter.drop_relation(relation) %}
 {% endmacro %}
+
+{% macro trino__fully_drop_relation(relation) %}
+    {% do adapter.clean_up_table(relation) %}
+    {% do adapter.drop_relation(relation) %}
+{% endmacro %}
