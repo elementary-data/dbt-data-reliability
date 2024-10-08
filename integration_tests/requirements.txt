@@ -3,4 +3,4 @@ pytest-xdist
 pytest-parametrization
 pytest-html
 filelock
-urllib3==2.0.4
+urllib3==2.0.6
