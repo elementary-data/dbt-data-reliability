@@ -12,7 +12,7 @@
             {% set current_length = 0 %}
         {% endif %}
         {% do current_chunk.append(item) %}
-        {% do current_length + item | length %}
+        {% set current_length = current_length + item | length %}
     {% endfor %}
     {% if current_chunk %}
         {% do chunks.append(current_chunk) %}
