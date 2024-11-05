@@ -140,7 +140,9 @@ def test_timings(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
     dbt_project.dbt_runner.vars["disable_run_results"] = False
     dbt_project.dbt_runner.run(select=TEST_MODEL)
-    results = dbt_project.run_query('select * from {{ ref("dbt_run_results") }}')
+    results = dbt_project.run_query(
+        """select * from {{ ref("dbt_run_results") }} where name='%s'""" % TEST_MODEL
+    )
 
     assert len(results) == 1
     assert results[0]["execute_started_at"]
