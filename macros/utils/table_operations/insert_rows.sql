@@ -27,30 +27,15 @@
     {% endif %}
 
     {{ elementary.file_log('Inserting {} rows to table {}'.format(rows | length, table_relation)) }}
-    {% set insert_rows_method = elementary.get_config_var('insert_rows_method') %}
-    {% if insert_rows_method == 'max_query_size' %}
-      {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows, on_query_exceed=on_query_exceed) %}
-      {% set queries_len = insert_rows_queries | length %}
-      {% for insert_query in insert_rows_queries %}
-        {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
-        {% do elementary.begin_duration_measure_context('run_insert_rows_query') %}
-        {% do elementary.run_query(insert_query) %}
-        {% do elementary.end_duration_measure_context('run_insert_rows_query') %}
-      {% endfor %}
-    {% elif insert_rows_method == 'chunk' %}
-      {% set rows_chunks = elementary.split_list_to_chunks(rows, chunk_size) %}
-      {% for rows_chunk in rows_chunks %}
-        {% do elementary.begin_duration_measure_context('get_chunk_insert_query') %}
-        {% set insert_rows_query = elementary.get_chunk_insert_query(table_relation, columns, rows_chunk) %}
-        {% do elementary.end_duration_measure_context('get_chunk_insert_query') %}
 
-        {% do elementary.begin_duration_measure_context('run_chunk_insert_query') %}
-        {% do elementary.run_query(insert_rows_query) %}
-        {% do elementary.end_duration_measure_context('run_chunk_insert_query') %}
-      {% endfor %}
-    {% else %}
-      {% do exceptions.raise_compiler_error("Specified invalid value for 'insert_rows_method' var.") %}
-    {% endif %}
+    {% set insert_rows_queries = elementary.get_insert_rows_queries(table_relation, columns, rows, chunk_size=chunk_size, on_query_exceed=on_query_exceed) %}
+    {% set queries_len = insert_rows_queries | length %}
+    {% for insert_query in insert_rows_queries %}
+      {% do elementary.file_log("[{}/{}] Running insert query.".format(loop.index, queries_len)) %}
+      {% do elementary.begin_duration_measure_context('run_insert_rows_query') %}
+      {% do elementary.run_query(insert_query) %}
+      {% do elementary.end_duration_measure_context('run_insert_rows_query') %}
+    {% endfor %}
 
     {% if should_commit %}
       {% do elementary.begin_duration_measure_context('commit') %}
@@ -65,7 +50,7 @@
     {{ return(elementary.default__insert_rows(table_relation, rows, false, chunk_size, on_query_exceed)) }}
 {% endmacro %}
 
-{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none, on_query_exceed=none) -%}
+{% macro get_insert_rows_queries(table_relation, columns, rows, query_max_size=none, chunk_size=5000, on_query_exceed=none) -%}
     {% do elementary.begin_duration_measure_context('get_insert_rows_queries') %}
 
     {% if not query_max_size %}
@@ -83,11 +68,12 @@
     {% do elementary.end_duration_measure_context('base_query_calc') %}
 
     {% set current_query = namespace(data=base_insert_query) %}
+    {% set current_chunk_size = namespace(data=0) %}
     {% for row in rows %}
       {% set row_sql = elementary.render_row_to_sql(row, columns) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
-      {% if query_with_row | length > query_max_size %}
+      {% if query_with_row | length > query_max_size or current_chunk_size.data > chunk_size %}
         {% set new_insert_query = base_insert_query + row_sql %}
 
         {# Check if row is too large to fit into an insert query. #}
@@ -111,9 +97,11 @@
           {% do insert_queries.append(current_query.data) %}
         {% endif %}
         {% set current_query.data = new_insert_query %}
+        {% set current_chunk_size.data = 1 %}
 
       {% else %}
         {% set current_query.data = query_with_row %}
+        {% set current_chunk_size.data = current_chunk_size.data + 1 %}
       {% endif %}
       {% if loop.last %}
         {% do insert_queries.append(current_query.data) %}
@@ -144,23 +132,6 @@
   {% do elementary.end_duration_measure_context('render_row_to_sql') %}
   {% do return(row_sql) %}
 {% endmacro %}
-
-{% macro get_chunk_insert_query(table_relation, columns, rows) -%}
-    {% set insert_rows_query %}
-        insert into {{ table_relation }}
-            ({%- for column in columns -%}
-                {{- column.name -}} {{- "," if not loop.last else "" -}}
-            {%- endfor -%}) values
-            {% for row in rows -%}
-                ({%- for column in columns -%}
-                    {%- set column_value = elementary.insensitive_get_dict_value(row, column.name, none) -%}
-                    {{ elementary.render_value(column_value) }}
-                    {{- "," if not loop.last else "" -}}
-                 {%- endfor -%}) {{- "," if not loop.last else "" -}}
-            {%- endfor -%}
-    {% endset %}
-    {{ return(insert_rows_query) }}
-{%- endmacro %}
 
 {% macro escape_special_chars(string_value) %}
     {{ return(adapter.dispatch('escape_special_chars', 'elementary')(string_value)) }}
