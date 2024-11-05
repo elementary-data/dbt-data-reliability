@@ -73,7 +73,7 @@
       {% set row_sql = elementary.render_row_to_sql(row, columns) %}
       {% set query_with_row = current_query.data + ("," if not loop.first else "") + row_sql %}
 
-      {% if query_with_row | length > query_max_size or current_chunk_size.data > chunk_size %}
+      {% if query_with_row | length > query_max_size or current_chunk_size.data >= chunk_size %}
         {% set new_insert_query = base_insert_query + row_sql %}
 
         {# Check if row is too large to fit into an insert query. #}
