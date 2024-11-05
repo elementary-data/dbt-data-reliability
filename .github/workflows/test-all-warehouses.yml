@@ -37,8 +37,8 @@ jobs:
       matrix:
         dbt-version:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
-          ! contains(github.event_name, 'pull_request') && fromJSON('["1.3.0", "latest_pre"]') ||
-          fromJSON('["latest_pre"]') }}
+          ! contains(github.event_name, 'pull_request') && fromJSON('["1.3.0", "latest_official"]') ||
+          fromJSON('["latest_official"]') }}
         warehouse-type:
           [
             postgres,
