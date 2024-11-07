@@ -28,9 +28,11 @@
         ('patch_path', 'string'),
         ('generated_at', 'string'),
         ('metadata_hash', 'string'),
+        ('unique_key', 'string'),
+        ('incremental_strategy', 'string'),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
-        {% do columns.extend([('bigquery_partition_by', 'string')]) %}
+        {% do columns.extend([('bigquery_partition_by', 'string'), ('bigquery_cluster_by', 'string')]) %}
     {% endif %}
 
     {% set dbt_models_empty_table_query = elementary.empty_table(columns) %}
@@ -80,7 +82,10 @@
         'path': node_dict.get('path'),
         'patch_path': node_dict.get('patch_path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
+        'unique_key': config_dict.get("unique_key"),
+        'incremental_strategy': config_dict.get("incremental_strategy"),
         'bigquery_partition_by': config_dict.get("partition_by"),
+        'bigquery_cluster_by': config_dict.get("cluster_by"),
     } %}
     {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
