@@ -186,7 +186,7 @@
     {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid?dag_run_id=" ~ job_run_id %}
     {% do return(airflow_job_url) %}
   {% elif orchestrator == 'dbt_cloud' %}
-    {% set account_id = elementary.get_var('account_id', ['DBT_ACCOUNT_ID']) %}
+    {% set account_id = elementary.get_var('account_id', ['DBT_CLOUD_ACCOUNT_ID']) %}
     {% set dbt_cloud_project_id = elementary.get_first_env_var(['DBT_CLOUD_PROJECT_ID']) %}
     {% set dbt_cloud_run_id = elementary.get_first_env_var(['DBT_CLOUD_RUN_ID']) %}
 
