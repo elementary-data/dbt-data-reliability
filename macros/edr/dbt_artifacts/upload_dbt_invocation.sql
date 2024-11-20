@@ -186,11 +186,12 @@
     {% set airflow_job_url = server_url ~ "/dags/" ~ job_id ~ "/grid?dag_run_id=" ~ job_run_id %}
     {% do return(airflow_job_url) %}
   {% elif orchestrator == 'dbt_cloud' %}
-    {% set account_id = elementary.get_var('account_id', ['DBT_ACCOUNT_ID']) %}
+    {% set account_id = elementary.get_var('account_id', ['DBT_CLOUD_ACCOUNT_ID']) %}
     {% set dbt_cloud_project_id = elementary.get_first_env_var(['DBT_CLOUD_PROJECT_ID']) %}
     {% set dbt_cloud_run_id = elementary.get_first_env_var(['DBT_CLOUD_RUN_ID']) %}
+    {% set dbt_cloud_domain = elementary.get_first_env_var(['DBT_CLOUD_DOMAIN']) or "cloud.getdbt.com" %}
 
-    {% set dbt_cloud_job_url = "https://cloud.getdbt.com/deploy/" ~ account_id ~ "/projects/" ~ dbt_cloud_project_id ~ "/runs/" ~ dbt_cloud_run_id %}
+    {% set dbt_cloud_job_url = "https://" ~ dbt_cloud_domain ~ "/deploy/" ~ account_id ~ "/projects/" ~ dbt_cloud_project_id ~ "/runs/" ~ dbt_cloud_run_id %}
     {% do return(dbt_cloud_job_url) %}
   {% elif orchestrator == 'github_actions' %}
     {% set server_url = elementary.get_first_env_var(["GITHUB_SERVER_URL"]) %}
