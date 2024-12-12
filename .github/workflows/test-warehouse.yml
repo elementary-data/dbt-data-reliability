@@ -59,14 +59,14 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: Checkout Elementary
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: elementary-data/elementary
           path: elementary
           ref: ${{ inputs.elementary-ref }}
 
       - name: Checkout dbt package
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: dbt-data-reliability
           ref: ${{ inputs.dbt-data-reliability-ref }}
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}
           path: ${{ env.TESTS_DIR }}/tests/detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html
