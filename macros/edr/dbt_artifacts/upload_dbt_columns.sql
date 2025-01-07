@@ -37,8 +37,8 @@
     {% for column_node in column_nodes.values() %}
         {% set config_dict = elementary.safe_get_with_default(column_node, 'config', {}) %}
         {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta') %}
-        {% set meta_dict = elementary.safe_get_with_default(column_node, 'meta') %}
-        {% set has_meta = config_meta_dict or meta_dict %}
+        {% set meta_dict = elementary.safe_get_with_default(column_node, 'meta', {}) %}
+        {% set has_meta = config_meta_dict or meta_dict | length > 0 %}
 
         {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags') %}
         {% set global_tags = elementary.safe_get_with_default(column_node, 'tags') %}
