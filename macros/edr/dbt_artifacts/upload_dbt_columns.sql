@@ -35,7 +35,7 @@
 
     {% set flattened_columns = [] %}
     {% for column_node in column_nodes.values() %}
-        {% if not elementary.get_config_var('upload_only_columns_with_descriptions') or column_node.get('description') %}
+        {% if elementary.get_config_var('columns_upload_strategy') == 'all' or column_node.get('description') %}
             {% set flat_column = elementary.flatten_column(table_node, column_node) %}
             {% do flattened_columns.append(flat_column) %}
         {% endif %}
