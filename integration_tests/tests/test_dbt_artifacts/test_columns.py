@@ -33,12 +33,12 @@ TABLE_NODE = {
 )
 @Parametrization.case(
     name="only_with_description",
-    columns_upload_strategy='enriched_only',
+    columns_upload_strategy="enriched_only",
     expected_columns=["with_description"],
 )
 @Parametrization.case(
     name="all",
-    columns_upload_strategy='all',
+    columns_upload_strategy="all",
     expected_columns=[
         "with_description",
         "without_description",
@@ -52,9 +52,7 @@ def test_flatten_table_columns(
     expected_columns: List[str],
 ) -> None:
     if columns_upload_strategy is not None:
-        dbt_project.dbt_runner.vars[
-            "columns_upload_strategy"
-        ] = columns_upload_strategy
+        dbt_project.dbt_runner.vars["columns_upload_strategy"] = columns_upload_strategy
     flattened_columns = json.loads(
         dbt_project.dbt_runner.run_operation(
             "elementary.flatten_table_columns", macro_args={"table_node": TABLE_NODE}
