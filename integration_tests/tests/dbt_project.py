@@ -18,7 +18,7 @@ SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
-    "disable_dbt_columns_autoupload": True,
+    "columns_upload_strategy": "none",
     "disable_run_results": True,
     "disable_freshness_results": True,
     "debug_logs": True,

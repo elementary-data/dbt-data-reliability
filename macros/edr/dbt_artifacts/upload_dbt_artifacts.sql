@@ -11,7 +11,7 @@
       }
     %}
 
-    {% if not elementary.get_config_var('disable_dbt_columns_autoupload') %}
+    {% if elementary.get_config_var('columns_upload_strategy') != 'none' %}
       {% do model_upload_func_map.update({"dbt_columns": elementary.upload_dbt_columns}) %}
     {% endif %}
 
