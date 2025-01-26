@@ -156,3 +156,7 @@
 {% macro trino__edr_type_timestamp() %}
     timestamp(6)
 {% endmacro %}
+
+{% macro fabric__edr_type_timestamp() %}
+    datetime2(2)
+{% endmacro %}

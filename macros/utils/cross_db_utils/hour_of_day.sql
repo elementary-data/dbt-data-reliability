@@ -22,3 +22,7 @@
 {% macro snowflake__edr_hour_of_day_expression(date_expr) %}
     HOUR({{ date_expr }})
 {% endmacro %}
+
+{% macro fabric__edr_hour_of_day_expression(date_expr) %}
+    DATEPART(HOUR, {{ date_expr }})
+{% endmacro %}
