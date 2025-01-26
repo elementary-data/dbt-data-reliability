@@ -20,7 +20,11 @@ max_bucket_end as (
            max(bucket_end) as last_bucket_end,
            min(bucket_end) as first_bucket_end
     from data_monitoring_metrics
-    group by 1,2,3,4
+    group by 
+      full_table_name,
+      column_name,
+      metric_name,
+      metric_properties
 
 )
 
