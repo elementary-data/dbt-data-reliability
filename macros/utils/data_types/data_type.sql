@@ -19,6 +19,10 @@
     {% do return("BOOL") %}
 {% endmacro %}
 
+{% macro fabric__edr_type_bool() %}
+    {% do return("bit") %}
+{% endmacro %}
+
 
 {%- macro edr_type_string() -%}
     {{ return(adapter.dispatch('edr_type_string', 'elementary')()) }}
