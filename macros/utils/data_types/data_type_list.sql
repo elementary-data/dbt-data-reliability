@@ -131,3 +131,24 @@
     {%- endif %}
 
 {% endmacro %}
+
+{% macro fabric__data_type_list(data_type) %}
+
+    {% set string_list = ['varchar', 'char'] | list %}
+    {% set numeric_list = ['smallint', 'int', 'bigint', 'float', 'real', 'numeric'] | list %}
+    {% set timestamp_list = ['datetime2','date', 'time'] | list %}
+    {% set boolean_list = ["bit"] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %}
+        {{ return(boolean_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}
