@@ -64,7 +64,7 @@
 {% endmacro %}
 
 {% macro fabric__edr_type_string() %}
-    {% do return("varchar") %}
+    {% do return("varchar(4096)") %}
 {% endmacro %}
 
 
