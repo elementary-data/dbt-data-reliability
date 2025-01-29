@@ -55,11 +55,7 @@
     {% set default_description = elementary.get_default_description(test_original_name, test_namespace) %}
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
-    {% set meta_dict = {} %}
-    {% if default_description %}
-        {% set meta_dict =  {'description': default_description} %} 
-    {% endif %}
-    {% do meta_dict.update(elementary.safe_get_with_default(node_dict, 'meta', {})) %}
+    {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
     {% do meta_dict.update(config_meta_dict) %}
 
     {% set description = none %}
@@ -67,6 +63,8 @@
         {% set description = node_dict.get('description') %}
     {% elif meta_dict.get('description') %}
         {% set description = meta_dict.pop('description') %}
+    {% elif default_description %}
+        {% set description = default_description %}
     {% endif %}
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
