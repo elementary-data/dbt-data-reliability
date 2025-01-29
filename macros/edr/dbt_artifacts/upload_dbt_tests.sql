@@ -62,6 +62,13 @@
     {% do meta_dict.update(elementary.safe_get_with_default(node_dict, 'meta', {})) %}
     {% do meta_dict.update(config_meta_dict) %}
 
+    {% set description = none %}
+    {% if dbt_version >= '1.9.0' and node_dict.get('description') %}
+        {% set description = node_dict.get('description') %}
+    {% elif meta_dict.get('description') %}
+        {% set description = meta_dict.pop('description') %}
+    {% endif %}
+
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
@@ -160,7 +167,7 @@
         'depends_on_macros': elementary.filter_none_and_sort(depends_on_dict.get('macros', [])),
         'depends_on_nodes': elementary.filter_none_and_sort(depends_on_dict.get('nodes', [])),
         'parent_model_unique_id': primary_test_model_id.data,
-        'description': meta_dict.get('description'),
+        'description': description,
         'name': node_dict.get('name'),
         'package_name': node_dict.get('package_name'),
         'type': elementary.get_test_sub_type(original_file_path, test_namespace),
