@@ -35,7 +35,17 @@
 
     {% set flattened_columns = [] %}
     {% for column_node in column_nodes.values() %}
-        {% if not elementary.get_config_var('upload_only_columns_with_descriptions') or column_node.get('description') %}
+        {% set config_dict = elementary.safe_get_with_default(column_node, 'config', {}) %}
+        {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta') %}
+        {% set meta_dict = elementary.safe_get_with_default(column_node, 'meta', {}) %}
+        {% set has_meta = config_meta_dict or meta_dict | length > 0 %}
+
+        {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags') %}
+        {% set global_tags = elementary.safe_get_with_default(column_node, 'tags') %}
+        {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags') %}
+        {% set has_tags = config_tags or global_tags or meta_tags %}
+
+        {% if elementary.get_config_var('columns_upload_strategy') == 'all' or column_node.get('description') or has_meta or has_tags %}
             {% set flat_column = elementary.flatten_column(table_node, column_node) %}
             {% do flattened_columns.append(flat_column) %}
         {% endif %}
