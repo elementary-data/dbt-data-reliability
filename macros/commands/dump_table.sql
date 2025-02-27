@@ -1,4 +1,4 @@
-{% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, timestamp_column=none, since=none, days_back=7, dedup=false, until=none, filter=none) %}
+{% macro dump_table(model_unique_id, output_path, exclude_deprecated_columns=true, timestamp_column=none, since=none, days_back=7, dedup=false, until=none, table_filter=none) %}
     {% set node = graph.nodes.get(model_unique_id) %}
     {% if not node %}
         {% do print("Node '{}' does not exist.".format(model_unique_id)) %}
@@ -35,11 +35,11 @@
                 where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
             {% endif %}
         {% endif %}
-        {% if filter %}
+        {% if table_filter %}
             {% if timestamp_column %}
-                and {{ filter }}
+                and {{ table_filter }}
             {% else %}
-                where {{ filter }}
+                where {{ table_filter }}
             {% endif %}
         {% endif %}
     {% endset %}
