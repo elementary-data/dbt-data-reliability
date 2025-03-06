@@ -1,6 +1,6 @@
-{% macro generate_schema_baseline_test(name=none, include_sources=True, include_models=False, fail_on_added=False, enforce_types=False, convert_to_lower=False) %}
+{% macro generate_schema_baseline_test(name=none, include_sources=True, include_models=False, fail_on_added=False, enforce_types=False, convert_to_lower=False, resource_type=none) %}
   {% if name %}
-    {{ generate_schema_baseline_test_for_node(name, fail_on_added=fail_on_added, enforce_types=enforce_types, convert_to_lower=convert_to_lower) }}
+    {{ generate_schema_baseline_test_for_node(name, fail_on_added=fail_on_added, enforce_types=enforce_types, convert_to_lower=convert_to_lower, resource_type=resource_type) }}
   {% else %}
     {{ generate_schema_baseline_test_for_all_nodes(include_sources=include_sources, include_models=include_models,
                                                    fail_on_added=fail_on_added, enforce_types=enforce_types, convert_to_lower=convert_to_lower) }}
@@ -20,11 +20,10 @@
   {% endfor %}
 {% endmacro %}
 
-{% macro generate_schema_baseline_test_for_node(node, fail_on_added=False, enforce_types=False, convert_to_lower=False) %}
+{% macro generate_schema_baseline_test_for_node(node, fail_on_added=False, enforce_types=False, convert_to_lower=False, resource_type=none) %}
   {% if node is string %}
     {% set node_name = node %}
-    {% set node = elementary.get_node_by_name(node_name) %}
-
+    {% set node = elementary.get_node_by_name(node_name, resource_type) %}
     {% if not node %}
       {% do print("Could not find any model or source by the name '{}'!".format(node_name)) %}
       {% do return(none) %}
@@ -84,7 +83,7 @@ sources:
             {%- for param, param_val in test_params.items() %}
               {{param}}: {{param_val}}
             {%- endfor -%}
-          {% endif -%}  
+          {% endif -%}
 {% endmacro %}
 
 {% macro generate_schema_baseline_test_for_model(node, columns, test_params, convert_to_lower) %}
