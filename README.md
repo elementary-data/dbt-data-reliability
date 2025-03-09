@@ -13,7 +13,7 @@
 
 ## What is Elementary?
 
-This dbt-native package powers **Elementary**, helping data and analytics engineers **detect data anomalies** and build **rich metadata tables** from their dbt runs and tests. Gain immediate visibility into data quality trends, **detect anomalies**, and uncover potential issues—all within dbt.
+This dbt-native package powers **Elementary**, helping data and analytics engineers **detect data anomalies** and build **rich metadata tables** from their dbt runs and tests. Gain immediate visibility into data quality trend and uncover potential issues, all within dbt.
 
 Choose the observability tool that fits your needs:
 
