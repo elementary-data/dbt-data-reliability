@@ -42,7 +42,7 @@
 
     select *
     from unstructured_data_validation
-    where result like '%false%'
+    where lower(result) like '%false%'
 {% endmacro %}
 
 {% macro databricks__generate_unstructured_data_validation(model, column_name, prompt_template, llm_model_name='databricks-meta-llama-3-3-70b-instruct') %}
@@ -57,13 +57,13 @@
 
     select *
     from unstructured_data_validation
-    where result like '%false%'
+    where lower(result) like '%false%'
 {% endmacro %}
 
 
 {% macro bigquery__generate_unstructured_data_validation(model, column_name, prompt_template, llm_model_name='flash15_model') %}
     with unstructured_data_validation as (
-        SELECT ml_generate_text_llm_result as
+        SELECT ml_generate_text_llm_result as result
         FROM
         ML.GENERATE_TEXT(
             MODEL `{{model.schema}}.{{llm_model_name}}`,
@@ -78,5 +78,5 @@
 
     select *
     from unstructured_data_validation
-    where result like '%false%'
+    where lower(result) like '%false%'
 {% endmacro %}
