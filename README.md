@@ -133,7 +133,7 @@ models:
               expectation_prompt: "There should be no contract date in the future"
 ```
 
-Learn more in our [AI data validation documentation](hhttps://docs.elementary-data.com/data-tests/ai-data-tests/ai_data_validations).
+Learn more in our [AI data validations documentation](https://docs.elementary-data.com/data-tests/ai-data-tests/ai_data_validations).
 
 ## How Elementary works?
 
