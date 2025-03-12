@@ -23,6 +23,7 @@ Available as self-hosted or Cloud service with premium features.
 - [Get more out of Elementary](#get-more-out-of-elementary-dbt-package)
 - [Run results and dbt artifacts](#run-results-and-dbt-artifacts)
 - [Data anomaly detection as dbt tests](#data-anomaly-detection-as-dbt-tests)
+- [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
 - [How Elementary works?](#how-elementary-works)
 - [Community & Support](#community--support)
 - [Contribution](#contributions)
@@ -61,9 +62,9 @@ Elementary has 3 offerings: This dbt package, Elementary Community (OSS) and Ele
 - **dbt package**
   - For basic data monitoring and dbt artifacts collection, Elementary offers a dbt package. The package adds logging, artifacts uploading, and Elementary tests (anomaly detection and schema) to your project.
 - **Elementary Community**
-  - An open-source CLI tool you can deploy and orchestrate to send alerts and self-host the Elementary report. Best for data and analytics engineers that require basic observability capabilities or for evaluating features without vendor approval. Our community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
+  - An open-source CLI tool you can deploy and orchestrate to send alerts and self-host the Elementary report. Best for data and analytics engineers that require basic observability capabilities or for evaluating features without vendor approval. Our community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
 - **Elementary Cloud**
-  - Ideal for teams monitoring mission-critical data pipelines, requiring guaranteed uptime and reliability, short-time-to-value, advanced features, collaboration, and professional support. The solution is secure by design, and requires no access to your data from cloud. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
+  - Ideal for teams monitoring mission-critical data pipelines, requiring guaranteed uptime and reliability, short-time-to-value, advanced features, collaboration, and professional support. The solution is secure by design, and requires no access to your data from cloud. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
 ## Run Results and dbt artifacts
 
@@ -110,6 +111,30 @@ models:
 
 Read about the available [Elementary tests and configuration](https://docs.elementary-data.com/data-tests/introduction).
 
+## AI-powered data validation and unstructured data tests
+
+Elementary leverages AI to enhance data reliability with natural language test definitions:
+
+- **AI data validation**: Define expectations in plain English to validate structured data
+- **Unstructured data validation**: Validate text, JSON, and other non-tabular data types
+
+Example:
+
+```yml
+# AI data validation example
+models:
+  - name: crm
+    description: "A table containing contract details."
+    columns:
+      - name: contract_date
+        description: "The date when the contract was signed."
+        tests:
+          - elementary.ai_data_validation:
+              expectation_prompt: "There should be no contract date in the future"
+```
+
+Learn more in our [AI data validation documentation](hhttps://docs.elementary-data.com/data-tests/ai-data-tests/ai_data_validations).
+
 ## How Elementary works?
 
 Elementary dbt package creates tables of metadata and test results in your data warehouse, as part of your dbt runs.
@@ -127,6 +152,6 @@ The cloud service or the CLI tool read the data from these tables, send alerts a
 
 ## Contributions
 
-Thank you :orange_heart: Whether it’s a bug fix, new feature, or additional documentation - we greatly appreciate contributions!
+Thank you :orange_heart: Whether it's a bug fix, new feature, or additional documentation - we greatly appreciate contributions!
 
 Check out the [contributions guide](https://docs.elementary-data.com/general/contributions) and [open issues](https://github.com/elementary-data/elementary/issues) in the main repo.
