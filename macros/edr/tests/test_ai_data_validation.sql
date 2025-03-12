@@ -1,4 +1,4 @@
-{% test ai_data_validation(model, column_name, expectation_prompt, llm_model_name=none, context='') %}
+{% test ai_data_validation(model, column_name, expectation_prompt, llm_model_name=none, prompt_context='') %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
@@ -9,8 +9,8 @@
         {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
 
         {# Prompt to supply to the LLM #}
-        {% set context_part = context ~ " " if context else "" %}
-        {% set prompt_template = "You are a data validator that should reply with string true if the expectation is met or the string false otherwise. " ~ context_part ~ "You got the following expectation: " ~ expectation_prompt ~ ". Your only role is to determine if the following text meets this expectation: " %}
+        {% set prompt_context_part = prompt_context ~ " " if prompt_context else "" %}
+        {% set prompt_template = "You are a data validator that should reply with string true if the expectation is met or the string false otherwise. " ~ prompt_context_part ~ "You got the following expectation: " ~ expectation_prompt ~ ". Your only role is to determine if the following text meets this expectation: " %}
 
         {{ elementary.generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name) }}
 
