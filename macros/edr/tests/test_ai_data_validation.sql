@@ -1,4 +1,4 @@
-{% test ai_data_validation(model, column_name, expectation_prompt, context='', llm_model_name='claude-3-5-sonnet') %}
+{% test ai_data_validation(model, column_name, expectation_prompt, context='', llm_model_name) %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
@@ -32,10 +32,13 @@
 {% endmacro %}
 
 {% macro snowflake__generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name) %}
+    {% set default_snowflake_model_name = 'claude-3-5-sonnet' %}
+    {% set chosen_llm_model_name = llm_model_name if llm_model_name is not none and llm_model_name|trim != '' else default_snowflake_model_name %}
+    
     with ai_data_validation_results as (
         select 
             snowflake.cortex.complete(
-                '{{ llm_model_name }}',
+                '{{ chosen_llm_model_name }}',
                 concat('{{ prompt_template }}', {{ column_name }}::text)
             ) as result
         from {{ model }}
@@ -46,11 +49,14 @@
     where lower(result) like '%false%'
 {% endmacro %}
 
-{% macro databricks__generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name='databricks-meta-llama-3-3-70b-instruct') %}
+{% macro databricks__generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name) %}
+    {% set default_databricks_model_name = 'databricks-meta-llama-3-3-70b-instruct' %}
+    {% set chosen_llm_model_name = llm_model_name if llm_model_name is not none and llm_model_name|trim != '' else default_databricks_model_name %}
+    
     with ai_data_validation_results as (
         select 
             ai_query(
-                '{{ llm_model_name }}',
+                '{{ chosen_llm_model_name }}',
                 concat('{{ prompt_template }}', cast({{ column_name }} as string))
             ) as result
         from {{ model }}
@@ -62,12 +68,15 @@
 {% endmacro %}
 
 
-{% macro bigquery__generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name='gemini-1.5-pro') %}
+{% macro bigquery__generate_ai_data_validation_sql(model, column_name, prompt_template, llm_model_name) %}
+    {% set default_bigquery_model_name = 'gemini-1.5-pro' %}
+    {% set chosen_llm_model_name = llm_model_name if llm_model_name is not none and llm_model_name|trim != '' else default_bigquery_model_name %}
+    
     with ai_data_validation_results as (
         SELECT ml_generate_text_llm_result as result
         FROM
         ML.GENERATE_TEXT(
-            MODEL `{{model.schema}}.{{llm_model_name}}`,
+            MODEL `{{model.schema}}.{{chosen_llm_model_name}}`,
             (
             SELECT
                 CONCAT(
