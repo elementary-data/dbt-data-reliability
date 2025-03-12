@@ -1,4 +1,4 @@
-{% test ai_data_validation(model, column_name, expectation_prompt, context='', llm_model_name) %}
+{% test ai_data_validation(model, column_name, expectation_prompt, llm_model_name, context='') %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
