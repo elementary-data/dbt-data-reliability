@@ -34,6 +34,7 @@ Choose the observability tool that fits your needs:
   - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
     - [**Metadata Tables - dbt Artifacts**](#metadata-tables---dbt-artifacts)
     - [**Run Results Tables**](#run-results-tables)
+  - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
   - [Quickstart - dbt Package](#quickstart---dbt-package)
   - [Community \& Support](#community--support)
   - [Contributions](#contributions)
@@ -145,6 +146,33 @@ These tables track execution details, test outcomes, and performance metrics fro
 - **elementary_test_results** – Consolidates all dbt test results, including Elementary anomaly tests.
 
 For a full breakdown of these tables, see the [documentation](https://docs.elementary-data.com/dbt/package-models).
+
+
+
+## AI-powered data validation and unstructured data tests
+
+Elementary leverages AI to enhance data reliability with natural language test definitions:
+
+- **AI data validation**: Define expectations in plain English to validate structured data
+- **Unstructured data validation**: Validate text, JSON, and other non-tabular data types
+
+Example:
+
+```yml
+# AI data validation example
+models:
+  - name: crm
+    description: "A table containing contract details."
+    columns:
+      - name: contract_date
+        description: "The date when the contract was signed."
+        tests:
+          - elementary.ai_data_validation:
+              expectation_prompt: "There should be no contract date in the future"
+```
+
+Learn more in our [AI data validations documentation](https://docs.elementary-data.com/data-tests/ai-data-tests/ai_data_validations).
+
 
 ## Quickstart - dbt Package
 
