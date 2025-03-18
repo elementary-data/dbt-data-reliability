@@ -23,20 +23,13 @@ Choose the observability tool that fits your needs:
 
 ### Table of Contents
 
-- [dbt-native data observability](#dbt-native-data-observability)
-  - [What is Elementary?](#what-is-elementary)
-    - [Table of Contents](#table-of-contents)
-    - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
+  - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
   - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
   - [Data Anomaly Detection \& Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
-    - [**Anomaly Detection Tests**](#anomaly-detection-tests)
-    - [**Schema Tests**](#schema-tests)
   - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
-    - [**Metadata Tables - dbt Artifacts**](#metadata-tables---dbt-artifacts)
-    - [**Run Results Tables**](#run-results-tables)
   - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
   - [Quickstart - dbt Package](#quickstart---dbt-package)
-  - [Community \& Support](#community--support)
+  - [Community & Support](#community--support)
   - [Contributions](#contributions)
 
 
@@ -181,7 +174,7 @@ Learn more in our [AI data validations documentation](https://docs.elementary-da
 ```
 packages:
   - package: elementary-data/elementary
-    version: 0.17.0
+    version: 0.18.0
     ## Docs: <https://docs.elementary-data.com>
 
 ```
