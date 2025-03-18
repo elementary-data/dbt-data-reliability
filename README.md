@@ -8,7 +8,7 @@
 <a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
 <a href="https://docs.elementary-data.com/quickstart"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
-<img alt="Downloads" src="[https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads"/](https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange%22&left_text=Downloads%22/)>
+<img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads/>
 </p>
 
 ## What is Elementary?
@@ -46,7 +46,7 @@ The **Elementary dbt package** helps you find anomalies in your data and build m
 To generate observability reports, send alerts, and govern your data quality effectively, connect your dbt package to one of the following options:
 
 - **Elementary OSS**
-- **A self-hosted, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the basic Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. It’s ideal for small teams of data and/or analytics engineers seeking a straightforward, non-collaborative setup for data observability. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
+- **A self-maintained, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the self-hosted Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
 - **Elementary Cloud**
   - A **fully managed, enterprise-ready** solution designed for **scalability and automation**. It offers automated **ML-powered anomaly detection**, flexible **data discovery**, an integrated **incident management system**, and **collaboration features.** Delivering **high value with minimal setup and infrastructure maintenance**, it's ideal for teams looking to enhance data reliability without operational overhead. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
