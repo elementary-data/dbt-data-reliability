@@ -23,14 +23,14 @@ Choose the observability tool that fits your needs:
 
 ### Table of Contents
 
-  - [What's Inside the Elementary dbt Package?](#whats-inside-the-elementary-dbt-package)
-  - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
-  - [Data Anomaly Detection & Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
-  - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
-  - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
-  - [Quickstart - dbt Package](#quickstart---dbt-package)
-  - [Community & Support](#community--support)
-  - [Contributions](#contributions)
+- [What's Inside the Elementary dbt Package?](#whats-inside-the-elementary-dbt-package)
+- [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
+- [Data Anomaly Detection & Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
+- [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
+- [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
+- [Quickstart - dbt Package](#quickstart---dbt-package)
+- [Community & Support](#community--support)
+- [Contributions](#contributions)
 
 ### **What's Inside the Elementary dbt Package?**
 
@@ -48,7 +48,7 @@ To generate observability reports, send alerts, and govern your data quality eff
 - **Elementary OSS**
 - **A self-hosted, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the basic Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. It’s ideal for small teams of data and/or analytics engineers seeking a straightforward, non-collaborative setup for data observability. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
 - **Elementary Cloud**
-    - A **fully managed, enterprise-ready** solution designed for **scalability and automation**. It offers automated **ML-powered anomaly detection**, flexible **data discovery**, an integrated **incident management system**, and **collaboration features.** Delivering **high value with minimal setup and infrastructure maintenance**, it's ideal for teams looking to enhance data reliability without operational overhead. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
+  - A **fully managed, enterprise-ready** solution designed for **scalability and automation**. It offers automated **ML-powered anomaly detection**, flexible **data discovery**, an integrated **incident management system**, and **collaboration features.** Delivering **high value with minimal setup and infrastructure maintenance**, it's ideal for teams looking to enhance data reliability without operational overhead. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
 <kbd align="center">
 <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
