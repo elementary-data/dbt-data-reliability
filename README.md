@@ -23,15 +23,14 @@ Choose the observability tool that fits your needs:
 
 ### Table of Contents
 
-  - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
+  - [What's Inside the Elementary dbt Package?](#whats-inside-the-elementary-dbt-package)
   - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
-  - [Data Anomaly Detection \& Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
+  - [Data Anomaly Detection & Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
   - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
   - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
   - [Quickstart - dbt Package](#quickstart---dbt-package)
   - [Community & Support](#community--support)
   - [Contributions](#contributions)
-
 
 ### **What's Inside the Elementary dbt Package?**
 
@@ -39,7 +38,6 @@ The **Elementary dbt package** is designed to enhance data observability within 
 
 - **Elementary Tests** – A collection of **anomaly detection tests** and other data quality checks that help identify unexpected trends, missing data, or schema changes directly within your dbt runs.
 - **Metadata & Test Results Tables** – The package automatically generates and updates **metadata tables** in your data warehouse, capturing valuable information from your dbt runs and test results. These tables act as the backbone of your **observability setup**, enabling **alerts and reports** when connected to an Elementary observability platform.
-
 
 ## Get more out of Elementary dbt package
 
@@ -55,7 +53,6 @@ To generate observability reports, send alerts, and govern your data quality eff
 <kbd align="center">
 <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
 </kbd>
-
 
 ## Data Anomaly Detection & Schema changes as dbt Tests
 
@@ -108,9 +105,6 @@ Elementary tests include:
 
 Read more about the available [Elementary tests and configuration](https://docs.elementary-data.com/data-tests/introduction).
 
-
-
-
 ## Elementary Tables - Run Results and dbt Artifacts
 
 The **Elementary dbt package** automatically stores **dbt artifacts and run results** in your data warehouse, creating structured tables that provide visibility into your dbt runs and metadata.
@@ -140,8 +134,6 @@ These tables track execution details, test outcomes, and performance metrics fro
 
 For a full breakdown of these tables, see the [documentation](https://docs.elementary-data.com/dbt/package-models).
 
-
-
 ## AI-powered data validation and unstructured data tests
 
 Elementary leverages AI to enhance data reliability with natural language test definitions:
@@ -165,7 +157,6 @@ models:
 ```
 
 Learn more in our [AI data validations documentation](https://docs.elementary-data.com/data-tests/ai-data-tests/ai_data_validations).
-
 
 ## Quickstart - dbt Package
 
@@ -194,7 +185,6 @@ models:
 4. Run `dbt run --select elementary`
 
 Check out the [full documentation](https://docs.elementary-data.com/).
-
 
 ## Community & Support
 
