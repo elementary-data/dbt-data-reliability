@@ -54,3 +54,19 @@ def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     )
     assert test_result["status"] == "fail"
     assert test_result["failed_row_count"] == overwrite_failed_row_count
+
+
+def test_warn_if_0(test_id: str, dbt_project: DbtProject):
+    # Edge case that we want to verify
+
+    null_count = 50
+    data = [{COLUMN_NAME: "pasten"} for _ in range(null_count)]
+    test_result = dbt_project.test(
+        test_id,
+        "not_null",
+        dict(column_name=COLUMN_NAME, warn_if="=0"),
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
+    )
+    assert test_result["status"] == "warn"
+    assert test_result["failed_row_count"] == 0
