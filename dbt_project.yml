@@ -13,6 +13,9 @@ seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
+models:
+  +enabled: "{{ target.type != 'fabric' }}"
+
 target-path: "target" # directory which will store compiled SQL files
 clean-targets: # directories to be removed by `dbt clean`
   - "target"
@@ -20,6 +23,6 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_modules"
 
 on-run-start:
-  - "{{ elementary.on_run_start() }}"
+  - "{{ elementary.on_run_start() if target.type != 'fabric' }}"
 on-run-end:
-  - "{{ elementary.on_run_end() }}"
+  - "{{ elementary.on_run_end() if target.type != 'fabric' }}"
