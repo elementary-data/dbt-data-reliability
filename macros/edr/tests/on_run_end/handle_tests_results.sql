@@ -41,7 +41,13 @@
 
     {% for elementary_test_results_row in elementary_test_results_rows %}
       {% set failures = elementary_test_results_row.get("failures", result.failures) %}
+
+      {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
+         even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
+         results if the number of failed rows is 0.
+         We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
       {% set status = "pass" if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" else result.status %}
+
       {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                 'failed_row_count': elementary_test_failed_row_count}) %}
       {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
