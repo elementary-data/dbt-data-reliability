@@ -1,12 +1,6 @@
 import dbt_project
 
 
-def init(target: str, project_dir: str):
-    tests_env = Environment(target, project_dir)
-    tests_env.clear()
-    tests_env.init()
-
-
 class Environment:
     def __init__(self, target: str, project_dir: str):
         self.dbt_runner = dbt_project.get_dbt_runner(target, project_dir)
