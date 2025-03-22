@@ -51,8 +51,17 @@ env:
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
 
 jobs:
+  approve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approval notice
+        run: |
+          echo "Your PR needs to be approved to run on the dwh_tests environment before this workflow can continue"
+
   test:
     runs-on: ubuntu-latest
+    needs: approve
+    environment: dwh_tests # This is a github environment (not to be confused with env vars)
     concurrency:
       # This is what eventually defines the schema name in the data platform.
       group: tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${{ github.head_ref || github.ref_name }}
@@ -114,6 +123,7 @@ jobs:
         env:
           PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
         run: |
+          echo "Setting profiles.yml"
           mkdir -p ~/.dbt
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/-/_/g")
