@@ -53,7 +53,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment: dwh_tests # This is a github environment (not to be confused with env vars)
+    environment: elementary_test_env # This is a github environment (not to be confused with env vars)
     concurrency:
       # This is what eventually defines the schema name in the data platform.
       group: tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${{ github.head_ref || github.ref_name }}
