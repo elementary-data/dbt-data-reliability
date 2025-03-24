@@ -17,7 +17,7 @@
       'command': flags.WHICH,
       'dbt_version': dbt_version,
       'elementary_version': elementary.get_elementary_package_version(),
-      'full_refresh': edr_evaluate_bool(flags.FULL_REFRESH),
+      'full_refresh': edr_evaluate_bool_condition(flags.FULL_REFRESH),
       'invocation_vars': elementary.get_invocation_vars(),
       'vars': elementary.get_all_vars(),
       'target_name': target.name,
