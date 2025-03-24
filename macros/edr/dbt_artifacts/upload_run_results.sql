@@ -43,7 +43,6 @@
     {% set run_result_dict = elementary.get_run_result_dict(run_result) %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
     {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
-    {{ debug()}}
     {% set flatten_run_result_dict = {
         'model_execution_id': elementary.get_node_execution_id(node),
         'invocation_id': invocation_id,
