@@ -58,7 +58,7 @@
         'execute_completed_at': none,
         'compile_started_at': none,
         'compile_completed_at': none,
-        'full_refresh': edr_evaluate_bool_condition(flags.FULL_REFRESH),
+        'full_refresh': edr_evaluate_bool(flags.FULL_REFRESH),
         'compiled_code': elementary.get_compiled_code(node, as_column_value=true),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),

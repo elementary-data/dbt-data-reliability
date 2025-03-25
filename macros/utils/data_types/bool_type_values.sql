@@ -4,31 +4,45 @@
 {# We have different bools for use in parameter wheres vs. in columns as values#}
 
 
-{#True bools#}
-
-{% macro edr_bool_true() -%}
-    {{ return(adapter.dispatch('edr_bool_true', 'elementary')()) }}
-{%- endmacro %}
-
-{# False bools#} 
-
-{% macro edr_bool_false() -%}
-    {{ return(adapter.dispatch('edr_bool_false', 'elementary')()) }}
-{%- endmacro %}
-
-{% macro edr_evaluate_bool_condition(return_value) %}
-{% if return_value == true %}
-{{ return(adapter.dispatch('edr_bool_true', 'elementary')()) }}
-{% else %}
-{{ return(adapter.dispatch('edr_bool_false', 'elementary')()) }}
-{% endif %}
+{% macro edr_evaluate_bool(return_value) %}
+{{ return(adapter.dispatch('edr_bool', 'elementary')(return_value)) }}
 {%endmacro%}
 
+{% macro edr_evaluate_bool_condition(return_value) %}
+{{ return(adapter.dispatch('edr_bool_condition', 'elementary')(return_value)) }}
+{%endmacro%}
 
-{% macro default__edr_bool_true() %}{%do return(true)%}{% endmacro %}
+{% macro default__edr_bool(return_value) %}
+    {% if return_value == true %}
+        {%do return(true)%}
+    {% else %}
+        {%do return(false)%}
+    {% endif %}
+{% endmacro %}
 
-{% macro fabric__edr_bool_true() %}1{% endmacro %}
 
-{% macro default__edr_bool_false() %}{%do return(false)%}{% endmacro %}
+{% macro fabric__edr_bool(return_value) %}
+    {% if return_value == true %}
+        {%do return(1)%}
+    {% else %}
+        {%do return(0)%}
+    {% endif %}
+{% endmacro %}
 
-{% macro fabric__edr_bool_false() %}0{% endmacro %}
+
+{% macro default__edr_bool_condition(return_value) %}
+    {% if return_value == true %}
+        {%do return(true)%}
+    {% else %}
+        {%do return(false)%}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro fabric__edr_bool_condition(return_value) %}
+    {% if return_value == true %}
+        {%do return('1=1')%}
+    {% else %}
+        {%do return('0=1')%}
+    {% endif %}
+{% endmacro %}

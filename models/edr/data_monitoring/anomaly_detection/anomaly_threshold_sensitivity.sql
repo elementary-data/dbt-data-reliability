@@ -21,13 +21,13 @@ score_sensitivity as (
         training_avg as metric_avg,
         training_stddev as metric_stddev,
         anomaly_score,
-        case when abs(anomaly_score) >= 1.5 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_1_5') }},
-        case when abs(anomaly_score) >= 2 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_2') }},
-        case when abs(anomaly_score) >= 2.5 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_2_5') }},
-        case when abs(anomaly_score) >= 3 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_3') }},
-        case when abs(anomaly_score) >= 3.5 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_3_5') }},
-        case when abs(anomaly_score) >= 4 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_4') }},
-        case when abs(anomaly_score) >= 4.5 then {{ elementary.edr_bool_true() }} else {{ elementary.edr_bool_false() }} end as {{ elementary.edr_quote_column('is_anomaly_4_5') }}
+        case when abs(anomaly_score) >= 1.5 then {{ elementary.edr_evaluate_bool(true) }} else {{ elementary.edr_evaluate_bool(false)  }} end as {{ elementary.edr_quote_column('is_anomaly_1_5') }},
+        case when abs(anomaly_score) >= 2 then {{ elementary.edr_evaluate_bool(true) }} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_2') }},
+        case when abs(anomaly_score) >= 2.5 then {{ elementary.edr_evaluate_bool(true) }} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_2_5') }},
+        case when abs(anomaly_score) >= 3 then {{ elementary.edr_evaluate_bool(true)}} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_3') }},
+        case when abs(anomaly_score) >= 3.5 then {{ elementary.edr_evaluate_bool(true) }} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_3_5') }},
+        case when abs(anomaly_score) >= 4 then {{ elementary.edr_evaluate_bool(true)}} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_4') }},
+        case when abs(anomaly_score) >= 4.5 then {{ elementary.edr_evaluate_bool(true) }} else {{ elementary.edr_evaluate_bool(false) }} end as {{ elementary.edr_quote_column('is_anomaly_4_5') }}
     from metrics_anomaly_score
     where abs(anomaly_score) >= 1.5
 
