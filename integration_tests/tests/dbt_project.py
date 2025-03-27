@@ -42,7 +42,7 @@ def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
 class DbtProject:
     def __init__(self, target: str, project_dir: str):
         self.dbt_runner = get_dbt_runner(target, project_dir)
-
+        self.target = target
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
@@ -57,23 +57,32 @@ class DbtProject:
         )
         return results
 
-    @staticmethod
     def read_table_query(
+        self,
         table_name: str,
         where: Optional[str] = None,
         group_by: Optional[str] = None,
         order_by: Optional[str] = None,
         limit: Optional[int] = None,
-        column_names: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None
     ):
-        return f"""
-            SELECT {', '.join(column_names) if column_names else '*'}
-            FROM {{{{ ref('{table_name}') }}}}
-            {f"WHERE {where}" if where else ""}
-            {f"GROUP BY {group_by}" if group_by else ""}
-            {f"ORDER BY {order_by}" if order_by else ""}
-            {f"LIMIT {limit}" if limit else ""}
-            """
+        if self.target == 'fabric':
+            return f"""
+                SELECT {f'TOP {limit}' if limit else ''} {', '.join(column_names) if column_names else '*'}
+                FROM {{{{ ref('{table_name}') }}}}
+                {f"WHERE {where}" if where else ""}
+                {f"GROUP BY {group_by}" if group_by else ""}
+                {f"ORDER BY {order_by}" if order_by else ""}
+                """
+        else:
+            return f"""
+                SELECT {', '.join(column_names) if column_names else '*'}
+                FROM {{{{ ref('{table_name}') }}}}
+                {f"WHERE {where}" if where else ""}
+                {f"GROUP BY {group_by}" if group_by else ""}
+                {f"ORDER BY {order_by}" if order_by else ""}
+                {f"LIMIT {limit}" if limit else ""}
+                """
 
     def read_table(
         self,

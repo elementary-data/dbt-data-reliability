@@ -89,11 +89,9 @@
                                                                            metric_names=all_columns_monitors,
                                                                            columns_only=true,
                                                                            metric_properties=metric_properties) %}
-
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}
-
         {% set flattened_test = elementary.flatten_test(context["model"]) %}
         {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
         {% do elementary.store_metrics_table_in_cache() %}
@@ -126,4 +124,3 @@
     {%- endif -%}
     {{ return(False) }}
 {%- endmacro -%}
-
