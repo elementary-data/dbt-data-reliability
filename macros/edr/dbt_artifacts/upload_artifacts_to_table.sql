@@ -1,7 +1,6 @@
 {% macro upload_artifacts_to_table(table_relation, artifacts, flatten_artifact_callback, append=False, should_commit=False, metadata_hashes=None, on_query_exceed=none) %}
     {% set context_name = 'upload_artifacts_to_table[' ~ table_relation.name ~ ']'%}
     {% do elementary.begin_duration_measure_context(context_name) %}
-
     {% set flatten_artifact_dicts = [] %}
     {% do elementary.file_log("[{}] Flattening the artifacts.".format(table_relation.identifier)) %}
     {% do elementary.begin_duration_measure_context('artifacts_flatten') %}
@@ -18,8 +17,10 @@
 
     {% if append %}
         {# In append mode, just insert, and no need to be atomic #}
+
         {% do elementary.insert_rows(table_relation, flatten_artifact_dicts, should_commit, elementary.get_config_var('dbt_artifacts_chunk_size'), on_query_exceed) %}
     {% else %}
+
         {% set upload_artifact_method = get_upload_artifact_method(table_relation, metadata_hashes) %}
         {% if upload_artifact_method.type == "diff" %}
             {% do elementary.file_log("[{}] Comparing the artifacts state.".format(table_relation.identifier)) %}
