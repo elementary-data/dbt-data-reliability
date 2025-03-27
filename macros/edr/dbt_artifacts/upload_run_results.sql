@@ -36,6 +36,9 @@
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
 
+{% macro debug_var(var_name, var_value) %}
+    {% do log("🔍 DEBUG — " ~ var_name ~ ": " ~ var_value, info=True) %}
+{% endmacro %}
 {% macro flatten_run_result(run_result) %}
     {% set run_result_dict = elementary.get_run_result_dict(run_result) %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
@@ -55,7 +58,7 @@
         'execute_completed_at': none,
         'compile_started_at': none,
         'compile_completed_at': none,
-        'full_refresh': flags.FULL_REFRESH,
+        'full_refresh': edr_evaluate_bool(flags.FULL_REFRESH),
         'compiled_code': elementary.get_compiled_code(node, as_column_value=true),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),

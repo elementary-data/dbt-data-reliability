@@ -133,3 +133,36 @@
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
+
+{% macro fabric__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    {%- set complete_buckets_cte %}
+        select
+            dateadd({{ time_bucket.period }}, num * {{ time_bucket.count }}, {{ min_bucket_start_expr }}) as edr_bucket_start,
+            dateadd({{ time_bucket.period }}, (num + 1) * {{ time_bucket.count }}, {{ min_bucket_start_expr }}) as edr_bucket_end
+        from (
+            select 
+                n as num
+            from (
+                select 
+                    row_number() over (order by (select null)) - 1 as n
+                from (
+                    select 1 as x
+                    union all select 1 union all select 1 union all select 1 union all select 1
+                    union all select 1 union all select 1 union all select 1 union all select 1 union all select 1
+                ) t1
+                cross join (
+                    select 1 as x
+                    union all select 1 union all select 1 union all select 1 union all select 1
+                    union all select 1 union all select 1 union all select 1 union all select 1 union all select 1
+                ) t2
+                cross join (
+                    select 1 as x
+                    union all select 1 union all select 1 union all select 1 union all select 1
+                ) t3
+            ) nums
+            where n < {{ elementary.edr_datediff(min_bucket_start_expr, max_bucket_end_expr, time_bucket.period) }} / {{ time_bucket.count }} + 1
+        ) as numbers
+        where dateadd({{ time_bucket.period }}, (num + 1) * {{ time_bucket.count }}, {{ min_bucket_start_expr }}) <= {{ max_bucket_end_expr }}
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
+{% endmacro %}
