@@ -64,9 +64,9 @@ class DbtProject:
         group_by: Optional[str] = None,
         order_by: Optional[str] = None,
         limit: Optional[int] = None,
-        column_names: Optional[List[str]] = None
+        column_names: Optional[List[str]] = None,
     ):
-        if self.target == 'fabric':
+        if self.target == "fabric":
             return f"""
                 SELECT {f'TOP {limit}' if limit else ''} {', '.join(column_names) if column_names else '*'}
                 FROM {{{{ ref('{table_name}') }}}}
