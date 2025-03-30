@@ -14,7 +14,7 @@
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
-{# This macro can't be used without truncating to full buckets #}
+{# This macro cant be used without truncating to full buckets #}
 {% macro get_backfill_bucket_start(detection_end, backfill_days) %}
     {% do return((detection_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
@@ -40,7 +40,7 @@
     {%- endif %}
 
     {%- set regular_bucket_times_query %}
-        with bucket_times as (
+        ;with bucket_times as (
             select
             {{ trunc_min_bucket_start_expr }} as days_back_start
            , {{ detection_end_expr }} as detection_end
@@ -58,7 +58,7 @@
     {%- endset %}
 
     {%- set incremental_bucket_times_query %}
-        with all_buckets as (
+        ;with all_buckets as (
             select edr_bucket_start as bucket_start, edr_bucket_end as bucket_end
             from ({{ elementary.complete_buckets_cte(metric_properties, trunc_min_bucket_start_expr, detection_end_expr) }}) results
             where edr_bucket_start >= {{ trunc_min_bucket_start_expr }}

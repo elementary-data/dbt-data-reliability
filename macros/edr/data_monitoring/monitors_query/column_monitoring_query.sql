@@ -173,18 +173,3 @@
     from metrics_final
 
 {% endmacro %}
-
-{% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
-  {% set select_statements %}
-    {%- for column in dimension_columns -%}
-      {{ column }}
-      {%- if as_prefix -%}
-        {{ " as " ~ as_prefix ~ "_" ~ column }}
-      {%- endif -%}
-      {%- if not loop.last -%}
-        {{ ", " }}
-      {%- endif -%}
-    {%- endfor -%}
-  {% endset %}
-  {{ return(select_statements) }}
-{% endmacro %}

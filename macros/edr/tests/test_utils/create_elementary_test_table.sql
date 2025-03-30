@@ -1,5 +1,5 @@
 {% macro create_elementary_test_table(database_name, schema_name, test_name, table_type, sql_query) %}
-    {% if execute %}
+   {% if execute %}
         {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()).replace("*", "") %}
         
         {% set default_identifier_quoting = api.Relation.get_default_quote_policy().get_part("identifier") %}        
@@ -14,7 +14,7 @@
                                                                    identifier=temp_table_name,
                                                                    type='table') -%}
 
-        {# Create the table if it doesn't exist #}
+        {# Create the table if it doesnt exist #}
         {%- do elementary.create_or_replace(false, temp_table_relation, sql_query) %}
 
         {# Cache the test table for easy access later #}
