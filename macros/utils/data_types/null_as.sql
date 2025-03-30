@@ -11,7 +11,15 @@
 {%- endmacro -%}
 
 {% macro null_string() %}
+    {{ return(adapter.dispatch('null_string', 'elementary')()) }}
+{% endmacro %}
+
+{% macro default__null_string() %}
     cast(null as {{ elementary.edr_type_string() }})
+{% endmacro %}
+
+{% macro clickhouse__null_string() %}
+    cast(null as Nullable({{ elementary.edr_type_string() }}))
 {% endmacro %}
 
 {% macro null_boolean() %} 

@@ -5,7 +5,6 @@
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
         {% endif %}
-
         {%- if elementary.is_ephemeral_model(model_relation) %}
             {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model_relation.identifier)) }}
         {%- endif %}
@@ -66,6 +65,7 @@
                                                                                                 column_name=column_name,
                                                                                                 metric_properties=metric_properties) %}
                     {%- endif %}
+
                     {{ elementary.debug_log('min_bucket_start - ' ~ min_bucket_start) }}
                     {{ elementary.test_log('start', full_table_name, column_name) }}
 
@@ -89,7 +89,6 @@
                                                                            metric_names=all_columns_monitors,
                                                                            columns_only=true,
                                                                            metric_properties=metric_properties) %}
-
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
 
         {{- elementary.test_log('end', full_table_name, 'all columns') }}

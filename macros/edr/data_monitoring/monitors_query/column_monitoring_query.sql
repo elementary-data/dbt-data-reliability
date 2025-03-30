@@ -13,7 +13,6 @@
         {% do metric_name_to_type.update({metric.name: metric.type}) %}
     {% endfor %}
 
-
     with monitored_table as (
         select * from {{ monitored_table }}
             {% if metric_properties.where_expression %} where {{ metric_properties.where_expression }} {% endif %}
@@ -26,7 +25,6 @@
              where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start) }}
                and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(max_bucket_end) }}
          ),
-
          filtered_monitored_table as (
             select {{ column_obj.quoted }},
                    {%- if dimensions -%} {{ elementary.select_dimensions_columns(dimensions, "dimension") }}, {%- endif -%}
@@ -96,39 +94,10 @@
     ),
 
     column_metrics_unpivot as (
-
-        {%- if column_metrics %}
-            {% for metric_name, metric_type in metric_name_to_type.items() %}
-                select
-                    {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
-                    bucket_start,
-                    bucket_end,
-                    {% if timestamp_column %}
-                        {{ elementary.timediff("hour", "bucket_start", "bucket_end") }} as bucket_duration_hours,
-                    {% else %}
-                        {{ elementary.null_int() }} as bucket_duration_hours,
-                    {% endif %}
-                    {% if dimensions | length > 0 %}
-                      {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
-                      {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
-                    {% else %}
-                      {{ elementary.null_string() }} as dimension,
-                      {{ elementary.null_string() }} as dimension_value,
-                    {% endif %}
-                    {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
-                    {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_name)) }} as metric_name,
-                    {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_type)) }} as metric_type
-                from column_metrics where {{ metric_type }} is not null
-                {% if not loop.last %} union all {% endif %}
-            {%- endfor %}
-        {%- else %}
-            {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('dimension','string'),('dimension_value','string'),('metric_name','string'),('metric_type','string'),('metric_value','float')]) }}
-        {%- endif %}
-
+        {{ elementary.get_column_metrics_unpivot_query(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions) }}
     ),
 
     metrics_final as (
-
         select
             {{ elementary.edr_cast_as_string(full_table_name_str) }} as full_table_name,
             edr_column_name as column_name,
@@ -143,7 +112,6 @@
             dimension_value,
             {{elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
         from column_metrics_unpivot
-
     )
 
     select
@@ -172,6 +140,70 @@
         metric_properties
     from metrics_final
 
+{% endmacro %}
+
+{% macro get_column_metrics_unpivot_query(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions) %}
+    {{ return(adapter.dispatch('get_column_metrics_unpivot_query', 'elementary')(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions)) }}
+{% endmacro %}
+
+{% macro default__get_column_metrics_unpivot_query(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions) %}
+    {%- if column_metrics %}
+        {% for metric_name, metric_type in metric_name_to_type.items() %}
+            select
+                {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
+                bucket_start,
+                bucket_end,
+                {% if timestamp_column %}
+                    {{ elementary.timediff("hour", "bucket_start", "bucket_end") }} as bucket_duration_hours,
+                {% else %}
+                    {{ elementary.null_int() }} as bucket_duration_hours,
+                {% endif %}
+                {% if dimensions | length > 0 %}
+                  {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
+                  {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
+                {% else %}
+                  {{ elementary.null_string() }} as dimension,
+                  {{ elementary.null_string() }} as dimension_value,
+                {% endif %}
+                {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
+                {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_name)) }} as metric_name,
+                {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_type)) }} as metric_type
+            from column_metrics where {{ metric_type }} is not null
+            {% if not loop.last %} union all {% endif %}
+        {%- endfor %}
+    {%- else %}
+        {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('dimension','string'),('dimension_value','string'),('metric_name','string'),('metric_type','string'),('metric_value','float')]) }}
+    {%- endif %}
+{% endmacro %}
+
+{% macro clickhouse__get_column_metrics_unpivot_query(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions) %}
+    {%- if column_metrics %}
+        {% for metric_name, metric_type in metric_name_to_type.items() %}
+            select
+                {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
+                bucket_start,
+                bucket_end,
+                {% if timestamp_column %}
+                    {{ elementary.timediff("hour", "bucket_start", "bucket_end") }} as bucket_duration_hours,
+                {% else %}
+                    {{ elementary.null_int() }} as bucket_duration_hours,
+                {% endif %}
+                {% if dimensions | length > 0 %}
+                  {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
+                  {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
+                {% else %}
+                  CAST(NULL AS Nullable(String)) as dimension,
+                  CAST(NULL AS Nullable(String)) as dimension_value,
+                {% endif %}
+                {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
+                cast({{ elementary.edr_quote(metric_name) }} as Nullable({{ elementary.edr_type_string() }})) as metric_name, 
+                cast({{ elementary.edr_quote(metric_type) }} as Nullable({{ elementary.edr_type_string() }})) as metric_type
+            from column_metrics where {{ metric_type }} is not null
+            {% if not loop.last %} union all {% endif %}
+        {%- endfor %}
+    {%- else %}
+        {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('dimension','string'),('dimension_value','string'),('metric_name','string'),('metric_type','string'),('metric_value','float')]) }}
+    {%- endif %}
 {% endmacro %}
 
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
