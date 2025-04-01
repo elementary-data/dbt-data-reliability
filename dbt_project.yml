@@ -3,9 +3,6 @@ version: "0.18.2"
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]
 
-flags:
-  require_explicit_package_overrides_for_builtin_materializations: false
-  
 config-version: 2
 profile: "elementary"
 
