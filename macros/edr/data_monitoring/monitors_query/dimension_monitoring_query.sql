@@ -202,8 +202,9 @@
                 {{ elementary.null_timestamp() }} as bucket_start,
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
-                {{ elementary.null_string() }} as dimension,
-                {{ elementary.null_string() }} as dimension_value,
+                
+                {{ elementary.const_as_string(dimensions_string) }} as dimension,
+                dimension_value,
                 {{ elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count
         )
