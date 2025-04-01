@@ -42,7 +42,6 @@
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
         {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
-
         {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model_relation, column_name, column_anomalies) -%}
         {%- if not column_obj_and_monitors -%}
             {{ exceptions.raise_compiler_error("Unable to find column `{}` in `{}`".format(column_name, full_table_name)) }}
