@@ -38,7 +38,7 @@
 {% endmacro %}
 
 {% macro clickhouse__edr_type_string() %}
-    {% do return("varchar(4096)") %}
+    {% do return("String") %}
 {% endmacro %}
 
 {% macro snowflake__edr_type_string() %}
