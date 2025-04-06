@@ -31,7 +31,7 @@
 {%- endmacro %}
 
 {% macro clickhouse__standard_deviation(column_name) -%}
-    stddevSamp(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    stddevPop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
 {% macro variance(column_name) -%}
