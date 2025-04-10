@@ -83,6 +83,11 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-trino.yml up -d
 
+      - name: Start Clickhouse
+        if: inputs.warehouse-type == 'clickhouse'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose up -d clickhouse
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
