@@ -16,6 +16,7 @@ on:
           - spark
           - athena
           - trino
+          - clickhouse
       elementary-ref:
         type: string
         required: false
