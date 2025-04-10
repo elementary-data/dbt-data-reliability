@@ -49,6 +49,7 @@ jobs:
             databricks_catalog,
             athena,
             trino,
+            clickhouse,
           ]
         include:
           # If we're not running on a specific dbt version, then always add postgres on 1.3.0
