@@ -12,6 +12,12 @@
     {{ return(macro(first_date, second_date, date_part)) }}
 {% endmacro %}
 
+{% macro clickhouse__edr_datediff(first_date, second_date, date_part) %}
+    {%- set first_date_expr = elementary.edr_cast_as_timestamp(first_date) if first_date is string else first_date -%}
+    {%- set second_date_expr = elementary.edr_cast_as_timestamp(second_date) if second_date is string else second_date -%}
+    coalesce(dateDiff('{{ date_part }}', {{ first_date_expr }}, {{ second_date_expr }}), 0)::Nullable(Int32)
+{% endmacro %}
+
 {% macro bigquery__edr_datediff(first_date, second_date, date_part) %}
     {%- if date_part | lower in ['second', 'minute', 'hour', 'day'] %}
         timestamp_diff({{ second_date }}, {{ first_date }}, {{ date_part }})

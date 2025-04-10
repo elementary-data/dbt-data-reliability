@@ -14,7 +14,7 @@
                                                                    identifier=temp_table_name,
                                                                    type='table') -%}
 
-        {# Create the table if it doesn't exist #}
+        {# Create the table if it doesnt exist #}
         {%- do elementary.create_or_replace(false, temp_table_relation, sql_query) %}
 
         {# Cache the test table for easy access later #}

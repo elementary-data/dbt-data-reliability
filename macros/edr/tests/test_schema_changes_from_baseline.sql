@@ -5,7 +5,6 @@
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source)") }}
         {% endif %}
-
         {%- if elementary.is_ephemeral_model(model_relation) %}
             {{ exceptions.raise_compiler_error("The test is not supported for ephemeral models, model name: {}".format(model_relation.identifier)) }}
         {%- endif %}

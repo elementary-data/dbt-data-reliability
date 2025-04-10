@@ -151,7 +151,6 @@ class DbtProject:
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
-
         test_vars = test_vars or {}
         test_vars["elementary_enabled"] = elementary_enabled
 

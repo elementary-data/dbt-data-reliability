@@ -64,7 +64,7 @@
             select edr_bucket_start, edr_bucket_end, dimension_value
             from training_set_dimensions left join buckets
                 on (buckets.joiner = training_set_dimensions.joiner
-                {# This makes sure we don't create empty buckets for dimensions before their first appearance #}
+                {# This makes sure we dont create empty buckets for dimensions before their first appearance #}
                 and edr_bucket_end >= dimension_min_bucket_end)
             where dimension_value is not null
         ),
@@ -202,13 +202,13 @@
                 {{ elementary.null_timestamp() }} as bucket_start,
                 bucket_end,
                 {{ elementary.null_int() }} as bucket_duration_hours,
+                
                 {{ elementary.const_as_string(dimensions_string) }} as dimension,
                 dimension_value,
                 {{ elementary.dict_to_quoted_json(metric_properties) }} as metric_properties
             from row_count
         )
     {% endif %}
-
     select
         {{ elementary.generate_surrogate_key([
             'full_table_name',

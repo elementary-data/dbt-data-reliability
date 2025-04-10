@@ -11,6 +11,16 @@
     {{ return('') }}
 {% endmacro %}
 
+{% macro clickhouse__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    with numbers as (
+        select arrayJoin(range(0, toUInt32({{ elementary.edr_datediff(min_bucket_start_expr, max_bucket_end_expr, time_bucket.period) }}))) as n
+    )
+    select
+        {{ elementary.edr_timeadd(time_bucket.period, 'n', min_bucket_start_expr) }} as edr_bucket_start,
+        {{ elementary.edr_timeadd(time_bucket.period, 'n + 1', min_bucket_start_expr) }} as edr_bucket_end
+    from numbers
+    where {{ elementary.edr_timeadd(time_bucket.period, 'n + 1', min_bucket_start_expr) }} <= {{ max_bucket_end_expr }}
+{% endmacro %}
 
 {% macro spark__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
@@ -133,3 +143,4 @@
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
+

@@ -98,7 +98,7 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         "sources": [
             {
                 "name": "test_source",
-                "database": "{{target.database}}",
+                "database": "{{target.database if target.type != 'clickhouse' else target.schema}}",
                 "schema": "{{target.schema}}",
                 "tables": [
                     {
