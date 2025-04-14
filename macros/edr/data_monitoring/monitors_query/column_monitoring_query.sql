@@ -94,33 +94,7 @@
     ),
 
     column_metrics_unpivot as (
-       {%- if column_metrics %}
-        {% for metric_name, metric_type in metric_name_to_type.items() %}
-            select
-                {{ elementary.const_as_string(column_obj.name) }} as edr_column_name,
-                bucket_start,
-                bucket_end,
-                {% if timestamp_column %}
-                    {{ elementary.timediff("hour", "bucket_start", "bucket_end") }} as bucket_duration_hours,
-                {% else %}
-                    {{ elementary.null_int() }} as bucket_duration_hours,
-                {% endif %}
-                {% if dimensions | length > 0 %}
-                  {{ elementary.const_as_string(elementary.join_list(dimensions, separator='; ')) }} as dimension,
-                  {{ elementary.list_concat_with_separator(prefixed_dimensions, separator='; ') }} as dimension_value,
-                {% else %}
-                  {{ elementary.null_string() }} as dimension,
-                  {{ elementary.null_string() }} as dimension_value,
-                {% endif %}
-                {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
-                {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_name)) }} as metric_name,
-                {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_type)) }} as metric_type
-            from column_metrics where {{ metric_type }} is not null
-            {% if not loop.last %} union all {% endif %}
-        {%- endfor %}
-    {%- else %}
-        {{ elementary.empty_table([('edr_column_name','string'),('bucket_start','timestamp'),('bucket_end','timestamp'),('bucket_duration_hours','int'),('dimension','string'),('dimension_value','string'),('metric_name','string'),('metric_type','string'),('metric_value','float')]) }}
-    {%- endif %}
+       {{ elementary.get_column_metrics_unpivot_query(column_metrics, column_obj, metric_name_to_type, timestamp_column, dimensions) }}
     ),
 
     metrics_final as (

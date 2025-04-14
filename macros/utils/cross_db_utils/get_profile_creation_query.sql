@@ -96,8 +96,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA {{ parameters["schema"] }} GRANT SELECT ON TA
 -- Create clickhouse user
 CREATE USER {{ parameters["user"] }} identified by '{{ parameters["password"] }}';
 
--- Grant select on all tables in the Elementary schema to the user
+-- Grant access on schema to user
 grant select on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
+grant create table on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
 {% endmacro %}
 
 
