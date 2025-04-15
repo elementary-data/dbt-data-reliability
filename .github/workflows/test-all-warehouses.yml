@@ -55,11 +55,6 @@ jobs:
             warehouse-type: postgres
           - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
             warehouse-type: postgres
-        exclude:
-          - dbt-version: "1.7.0"
-            warehouse-type: athena
-          - dbt-version: "1.7.0"
-            warehouse-type: trino
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
