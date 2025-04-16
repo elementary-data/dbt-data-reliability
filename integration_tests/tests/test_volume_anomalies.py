@@ -355,7 +355,7 @@ def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
-@pytest.mark.skip_targets(["clickhouse"])   
+@pytest.mark.skip_targets(["clickhouse"])
 def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [

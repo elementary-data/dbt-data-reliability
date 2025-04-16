@@ -1,5 +1,6 @@
-from dbt_project import DbtProject
 import pytest
+from dbt_project import DbtProject
+
 COLUMN_NAME = "value"
 
 

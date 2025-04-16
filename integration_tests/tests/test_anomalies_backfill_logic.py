@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, time, timedelta
-import pytest
 
 import dateutil.parser
+import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 

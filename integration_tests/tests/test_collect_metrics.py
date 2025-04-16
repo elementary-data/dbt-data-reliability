@@ -1,8 +1,8 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
-import pytest
 
+import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
