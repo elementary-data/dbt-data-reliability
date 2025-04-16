@@ -32,5 +32,5 @@
 {% endmacro %}
 
 {% macro clickhouse__get_relation_max_name_length(temporary, relation, sql_query) %}
-    {{ return(192) }}
+    {{ return(128) }}
 {% endmacro %}
