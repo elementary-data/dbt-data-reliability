@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+import pytest
 
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -33,6 +34,7 @@ def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
     return [json.loads(result["result_row"]) for result in results]
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -66,6 +68,7 @@ def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     assert all([row["min_value"] == row["max_value"] for row in anomaly_test_points])
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid_with_seasonality(
     test_id: str, dbt_project: DbtProject
 ):

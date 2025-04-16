@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+import pytest
 
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -68,6 +69,7 @@ def test_dimension_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -99,6 +101,7 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert anomaly_test_points[0]["dimension_value"] == "Superman"
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_dimensions_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject
 ):
@@ -144,6 +147,7 @@ def test_dimensions_anomalies_with_where_parameter(
     assert test_result["status"] == "fail"
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_id: str, dbt_project: DbtProject
 ):

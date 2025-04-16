@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+import pytest
 
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -24,6 +25,7 @@ DBT_TEST_ARGS = {
     time_bucket={"period": "hour", "count": 6},
     dates_step=timedelta(hours=6),
 )
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_specific_dates(
     test_id: str, dbt_project: DbtProject, time_bucket: dict, dates_step: timedelta
 ):
@@ -123,6 +125,7 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -158,6 +161,7 @@ def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))

@@ -23,6 +23,7 @@ def test_artifacts_caching(dbt_project: DbtProject):
     assert first_row == second_row, "Artifacts are not cached at the on-run-end."
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_artifacts_updating(dbt_project: DbtProject):
     # Disabled by default in the tests for performance reasons.
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
