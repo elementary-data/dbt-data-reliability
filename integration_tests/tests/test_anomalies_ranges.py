@@ -34,6 +34,7 @@ def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
     return [json.loads(result["result_row"]) for result in results]
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
@@ -68,6 +69,7 @@ def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     assert all([row["min_value"] == row["max_value"] for row in anomaly_test_points])
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid_with_seasonality(
     test_id: str, dbt_project: DbtProject

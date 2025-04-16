@@ -92,6 +92,7 @@ def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
     assert col_to_metric_names == EXPECTED_COL_TO_METRIC_NAMES
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()

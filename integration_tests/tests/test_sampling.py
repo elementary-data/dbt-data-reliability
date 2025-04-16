@@ -23,6 +23,7 @@ SAMPLES_QUERY = """
 TEST_SAMPLE_ROW_COUNT = 7
 
 
+# Sampling currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_sampling(test_id: str, dbt_project: DbtProject):
     null_count = 50

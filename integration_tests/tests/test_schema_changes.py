@@ -41,6 +41,7 @@ def assert_test_results(test_results: List[dict]):
     assert not expected_failures
 
 
+# Schema changes currently not supported on targets
 @pytest.mark.skip_targets(["databricks", "spark", "athena", "trino", "clickhouse"])
 def test_schema_changes(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes"
@@ -54,6 +55,7 @@ def test_schema_changes(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
+# Schema changes currently not supported on targets
 @pytest.mark.skip_targets(["databricks", "spark", "athena", "trino", "clickhouse"])
 def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes_from_baseline"

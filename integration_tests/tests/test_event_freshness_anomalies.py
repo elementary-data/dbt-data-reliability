@@ -30,6 +30,7 @@ def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
     anomaly_date = datetime.now() - timedelta(days=2)
@@ -52,6 +53,7 @@ def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
     # To avoid races, set the "custom_started_at" to the beginning of the day

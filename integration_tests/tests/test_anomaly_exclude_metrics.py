@@ -25,6 +25,7 @@ DBT_TEST_ARGS = {
     time_bucket={"period": "hour", "count": 6},
     dates_step=timedelta(hours=6),
 )
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_specific_dates(
     test_id: str, dbt_project: DbtProject, time_bucket: dict, dates_step: timedelta
@@ -125,6 +126,7 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
@@ -161,6 +163,7 @@ def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
