@@ -1,8 +1,11 @@
+import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "value"
 
 
+# Failed row count currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_count_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -37,6 +40,8 @@ def test_sum_failed_row_count(test_id: str, dbt_project: DbtProject):
     )  # when the failed_row_count_calc is sum(<column_name>), these should not be equal
 
 
+# Failed row count currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     overwrite_failed_row_count = 5

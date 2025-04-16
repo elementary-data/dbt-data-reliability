@@ -37,6 +37,10 @@
     {% endif %}
 {% endmacro %}
 
+{% macro clickhouse__edr_type_string() %}
+    {% do return("String") %}
+{% endmacro %}
+
 {% macro snowflake__edr_type_string() %}
     {# Default max varchar size in Snowflake is 16MB #}
     {% do return("varchar") %}

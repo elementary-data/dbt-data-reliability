@@ -14,7 +14,7 @@
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
-{# This macro can't be used without truncating to full buckets #}
+{# This macro cant be used without truncating to full buckets #}
 {% macro get_backfill_bucket_start(detection_end, backfill_days) %}
     {% do return((detection_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
 {% endmacro %}
@@ -38,7 +38,6 @@
     {%- else %}
         {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation('data_monitoring_metrics') %}
     {%- endif %}
-
     {%- set regular_bucket_times_query %}
         with bucket_times as (
             select
@@ -100,11 +99,11 @@
 
     {# We assume we should also cosider sources as incremental #}
     {% if force_metrics_backfill or not (elementary.is_incremental_model(elementary.get_model_graph_node(model_relation), source_included=true) or unit_test) %}
+ 
         {%- set buckets = elementary.agate_to_dicts(elementary.run_query(regular_bucket_times_query))[0] %}
     {%- else %}
         {%- set buckets = elementary.agate_to_dicts(elementary.run_query(incremental_bucket_times_query))[0] %}
     {% endif %}
-
     {%- if buckets %}
         {%- set min_bucket_start = elementary.edr_quote(buckets.get('min_bucket_start')) %}
         {%- set max_bucket_end = elementary.edr_quote(buckets.get('max_bucket_end')) %}

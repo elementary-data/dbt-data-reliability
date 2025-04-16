@@ -36,6 +36,8 @@ def test_table_volume_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -47,9 +49,11 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="source", as_model=False)
 @Parametrization.case(name="model", as_model=True)
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject, as_model: bool
 ):
@@ -93,6 +97,8 @@ def test_volume_anomalies_with_where_parameter(
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow() - timedelta(hours=2)
     data = [
@@ -124,6 +130,8 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -140,6 +148,8 @@ def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtPro
     assert test_result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -155,6 +165,8 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
     assert test_result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     dates = generate_dates(
@@ -175,6 +187,8 @@ def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -192,6 +206,8 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
     data = [{"hello": "world"}]
     min_training_set_size = 4
@@ -211,6 +227,7 @@ def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
 @pytest.mark.only_on_targets(["bigquery"])
 def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
@@ -249,6 +266,8 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     drop_failure_percent_threshold=5,
     metric_value=29,
 )
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomaly_static_data_drop(
     test_id: str,
     dbt_project: DbtProject,
@@ -300,6 +319,8 @@ def test_volume_anomaly_static_data_drop(
     spike_failure_percent_threshold=5,
     metric_value=31,
 )
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomaly_static_data_spike(
     test_id: str,
     dbt_project: DbtProject,
@@ -345,6 +366,8 @@ def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
@@ -371,6 +394,8 @@ def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     fail_value=4 * 24,
     pass_value=24,
 )
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_table_volume_anomalies_periods_params(
     test_id: str, dbt_project: DbtProject, period: str, fail_value: int, pass_value: int
 ):
@@ -446,6 +471,8 @@ def test_anomalyless_table_volume_anomalies_periods_params(
     anomaly_sensitivity=3000,
     metric_value=44,
 )
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_ignore_small_changes_both(
     test_id: str,
     dbt_project: DbtProject,

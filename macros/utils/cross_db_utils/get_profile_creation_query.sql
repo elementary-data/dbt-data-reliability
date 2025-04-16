@@ -92,6 +92,16 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA {{ parameters["schema"] }} GRANT SELECT ON TA
 {% endmacro %}
 
 
+{% macro clickhouse__get_profile_creation_query(parameters) %}
+-- Create clickhouse user
+CREATE USER {{ parameters["user"] }} identified by '{{ parameters["password"] }}';
+
+-- Grant access on schema to user
+grant select on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
+grant create table on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
+{% endmacro %}
+
+
 {# Databricks, BigQuery, Spark #}
 {% macro default__get_profile_creation_query(parameters) %}
   {% do exceptions.raise_compiler_error('User creation not supported through sql using ' ~ target.type) %}
