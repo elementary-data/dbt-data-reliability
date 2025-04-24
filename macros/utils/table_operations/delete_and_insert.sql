@@ -132,3 +132,19 @@
 
     {% do return(queries) %}
 {% endmacro %}
+
+{# FIX: Duckdb adaptor; Removed begin/end transaction behavior #}
+{% macro duckdb__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+    {% set query %}
+        {% if delete_relation %}
+            delete from {{ relation }}
+            where
+            {{ delete_column_key }} is null
+            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+        {% endif %}
+        {% if insert_relation %}
+            insert into {{ relation }} select * from {{ insert_relation }};
+        {% endif %}
+    {% endset %}
+    {% do return([query]) %}
+{% endmacro %}

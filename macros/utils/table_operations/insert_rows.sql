@@ -174,3 +174,8 @@
         NULL
     {%- endif -%}
 {%- endmacro -%}
+
+{# FIX: Duckdb escape single quote #}
+{%- macro duckdb__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "''") | replace("\n", "\\n") | replace("\r", "\\r")) -}}
+{%- endmacro -%}

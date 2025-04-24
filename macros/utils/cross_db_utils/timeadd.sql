@@ -33,3 +33,8 @@
 {% macro trino__edr_timeadd(date_part, number, timestamp_expression) %}
     date_add('{{ date_part }}', {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
+
+{# FIX: Add adaptor for DuckDB #}
+{% macro duckdb__edr_timeadd(date_part, number, timestamp_expression) %}
+    {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + {{ elementary.edr_cast_as_int(number) }} * INTERVAL '1 {{ date_part }}'
+{% endmacro %}

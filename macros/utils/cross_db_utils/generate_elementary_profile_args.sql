@@ -171,3 +171,13 @@
 {% macro default__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
 {% endmacro %}
+
+{# FIX: Duckdb arguments #}
+{% macro duckdb__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
+  {% do return([
+    _parameter("type", target.type),
+    _parameter("path", target.path),
+    _parameter("schema", elementary_schema),
+    _parameter("threads", target.threads),
+  ]) %}
+{% endmacro %}
