@@ -1,8 +1,11 @@
+import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "value"
 
 
+# Failed row count currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_count_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -37,6 +40,8 @@ def test_sum_failed_row_count(test_id: str, dbt_project: DbtProject):
     )  # when the failed_row_count_calc is sum(<column_name>), these should not be equal
 
 
+# Failed row count currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     overwrite_failed_row_count = 5
@@ -54,3 +59,19 @@ def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     )
     assert test_result["status"] == "fail"
     assert test_result["failed_row_count"] == overwrite_failed_row_count
+
+
+def test_warn_if_0(test_id: str, dbt_project: DbtProject):
+    # Edge case that we want to verify
+
+    null_count = 50
+    data = [{COLUMN_NAME: "pasten"} for _ in range(null_count)]
+    test_result = dbt_project.test(
+        test_id,
+        "not_null",
+        dict(column_name=COLUMN_NAME, warn_if="=0"),
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
+    )
+    assert test_result["status"] == "warn"
+    assert test_result["failed_row_count"] == 0

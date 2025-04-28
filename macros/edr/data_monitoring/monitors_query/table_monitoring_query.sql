@@ -227,7 +227,7 @@
     consecutive_updates_freshness as (
         select
             timestamp_val as update_timestamp,
-            {{ elementary.timediff('second', 'lag(timestamp_val) over (order by timestamp_val)', 'timestamp_val') }} as freshness
+            {{ elementary.timediff('second', elementary.lag('timestamp_val') ~ ' over (order by timestamp_val)', 'timestamp_val') }} as freshness
         from unique_timestamps
     ),
     time_filtered_consecutive_updates_freshness as (
@@ -300,9 +300,21 @@
 {% endmacro %}
 
 {% macro get_no_timestamp_event_freshness_query(metric, metric_properties) %}
+    {{ return(adapter.dispatch('get_no_timestamp_event_freshness_query', 'elementary')(metric, metric_properties)) }}
+{% endmacro %}
+
+{% macro default__get_no_timestamp_event_freshness_query(metric, metric_properties) %}
     select
         {{ elementary.const_as_string(metric.name) }} as metric_name,
         {{ elementary.const_as_string("event_freshness") }} as metric_type,
         {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max({})".format(metric_properties.event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
+    from monitored_table
+{% endmacro %}
+
+{% macro clickhouse__get_no_timestamp_event_freshness_query(metric, metric_properties) %}
+    select
+        {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("event_freshness") }} as metric_type,
+        {{ elementary.timediff('second', elementary.edr_cast_as_timestamp("max(toDateTime64({}, 3))".format(metric_properties.event_timestamp_column)), elementary.edr_quote(elementary.get_run_started_at())) }} as metric_value
     from monitored_table
 {% endmacro %}

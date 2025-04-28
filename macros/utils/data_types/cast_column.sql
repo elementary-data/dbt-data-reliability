@@ -21,6 +21,14 @@
     )
 {%- endmacro -%}
 
+{%- macro clickhouse__edr_cast_as_timestamp(timestamp_field) -%}
+    coalesce(
+        toDateTime(
+            left(splitByChar('+', toString({{ timestamp_field }}))[1], 19)),
+        toDateTime('1970-01-01 00:00:00')
+    )
+{%- endmacro -%}
+
 {%- macro edr_cast_as_float(column) -%}
     cast({{ column }} as {{ elementary.edr_type_float() }})
 {%- endmacro -%}

@@ -42,7 +42,6 @@
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
         {{ elementary.debug_log('test configuration - ' ~ test_configuration) }}
-
         {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(model_relation, column_name, column_anomalies) -%}
         {%- if not column_obj_and_monitors -%}
             {{ exceptions.raise_compiler_error("Unable to find column `{}` in `{}`".format(column_name, full_table_name)) }}
@@ -80,7 +79,6 @@
                                                                              dimensions) %}
         {{ elementary.debug_log('column_monitoring_query - \n' ~ column_monitoring_query) }}
         {% set temp_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'metrics', column_monitoring_query) %}
-
         {#- calculate anomaly scores for metrics -#}
         {% set anomaly_scores_query = elementary.get_anomaly_scores_query(test_metrics_table_relation=temp_table_relation,
                                                                           model_relation=model_relation,

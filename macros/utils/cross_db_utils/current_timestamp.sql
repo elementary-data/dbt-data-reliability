@@ -22,6 +22,9 @@
     cast(current_timestamp() as timestamp)
 {% endmacro %}
 
+{% macro clickhouse__edr_current_timestamp() %}
+    now()
+{% endmacro %}
 
 {% macro edr_current_timestamp_in_utc() -%}
     {{ adapter.dispatch('edr_current_timestamp_in_utc','elementary')() }}
@@ -45,6 +48,10 @@
 
 {% macro spark__edr_current_timestamp_in_utc() %}
     cast(unix_timestamp() as timestamp)
+{% endmacro %}
+
+{% macro clickhouse__edr_current_timestamp_in_utc() %}
+    now('UTC')
 {% endmacro %}
 
 {% macro athena__edr_current_timestamp() -%}
