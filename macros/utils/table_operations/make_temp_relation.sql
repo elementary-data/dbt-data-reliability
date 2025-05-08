@@ -17,7 +17,9 @@
 {% endmacro %}
 
 {% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
-    {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
+    {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
+    {% set tmp_relation = api.Relation.create(identifier=tmp_identifier, type='view') %}
+    {% do return(tmp_relation) %}
 {% endmacro %}
 
 --- VIEWS
