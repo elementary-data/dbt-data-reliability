@@ -1,5 +1,5 @@
 name: "elementary"
-version: "0.18.2"
+version: "0.18.2-tuva.1"
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]
 
