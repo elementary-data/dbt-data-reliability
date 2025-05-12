@@ -24,7 +24,9 @@
 
 {% macro default__drop_schema(database_name, schema_name) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
-    {% do dbt.drop_schema(schema_relation) %}
+    {%- call statement('drop_schema') -%}
+    drop schema if exists {{ schema_relation.database }}.{{ schema_relation.schema }} cascade
+    {% endcall %}
     {% do adapter.commit() %}
     {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
 {% endmacro %}
