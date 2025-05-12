@@ -1,13 +1,16 @@
 {% macro clear_tests() %}
     {% if execute %}
-        {% do drop_schema(elementary.target_database(), target.schema) %}
+    
+        {% set database_name = elementary.target_database() %}
+        {% set schema_name = target.schema %}
+        {% do elementary_integration_tests.drop_schema(database_name, schema_name) %}
 
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% do drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.drop_schema(database_name, schema_name) %}
 
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {% if tests_schema_name != schema_name %}
-            {% do drop_schema(database_name, tests_schema_name) %}
+            {% do elementary_integration_tests.drop_schema(database_name, tests_schema_name) %}
         {% else %}
             {{ elementary.edr_log("Tests schema is the same as the main elementary schema, nothing to drop.") }}
         {% endif %}
@@ -16,7 +19,7 @@
 {% endmacro %}
 
 {% macro drop_schema(database_name, schema_name) %}
-    {% do adapter.dispatch('drop_schema')(database_name, schema_name) %}
+    {% do return(adapter.dispatch('drop_schema','elementary_integration_tests')(database_name, schema_name)) %}
 {% endmacro %}
 
 {% macro default__drop_schema(database_name, schema_name) %}
