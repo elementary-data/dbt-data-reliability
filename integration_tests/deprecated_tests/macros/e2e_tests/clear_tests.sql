@@ -3,14 +3,14 @@
     
         {% set database_name = elementary.target_database() %}
         {% set schema_name = target.schema %}
-        {% do elementary_integration_tests.elmt_drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.edr_drop_schema(database_name, schema_name) %}
 
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% do elementary_integration_tests.elmt_drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.edr_drop_schema(database_name, schema_name) %}
 
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {% if tests_schema_name != schema_name %}
-            {% do elementary_integration_tests.elmt_drop_schema(database_name, tests_schema_name) %}
+            {% do elementary_integration_tests.edr_drop_schema(database_name, tests_schema_name) %}
         {% else %}
             {{ elementary.edr_log("Tests schema is the same as the main elementary schema, nothing to drop.") }}
         {% endif %}
@@ -18,18 +18,18 @@
     {{ return('') }}
 {% endmacro %}
 
-{% macro elmt_drop_schema(database_name, schema_name) %}
-    {% do return(adapter.dispatch('elmt_drop_schema','elementary_integration_tests')(database_name, schema_name)) %}
+{% macro edr_drop_schema(database_name, schema_name) %}
+    {% do return(adapter.dispatch('edr_drop_schema','elementary_integration_tests')(database_name, schema_name)) %}
 {% endmacro %}
 
-{% macro default__elmt_drop_schema(database_name, schema_name) %}
+{% macro default__edr_drop_schema(database_name, schema_name) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
     {% do dbt.drop_schema(schema_relation) %}
     {% do adapter.commit() %}
     {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
 {% endmacro %}
 
-{% macro clickhouse__elmt_drop_schema(database_name, schema_name) %}
+{% macro clickhouse__edr_drop_schema(database_name, schema_name) %}
    {% set results = run_query("SELECT name FROM system.tables WHERE database = '" ~ database_name ~ "'") %}
     {% if execute %}
         {% for row in results %}
