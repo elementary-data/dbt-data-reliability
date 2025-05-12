@@ -3,14 +3,14 @@
     
         {% set database_name = elementary.target_database() %}
         {% set schema_name = target.schema %}
-        {% do elementary_integration_tests.drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.elmt_drop_schema(database_name, schema_name) %}
 
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-        {% do elementary_integration_tests.drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.elmt_drop_schema(database_name, schema_name) %}
 
         {% set tests_schema_name = elementary.get_elementary_tests_schema(database_name, schema_name) %}
         {% if tests_schema_name != schema_name %}
-            {% do elementary_integration_tests.drop_schema(database_name, tests_schema_name) %}
+            {% do elementary_integration_tests.elmt_drop_schema(database_name, tests_schema_name) %}
         {% else %}
             {{ elementary.edr_log("Tests schema is the same as the main elementary schema, nothing to drop.") }}
         {% endif %}
@@ -18,38 +18,18 @@
     {{ return('') }}
 {% endmacro %}
 
-{% macro drop_schema(database_name, schema_name) %}
-    {% do return(adapter.dispatch('drop_schema','elementary_integration_tests')(database_name, schema_name)) %}
+{% macro elmt_drop_schema(database_name, schema_name) %}
+    {% do return(adapter.dispatch('elmt_drop_schema','elementary_integration_tests')(database_name, schema_name)) %}
 {% endmacro %}
 
-{% macro default__drop_schema(database_name, schema_name) %}
+{% macro default__elmt_drop_schema(database_name, schema_name) %}
     {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
-    {%- call statement('drop_schema') -%}
-    drop schema if exists {{ schema_relation.database }}.{{ schema_relation.schema }} cascade
-    {% endcall %}
+    {% do dbt.drop_schema(schema_relation) %}
     {% do adapter.commit() %}
     {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
 {% endmacro %}
 
-{% macro bigquery__drop_schema(database_name, schema_name) %}
-    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
-    {%- call statement('drop_schema') -%}
-    drop schema if exists `{{ schema_relation.database }}`.`{{ schema_relation.schema }}` cascade
-    {% endcall %}
-    {% do adapter.commit() %}
-    {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
-{% endmacro %}
-
-{% macro redshift__drop_schema(database_name, schema_name) %}
-    {% set schema_relation = api.Relation.create(database=database_name, schema=schema_name) %}
-    {%- call statement('drop_schema') -%}
-    drop schema if exists {{ schema_relation.schema }} cascade
-    {% endcall %}
-    {% do adapter.commit() %}
-    {% do elementary.edr_log("dropped schema {}".format(schema_relation | string)) %}
-{% endmacro %}
-
-{% macro clickhouse__drop_schema(database_name, schema_name) %}
+{% macro clickhouse__elmt_drop_schema(database_name, schema_name) %}
    {% set results = run_query("SELECT name FROM system.tables WHERE database = '" ~ database_name ~ "'") %}
     {% if execute %}
         {% for row in results %}
