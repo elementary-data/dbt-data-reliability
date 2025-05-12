@@ -1,9 +1,6 @@
 {% macro clear_tests() %}
     {% if execute %}
-    
-        {% set database_name = elementary.target_database() %}
-        {% set schema_name = target.schema %}
-        {% do elementary_integration_tests.edr_drop_schema(database_name, schema_name) %}
+        {% do elementary_integration_tests.edr_drop_schema(elementary.target_database(), target.schema) %}
 
         {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
         {% do elementary_integration_tests.edr_drop_schema(database_name, schema_name) %}
