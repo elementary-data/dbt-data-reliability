@@ -30,6 +30,7 @@
         ('metadata_hash', 'string'),
         ('unique_key', 'string'),
         ('incremental_strategy', 'string'),
+        ('group_name', 'string'),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
         {% do columns.extend([('bigquery_partition_by', 'string'), ('bigquery_cluster_by', 'string')]) %}
@@ -86,6 +87,7 @@
         'incremental_strategy': config_dict.get("incremental_strategy"),
         'bigquery_partition_by': config_dict.get("partition_by"),
         'bigquery_cluster_by': config_dict.get("cluster_by"),
+        'group_name': config_dict.get("group") or node_dict.get("group"),
     } %}
     {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
