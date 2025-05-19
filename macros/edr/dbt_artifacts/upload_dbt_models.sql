@@ -31,6 +31,7 @@
         ('unique_key', 'string'),
         ('incremental_strategy', 'string'),
         ('group_name', 'string'),
+        ('access', 'string'),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var("include_other_warehouse_specific_columns") %}
         {% do columns.extend([('bigquery_partition_by', 'string'), ('bigquery_cluster_by', 'string')]) %}
@@ -63,7 +64,7 @@
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
     {% set tags = elementary.union_lists(tags, meta_tags) %}
-
+  
     {% set flatten_model_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'alias': node_dict.get('alias'),
@@ -88,6 +89,7 @@
         'bigquery_partition_by': config_dict.get("partition_by"),
         'bigquery_cluster_by': config_dict.get("cluster_by"),
         'group_name': config_dict.get("group") or node_dict.get("group"),
+        'access': config_dict.get("access") or node_dict.get("access"),
     } %}
     {% do flatten_model_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_model_metadata_dict)}) %}
     {{ return(flatten_model_metadata_dict) }}
