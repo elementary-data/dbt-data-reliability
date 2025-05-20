@@ -277,3 +277,17 @@ class DbtProject:
             YAML().dump(content, f)
         yield path
         path.unlink()
+
+    def assert_table_exists(self, table_name: str):
+        table_exists_query = f"""
+            select 1
+            from information_schema.tables
+            where table_name = '{table_name}'
+        """
+        try:
+            table_exists_result = self.run_query(table_exists_query)
+        except IndexError:
+            table_exists_result = []
+        except Exception as e:
+            raise AssertionError(f"Failed to check if {table_name} exists: {e}")
+        assert table_exists_result, f"{table_name} table does not exist. The artifact was not created."
