@@ -1,3 +1,5 @@
+import contextlib
+
 import pytest
 from dbt_project import DbtProject
 
@@ -19,9 +21,11 @@ GROUP_CONFIG = {
 }
 
 
+@contextlib.contextmanager
 def _write_group_config(dbt_project: DbtProject, group_config: dict, name: str):
-    """Helper to write a group config YAML file in the dbt project."""
-    return dbt_project.write_yaml(group_config, name=name)
+    """Context manager to write a group config YAML file in the dbt project and clean up after."""
+    with dbt_project.write_yaml(group_config, name=name) as file_path:
+        yield file_path
 
 
 def _get_group_from_table(
@@ -118,10 +122,10 @@ def test_dbt_groups_artifact_parametrized(
         ), f"Group {group_name} not found in dbt_groups artifact table."
         assert (
             group.get("owner_name") == owner_name
-        ), f"Expected owner name {owner_name}, got {group.get('owner_name')}"
+        ), f"Expected owner name '{owner_name}', got '{group.get('owner_name')}'"
         assert (
             group.get("owner_email") == owner_email
-        ), f"Expected owner email {owner_email}, got {group.get('owner_email')}"
+        ), f"Expected owner email: '{owner_email}', got '{group.get('owner_email')}'"
 
 
 def test_model_group_attribute(dbt_project: DbtProject):
