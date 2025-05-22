@@ -1,4 +1,9 @@
+"""
+Integration tests for dbt group and owner artifact handling.
+Covers models, tests, seeds, and snapshots group assignment and artifact table correctness.
+"""
 import contextlib
+import uuid
 
 import pytest
 from dbt_project import DbtProject
@@ -104,7 +109,7 @@ def _normalize_empty(val):
     ],
 )
 def test_dbt_groups_artifact_parametrized(
-    dbt_project: DbtProject, group_config, expected_groups, test_name
+    dbt_project: DbtProject, group_config, expected_groups, test_name, tmp_path
 ):
     """
     Parametrized test for group artifact scenarios:
@@ -113,13 +118,31 @@ def test_dbt_groups_artifact_parametrized(
     - Two groups, each with owner
     Asserts that the group(s) and owner details are present and correct in the dbt_groups artifact table.
     """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    # Patch group and owner names to be unique
+    patched_group_config = {"groups": []}
+    patched_expected_groups = []
+    for i, group in enumerate(group_config["groups"]):
+        group_name = f"{group['name']}_{unique_id}_{i}"
+        owner = group.get("owner", {})
+        patched_owner = dict(owner)
+        patched_group = dict(group)
+        patched_group["name"] = group_name
+        patched_group["owner"] = patched_owner
+        patched_group_config["groups"].append(patched_group)
+    for i, (group_name, owner_name, owner_email) in enumerate(expected_groups):
+        patched_expected_groups.append(
+            (f"{group_name}_{unique_id}_{i}", owner_name, owner_email)
+        )
     with _write_group_config(
-        dbt_project, group_config, name=f"groups_test_{test_name}.yml"
+        dbt_project,
+        patched_group_config,
+        name=f"groups_test_{test_name}_{unique_id}.yml",
     ):
         dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
         dbt_project.dbt_runner.run()
         dbt_project.assert_table_exists("dbt_groups")
-    for group_name, owner_name, owner_email in expected_groups:
+    for group_name, owner_name, owner_email in patched_expected_groups:
         group = _get_group_from_table(dbt_project, group_name)
         assert (
             group is not None
@@ -132,12 +155,14 @@ def test_dbt_groups_artifact_parametrized(
         ), f"Expected owner email: '{owner_email}', got '{group.get('owner_email')}'"
 
 
-def test_model_group_attribute(dbt_project: DbtProject):
+def test_model_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a model assigned to a group inherits the group attribute in the dbt_models artifact table.
     Asserts that the model row has the correct group_name.
     """
-    model_name = "model_with_group"
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_with_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
     model_sql = """
     select 1 as col
     """
@@ -146,17 +171,32 @@ def test_model_group_attribute(dbt_project: DbtProject):
         "models": [
             {
                 "name": model_name,
-                "group": GROUP_NAME,
+                "group": group_name,
                 "description": "A model assigned to a group for testing",
             }
         ],
     }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {
+                    "name": OWNER_NAME,
+                    "email": OWNER_EMAIL,
+                },
+            }
+        ]
+    }
     with _write_group_config(
-        dbt_project, GROUP_CONFIG, name="groups_test_model_inherits.yml"
-    ), dbt_project.write_yaml(schema_yaml, name="schema_model_with_group.yml"):
-        model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
-        model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_project, group_config, name=f"groups_test_model_inherits_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_model_with_group_{unique_id}.yml"
+    ):
+        model_path = tmp_path / f"{model_name}.sql"
         model_path.write_text(model_sql)
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
@@ -167,25 +207,27 @@ def test_model_group_attribute(dbt_project: DbtProject):
             assert len(models) == 1, f"Expected 1 model, got {len(models)}"
             model_row = models[0]
             assert (
-                model_row["group_name"] == GROUP_NAME
-            ), f"Expected group_name {GROUP_NAME}, got {model_row['group_name']}"
+                model_row["group_name"] == group_name
+            ), f"Expected group_name {group_name}, got {model_row['group_name']}"
         finally:
-            if model_path.exists():
-                model_path.unlink()
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
 
 
-def test_test_group_attribute(dbt_project: DbtProject):
+def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a test on a model assigned to a group inherits the group attribute in the dbt_tests artifact table.
     Asserts that the test row has the correct group_name.
     """
-    model_name = "model_with_group"
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_with_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
     schema_yaml = {
         "version": 2,
         "models": [
             {
                 "name": model_name,
-                "group": GROUP_NAME,
+                "group": group_name,
                 "description": "A model assigned to a group for testing",
                 "columns": [{"name": "col", "tests": ["unique"]}],
             }
@@ -194,12 +236,27 @@ def test_test_group_attribute(dbt_project: DbtProject):
     model_sql = """
     select 1 as col
     """
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {
+                    "name": OWNER_NAME,
+                    "email": OWNER_EMAIL,
+                },
+            }
+        ]
+    }
     with _write_group_config(
-        dbt_project, GROUP_CONFIG, name="groups_test_model_inherits.yml"
-    ), dbt_project.write_yaml(schema_yaml, name="schema_model_with_group.yml"):
-        model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
-        model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_project, group_config, name=f"groups_test_model_inherits_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_model_with_group_{unique_id}.yml"
+    ):
+        model_path = tmp_path / f"{model_name}.sql"
         model_path.write_text(model_sql)
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
@@ -210,22 +267,22 @@ def test_test_group_attribute(dbt_project: DbtProject):
             assert len(tests) == 1, f"Expected 1 test, got {len(tests)}"
             test_row = tests[0]
             assert (
-                test_row["group_name"] == GROUP_NAME
-            ), f"Expected group_name {GROUP_NAME}, got {test_row['group_name']}"
+                test_row["group_name"] == group_name
+            ), f"Expected group_name {group_name}, got {test_row['group_name']}"
         finally:
-            if model_path.exists():
-                model_path.unlink()
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
 
 
-def test_test_override_group(dbt_project: DbtProject):
+def test_test_override_group(dbt_project: DbtProject, tmp_path):
     """
     Test that a singular test defined in schema.yml, which belongs to a model with a group, but also has a config: section with another group,
     uses the group from the config in the dbt_tests artifact table.
     """
-    model_name = "model_with_group"
-    test_group = GROUP_NAME
-    override_group = "override_group"
-    # Write group config with both groups
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_with_group_{unique_id}"
+    test_group = f"test_group_{unique_id}"
+    override_group = f"override_group_{unique_id}"
     group_config = {
         "groups": [
             {"name": test_group, "owner": {"name": OWNER_NAME, "email": OWNER_EMAIL}},
@@ -255,11 +312,15 @@ def test_test_override_group(dbt_project: DbtProject):
     select 1 as col
     """
     with _write_group_config(
-        dbt_project, group_config, name="groups_test_override_group.yml"
-    ), dbt_project.write_yaml(schema_yaml, name="schema_model_with_override_group.yml"):
-        model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
-        model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_project, group_config, name=f"groups_test_override_group_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_model_with_override_group_{unique_id}.yml"
+    ):
+        model_path = tmp_path / f"{model_name}.sql"
         model_path.write_text(model_sql)
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
@@ -273,61 +334,82 @@ def test_test_override_group(dbt_project: DbtProject):
                 test_row["group_name"] == override_group
             ), f"Expected group_name {override_group}, got {test_row['group_name']}"
         finally:
-            if model_path.exists():
-                model_path.unlink()
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
 
 
-def test_seed_group_attribute(dbt_project: DbtProject):
+@contextlib.contextmanager
+def cleanup_file(path):
+    try:
+        yield
+    finally:
+        if path.exists():
+            path.unlink()
+
+
+def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a seed assigned to a group inherits the group attribute in the dbt_seeds artifact table.
     Asserts that the seed row has the correct group_name.
     """
-    seed_name = "seed_with_group"
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    seed_name = f"seed_with_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
     seed_csv = """id,value\n1,foo\n2,bar\n"""
-
     schema_yaml = {
         "version": 2,
         "seeds": [
             {
                 "name": seed_name,
-                "group": GROUP_NAME,
+                "group": group_name,
                 "description": "A seed assigned to a group for testing",
             }
         ],
     }
-
-    seed_path = dbt_project.seeds_dir_path / f"{seed_name}.csv"
-    try:
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {
+                    "name": OWNER_NAME,
+                    "email": OWNER_EMAIL,
+                },
+            }
+        ]
+    }
+    seed_path = tmp_path / f"{seed_name}.csv"
+    dbt_seed_path = dbt_project.seeds_dir_path / f"{seed_name}.csv"
+    with cleanup_file(dbt_seed_path):
         with _write_group_config(
-            dbt_project, GROUP_CONFIG, name="groups_test_seed_inherits.yml"
-        ), dbt_project.write_yaml(schema_yaml, name="schema_seed_with_group.yml"):
-            seed_path.parent.mkdir(parents=True, exist_ok=True)
+            dbt_project, group_config, name=f"groups_test_seed_inherits_{unique_id}.yml"
+        ), dbt_project.write_yaml(
+            schema_yaml, name=f"schema_seed_with_group_{unique_id}.yml"
+        ):
             seed_path.write_text(seed_csv)
+            dbt_seed_path.parent.mkdir(parents=True, exist_ok=True)
+            dbt_seed_path.write_text(seed_csv)
             # Run dbt seed
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.seed(select=seed_name)
-
             dbt_project.assert_table_exists("dbt_seeds")
-
             seeds = dbt_project.read_table(
                 "dbt_seeds", where=f"name = '{seed_name}'", raise_if_empty=True
             )
             assert len(seeds) == 1, f"Expected 1 seed, got {len(seeds)}"
             seed_row = seeds[0]
             assert (
-                seed_row["group_name"] == GROUP_NAME
-            ), f"Expected group_name {GROUP_NAME}, got {seed_row['group_name']}"
-    finally:
-        if seed_path.exists():
-            seed_path.unlink()
+                seed_row["group_name"] == group_name
+            ), f"Expected group_name {group_name}, got {seed_row['group_name']}"
 
 
-def test_snapshot_group_attribute(dbt_project: DbtProject):
+def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a snapshot assigned to a group inherits the group attribute in the dbt_snapshots artifact table.
     Asserts that the snapshot row has the correct group_name.
     """
-    snapshot_name = "snapshot_with_group"
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    snapshot_name = f"snapshot_with_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
     snapshot_sql = (
         "{% snapshot " + snapshot_name + " %}\n"
         "{{ config(\n"
@@ -343,32 +425,43 @@ def test_snapshot_group_attribute(dbt_project: DbtProject):
         "snapshots": [
             {
                 "name": snapshot_name,
-                "group": GROUP_NAME,
+                "group": group_name,
                 "description": "A snapshot assigned to a group for testing",
             }
         ],
     }
-    snapshots_dir = dbt_project.project_dir_path / "snapshots"
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {
+                    "name": OWNER_NAME,
+                    "email": OWNER_EMAIL,
+                },
+            }
+        ]
+    }
+    snapshots_dir = tmp_path / "snapshots"
     snapshot_path = snapshots_dir / f"{snapshot_name}.sql"
-    try:
+    dbt_snapshots_dir = dbt_project.project_dir_path / "snapshots"
+    dbt_snapshot_path = dbt_snapshots_dir / f"{snapshot_name}.sql"
+    with cleanup_file(dbt_snapshot_path):
         with _write_group_config(
-            dbt_project, GROUP_CONFIG, name="groups_test_snapshot_inherits.yml"
-        ), dbt_project.write_yaml(schema_yaml, name="schema_snapshot_with_group.yml"):
+            dbt_project,
+            group_config,
+            name=f"groups_test_snapshot_inherits_{unique_id}.yml",
+        ), dbt_project.write_yaml(
+            schema_yaml, name=f"schema_snapshot_with_group_{unique_id}.yml"
+        ):
             snapshots_dir.mkdir(parents=True, exist_ok=True)
             snapshot_path.write_text(snapshot_sql)
-            # Debug: print file existence and directory contents
-            print(
-                f"DEBUG: Snapshot file exists: {snapshot_path.exists()} at {snapshot_path}"
-            )
-            print(
-                f"DEBUG: Snapshots dir contents: {list(snapshots_dir.iterdir()) if snapshots_dir.exists() else 'DIR DOES NOT EXIST'}"
-            )
+            # Copy to dbt project snapshots dir
+            dbt_snapshots_dir.mkdir(parents=True, exist_ok=True)
+            dbt_snapshot_path.write_text(snapshot_sql)
             # Run dbt snapshot (runs all snapshots, as selecting is not supported by the runner)
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run()
-
             dbt_project.assert_table_exists("dbt_snapshots")
-
             snapshots = dbt_project.read_table(
                 "dbt_snapshots", where=f"name = '{snapshot_name}'", raise_if_empty=False
             )
@@ -378,11 +471,5 @@ def test_snapshot_group_attribute(dbt_project: DbtProject):
             assert len(snapshots) == 1, f"Expected 1 snapshot, got {len(snapshots)}"
             snapshot_row = snapshots[0]
             assert (
-                snapshot_row["group_name"] == GROUP_NAME
-            ), f"Expected group_name {GROUP_NAME}, got {snapshot_row['group_name']}"
-    finally:
-        if snapshot_path.exists():
-            snapshot_path.unlink()
-        # Optionally clean up the snapshots_dir if empty
-        if snapshots_dir.exists() and not any(snapshots_dir.iterdir()):
-            snapshots_dir.rmdir()
+                snapshot_row["group_name"] == group_name
+            ), f"Expected group_name {group_name}, got {snapshot_row['group_name']}"
