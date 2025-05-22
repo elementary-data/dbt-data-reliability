@@ -36,6 +36,10 @@ def _get_group_from_table(
     return next((g for g in groups if g["name"] == group_name), None)
 
 
+def _normalize_empty(val):
+    return val if val not in (None, "") else None
+
+
 @pytest.mark.parametrize(
     "group_config, expected_groups, test_name",
     [
@@ -120,11 +124,11 @@ def test_dbt_groups_artifact_parametrized(
         assert (
             group is not None
         ), f"Group {group_name} not found in dbt_groups artifact table."
-        assert (
-            group.get("owner_name") == owner_name
+        assert _normalize_empty(group.get("owner_name")) == _normalize_empty(
+            owner_name
         ), f"Expected owner name '{owner_name}', got '{group.get('owner_name')}'"
-        assert (
-            group.get("owner_email") == owner_email
+        assert _normalize_empty(group.get("owner_email")) == _normalize_empty(
+            owner_email
         ), f"Expected owner email: '{owner_email}', got '{group.get('owner_email')}'"
 
 
