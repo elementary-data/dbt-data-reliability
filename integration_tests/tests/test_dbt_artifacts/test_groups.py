@@ -56,12 +56,11 @@ def print_dbt_log_tail(n=40):
 
 def run_dbt_and_check(cmd, *args, **kwargs):
     result = cmd(*args, **kwargs)
+    print_dbt_log_tail()  # Always print log tail
     # If result is a dict or object, check for success
     if hasattr(result, "success") and not result.success:
-        print_dbt_log_tail()
         assert False, f"dbt command failed: {result}"
     elif isinstance(result, dict) and not result.get("success", True):
-        print_dbt_log_tail()
         assert False, f"dbt command failed: {result}"
     # If result is None, rely on downstream assertions
     return result
