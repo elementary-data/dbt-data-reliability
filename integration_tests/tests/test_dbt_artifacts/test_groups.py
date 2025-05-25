@@ -45,121 +45,15 @@ def _normalize_empty(val):
     return val if val not in (None, "") else None
 
 
-@pytest.mark.parametrize(
-    "group_config, expected_groups, test_name",
-    [
-        # Single group with owner name and email
-        (
-            GROUP_CONFIG,
-            [(GROUP_NAME, OWNER_NAME, OWNER_EMAIL)],
-            "single_group",
-        ),
-        # Single group with name only, no email
-        (
-            {"groups": [{"name": GROUP_NAME, "owner": {"name": OWNER_NAME}}]},
-            [(GROUP_NAME, OWNER_NAME, None)],
-            "single_group_without_email",
-        ),
-        # Single group with email only, no name
-        (
-            {"groups": [{"name": GROUP_NAME, "owner": {"email": OWNER_EMAIL}}]},
-            [(GROUP_NAME, None, OWNER_EMAIL)],
-            "single_group_without_name",
-        ),
-        # Single group with owner additional fields
-        (
-            {
-                "groups": [
-                    {
-                        "name": GROUP_NAME,
-                        "owner": {"email": OWNER_EMAIL, "slack": "slack_channel"},
-                    }
-                ]
-            },
-            [(GROUP_NAME, None, OWNER_EMAIL)],
-            "single_group_with_additional_fields",
-        ),
-        # Two groups, each with owner
-        (
-            {
-                "groups": [
-                    {
-                        "name": "test_group_1",
-                        "owner": {"name": "Owner One", "email": "owner1@example.com"},
-                    },
-                    {
-                        "name": "test_group_2",
-                        "owner": {"name": "Owner Two", "email": "owner2@example.com"},
-                    },
-                ]
-            },
-            [
-                ("test_group_1", "Owner One", "owner1@example.com"),
-                ("test_group_2", "Owner Two", "owner2@example.com"),
-            ],
-            "two_groups",
-        ),
-    ],
-    ids=[
-        "single_group",
-        "single_group_without_email",
-        "single_group_without_name",
-        "single_group_with_additional_fields",
-        "two_groups",
-    ],
-)
-def test_dbt_groups_artifact_parametrized(
-    dbt_project: DbtProject, group_config, expected_groups, test_name, tmp_path
-):
-    """
-    Parametrized test for group artifact scenarios:
-    - Single group with owner (name and email)
-    - Single group with owner (name only, no email)
-    - Two groups, each with owner
-    Asserts that the group(s) and owner details are present and correct in the dbt_groups artifact table.
-    """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
-    # Patch group and owner names to be unique
-    patched_group_config = {"groups": []}
-    patched_expected_groups = []
-    for i, group in enumerate(group_config["groups"]):
-        group_name = f"{group['name']}_{unique_id}_{i}"
-        owner = group.get("owner", {})
-        patched_owner = dict(owner)
-        patched_group = dict(group)
-        patched_group["name"] = group_name
-        patched_group["owner"] = patched_owner
-        patched_group_config["groups"].append(patched_group)
-    for i, (group_name, owner_name, owner_email) in enumerate(expected_groups):
-        patched_expected_groups.append(
-            (f"{group_name}_{unique_id}_{i}", owner_name, owner_email)
-        )
-    with _write_group_config(
-        dbt_project,
-        patched_group_config,
-        name=f"groups_test_{test_name}_{unique_id}.yml",
-    ):
-        dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
-        dbt_project.dbt_runner.run()
-        dbt_project.assert_table_exists("dbt_groups")
-    for group_name, owner_name, owner_email in patched_expected_groups:
-        group = _get_group_from_table(dbt_project, group_name)
-        assert (
-            group is not None
-        ), f"Group {group_name} not found in dbt_groups artifact table."
-        assert _normalize_empty(group.get("owner_name")) == _normalize_empty(
-            owner_name
-        ), f"Expected owner name '{owner_name}', got '{group.get('owner_name')}'"
-        assert _normalize_empty(group.get("owner_email")) == _normalize_empty(
-            owner_email
-        ), f"Expected owner email: '{owner_email}', got '{group.get('owner_email')}'"
-
-
-def test_model_group_attribute(dbt_project: DbtProject, tmp_path):
+def test_model_and_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that a model assigned to a group inherits the group attribute in the dbt_models artifact table.
     Asserts that the model row has the correct group_name.
+    Asserts that the group exists in the dbt_groups artifact table.
+    This test tests both things although it is not a best practice. We decided to do it
+    to save running time since these tests are very slow.
     """
+
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_with_group_{unique_id}"
     group_name = f"test_group_{unique_id}"
@@ -201,6 +95,7 @@ def test_model_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
             dbt_project.assert_table_exists("dbt_models")
+
             models = dbt_project.read_table(
                 "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
             )
@@ -209,9 +104,130 @@ def test_model_group_attribute(dbt_project: DbtProject, tmp_path):
             assert (
                 model_row["group_name"] == group_name
             ), f"Expected group_name {group_name}, got {model_row['group_name']}"
+
+            # Assert group exists in dbt_groups table
+            group_row = _get_group_from_table(dbt_project, group_name)
+            assert (
+                group_row is not None
+            ), f"Group {group_name} not found in dbt_groups artifact table."
+            assert _normalize_empty(group_row.get("owner_name")) == _normalize_empty(
+                OWNER_NAME
+            ), f"Expected owner name '{OWNER_NAME}', got '{group_row.get('owner_name')}'"
+            assert _normalize_empty(group_row.get("owner_email")) == _normalize_empty(
+                OWNER_EMAIL
+            ), f"Expected owner email '{OWNER_EMAIL}', got '{group_row.get('owner_email')}'"
+
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()
+
+
+def test_two_groups(dbt_project: DbtProject, tmp_path):
+    """
+    Test that two models assigned to two different groups inherit the correct group attribute in the dbt_models artifact table.
+    Asserts that both model rows have the correct group_name, and both groups exist in dbt_groups.
+    This test also tests that dbt_groups is filled with the correct owner info when name or email are not provided.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name_1 = f"model_1_with_group_{unique_id}"
+    model_name_2 = f"model_2_with_group_{unique_id}"
+    group_name_1 = f"test_group_1_{unique_id}"
+    group_name_2 = f"test_group_2_{unique_id}"
+    owner_email_1 = OWNER_EMAIL
+    owner_name_2 = "Other Owner"
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name_1,
+                "group": group_name_1,
+                "description": "A model assigned to group 1 for testing",
+            },
+            {
+                "name": model_name_2,
+                "group": group_name_2,
+                "description": "A model assigned to group 2 for testing",
+            },
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name_1,
+                "owner": {
+                    "email": owner_email_1,
+                    "slack": "slack_channel_1",
+                },
+            },
+            {
+                "name": group_name_2,
+                "owner": {
+                    "name": owner_name_2,
+                },
+            },
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_test_two_groups_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_model_with_two_groups_{unique_id}.yml"
+    ):
+        # Write both model files
+        model_path_1 = tmp_path / f"{model_name_1}.sql"
+        model_path_2 = tmp_path / f"{model_name_2}.sql"
+        model_path_1.write_text(model_sql)
+        model_path_2.write_text(model_sql)
+        dbt_model_path_1 = dbt_project.models_dir_path / "tmp" / f"{model_name_1}.sql"
+        dbt_model_path_2 = dbt_project.models_dir_path / "tmp" / f"{model_name_2}.sql"
+        dbt_model_path_1.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path_1.write_text(model_sql)
+        dbt_model_path_2.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path_2.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(select=f"{model_name_1} {model_name_2}")
+            dbt_project.assert_table_exists("dbt_models")
+
+            # Check both models and their groups/owners
+            for model_name, group_name, owner_name, owner_email in [
+                (model_name_1, group_name_1, None, owner_email_1),
+                (model_name_2, group_name_2, owner_name_2, None),
+            ]:
+                models = dbt_project.read_table(
+                    "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+                )
+                assert (
+                    len(models) == 1
+                ), f"Expected 1 model for {model_name}, got {len(models)}"
+                model_row = models[0]
+                assert (
+                    model_row["group_name"] == group_name
+                ), f"Expected group_name {group_name}, got {model_row['group_name']} for model {model_name}"
+
+                # Assert group exists in dbt_groups table and owner info is correct
+                group_row = _get_group_from_table(dbt_project, group_name)
+                assert (
+                    group_row is not None
+                ), f"Group {group_name} not found in dbt_groups artifact table."
+                assert _normalize_empty(
+                    group_row.get("owner_name")
+                ) == _normalize_empty(
+                    owner_name
+                ), f"Expected owner name '{owner_name}', got '{group_row.get('owner_name')}'"
+                assert _normalize_empty(
+                    group_row.get("owner_email")
+                ) == _normalize_empty(
+                    owner_email
+                ), f"Expected owner email '{owner_email}', got '{group_row.get('owner_email')}'"
+
+        finally:
+            if dbt_model_path_1.exists():
+                dbt_model_path_1.unlink()
+            if dbt_model_path_2.exists():
+                dbt_model_path_2.unlink()
 
 
 def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
@@ -462,7 +478,7 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_snapshot_path.write_text(snapshot_sql)
             # Run dbt snapshot (runs all snapshots, as selecting is not supported by the runner)
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
-            dbt_project.dbt_runner.run()
+            dbt_project.dbt_runner.snapshot()
             dbt_project.assert_table_exists("dbt_snapshots")
             snapshots = dbt_project.read_table(
                 "dbt_snapshots", where=f"name = '{snapshot_name}'", raise_if_empty=False
