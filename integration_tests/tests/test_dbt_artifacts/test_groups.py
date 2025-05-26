@@ -138,7 +138,6 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.run(select=model_name)
-            dbt_project.assert_table_exists("dbt_models")
 
             models = dbt_project.read_table(
                 "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
@@ -228,7 +227,6 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.run(select=f"{model_name_1} {model_name_2}")
-            dbt_project.assert_table_exists("dbt_models")
 
             # Check both models and their groups/owners
             assert_group_row_in_db_groups(
@@ -297,7 +295,6 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
-            dbt_project.assert_table_exists("dbt_tests")
             tests = dbt_project.read_table(
                 "dbt_tests", where="name LIKE 'unique%'", raise_if_empty=True
             )
@@ -362,7 +359,6 @@ def test_test_override_group(dbt_project: DbtProject, tmp_path):
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.run(select=model_name)
-            dbt_project.assert_table_exists("dbt_tests")
             tests = dbt_project.read_table(
                 "dbt_tests", where="name LIKE 'unique%'", raise_if_empty=True
             )
@@ -430,7 +426,6 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.seed(select=seed_name)
-            dbt_project.assert_table_exists("dbt_seeds")
             seeds = dbt_project.read_table(
                 "dbt_seeds", where=f"name = '{seed_name}'", raise_if_empty=True
             )
@@ -507,7 +502,6 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.snapshot()
-            dbt_project.assert_table_exists("dbt_snapshots")
 
             snapshots = dbt_project.read_table(
                 "dbt_snapshots", where=f"name = '{snapshot_name}'", raise_if_empty=False
