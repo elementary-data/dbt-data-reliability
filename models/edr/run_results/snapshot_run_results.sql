@@ -31,6 +31,7 @@ SELECT
     run_results.compiled_code,
     run_results.adapter_response,
     run_results.thread_id,
+    run_results.group_name,
     snapshots.database_name,
     snapshots.schema_name,
     coalesce(run_results.materialization, snapshots.materialization) as materialization,
