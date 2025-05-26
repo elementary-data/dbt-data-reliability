@@ -45,6 +45,49 @@ def _normalize_empty(val):
     return val if val not in (None, "") else None
 
 
+def assert_group_name_in_run_results_view(
+    dbt_project, view_name, object_name, group_name
+):
+    """Assert that the view_run_results table has exactly one row for model_name and its group_name matches."""
+    view_run_results = dbt_project.read_table(
+        view_name, where=f"name = '{object_name}'", raise_if_empty=True
+    )
+
+    assert (
+        len(view_run_results) == 1
+    ), f"Expected 1 view run result, got {len(view_run_results)}"
+    view_run_result_row = view_run_results[0]
+    assert (
+        view_run_result_row["group_name"] == group_name
+    ), f"Expected group_name '{group_name}', got '{view_run_result_row['group_name']}'"
+
+
+def assert_group_name_in_run_results(dbt_project, model_name, group_name):
+    assert_group_name_in_run_results_view(
+        dbt_project, "dbt_run_results", model_name, group_name
+    )
+
+
+def assert_group_name_in_model_run_results(dbt_project, model_name, group_name):
+    assert_group_name_in_run_results_view(
+        dbt_project, "model_run_results", model_name, group_name
+    )
+
+
+def assert_group_row_in_db_groups(dbt_project, group_name, owner_name, owner_email):
+    """Assert that the group exists in dbt_groups and owner info matches."""
+    group_row = _get_group_from_table(dbt_project, group_name)
+    assert (
+        group_row is not None
+    ), f"Group {group_name} not found in dbt_groups artifact table."
+    assert _normalize_empty(group_row.get("owner_name")) == _normalize_empty(
+        owner_name
+    ), f"Expected owner name '{owner_name}', got '{group_row.get('owner_name')}'"
+    assert _normalize_empty(group_row.get("owner_email")) == _normalize_empty(
+        owner_email
+    ), f"Expected owner email '{owner_email}', got '{group_row.get('owner_email')}'"
+
+
 def test_model_and_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that a model assigned to a group inherits the group attribute in the dbt_models artifact table.
@@ -93,6 +136,7 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
         dbt_model_path.write_text(model_sql)
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.run(select=model_name)
             dbt_project.assert_table_exists("dbt_models")
 
@@ -105,17 +149,11 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
                 model_row["group_name"] == group_name
             ), f"Expected group_name {group_name}, got {model_row['group_name']}"
 
-            # Assert group exists in dbt_groups table
-            group_row = _get_group_from_table(dbt_project, group_name)
-            assert (
-                group_row is not None
-            ), f"Group {group_name} not found in dbt_groups artifact table."
-            assert _normalize_empty(group_row.get("owner_name")) == _normalize_empty(
-                OWNER_NAME
-            ), f"Expected owner name '{OWNER_NAME}', got '{group_row.get('owner_name')}'"
-            assert _normalize_empty(group_row.get("owner_email")) == _normalize_empty(
-                OWNER_EMAIL
-            ), f"Expected owner email '{OWNER_EMAIL}', got '{group_row.get('owner_email')}'"
+            assert_group_row_in_db_groups(
+                dbt_project, group_name, OWNER_NAME, OWNER_EMAIL
+            )
+            assert_group_name_in_run_results(dbt_project, model_name, group_name)
+            assert_group_name_in_model_run_results(dbt_project, model_name, group_name)
 
         finally:
             if dbt_model_path.exists():
@@ -188,40 +226,23 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
         dbt_model_path_2.write_text(model_sql)
         try:
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.run(select=f"{model_name_1} {model_name_2}")
             dbt_project.assert_table_exists("dbt_models")
 
             # Check both models and their groups/owners
-            for model_name, group_name, owner_name, owner_email in [
-                (model_name_1, group_name_1, None, owner_email_1),
-                (model_name_2, group_name_2, owner_name_2, None),
-            ]:
-                models = dbt_project.read_table(
-                    "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
-                )
-                assert (
-                    len(models) == 1
-                ), f"Expected 1 model for {model_name}, got {len(models)}"
-                model_row = models[0]
-                assert (
-                    model_row["group_name"] == group_name
-                ), f"Expected group_name {group_name}, got {model_row['group_name']} for model {model_name}"
-
-                # Assert group exists in dbt_groups table and owner info is correct
-                group_row = _get_group_from_table(dbt_project, group_name)
-                assert (
-                    group_row is not None
-                ), f"Group {group_name} not found in dbt_groups artifact table."
-                assert _normalize_empty(
-                    group_row.get("owner_name")
-                ) == _normalize_empty(
-                    owner_name
-                ), f"Expected owner name '{owner_name}', got '{group_row.get('owner_name')}'"
-                assert _normalize_empty(
-                    group_row.get("owner_email")
-                ) == _normalize_empty(
-                    owner_email
-                ), f"Expected owner email '{owner_email}', got '{group_row.get('owner_email')}'"
+            assert_group_row_in_db_groups(
+                dbt_project, group_name_1, None, owner_email_1
+            )
+            assert_group_row_in_db_groups(dbt_project, group_name_2, owner_name_2, None)
+            assert_group_name_in_run_results(dbt_project, model_name_1, group_name_1)
+            assert_group_name_in_run_results(dbt_project, model_name_2, group_name_2)
+            assert_group_name_in_model_run_results(
+                dbt_project, model_name_1, group_name_1
+            )
+            assert_group_name_in_model_run_results(
+                dbt_project, model_name_2, group_name_2
+            )
 
         finally:
             if dbt_model_path_1.exists():
@@ -407,6 +428,7 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_seed_path.write_text(seed_csv)
             # Run dbt seed
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.seed(select=seed_name)
             dbt_project.assert_table_exists("dbt_seeds")
             seeds = dbt_project.read_table(
@@ -417,6 +439,11 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
             assert (
                 seed_row["group_name"] == group_name
             ), f"Expected group_name {group_name}, got {seed_row['group_name']}"
+
+            assert_group_name_in_run_results(dbt_project, seed_name, group_name)
+            assert_group_name_in_run_results_view(
+                dbt_project, "seed_run_results", seed_name, group_name
+            )
 
 
 def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
@@ -478,8 +505,10 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             dbt_snapshot_path.write_text(snapshot_sql)
             # Run dbt snapshot (runs all snapshots, as selecting is not supported by the runner)
             dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.vars["disable_run_results"] = False
             dbt_project.dbt_runner.snapshot()
             dbt_project.assert_table_exists("dbt_snapshots")
+
             snapshots = dbt_project.read_table(
                 "dbt_snapshots", where=f"name = '{snapshot_name}'", raise_if_empty=False
             )
@@ -491,3 +520,8 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             assert (
                 snapshot_row["group_name"] == group_name
             ), f"Expected group_name {group_name}, got {snapshot_row['group_name']}"
+
+            assert_group_name_in_run_results(dbt_project, snapshot_name, group_name)
+            assert_group_name_in_run_results_view(
+                dbt_project, "snapshot_run_results", snapshot_name, group_name
+            )
