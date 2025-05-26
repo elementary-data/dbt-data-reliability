@@ -1,7 +1,6 @@
 {%- macro upload_dbt_groups(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_groups') %}
     {% if execute and relation %}
-        {# % do debug() % #}
         {% set groups = graph.groups.values() | selectattr('resource_type', '==', 'group') %}
         {% do elementary.upload_artifacts_to_table(relation, groups, elementary.flatten_group, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
