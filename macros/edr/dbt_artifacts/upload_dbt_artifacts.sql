@@ -8,7 +8,6 @@
       "dbt_metrics": elementary.upload_dbt_metrics,
       "dbt_exposures": elementary.upload_dbt_exposures,
       "dbt_seeds": elementary.upload_dbt_seeds,
-      "dbt_groups": elementary.upload_dbt_groups,
       }
     %}
 

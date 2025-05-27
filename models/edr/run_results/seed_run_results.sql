@@ -31,7 +31,6 @@ SELECT
     run_results.compiled_code,
     run_results.adapter_response,
     run_results.thread_id,
-    run_results.group_name,
     seeds.database_name,
     seeds.schema_name,
     run_results.materialization,

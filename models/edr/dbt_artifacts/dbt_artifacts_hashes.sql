@@ -14,7 +14,6 @@
   "dbt_exposures",
   "dbt_seeds",
   "dbt_columns",
-  "dbt_groups",
 ] %}
 
 {% for artifact_model in artifact_models %}

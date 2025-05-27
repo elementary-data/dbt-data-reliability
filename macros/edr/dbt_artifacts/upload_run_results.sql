@@ -31,8 +31,7 @@
                                                                        ('query_id', 'string'),
                                                                        ('thread_id', 'string'),
                                                                        ('materialization', 'string'),
-                                                                       ('adapter_response', 'string'),
-                                                                       ('group_name', 'string'),
+                                                                       ('adapter_response', 'string')
                                                                        ]) %}
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
@@ -62,8 +61,7 @@
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
         'materialization': config_dict.get('materialized'),
-        'adapter_response': run_result_dict.get('adapter_response', {}),
-        'group_name': config_dict.get('group'),
+        'adapter_response': run_result_dict.get('adapter_response', {})
     } %}
 
     {% set timings = elementary.safe_get_with_default(run_result_dict, 'timing', []) %}

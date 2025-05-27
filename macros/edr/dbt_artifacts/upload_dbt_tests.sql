@@ -38,8 +38,7 @@
                                                                  ('path', 'string'),
                                                                  ('generated_at', 'string'),
                                                                  ('metadata_hash', 'string'),
-                                                                 ('quality_dimension', 'string'),
-                                                                 ('group_name', 'string'),
+                                                                 ('quality_dimension', 'string')
                                                                  ]) %}
     {{ return(dbt_tests_empty_table_query) }}
 {% endmacro %}
@@ -174,8 +173,7 @@
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'quality_dimension': meta_dict.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace),
-        'group_name': config_dict.get("group") or node_dict.get("group"),
+        'quality_dimension': meta_dict.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace)
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
