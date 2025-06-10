@@ -83,10 +83,12 @@ def test_dbt_artifacts_hashes(dbt_project: DbtProject):
     dbt_project.read_table("dbt_artifacts_hashes", raise_if_empty=False)
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_threshold_sensitivity(dbt_project: DbtProject):
     dbt_project.read_table("anomaly_threshold_sensitivity", raise_if_empty=False)
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_metrics_anomaly_score(dbt_project: DbtProject):
     dbt_project.read_table("metrics_anomaly_score", raise_if_empty=False)
 

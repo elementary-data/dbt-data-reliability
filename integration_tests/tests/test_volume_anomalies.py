@@ -11,6 +11,8 @@ DBT_TEST_NAME = "elementary.volume_anomalies"
 DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN}
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -21,6 +23,8 @@ def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_table_volume_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -353,6 +357,8 @@ def test_volume_anomaly_static_data_spike(
     assert test_result["status"] == expected_result
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
@@ -508,6 +514,8 @@ def test_ignore_small_changes_both(
     assert test_result["status"] == expected_result
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_vol_anomalies_with_test_materialization(
     test_id: str, dbt_project: DbtProject
 ):
