@@ -201,6 +201,8 @@ class TestFreshnessAnomalies:
         assert result["status"] == "pass"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_first_metric_null(test_id, dbt_project: DbtProject):
     config = dict(
         timestamp_column=TIMESTAMP_COLUMN,

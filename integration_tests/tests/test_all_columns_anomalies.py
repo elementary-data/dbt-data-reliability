@@ -129,6 +129,8 @@ def test_all_columns_anomalies_with_where_expression(
     }
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_all_columns_anomalies_all_monitors_sanity(
     test_id: str, dbt_project: DbtProject
 ):
