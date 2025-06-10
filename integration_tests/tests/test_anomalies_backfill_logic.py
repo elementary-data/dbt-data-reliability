@@ -74,6 +74,8 @@ def get_latest_anomaly_test_metrics(dbt_project: DbtProject, test_id: str):
     }
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_full_backfill_for_non_incremental_model(dbt_project: DbtProject, test_id: str):
     utc_today = datetime.utcnow().date()
     data_dates = generate_dates(base_date=utc_today - timedelta(1))

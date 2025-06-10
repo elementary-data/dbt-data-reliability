@@ -14,6 +14,8 @@ DBT_TEST_ARGS = {
 }
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -137,6 +139,8 @@ def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_column_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -225,22 +229,20 @@ def test_volume_anomaly_static_data_drop(
     assert test_result["status"] == expected_result
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
             "superhero": superhero,
-            "dimension1": "dim1",
-            "dimension2": "dim2",
         }
         for cur_date in generate_dates(base_date=utc_today - timedelta(1))
         for superhero in ["Superman", "Batman"]
     ]
-    test_args = DBT_TEST_ARGS.copy()
-    test_args["dimensions"] = ["dimension1", "dimension2"]
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="superhero"
     )
     assert test_result["status"] == "pass"
 

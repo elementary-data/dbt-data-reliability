@@ -31,6 +31,8 @@ def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
     return [json.loads(result["result_row"]) for result in results]
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -49,6 +51,8 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert len(anomaly_test_points) == 0
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):

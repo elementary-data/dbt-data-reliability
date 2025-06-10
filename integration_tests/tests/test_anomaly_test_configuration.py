@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Generic, Literal, TypeVar
 
+import pytest
 from dbt_project import DbtProject
 from parametrization import Parametrization
 
@@ -112,6 +113,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
     test_config={key: value.test for key, value in PARAM_VALUES.items()},
     expected_config=_get_expected_adapted_config("test"),
 )
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_test_configuration(
     dbt_project: DbtProject,
     vars_config: dict,

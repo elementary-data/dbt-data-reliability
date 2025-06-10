@@ -10,6 +10,8 @@ UPDATE_TIMESTAMP_COLUMN = "update_timestamp"
 STEP = timedelta(hours=1)
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
     data = [
         {
