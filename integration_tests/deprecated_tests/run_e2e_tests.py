@@ -103,8 +103,34 @@ def filter_anomaly_tests_for_clickhouse(
     test_types: List[str], target: str
 ) -> List[str]:
     if target == "clickhouse":
-        # For ClickHouse, we'll only run basic artifacts tests
-        return ["artifacts"] if "artifacts" in test_types else []
+        # Tests not supported on ClickHouse
+        unsupported_test_types = {
+            # Anomaly tests (not supported in ClickHouse)
+            "seasonal_volume",
+            "table",
+            "column",
+            "directional_anomalies",
+            "backfill_days",
+            "dimension",
+            "no_timestamp",
+            # Schema and error tests (function compatibility issues)
+            "schema",
+            "error_test",
+            "error_model",
+            "error_snapshot",
+            # Models with compatibility issues
+            "create_table",
+            "non_dbt_models",
+            # Tests requiring specific database setup
+            "config_levels",
+        }
+
+        # Keep basic tests that should work with ClickHouse
+        return [
+            test_type
+            for test_type in test_types
+            if test_type not in unsupported_test_types
+        ]
     return test_types
 
 
@@ -506,18 +532,7 @@ def main(target, e2e_type, generate_data, clear_tests):
     found_failures = False
     for e2e_target in e2e_targets:
         print(f"Starting {e2e_target} tests\n")
-        # Filter tests for the current target
-        filtered_test_types = filter_anomaly_tests_for_clickhouse(e2e_types, e2e_target)
-
-        if not filtered_test_types:
-            print(
-                f"ERROR: No supported tests found for {e2e_target}. This indicates that {e2e_target} is not properly supported."
-            )
-            sys.exit(1)
-
-        e2e_test_results = e2e_tests(
-            e2e_target, filtered_test_types, clear_tests, generate_data
-        )
+        e2e_test_results = e2e_tests(e2e_target, e2e_types, clear_tests, generate_data)
         print(f"\n{e2e_target} results")
         all_results[e2e_target] = e2e_test_results
 
