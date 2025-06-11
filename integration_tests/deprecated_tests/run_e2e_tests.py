@@ -99,6 +99,26 @@ def test_artifacts_update(dbt_runner: BaseDbtRunner) -> TestResult:
     )
 
 
+def filter_anomaly_tests_for_clickhouse(
+    test_types: List[str], target: str
+) -> List[str]:
+    if target == "clickhouse":
+        # Anomaly tests are not supported on ClickHouse
+        anomaly_test_types = {
+            "seasonal_volume",
+            "table",
+            "column",
+            "directional_anomalies",
+            "backfill_days",
+            "dimension",
+            "no_timestamp",
+        }
+        return [
+            test_type for test_type in test_types if test_type not in anomaly_test_types
+        ]
+    return test_types
+
+
 def e2e_tests(
     target: str,
     test_types: List[str],
@@ -106,6 +126,9 @@ def e2e_tests(
     generate_data: bool,
 ) -> TestResults:
     test_results = TestResults()
+
+    # Filter out anomaly tests for ClickHouse
+    test_types = filter_anomaly_tests_for_clickhouse(test_types, target)
 
     dbt_runner = create_dbt_runner(
         project_dir=FILE_DIR,
