@@ -103,8 +103,8 @@ def filter_anomaly_tests_for_clickhouse(
     test_types: List[str], target: str
 ) -> List[str]:
     if target == "clickhouse":
-        # Anomaly tests are not supported on ClickHouse
-        anomaly_test_types = {
+        # Tests not supported on ClickHouse
+        unsupported_test_types = {
             "seasonal_volume",
             "table",
             "column",
@@ -112,9 +112,15 @@ def filter_anomaly_tests_for_clickhouse(
             "backfill_days",
             "dimension",
             "no_timestamp",
+            "schema",  # Schema tests have different behavior in ClickHouse
+            "error_test",  # Contains function not supported
+            "error_model",  # Contains function not supported
+            "error_snapshot",  # Contains function not supported
         }
         return [
-            test_type for test_type in test_types if test_type not in anomaly_test_types
+            test_type
+            for test_type in test_types
+            if test_type not in unsupported_test_types
         ]
     return test_types
 
