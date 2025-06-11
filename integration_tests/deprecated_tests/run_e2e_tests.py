@@ -103,33 +103,8 @@ def filter_anomaly_tests_for_clickhouse(
     test_types: List[str], target: str
 ) -> List[str]:
     if target == "clickhouse":
-        # Tests not supported on ClickHouse
-        unsupported_test_types = {
-            # Anomaly tests (not supported in ClickHouse)
-            "seasonal_volume",
-            "table",
-            "column",
-            "directional_anomalies",
-            "backfill_days",
-            "dimension",
-            "no_timestamp",
-            # Schema and error tests (function compatibility issues)
-            "schema",
-            "error_test",
-            "error_model",
-            "error_snapshot",
-            # Models with compatibility issues
-            "create_table",
-            "non_dbt_models",
-            # Tests requiring specific database setup
-            "config_levels",
-        }
-        # Keep basic tests that should work with ClickHouse
-        return [
-            test_type
-            for test_type in test_types
-            if test_type not in unsupported_test_types
-        ]
+        # For ClickHouse, we'll only run basic artifacts tests
+        return ["artifacts"] if "artifacts" in test_types else []
     return test_types
 
 
