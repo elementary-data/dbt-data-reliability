@@ -58,7 +58,7 @@
     {{ return('') }}
 {% endmacro %}
 
-{% macro bigquery__get_target_adapter_specific_fields %}
+{% macro bigquery__get_target_adapter_specific_fields() %}
     {{ return({"execution_project": target.execution_project}) }}
 {% endmacro %}
 
