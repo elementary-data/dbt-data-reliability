@@ -5,7 +5,6 @@
   {% endif %}
 
   {% do elementary.recommend_dbt_core_artifacts_upgrade() %}
-  {% do elementary.ensure_materialize_override() %}
   {% do elementary.init_elementary_graph() %}
 
   {% if elementary.is_test_command() %}
