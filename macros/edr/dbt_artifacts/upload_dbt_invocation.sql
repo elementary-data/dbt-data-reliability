@@ -128,7 +128,7 @@
     {% set all_vars = {} %}
     {% set config = elementary.get_runtime_config() %}
     {%- if config.vars -%}
-        {% do all_vars.update(config.vars.to_dict()) %}
+        {% do all_vars.update(elementary.agate_to_dict(config.vars)) %}
     {%- endif -%}
     {% do all_vars.update(elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}
