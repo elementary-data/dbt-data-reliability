@@ -169,6 +169,7 @@
           "quality_dimension": "uniqueness"
         },
         "expect_column_to_exist": {
+          "quality_dimension": "validity",
           "description": "Expect the specified column to exist."
         },
         "expect_row_values_to_have_recent_data": {
@@ -227,6 +228,7 @@
           "quality_dimension": "validity"
         },
         "expect_column_values_to_be_in_type_list": {
+          "quality_dimension": "validity",
           "description": "Expect a column to be one of a specified type list."
         },
         "expect_column_values_to_have_consistent_casing": {
@@ -306,9 +308,11 @@
           "quality_dimension": "consistency"
         },
         "expect_column_values_to_be_within_n_moving_stdevs": {
+          "quality_dimension": "accuracy",
           "description": "A simple anomaly test based on the assumption that differences between periods in a given time series follow a log-normal distribution. Thus, we would expect the logged differences (vs N periods ago) in metric values to be within Z sigma away from a moving average. By applying a list of columns in the `group_by` parameter, you can also test for deviations within a group."
         },
         "expect_column_values_to_be_within_n_stdevs": {
+          "quality_dimension": "accuracy",
           "description": "Expects (optionally grouped & summed) metric values to be within Z sigma away from the column average"
         },
         "expect_row_values_to_have_data_for_every_n_datepart": {
@@ -413,9 +417,11 @@
           "description": "Monitors the row count of your table over time."
         },
         "freshness_anomalies": {
+          "quality_dimension": "freshness",
           "description": "Monitors the freshness of your table over time, as the expected time between data updates."
         },
         "event_freshness_anomalies": {
+          "quality_dimension": "freshness",
           "description": "Monitors the freshness of event data over time, as the expected time it takes each event to load, that is, the time between when the event actually occurs (the event timestamp), and when it is loaded to the database (the update timestamp)."
         },
         "dimension_anomalies": {
