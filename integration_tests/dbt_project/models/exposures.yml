@@ -15,11 +15,12 @@ exposures:
     owner:
       name: Callum McData
       email: data@jaffleshop.com
-    meta:
-      referenced_columns:
-        - column_name: id
-          data_type: numeric
-          node: ref('customers')
+    config:
+      meta:
+        referenced_columns:
+          - column_name: id
+            data_type: numeric
+            node: ref('customers')
 
   - name: orders
     label: Returned Orders
@@ -35,8 +36,9 @@ exposures:
     owner:
       name: Callum McData
       email: data@jaffleshop.com
-    meta:
-      referenced_columns:
-        - column_name: "order_id"
-          data_type: "string"
-        - column_name: "ZOMG"
+    config:
+      meta:
+        referenced_columns:
+          - column_name: "order_id"
+            data_type: "string"
+          - column_name: "ZOMG"
