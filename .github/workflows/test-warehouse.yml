@@ -21,7 +21,6 @@ on:
         type: string
         required: false
         description: Branch or tag to checkout for 'elementary' repository
-        default: ele-4724-dbt_fusion-support # TEMPORARY
       dbt-data-reliability-ref:
         type: string
         required: false
@@ -43,7 +42,6 @@ on:
       dbt-data-reliability-ref:
         type: string
         required: false
-        default: ele-4724-dbt_fusion-support # TEMPORARY
       dbt-version:
         type: string
         default: "latest_official"
