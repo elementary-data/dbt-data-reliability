@@ -115,7 +115,7 @@
     {% endset %}
 
     {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
-    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
 
     {% if not elementary.has_temp_table_support() %}
@@ -163,7 +163,7 @@
     {% endset %}
 
     {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
-    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
 
     {% if not elementary.has_temp_table_support() %}
