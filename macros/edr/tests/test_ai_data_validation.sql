@@ -1,7 +1,7 @@
 {% test ai_data_validation(model, column_name, expectation_prompt, llm_model_name=none, prompt_context='') %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
-       {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
+       {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
         {% endif %}

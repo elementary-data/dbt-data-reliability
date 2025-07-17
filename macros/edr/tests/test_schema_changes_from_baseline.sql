@@ -1,7 +1,7 @@
 {% test schema_changes_from_baseline(model, fail_on_added=False, enforce_types=False) %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
-        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
+        {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source)") }}
         {% endif %}
@@ -20,7 +20,7 @@
         {% set full_table_name = elementary.relation_to_full_name(model_relation) %}
         {% set changes_from_baseline_query = elementary.get_column_changes_from_baseline_query(model_relation, full_table_name, baseline_table_relation, include_added=fail_on_added) %}
 
-        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set flattened_test = elementary.flatten_test(elementary.get_test_model()) %}
         {% do elementary.store_schema_snapshot_tables_in_cache() %}
         {% do elementary.store_schema_test_results(flattened_test, changes_from_baseline_query) %}
 
