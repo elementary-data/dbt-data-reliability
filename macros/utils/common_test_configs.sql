@@ -221,6 +221,7 @@
           "quality_dimension": "consistency"
         },
         "expect_table_row_count_to_equal": {
+          "quality_dimension": "completeness",
           "description": "Expect the number of rows in a model to be equal to `expected_number_of_rows`."
         },
         "expect_column_values_to_be_of_type": {
@@ -316,6 +317,7 @@
           "description": "Expects (optionally grouped & summed) metric values to be within Z sigma away from the column average"
         },
         "expect_row_values_to_have_data_for_every_n_datepart": {
+          "quality_dimension": "completeness",
           "description": "Expects model to have values for every grouped `date_part`."
         },
         "expect_column_values_to_be_of_type_list": {
@@ -403,9 +405,11 @@
       },
       "elementary": {
         "schema_changes": {
+          "quality_dimension": "validity",
           "description": "Monitors schema changes on the table of deleted, added, type changed columns over time. The test will fail if the table's schema changed from the previous execution of the test."
         },
         "schema_changes_from_baseline": {
+          "quality_dimension": "validity",
           "description": "Compares the table's schema against a baseline contract of columns defined in the table's configuration."
         },
         "json_schema": {
@@ -414,6 +418,7 @@
           "description": "This test validates that the data in a column is valid according to a JSON schema."
         },
         "volume_anomalies": {
+          "quality_dimension": "completeness",
           "description": "Monitors the row count of your table over time."
         },
         "freshness_anomalies": {
@@ -425,6 +430,7 @@
           "description": "Monitors the freshness of event data over time, as the expected time it takes each event to load, that is, the time between when the event actually occurs (the event timestamp), and when it is loaded to the database (the update timestamp)."
         },
         "dimension_anomalies": {
+          "quality_dimension": "completeness",
           "description": "Monitors the frequency of values in the configured dimensions over time."
         },
         "all_columns_anomalies": {
@@ -434,6 +440,7 @@
           "description": "Executes column level monitors and anomaly detection on the column"
         },
         "exposure_schema_validity": {
+          "quality_dimension": "validity",
           "description": "Column level exposure validation according to the meta.columns property in exposures.yml"
         },
         "collect_metrics": {
