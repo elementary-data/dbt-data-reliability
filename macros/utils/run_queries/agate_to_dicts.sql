@@ -24,5 +24,9 @@
   {% if val.year is defined %}
     {% do return(val.isoformat()) %}
   {% endif %}
+  {% if val is number and '.' in val | string %}
+    {# a bit of a hacky way to standardize Decimals which are not JSON-serializable #}
+    {% do return(val | string | float) %}
+  {% endif %}
   {% do return(val) %}
 {% endmacro %}
