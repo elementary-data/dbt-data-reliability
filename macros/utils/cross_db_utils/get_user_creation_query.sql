@@ -7,8 +7,6 @@
 {%- set normalized_public_key = parameters["public_key"]
             .replace('-----BEGIN PUBLIC KEY-----', '')
             .replace('-----END PUBLIC KEY-----', '')
-            .replace('\n', '')
-            .replace(' ', '')
             .strip() -%}
 
 -- Set credentials as variables
