@@ -32,8 +32,8 @@
         {% if model.resource_type == 'test' %}
             {% set test_metadata = model.get('test_metadata', {}) %}
             {% do metadata.update({
-                'test_short_name': test_metadata["name"],
-                'test_namespace': test_metadata["namespace"]
+                'test_short_name': test_metadata.get("name"),
+                'test_namespace': test_metadata.get("namespace")
             }) %}
         {% endif %}
     {% endif %}
