@@ -25,9 +25,9 @@
 
     {% if model %}
         {% do metadata.update({
-            'package_name': model.package_name,
-            'resource_name': model.name,
-            'resource_type': model.resource_type
+            'package_name': model['package_name'],
+            'resource_name': model['name'],
+            'resource_type': model['resource_type']
         }) %}
         {% if model.resource_type == 'test' %}
             {% set test_metadata = model.get('test_metadata', {}) %}
