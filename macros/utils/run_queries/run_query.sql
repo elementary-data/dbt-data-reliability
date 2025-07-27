@@ -1,11 +1,5 @@
 {% macro run_query(query, lowercase_column_names=True) %}
-    {% set query_with_metadata %}
-        {{ query }}
-        /* --ELEMENTARY-METADATA-- {{ elementary.get_elementary_query_metadata() | tojson }} --END-ELEMENTARY-METADATA-- */
-    {% endset %}
-    {% do print(query_with_metadata) %}
-
-    {% set query_result = dbt.run_query(query_with_metadata) %}
+    {% set query_result = dbt.run_query(elementary.format_query_with_metadata(query)) %}
     {% if lowercase_column_names %}
         {% set lowercased_column_names = {} %}
         {% for column_name in query_result.column_names %}
@@ -15,6 +9,21 @@
     {% endif %}
 
     {% do return(query_result) %}
+{% endmacro %}
+
+{% macro format_query_with_metadata(query) %}
+    {% do return(adapter.dispatch('format_query_with_metadata', 'elementary')(query)) %}
+{% endmacro %}
+
+{% macro default__format_query_with_metadata(query) %}
+    /* --ELEMENTARY-METADATA-- {{ elementary.get_elementary_query_metadata() | tojson }} --END-ELEMENTARY-METADATA-- */
+    {{ query }}
+{% endmacro %}
+
+{% macro snowflake__format_query_with_metadata(query) %}
+    {# Snowflake removes leading comments #}
+    {{ query }}
+    /* --ELEMENTARY-METADATA-- {{ elementary.get_elementary_query_metadata() | tojson }} --END-ELEMENTARY-METADATA-- */
 {% endmacro %}
 
 {% macro get_elementary_query_metadata() %}
