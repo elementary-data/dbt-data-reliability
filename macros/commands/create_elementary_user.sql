@@ -12,6 +12,9 @@
       {% do parameter_values.update({"password": password}) %}
     {% endif %}
   {% elif auth_method == "keypair" %}
+    {%- if public_key is none or public_key == "" -%}
+      {%- do exceptions.raise_compiler_error("ERROR: A public key must be provided to generate a Snowflake user!") -%}
+    {%- endif -%}
     {% do parameter_values.update({"public_key": public_key}) %}
   {% endif %}
 

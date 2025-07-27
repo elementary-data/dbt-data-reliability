@@ -4,12 +4,11 @@
 
 
 {% macro snowflake__get_user_creation_query(parameters) %}
-{%- if parameters.get("public_key") is none -%}
-  {%- do exceptions.raise_compiler_error("ERROR: A public key must be provided to generate a Snowflake user!") -%}
-{%- endif -%}
 {%- set normalized_public_key = parameters["public_key"]
             .replace('-----BEGIN PUBLIC KEY-----', '')
             .replace('-----END PUBLIC KEY-----', '')
+            .replace('\n', '')
+            .replace(' ', '')
             .strip() -%}
 
 -- Set credentials as variables
