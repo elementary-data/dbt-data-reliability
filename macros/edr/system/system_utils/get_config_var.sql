@@ -1,9 +1,16 @@
-{% macro get_elementary_runtime_config() %}
+{% macro get_elementary_runtime_config(include_defaults=true) %}
   {% set default_config = elementary.get_default_config() %}
+  {% set unset = '<ELEMENTARY_UNSET_MAGIC_STRING>' %}
   {% set runtime_config = {} %}
   {% for var_name in default_config.keys() %}
-    {% set var_value = var(var_name, default_config.get(var_name)) %}
-    {% do runtime_config.update({var_name: var_value}) %}
+    {% if include_defaults %}
+      {% set var_value = var(var_name, default_config.get(var_name)) %}
+    {% else %}
+      {% set var_value = var(var_name, unset) %}
+    {% endif %}
+    {% if var_value != unset %}
+      {% do runtime_config.update({var_name: var_value}) %}
+    {% endif %}
   {% endfor %}
   {% do return(runtime_config) %}
 {% endmacro %}
