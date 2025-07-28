@@ -1,3 +1,13 @@
+{% macro get_elementary_runtime_config() %}
+  {% set default_config = elementary.get_default_config() %}
+  {% set runtime_config = {} %}
+  {% for var_name in default_config.keys() %}
+    {% set var_value = var(var_name, default_config.get(var_name)) %}
+    {% do runtime_config.update({var_name: var_value}) %}
+  {% endfor %}
+  {% do return(runtime_config) %}
+{% endmacro %}
+
 {% macro get_config_var(var_name) %}
   {% set default_config = elementary.get_default_config() %}
   {% set var_value = var(var_name, default_config.get(var_name)) %}
