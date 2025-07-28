@@ -64,7 +64,9 @@
     },
     'include_other_warehouse_specific_columns': false,
     'fail_on_zero': false,
-    'anomaly_exclude_metrics': none
+    'anomaly_exclude_metrics': none,
+    'disable_samples_on_pii_tables': false,
+    'pii_table_tags': ['pii']
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
