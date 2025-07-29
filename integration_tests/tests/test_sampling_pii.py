@@ -11,7 +11,7 @@ SAMPLES_QUERY = """
         select id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
-        order by created_at desc
+        order by created_at desc, id desc
         limit 1
     )
 
