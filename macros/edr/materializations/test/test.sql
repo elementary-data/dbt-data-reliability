@@ -51,7 +51,8 @@
 {% macro handle_dbt_test(flattened_test, materialization_macro) %}
   {% set result = materialization_macro() %}
   {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
-                                                         ignore_passed_tests=true) %}
+                                                         ignore_passed_tests=true,
+                                                         flattened_test=flattened_test) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
   {% do return(result) %}
@@ -103,7 +104,7 @@
   {% do return(new_sql) %}
 {% endmacro %}
 
-{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false, flattened_test=none) %}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
@@ -111,11 +112,35 @@
     {% do elementary.debug_log("Skipping sample query because the test passed.") %}
     {% do return([]) %}
   {% endif %}
+  
+  {% set pii_columns = [] %}
+  {% if flattened_test %}
+    {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
+  {% endif %}
+  
+  {% set select_clause = "*" %}
+  {% if pii_columns %}
+    {% set query_to_get_columns %}
+      with test_results as (
+        {{ sql }}
+      )
+      select * from test_results limit 0
+    {% endset %}
+    {% set columns_result = elementary.run_query(query_to_get_columns) %}
+    {% set all_columns = columns_result.column_names %}
+    {% set safe_columns = all_columns | reject("in", pii_columns) | list %}
+    {% if safe_columns %}
+      {% set select_clause = safe_columns | join(", ") %}
+    {% else %}
+      {% set select_clause = "1 as _no_non_pii_columns" %}
+    {% endif %}
+  {% endif %}
+  
   {% set query %}
     with test_results as (
       {{ sql }}
     )
-    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
+    select {{ select_clause }} from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
   {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
