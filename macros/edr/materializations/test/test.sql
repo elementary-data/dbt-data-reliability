@@ -113,18 +113,10 @@
     {% do return([]) %}
   {% endif %}
   
-  {% if flattened_test and elementary.is_sampling_disabled_for_column(flattened_test) %}
-    {% do elementary.debug_log("Skipping sample query because disable_samples is true for this column.") %}
-    {% do return([]) %}
-  {% endif %}
-  
-  {% set pii_columns = [] %}
-  {% if flattened_test %}
-    {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
-  {% endif %}
+  {% set columns_to_exclude = elementary.get_columns_to_exclude_from_sampling(flattened_test) %}
   
   {% set select_clause = "*" %}
-  {% if pii_columns %}
+  {% if columns_to_exclude %}
     {% set query_to_get_columns %}
       with test_results as (
         {{ sql }}
@@ -133,11 +125,11 @@
     {% endset %}
     {% set columns_result = elementary.run_query(query_to_get_columns) %}
     {% set all_columns = columns_result.column_names %}
-    {% set safe_columns = all_columns | reject("in", pii_columns) | list %}
+    {% set safe_columns = all_columns | reject("in", columns_to_exclude) | list %}
     {% if safe_columns %}
       {% set select_clause = safe_columns | join(", ") %}
     {% else %}
-      {% set select_clause = "1 as _no_non_pii_columns" %}
+      {% set select_clause = "1 as _no_non_excluded_columns" %}
     {% endif %}
   {% endif %}
   
@@ -148,6 +140,26 @@
     select {{ select_clause }} from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
   {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
+{% endmacro %}
+
+{% macro get_columns_to_exclude_from_sampling(flattened_test) %}
+  {% set columns_to_exclude = [] %}
+  
+  {% if not flattened_test %}
+    {% do return(columns_to_exclude) %}
+  {% endif %}
+  
+  {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
+  {% set columns_to_exclude = columns_to_exclude + pii_columns %}
+  
+  {% if elementary.is_sampling_disabled_for_column(flattened_test) %}
+    {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
+    {% if test_column_name and test_column_name not in columns_to_exclude %}
+      {% do columns_to_exclude.append(test_column_name) %}
+    {% endif %}
+  {% endif %}
+  
+  {% do return(columns_to_exclude) %}
 {% endmacro %}
 
 {% macro is_sampling_disabled_for_column(flattened_test) %}

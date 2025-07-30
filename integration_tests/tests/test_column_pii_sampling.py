@@ -126,7 +126,7 @@ def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProje
 
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
     for sample in samples:
-        assert "_no_non_pii_columns" in sample
-        assert sample["_no_non_pii_columns"] == 1
+        assert "_no_non_excluded_columns" in sample
+        assert sample["_no_non_excluded_columns"] == 1
         assert SENSITIVE_COLUMN not in sample
         assert SAFE_COLUMN not in sample
