@@ -180,6 +180,7 @@
   {% do return(false) %}
 {% endmacro %}
 
+
 {% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
   {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}
 {% endmacro %}
