@@ -3,9 +3,6 @@ version: "1.0.0"
 config-version: 2
 profile: "elementary_tests"
 
-flags:
-  require_explicit_package_overrides_for_builtin_materializations: false
-
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
@@ -21,7 +18,7 @@ clean-targets: # directories to be removed by `dbt clean`
 
 vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
-  mute_ensure_materialization_override: false
+  mute_ensure_materialization_override: true
 
 models:
   elementary_tests:
