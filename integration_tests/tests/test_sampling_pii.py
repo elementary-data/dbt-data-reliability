@@ -53,7 +53,9 @@ def test_sampling_pii_disabled(test_id: str, dbt_project: DbtProject):
 
 
 @pytest.mark.skip_targets(["clickhouse"])
-def test_sampling_pii_disabled_with_default_config(test_id: str, dbt_project: DbtProject):
+def test_sampling_pii_disabled_with_default_config(
+    test_id: str, dbt_project: DbtProject
+):
     """Test that PII-tagged tables don't upload samples even when tests fail"""
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -81,7 +83,9 @@ def test_sampling_pii_disabled_with_default_config(test_id: str, dbt_project: Db
 
 
 @pytest.mark.skip_targets(["clickhouse"])
-def test_sampling_pii_enabled_with_default_config(test_id: str, dbt_project: DbtProject):
+def test_sampling_pii_enabled_with_default_config(
+    test_id: str, dbt_project: DbtProject
+):
     """Test that PII-tagged tables don't upload samples even when tests fail"""
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -165,7 +169,6 @@ def test_sampling_pii_feature_disabled(test_id: str, dbt_project: DbtProject):
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
 
-
 @pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_disable_samples_overrides_pii(test_id: str, dbt_project: DbtProject):
     """Test that disable_test_samples flag overrides PII detection when both are present"""
@@ -178,7 +181,9 @@ def test_sampling_disable_samples_overrides_pii(test_id: str, dbt_project: DbtPr
         dict(column_name=COLUMN_NAME),
         data=data,
         as_model=True,
-        model_config={"config": {"meta": {"disable_test_samples": True}, "tags": ["pii"]}},
+        model_config={
+            "config": {"meta": {"disable_test_samples": True}, "tags": ["pii"]}
+        },
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
