@@ -50,7 +50,20 @@
 
 {% macro handle_dbt_test(flattened_test, materialization_macro) %}
   {% set result = materialization_macro() %}
-  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
+  {% set sample_limit = elementary.get_config_var('test_sample_row_count') %}
+  
+  {% set disable_test_samples = false %}
+  {% if "meta" in flattened_test and "disable_test_samples" in flattened_test["meta"] %}
+    {% set disable_test_samples = flattened_test["meta"]["disable_test_samples"] %}
+  {% endif %}
+  
+  {% if disable_test_samples %}
+    {% set sample_limit = 0 %}
+  {% elif elementary.is_pii_table(flattened_test) %}
+    {% set sample_limit = 0 %}
+  {% endif %}
+  
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit,
                                                          ignore_passed_tests=true,
                                                          flattened_test=flattened_test) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
