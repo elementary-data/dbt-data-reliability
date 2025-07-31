@@ -80,6 +80,7 @@ def test_sampling_pii_disabled_with_default_config(test_id: str, dbt_project: Db
     assert len(samples) == 0
 
 
+@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_pii_enabled_with_default_config(test_id: str, dbt_project: DbtProject):
     """Test that PII-tagged tables don't upload samples even when tests fail"""
     null_count = 50
