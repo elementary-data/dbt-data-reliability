@@ -25,10 +25,10 @@
   {% for column_node in column_nodes.values() %}
     {% set config_dict = column_node.get('config', {}) %}
     {% set config_tags = config_dict.get('tags', []) %}
-    {% set global_tags = column_node.get('tags', []) %}
+    {% set column_tags = column_node.get('tags', []) %}
     {% set meta_dict = column_node.get('meta', {}) %}
     {% set meta_tags = meta_dict.get('tags', []) %}
-    {% set all_column_tags = config_tags + global_tags + meta_tags %}
+    {% set all_column_tags = config_tags + column_tags + meta_tags %}
     
     {% for pii_tag in pii_column_tags %}
       {% if pii_tag in all_column_tags %}

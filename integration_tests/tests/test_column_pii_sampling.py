@@ -95,6 +95,46 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
 
 
 @pytest.mark.skip_targets(["clickhouse"])
+def test_column_pii_sampling_tags_exist_but_flag_disabled(
+    test_id: str, dbt_project: DbtProject
+):
+    """Test that when PII tags exist but disable_samples_on_pii_columns is false, samples are collected normally"""
+    data = [
+        {SENSITIVE_COLUMN: f"user{i}@example.com", SAFE_COLUMN: None} for i in range(10)
+    ]
+
+    test_result = dbt_project.test(
+        test_id,
+        "not_null",
+        test_args=dict(column_name=SAFE_COLUMN),
+        data=data,
+        columns=[
+            {"name": SENSITIVE_COLUMN, "config": {"tags": ["pii"]}},
+            {"name": SAFE_COLUMN},
+        ],
+        test_vars={
+            "enable_elementary_test_materialization": True,
+            "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
+            "disable_samples_on_pii_columns": False,  # Flag is disabled
+            "pii_column_tags": ["pii"],
+        },
+    )
+    assert test_result["status"] == "fail"
+
+    samples = [
+        json.loads(row["result_row"])
+        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+    ]
+
+    assert len(samples) == TEST_SAMPLE_ROW_COUNT
+    for sample in samples:
+        assert (
+            SENSITIVE_COLUMN in sample
+        )  # PII column should be included when flag is disabled
+        assert SAFE_COLUMN in sample
+
+
+@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProject):
     """Test behavior when all columns are tagged as PII"""
     data = [
