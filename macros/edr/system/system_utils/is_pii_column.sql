@@ -1,7 +1,7 @@
 {% macro get_pii_columns_from_parent_model(flattened_test) %}
   {% set pii_columns = [] %}
   
-  {% if not elementary.get_config_var('disable_samples_on_pii_columns') %}
+  {% if not elementary.get_config_var('disable_samples_on_pii_tags') %}
     {% do return(pii_columns) %}
   {% endif %}
   
@@ -17,9 +17,9 @@
     {% do return(pii_columns) %}
   {% endif %}
   
-  {% set pii_column_tags = elementary.get_config_var('pii_column_tags') %}
-  {% if pii_column_tags is string %}
-    {% set pii_column_tags = [pii_column_tags] %}
+  {% set pii_tags = elementary.get_config_var('pii_tags') %}
+  {% if pii_tags is string %}
+    {% set pii_tags = [pii_tags] %}
   {% endif %}
   
   {% for column_node in column_nodes.values() %}
@@ -30,7 +30,7 @@
     {% set meta_tags = meta_dict.get('tags', []) %}
     {% set all_column_tags = config_tags + column_tags + meta_tags %}
     
-    {% for pii_tag in pii_column_tags %}
+    {% for pii_tag in pii_tags %}
       {% if pii_tag in all_column_tags %}
         {% do pii_columns.append(column_node.get('name')) %}
         {% break %}

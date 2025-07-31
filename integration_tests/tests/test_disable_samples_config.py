@@ -116,7 +116,7 @@ def test_disable_samples_config_overrides_pii_tags(
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
-            "disable_samples_on_pii_columns": True,
+            "disable_samples_on_pii_tags": True,
         },
     )
     assert test_result["status"] == "fail"
@@ -153,8 +153,8 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
-            "disable_samples_on_pii_columns": True,
-            "pii_column_tags": ["pii"],
+            "disable_samples_on_pii_tags": True,
+            "pii_tags": ["pii"],
         },
     )
     assert test_result["status"] == "fail"

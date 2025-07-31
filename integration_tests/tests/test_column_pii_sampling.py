@@ -42,8 +42,8 @@ def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
-            "disable_samples_on_pii_columns": True,
-            "pii_column_tags": ["pii"],
+            "disable_samples_on_pii_tags": True,
+            "pii_tags": ["pii"],
         },
     )
     assert test_result["status"] == "fail"
@@ -78,7 +78,7 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
-            "disable_samples_on_pii_columns": False,
+            "disable_samples_on_pii_tags": False,
         },
     )
     assert test_result["status"] == "fail"
@@ -98,7 +98,7 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
 def test_column_pii_sampling_tags_exist_but_flag_disabled(
     test_id: str, dbt_project: DbtProject
 ):
-    """Test that when PII tags exist but disable_samples_on_pii_columns is false, samples are collected normally"""
+    """Test that when PII tags exist but disable_samples_on_pii_tags is false, samples are collected normally"""
     data = [
         {SENSITIVE_COLUMN: f"user{i}@example.com", SAFE_COLUMN: None} for i in range(10)
     ]
@@ -115,8 +115,8 @@ def test_column_pii_sampling_tags_exist_but_flag_disabled(
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
-            "disable_samples_on_pii_columns": False,  # Flag is disabled
-            "pii_column_tags": ["pii"],
+            "disable_samples_on_pii_tags": False,  # Flag is disabled
+            "pii_tags": ["pii"],
         },
     )
     assert test_result["status"] == "fail"
@@ -153,8 +153,8 @@ def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProje
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": TEST_SAMPLE_ROW_COUNT,
-            "disable_samples_on_pii_columns": True,
-            "pii_column_tags": ["pii"],
+            "disable_samples_on_pii_tags": True,
+            "pii_tags": ["pii"],
         },
     )
     assert test_result["status"] == "pass"
