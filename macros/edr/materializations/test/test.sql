@@ -52,12 +52,12 @@
   {% set result = materialization_macro() %}
   {% set sample_limit = elementary.get_config_var('test_sample_row_count') %}
   
-  {% set disable_samples = false %}
-  {% if "meta" in flattened_test and "disable_samples" in flattened_test["meta"] %}
-    {% set disable_samples = flattened_test["meta"]["disable_samples"] %}
+  {% set disable_test_samples = false %}
+  {% if "meta" in flattened_test and "disable_test_samples" in flattened_test["meta"] %}
+    {% set disable_test_samples = flattened_test["meta"]["disable_test_samples"] %}
   {% endif %}
   
-  {% if disable_samples %}
+  {% if disable_test_samples %}
     {% set sample_limit = 0 %}
   {% elif elementary.is_pii_table(flattened_test) %}
     {% set sample_limit = 0 %}
