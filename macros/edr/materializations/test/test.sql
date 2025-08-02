@@ -130,14 +130,10 @@
   
   {% set select_clause = "*" %}
   {% if columns_to_exclude %}
-    {% set query_to_get_columns %}
-      with test_results as (
-        {{ sql }}
-      )
-      select * from test_results limit 0
-    {% endset %}
-    {% set columns_result = elementary.run_query(query_to_get_columns) %}
-    {% set all_columns = columns_result.column_names %}
+    {# Use dbt's built-in parser to get actual column names #}
+    {% set test_relation = elementary.create_test_result_relation(flattened_test) %}
+    {% set result_columns = adapter.get_columns_in_relation(test_relation) %}
+    {% set all_columns = result_columns | map(attribute='name') | list %}
     {% set safe_columns = all_columns | reject("in", columns_to_exclude) | list %}
     {% if safe_columns %}
       {% set select_clause = safe_columns | join(", ") %}
@@ -177,175 +173,86 @@
   {% do return(columns_to_exclude) %}
 {% endmacro %}
 
-{% macro get_test_result_column_mapping(flattened_test) %}
-  {# This macro maps original column names to the actual column names in test results #}
-  {% set test_type = elementary.get_test_type(flattened_test) %}
-  {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
-  {% set mapping = {} %}
-  
-  {% if test_type == 'dbt_test' %}
-    {% set test_name = elementary.insensitive_get_dict_value(flattened_test, 'name') %}
-    
-    {# For unique tests, the original column becomes 'unique_field' #}
-    {% if test_name == 'unique' and test_column_name %}
-      {% do mapping.update({test_column_name: 'unique_field'}) %}
-    {% endif %}
-    
-    {# For accepted_values tests, the original column becomes 'value' #}
-    {% if test_name == 'accepted_values' and test_column_name %}
-      {% do mapping.update({test_column_name: 'value'}) %}
-    {% endif %}
-    
-    {# For relationships tests, the original column becomes 'from_field' #}
-    {% if test_name == 'relationships' and test_column_name %}
-      {% do mapping.update({test_column_name: 'from_field'}) %}
-    {% endif %}
-    
-    {# For not_null tests, the original column name is preserved #}
-    {% if test_name == 'not_null' and test_column_name %}
-      {% do mapping.update({test_column_name: test_column_name}) %}
-    {% endif %}
-  {% endif %}
-  
-  {% do return(mapping) %}
-{% endmacro %}
+{# Removed complex column mapping macros - replaced with simpler dbt parser-based approach #}
 
-{% macro get_test_result_column_mapping_dynamic(flattened_test) %}
-  {# This macro dynamically analyzes the test SQL to understand column mappings #}
-  {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
-  {% set mapping = {} %}
-  
-  {% if not test_column_name %}
-    {% do return(mapping) %}
-  {% endif %}
-  
-  {# Get the compiled SQL for the test #}
-  {% set test_sql = elementary.get_compiled_code(flattened_test) %}
-  
-  {# Look for common patterns in the SQL that indicate column aliasing #}
-  {% set sql_lower = test_sql | lower %}
-  
-  {# Pattern 1: Look for "as unique_field" or "unique_field" after the column name #}
-  {% if test_column_name in sql_lower %}
-    {# Find the position of the column name in the SQL #}
-    {% set column_pos = sql_lower.find(test_column_name | lower) %}
-    {% if column_pos != -1 %}
-      {# Look for common aliases after the column name #}
-      {% set after_column = sql_lower[column_pos + (test_column_name | length):column_pos + (test_column_name | length) + 50] %}
-      
-      {# Check for "as unique_field" pattern #}
-      {% if " as unique_field" in after_column %}
-        {% do mapping.update({test_column_name: 'unique_field'}) %}
-      {% elif " as value" in after_column %}
-        {% do mapping.update({test_column_name: 'value'}) %}
-      {% elif " as from_field" in after_column %}
-        {% do mapping.update({test_column_name: 'from_field'}) %}
-      {% elif " as to_field" in after_column %}
-        {% do mapping.update({test_column_name: 'to_field'}) %}
-      {% else %}
-        {# If no explicit alias found, check if the column name appears in the SELECT clause #}
-        {% set select_pattern = "select " ~ test_column_name | lower %}
-        {% if select_pattern in sql_lower %}
-          {% do mapping.update({test_column_name: test_column_name}) %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-  {% endif %}
-  
-  {% do return(mapping) %}
-{% endmacro %}
-
-{% macro get_columns_to_exclude_from_sampling_with_mapping(flattened_test) %}
+{% macro get_columns_to_exclude_from_sampling_intelligent(flattened_test) %}
+  {# This macro uses dbt's built-in parser to get actual test result columns and handle exclusions #}
   {% set original_columns_to_exclude = elementary.get_columns_to_exclude_from_sampling(flattened_test) %}
-  {% set column_mapping = elementary.get_test_result_column_mapping_dynamic(flattened_test) %}
+  
+  {% if not original_columns_to_exclude %}
+    {% do return([]) %}
+  {% endif %}
+  
+  {# Get the actual test result columns using dbt's built-in parser #}
+  {% set test_relation = elementary.create_test_result_relation(flattened_test) %}
+  {% set result_columns = adapter.get_columns_in_relation(test_relation) %}
+  {% set result_column_names = result_columns | map(attribute='name') | list %}
+  
+  {# Map original columns to actual result columns using a simple matching strategy #}
   {% set mapped_columns_to_exclude = [] %}
   
   {% for original_column in original_columns_to_exclude %}
-    {% if original_column in column_mapping %}
-      {% do mapped_columns_to_exclude.append(column_mapping[original_column]) %}
-    {% else %}
-      {% do mapped_columns_to_exclude.append(original_column) %}
+    {% set found_match = false %}
+    
+    {# First, try exact match (case-insensitive) #}
+    {% for result_column in result_column_names %}
+      {% if result_column.lower() == original_column.lower() %}
+        {% do mapped_columns_to_exclude.append(result_column) %}
+        {% set found_match = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+    
+    {# If no exact match, try common dbt test patterns #}
+    {% if not found_match %}
+      {% set test_name = elementary.insensitive_get_dict_value(flattened_test, 'name') %}
+      {% set common_mappings = {
+        'unique': 'unique_field',
+        'accepted_values': 'value', 
+        'relationships': 'from_field',
+        'not_null': original_column
+      } %}
+      
+      {% if test_name in common_mappings %}
+        {% set expected_column = common_mappings[test_name] %}
+        {% if expected_column in result_column_names %}
+          {% do mapped_columns_to_exclude.append(expected_column) %}
+          {% set found_match = true %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    
+    {# If still no match, try to find the most likely column containing the original data #}
+    {% if not found_match %}
+      {# Look for columns that might contain the original column's data #}
+      {% set non_metadata_columns = result_column_names | reject("in", ['n_records', 'count', 'num_records', 'row_count', 'test_result']) | list %}
+      {% if non_metadata_columns | length == 1 %}
+        {% do mapped_columns_to_exclude.append(non_metadata_columns[0]) %}
+      {% elif original_column in result_column_names %}
+        {# If the original column name exists in results, use it #}
+        {% do mapped_columns_to_exclude.append(original_column) %}
+      {% endif %}
     {% endif %}
   {% endfor %}
   
   {% do return(mapped_columns_to_exclude) %}
 {% endmacro %}
 
-{% macro get_columns_to_exclude_from_sampling_intelligent(flattened_test) %}
-  {# This macro uses an intelligent approach to map excluded columns to test result columns #}
-  {% set original_columns_to_exclude = elementary.get_columns_to_exclude_from_sampling(flattened_test) %}
-  {% set mapped_columns_to_exclude = [] %}
+{% macro create_test_result_relation(flattened_test) %}
+  {# Create a temporary relation for the test results to use dbt's parser #}
+  {% set database, schema = elementary.get_package_database_and_schema() %}
+  {% set test_id = "tmp_" ~ elementary.get_node_execution_id(flattened_test)[:20] %}
   
-  {% if not original_columns_to_exclude %}
-    {% do return(mapped_columns_to_exclude) %}
-  {% endif %}
-  
-  {# Get the test result columns by running a sample query #}
-  {% set sample_query %}
+  {# Create a temporary table with the test results #}
+  {% set temp_sql %}
     with test_results as (
       {{ sql }}
     )
     select * from test_results limit 0
   {% endset %}
   
-  {% set columns_result = elementary.run_query(sample_query) %}
-  {% set result_columns = columns_result.column_names %}
-  
-  {# For each column to exclude, find the best match in the result columns #}
-  {% for original_column in original_columns_to_exclude %}
-    {% set found_match = false %}
-    
-    {# First, try exact match #}
-    {% if original_column in result_columns %}
-      {% do mapped_columns_to_exclude.append(original_column) %}
-      {% set found_match = true %}
-    {% else %}
-      {# Try common dbt test patterns #}
-      {% set test_name = elementary.insensitive_get_dict_value(flattened_test, 'name') %}
-      
-      {# For unique tests, check for 'unique_field' #}
-      {% if test_name == 'unique' and 'unique_field' in result_columns %}
-        {% do mapped_columns_to_exclude.append('unique_field') %}
-        {% set found_match = true %}
-      {% endif %}
-      
-      {# For accepted_values tests, check for 'value' #}
-      {% if test_name == 'accepted_values' and 'value' in result_columns %}
-        {% do mapped_columns_to_exclude.append('value') %}
-        {% set found_match = true %}
-      {% endif %}
-      
-      {# For relationships tests, check for 'from_field' #}
-      {% if test_name == 'relationships' and 'from_field' in result_columns %}
-        {% do mapped_columns_to_exclude.append('from_field') %}
-        {% set found_match = true %}
-      {% endif %}
-      
-      {# For custom tests, try to find columns that might contain the original data #}
-      {% if not found_match %}
-        {# Look for columns that might contain the original column's data #}
-        {% for result_column in result_columns %}
-          {# Skip metadata columns like n_records, count, etc. #}
-          {% if result_column not in ['n_records', 'count', 'num_records', 'row_count'] %}
-            {# If this is the only non-metadata column, it's likely the original data #}
-            {% set non_metadata_columns = result_columns | reject("in", ['n_records', 'count', 'num_records', 'row_count']) | list %}
-            {% if non_metadata_columns | length == 1 %}
-              {% do mapped_columns_to_exclude.append(result_column) %}
-              {% set found_match = true %}
-              {% break %}
-            {% endif %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    {% endif %}
-    
-    {# If no match found, add the original column name (will be filtered out if not present) #}
-    {% if not found_match %}
-      {% do mapped_columns_to_exclude.append(original_column) %}
-    {% endif %}
-  {% endfor %}
-  
-  {% do return(mapped_columns_to_exclude) %}
+  {% set relation = elementary.create_temp_table(database, schema, test_id, temp_sql) %}
+  {% do return(relation) %}
 {% endmacro %}
 
 {% macro is_sampling_disabled_for_column(flattened_test) %}
