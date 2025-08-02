@@ -30,7 +30,7 @@ def test_disable_samples_config_prevents_sampling(
     columns = [
         {
             "name": COLUMN_NAME,
-            "config": {"disable_samples": True},
+            "config": {"disable_test_samples": True},
             "tests": [{"not_null": {}}],
         }
     ]
@@ -66,7 +66,7 @@ def test_disable_samples_false_allows_sampling(test_id: str, dbt_project: DbtPro
     columns = [
         {
             "name": COLUMN_NAME,
-            "config": {"disable_samples": False},
+            "config": {"disable_test_samples": False},
             "tests": [{"not_null": {}}],
         }
     ]
@@ -103,7 +103,7 @@ def test_disable_samples_config_overrides_pii_tags(
     columns = [
         {
             "name": COLUMN_NAME,
-            "config": {"disable_samples": True, "tags": ["pii"]},
+            "config": {"disable_test_samples": True, "tags": ["pii"]},
             "tests": [{"not_null": {}}],
         }
     ]
@@ -134,7 +134,7 @@ def test_disable_samples_config_overrides_pii_tags(
 
 @pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProject):
-    """Test that disable_samples and PII columns both get excluded"""
+    """Test that disable_test_samples and PII columns both get excluded"""
     data = [
         {"col1": None, "col2": f"pii{i}", "col3": f"disabled{i}"} for i in range(10)
     ]
@@ -142,7 +142,7 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
     columns = [
         {"name": "col1", "tests": [{"not_null": {}}]},
         {"name": "col2", "config": {"tags": ["pii"]}},
-        {"name": "col3", "config": {"disable_samples": True}},
+        {"name": "col3", "config": {"disable_test_samples": True}},
     ]
 
     test_result = dbt_project.test(
@@ -173,13 +173,13 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
 
 @pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_with_multiple_columns(test_id: str, dbt_project: DbtProject):
-    """Test that disable_samples excludes only the disabled column"""
+    """Test that disable_test_samples excludes only the disabled column"""
     data = [{"col1": None, "col2": f"value{i}"} for i in range(10)]
 
     columns = [
         {
             "name": "col1",
-            "config": {"disable_samples": True},
+            "config": {"disable_test_samples": True},
             "tests": [{"not_null": {}}],
         },
         {"name": "col2"},
