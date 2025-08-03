@@ -175,6 +175,8 @@
   {% set test_query_lower = test_query.lower() %}
   
   {# Check if query uses * (select all columns) #}
+  {# Note: This is intentionally conservative and may over-censor in cases like 
+     "SELECT * FROM other_table" in CTEs, but it's better to be safe with PII data #}
   {% if '*' in test_query_lower %}
     {% do return(true) %}
   {% endif %}
