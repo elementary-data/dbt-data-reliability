@@ -21,11 +21,17 @@
   {% set pii_tags = (raw_pii_tags if raw_pii_tags is iterable else [raw_pii_tags]) | map('lower') | list %}
   
   {% for column_node in column_nodes.values() %}
+    {# column -> tags #}
+    {% set column_tags = column_node.get('tags', []) %}
+
+    {# column -> config -> tags #}
     {% set config_dict = column_node.get('config', {}) %}
     {% set config_tags = config_dict.get('tags', []) %}
-    {% set column_tags = column_node.get('tags', []) %}
+
+    {# column -> meta -> tags #}
     {% set meta_dict = column_node.get('meta', {}) %}
     {% set meta_tags = meta_dict.get('tags', []) %}
+
     {% set all_column_tags = config_tags + column_tags + meta_tags %}
     {% set all_column_tags_lower = all_column_tags | map('lower') | list %}
     

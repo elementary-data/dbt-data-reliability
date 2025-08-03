@@ -53,7 +53,6 @@ def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -87,10 +86,10 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
 
     # sample should be {'unique_field': 'user@example.com', 'n_records': 10}
     assert len(samples) == 1
-    for sample in samples:
-        # The original column name is mapped to 'unique_field' in unique tests
-        assert "unique_field" in sample
-        assert "n_records" in sample
+    assert "unique_field" in samples[0]
+    assert samples[0]["unique_field"] == "user@example.com"
+    assert "n_records" in samples[0]
+    assert samples[0]["n_records"] == 10
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -126,10 +125,10 @@ def test_column_pii_sampling_tags_exist_but_flag_disabled(
 
     # When flag is disabled, we get the full sample (not limited by PII filtering)
     assert len(samples) == 1
-    for sample in samples:
-        # The original column name is mapped to 'unique_field' in unique tests
-        assert "unique_field" in sample
-        assert "n_records" in sample
+    assert "unique_field" in samples[0]
+    assert samples[0]["unique_field"] == 1
+    assert "n_records" in samples[0]
+    assert samples[0]["n_records"] == 10
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -195,7 +194,6 @@ def test_unique_test_column_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -227,7 +225,6 @@ def test_accepted_values_test_column_mapping(test_id: str, dbt_project: DbtProje
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -259,7 +256,6 @@ def test_not_null_test_column_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -294,7 +290,6 @@ def test_multiple_pii_columns_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -321,21 +316,16 @@ def test_custom_sql_test_with_pii_column_simple(test_id: str, dbt_project: DbtPr
     )
     assert test_result["status"] == "fail"
 
-    # Verify that PII columns are excluded from sampling
     samples = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
-def test_custom_sql_test_with_pii_column_complex_aliasing(
-    test_id: str, dbt_project: DbtProject
-):
-    """Test that custom SQL tests with complex column aliasing and PII columns work correctly"""
+def test_meta_tags_and_accepted_values(test_id: str, dbt_project: DbtProject):
     data = [{SENSITIVE_COLUMN: "user@example.com", SAFE_COLUMN: i} for i in range(10)]
 
     # Test with accepted_values to simulate complex column mapping
@@ -345,7 +335,7 @@ def test_custom_sql_test_with_pii_column_complex_aliasing(
         test_args=dict(column_name=SENSITIVE_COLUMN, values=["invalid@example.com"]),
         data=data,
         columns=[
-            {"name": SENSITIVE_COLUMN, "config": {"tags": ["pii"]}},
+            {"name": SENSITIVE_COLUMN, "meta": {"tags": ["pii"]}},
             {"name": SAFE_COLUMN},
         ],
         test_vars={
@@ -357,13 +347,11 @@ def test_custom_sql_test_with_pii_column_complex_aliasing(
     )
     assert test_result["status"] == "fail"
 
-    # Verify that PII columns are excluded from sampling
     samples = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -384,8 +372,8 @@ def test_custom_sql_test_with_multiple_pii_columns(
         test_args=dict(column_name=SENSITIVE_COLUMN),
         data=data,
         columns=[
-            {"name": SENSITIVE_COLUMN, "config": {"tags": ["pii"]}},
-            {"name": "phone", "config": {"tags": ["pii"]}},
+            {"name": SENSITIVE_COLUMN, "tags": ["pii"]},
+            {"name": "phone", "tags": ["pii"]},
             {"name": SAFE_COLUMN},
         ],
         test_vars={
@@ -397,13 +385,10 @@ def test_custom_sql_test_with_multiple_pii_columns(
     )
     assert test_result["status"] == "fail"
 
-    # Verify that PII columns are excluded from sampling
     samples = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
-
-    # With new logic: sampling is disabled entirely when PII is detected
     assert len(samples) == 0
 
 
@@ -430,4 +415,8 @@ def test_custom_sql_test_with_subquery_and_pii(test_id: str, dbt_project: DbtPro
         },
     )
     assert test_result["status"] == "pass"
-    # For passing tests, we don't expect samples to be generated
+    samples = [
+        json.loads(row["result_row"])
+        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+    ]
+    assert len(samples) == 0

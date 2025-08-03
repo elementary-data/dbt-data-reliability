@@ -159,7 +159,7 @@
   {% do return(columns_to_exclude) %}
 {% endmacro %}
 
-{# Simple logic: if test query contains PII columns or *, disable sampling entirely #}
+{# if test query contains PII columns or *, disable sampling entirely #}
 {% macro should_disable_sampling_for_pii(flattened_test) %}
   {% if not elementary.get_config_var('disable_samples_on_pii_tags') %}
     {% do return(false) %}
@@ -188,8 +188,6 @@
   
   {% do return(false) %}
 {% endmacro %}
-
-{# Removed complex column mapping macros - replaced with simpler approach #}
 
 {% macro is_sampling_disabled_for_column(flattened_test) %}
   {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
