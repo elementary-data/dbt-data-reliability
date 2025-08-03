@@ -61,6 +61,8 @@
     {% set sample_limit = 0 %}
   {% elif elementary.is_pii_table(flattened_test) %}
     {% set sample_limit = 0 %}
+  {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
+    {% set sample_limit = 0 %}
   {% endif %}
   
   {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit,
@@ -126,27 +128,11 @@
     {% do return([]) %}
   {% endif %}
   
-  {% set columns_to_exclude = elementary.get_columns_to_exclude_from_sampling_intelligent(flattened_test) %}
-  
-  {% set select_clause = "*" %}
-  {% if columns_to_exclude %}
-    {# Use dbt's built-in parser to get actual column names #}
-    {% set test_relation = elementary.create_test_result_relation(flattened_test) %}
-    {% set result_columns = adapter.get_columns_in_relation(test_relation) %}
-    {% set all_columns = result_columns | map(attribute='name') | list %}
-    {% set safe_columns = all_columns | reject("in", columns_to_exclude) | list %}
-    {% if safe_columns %}
-      {% set select_clause = safe_columns | join(", ") %}
-    {% else %}
-      {% set select_clause = "1 as _no_non_excluded_columns" %}
-    {% endif %}
-  {% endif %}
-  
   {% set query %}
     with test_results as (
       {{ sql }}
     )
-    select {{ select_clause }} from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
+    select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
   {% endset %}
   {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
@@ -173,87 +159,37 @@
   {% do return(columns_to_exclude) %}
 {% endmacro %}
 
-{# Removed complex column mapping macros - replaced with simpler dbt parser-based approach #}
-
-{% macro get_columns_to_exclude_from_sampling_intelligent(flattened_test) %}
-  {# This macro uses dbt's built-in parser to get actual test result columns and handle exclusions #}
-  {% set original_columns_to_exclude = elementary.get_columns_to_exclude_from_sampling(flattened_test) %}
-  
-  {% if not original_columns_to_exclude %}
-    {% do return([]) %}
+{# Simple logic: if test query contains PII columns or *, disable sampling entirely #}
+{% macro should_disable_sampling_for_pii(flattened_test) %}
+  {% if not elementary.get_config_var('disable_samples_on_pii_tags') %}
+    {% do return(false) %}
   {% endif %}
   
-  {# Get the actual test result columns using dbt's built-in parser #}
-  {% set test_relation = elementary.create_test_result_relation(flattened_test) %}
-  {% set result_columns = adapter.get_columns_in_relation(test_relation) %}
-  {% set result_column_names = result_columns | map(attribute='name') | list %}
+  {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
+  {% if not pii_columns %}
+    {% do return(false) %}
+  {% endif %}
   
-  {# Map original columns to actual result columns using a simple matching strategy #}
-  {% set mapped_columns_to_exclude = [] %}
+  {# Get the compiled test query #}
+  {% set test_query = elementary.get_compiled_code(flattened_test) %}
+  {% set test_query_lower = test_query.lower() %}
   
-  {% for original_column in original_columns_to_exclude %}
-    {% set found_match = false %}
-    
-    {# First, try exact match (case-insensitive) #}
-    {% for result_column in result_column_names %}
-      {% if result_column.lower() == original_column.lower() %}
-        {% do mapped_columns_to_exclude.append(result_column) %}
-        {% set found_match = true %}
-        {% break %}
-      {% endif %}
-    {% endfor %}
-    
-    {# If no exact match, try common dbt test patterns #}
-    {% if not found_match %}
-      {% set test_name = elementary.insensitive_get_dict_value(flattened_test, 'name') %}
-      {% set common_mappings = {
-        'unique': 'unique_field',
-        'accepted_values': 'value', 
-        'relationships': 'from_field',
-        'not_null': original_column
-      } %}
-      
-      {% if test_name in common_mappings %}
-        {% set expected_column = common_mappings[test_name] %}
-        {% if expected_column in result_column_names %}
-          {% do mapped_columns_to_exclude.append(expected_column) %}
-          {% set found_match = true %}
-        {% endif %}
-      {% endif %}
-    {% endif %}
-    
-    {# If still no match, try to find the most likely column containing the original data #}
-    {% if not found_match %}
-      {# Look for columns that might contain the original column's data #}
-      {% set non_metadata_columns = result_column_names | reject("in", ['n_records', 'count', 'num_records', 'row_count', 'test_result']) | list %}
-      {% if non_metadata_columns | length == 1 %}
-        {% do mapped_columns_to_exclude.append(non_metadata_columns[0]) %}
-      {% elif original_column in result_column_names %}
-        {# If the original column name exists in results, use it #}
-        {% do mapped_columns_to_exclude.append(original_column) %}
-      {% endif %}
+  {# Check if query uses * (select all columns) #}
+  {% if '*' in test_query_lower %}
+    {% do return(true) %}
+  {% endif %}
+  
+  {# Check if any PII column appears in the test query #}
+  {% for pii_column in pii_columns %}
+    {% if pii_column.lower() in test_query_lower %}
+      {% do return(true) %}
     {% endif %}
   {% endfor %}
   
-  {% do return(mapped_columns_to_exclude) %}
+  {% do return(false) %}
 {% endmacro %}
 
-{% macro create_test_result_relation(flattened_test) %}
-  {# Create a temporary relation for the test results to use dbt's parser #}
-  {% set database, schema = elementary.get_package_database_and_schema() %}
-  {% set test_id = "tmp_" ~ elementary.get_node_execution_id(flattened_test)[:20] %}
-  
-  {# Create a temporary table with the test results #}
-  {% set temp_sql %}
-    with test_results as (
-      {{ sql }}
-    )
-    select * from test_results limit 0
-  {% endset %}
-  
-  {% set relation = elementary.create_temp_table(database, schema, test_id, temp_sql) %}
-  {% do return(relation) %}
-{% endmacro %}
+{# Removed complex column mapping macros - replaced with simpler approach #}
 
 {% macro is_sampling_disabled_for_column(flattened_test) %}
   {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}

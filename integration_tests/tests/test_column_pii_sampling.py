@@ -53,9 +53,8 @@ def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    assert len(samples) == 1
-    assert samples[0]["n_records"] == 10
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -196,11 +195,8 @@ def test_unique_test_column_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # Should only contain n_records, not unique_field (which contains PII)
-    assert len(samples) == 1
-    assert "n_records" in samples[0]
-    assert "unique_field" not in samples[0]
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -231,11 +227,8 @@ def test_accepted_values_test_column_mapping(test_id: str, dbt_project: DbtProje
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # Should only contain n_records, not value (which contains PII)
-    assert len(samples) == 1
-    assert "n_records" in samples[0]
-    assert "value" not in samples[0]
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -266,12 +259,8 @@ def test_not_null_test_column_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # Should only contain _no_non_excluded_columns when all columns are PII
-    assert len(samples) == TEST_SAMPLE_ROW_COUNT
-    for sample in samples:
-        assert "_no_non_excluded_columns" in sample
-        assert SENSITIVE_COLUMN not in sample
-        assert SAFE_COLUMN not in sample
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -305,12 +294,8 @@ def test_multiple_pii_columns_mapping(test_id: str, dbt_project: DbtProject):
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    # Should only contain n_records, not unique_field or phone (which contain PII)
-    assert len(samples) == 1
-    assert "n_records" in samples[0]
-    assert "unique_field" not in samples[0]
-    assert "phone" not in samples[0]
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -342,10 +327,8 @@ def test_custom_sql_test_with_pii_column_simple(test_id: str, dbt_project: DbtPr
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    assert len(samples) == 1
-    assert samples[0]["n_records"] == 10
-    # Should only contain n_records, not the actual PII data
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -380,10 +363,8 @@ def test_custom_sql_test_with_pii_column_complex_aliasing(
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    assert len(samples) == 1
-    assert samples[0]["n_records"] == 10
-    # Should only contain n_records, not the actual PII data
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -422,10 +403,8 @@ def test_custom_sql_test_with_multiple_pii_columns(
         for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
     ]
 
-    assert len(samples) == 1
-    assert samples[0]["n_records"] == 10
-    # Should only contain n_records, not the actual PII data
-    assert len(samples[0]) == 1
+    # With new logic: sampling is disabled entirely when PII is detected
+    assert len(samples) == 0
 
 
 @pytest.mark.skip_targets(["clickhouse"])
@@ -451,11 +430,4 @@ def test_custom_sql_test_with_subquery_and_pii(test_id: str, dbt_project: DbtPro
         },
     )
     assert test_result["status"] == "pass"
-
     # For passing tests, we don't expect samples to be generated
-    # The test passes, so no failed rows to sample
-    # This is expected behavior for passing tests
-
-
-# Removed complex custom SQL tests that don't work with this framework
-# The simplified column mapping logic works with standard dbt test types
