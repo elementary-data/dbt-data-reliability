@@ -158,6 +158,16 @@
 {% endmacro %}
 
 {% macro dremio__edr_datediff(first_date, second_date, date_part) %}
+    {% if date_part.lower() == 'second' %}
+        {# Use a different method specifically for seconds diff - as it's helpful in a specific case
+           when subtracting aggregate values (problematic with the statement containing "select" - see below) #}
+        {%- set expr -%}
+            (unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 
+             unix_timestamp(substr(cast(({{ first_date }}) as varchar), 1, 19)))
+        {%- endset -%}
+        {% do return(expr) %}
+    {% endif %}
+
     {% set macro = dbt.datediff or dbt_utils.datediff %}
     {% if not macro %}
         {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}
