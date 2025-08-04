@@ -161,4 +161,3 @@
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
-  
