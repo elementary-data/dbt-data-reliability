@@ -22,6 +22,11 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro dremio__edr_make_temp_relation(base_relation, suffix) %}
+    {% set base_relation_with_type = base_relation.incorporate(type='table') %}
+    {% do return(dbt.make_temp_relation(base_relation_with_type, suffix)) %}
+{% endmacro %}
+
 --- VIEWS
 {% macro make_temp_view_relation(base_relation, suffix=none) %}
     {% if not suffix %}
