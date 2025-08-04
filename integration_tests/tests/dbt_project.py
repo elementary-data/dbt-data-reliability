@@ -149,6 +149,7 @@ class DbtProject:
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
+        column_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -173,9 +174,10 @@ class DbtProject:
         if test_column is None:
             table_yaml["tests"] = [{dbt_test_name: test_args}]
         else:
-            table_yaml["columns"] = [
-                {"name": test_column, "tests": [{dbt_test_name: test_args}]}
-            ]
+            column_def = {"name": test_column, "tests": [{dbt_test_name: test_args}]}
+            if column_config:
+                column_def["config"] = column_config
+            table_yaml["columns"] = [column_def]
 
         temp_table_ctx: Any
         if as_model:
