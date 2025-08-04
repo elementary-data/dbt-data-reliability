@@ -1,17 +1,17 @@
 {% macro get_column_tags(column_node) %}
-  {# column -> tags #}
-  {% set column_tags = column_node.get('tags', []) %}
+  {% set _tags_sources = [
+    column_node.get('tags', []),
+    column_node.get('config', {}).get('tags', []),
+    column_node.get('meta', {}).get('tags', []),
+  ] %}
 
-  {# column -> config -> tags #}
-  {% set config_dict = column_node.get('config', {}) %}
-  {% set config_tags = config_dict.get('tags', []) %}
+  {% set all_column_tags = [] %}
+  {% for src in _tags_sources %}
+    {% set tags_list = src if src is iterable and not (src is string) else [src] %}
+    {% do all_column_tags.extend(tags_list) %}
+  {% endfor %}
 
-  {# column -> meta -> tags #}
-  {% set meta_dict = column_node.get('meta', {}) %}
-  {% set meta_tags = meta_dict.get('tags', []) %}
-
-  {% set all_column_tags = config_tags + column_tags + meta_tags %}
-  {% do return(all_column_tags | map('lower') | list) %}
+  {% do return(all_column_tags | map('lower') | unique | list) %}
 {% endmacro %}
 
 {% macro get_pii_columns_from_parent_model(flattened_test) %}
@@ -29,13 +29,24 @@
   {% endif %}
   
   {% set raw_pii_tags = elementary.get_config_var('pii_tags') %}
-  {% set pii_tags = (raw_pii_tags if raw_pii_tags is iterable else [raw_pii_tags]) | map('lower') | list %}
+  {% if raw_pii_tags is string %}
+    {% set pii_tags = [raw_pii_tags|lower] %}
+  {% else %}
+    {% set pii_tags = (raw_pii_tags or []) | map('lower') | list %}
+  {% endif %}
   
   {# Check if the model itself has PII tags - if so, all columns are considered PII #}
-  {% set model_tags = parent_model.get('tags', []) %}
-  {% set model_config_tags = parent_model.get('config', {}).get('tags', []) %}
-  {% set model_meta_tags = parent_model.get('meta', {}).get('tags', []) %}
-  {% set all_model_tags = (model_tags + model_config_tags + model_meta_tags) | map('lower') | list %}
+  {% set _model_tags_sources = [
+    parent_model.get('tags', []),
+    parent_model.get('config', {}).get('tags', []),
+    parent_model.get('meta', {}).get('tags', [])
+  ] %}
+  {% set all_model_tags = [] %}
+  {% for src in _model_tags_sources %}
+    {% set tags_list = src if src is iterable and not (src is string) else [src] %}
+    {% do all_model_tags.extend(tags_list) %}
+  {% endfor %}
+  {% set all_model_tags = all_model_tags | map('lower') | unique | list %}
   
   {% for pii_tag in pii_tags %}
     {% if pii_tag in all_model_tags %}
