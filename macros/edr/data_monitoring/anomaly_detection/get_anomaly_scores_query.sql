@@ -28,6 +28,7 @@
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
     {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
@@ -39,9 +40,9 @@
             with buckets as (
                 select edr_bucket_start, edr_bucket_end
                 from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start_expr,
-                                                         elementary.edr_quote(detection_end)) }}) results
-                where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start_expr) }}
-                  and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) }}
+                                                         detection_end_expr) }}) results
+                where edr_bucket_start >= {{ min_bucket_start_expr }}
+                  and edr_bucket_end <= {{ detection_end_expr }}
             ),
         {% else %}
             with

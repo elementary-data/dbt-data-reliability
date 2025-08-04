@@ -156,3 +156,18 @@
     {% endif %}
     {{ return(macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part)) }}
 {% endmacro %}
+
+{% macro dremio__edr_datediff(first_date, second_date, date_part) %}
+    {% set macro = dbt.datediff or dbt_utils.datediff %}
+    {% if not macro %}
+        {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}
+    {% endif %}
+
+    {% set sql = macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part) %}
+
+    {# Hack - dbt-dremio implements this macro as a select statement (which seems to be necessary), but in order 
+       for it to really work we wrap it in parentheses and remove ; if it is there #}
+    {% set sql = '(' ~ sql.strip().replace(';', '') ~ ')' %}
+
+    {% do return(sql) %}
+{% endmacro %}
