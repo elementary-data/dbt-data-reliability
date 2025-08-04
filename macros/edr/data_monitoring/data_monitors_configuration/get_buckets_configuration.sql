@@ -1,10 +1,10 @@
 {% macro get_detection_end(detection_delay) %}
     {% if not detection_delay %}
-        {% do return(elementary.get_run_started_at()) %}
+        {% do return(elementary.get_run_started_at().replace(microsecond=0)) %}
     {% endif %}
 
     {%- set kwargs = {detection_delay.period+'s': detection_delay.count} %}
-    {%- set detection_end = elementary.get_run_started_at() - modules.datetime.timedelta(**kwargs) %}
+    {%- set detection_end = elementary.get_run_started_at().replace(microsecond=0) - modules.datetime.timedelta(**kwargs) %}
     {% do return(detection_end) %}
 {% endmacro %}
 
@@ -105,8 +105,8 @@
         {%- set buckets = elementary.agate_to_dicts(elementary.run_query(incremental_bucket_times_query))[0] %}
     {% endif %}
     {%- if buckets %}
-        {%- set min_bucket_start = elementary.edr_quote(buckets.get('min_bucket_start')) %}
-        {%- set max_bucket_end = elementary.edr_quote(buckets.get('max_bucket_end')) %}
+        {%- set min_bucket_start = elementary.edr_datetime_to_sql(buckets.get('min_bucket_start')) %}
+        {%- set max_bucket_end = elementary.edr_datetime_to_sql(buckets.get('max_bucket_end')) %}
         {{ return([min_bucket_start, max_bucket_end]) }}
     {%- else %}
         {{ exceptions.raise_compiler_error("Failed to calc test buckets min and max") }}

@@ -269,7 +269,7 @@
     bucket_freshness_ranked as (
         select
             *,
-            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_number
+            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_num
         from bucket_all_freshness_metrics
     )
 
@@ -281,7 +281,7 @@
         {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
-    where row_number = 1
+    where row_num = 1
 {% endmacro %}
 
 {% macro event_freshness_metric_query(metric, metric_properties) %}

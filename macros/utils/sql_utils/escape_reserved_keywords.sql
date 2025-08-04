@@ -14,7 +14,7 @@
 {% endmacro %}
 
 {% macro dremio__is_reserved_keywords(keyword) %}
-    {% do return(keyword in ['filter', 'sql', 'timestamp']) %}
+    {% do return(keyword in ['filter', 'sql', 'timestamp', 'value']) %}
 {% endmacro %}
 
 {% macro escape_keywords(keyword) %}

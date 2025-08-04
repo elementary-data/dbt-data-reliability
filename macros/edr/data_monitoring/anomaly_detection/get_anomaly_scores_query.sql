@@ -28,6 +28,7 @@
         {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
     {%- endif %}
     {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
     {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
@@ -39,9 +40,9 @@
             with buckets as (
                 select edr_bucket_start, edr_bucket_end
                 from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start_expr,
-                                                         elementary.edr_quote(detection_end)) }}) results
-                where edr_bucket_start >= {{ elementary.edr_cast_as_timestamp(min_bucket_start_expr) }}
-                  and edr_bucket_end <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(detection_end)) }}
+                                                         detection_end_expr) }}) results
+                where edr_bucket_start >= {{ min_bucket_start_expr }}
+                  and edr_bucket_end <= {{ detection_end_expr }}
             ),
         {% else %}
             with
@@ -121,7 +122,7 @@
                 {{ metric_time_bucket_expr }} as metric_time_bucket,
                 {{ elementary.edr_cast_as_date(elementary.edr_date_trunc('day', metric_time_bucket_expr))}} as metric_date,
 
-                row_number() over (partition by id order by updated_at desc) as row_number
+                row_number() over (partition by id order by updated_at desc) as row_num
             from union_metrics
 
         ),
@@ -144,7 +145,7 @@
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
-            where row_number = 1
+            where row_num = 1
         ),
 
         time_window_aggregation as (

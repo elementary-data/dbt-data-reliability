@@ -34,6 +34,10 @@
     stddevPop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
+{% macro dremio__standard_deviation(column_name) -%}
+    stddev_pop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro variance(column_name) -%}
     {{ return(adapter.dispatch('variance', 'elementary')(column_name)) }}
 {%- endmacro %}

@@ -29,6 +29,10 @@
     )
 {%- endmacro -%}
 
+{%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
+    cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
+{%- endmacro -%}
+
 {%- macro edr_cast_as_float(column) -%}
     cast({{ column }} as {{ elementary.edr_type_float() }})
 {%- endmacro -%}
@@ -83,6 +87,10 @@
         try_cast({{ timestamp_field }} as {{ elementary.edr_type_date() }}),
         cast(from_iso8601_timestamp(cast({{ timestamp_field }} AS {{ elementary.edr_type_string() }})) AS {{ elementary.edr_type_date() }})
     )
+{%- endmacro -%}
+
+{%- macro dremio__edr_cast_as_date(timestamp_field) -%}
+    cast({{ timestamp_field }} as {{ elementary.edr_type_date() }})
 {%- endmacro -%}
 
 
