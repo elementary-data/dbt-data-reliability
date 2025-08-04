@@ -122,7 +122,7 @@
                 {{ metric_time_bucket_expr }} as metric_time_bucket,
                 {{ elementary.edr_cast_as_date(elementary.edr_date_trunc('day', metric_time_bucket_expr))}} as metric_date,
 
-                row_number() over (partition by id order by updated_at desc) as row_number
+                row_number() over (partition by id order by updated_at desc) as row_num
             from union_metrics
 
         ),
@@ -145,7 +145,7 @@
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
-            where row_number = 1
+            where row_num = 1
         ),
 
         time_window_aggregation as (

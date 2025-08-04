@@ -9,7 +9,7 @@
             ),
             columns_snapshot_with_duplicates as (
                 select *,
-                    row_number() over (partition by column_state_id order by detected_at desc) as row_number
+                    row_number() over (partition by column_state_id order by detected_at desc) as row_num
                 from union_temp_columns_snapshot
             )
             select
@@ -21,7 +21,7 @@
                 is_new,
                 detected_at
             from columns_snapshot_with_duplicates
-            where row_number = 1
+            where row_num = 1
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
