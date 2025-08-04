@@ -23,7 +23,7 @@ select
   results.error,
   results.warn_after,
   results.error_after,
-  results.filter,
+  results.{{ elementary.escape_reserved_keywords('filter') }},
   sources.unique_id,
   sources.database_name,
   sources.schema_name,
@@ -40,7 +40,7 @@ select
   -- https://docs.databricks.com/en/delta/update-schema.html#automatic-schema-evolution-for-delta-lake-merge
   results.error_after as freshness_error_after,
   results.warn_after as freshness_warn_after,
-  results.filter as freshness_filter
+  results.{{ elementary.escape_reserved_keywords('filter') }} as freshness_filter
 from results
 join sources on results.unique_id = sources.unique_id
 where {{ not elementary.get_config_var('disable_source_freshness_alerts') }} and lower(status) != 'pass'
