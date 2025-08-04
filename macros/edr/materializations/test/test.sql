@@ -65,9 +65,7 @@
     {% set sample_limit = 0 %}
   {% endif %}
   
-  {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit,
-                                                         ignore_passed_tests=true,
-                                                         flattened_test=flattened_test) %}
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit, ignore_passed_tests=true) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
   {% do return(result) %}
@@ -119,7 +117,7 @@
   {% do return(new_sql) %}
 {% endmacro %}
 
-{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false, flattened_test=none) %}
+{% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
