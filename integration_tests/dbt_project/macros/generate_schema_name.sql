@@ -33,7 +33,7 @@
 
   {%- else -%}
 
-      {% do return("{}.{}".format(default_schema, custom_schema_name)) %}
+      {% do return("{}_{}".format(default_schema, custom_schema_name)) %}
 
   {%- endif -%}
 {%- endmacro %}
