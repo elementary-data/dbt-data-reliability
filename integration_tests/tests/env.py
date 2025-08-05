@@ -3,6 +3,7 @@ import dbt_project
 
 class Environment:
     def __init__(self, target: str, project_dir: str):
+        self.target = target
         self.dbt_runner = dbt_project.get_dbt_runner(target, project_dir)
 
     def clear(self):
