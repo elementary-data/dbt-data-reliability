@@ -175,8 +175,8 @@
 
     {% set sql = macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part) %}
 
-    {# Hack - dbt-dremio implements this macro as a select statement (which seems to be necessary), but in order 
-       for it to really work we wrap it in parentheses and remove ; if it is there #}
+    {# Hack - dbt-dremio implements this macro as a select statement, but in order 
+       for it to really work inside a select statement we wrap it in parentheses and remove ; and the select keyword if it is there #}
     {% set sql = '(' ~ sql.strip().replace(';', '').replace('select', '') ~ ')' %}
 
     {% do return(sql) %}
