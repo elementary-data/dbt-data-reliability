@@ -62,7 +62,7 @@
     {% set base_insert_query %}
        insert into {{ table_relation }}
          ({%- for column in columns -%}
-           {{- column.name -}} {{- "," if not loop.last else "" -}}
+           {{- elementary.escape_reserved_keywords(column.name) -}} {{- "," if not loop.last else "" -}}
          {%- endfor -%}) values
     {% endset %}
     {% do elementary.end_duration_measure_context('base_query_calc') %}
