@@ -158,26 +158,37 @@
 {% endmacro %}
 
 {% macro dremio__edr_datediff(first_date, second_date, date_part) %}
-    {% if date_part.lower() == 'second' %}
-        {# Use a different method specifically for seconds diff - as it's helpful in a specific case
-           when subtracting aggregate values (problematic with the statement containing "select" - see below) #}
-        {%- set expr -%}
-            (unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 
-             unix_timestamp(substr(cast(({{ first_date }}) as varchar), 1, 19)))
-        {%- endset -%}
-        {% do return(expr) %}
+    {%- set seconds_diff_expr -%}
+        cast(unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 
+            unix_timestamp(substr(cast(({{ first_date }}) as varchar), 1, 19)) as integer)
+    {%- endset -%}
+
+    {# This macro is copied from dbt-dremio, but we replaced entirely the usage of TIMESTAMPDIFF
+       as for some reason it must be used with "select" - which creates issues. 
+       So we're using an alternative implementation in these cases using the seconds diff expression above.
+
+       See original implementation here - https://github.com/dremio/dbt-dremio/blob/22588446edabae1670d929e27501ae3060fdd0bc/dbt/include/dremio/macros/utils/date_spine.sql#L53
+    #}
+
+    {% if date_part == 'year' %}
+        (EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) 
+    {% elif date_part == 'quarter' %}
+        ((EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) * 4 + CEIL(EXTRACT(MONTH FROM {{end_date}}) / 3.0) - CEIL(EXTRACT(MONTH FROM {{start_date}}) / 3.0))
+    {% elif date_part == 'month' %}
+        ((EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) * 12 + (EXTRACT(MONTH FROM {{end_date}}) - EXTRACT(MONTH FROM {{start_date}})))
+    {% elif date_part == 'weekday' %}
+        CAST(CAST({{end_date}} AS DATE) - CAST({{start_date}} AS DATE) AS INTEGER)
+    {% elif date_part == 'week' %}
+        ({{ seconds_diff_expr }} / (60 * 60 * 24 * 7))
+    {% elif date_part == 'day' %}
+        ({{ seconds_diff_expr }} / (60 * 60 * 24))
+    {% elif date_part == 'hour' %}
+        ({{ seconds_diff_expr }} / (60 * 60))
+    {% elif date_part == 'minute' %}
+        ({{ seconds_diff_expr }} / 60)
+    {% elif date_part == 'second' %}
+        {{ seconds_diff_expr }}
+    {% else %}
+        {% do exceptions.raise_compiler_error('Unsupported date part: ' ~ date_part) %}
     {% endif %}
-
-    {% set macro = dbt.datediff or dbt_utils.datediff %}
-    {% if not macro %}
-        {{ exceptions.raise_compiler_error("Did not find a `datediff` macro.") }}
-    {% endif %}
-
-    {% set sql = macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part) %}
-
-    {# Hack - dbt-dremio implements this macro as a select statement, but in order 
-       for it to really work inside a select statement we wrap it in parentheses and remove ; and the select keyword if it is there #}
-    {% set sql = '(' ~ sql.strip().replace(';', '').replace('select', '') ~ ')' %}
-
-    {% do return(sql) %}
 {% endmacro %}
