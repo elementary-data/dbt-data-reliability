@@ -162,6 +162,9 @@
         cast(unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 
             unix_timestamp(substr(cast(({{ first_date }}) as varchar), 1, 19)) as integer)
     {%- endset -%}
+    
+    {%- set first_date_ts = elementary.edr_cast_as_timestamp(first_date) -%}
+    {%- set second_date_ts = elementary.edr_cast_as_timestamp(second_date) -%}
 
     {# This macro is copied from dbt-dremio, but we replaced entirely the usage of TIMESTAMPDIFF
        as for some reason it must be used with "select" - which creates issues. 
@@ -171,13 +174,13 @@
     #}
 
     {% if date_part == 'year' %}
-        (EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) 
+        (EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) 
     {% elif date_part == 'quarter' %}
-        ((EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) * 4 + CEIL(EXTRACT(MONTH FROM {{end_date}}) / 3.0) - CEIL(EXTRACT(MONTH FROM {{start_date}}) / 3.0))
+        ((EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) * 4 + CEIL(EXTRACT(MONTH FROM {{second_date_ts}}) / 3.0) - CEIL(EXTRACT(MONTH FROM {{first_date_ts}}) / 3.0))
     {% elif date_part == 'month' %}
-        ((EXTRACT(YEAR FROM {{end_date}}) - EXTRACT(YEAR FROM {{start_date}})) * 12 + (EXTRACT(MONTH FROM {{end_date}}) - EXTRACT(MONTH FROM {{start_date}})))
+        ((EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) * 12 + (EXTRACT(MONTH FROM {{second_date_ts}}) - EXTRACT(MONTH FROM {{first_date_ts}})))
     {% elif date_part == 'weekday' %}
-        CAST(CAST({{end_date}} AS DATE) - CAST({{start_date}} AS DATE) AS INTEGER)
+        CAST(CAST({{second_date_ts}} AS DATE) - CAST({{first_date_ts}} AS DATE) AS INTEGER)
     {% elif date_part == 'week' %}
         ({{ seconds_diff_expr }} / (60 * 60 * 24 * 7))
     {% elif date_part == 'day' %}

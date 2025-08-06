@@ -76,17 +76,20 @@
 {% endmacro %}
 
 {% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_metrics, min_bucket_start, max_bucket_end, full_table_name_str) %}
+    {%- set timestamp_col_expr = elementary.edr_cast_as_timestamp(elementary.escape_reserved_keywords(timestamp_column)) -%}
+    {%- set event_timestamp_col_expr = elementary.edr_cast_as_timestamp(elementary.escape_reserved_keywords(event_timestamp_column)) -%}
+
     with partially_time_filtered_monitored_table as (
         select
-            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as monitored_table_timestamp_column
+            {{ timestamp_col_expr }} as monitored_table_timestamp_column
             {%- if metric_properties.timestamp_column and metric_properties.event_timestamp_column %}
-            , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as monitored_table_event_timestamp_column
+            , {{ event_timestamp_col_expr }} as monitored_table_event_timestamp_column
             {%- endif %}
         from {{ monitored_table }}
         -- Freshness metric calculated differences between consecutive buckets, thus the first diff
         -- is always null. Therefore we let few old buckets inside the query and filter them later, just for
         -- the first relevant diff not to be null
-        where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= {{ elementary.edr_timeadd("day", -7, elementary.edr_cast_as_timestamp(min_bucket_start)) }}
+        where {{ timestamp_col_expr }} >= {{ elementary.edr_timeadd("day", -7, elementary.edr_cast_as_timestamp(min_bucket_start)) }}
         {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
     ),
     monitored_table as (
