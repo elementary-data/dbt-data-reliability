@@ -9,6 +9,7 @@ from uuid import uuid4
 from data_seeder import DbtDataSeeder
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import create_dbt_runner
+from dbt_utils import get_database_and_schema_properties
 from logger import get_logger
 from ruamel.yaml import YAML
 
@@ -187,8 +188,7 @@ class DbtProject:
                 test_id, materialization
             )
         else:
-            schema_property = "root_path" if self.target == "dremio" else "schema"
-            database_property = "datalake" if self.target == "dremio" else "database"
+            database_property, schema_property = get_database_and_schema_properties(self.target)
             props_yaml = {
                 "version": 2,
                 "sources": [
