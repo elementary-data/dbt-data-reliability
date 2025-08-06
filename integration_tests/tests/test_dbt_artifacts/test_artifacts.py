@@ -96,8 +96,14 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 @pytest.mark.requires_dbt_version("1.8.0")
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
-    database_property, schema_property = get_database_and_schema_properties(dbt_project.target)
-    loaded_at_field = '"UPDATE_TIME"::timestamp' if dbt_project.target != "dremio" else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
+    database_property, schema_property = get_database_and_schema_properties(
+        dbt_project.target
+    )
+    loaded_at_field = (
+        '"UPDATE_TIME"::timestamp'
+        if dbt_project.target != "dremio"
+        else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
+    )
     source_config = {
         "version": 2,
         "sources": [

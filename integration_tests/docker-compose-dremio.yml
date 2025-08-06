@@ -23,7 +23,7 @@ services:
     ports:
       - 9001:9001
       - 9000:9000
-    command: [ "server", "/data", "--console-address", ":9001" ]
+    command: ["server", "/data", "--console-address", ":9001"]
     volumes:
       - minio_data:/data
 
@@ -65,7 +65,7 @@ services:
       - dremio_data:/opt/dremio/data:rw
     # Workaround for permission issues in podman
     user: "0"
-  
+
   dremio-setup:
     image: alpine:latest
     container_name: dremio-setup
@@ -76,7 +76,7 @@ services:
     command: sh /dremio-setup.sh
     networks:
       - dremio-lakehouse
-      
+
 networks:
   dremio-lakehouse:
 
