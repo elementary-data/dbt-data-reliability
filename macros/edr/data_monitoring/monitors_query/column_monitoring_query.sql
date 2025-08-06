@@ -61,8 +61,8 @@
                     {%- if 'null_count' in metric_types -%} {{ elementary.null_count(column) }} {%- else -%} null {% endif %} as null_count,
                     {%- if 'null_percent' in metric_types -%} {{ elementary.null_percent(column) }} {%- else -%} null {% endif %} as null_percent,
                     {%- if 'not_null_percent' in metric_types -%} {{ elementary.not_null_percent(column) }} {%- else -%} null {% endif %} as not_null_percent,
-                    {%- if 'max' in metric_types -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as max,
-                    {%- if 'min' in metric_types -%} {{ elementary.min(column) }} {%- else -%} null {% endif %} as min,
+                    {%- if 'max' in metric_types -%} {{ elementary.max(column) }} {%- else -%} null {% endif %} as {{ elementary.escape_reserved_keywords('max') }},
+                    {%- if 'min' in metric_types -%} {{ elementary.min(column) }} {%- else -%} null {% endif %} as {{ elementary.escape_reserved_keywords('min') }},
                     {%- if 'average' in metric_types -%} {{ elementary.average(column) }} {%- else -%} null {% endif %} as average,
                     {%- if 'zero_count' in metric_types -%} {{ elementary.zero_count(column) }} {%- else -%} null {% endif %} as zero_count,
                     {%- if 'zero_percent' in metric_types -%} {{ elementary.zero_percent(column) }} {%- else -%} null {% endif %} as zero_percent,
@@ -77,7 +77,7 @@
                     {%- if 'count_true' in metric_types -%} {{ elementary.count_true(column) }} {%- else -%} null {% endif %} as count_true,
                     {%- if 'count_false' in metric_types -%} {{ elementary.count_false(column) }} {%- else -%} null {% endif %} as count_false,
                     {%- if 'not_missing_percent' in metric_types -%} {{ elementary.not_missing_percent(column) }} {%- else -%} null {% endif %} as not_missing_percent,
-                    {%- if 'sum' in metric_types -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as sum
+                    {%- if 'sum' in metric_types -%} {{ elementary.sum(column) }} {%- else -%} null {% endif %} as {{ elementary.escape_reserved_keywords('sum') }}
                 from filtered_monitored_table
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
