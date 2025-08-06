@@ -42,7 +42,7 @@ def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
 class DbtProject:
     def __init__(self, target: str, project_dir: str):
         self.dbt_runner = get_dbt_runner(target, project_dir)
-
+        self.target = target
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
@@ -187,12 +187,15 @@ class DbtProject:
                 test_id, materialization
             )
         else:
+            schema_property = "root_path" if self.target == "dremio" else "schema"
+            database_property = "datalake" if self.target == "dremio" else "database"
             props_yaml = {
                 "version": 2,
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
+                        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
+                        "database": f"{{{{ target.{database_property} }}}}",
                         "tables": [table_yaml],
                     }
                 ],
