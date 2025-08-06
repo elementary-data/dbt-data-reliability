@@ -112,10 +112,10 @@
                   {{ elementary.null_string() }} as dimension,
                   {{ elementary.null_string() }} as dimension_value,
                 {% endif %}
-                {{ elementary.edr_cast_as_float(metric_type) }} as metric_value,
+                {{ elementary.edr_cast_as_float(elementary.escape_reserved_keywords(metric_type)) }} as metric_value,
                 {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_name)) }} as metric_name,
                 {{ elementary.edr_cast_as_string(elementary.edr_quote(metric_type)) }} as metric_type
-            from column_metrics where {{ metric_type }} is not null
+            from column_metrics where {{ elementary.escape_reserved_keywords(metric_type) }} is not null
             {% if not loop.last %} union all {% endif %}
         {%- endfor %}
     {%- else %}
