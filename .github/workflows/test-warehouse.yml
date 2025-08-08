@@ -17,6 +17,7 @@ on:
           - athena
           - trino
           - clickhouse
+          - dremio
       elementary-ref:
         type: string
         required: false
@@ -87,6 +88,11 @@ jobs:
         if: inputs.warehouse-type == 'clickhouse'
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose up -d clickhouse
+
+      - name: Start Dremio
+        if: inputs.warehouse-type == 'dremio'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-dremio.yml up -d
 
       - name: Setup Python
         uses: actions/setup-python@v4

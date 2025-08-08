@@ -3,7 +3,7 @@ import json
 import pytest
 from dbt_project import DbtProject
 
-COLUMN_NAME = "value"
+COLUMN_NAME = "some_column"
 
 
 SAMPLES_QUERY = """

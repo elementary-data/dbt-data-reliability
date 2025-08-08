@@ -48,11 +48,11 @@
 {% endmacro %}
 
 {% macro trino__get_clean_elementary_test_tables_queries(test_table_relations) %}
-    {% set queries = [] %}
-    {% for test_relation in test_table_relations %}
-        {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation)) %}
-    {% endfor %}
-    {% do return(queries) %}
+    {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
+{% endmacro %}
+
+{% macro dremio__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
 {% endmacro %}
 
 {% macro get_transaction_clean_elementary_test_tables_queries(test_table_relations) %}

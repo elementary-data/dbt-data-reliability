@@ -1,6 +1,6 @@
 from dbt_project import DbtProject
 
-COLUMN_NAME = "value"
+COLUMN_NAME = "some_column"
 
 
 def test_running_dbt_tests_without_elementary(test_id: str, dbt_project: DbtProject):

@@ -40,3 +40,7 @@
 {% macro trino__edr_day_of_week_expression(date_expr) %}
     date_format({{ date_expr }}, '%W')
 {% endmacro %}
+
+{% macro dremio__edr_day_of_week_expression(date_expr) %}
+    TO_CHAR({{ date_expr }}, 'DAY')
+{% endmacro %}

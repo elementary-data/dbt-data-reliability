@@ -3,10 +3,11 @@ import os
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Literal, Optional, Union, overload
+from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
+from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import create_dbt_runner
 from logger import get_logger
@@ -42,7 +43,7 @@ def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
 class DbtProject:
     def __init__(self, target: str, project_dir: str):
         self.dbt_runner = get_dbt_runner(target, project_dir)
-
+        self.target = target
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
@@ -189,12 +190,16 @@ class DbtProject:
                 test_id, materialization
             )
         else:
+            database_property, schema_property = get_database_and_schema_properties(
+                self.target
+            )
             props_yaml = {
                 "version": 2,
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
+                        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
+                        "database": f"{{{{ target.{database_property} }}}}",
                         "tables": [table_yaml],
                     }
                 ],
@@ -232,9 +237,19 @@ class DbtProject:
             return [test_result] if multiple_results else test_result
 
     def seed(self, data: List[dict], table_name: str):
-        return DbtDataSeeder(
+        with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name)
+        ).seed(data, table_name):
+            return
+
+    @contextmanager
+    def seed_context(
+        self, data: List[dict], table_name: str
+    ) -> Generator[None, None, None]:
+        with DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, table_name):
+            yield
 
     @contextmanager
     def create_temp_model_for_existing_table(

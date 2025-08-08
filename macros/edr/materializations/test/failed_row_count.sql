@@ -39,5 +39,5 @@
   with results as (
     {{ sql }}
   )
-  select {{ failed_row_count_calc }} as count from results
+  select {{ failed_row_count_calc }} as {{ elementary.escape_reserved_keywords('count') }} from results
 {% endmacro %}

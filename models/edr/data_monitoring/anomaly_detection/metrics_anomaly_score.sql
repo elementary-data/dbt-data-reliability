@@ -46,7 +46,8 @@ metrics_anomaly_score as (
         metric_name,
         case
             when training_stddev is null then null
-            when training_stddev = 0 then 0
+            when training_set_size = 1 then null  -- Single value case - no historical context for anomaly detection
+            when training_stddev = 0 then 0  -- Stationary data case - valid, all values are identical
             else (metric_value - training_avg) / (training_stddev)
         end as anomaly_score,
         metric_value as latest_metric_value,

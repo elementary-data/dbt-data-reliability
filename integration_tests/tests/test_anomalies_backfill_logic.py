@@ -19,12 +19,12 @@ LATEST_METRICS_QUERY = """
             bucket_start,
             bucket_end,
             metric_value,
-            row_number() over (partition by id order by updated_at desc) as row_number
+            row_number() over (partition by id order by updated_at desc) as row_num
         from {{{{ ref("data_monitoring_metrics") }}}}
         where metric_name = 'row_count' and lower(full_table_name) like '%{test_id}'
     )
     select bucket_start, bucket_end, metric_value from metrics_ordered
-    where row_number = 1
+    where row_num = 1
 """
 
 # This returns data points used in the latest anomaly test

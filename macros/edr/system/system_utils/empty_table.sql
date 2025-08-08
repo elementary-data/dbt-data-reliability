@@ -137,6 +137,8 @@
 
     {%- set dummy_values = elementary.dummy_values() %}
 
+    {%- set column_name = elementary.escape_reserved_keywords(column_name) %}
+
     {%- if data_type == 'boolean' %}
         cast ({{ dummy_values['boolean'] }} as {{ elementary.edr_type_bool()}}) as {{ column_name }}
     {%- elif data_type == 'timestamp' -%}

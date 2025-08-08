@@ -18,6 +18,10 @@
     {% do return(false) %}
 {% endmacro %}
 
+{% macro dremio__has_temp_table_support() %}
+    {% do return(false) %}
+{% endmacro %}
+
 {% macro clickhouse__has_temp_table_support() %}
     {% do return(false) %}
 {% endmacro %}

@@ -191,7 +191,7 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "dimensions": ["superhero"],
-        "exclude_final_results": "value > 15",
+        "exclude_final_results": '{{ elementary.escape_reserved_keywords("value") }} > 15',
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
@@ -200,7 +200,7 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "dimensions": ["superhero"],
-        "exclude_final_results": "average > 3",
+        "exclude_final_results": '{{ elementary.escape_reserved_keywords("average") }} > 3',
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"

@@ -6,4 +6,4 @@
     )
 }}
 
-SELECT 1 AS one
+SELECT 1 AS {{ elementary.escape_reserved_keywords('one') }}

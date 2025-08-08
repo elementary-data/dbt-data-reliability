@@ -156,3 +156,7 @@
 {% macro trino__edr_type_timestamp() %}
     timestamp(6)
 {% endmacro %}
+
+{% macro dremio__edr_type_timestamp() %}
+    timestamp
+{% endmacro %}

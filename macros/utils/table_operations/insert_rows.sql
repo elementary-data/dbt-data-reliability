@@ -62,7 +62,7 @@
     {% set base_insert_query %}
        insert into {{ table_relation }}
          ({%- for column in columns -%}
-           {{- column.name -}} {{- "," if not loop.last else "" -}}
+           {{- elementary.escape_reserved_keywords(column.name) -}} {{- "," if not loop.last else "" -}}
          {%- endfor -%}) values
     {% endset %}
     {% do elementary.end_duration_measure_context('base_query_calc') %}
@@ -153,6 +153,10 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{%- macro dremio__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\'", "''")) -}}
+{%- endmacro -%}
+
 {%- macro trino__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
@@ -162,7 +166,7 @@
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string and data_type == 'timestamp' -%}
-            {{- elementary.edr_cast_as_timestamp(elementary.edr_quote(value)) -}}
+            {{- elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(value)) -}}
         {%- elif value is string -%}
             '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}

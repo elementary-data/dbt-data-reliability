@@ -69,3 +69,12 @@
 {% macro trino__edr_current_timestamp_in_utc() -%}
     cast(current_timestamp at time zone 'UTC' as timestamp(6))
 {%- endmacro -%}
+
+{% macro dremio__edr_current_timestamp() -%}
+    CURRENT_TIMESTAMP()
+{%- endmacro -%}
+
+{% macro dremio__edr_current_timestamp_in_utc() -%}
+    -- Dremio CURRENT_TIMESTAMP() is always in UTC
+    CURRENT_TIMESTAMP()
+{%- endmacro -%}

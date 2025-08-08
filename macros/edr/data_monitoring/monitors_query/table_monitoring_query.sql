@@ -76,17 +76,19 @@
 {% endmacro %}
 
 {% macro get_timestamp_table_query(monitored_table, metric_properties, timestamp_column, table_metrics, min_bucket_start, max_bucket_end, full_table_name_str) %}
+    {%- set timestamp_col_expr = elementary.edr_cast_as_timestamp(elementary.escape_reserved_keywords(timestamp_column)) -%}
+
     with partially_time_filtered_monitored_table as (
         select
-            {{ elementary.edr_cast_as_timestamp(timestamp_column) }} as monitored_table_timestamp_column
+            {{ timestamp_col_expr }} as monitored_table_timestamp_column
             {%- if metric_properties.timestamp_column and metric_properties.event_timestamp_column %}
-            , {{ elementary.edr_cast_as_timestamp(metric_properties.event_timestamp_column) }} as monitored_table_event_timestamp_column
+            , {{ elementary.edr_cast_as_timestamp(elementary.escape_reserved_keywords(metric_properties.event_timestamp_column)) }} as monitored_table_event_timestamp_column
             {%- endif %}
         from {{ monitored_table }}
         -- Freshness metric calculated differences between consecutive buckets, thus the first diff
         -- is always null. Therefore we let few old buckets inside the query and filter them later, just for
         -- the first relevant diff not to be null
-        where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} >= {{ elementary.edr_timeadd("day", -7, elementary.edr_cast_as_timestamp(min_bucket_start)) }}
+        where {{ timestamp_col_expr }} >= {{ elementary.edr_timeadd("day", -7, elementary.edr_cast_as_timestamp(min_bucket_start)) }}
         {% if metric_properties.where_expression %} and {{ metric_properties.where_expression }} {% endif %}
     ),
     monitored_table as (
@@ -269,7 +271,7 @@
     bucket_freshness_ranked as (
         select
             *,
-            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_number
+            row_number () over (partition by edr_bucket_end order by freshness is null, freshness desc) as row_num
         from bucket_all_freshness_metrics
     )
 
@@ -281,7 +283,7 @@
         {{ elementary.edr_cast_as_string('update_timestamp') }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
-    where row_number = 1
+    where row_num = 1
 {% endmacro %}
 
 {% macro event_freshness_metric_query(metric, metric_properties) %}

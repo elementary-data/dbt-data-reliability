@@ -9,7 +9,7 @@
             ),
             metrics_with_duplicates as (
                 select *,
-                    row_number() over (partition by id order by updated_at desc) as row_number
+                    row_number() over (partition by id order by updated_at desc) as row_num
                 from union_temps_metrics
             )
             select
@@ -28,7 +28,7 @@
                 dimension_value,
                 metric_properties
             from metrics_with_duplicates
-            where row_number = 1
+            where row_num = 1
         {%- endset %}
         {{ return(union_temp_query) }}
     {%- endif %}
