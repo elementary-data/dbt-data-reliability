@@ -35,6 +35,9 @@
 {%- endmacro %}
 
 {% macro dremio__standard_deviation(column_name) -%}
+    -- Dremio's stddev in window functions can raise division by zero with single values
+    -- stddev_pop returns 0 for single values instead of raising an error
+    -- We'll handle the single-value case in the anomaly detection logic using training_set_size
     stddev_pop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
