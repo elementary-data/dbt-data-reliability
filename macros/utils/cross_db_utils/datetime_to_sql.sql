@@ -8,7 +8,12 @@
 
 {% macro dremio__edr_datetime_to_sql(dt) %}
   {% if dt is string %}
-    {% set dt = modules.datetime.datetime.fromisoformat(dt) %}
+    {% if 'T' in dt %}
+      {% set dt = modules.datetime.datetime.fromisoformat(dt) %}
+    {% else %}
+      {% do return(elementary.edr_quote(dt)) %}
+    {% endif %}
   {% endif %}
+
   {% do return(elementary.edr_quote(dt.strftime(elementary.get_time_format()))) %}
 {% endmacro %}

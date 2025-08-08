@@ -22,7 +22,7 @@ EXPECTED_FAILURES = [
     ("name", "column_removed"),
 ]
 
-STRING_JINJA = r"{{ 'STRING' if (target.type == 'bigquery' or target.type == 'databricks') else 'character varying' if target.type == 'redshift' else 'TEXT' }}"
+STRING_JINJA = r"{{ 'STRING' if (target.type == 'bigquery' or target.type == 'databricks') else 'character varying' if (target.type == 'redshift' or target.type == 'dremio') else 'TEXT' }}"
 
 
 def assert_test_results(test_results: List[dict]):

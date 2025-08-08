@@ -166,7 +166,7 @@
         {%- if value is number -%}
             {{- value -}}
         {%- elif value is string and data_type == 'timestamp' -%}
-            {{- elementary.edr_cast_as_timestamp(elementary.edr_quote(value)) -}}
+            {{- elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(value)) -}}
         {%- elif value is string -%}
             '{{- elementary.escape_special_chars(value) -}}'
         {%- elif value is mapping or value is sequence -%}
