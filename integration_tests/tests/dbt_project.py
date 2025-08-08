@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Literal, Optional, Union, overload
+from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
@@ -235,9 +235,19 @@ class DbtProject:
             return [test_result] if multiple_results else test_result
 
     def seed(self, data: List[dict], table_name: str):
-        return DbtDataSeeder(
+        with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name)
+        ).seed(data, table_name):
+            return
+
+    @contextmanager
+    def seed_context(
+        self, data: List[dict], table_name: str
+    ) -> Generator[None, None, None]:
+        with DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, table_name):
+            yield
 
     @contextmanager
     def create_temp_model_for_existing_table(
