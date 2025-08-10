@@ -181,6 +181,17 @@
   {% do return(parameters) %}
 {% endmacro %}
 
+{% macro dremio__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
+  {% do return([
+    _parameter("project_id", target.cloud_project_id),
+    _parameter("host", target.cloud_host),
+    _parameter("object_storage", elementary_database),
+    _parameter("object_storage_path", elementary_schema),
+    _parameter("user", target.user),
+    _parameter("token", "<TOKEN>"),
+    _parameter("threads", target.threads),
+  ]) %}
+{% endmacro %}
 
 {% macro default__generate_elementary_profile_args(method, elementary_database, elementary_schema) %}
 Adapter "{{ target.type }}" is not supported on Elementary.
