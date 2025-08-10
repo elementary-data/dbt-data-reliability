@@ -23,7 +23,7 @@
 {% macro dremio__get_default_schema_name(custom_schema_name, node) -%}
   {%- set default_schema = target.schema if not is_datalake_node(node)
     else target.root_path -%}
-  {%- if custom_schema_name is none -%}
++ {%- if not custom_schema_name -%}
 
       {% do return(default_schema) %}
 
