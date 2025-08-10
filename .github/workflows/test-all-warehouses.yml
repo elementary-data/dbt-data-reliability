@@ -49,6 +49,7 @@ jobs:
             athena,
             trino,
             clickhouse,
+            dremio
           ]
         include:
           # If we're not running on a specific dbt version, then always add postgres on 1.8.0
