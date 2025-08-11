@@ -106,6 +106,14 @@ grant create table on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
 {% endmacro %}
 
 
+{% macro dremio__get_user_creation_query(parameters) %}
+CREATE USER "{{ parameters["user"] }}";
+
+GRANT USAGE ON PROJECT TO USER "{{ parameters["user"] }}";
+GRANT SELECT ON ALL DATASETS IN FOLDER {% for part in (parameters["object_storage"] ~ "." ~ parameters["object_storage_path"]).split(".") %}"{{ part }}"{% if not loop.last %}.{% endif %}{% endfor %} TO USER "{{ parameters["user"] }}";
+{% endmacro %}
+
+
 {# Databricks, BigQuery, Spark #}
 {% macro default__get_user_creation_query(parameters) %}
   {% do exceptions.raise_compiler_error('User creation not supported through sql using ' ~ target.type) %}

@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 from dbt_flags import set_flags
 from dbt_project import DbtProject
+from dbt_utils import get_database_and_schema_properties
 
 TEST_MODEL = "one"
 
@@ -95,17 +96,25 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 @pytest.mark.requires_dbt_version("1.8.0")
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
+    database_property, schema_property = get_database_and_schema_properties(
+        dbt_project.target
+    )
+    loaded_at_field = (
+        '"UPDATE_TIME"::timestamp'
+        if dbt_project.target != "dremio"
+        else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
+    )
     source_config = {
         "version": 2,
         "sources": [
             {
                 "name": "test_source",
-                "database": "{{target.database if target.type != 'clickhouse' else target.schema}}",
-                "schema": "{{target.schema}}",
+                "database": f"{{{{ target.{database_property} }}}}",
+                "schema": f"{{{{ target.{schema_property} }}}}",
                 "tables": [
                     {
                         "name": test_id,
-                        "loaded_at_field": '"UPDATE_TIME"::timestamp',
+                        "loaded_at_field": loaded_at_field,
                         "freshness": {
                             "warn_after": {
                                 "count": 1,

@@ -39,8 +39,7 @@
             select
                 bucket_end,
                 dimension_value,
-                metric_value,
-                row_number () over (partition by dimension_value order by bucket_end desc) as row_number
+                metric_value
             from {{ data_monitoring_metrics_relation }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
@@ -147,8 +146,7 @@
             select
                 bucket_end,
                 dimension_value,
-                metric_value,
-                row_number () over (partition by dimension_value order by bucket_end desc) as row_number
+                metric_value
             from {{ data_monitoring_metrics_relation }}
             where full_table_name = {{ full_table_name_str }}
                 and metric_name = {{ elementary.edr_quote(metric_name) }}
