@@ -2,6 +2,7 @@ target/
 dbt_packages/
 logs/
 scripts/
+package-lock.yml
 
 .idea
 .DS_Store
@@ -11,6 +12,7 @@ integration_tests/data
 edr_target
 
 venv/
+.venv/
 elementary*.html
 elementary*.json
 
@@ -24,3 +26,4 @@ __pycache__/
 
 # vscode
 .vscode/
+dbt_internal_packages/
