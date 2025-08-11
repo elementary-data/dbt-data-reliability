@@ -35,4 +35,10 @@
         {% do elementary.clean_elementary_temp_tables() %}
       {% endif %}
   {% endif %}
+
+  {% set dummy_query %}
+  -- This query is needed for Elementary to work correctly with dbt Fusion
+  select 'on-run-end'
+  {% endset %}
+  {{ return(dummy_query) }}
 {% endmacro %}

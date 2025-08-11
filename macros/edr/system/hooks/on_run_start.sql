@@ -22,4 +22,6 @@
   {% if elementary.is_test_command() %}
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
+
+  {{ return("select 'on-run-start'") }}
 {% endmacro %}
