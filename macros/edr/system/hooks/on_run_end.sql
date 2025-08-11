@@ -36,6 +36,7 @@
       {% endif %}
   {% endif %}
 
+  {# The hook will always run a query, so we need to pass something back #}
   {% set dummy_query %}
   -- This query is needed for Elementary to work correctly with dbt Fusion
   select 'on-run-end'

@@ -23,5 +23,10 @@
     {{ elementary.create_elementary_tests_schema() }}
   {% endif %}
 
-  {{ return("select 'on-run-start'") }}
+  {# The hook will always run a query, so we need to pass something back #}
+  {% set dummy_query %}
+  -- This query is needed for Elementary to work correctly with dbt Fusion
+  select 'on-run-start'
+  {% endset %}
+  {{ return(dummy_query) }}
 {% endmacro %}
