@@ -4,14 +4,16 @@
     materialized = 'incremental',
     unique_key = 'elementary_test_results_id',
     on_schema_change = 'append_new_columns',
-    indexes=[{'columns': ['created_at']}, {'columns': ['elementary_test_results_id']}] if target.type == "postgres" else [],
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
     meta={
       "timestamp_column": "created_at",
       "prev_timestamp_column": "detected_at",
       },
-    table_type=elementary.get_default_table_type(),
-    incremental_strategy=elementary.get_default_incremental_strategy()
+    incremental_strategy=elementary.get_default_incremental_strategy(),
+    meta = {
+      "indexes" : [{'columns': ['created_at']}, {'columns': ['elementary_test_results_id']}] if target.type == "postgres" else [],
+      "table_type" : elementary.get_default_table_type(),
+    }
   )
 }}
 

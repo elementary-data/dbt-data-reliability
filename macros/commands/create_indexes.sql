@@ -25,7 +25,7 @@
   {% set all_queries = [] %}
   {% for table_node in table_nodes %}
     {% set relation = api.Relation.create(table_node.database, table_node.schema, table_node.alias) %}
-    {% set indexes = table_node.config.get("indexes", []) %}
+    {% set indexes = table_node.config.get('meta', {}).get("indexes", []) %}
     {% for _index_dict in indexes %}
       {% if not elementary.does_index_exist(_index_dict, existing_indexes) %}
         {% do all_queries.append(get_create_index_sql(relation, _index_dict)) %}
