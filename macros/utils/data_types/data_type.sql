@@ -145,7 +145,7 @@
 
 {% macro athena__edr_type_timestamp() %}
   {%- set config = model.get('config', {}) -%}
-  {%- set table_type = config.get('table_type', 'hive') -%}
+  {%- set table_type = config.get('meta', {}).get('table_type', 'hive') -%}
   {%- if table_type == 'iceberg' -%}
     timestamp(6)
   {%- else -%}
