@@ -153,10 +153,10 @@
 {% endmacro %}
 
 {% macro dremio__data_type_list(data_type) %}
-    {% set string_list = ['VARCHAR', 'CHARACTER VARYING'] | list %}
-    {% set numeric_list = ['INT','INTEGER','BIGINT','DOUBLE','DECIMAL','FLOAT','SMALLINT','TINYINT'] | list %}
-    {% set timestamp_list = ['DATE','TIME','TIMESTAMP', 'TIME WITH TIME ZONE', 'TIMESTAMP WITH TIME ZONE'] | list %}
-    {% set boolean_list = ['BOOLEAN', 'BIT'] | list %}
+    {% set string_list = ['varchar', 'character varying'] | list %}
+    {% set numeric_list = ['int','integer','bigint','double','decimal','float','smallint','tinyint'] | list %}
+    {% set timestamp_list = ['date','time','timestamp', 'time with time zone', 'timestamp with time zone'] | list %}
+    {% set boolean_list = ['boolean', 'bit'] | list %}
 
     {%- if data_type == 'string' %}
         {{ return(string_list) }}
