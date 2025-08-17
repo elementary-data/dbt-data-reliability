@@ -57,7 +57,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
 ):
     explicit_target_for_bigquery = (
         "other"
-        if dbt_project.dbt_runner.target in ["bigquery", "snowflake", ""]
+        if dbt_project.dbt_runner.target in ["bigquery", "snowflake", "dremio", ""]
         else "string"
     )
     DBT_TEST_ARGS = {
@@ -130,6 +130,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
         "databricks_catalog": "int",
         "athena": "int",
         "trino": "int",
+        "dremio": "int",
     }.get(dbt_project.dbt_runner.target, "numeric")
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
