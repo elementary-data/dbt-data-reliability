@@ -145,7 +145,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          dbt deps --project-dir dbt_project
+          ${{ (inputs.use-dbt-fusion && 'dbtf') || 'dbt' }} deps --project-dir dbt_project
           pip install -r requirements.txt
 
       - name: Write dbt profiles
@@ -160,7 +160,7 @@ jobs:
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          dbt debug -t "${{ inputs.warehouse-type }}"
+          ${{ (inputs.use-dbt-fusion && 'dbtf') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
