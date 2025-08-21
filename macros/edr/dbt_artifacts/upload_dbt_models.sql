@@ -68,7 +68,7 @@
     {% set flatten_model_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
         'alias': node_dict.get('alias'),
-        'checksum': checksum_dict.get('checksum'),
+        'checksum': checksum_dict.get('checksum') if checksum_dict is mapping else none,
         'materialization': config_dict.get('materialized'),
         'tags': elementary.filter_none_and_sort(tags),
         'meta': meta_dict,
