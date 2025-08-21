@@ -30,6 +30,11 @@ on:
         required: false
         default: "latest_official"
         description: dbt's version to test with
+      use-dbt-fusion:
+        type: boolean
+        required: false
+        description: Use dbt-fusion to run tests
+        default: false
 
   workflow_call:
     inputs:
@@ -124,10 +129,15 @@ jobs:
         run: pip install databricks-sql-connector==2.9.3
 
       - name: Install dbt
+        if: !inputs.use-dbt-fusion
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
+
+      - name: Install dbt-fusion
+        if: inputs.use-dbt-fusion
+        run: curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --update
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
@@ -154,7 +164,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.use-dbt-fusion && '--runner-method fusion') || '' }}
 
       - name: Upload test results
         if: always()
