@@ -1,27 +1,26 @@
 {%- macro get_anomaly_query(flattened_test=none) -%}
-  {%- set anomaly_scores_query -%}
+  {%- set query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-  {%- endset -%}
-
-  {% set anomalies_count_query -%}
-    select count(*) as anomalies_count
-    from ({{ anomaly_scores_query }})
     where is_anomalous = true
   {%- endset -%}
+  {{- return(query) -}}
+{%- endmacro -%}
 
-  {% set non_anomalies_query -%}
-    {{ anomaly_scores_query }}
-    where is_anomalous = true
+{%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
+  {%- set anomaly_scores_query -%}
+    select distinct dimension_value
+    from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where dimension is not null
+    and dimension_value is not null
+    and is_anomalous = true
   {%- endset -%}
 
-  {% set anomalies_count_result = elementary.agate_to_dicts(elementary.run_query(anomalies_count_query)) %}
-  {% set anomalies_count = anomalies_count_result[0]['anomalies_count'] %}
+  {% set anomalous_dimension_values_query -%}
+    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where dimension_value in ({{ anomaly_scores_query }})
+  {%- endset -%}
 
-  {% if anomalies_count > 0 %}
-    {{- return(anomaly_scores_query) -}}
-  {% else %}
-    {{- return(non_anomalies_query) -}}
-  {% endif %}
+  {{- return(anomalous_dimension_values_query) -}}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(flattened_test=none) %}
