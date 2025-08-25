@@ -7,20 +7,17 @@
 {%- endmacro -%}
 
 {%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
-  {%- set anomaly_scores_query -%}
-    select distinct dimension_value
-    from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-    where dimension is not null
-    and dimension_value is not null
-    and is_anomalous = true
+  {%- set dimension_values_query -%}
+    select distinct dimension_value from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where is_anomalous = true
   {%- endset -%}
 
-  {% set anomalous_dimension_values_query -%}
+  {% set dimension_anomalies_query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-    where dimension_value in ({{ anomaly_scores_query }})
+    where dimension_value in ({{ dimension_values_query }})
   {%- endset -%}
 
-  {{- return(anomalous_dimension_values_query) -}}
+  {{- return(dimension_anomalies_query) -}}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(flattened_test=none) %}
