@@ -143,12 +143,6 @@ jobs:
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
-      - name: Install dependencies
-        working-directory: ${{ env.TESTS_DIR }}
-        run: |
-          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
-          pip install -r requirements.txt
-
       - name: Write dbt profiles
         env:
           PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
@@ -157,6 +151,12 @@ jobs:
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
           echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+
+      - name: Install dependencies
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
+          pip install -r requirements.txt
 
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
