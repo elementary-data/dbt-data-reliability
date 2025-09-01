@@ -139,7 +139,7 @@ jobs:
         if: inputs.use-dbt-fusion
         run: |
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --update
-          exec $SHELL
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
