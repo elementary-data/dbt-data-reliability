@@ -139,7 +139,6 @@ jobs:
         if: inputs.use-dbt-fusion
         run: |
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --update
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
@@ -147,7 +146,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.use-dbt-fusion && 'dbtf') || 'dbt' }} deps --project-dir dbt_project
+          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           pip install -r requirements.txt
 
       - name: Write dbt profiles
@@ -162,7 +161,7 @@ jobs:
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.use-dbt-fusion && 'dbtf') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
+          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
