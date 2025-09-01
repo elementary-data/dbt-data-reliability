@@ -145,7 +145,7 @@ jobs:
 
       - name: Write dbt profiles
         env:
-          PROFILES_YML: ${{ secrets.CI_PROFILES_YML }}
+          PROFILES_YML: ${{ (inputs.use-dbt-fusion && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
         run: |
           mkdir -p ~/.dbt
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
