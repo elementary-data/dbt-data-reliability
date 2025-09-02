@@ -115,11 +115,13 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
                 "tables": [
                     {
                         "name": test_id,
-                        "loaded_at_field": loaded_at_field,
-                        "freshness": {
-                            "warn_after": {
-                                "count": 1,
-                                "period": "hour",
+                        "config": {
+                            "loaded_at_field": loaded_at_field,
+                            "freshness": {
+                                "warn_after": {
+                                    "count": 1,
+                                    "period": "hour",
+                                },
                             },
                         },
                     }
