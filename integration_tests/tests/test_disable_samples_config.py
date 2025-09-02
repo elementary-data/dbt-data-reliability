@@ -30,13 +30,14 @@ def test_disable_samples_config_prevents_sampling(
     test_result = dbt_project.test(
         test_id,
         "not_null",
-        dict(column_name=COLUMN_NAME, meta={"disable_test_samples": True}),
+        dict(column_name=COLUMN_NAME),
         data=data,
         as_model=True,
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
         },
+        test_config={"meta": {"disable_test_samples": True}},
     )
     assert test_result["status"] == "fail"
 
@@ -55,13 +56,14 @@ def test_disable_samples_false_allows_sampling(test_id: str, dbt_project: DbtPro
     test_result = dbt_project.test(
         test_id,
         "not_null",
-        dict(column_name=COLUMN_NAME, meta={"disable_test_samples": False}),
+        dict(column_name=COLUMN_NAME),
         data=data,
         as_model=True,
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
         },
+        test_config={"meta": {"disable_test_samples": False}},
     )
     assert test_result["status"] == "fail"
 
@@ -85,10 +87,7 @@ def test_disable_samples_config_overrides_pii_tags(
     test_result = dbt_project.test(
         test_id,
         "not_null",
-        dict(
-            column_name=COLUMN_NAME,
-            meta={"disable_test_samples": True, "tags": ["pii"]},
-        ),
+        dict(column_name=COLUMN_NAME),
         data=data,
         as_model=True,
         test_vars={
@@ -96,6 +95,7 @@ def test_disable_samples_config_overrides_pii_tags(
             "test_sample_row_count": 5,
             "disable_samples_on_pii_tags": True,
         },
+        test_config={"meta": {"disable_test_samples": True, "tags": ["pii"]}},
     )
     assert test_result["status"] == "fail"
 
@@ -116,7 +116,7 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
     test_result = dbt_project.test(
         test_id,
         "not_null",
-        dict(column_name="col1", meta={"disable_test_samples": True}),
+        dict(column_name="col1"),
         data=data,
         as_model=True,
         test_vars={
@@ -125,6 +125,7 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
             "disable_samples_on_pii_tags": True,
             "pii_tags": ["pii"],
         },
+        test_config={"meta": {"disable_test_samples": True}},
     )
     assert test_result["status"] == "fail"
 
@@ -144,13 +145,14 @@ def test_disable_samples_with_multiple_columns(test_id: str, dbt_project: DbtPro
     test_result = dbt_project.test(
         test_id,
         "not_null",
-        dict(column_name="col1", meta={"disable_test_samples": True}),
+        dict(column_name="col1"),
         data=data,
         as_model=True,
         test_vars={
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
         },
+        test_config={"meta": {"disable_test_samples": True}},
     )
     assert test_result["status"] == "fail"
 
