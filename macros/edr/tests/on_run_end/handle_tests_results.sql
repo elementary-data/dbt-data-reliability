@@ -25,8 +25,9 @@
     {% do return('') %}
 {% endmacro %}
 
-{% macro get_normalized_test_status(status, elementary_test_results_row) %}
+{% macro get_normalized_test_status(result, elementary_test_results_row) %}
   {% set failures = elementary_test_results_row.get("failures", result.failures) %}
+  {% set status = result.status %}
 
   {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
     even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
@@ -67,7 +68,7 @@
 
       {% for elementary_test_results_row in elementary_test_results_rows %}
         {% set failures = elementary_test_results_row.get("failures", result.failures) %}
-        {% set status = elementary.get_normalized_test_status(result.status, elementary_test_results_row) %}
+        {% set status = elementary.get_normalized_test_status(result, elementary_test_results_row) %}
 
         {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                   'failed_row_count': elementary_test_failed_row_count}) %}
