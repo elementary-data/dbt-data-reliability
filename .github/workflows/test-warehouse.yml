@@ -159,6 +159,7 @@ jobs:
           echo "$${ github.workspace }/dbt-data-reliability"
           sed -i 's|\.\./\.\./|${{ github.workspace }}/dbt-data-reliability|' dbt_project/packages.yml
           cat dbt_project/packages.yml
+          rm -rf dbt_project/package-lock.yml
           ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           pip install -r requirements.txt
 
