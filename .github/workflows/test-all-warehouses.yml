@@ -57,6 +57,8 @@ jobs:
             warehouse-type: postgres
           - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
             warehouse-type: postgres
+          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+            warehouse-type: snowflake
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
