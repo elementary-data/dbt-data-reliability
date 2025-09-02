@@ -310,5 +310,8 @@ class DbtProject:
         path = self.models_dir_path / name
         with open(path, "w") as f:
             YAML().dump(content, f)
-        yield path
-        path.unlink()
+
+        try:
+            yield path
+        finally:
+            path.unlink()
