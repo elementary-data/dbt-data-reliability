@@ -155,7 +155,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          sed -i 's|../../|${{ github.workspace }}/dbt-data-reliability|' dbt_project/packages.yml
+          sed -i 's|\.\./\.\./|${{ github.workspace }}/dbt-data-reliability|' dbt_project/packages.yml
           ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           pip install -r requirements.txt
 
