@@ -120,6 +120,7 @@ class DbtProject:
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -140,6 +141,7 @@ class DbtProject:
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -160,6 +162,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         column_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -181,12 +184,16 @@ class DbtProject:
         if columns:
             table_yaml["columns"] = columns
 
+        test_yaml = {dbt_test_name: {"arguments": test_args}}
+        if test_config:
+            test_yaml[dbt_test_name]["config"] = test_config
+
         if test_column is None:
-            table_yaml["tests"] = [{dbt_test_name: {"arguments": test_args}}]
+            table_yaml["tests"] = [test_yaml]
         else:
             column_def = {
                 "name": test_column,
-                "tests": [{dbt_test_name: {"arguments": test_args}}],
+                "tests": [test_yaml],
             }
             if column_config:
                 column_def["config"] = column_config
