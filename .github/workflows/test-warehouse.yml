@@ -161,7 +161,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -s -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.use-dbt-fusion && '--runner-method fusion') || '' }}
+        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
 
       - name: Upload test results
         if: always()
