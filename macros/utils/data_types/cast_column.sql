@@ -23,8 +23,8 @@
 
 {%- macro clickhouse__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(
-        parseDateTimeBestEffortOrNull(toString({{ timestamp_field }})),
-        toDateTime('1970-01-01 00:00:00')
+        parseDateTimeBestEffortOrNull(toString({{ timestamp_field }}), 'UTC'),
+        toDateTime('1970-01-01 00:00:00', 'UTC')
     )
 {%- endmacro -%}
 
