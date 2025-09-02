@@ -30,11 +30,6 @@ on:
         required: false
         default: "latest_official"
         description: dbt's version to test with
-      use-dbt-fusion:
-        type: boolean
-        required: false
-        description: Use dbt-fusion to run tests
-        default: false
 
   workflow_call:
     inputs:
@@ -129,14 +124,14 @@ jobs:
         run: pip install databricks-sql-connector==2.9.3
 
       - name: Install dbt
-        if: ${{ ! inputs.use-dbt-fusion }}
+        if: ${{ dbt-version != 'fusion' }}
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install dbt-fusion
-        if: inputs.use-dbt-fusion
+        if: inputs.dbt-version == 'fusion'
         run: |
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --update
 
@@ -145,7 +140,7 @@ jobs:
 
       - name: Write dbt profiles
         env:
-          PROFILES_YML: ${{ (inputs.use-dbt-fusion && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
+          PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
         run: |
           mkdir -p ~/.dbt
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
@@ -155,14 +150,14 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
+          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
 
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.use-dbt-fusion && '~/.local/bin/dbt') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
+          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
