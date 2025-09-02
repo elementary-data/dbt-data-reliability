@@ -108,7 +108,9 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A model assigned to a group for testing",
             }
         ],
@@ -181,12 +183,16 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name_1,
-                "group": group_name_1,
+                "config": {
+                    "group": group_name_1,
+                },
                 "description": "A model assigned to group 1 for testing",
             },
             {
                 "name": model_name_2,
-                "group": group_name_2,
+                "config": {
+                    "group": group_name_2,
+                },
                 "description": "A model assigned to group 2 for testing",
             },
         ],
@@ -263,7 +269,9 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A model assigned to a group for testing",
                 "columns": [{"name": "col", "tests": ["unique"]}],
             }
@@ -334,7 +342,9 @@ def test_test_override_group(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": test_group,
+                "config": {
+                    "group": test_group,
+                },
                 "description": "A model assigned to a group for testing",
                 "columns": [
                     {
@@ -398,7 +408,9 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
         "seeds": [
             {
                 "name": seed_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A seed assigned to a group for testing",
             }
         ],
@@ -469,7 +481,9 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
         "snapshots": [
             {
                 "name": snapshot_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A snapshot assigned to a group for testing",
             }
         ],
