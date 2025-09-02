@@ -50,6 +50,9 @@
           results if the number of failed rows is 0.
           We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
         {% set status = "pass" if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" else result.status %}
+        {% if elementary.is_dbt_fusion() and status == 'error' %}
+          {% set status = "fail" %}
+        {% endif %}
 
         {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                   'failed_row_count': elementary_test_failed_row_count}) %}
