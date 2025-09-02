@@ -25,6 +25,30 @@
     {% do return('') %}
 {% endmacro %}
 
+{% macro get_normalized_test_status(status, elementary_test_results_row) %}
+  {% set failures = elementary_test_results_row.get("failures", result.failures) %}
+
+  {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
+    even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
+    results if the number of failed rows is 0.
+    We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
+  {% if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" %}
+    {% set status = "pass" %}
+  {% endif %}
+
+  {% if elementary.is_dbt_fusion() %}
+    {% if status == 'error' %}
+      {# dbt-fusion currently doesn't distinguish between failure and error #}
+      {% set status = "fail" %}
+    {% elif status == 'success' %}
+      {# dbt-fusion seems to sometime return 'pass' and sometimes 'success', so we normalize to 'pass' #}
+      {% set status = "pass" %}
+    {% endif %}
+  {% endif %}
+
+  {% do return(status) %}
+{% endmacro %}
+
 {% macro get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_row_counts, render_result_rows=false) %}
   {% set elementary_test_results = [] %}
 
@@ -43,15 +67,7 @@
 
       {% for elementary_test_results_row in elementary_test_results_rows %}
         {% set failures = elementary_test_results_row.get("failures", result.failures) %}
-
-        {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
-          even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
-          results if the number of failed rows is 0.
-          We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
-        {% set status = "pass" if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" else result.status %}
-        {% if elementary.is_dbt_fusion() and status == 'error' %}
-          {% set status = "fail" %}
-        {% endif %}
+        {% set status = elementary.get_normalized_test_status(result.status, elementary_test_results_row) %}
 
         {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                   'failed_row_count': elementary_test_failed_row_count}) %}
