@@ -124,7 +124,7 @@ jobs:
         run: pip install databricks-sql-connector==2.9.3
 
       - name: Install dbt
-        if: ${{ dbt-version != 'fusion' }}
+        if: ${{ inputs.dbt-version != 'fusion' }}
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
