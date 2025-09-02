@@ -35,9 +35,9 @@ def project_dir_copy(runner_method: Optional[RunnerMethod]):
             dirs_exist_ok=True,
             symlinks=True,
         )
-        # _edit_packages_yml_to_include_absolute_elementary_package_path(
-        #     dbt_project_copy_dir
-        # )
+        _edit_packages_yml_to_include_absolute_elementary_package_path(
+            dbt_project_copy_dir
+        )
         _remove_python_tests_for_dbt_fusion(dbt_project_copy_dir, runner_method)
         yield dbt_project_copy_dir
     finally:
