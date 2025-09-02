@@ -54,7 +54,7 @@
   {% set elementary_test_results = [] %}
 
   {% for result in results %}
-    {% set node = elementary.get_node(result.unique_id) %}
+    {% set node = elementary.get_node(result.unique_id or result.node.unique_id) %}
     {% if node.resource_type == 'test' %}
       {% set result = elementary.get_run_result_dict(result) %}
       {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}

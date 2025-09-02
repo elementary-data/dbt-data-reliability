@@ -14,6 +14,7 @@ SUPPORTED_TARGETS = ["snowflake"]
 
 
 @pytest.mark.requires_dbt_version("1.3.0")
+@pytest.mark.skip_for_dbt_fusion
 class TestJsonschema:
     @pytest.mark.only_on_targets(SUPPORTED_TARGETS)
     def test_valid(self, test_id: str, dbt_project: DbtProject):
