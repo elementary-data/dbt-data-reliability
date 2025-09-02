@@ -115,6 +115,13 @@ def only_on_targets(request, target: str):
 
 
 @pytest.fixture(autouse=True)
+def skip_for_dbt_fusion(request, runner_method: Optional[RunnerMethod]):
+    if request.node.get_closest_marker("skip_for_dbt_fusion"):
+        if runner_method == RunnerMethod.FUSION:
+            pytest.skip("Test unsupported for dbt fusion")
+
+
+@pytest.fixture(autouse=True)
 def requires_dbt_version(request):
     if request.node.get_closest_marker("requires_dbt_version"):
         required_version = request.node.get_closest_marker("requires_dbt_version").args[
