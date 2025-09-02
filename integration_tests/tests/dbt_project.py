@@ -184,7 +184,10 @@ class DbtProject:
         if test_column is None:
             table_yaml["tests"] = [{dbt_test_name: {"arguments": test_args}}]
         else:
-            column_def = {"name": test_column, "tests": [{dbt_test_name: test_args}]}
+            column_def = {
+                "name": test_column,
+                "tests": [{dbt_test_name: {"arguments": test_args}}],
+            }
             if column_config:
                 column_def["config"] = column_config
             table_yaml["columns"] = [column_def]
