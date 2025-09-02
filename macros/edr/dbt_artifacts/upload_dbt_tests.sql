@@ -133,6 +133,8 @@
       {% endif %}
     {% endif %}
 
+    {% set group_name = config_dict.get("group") or node_dict.get("group") %}
+
     {% set primary_test_model_database = none %}
     {% set primary_test_model_schema = none %}
     {%- if primary_test_model_id.data is not none -%}
@@ -140,6 +142,7 @@
         {%- if tested_model_node -%}
             {% set primary_test_model_database = tested_model_node.get('database') %}
             {% set primary_test_model_schema = tested_model_node.get('schema') %}
+            {% set group_name = group_name or tested_model_node.get('group') %}
         {%- endif -%}
     {%- endif -%}
 
@@ -178,7 +181,7 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
         'quality_dimension': unified_meta.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace),
-        'group_name': config_dict.get("group") or node_dict.get("group"),
+        'group_name': group_name,
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
