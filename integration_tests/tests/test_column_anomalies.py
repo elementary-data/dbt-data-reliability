@@ -112,29 +112,28 @@ def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
         ]
     ]
 
-    params = DBT_TEST_ARGS
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, data=data, test_column="superhero"
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, test_column="superhero"
     )
     assert test_result["status"] == "fail"
 
-    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
-        params,
+        DBT_TEST_ARGS,
         test_column="superhero",
         test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'Marvel'"},
     )
     assert test_result["status"] == "pass"
 
-    params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_result = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
-        params,
+        DBT_TEST_ARGS,
         test_column="superhero",
         test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'DC'"},
     )
     assert test_result["status"] == "fail"
 
