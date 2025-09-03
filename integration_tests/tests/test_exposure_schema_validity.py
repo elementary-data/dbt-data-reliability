@@ -14,7 +14,7 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
 ):
     seed(dbt_project)
     run_result = dbt_project.dbt_runner.run(
-        models="orders", full_refresh=True, quiet=True
+        select="orders", full_refresh=True, quiet=True
     )
     assert run_result is True
     test_result = dbt_project.dbt_runner._run_command(
@@ -32,7 +32,7 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
 ):
     seed(dbt_project)
     run_result = dbt_project.dbt_runner.run(
-        models="customers", full_refresh=True, quiet=True
+        select="customers", full_refresh=True, quiet=True
     )
     assert run_result is True
     test_result = dbt_project.dbt_runner._run_command(
