@@ -4,7 +4,11 @@
     transient=False,
     unique_key = 'model_execution_id',
     on_schema_change = 'append_new_columns',
-    indexes=[{'columns': ['unique_id']}] if target.type == "postgres" else [],
+    indexes=[
+      {'columns': ['unique_id']},
+      {'columns': ['unique_id', 'created_at']},
+      {'columns': ['model_execution_id']},
+    ] if target.type == "postgres" else [],
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
     meta={
       "dedup_by_column": "model_execution_id",

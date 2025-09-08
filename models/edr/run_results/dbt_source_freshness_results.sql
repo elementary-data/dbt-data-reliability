@@ -9,7 +9,11 @@
       "prev_timestamp_column": "generated_at",
       },
     table_type=elementary.get_default_table_type(),
-    incremental_strategy=elementary.get_default_incremental_strategy()
+    incremental_strategy=elementary.get_default_incremental_strategy(),
+    indexes=[
+      {'columns': ['unique_id', 'created_at']}, 
+      {'columns': ['source_freshness_execution_id']},
+    ] if target.type == "postgres" else []
   )
 }}
 
