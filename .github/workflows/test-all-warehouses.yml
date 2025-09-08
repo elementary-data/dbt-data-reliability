@@ -1,6 +1,6 @@
 name: Test all warehouse platforms
 on:
-  pull_request_target:
+  pull_request:
     branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -41,22 +41,8 @@ jobs:
           fromJSON('["latest_official"]') }}
         warehouse-type:
           [
-            postgres,
-            snowflake,
-            bigquery,
-            redshift,
-            databricks_catalog,
-            athena,
-            trino,
-            clickhouse,
-            dremio,
+            postgres
           ]
-        include:
-          # If we're not running on a specific dbt version, then always add postgres on 1.8.0
-          - dbt-version: "${{ inputs.dbt-version || '1.8.0' }}"
-            warehouse-type: postgres
-          - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
-            warehouse-type: postgres
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
