@@ -9,7 +9,7 @@ from uuid import uuid4
 from data_seeder import DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
-from elementary.clients.dbt.factory import create_dbt_runner
+from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
 
@@ -31,19 +31,28 @@ DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
 logger = get_logger(__name__)
 
 
-def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
+def get_dbt_runner(
+    target: str, project_dir: str, runner_method: Optional[RunnerMethod] = None
+) -> BaseDbtRunner:
     return create_dbt_runner(
         project_dir,
         target=target,
         vars=_DEFAULT_VARS.copy(),
         raise_on_failure=False,
+        runner_method=runner_method,
     )
 
 
 class DbtProject:
-    def __init__(self, target: str, project_dir: str):
-        self.dbt_runner = get_dbt_runner(target, project_dir)
+    def __init__(
+        self,
+        target: str,
+        project_dir: str,
+        runner_method: Optional[RunnerMethod] = None,
+    ):
+        self.dbt_runner = get_dbt_runner(target, project_dir, runner_method)
         self.target = target
+
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
@@ -111,6 +120,7 @@ class DbtProject:
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -131,6 +141,7 @@ class DbtProject:
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -151,6 +162,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         column_config: Optional[Dict[str, Any]] = None,
+        test_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -172,10 +184,17 @@ class DbtProject:
         if columns:
             table_yaml["columns"] = columns
 
+        test_yaml = {dbt_test_name: {"arguments": test_args}}
+        if test_config:
+            test_yaml[dbt_test_name]["config"] = test_config
+
         if test_column is None:
-            table_yaml["tests"] = [{dbt_test_name: test_args}]
+            table_yaml["tests"] = [test_yaml]
         else:
-            column_def = {"name": test_column, "tests": [{dbt_test_name: test_args}]}
+            column_def = {
+                "name": test_column,
+                "tests": [test_yaml],
+            }
             if column_config:
                 column_def["config"] = column_config
             table_yaml["columns"] = [column_def]
@@ -298,5 +317,8 @@ class DbtProject:
         path = self.models_dir_path / name
         with open(path, "w") as f:
             YAML().dump(content, f)
-        yield path
-        path.unlink()
+
+        try:
+            yield path
+        finally:
+            path.unlink()
