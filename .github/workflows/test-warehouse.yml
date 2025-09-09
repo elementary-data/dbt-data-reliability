@@ -53,7 +53,7 @@ env:
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
 
 jobs:
-  # PRs from forks require approval, specifically with the "pull_request_target" event as it contains repo secrets.
+  # PRs from forks require approval
   check-if-requires-approval:
     runs-on: ubuntu-latest
     outputs:
@@ -62,7 +62,7 @@ jobs:
       - name: Set requires approval output
         id: set-output
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request_target" && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
             echo "requires_approval=true" >> $GITHUB_OUTPUT
           else
             echo "requires_approval=false" >> $GITHUB_OUTPUT
