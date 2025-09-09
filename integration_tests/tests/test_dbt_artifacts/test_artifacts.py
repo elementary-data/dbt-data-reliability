@@ -53,6 +53,7 @@ def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
     assert len(existing_artifacts) == len(new_artifacts)
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_dbt_invocations(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
     dbt_project.dbt_runner.run(selector="one")
@@ -96,6 +97,7 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 
 @pytest.mark.requires_dbt_version("1.8.0")
+@pytest.mark.skip_for_dbt_fusion
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     database_property, schema_property = get_database_and_schema_properties(
         dbt_project.target
