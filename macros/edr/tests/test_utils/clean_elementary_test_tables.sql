@@ -42,7 +42,12 @@
 {% macro athena__get_clean_elementary_test_tables_queries(test_table_relations) %}
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
-        {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation.render_pure())) %}
+        {% if test_relation.database %}
+            {% set quoted_relation = "`{}`.`{}`.`{}`".format(test_relation.database, test_relation.schema, test_relation.identifier) %}
+        {% else %}
+            {% set quoted_relation = "`{}`.`{}`".format(test_relation.schema, test_relation.identifier) %}
+        {% endif %}
+        {% do queries.append("DROP TABLE IF EXISTS {}".format(quoted_relation)) %}
     {% endfor %}
     {% do return(queries) %}
 {% endmacro %}
