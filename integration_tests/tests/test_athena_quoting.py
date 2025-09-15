@@ -13,11 +13,11 @@ def test_athena_clean_elementary_test_tables_quoting(
     )
 
     assert any(
-        "DROP TABLE IF EXISTS `" in result for result in test_result
-    ), "Expected backtick quoting in DROP TABLE statement"
+        "`test_db`.`test_schema`.`test_table`" in result for result in test_result
+    ), "Expected backtick quoting around identifiers"
     assert any(
-        "test_db.test_schema.test_table" in result for result in test_result
-    ), "Expected database.schema.table format"
+        "DROP TABLE IF EXISTS" in result for result in test_result
+    ), "Expected DROP TABLE IF EXISTS statement"
 
     test_result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_athena_quoting_without_database",
@@ -25,22 +25,22 @@ def test_athena_clean_elementary_test_tables_quoting(
     )
 
     assert any(
-        "DROP TABLE IF EXISTS `" in result for result in test_result
-    ), "Expected backtick quoting in DROP TABLE statement"
+        "`test_schema`.`test_table`" in result for result in test_result
+    ), "Expected backtick quoting around identifiers"
     assert any(
-        "test_schema.test_table" in result for result in test_result
-    ), "Expected schema.table format"
+        "DROP TABLE IF EXISTS" in result for result in test_result
+    ), "Expected DROP TABLE IF EXISTS statement"
 
     test_result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_athena_quoting_special_chars", return_raw_edr_logs=True
     )
 
     assert any(
-        "DROP TABLE IF EXISTS `" in result for result in test_result
-    ), "Expected backtick quoting for special characters"
+        "`test-db`.`test_schema`.`test-table`" in result for result in test_result
+    ), "Expected backtick quoting around identifiers with special characters"
     assert any(
-        "test-db.test_schema.test-table" in result for result in test_result
-    ), "Expected special characters to be handled"
+        "DROP TABLE IF EXISTS" in result for result in test_result
+    ), "Expected DROP TABLE IF EXISTS statement"
 
 
 @pytest.mark.only_on_targets(["athena"])
@@ -52,8 +52,8 @@ def test_athena_quoting_regression(test_id: str, dbt_project: DbtProject):
     )
 
     assert any(
-        "DROP TABLE IF EXISTS `" in result for result in test_result
-    ), "Expected backtick quoting for normal names"
+        "`normal_db`.`normal_schema`.`normal_table`" in result for result in test_result
+    ), "Expected backtick quoting around normal identifiers"
     assert any(
-        "normal_db.normal_schema.normal_table" in result for result in test_result
-    ), "Expected normal names to work"
+        "DROP TABLE IF EXISTS" in result for result in test_result
+    ), "Expected DROP TABLE IF EXISTS statement"
