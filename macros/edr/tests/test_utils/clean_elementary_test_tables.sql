@@ -40,6 +40,7 @@
 {% endmacro %}
 
 {% macro athena__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {# Athena requires explicit backtick quoting for DROP TABLE statements to avoid parsing errors (important-comment) #}
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
         {% if test_relation.database %}
