@@ -44,9 +44,14 @@
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
         {% if test_relation.database %}
-            {% set quoted_relation = "`{}`.`{}`.`{}`".format(test_relation.database, test_relation.schema, test_relation.identifier) %}
+            {% set escaped_database = test_relation.database | replace('`', '``') %}
+            {% set escaped_schema = test_relation.schema | replace('`', '``') %}
+            {% set escaped_identifier = test_relation.identifier | replace('`', '``') %}
+            {% set quoted_relation = "`{}`.`{}`.`{}`".format(escaped_database, escaped_schema, escaped_identifier) %}
         {% else %}
-            {% set quoted_relation = "`{}`.`{}`".format(test_relation.schema, test_relation.identifier) %}
+            {% set escaped_schema = test_relation.schema | replace('`', '``') %}
+            {% set escaped_identifier = test_relation.identifier | replace('`', '``') %}
+            {% set quoted_relation = "`{}`.`{}`".format(escaped_schema, escaped_identifier) %}
         {% endif %}
         {% do queries.append("DROP TABLE IF EXISTS {}".format(quoted_relation)) %}
     {% endfor %}

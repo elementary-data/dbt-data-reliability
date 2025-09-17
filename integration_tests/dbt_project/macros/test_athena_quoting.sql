@@ -4,7 +4,7 @@
     ] %}
     {% set queries = elementary.athena__get_clean_elementary_test_tables_queries(mock_relations) %}
     {% for query in queries %}
-        {{ log(query, info=True) }}
+        {{ log("Elementary: " ~ query, info=True) }}
     {% endfor %}
     {{ return('') }}
 {% endmacro %}
@@ -15,7 +15,7 @@
     ] %}
     {% set queries = elementary.athena__get_clean_elementary_test_tables_queries(mock_relations) %}
     {% for query in queries %}
-        {{ log(query, info=True) }}
+        {{ log("Elementary: " ~ query, info=True) }}
     {% endfor %}
     {{ return('') }}
 {% endmacro %}
@@ -26,7 +26,7 @@
     ] %}
     {% set queries = elementary.athena__get_clean_elementary_test_tables_queries(mock_relations) %}
     {% for query in queries %}
-        {{ log(query, info=True) }}
+        {{ log("Elementary: " ~ query, info=True) }}
     {% endfor %}
     {{ return('') }}
 {% endmacro %}
@@ -37,7 +37,18 @@
     ] %}
     {% set queries = elementary.athena__get_clean_elementary_test_tables_queries(mock_relations) %}
     {% for query in queries %}
-        {{ log(query, info=True) }}
+        {{ log("Elementary: " ~ query, info=True) }}
+    {% endfor %}
+    {{ return('') }}
+{% endmacro %}
+
+{% macro test_athena_quoting_with_backticks() %}
+    {% set mock_relations = [
+        api.Relation.create(database='test`db', schema='test_schema', identifier='test`table')
+    ] %}
+    {% set queries = elementary.athena__get_clean_elementary_test_tables_queries(mock_relations) %}
+    {% for query in queries %}
+        {{ log("Elementary: " ~ query, info=True) }}
     {% endfor %}
     {{ return('') }}
 {% endmacro %}

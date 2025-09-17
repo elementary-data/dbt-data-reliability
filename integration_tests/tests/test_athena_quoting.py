@@ -49,3 +49,17 @@ def test_athena_quoting_regression(test_id: str, dbt_project: DbtProject):
         "DROP TABLE IF EXISTS `normal_db`.`normal_schema`.`normal_table`" in result
         for result in test_result
     ), "Expected DROP TABLE IF EXISTS with backtick quoting around normal identifiers"
+
+
+@pytest.mark.only_on_targets(["athena"])
+def test_athena_quoting_with_backticks(test_id: str, dbt_project: DbtProject):
+    """Test that Athena quoting properly escapes backticks in identifiers."""
+
+    test_result = dbt_project.dbt_runner.run_operation(
+        "elementary_tests.test_athena_quoting_with_backticks", return_raw_edr_logs=True
+    )
+
+    assert any(
+        "DROP TABLE IF EXISTS `test``db`.`test_schema`.`test``table`" in result
+        for result in test_result
+    ), "Expected DROP TABLE IF EXISTS with properly escaped backticks in identifiers"
