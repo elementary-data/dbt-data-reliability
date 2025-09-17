@@ -154,7 +154,7 @@
 {%- endmacro -%}
 
 {%- macro dremio__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("\'", "''")) -}}
+    {{- return(string_value | replace("\'", "''") | replace("‘", "''") | replace("’", "''") | replace("​", " ")) -}}
 {%- endmacro -%}
 
 {%- macro trino__escape_special_chars(string_value) -%}
