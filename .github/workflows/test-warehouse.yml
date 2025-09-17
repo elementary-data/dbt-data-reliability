@@ -11,7 +11,6 @@ on:
           - snowflake
           - bigquery
           - redshift
-          - databricks
           - databricks_catalog
           - spark
           - athena
@@ -62,7 +61,7 @@ jobs:
       - name: Set requires approval output
         id: set-output
         run: |
-          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+          if [[ "${{ github.event_name }}" =~ ^pull_request && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
             echo "requires_approval=true" >> $GITHUB_OUTPUT
           else
             echo "requires_approval=false" >> $GITHUB_OUTPUT
