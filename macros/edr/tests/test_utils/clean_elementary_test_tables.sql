@@ -40,9 +40,18 @@
 {% endmacro %}
 
 {% macro athena__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {# Athena requires explicit backtick quoting for DROP TABLE statements to avoid parsing errors #}
     {% set queries = [] %}
     {% for test_relation in test_table_relations %}
-        {% do queries.append("DROP TABLE IF EXISTS {}".format(test_relation.render_pure())) %}
+        {% set escaped_database = test_relation.database | replace('`', '``') if test_relation.database else none %}
+        {% set escaped_schema = test_relation.schema | replace('`', '``') %}
+        {% set escaped_identifier = test_relation.identifier | replace('`', '``') %}
+        {% if test_relation.database %}
+            {% set quoted_relation = "`{}`.`{}`.`{}`".format(escaped_database, escaped_schema, escaped_identifier) %}
+        {% else %}
+            {% set quoted_relation = "`{}`.`{}`".format(escaped_schema, escaped_identifier) %}
+        {% endif %}
+        {% do queries.append("DROP TABLE IF EXISTS {}".format(quoted_relation)) %}
     {% endfor %}
     {% do return(queries) %}
 {% endmacro %}
