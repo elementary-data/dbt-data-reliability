@@ -23,6 +23,7 @@
                                                                   ('path', 'string'),
                                                                   ('generated_at', 'string'),
                                                                   ('metadata_hash', 'string'),
+                                                                  ('group_name', 'string'),
                                                                   ]) %}
     {{ return(dbt_seeds_empty_table_query) }}
 {% endmacro %}
@@ -65,7 +66,8 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'group_name': config_dict.get("group") or node_dict.get("group"),
     }%}
     {% do flatten_seed_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_seed_metadata_dict)}) %}
     {{ return(flatten_seed_metadata_dict) }}

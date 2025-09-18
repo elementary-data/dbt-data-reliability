@@ -71,6 +71,8 @@ def test_exclude_specific_dates(
     assert test_result["status"] == "fail"
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     # To avoid races, set the "custom_started_at" to the beginning of the hour
     test_started_at = datetime.utcnow().replace(minute=0, second=0)

@@ -50,8 +50,22 @@
 
 {% macro handle_dbt_test(flattened_test, materialization_macro) %}
   {% set result = materialization_macro() %}
-  {% set result_rows = elementary.query_test_result_rows(sample_limit=elementary.get_config_var('test_sample_row_count'),
-                                                         ignore_passed_tests=true) %}
+  {% set sample_limit = elementary.get_config_var('test_sample_row_count') %}
+
+  {% set disable_test_samples = false %}
+  {% if "meta" in flattened_test and "disable_test_samples" in flattened_test["meta"] %}
+    {% set disable_test_samples = flattened_test["meta"]["disable_test_samples"] %}
+  {% endif %}
+
+  {% if disable_test_samples %}
+    {% set sample_limit = 0 %}
+  {% elif elementary.is_pii_table(flattened_test) %}
+    {% set sample_limit = 0 %}
+  {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
+    {% set sample_limit = 0 %}
+  {% endif %}
+
+  {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit, ignore_passed_tests=true) %}
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
   {% do return(result) %}
@@ -111,6 +125,7 @@
     {% do elementary.debug_log("Skipping sample query because the test passed.") %}
     {% do return([]) %}
   {% endif %}
+
   {% set query %}
     with test_results as (
       {{ sql }}
@@ -119,6 +134,79 @@
   {% endset %}
   {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
+
+{% macro get_columns_to_exclude_from_sampling(flattened_test) %}
+  {% set columns_to_exclude = [] %}
+
+  {% if not flattened_test %}
+    {% do return(columns_to_exclude) %}
+  {% endif %}
+
+  {% if elementary.get_config_var('disable_samples_on_pii_tags') %}
+    {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
+    {% set columns_to_exclude = columns_to_exclude + pii_columns %}
+  {% endif %}
+
+  {% if elementary.is_sampling_disabled_for_column(flattened_test) %}
+    {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
+    {% if test_column_name and test_column_name not in columns_to_exclude %}
+      {% do columns_to_exclude.append(test_column_name) %}
+    {% endif %}
+  {% endif %}
+
+  {% do return(columns_to_exclude) %}
+{% endmacro %}
+
+{# if test query contains PII columns or *, disable sampling entirely #}
+{% macro should_disable_sampling_for_pii(flattened_test) %}
+  {% if not elementary.get_config_var('disable_samples_on_pii_tags') %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% set pii_columns = elementary.get_pii_columns_from_parent_model(flattened_test) %}
+  {% if not pii_columns %}
+    {% do return(false) %}
+  {% endif %}
+
+  {# Get the compiled test query #}
+  {% set test_query = elementary.get_compiled_code(flattened_test) %}
+  {% set test_query_lower = test_query.lower() %}
+
+  {# Check if query uses * (select all columns) #}
+  {# Note: This is intentionally conservative and may over-censor in cases like
+     "SELECT * FROM other_table" in CTEs, but it's better to be safe with PII data #}
+  {% if '*' in test_query_lower %}
+    {% do return(true) %}
+  {% endif %}
+
+  {# Check if any PII column appears in the test query #}
+  {% for pii_column in pii_columns %}
+    {% if pii_column.lower() in test_query_lower %}
+      {% do return(true) %}
+    {% endif %}
+  {% endfor %}
+
+  {% do return(false) %}
+{% endmacro %}
+
+{% macro is_sampling_disabled_for_column(flattened_test) %}
+  {% set test_column_name = elementary.insensitive_get_dict_value(flattened_test, 'test_column_name') %}
+  {% set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
+
+  {% if not test_column_name or not parent_model_unique_id %}
+    {% do return(false) %}
+  {% endif %}
+
+  {% set parent_model = elementary.get_node(parent_model_unique_id) %}
+  {% if parent_model and parent_model.get('columns') %}
+    {% set column_config = parent_model.get('columns', {}).get(test_column_name, {}).get('config', {}) %}
+    {% set disable_test_samples = elementary.safe_get_with_default(column_config, 'disable_test_samples', false) %}
+    {% do return(disable_test_samples) %}
+  {% endif %}
+
+  {% do return(false) %}
+{% endmacro %}
+
 
 {% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
   {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}

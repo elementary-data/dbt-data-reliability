@@ -1,3 +1,20 @@
+{% macro get_elementary_runtime_config(include_defaults=true) %}
+  {% set default_config = elementary.get_default_config() %}
+  {% set unset = '<ELEMENTARY_UNSET_MAGIC_STRING>' %}
+  {% set runtime_config = {} %}
+  {% for var_name in default_config.keys() %}
+    {% if include_defaults %}
+      {% set var_value = var(var_name, default_config.get(var_name)) %}
+    {% else %}
+      {% set var_value = var(var_name, unset) %}
+    {% endif %}
+    {% if var_value != unset %}
+      {% do runtime_config.update({var_name: var_value}) %}
+    {% endif %}
+  {% endfor %}
+  {% do return(runtime_config) %}
+{% endmacro %}
+
 {% macro get_config_var(var_name) %}
   {% set default_config = elementary.get_default_config() %}
   {% set var_value = var(var_name, default_config.get(var_name)) %}
@@ -64,7 +81,9 @@
     },
     'include_other_warehouse_specific_columns': false,
     'fail_on_zero': false,
-    'anomaly_exclude_metrics': none
+    'anomaly_exclude_metrics': none,
+    'disable_samples_on_pii_tags': false,
+    'pii_tags': ['pii']
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
@@ -90,5 +109,11 @@
 {%- macro trino__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({'query_max_size': 250000}) %}
+    {{- return(default_config) -}}
+{%- endmacro -%}
+
+{%- macro dremio__get_default_config() -%}
+    {% set default_config = elementary.default__get_default_config() %}
+    {% do default_config.update({'dbt_artifacts_chunk_size': 100}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}

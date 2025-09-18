@@ -3,10 +3,11 @@ import os
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, List, Literal, Optional, Union, overload
+from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
 from data_seeder import DbtDataSeeder
+from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import create_dbt_runner
 from logger import get_logger
@@ -42,7 +43,7 @@ def get_dbt_runner(target: str, project_dir: str) -> BaseDbtRunner:
 class DbtProject:
     def __init__(self, target: str, project_dir: str):
         self.dbt_runner = get_dbt_runner(target, project_dir)
-
+        self.target = target
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
@@ -109,6 +110,7 @@ class DbtProject:
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
+        model_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -128,6 +130,7 @@ class DbtProject:
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
+        model_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -146,6 +149,8 @@ class DbtProject:
         materialization: str = "table",  # Only relevant if as_model=True
         test_vars: Optional[dict] = None,
         elementary_enabled: bool = True,
+        model_config: Optional[Dict[str, Any]] = None,
+        column_config: Optional[Dict[str, Any]] = None,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -161,15 +166,19 @@ class DbtProject:
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {"name": test_id}
 
+        if model_config:
+            table_yaml.update(model_config)
+
         if columns:
             table_yaml["columns"] = columns
 
         if test_column is None:
             table_yaml["tests"] = [{dbt_test_name: test_args}]
         else:
-            table_yaml["columns"] = [
-                {"name": test_column, "tests": [{dbt_test_name: test_args}]}
-            ]
+            column_def = {"name": test_column, "tests": [{dbt_test_name: test_args}]}
+            if column_config:
+                column_def["config"] = column_config
+            table_yaml["columns"] = [column_def]
 
         temp_table_ctx: Any
         if as_model:
@@ -181,12 +190,16 @@ class DbtProject:
                 test_id, materialization
             )
         else:
+            database_property, schema_property = get_database_and_schema_properties(
+                self.target
+            )
             props_yaml = {
                 "version": 2,
                 "sources": [
                     {
                         "name": "test_data",
-                        "schema": f"{{{{ target.schema }}}}{SCHEMA_NAME_SUFFIX}",
+                        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
+                        "database": f"{{{{ target.{database_property} }}}}",
                         "tables": [table_yaml],
                     }
                 ],
@@ -224,9 +237,19 @@ class DbtProject:
             return [test_result] if multiple_results else test_result
 
     def seed(self, data: List[dict], table_name: str):
-        return DbtDataSeeder(
+        with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name)
+        ).seed(data, table_name):
+            return
+
+    @contextmanager
+    def seed_context(
+        self, data: List[dict], table_name: str
+    ) -> Generator[None, None, None]:
+        with DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, table_name):
+            yield
 
     @contextmanager
     def create_temp_model_for_existing_table(

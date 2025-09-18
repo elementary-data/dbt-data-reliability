@@ -129,7 +129,7 @@
     {%- else %}
         {{ return([]) }}
     {%- endif %}
-
+ 
 {% endmacro %}
 
 {% macro clickhouse__data_type_list(data_type) %}
@@ -137,6 +137,26 @@
     {% set numeric_list = ['Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Float32', 'Float64', 'Decimal', 'Decimal32', 'Decimal64', 'Decimal128'] | list %}
     {% set timestamp_list = ['DateTime', 'Date', 'Date32'] | list %}
     {% set boolean_list = ["UInt8","Bool"] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %}
+        {{ return(boolean_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}
+
+{% macro dremio__data_type_list(data_type) %}
+    {% set string_list = ['varchar', 'character varying'] | list %}
+    {% set numeric_list = ['int','integer','bigint','double','decimal','float','smallint','tinyint'] | list %}
+    {% set timestamp_list = ['date','time','timestamp', 'time with time zone', 'timestamp with time zone'] | list %}
+    {% set boolean_list = ['boolean', 'bit'] | list %}
 
     {%- if data_type == 'string' %}
         {{ return(string_list) }}

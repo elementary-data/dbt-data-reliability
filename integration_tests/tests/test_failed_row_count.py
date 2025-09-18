@@ -1,7 +1,7 @@
 import pytest
 from dbt_project import DbtProject
 
-COLUMN_NAME = "value"
+COLUMN_NAME = "some_column"
 
 
 # Failed row count currently not supported on ClickHouse

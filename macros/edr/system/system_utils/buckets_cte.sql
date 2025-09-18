@@ -144,3 +144,20 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
+{% macro dremio__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    {%- set complete_buckets_cte %}
+        with integers as (
+            select (row_number() over (order by t1.val, t2.val, t3.val, t4.val)) - 1 as num
+            from (values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)) t1(val)
+            cross join (values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)) t2(val)
+            cross join (values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)) t3(val)
+            cross join (values (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)) t4(val)
+        )
+        select
+            {{ elementary.edr_timeadd(time_bucket.period, 'num * ' ~ time_bucket.count, min_bucket_start_expr) }} as edr_bucket_start,
+            {{ elementary.edr_timeadd(time_bucket.period, '(num + 1) * ' ~ time_bucket.count, min_bucket_start_expr) }} as edr_bucket_end
+        from integers
+        where {{ elementary.edr_timeadd(time_bucket.period, '(num + 1) * ' ~ time_bucket.count, min_bucket_start_expr) }} <= {{ max_bucket_end_expr }}
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
+{% endmacro %}

@@ -30,6 +30,7 @@
                                                                    ('path', 'string'),
                                                                    ('generated_at', 'string'),
                                                                    ('metadata_hash', 'string'),
+                                                                   ('group_name', 'string'),
                                                                    ]) %}
     {{ return(dbt_metrics_empty_table_query) }}
 {% endmacro %}
@@ -37,6 +38,7 @@
 {% macro flatten_metric(node_dict) %}
     {% set depends_on_dict = elementary.safe_get_with_default(node_dict, 'depends_on', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
+    {% set config_dict = elementary.safe_get_with_default(node_dict, 'config', {}) %}
     {% set tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
     {% set flatten_metric_metadata_dict = {
         'unique_id': node_dict.get('unique_id'),
@@ -57,7 +59,8 @@
         'package_name': node_dict.get('package_name'),
         'original_path': node_dict.get('original_file_path'),
         'path': node_dict.get('path'),
-        'generated_at': elementary.datetime_now_utc_as_string()
+        'generated_at': elementary.datetime_now_utc_as_string(),
+        'group_name': config_dict.get("group"),
     }%}
     {% do flatten_metric_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_metric_metadata_dict)}) %}
     {{ return(flatten_metric_metadata_dict) }}

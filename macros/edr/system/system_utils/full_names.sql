@@ -102,6 +102,20 @@
 {% endmacro %}
 
 
+{% macro dremio__full_name_split(part_name) %}
+    {%- if part_name == 'database_name' -%}
+        trim('"' from split_part(full_table_name,'.',1)) as {{ part_name }}
+    {%- elif part_name == 'schema_name' -%}
+        trim('"' from substr(full_table_name, length(split_part(full_table_name,'.',1)) + 2, 
+             length(full_table_name) - length(split_part(full_table_name,'.',1)) - length(split_part(full_table_name,'.',length(full_table_name) - length(replace(full_table_name,'.','')) + 1)) - 2)) as {{ part_name }}
+    {%- elif part_name == 'table_name' -%}
+        trim('"' from split_part(full_table_name,'.',length(full_table_name) - length(replace(full_table_name,'.','')) + 1)) as {{ part_name }}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+{% endmacro %}
+
+
 {% macro relation_to_full_name(relation) %}
     {%- if relation.is_cte %}
         {# Ephemeral models don't have db and schema #}

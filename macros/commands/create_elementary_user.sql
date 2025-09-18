@@ -1,22 +1,36 @@
-{% macro create_elementary_user(user="elementary", password=none, role="ELEMENTARY_ROLE") %}
-  {% if password is none %}
-    {% set password = elementary.generate_password() %}
-  {% endif %}
-  {% set profile_parameters = elementary.generate_elementary_profile_args(overwrite_values={
+{% macro create_elementary_user(user="elementary", password=none, role="ELEMENTARY_ROLE", public_key=none) %}
+  {% set auth_method = elementary.get_auth_method() %}
+  {% set parameter_values = {
     "user": user,
-    "password": password,
     "role": role
-  }) %}
-  {% set profile_parameters_dict = {} %}
+  } %}
+
+  {% if auth_method == "password" %}
+    {% if password is none %}
+      {% do parameter_values.update({"password": elementary.generate_password()}) %}
+    {% else %}
+      {% do parameter_values.update({"password": password}) %}
+    {% endif %}
+  {% elif auth_method == "keypair" %}
+    {%- if public_key is none or public_key == "" -%}
+      {%- do exceptions.raise_compiler_error("ERROR: A public key must be provided to generate a Snowflake user!") -%}
+    {%- endif -%}
+    {% do parameter_values.update({"public_key": public_key}) %}
+  {% endif %}
+
+  {# Unify the parameters above with auto-generated profile parameters, to get everything
+     we need to create the user. #}
+  {% set profile_parameters = elementary.generate_elementary_profile_args(overwrite_values=parameter_values) %}  
   {% for parameter in profile_parameters %}
-    {% set profile_parameters_dict = profile_parameters_dict.update({parameter["name"]: parameter["value"]}) %}
+    {% do parameter_values.update({parameter["name"]: parameter["value"]}) %}
   {% endfor %}
-  {% set profile_creation_query = elementary.get_profile_creation_query(profile_parameters_dict) %}
+
+  {% set profile_creation_query = elementary.get_user_creation_query(parameter_values) %}
   {% do print("\nPlease run the following query in your database to create the Elementary user:\n" ~ profile_creation_query) %}
   {% do print("\nAfter that, use the following parameters when configuring your environment\n") %}
   {% for parameter in profile_parameters %}
-    {% if parameter["name"] != "threads" %}  {# threads is not a parameter for the environment #}
-      {% do print(parameter["name"]|capitalize ~ ": " ~ parameter["value"]) %}
+    {% if parameter["name"] not in ["threads", "public_key"] %}
+      {% do print(parameter["name"]|capitalize|replace('_', ' ') ~ ": " ~ parameter["value"]) %}
     {% endif %}
   {% endfor %}
 {% endmacro %}
@@ -30,4 +44,17 @@
     {% set ns.password = [ns.password, (x | replace('x', characters | random ))] | join %}
   {% endfor %}
   {% do return(ns.password) %}
+{% endmacro %}
+
+
+{% macro get_auth_method() %}
+  {% do return(adapter.dispatch("get_auth_method", "elementary")()) %}
+{% endmacro %}
+
+{% macro default__get_auth_method() %}
+  {% do return("password") %}
+{% endmacro %}
+
+{% macro snowflake__get_auth_method() %}
+  {% do return("keypair") %}
 {% endmacro %}

@@ -31,6 +31,8 @@ def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
     return [json.loads(result["result_row"]) for result in results]
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -49,6 +51,8 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert len(anomaly_test_points) == 0
 
 
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -82,6 +86,7 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
         }
         for superhero in ["Superman", "Superman", "Superman", "Spiderman"]
     ]
+
     data += [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
@@ -94,12 +99,19 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "fail"
 
-    # Dimension anomalies only stores anomalous rows (unlike other anomaly tests) - so we should only get 1 row with the problematic value
     anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
-    assert len(anomaly_test_points) == 1
-    assert anomaly_test_points[0]["is_anomalous"]
-    assert anomaly_test_points[0]["dimension"] == "superhero"
-    assert anomaly_test_points[0]["dimension_value"] == "Superman"
+
+    # Only dimension values with anomalies are stored in the test points
+    dimension_values = set([x["dimension_value"] for x in anomaly_test_points])
+
+    superman_anomaly_test_points = [
+        x for x in anomaly_test_points if x["dimension_value"] == "Superman"
+    ]
+
+    assert len(dimension_values) == 1
+    assert "Superman" in dimension_values
+    assert len(anomaly_test_points) == len(superman_anomaly_test_points)
+    assert any(x["is_anomalous"] for x in superman_anomaly_test_points)
 
 
 # Anomalies currently not supported on ClickHouse
@@ -187,7 +199,7 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "dimensions": ["superhero"],
-        "exclude_final_results": "value > 15",
+        "exclude_final_results": '{{ elementary.escape_reserved_keywords("value") }} > 15',
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
@@ -196,7 +208,7 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "dimensions": ["superhero"],
-        "exclude_final_results": "average > 3",
+        "exclude_final_results": '{{ elementary.escape_reserved_keywords("average") }} > 3',
     }
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"

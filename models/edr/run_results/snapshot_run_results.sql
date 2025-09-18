@@ -31,14 +31,15 @@ SELECT
     run_results.compiled_code,
     run_results.adapter_response,
     run_results.thread_id,
-    snapshots.database_name,
-    snapshots.schema_name,
-    coalesce(run_results.materialization, snapshots.materialization) as materialization,
-    snapshots.tags,
-    snapshots.package_name,
-    snapshots.path,
-    snapshots.original_path,
-    snapshots.owner,
-    snapshots.alias
+    run_results.group_name,
+    model_snapshots.database_name,
+    model_snapshots.schema_name,
+    coalesce(run_results.materialization, model_snapshots.materialization) as materialization,
+    model_snapshots.tags,
+    model_snapshots.package_name,
+    model_snapshots.path,
+    model_snapshots.original_path,
+    model_snapshots.owner,
+    model_snapshots.alias
 FROM dbt_run_results run_results
-JOIN dbt_snapshots snapshots ON run_results.unique_id = snapshots.unique_id
+JOIN dbt_snapshots model_snapshots ON run_results.unique_id = model_snapshots.unique_id

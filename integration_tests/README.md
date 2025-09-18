@@ -42,7 +42,7 @@ pip install elementary-data
 5. Run the tests.
 
 ```shell
-pytest -vvv -n8
+pytest tests -vvv -n8
 ```
 
 ### Web Interface

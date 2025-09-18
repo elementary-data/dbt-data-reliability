@@ -156,3 +156,42 @@
     {% endif %}
     {{ return(macro(elementary.edr_cast_as_timestamp(first_date), elementary.edr_cast_as_timestamp(second_date), date_part)) }}
 {% endmacro %}
+
+{% macro dremio__edr_datediff(first_date, second_date, date_part) %}
+    {%- set seconds_diff_expr -%}
+        cast(unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 
+            unix_timestamp(substr(cast(({{ first_date }}) as varchar), 1, 19)) as integer)
+    {%- endset -%}
+    
+    {%- set first_date_ts = elementary.edr_cast_as_timestamp(first_date) -%}
+    {%- set second_date_ts = elementary.edr_cast_as_timestamp(second_date) -%}
+
+    {# This macro is copied from dbt-dremio, but we replaced entirely the usage of TIMESTAMPDIFF
+       as for some reason it must be used with "select" - which creates issues. 
+       So we're using an alternative implementation in these cases using the seconds diff expression above.
+
+       See original implementation here - https://github.com/dremio/dbt-dremio/blob/22588446edabae1670d929e27501ae3060fdd0bc/dbt/include/dremio/macros/utils/date_spine.sql#L53
+    #}
+
+    {% if date_part == 'year' %}
+        (EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) 
+    {% elif date_part == 'quarter' %}
+        ((EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) * 4 + CEIL(EXTRACT(MONTH FROM {{second_date_ts}}) / 3.0) - CEIL(EXTRACT(MONTH FROM {{first_date_ts}}) / 3.0))
+    {% elif date_part == 'month' %}
+        ((EXTRACT(YEAR FROM {{second_date_ts}}) - EXTRACT(YEAR FROM {{first_date_ts}})) * 12 + (EXTRACT(MONTH FROM {{second_date_ts}}) - EXTRACT(MONTH FROM {{first_date_ts}})))
+    {% elif date_part == 'weekday' %}
+        CAST(CAST({{second_date_ts}} AS DATE) - CAST({{first_date_ts}} AS DATE) AS INTEGER)
+    {% elif date_part == 'week' %}
+        ({{ seconds_diff_expr }} / (60 * 60 * 24 * 7))
+    {% elif date_part == 'day' %}
+        ({{ seconds_diff_expr }} / (60 * 60 * 24))
+    {% elif date_part == 'hour' %}
+        ({{ seconds_diff_expr }} / (60 * 60))
+    {% elif date_part == 'minute' %}
+        ({{ seconds_diff_expr }} / 60)
+    {% elif date_part == 'second' %}
+        {{ seconds_diff_expr }}
+    {% else %}
+        {% do exceptions.raise_compiler_error('Unsupported date part: ' ~ date_part) %}
+    {% endif %}
+{% endmacro %}

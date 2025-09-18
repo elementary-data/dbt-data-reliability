@@ -165,7 +165,7 @@ Learn more in our [AI data validations documentation](https://docs.elementary-da
 ```
 packages:
   - package: elementary-data/elementary
-    version: 0.18.2
+    version: 0.19.4
     ## Docs: <https://docs.elementary-data.com>
 
 ```

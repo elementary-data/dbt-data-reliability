@@ -40,7 +40,7 @@
                                                                                                    detection_period=detection_period,
                                                                                                    training_period=training_period,
                                                                                                    exclude_final_results=exclude_final_results) %}
-        
+
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
         {%- endif %}
@@ -71,11 +71,11 @@
         {{ elementary.test_log('end', full_table_name) }}
 
         {% set flattened_test = elementary.flatten_test(context["model"]) %}
-        {% set anomalous_rows_sql = elementary.get_anomaly_query(flatten_model) %}
+        {% set anomalous_dimension_rows_sql = elementary.get_anomaly_query_for_dimension_anomalies(flattened_test) %}
         {% do elementary.store_metrics_table_in_cache() %}
-        {% do elementary.store_anomaly_test_results(flattened_test, anomalous_rows_sql) %}
+        {% do elementary.store_anomaly_test_results(flattened_test, anomalous_dimension_rows_sql) %}
 
-        {{ anomalous_rows_sql }}
+        {{ elementary.get_anomaly_query(flattened_test) }}
 
     {% else %}
 

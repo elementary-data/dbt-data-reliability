@@ -23,10 +23,13 @@
 
 {%- macro clickhouse__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(
-        toDateTime(
-            left(splitByChar('+', toString({{ timestamp_field }}))[1], 19)),
-        toDateTime('1970-01-01 00:00:00')
+        parseDateTimeBestEffortOrNull(toString({{ timestamp_field }}), 'UTC'),
+        toDateTime('1970-01-01 00:00:00', 'UTC')
     )
+{%- endmacro -%}
+
+{%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
+    cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
 {%- macro edr_cast_as_float(column) -%}
@@ -83,6 +86,10 @@
         try_cast({{ timestamp_field }} as {{ elementary.edr_type_date() }}),
         cast(from_iso8601_timestamp(cast({{ timestamp_field }} AS {{ elementary.edr_type_string() }})) AS {{ elementary.edr_type_date() }})
     )
+{%- endmacro -%}
+
+{%- macro dremio__edr_cast_as_date(timestamp_field) -%}
+    cast({{ timestamp_field }} as {{ elementary.edr_type_date() }})
 {%- endmacro -%}
 
 

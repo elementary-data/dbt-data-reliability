@@ -11,12 +11,12 @@ on:
           - snowflake
           - bigquery
           - redshift
-          - databricks
           - databricks_catalog
           - spark
           - athena
           - trino
           - clickhouse
+          - dremio
       elementary-ref:
         type: string
         required: false
@@ -52,9 +52,25 @@ env:
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
 
 jobs:
+  # PRs from forks require approval
+  check-if-requires-approval:
+    runs-on: ubuntu-latest
+    outputs:
+      requires_approval: ${{ steps.set-output.outputs.requires_approval }}
+    steps:
+      - name: Set requires approval output
+        id: set-output
+        run: |
+          if [[ "${{ github.event_name }}" =~ ^pull_request && "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            echo "requires_approval=true" >> $GITHUB_OUTPUT
+          else
+            echo "requires_approval=false" >> $GITHUB_OUTPUT
+          fi
+
   test:
     runs-on: ubuntu-latest
-    environment: elementary_test_env # This is a github environment (not to be confused with env vars)
+    needs: [check-if-requires-approval]
+    environment: ${{ (needs.check-if-requires-approval.outputs.requires_approval == 'true' && 'elementary_test_env') || '' }}
     concurrency:
       # This is what eventually defines the schema name in the data platform.
       group: tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${{ github.head_ref || github.ref_name }}
@@ -88,6 +104,11 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose up -d clickhouse
 
+      - name: Start Dremio
+        if: inputs.warehouse-type == 'dremio'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-dremio.yml up -d
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -106,7 +127,7 @@ jobs:
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('<={0}', inputs.dbt-version)) || '' }}"
+          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
@@ -123,7 +144,7 @@ jobs:
         run: |
           mkdir -p ~/.dbt
           DBT_VERSION=$(pip show dbt-core | grep -i version | awk '{print $2}' | sed 's/\.//g')
-          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/-/_/g")
+          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
           echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Check DWH connection
