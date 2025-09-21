@@ -6,7 +6,6 @@
         {% set rows.data = agate_table.rows %}
     {% endif %}
 
-    {% set column_types = agate_table.column_types %}
     {% set serializable_rows = [] %}
     {% for agate_row in rows.data %}
         {% set serializable_row = {} %}
