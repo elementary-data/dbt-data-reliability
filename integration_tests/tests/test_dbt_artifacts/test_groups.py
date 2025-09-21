@@ -457,7 +457,7 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
         "    check_cols='all',\n"
         "    target_schema=target.schema\n"
         ") }}\n"
-        "select 1 as id, 'foo' as value\n"
+        "select 1 as id, 'foo' as {{ elementary.escape_reserved_keywords(\"value\") }}\n"
         "{% endsnapshot %}\n"
     )
     schema_yaml = {
