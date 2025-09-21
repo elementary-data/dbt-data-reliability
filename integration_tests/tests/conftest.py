@@ -13,7 +13,12 @@ from logger import get_logger
 from packaging import version
 
 DBT_PROJECT_PATH = Path(__file__).parent.parent / "dbt_project"
-DBT_FUSION_SUPPORTED_TARGETS = ["snowflake", "bigquery", "databricks"]
+DBT_FUSION_SUPPORTED_TARGETS = [
+    "snowflake",
+    "bigquery",
+    "redshift",
+    "databricks_catalog",
+]
 
 logger = get_logger(__name__)
 
