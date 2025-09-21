@@ -3,6 +3,7 @@
     column_node.get('tags', []),
     column_node.get('config', {}).get('tags', []),
     column_node.get('meta', {}).get('tags', []),
+    column_node.get('config', {}).get('meta', {}).get('tags', []),
   ] %}
 
   {% set all_column_tags = [] %}
