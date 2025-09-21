@@ -1,7 +1,7 @@
 {% macro create_elementary_test_table(database_name, schema_name, test_name, table_type, sql_query) %}
     {% if execute %}
-        {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()).replace("*", "") %}
-        {% set temp_table_name = adapter.quote_as_configured(temp_table_name, 'identifier') %}
+        {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()) %}
+        {% set temp_table_name = temp_table_name.replace("*", "").replace("-", "_").replace(".", "_") %}
 
         {{ elementary.debug_log(table_type ~ ' table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_table_name) }}
 
