@@ -1,6 +1,6 @@
 name: Test all warehouse platforms
 on:
-  pull_request:
+  pull_request_target:
     branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
