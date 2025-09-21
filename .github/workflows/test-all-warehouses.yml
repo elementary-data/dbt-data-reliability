@@ -69,7 +69,7 @@ jobs:
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
       dbt-version: ${{ matrix.dbt-version }}
-      elementary-ref: ${{ inputs.elementary-ref || 'ele-4724-dbt_fusion-support' }} # TODO: remove once the CLI PR is merged
+      elementary-ref: ${{ 'ele-4724-dbt_fusion-support' }} # TODO: remove once the CLI PR is merged
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || (github.event_name == 'pull_request_target' && github.event.pull_request.head.sha) || '' }}
     secrets: inherit
 
