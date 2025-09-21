@@ -97,7 +97,7 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
     to save running time since these tests are very slow.
     """
 
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     model_name = f"model_with_group_{unique_id}"
     group_name = f"test_group_{unique_id}"
     model_sql = """
@@ -165,7 +165,7 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
     Asserts that both model rows have the correct group_name, and both groups exist in dbt_groups.
     This test also tests that dbt_groups is filled with the correct owner info when name or email are not provided.
     """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     model_name_1 = f"model_1_with_group_{unique_id}"
     model_name_2 = f"model_2_with_group_{unique_id}"
     group_name_1 = f"test_group_1_{unique_id}"
@@ -254,7 +254,7 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
     Test that a test on a model assigned to a group inherits the group attribute in the dbt_tests artifact table.
     Asserts that the test row has the correct group_name.
     """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     model_name = f"model_with_group_{unique_id}"
     group_name = f"test_group_{unique_id}"
     schema_yaml = {
@@ -314,7 +314,7 @@ def test_test_override_group(dbt_project: DbtProject, tmp_path):
     Test that a singular test defined in schema.yml, which belongs to a model with a group, but also has a config: section with another group,
     uses the group from the config in the dbt_tests artifact table.
     """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     model_name = f"model_with_group_{unique_id}"
     test_group = f"test_group_{unique_id}"
     override_group = f"override_group_{unique_id}"
@@ -386,7 +386,7 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
     Test that a seed assigned to a group inherits the group attribute in the dbt_seeds artifact table.
     Asserts that the seed row has the correct group_name.
     """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     seed_name = f"seed_with_group_{unique_id}"
     group_name = f"test_group_{unique_id}"
     seed_csv = """id,value\n1,foo\n2,bar\n"""
@@ -446,7 +446,7 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
     Test that a snapshot assigned to a group inherits the group attribute in the dbt_snapshots artifact table.
     Asserts that the snapshot row has the correct group_name.
     """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
+    unique_id = uuid.uuid4().hex[:6]
     snapshot_name = f"snapshot_with_group_{unique_id}"
     group_name = f"test_group_{unique_id}"
     snapshot_sql = (
