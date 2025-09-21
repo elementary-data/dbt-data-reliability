@@ -169,9 +169,8 @@
   {% endif %}
 
   {# Get the compiled test query #}
-  {% set test_query = elementary.get_compiled_code(flattened_test) %}
-  {% set test_query_lower = test_query.lower() %}
-
+  {% set test_query_lower = sql.lower() %}
+  
   {# Check if query uses * (select all columns) #}
   {# Note: This is intentionally conservative and may over-censor in cases like
      "SELECT * FROM other_table" in CTEs, but it's better to be safe with PII data #}
