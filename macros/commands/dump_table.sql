@@ -23,7 +23,8 @@
         {% if dedup and (dedup_by_column in column_names) and (order_by_dedup_column in column_names) %}
             {{ elementary.dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation) }}
         {% else %}
-            select {{ elementary.escape_select(column_names) }} from {{ relation }}
+            select {{ elementary.select_columns(column_names, timestamp_column) }}
+            from {{ relation }}
         {% endif %}
         {% if timestamp_column %}
             {% if since %}
@@ -63,6 +64,6 @@
         where row_index = 1
     )
 
-    select {{ elementary.escape_select(column_names) }}
+    select {{ elementary.select_columns(column_names, timestamp_column) }}
     from deduped_relation
 {% endmacro %}
