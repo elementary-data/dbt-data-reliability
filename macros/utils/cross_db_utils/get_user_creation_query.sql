@@ -131,7 +131,8 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
 {% endmacro %}
 
 {% macro get_dremio_databases() %}
-    {# Dremio has a distinction between "databases" that contain views, and ones that contain writable tables:
+    {# 
+       Dremio has a distinction between "databases" that contain views, and ones that contain writable tables:
        1. Tables exist come from sources (e.g. datalake Iceberg tables).
        2. Views exist in catalogs / spaces (naming changes depending on Dremio cloud vs software).
 
@@ -160,7 +161,7 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
             {% continue %}
         {% endif %}
 
-        {# This condition guarantees that if there's at least one view in the DB we'll consider it as a catalog (see explanation above) %}
+        {# This condition guarantees that if there's at least one view in the DB we'll consider it as a catalog (see explanation above) #}
         {% if db_name_lower in db_name_to_type and row["database_type"] != "CATALOG" %}
             {% continue %}
         {% endif %}
