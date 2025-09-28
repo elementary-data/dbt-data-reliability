@@ -155,14 +155,12 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
 
     {% set db_name_to_type = {} %}
     {% for row in elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
-        {% set db_name_lower = row["database_name"] | lower %}
-
-        {% if db_name_lower not in configured_dbs %}
+        {% if row["database_name"] | lower not in configured_dbs %}
             {% continue %}
         {% endif %}
 
         {# This condition guarantees that if there's at least one view in the DB we'll consider it as a catalog (see explanation above) #}
-        {% if db_name_lower in db_name_to_type and row["database_type"] != "CATALOG" %}
+        {% if row["database_type"] in db_name_to_type and row["database_type"] != "CATALOG" %}
             {% continue %}
         {% endif %}
 
