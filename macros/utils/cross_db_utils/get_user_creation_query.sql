@@ -133,15 +133,15 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
 {% macro get_dremio_databases() %}
     {# 
        Dremio has a distinction between "databases" that contain views, and ones that contain writable tables:
-       1. Tables exist come from sources (e.g. datalake Iceberg tables).
+       1. Tables exist in sources (e.g. datalake Iceberg tables).
        2. Views exist in catalogs / spaces (naming changes depending on Dremio cloud vs software).
 
-       So we return in this macro both the db name and type so we can understand what kind of object to give permission on.
-       We deduce the db type acco
+       This macro therefore returns a mapping of db names to their appropriate type, so we can know what kind of object to grant
+       permissions on.
 
        NOTE: Despite of the above, I saw in our dev env that some "catalogs" might contain tables (not views).
-       Our logic below deduces the db type by the actual table types we're seeing - so in order to handle this edge case we'll 
-       consider a db as a "catalog" if it has at least one view.
+       Our logic below deduces the db type by the actual table types we're seeing in the info schema - so in order to handle 
+       this edge case we'll consider a db as a "catalog" if it has at least one view.
     #}
 
     {% set dremio_databases_query %}
