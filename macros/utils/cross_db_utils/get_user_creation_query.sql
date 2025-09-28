@@ -131,6 +131,18 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
 {% endmacro %}
 
 {% macro get_dremio_databases() %}
+    {# Dremio has a distinction between "databases" that contain views, and ones that contain writable tables:
+       1. Tables exist come from sources (e.g. datalake Iceberg tables).
+       2. Views exist in catalogs / spaces (naming changes depending on Dremio cloud vs software).
+
+       So we return in this macro both the db name and type so we can understand what kind of object to give permission on.
+       We deduce the db type acco
+
+       NOTE: Despite of the above, I saw in our dev env that some "catalogs" might contain tables (not views).
+       Our logic below deduces the db type by the actual table types we're seeing - so in order to handle this edge case we'll 
+       consider a db as a "catalog" if it has at least one view.
+    #}
+
     {% set dremio_databases_query %}
         select distinct 
             case when lower(table_type) = 'view' then 'CATALOG' else 'SOURCE' end database_type, 
@@ -144,14 +156,11 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
     {% for row in elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
         {% set db_name_lower = row["database_name"] | lower %}
 
-        {# Only include dbs configured in the dbt project #}
         {% if db_name_lower not in configured_dbs %}
             {% continue %}
         {% endif %}
 
-        {# It seems that in some cases there can be tables in catalogs (spaces), even though the docs clain they 
-           should only contain views.
-           So anyway, to be safe - if we see at least one view on the db we'll categorize it as a catalog.  #}
+        {# This condition guarantees that if there's at least one view in the DB we'll consider it as a catalog (see explanation above) %}
         {% if db_name_lower in db_name_to_type and row["database_type"] != "CATALOG" %}
             {% continue %}
         {% endif %}
