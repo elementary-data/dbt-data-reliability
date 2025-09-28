@@ -107,14 +107,57 @@ grant create table on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
 
 
 {% macro dremio__get_user_creation_query(parameters) %}
+{% set dremio_dbs = elementary.get_dremio_databases() %}
+
+-- Create dremio user
 CREATE USER "{{ parameters["user"] }}";
 
+-- General usage permissions
 GRANT USAGE ON PROJECT TO USER "{{ parameters["user"] }}";
+
+-- Read permissions on elementary schema
 GRANT SELECT ON ALL DATASETS IN FOLDER {% for part in (parameters["object_storage"] ~ "." ~ parameters["object_storage_path"]).split(".") %}"{{ part }}"{% if not loop.last %}.{% endif %}{% endfor %} TO USER "{{ parameters["user"] }}";
+
+-- Metadata permissions on all catalogs and sources (no read access)
+{% for db_name, db_type in dremio_dbs.items() -%}
+GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["user"] }}";
+{% endfor %}
 {% endmacro %}
 
 
 {# Databricks, BigQuery, Spark #}
 {% macro default__get_user_creation_query(parameters) %}
   {% do exceptions.raise_compiler_error('User creation not supported through sql using ' ~ target.type) %}
+{% endmacro %}
+
+{% macro get_dremio_databases() %}
+    {% set dremio_databases_query %}
+        select distinct 
+            case when lower(table_type) = 'view' then 'CATALOG' else 'SOURCE' end database_type, 
+            split_part(table_schema, '.', 1) as database_name 
+        from information_schema."TABLES"
+        where split_part(table_schema, '.', 1) not in ('$scratch', 'INFORMATION_SCHEMA', 'sys')
+    {% endset %}
+    {% set configured_dbs = elementary.get_configured_databases_from_graph() | map('lower') | list %}
+
+    {% set db_name_to_type = {} %}
+    {% for row in elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
+        {% set db_name_lower = row["database_name"] | lower %}
+
+        {# Only include dbs configured in the dbt project #}
+        {% if db_name_lower not in configured_dbs %}
+            {% continue %}
+        {% endif %}
+
+        {# It seems that in some cases there can be tables in catalogs (spaces), even though the docs clain they 
+           should only contain views.
+           So anyway, to be safe - if we see at least one view on the db we'll categorize it as a catalog.  #}
+        {% if db_name_lower in db_name_to_type and row["database_type"] != "CATALOG" %}
+            {% continue %}
+        {% endif %}
+
+        {% do db_name_to_type.update({row["database_name"]: row["database_type"]}) %}
+    {% endfor %}
+
+    {% do return(db_name_to_type) %}
 {% endmacro %}
