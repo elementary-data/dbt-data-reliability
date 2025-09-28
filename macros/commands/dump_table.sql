@@ -21,9 +21,10 @@
     {% set order_by_dedup_column = "generated_at" %}
     {% set query %}
         {% if dedup and (dedup_by_column in column_names) and (order_by_dedup_column in column_names) %}
-            {{ elementary.dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation) }}
+            {{ elementary.dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation, timestamp_column=timestamp_column) }}
         {% else %}
-            select {{ elementary.escape_select(column_names) }} from {{ relation }}
+            select {{ elementary.select_columns(column_names, timestamp_column) }}
+            from {{ relation }}
         {% endif %}
         {% if timestamp_column %}
             {% if since %}
@@ -49,7 +50,7 @@
 {% endmacro %}
 
 
-{% macro dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation) %}
+{% macro dedup_by_column_query(dedup_by_column, order_by_dedup_column, column_names, relation, timestamp_column=none) %}
     with indexed_relation as (
         select 
             {{ elementary.escape_select(column_names) }}, 
@@ -63,6 +64,6 @@
         where row_index = 1
     )
 
-    select {{ elementary.escape_select(column_names) }}
+    select {{ elementary.select_columns(column_names, timestamp_column) }}
     from deduped_relation
 {% endmacro %}
