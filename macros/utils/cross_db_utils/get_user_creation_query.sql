@@ -107,14 +107,65 @@ grant create table on {{ parameters["schema"] }}.* to {{ parameters["user"] }}
 
 
 {% macro dremio__get_user_creation_query(parameters) %}
+{% set dremio_dbs = elementary.get_dremio_databases() %}
+
+-- Create dremio user
 CREATE USER "{{ parameters["user"] }}";
 
+-- General usage permissions
 GRANT USAGE ON PROJECT TO USER "{{ parameters["user"] }}";
+
+-- Read permissions on elementary schema
 GRANT SELECT ON ALL DATASETS IN FOLDER {% for part in (parameters["object_storage"] ~ "." ~ parameters["object_storage_path"]).split(".") %}"{{ part }}"{% if not loop.last %}.{% endif %}{% endfor %} TO USER "{{ parameters["user"] }}";
+
+-- Metadata permissions on all catalogs and sources (no read access)
+{% for db_name, db_type in dremio_dbs.items() -%}
+GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["user"] }}";
+{% endfor %}
 {% endmacro %}
 
 
 {# Databricks, BigQuery, Spark #}
 {% macro default__get_user_creation_query(parameters) %}
   {% do exceptions.raise_compiler_error('User creation not supported through sql using ' ~ target.type) %}
+{% endmacro %}
+
+{% macro get_dremio_databases() %}
+    {# 
+       Dremio has a distinction between "databases" that contain views, and ones that contain writable tables:
+       1. Tables exist in sources (e.g. datalake Iceberg tables).
+       2. Views exist in catalogs / spaces (naming changes depending on Dremio cloud vs software).
+
+       This macro therefore returns a mapping of db names to their appropriate type, so we can know what kind of object to grant
+       permissions on.
+
+       NOTE: Despite of the above, I saw in our dev env that some "catalogs" might contain tables (not views).
+       Our logic below deduces the db type by the actual table types we're seeing in the info schema - so in order to handle 
+       this edge case we'll consider a db as a "catalog" if it has at least one view.
+    #}
+
+    {% set dremio_databases_query %}
+        select distinct 
+            case when lower(table_type) = 'view' then 'CATALOG' else 'SOURCE' end database_type, 
+            split_part(table_schema, '.', 1) as database_name 
+        from information_schema."TABLES"
+        where split_part(table_schema, '.', 1) not in ('$scratch', 'INFORMATION_SCHEMA', 'sys')
+    {% endset %}
+    {% set configured_dbs = elementary.get_configured_databases_from_graph() | map('lower') | list %}
+
+    {% set db_name_to_type = {} %}
+    {% for row in elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
+        {% if row["database_name"] | lower not in configured_dbs %}
+            {% continue %}
+        {% endif %}
+
+        {# This condition guarantees that if there's at least one view in the DB we'll consider it as a catalog (see explanation above) #}
+        {% if row["database_type"] in db_name_to_type and row["database_type"] != "CATALOG" %}
+            {% continue %}
+        {% endif %}
+
+        {% do db_name_to_type.update({row["database_name"]: row["database_type"]}) %}
+    {% endfor %}
+
+    {% do return(db_name_to_type) %}
 {% endmacro %}

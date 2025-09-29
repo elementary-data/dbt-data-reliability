@@ -159,6 +159,7 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
                 dbt_model_path.unlink()
 
 
+@pytest.mark.skip_targets(["dremio"])
 def test_two_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that two models assigned to two different groups inherit the correct group attribute in the dbt_models artifact table.
@@ -309,6 +310,7 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.requires_dbt_version("1.9.4")
+@pytest.mark.skip_targets(["dremio"])
 def test_test_override_group(dbt_project: DbtProject, tmp_path):
     """
     Test that a singular test defined in schema.yml, which belongs to a model with a group, but also has a config: section with another group,
@@ -381,6 +383,7 @@ def cleanup_file(path):
             path.unlink()
 
 
+@pytest.mark.skip_targets(["dremio"])
 def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a seed assigned to a group inherits the group attribute in the dbt_seeds artifact table.
@@ -441,6 +444,7 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
             )
 
 
+@pytest.mark.skip_targets(["dremio"])
 def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a snapshot assigned to a group inherits the group attribute in the dbt_snapshots artifact table.
