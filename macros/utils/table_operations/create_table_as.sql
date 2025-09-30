@@ -27,6 +27,10 @@
 {% endmacro %}
 
 {% macro default__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {{ dbt.get_create_table_as_sql(temporary, relation, sql_query) }}
+{% endmacro %}
+
+{% macro snowflake__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
   create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
