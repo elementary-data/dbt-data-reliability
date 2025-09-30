@@ -1,5 +1,15 @@
 {% macro create_intermediate_relation(base_relation, rows, temporary, like_columns=none) %}
-    {% set int_relation = elementary.edr_make_intermediate_relation(base_relation).incorporate(type='table') %}
+    {% set int_relation = elementary.edr_make_intermediate_relation(base_relation) %}
+
+    {# It seems that in dbt-fusion we fail in case the database/schema are None and not passed explicitly
+       through the "path" param (happens in temp tables for some adapters). 
+       So to be safe, we just pass all of them explicitly. #}
+    {% set int_relation = int_relation.incorporate(
+        type='table',
+        path={"database": int_relation.database,
+              "schema": int_relation.schema,
+              "table": int_relation.identifier}
+    ) %}
 
     {% if not elementary.has_temp_table_support() %}
         {% set temporary = false %}
