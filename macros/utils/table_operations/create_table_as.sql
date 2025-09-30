@@ -31,7 +31,15 @@
   as {{ sql_query }}
 {% endmacro %}
 
+{% macro bigquery__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  create or replace table {{ relation }}
+  {% if temporary %}
+  options (expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 hour))
+  {% endif %}
+  as {{ sql_query }}
+{% endmacro %}
+
 {% macro postgres__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
-  create {% if temporary %} temporary {% endif %} table {{ relation }}
+  create {% if temporary %} temporary {% endif %} table {{ relation.include(database=(not temporary), schema=(not temporary)) }}
   as {{ sql_query }}
 {% endmacro %}
