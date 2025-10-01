@@ -52,6 +52,7 @@ class DbtProject:
     ):
         self.dbt_runner = get_dbt_runner(target, project_dir, runner_method)
         self.target = target
+        self.runner_method = runner_method
 
         self.project_dir_path = Path(project_dir)
         self.models_dir_path = self.project_dir_path / "models"
@@ -259,7 +260,23 @@ class DbtProject:
         with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         ).seed(data, table_name):
-            return
+            self._fix_seed_if_needed(data, table_name)
+
+    def _fix_seed_if_needed(self, data: List[dict], table_name: str):
+        # Ugly hack for bigquery + fusion - seems like nulls are seeded as empty strings
+        if self.runner_method == RunnerMethod.FUSION and self.target == "bigquery":
+            for col_name in data[0].keys():
+                self.run_query(
+                    """
+                    UPDATE {{ ref('%(table_name)s') }}
+                    SET %(col_name)s = NULL
+                    WHERE %(col_name)s = ''
+                """
+                    % {
+                        "table_name": table_name,
+                        "col_name": col_name,
+                    }
+                )
 
     @contextmanager
     def seed_context(
