@@ -23,9 +23,24 @@
   {% if val.year is defined %}
     {% do return(val.isoformat()) %}
   {% endif %}
-  {% if val is number and '.' in val | string %}
-    {# a bit of a hacky way to standardize Decimals which are not JSON-serializable #}
-    {% do return(val | string | float) %}
+  {% if elementary.edr_is_decimal(val) %}
+    {% do return(elementary.edr_serialize_decimal(val)) %}
   {% endif %}
   {% do return(val) %}
+{% endmacro %}
+
+{% macro edr_is_decimal(val) %}
+  {# A hacky way to check if a value is of type Decimal, as there isn't a straightforward way to check that #}
+  {% do return(val is number and val.normalize is defined and val.normalize is not none) %}
+{% endmacro %}
+
+{% macro edr_serialize_decimal(val) %}
+  {% set dec_tuple = val.normalize().as_tuple() %}
+
+  {# A hacky way to standardize Decimals which are not JSON-serializable #}
+  {% if dec_tuple[2] == 0 %}
+    {% do return(val | string | int) %}
+  {% else %}
+    {% do return(val | string | float) %}
+  {% endif %}
 {% endmacro %}
