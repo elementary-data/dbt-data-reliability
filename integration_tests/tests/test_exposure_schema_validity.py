@@ -60,9 +60,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
     explicit_target_for_bigquery = (
-        "other"
-        if dbt_project.dbt_runner.target in ["bigquery", "snowflake", "dremio", ""]
-        else "string"
+        "other" if dbt_project.dbt_runner.target == "dremio" else "string"
     )
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
