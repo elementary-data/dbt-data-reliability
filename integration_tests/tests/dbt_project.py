@@ -260,23 +260,16 @@ class DbtProject:
         with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         ).seed(data, table_name):
-            self._fix_seed_if_needed(data, table_name)
+            self._fix_seed_if_needed(table_name)
 
-    def _fix_seed_if_needed(self, data: List[dict], table_name: str):
-        # Ugly hack for bigquery + fusion - seems like nulls are seeded as empty strings
+    def _fix_seed_if_needed(self, table_name: str):
+        # Hack for BigQuery - seems like we get empty strings instead of nulls in seeds, so we
+        # fix them here
         if self.runner_method == RunnerMethod.FUSION and self.target == "bigquery":
-            for col_name in data[0].keys():
-                self.run_query(
-                    """
-                    UPDATE {{ ref('%(table_name)s') }}
-                    SET %(col_name)s = NULL
-                    WHERE %(col_name)s = ''
-                """
-                    % {
-                        "table_name": table_name,
-                        "col_name": col_name,
-                    }
-                )
+            self.dbt_runner.run_operation(
+                "elementary_tests.replace_empty_strings_with_nulls",
+                macro_args={"table_name": table_name},
+            )
 
     @contextmanager
     def seed_context(
