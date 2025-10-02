@@ -370,7 +370,7 @@ def test_meta_tags_and_accepted_values(test_id: str, dbt_project: DbtProject):
         test_args=dict(column_name=SENSITIVE_COLUMN, values=["invalid@example.com"]),
         data=data,
         columns=[
-            {"name": SENSITIVE_COLUMN, "meta": {"tags": ["pii"]}},
+            {"name": SENSITIVE_COLUMN, "config": {"meta": {"tags": ["pii"]}}},
             {"name": SAFE_COLUMN},
         ],
         test_vars={

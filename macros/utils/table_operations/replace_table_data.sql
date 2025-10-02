@@ -5,7 +5,7 @@
 {# Default (Bigquery & Snowflake) - upload data to a temp table, and then atomically replace the table with a new one #}
 {% macro default__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(relation, rows, temporary=True) %}
-    {% do elementary.run_query(dbt.create_table_as(False, relation, 'select * from {}'.format(intermediate_relation))) %}
+    {% do elementary.edr_create_table_as(False, relation, 'select * from {}'.format(intermediate_relation)) %}
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
 

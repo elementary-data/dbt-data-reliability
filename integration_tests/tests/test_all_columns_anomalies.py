@@ -59,7 +59,7 @@ def test_anomalous_all_columns_anomalies(test_id: str, dbt_project: DbtProject):
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-def test_all_columns_anomalies_with_where_expression(
+def test_all_columns_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject
 ):
     utc_today = datetime.utcnow().date()
@@ -92,9 +92,8 @@ def test_all_columns_anomalies_with_where_expression(
         ]
     ]
 
-    params = DBT_TEST_ARGS
     test_results = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, data=data, multiple_results=True
+        test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data, multiple_results=True
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {
@@ -103,23 +102,23 @@ def test_all_columns_anomalies_with_where_expression(
         "universe": "pass",
     }
 
-    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_results = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
-        params,
+        DBT_TEST_ARGS,
         multiple_results=True,
         test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'Marvel'"},
     )
     assert all([res["status"] == "pass" for res in test_results])
 
-    params = dict(DBT_TEST_ARGS, where="universe = 'DC'")
     test_results = dbt_project.test(
         test_id,
         DBT_TEST_NAME,
-        params,
+        DBT_TEST_ARGS,
         multiple_results=True,
         test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'DC'"},
     )
     col_to_status = {res["column_name"].lower(): res["status"] for res in test_results}
     assert col_to_status == {

@@ -16,7 +16,7 @@
     {%- set exposures = (exposures or graph.exposures).values() -%}
     {%- set columns = columns or adapter.get_columns_in_relation(model)  -%}
 
-    {%- set model_relation = elementary.get_model_relation_for_test(model, context["model"]) -%}
+    {%- set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) -%}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) -%}
     {{- elementary.test_log('start', full_table_name, 'exposure validation') -}}
 

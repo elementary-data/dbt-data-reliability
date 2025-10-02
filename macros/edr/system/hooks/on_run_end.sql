@@ -1,4 +1,8 @@
 {% macro on_run_end() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return('') %}
+  {% endif %}
+
   {%- if execute and not elementary.is_docs_command() %}
       {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
       {% if not execute or edr_cli_run %}
