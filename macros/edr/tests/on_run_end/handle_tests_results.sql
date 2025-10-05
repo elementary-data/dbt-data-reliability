@@ -57,8 +57,8 @@
     {% set result = elementary.get_run_result_dict(result) %}
     {% set node = result.node or elementary.get_node(result.unique_id or result.node.unique_id) %}
     {% if node.resource_type == 'test' %}
-      {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
-      {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(result.node.unique_id) %}
+      {% set elementary_test_results_rows = cached_elementary_test_results.get(node.unique_id) %}
+      {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(node.unique_id) %}
 
       {# Materializing the test failed and therefore was not added to the cache. #}
       {% if not elementary_test_results_rows %}
