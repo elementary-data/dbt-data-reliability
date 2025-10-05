@@ -9,7 +9,6 @@ def seed(dbt_project: DbtProject):
     assert seed_result is True
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -59,7 +58,7 @@ def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtPro
 def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
-    explicit_target_for_bigquery = (
+    target_data_type = (
         "other" if dbt_project.dbt_runner.target == "dremio" else "string"
     )
     DBT_TEST_ARGS = {
@@ -71,7 +70,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
                     "referenced_columns": [
                         {
                             "column_name": "order_id",
-                            "data_type": explicit_target_for_bigquery,
+                            "data_type": target_data_type,
                         }
                     ]
                 },
