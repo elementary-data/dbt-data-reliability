@@ -43,7 +43,7 @@ def project_dir_copy(runner_method: Optional[RunnerMethod]):
         _edit_packages_yml_to_include_absolute_elementary_package_path(
             dbt_project_copy_dir
         )
-        _remove_python_tests_for_dbt_fusion(dbt_project_copy_dir, runner_method)
+        _remove_python_models_for_dbt_fusion(dbt_project_copy_dir, runner_method)
         yield dbt_project_copy_dir
     finally:
         shutil.rmtree(dbt_project_copy_dir)
@@ -67,7 +67,7 @@ def _edit_packages_yml_to_include_absolute_elementary_package_path(
         yaml.dump(packages_yml, packages_yml_file)
 
 
-def _remove_python_tests_for_dbt_fusion(
+def _remove_python_models_for_dbt_fusion(
     project_dir_copy: str, runner_method: Optional[RunnerMethod]
 ):
     if runner_method != RunnerMethod.FUSION:
