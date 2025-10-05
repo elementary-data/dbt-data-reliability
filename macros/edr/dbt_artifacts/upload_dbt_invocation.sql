@@ -108,7 +108,7 @@
         {% do return(invocation_args_dict.selector_name) %}
     {% elif invocation_args_dict and invocation_args_dict.INVOCATION_COMMAND %}
         {% set match = modules.re.search(
-            "--selector\s+(\S+)",
+            "--selector(?:\s+|=)(\S+)",
             invocation_args_dict.INVOCATION_COMMAND
         ) %}
         {% if match %}
