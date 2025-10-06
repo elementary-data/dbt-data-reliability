@@ -9,6 +9,7 @@ def seed(dbt_project: DbtProject):
     assert seed_result is True
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_id: str, dbt_project: DbtProject
 ):
