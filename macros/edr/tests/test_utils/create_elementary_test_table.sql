@@ -1,11 +1,7 @@
 {% macro create_elementary_test_table(database_name, schema_name, test_name, table_type, sql_query) %}
     {% if execute %}
-        {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()).replace("*", "") %}
-        
-        {% set default_identifier_quoting = api.Relation.get_default_quote_policy().get_part("identifier") %}        
-        {% if not adapter.config.quoting.get("identifier", default_identifier_quoting) %}
-            {% set temp_table_name = adapter.quote(temp_table_name) %}
-        {% endif %}
+        {% set temp_table_name = elementary.table_name_with_suffix(test_name, "__" ~ table_type ~ elementary.get_timestamped_table_suffix()) %}
+        {% set temp_table_name = temp_table_name.replace("*", "").replace("-", "_").replace(".", "_") %}
 
         {{ elementary.debug_log(table_type ~ ' table: ' ~ database_name ~ '.' ~ schema_name ~ '.' ~ temp_table_name) }}
 

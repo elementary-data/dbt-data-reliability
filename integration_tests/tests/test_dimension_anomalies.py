@@ -144,19 +144,24 @@ def test_dimensions_anomalies_with_where_parameter(
         for universe, superhero in [("DC", "Superman"), ("Marvel", "Spiderman")]
     ]
 
-    params = DBT_TEST_ARGS
-    test_result = dbt_project.test(test_id, DBT_TEST_NAME, params, data=data)
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
     assert test_result["status"] == "fail"
 
-    params = dict(DBT_TEST_ARGS, where="universe = 'Marvel'")
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, test_vars={"force_metrics_backfill": True}
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'Marvel'"},
     )
     assert test_result["status"] == "pass"
 
-    params = dict(params, where="universe = 'DC'")
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, params, test_vars={"force_metrics_backfill": True}
+        test_id,
+        DBT_TEST_NAME,
+        DBT_TEST_ARGS,
+        test_vars={"force_metrics_backfill": True},
+        test_config={"where": "universe = 'DC'"},
     )
     assert test_result["status"] == "fail"
 

@@ -25,3 +25,6 @@ __pycache__/
 
 # vscode
 .vscode/
+dbt_internal_packages/
+
+/package-lock.yml

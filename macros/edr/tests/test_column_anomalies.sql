@@ -1,7 +1,7 @@
 {% test column_anomalies(model, column_name, column_anomalies, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, dimensions) %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
-        {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
+        {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
         {% if not model_relation %}
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
         {% endif %}
@@ -92,7 +92,7 @@
         {% set anomaly_scores_test_table_relation = elementary.create_elementary_test_table(database_name, tests_schema_name, test_table_name, 'anomaly_scores', anomaly_scores_query) %}
         {{ elementary.test_log('end', full_table_name, column_name) }}
 
-        {% set flattened_test = elementary.flatten_test(context["model"]) %}
+        {% set flattened_test = elementary.flatten_test(elementary.get_test_model()) %}
         {% set anomaly_scores_sql = elementary.get_read_anomaly_scores_query() %}
         {% do elementary.store_metrics_table_in_cache() %}
         {% do elementary.store_anomaly_test_results(flattened_test, anomaly_scores_sql) %}

@@ -21,7 +21,13 @@
 {% endmacro %}
 
 {% macro snowflake__format_query_with_metadata(query) %}
-    {# Snowflake removes leading comments #}
+    {#- Strip ; from last statement to prevent error in dbt-fusion -#}
+    {%- set query = query.strip() -%}
+    {%- if query.endswith(';') -%}
+        {%- set query = query[:-1] -%}
+    {%- endif -%}
+
+    {# Snowflake removes leading comments, so comment is after the statement #}
     {{ query }}
     /* --ELEMENTARY-METADATA-- {{ elementary.get_elementary_query_metadata() | tojson }} --END-ELEMENTARY-METADATA-- */
 {% endmacro %}

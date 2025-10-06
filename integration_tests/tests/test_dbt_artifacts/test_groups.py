@@ -88,6 +88,7 @@ def assert_group_row_in_db_groups(dbt_project, group_name, owner_name, owner_ema
     ), f"Expected owner email '{owner_email}', got '{group_row.get('owner_email')}'"
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_model_and_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that a model assigned to a group inherits the group attribute in the dbt_models artifact table.
@@ -108,7 +109,9 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A model assigned to a group for testing",
             }
         ],
@@ -160,6 +163,7 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_two_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that two models assigned to two different groups inherit the correct group attribute in the dbt_models artifact table.
@@ -181,12 +185,16 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name_1,
-                "group": group_name_1,
+                "config": {
+                    "group": group_name_1,
+                },
                 "description": "A model assigned to group 1 for testing",
             },
             {
                 "name": model_name_2,
-                "group": group_name_2,
+                "config": {
+                    "group": group_name_2,
+                },
                 "description": "A model assigned to group 2 for testing",
             },
         ],
@@ -263,7 +271,9 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A model assigned to a group for testing",
                 "columns": [{"name": "col", "tests": ["unique"]}],
             }
@@ -334,7 +344,9 @@ def test_test_override_group(dbt_project: DbtProject, tmp_path):
         "models": [
             {
                 "name": model_name,
-                "group": test_group,
+                "config": {
+                    "group": test_group,
+                },
                 "description": "A model assigned to a group for testing",
                 "columns": [
                     {
@@ -398,7 +410,9 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
         "seeds": [
             {
                 "name": seed_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A seed assigned to a group for testing",
             }
         ],
@@ -445,6 +459,7 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a snapshot assigned to a group inherits the group attribute in the dbt_snapshots artifact table.
@@ -469,7 +484,9 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
         "snapshots": [
             {
                 "name": snapshot_name,
-                "group": group_name,
+                "config": {
+                    "group": group_name,
+                },
                 "description": "A snapshot assigned to a group for testing",
             }
         ],

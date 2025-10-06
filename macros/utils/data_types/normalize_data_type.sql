@@ -6,16 +6,21 @@
     {%- endif %}
 
     {%- if data_type is defined and data_type is not none %}
-        {%- if data_type in elementary.data_type_list('string') %}
+        {%- if elementary.is_data_type_of_normalized_type(data_type, 'string') %}
             {{ return('string') }}
-        {%- elif data_type in elementary.data_type_list('numeric') %}
+        {%- elif elementary.is_data_type_of_normalized_type(data_type, 'numeric') %}
             {{ return('numeric') }}
-        {%- elif data_type in elementary.data_type_list('timestamp') %}
+        {%- elif elementary.is_data_type_of_normalized_type(data_type, 'timestamp') %}
             {{ return('timestamp') }}
-        {%- elif data_type in elementary.data_type_list("boolean") %}
+        {%- elif elementary.is_data_type_of_normalized_type(data_type, "boolean") %}
             {{ return("boolean") }}
         {%- else %}
             {{ return('other') }}
         {% endif %}
     {%- endif %}
+{% endmacro %}
+
+{% macro is_data_type_of_normalized_type(data_type, normalized_type) %}
+    {% set data_type_list = elementary.data_type_list(normalized_type) | map('lower') %}
+    {% do return(data_type | lower in data_type_list) %}
 {% endmacro %}

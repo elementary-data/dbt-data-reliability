@@ -59,4 +59,4 @@ def test_flatten_table_columns(
         )[0]
     )
     flattened_column_names = [column["name"] for column in flattened_columns]
-    assert flattened_column_names == expected_columns
+    assert set(flattened_column_names) == set(expected_columns)

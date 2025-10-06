@@ -4,6 +4,16 @@
         {% do return(test_model) %}
     {% endif %}
 
+    {# If the test depends on a single model ID, try to get the relation from it #}
+    {% set depends_on_node_ids = test_node.get("depends_on", {}).get("nodes") %}
+    {% if depends_on_node_ids and depends_on_node_ids | length == 1 %}
+        {% set node = elementary.get_node(depends_on_node_ids[0]) %}
+        {% set relation = elementary.get_relation_from_node(node) %}
+        {% if relation %}
+            {% do return(relation) %}
+        {% endif %}
+    {% endif %}
+
     {# Test model is a string, this might mean that a "where" parameter was passed to the test.
        In the heuristic below we rely on the fact that in this case the model jinja will have
        a very specific structure (see the "build_model_str" function in dbt-core) #}

@@ -114,6 +114,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
     expected_config=_get_expected_adapted_config("test"),
 )
 @pytest.mark.skip_targets(["clickhouse"])
+@pytest.mark.skip_for_dbt_fusion
 def test_anomaly_test_configuration(
     dbt_project: DbtProject,
     vars_config: dict,

@@ -1,12 +1,13 @@
 {% macro get_result_node(identifier, package_name='elementary') %}
   {% for result in results %}
-    {% if result.node.identifier == identifier %}
+    {% set node = elementary.get_node(result.unique_id) %}
+    {% if node.identifier == identifier %}
       {% if package_name %}
-        {% if result.node.package_name == package_name %}
-          {{ return(result.node) }}
+        {% if node.package_name == package_name %}
+          {{ return(node) }}
         {% endif %}
       {% else %}
-        {{ return(result.node) }}
+        {{ return(node) }}
       {% endif %}
     {% endif %}
   {% endfor %}

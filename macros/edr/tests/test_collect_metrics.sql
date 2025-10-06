@@ -26,7 +26,7 @@
         {% set dimensions = [] %}
     {% endif %}
 
-    {% set model_relation = elementary.get_model_relation_for_test(model, context["model"]) %}
+    {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
     {% if not model_relation %}
         {% do exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") %}
     {% endif %}

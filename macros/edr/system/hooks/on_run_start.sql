@@ -1,11 +1,14 @@
 {% macro on_run_start() %}
+  {% if not elementary.is_elementary_enabled() %}
+    {% do return('') %}
+  {% endif %}
+  
   {% set edr_cli_run = elementary.get_config_var('edr_cli_run') %}
   {% if not execute or edr_cli_run %}
     {{ return('') }}
   {% endif %}
 
   {% do elementary.recommend_dbt_core_artifacts_upgrade() %}
-  {% do elementary.ensure_materialize_override() %}
   {% set runtime_config = elementary.get_elementary_runtime_config(include_defaults=false) %}
   {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
   {% set elementary_version = elementary.get_elementary_package_version() %}

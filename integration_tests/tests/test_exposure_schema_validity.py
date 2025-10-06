@@ -9,6 +9,7 @@ def seed(dbt_project: DbtProject):
     assert seed_result is True
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -27,6 +28,7 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
     assert test_result.success is False
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_valid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -45,6 +47,7 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
 
 
 @pytest.mark.skip_targets(["spark"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(test_id, DBT_TEST_NAME)
     assert test_result["status"] == "pass"
@@ -52,13 +55,12 @@ def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtPro
 
 # Schema validity currently not supported on ClickHouse
 @pytest.mark.skip_targets(["spark", "clickhouse"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
-    explicit_target_for_bigquery = (
-        "other"
-        if dbt_project.dbt_runner.target in ["bigquery", "snowflake", "dremio", ""]
-        else "string"
+    target_data_type = (
+        "other" if dbt_project.dbt_runner.target == "dremio" else "string"
     )
     DBT_TEST_ARGS = {
         "node": "models.exposures_test",
@@ -69,7 +71,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
                     "referenced_columns": [
                         {
                             "column_name": "order_id",
-                            "data_type": explicit_target_for_bigquery,
+                            "data_type": target_data_type,
                         }
                     ]
                 },
@@ -86,6 +88,7 @@ def test_exposure_schema_validity_correct_columns_and_types(
 
 
 @pytest.mark.skip_targets(["spark"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_invalid_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -118,6 +121,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 
 # Schema validity currently not supported on ClickHouse
 @pytest.mark.skip_targets(["spark", "clickhouse"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_id: str, dbt_project: DbtProject
 ):
@@ -160,6 +164,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
 
 
 @pytest.mark.skip_targets(["spark"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_missing_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -183,6 +188,7 @@ def test_exposure_schema_validity_correct_columns_and_missing_type(
 
 
 @pytest.mark.skip_targets(["spark"])
+@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_missing_columns(
     test_id: str, dbt_project: DbtProject
 ):

@@ -57,20 +57,23 @@
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
-    {% do meta_dict.update(config_meta_dict) %}
+
+    {% set unified_meta = {} %}
+    {% do unified_meta.update(config_meta_dict) %}
+    {% do unified_meta.update(meta_dict) %}
 
     {% set description = none %}
     {% if dbt_version >= '1.9.0' and node_dict.get('description') %}
         {% set description = node_dict.get('description') %}
-    {% elif meta_dict.get('description') %}
-        {% set description = meta_dict.pop('description') %}
+    {% elif unified_meta.get('description') %}
+        {% set description = unified_meta.pop('description') %}
     {% elif default_description %}
         {% set description = default_description %}
     {% endif %}
 
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, 'tags', []) %}
-    {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
+    {% set meta_tags = elementary.safe_get_with_default(unified_meta, 'tags', []) %}
     {% set tags = elementary.union_lists(config_tags, global_tags) %}
     {% set tags = elementary.union_lists(tags, meta_tags) %}
 
@@ -79,7 +82,7 @@
     {% set test_models_owners = [] %}
     {% set test_models_tags = [] %}
     {% for test_model_node in test_model_nodes %}
-        {% set flatten_test_model_node = elementary.flatten_model(test_model_node) %}
+        {% set flatten_test_model_node = elementary.flatten_node(test_model_node) %}
         {% set test_model_owner = flatten_test_model_node.get('owner') %}
         {% if test_model_owner %}
             {% if test_model_owner is string %}
@@ -130,6 +133,8 @@
       {% endif %}
     {% endif %}
 
+    {% set group_name = config_dict.get("group") or node_dict.get("group") %}
+
     {% set primary_test_model_database = none %}
     {% set primary_test_model_schema = none %}
     {%- if primary_test_model_id.data is not none -%}
@@ -137,6 +142,7 @@
         {%- if tested_model_node -%}
             {% set primary_test_model_database = tested_model_node.get('database') %}
             {% set primary_test_model_schema = tested_model_node.get('schema') %}
+            {% set group_name = group_name or tested_model_node.get('group') %}
         {%- endif -%}
     {%- endif -%}
 
@@ -160,7 +166,7 @@
         'tags': elementary.filter_none_and_sort(tags),
         'model_tags': elementary.filter_none_and_sort(test_models_tags),
         'model_owners': elementary.filter_none_and_sort(test_models_owners),
-        'meta': meta_dict,
+        'meta': unified_meta,
         'database_name': primary_test_model_database,
         'schema_name': primary_test_model_schema,
         'depends_on_macros': elementary.filter_none_and_sort(depends_on_dict.get('macros', [])),
@@ -174,8 +180,8 @@
         'compiled_code': elementary.get_compiled_code(node_dict),
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'quality_dimension': meta_dict.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace),
-        'group_name': config_dict.get("group") or node_dict.get("group"),
+        'quality_dimension': unified_meta.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace),
+        'group_name': group_name,
     }%}
     {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
@@ -185,7 +191,7 @@
     {% set test_type = 'generic' %}
     {%- if test_namespace == 'dbt_expectations' -%}
         {% set test_type = 'expectation' %}
-    {%- elif 'tests/generic' in test_path or 'macros/' in test_path -%}
+    {%- elif 'tests/generic' in test_path or 'macros/' in test_path or 'generic_tests/' in test_path -%}
         {% set test_type = 'generic' %}
     {%- elif 'tests/' in test_path -%}
         {% set test_type = 'singular' %}

@@ -51,12 +51,15 @@
     order by metadata_hash
     {% endset %}
     {% set artifacts_hashes_results = elementary.run_query(stored_artifacts_query) %}
-    {% set artifact_agate_hashes = artifacts_hashes_results.group_by("artifacts_model") %}
-    {% set artifacts_hashes = {} %}
-    {% for artifacts_model, metadata_hashes in artifact_agate_hashes.items() %}
-        {% do artifacts_hashes.update({artifacts_model: metadata_hashes.columns["metadata_hash"]}) %}
+    {% set artifacts_hashes = elementary.agate_to_dicts(artifacts_hashes_results) %}
+
+    {% set artifacts_hashes_per_model = {} %}
+    {% for artifacts_hashes_row in artifacts_hashes %}
+        {% do artifacts_hashes_per_model.setdefault(artifacts_hashes_row['artifacts_model'], []) %}
+        {% do artifacts_hashes_per_model[artifacts_hashes_row['artifacts_model']].append(artifacts_hashes_row['metadata_hash']) %}
     {% endfor %}
-    {% do return(artifacts_hashes) %}
+    
+    {% do return(artifacts_hashes_per_model) %}
 {% endmacro %}
 
 {% macro get_artifacts_hashes_for_model(model_name) %}

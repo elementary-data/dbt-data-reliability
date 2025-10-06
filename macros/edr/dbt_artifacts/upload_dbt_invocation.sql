@@ -87,8 +87,12 @@
 
 {%- macro get_invocation_select_filter() -%}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.select -%}
-        {{- return(invocation_args_dict.select) -}}
+    {%- if invocation_args_dict -%}
+        {%- if invocation_args_dict.select -%}
+            {{- return(invocation_args_dict.select) -}}
+        {%- elif invocation_args_dict.SELECT -%}
+            {{- return(invocation_args_dict.SELECT) -}}
+        {%- endif -%}
     {%- elif config.args and config.args.select -%}
         {{- return(config.args.select) -}}
     {%- else -%}
@@ -102,6 +106,16 @@
         {% do return(invocation_args_dict.selector) %}
     {% elif invocation_args_dict and invocation_args_dict.selector_name %}
         {% do return(invocation_args_dict.selector_name) %}
+    {% elif invocation_args_dict and invocation_args_dict.INVOCATION_COMMAND %}
+        {% set match = modules.re.search(
+            "--selector(?:\s+|=)(\S+)",
+            invocation_args_dict.INVOCATION_COMMAND
+        ) %}
+        {% if match %}
+            {% do return(match.group(1)) %}
+        {% else %}
+            {% do return(none) %}
+        {% endif %}
     {% elif config.args and config.args.selector_name %}
         {% do return(config.args.selector_name) %}
     {% else %}
@@ -118,6 +132,8 @@
         {% else %}
             {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
         {% endif %}
+    {% elif invocation_args_dict and invocation_args_dict.VARS %}
+        {% set invocation_vars = invocation_args_dict.VARS %}
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
@@ -128,7 +144,7 @@
     {% set all_vars = {} %}
     {% set config = elementary.get_runtime_config() %}
     {%- if config.vars -%}
-        {% do all_vars.update(config.vars.to_dict()) %}
+        {% do all_vars.update(elementary.dbt_object_to_dict(config.vars)) %}
     {%- endif -%}
     {% do all_vars.update(elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}

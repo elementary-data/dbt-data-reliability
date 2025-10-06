@@ -3,13 +3,13 @@
     {% set major = major | int %}
     {% set minor = minor | int %}
     {% if major < 1 or major == 1 and minor < 8 %}
-        {% do return(run_result.to_dict()) %}
+        {% do return(elementary.dbt_object_to_dict(run_result)) %}
     {% else %}
         {# There's a bug in dbt 1.8 which causes run_result.to_dict to fail on an exception #}
         {% set timing_dicts = [] %}
         {% if run_result.timing %}          
             {% for item in run_result.timing %}
-                {% do timing_dicts.append(item.to_dict()) %}
+                {% do timing_dicts.append(elementary.dbt_object_to_dict(item)) %}
             {% endfor %}
         {% endif %}
 
@@ -20,7 +20,7 @@
             'failures': run_result.failures,
             'execution_time': run_result.execution_time,
             'timing': timing_dicts,
-            'node': run_result.node.to_dict() if run_result.node else None,
+            'node': elementary.dbt_object_to_dict(run_result.node) if run_result.node else None,
             'thread_id': run_result.thread_id
         }) %}
     {% endif %}

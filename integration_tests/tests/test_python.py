@@ -10,6 +10,7 @@ SUPPORTED_TARGETS = ["snowflake"]
 
 
 @pytest.mark.requires_dbt_version("1.3.0")
+@pytest.mark.skip_for_dbt_fusion
 class TestPython:
     @pytest.mark.only_on_targets(SUPPORTED_TARGETS)
     @Parametrization.autodetect_parameters()

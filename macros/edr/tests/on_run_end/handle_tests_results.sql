@@ -25,37 +25,60 @@
     {% do return('') %}
 {% endmacro %}
 
+{% macro get_normalized_test_status(result, elementary_test_results_row) %}
+  {% set failures = elementary_test_results_row.get("failures", result.failures) %}
+  {% set status = result.status %}
+
+  {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
+    even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
+    results if the number of failed rows is 0.
+    We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
+  {% if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" %}
+    {% set status = "pass" %}
+  {% endif %}
+
+  {% if elementary.is_dbt_fusion() %}
+    {% if status == 'error' %}
+      {# dbt-fusion currently doesn't distinguish between failure and error #}
+      {% set status = "fail" %}
+    {% elif status == 'success' %}
+      {# dbt-fusion seems to sometime return 'pass' and sometimes 'success', so we normalize to 'pass' #}
+      {% set status = "pass" %}
+    {% endif %}
+  {% endif %}
+
+  {% do return(status) %}
+{% endmacro %}
+
 {% macro get_result_enriched_elementary_test_results(cached_elementary_test_results, cached_elementary_test_failed_row_counts, render_result_rows=false) %}
   {% set elementary_test_results = [] %}
 
-  {% for result in results | selectattr('node.resource_type', '==', 'test') %}
+  {% for result in results %}
     {% set result = elementary.get_run_result_dict(result) %}
-    {% set elementary_test_results_rows = cached_elementary_test_results.get(result.node.unique_id) %}
-    {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(result.node.unique_id) %}
+    {% set node = result.node or elementary.get_node(result.unique_id or result.node.unique_id) %}
+    {% if node.resource_type == 'test' %}
+      {% set elementary_test_results_rows = cached_elementary_test_results.get(node.unique_id) %}
+      {% set elementary_test_failed_row_count = cached_elementary_test_failed_row_counts.get(node.unique_id) %}
 
-    {# Materializing the test failed and therefore was not added to the cache. #}
-    {% if not elementary_test_results_rows %}
-      {% set flattened_test = elementary.flatten_test(result.node) %}
-      {% set elementary_test_results_rows = [elementary.get_dbt_test_result_row(flattened_test)] %}
-    {% endif %}
-
-    {% for elementary_test_results_row in elementary_test_results_rows %}
-      {% set failures = elementary_test_results_row.get("failures", result.failures) %}
-
-      {# For Elementary anomaly tests, we actually save more than one result per test, in that case the dbt status will be "fail"
-         even if one such result failed and the rest succeeded. To handle this, we make sure to mark the status as "pass" for these 
-         results if the number of failed rows is 0.
-         We don't want to do this for every test though - because otherwise it can break configurations like warn_if=0 #}
-      {% set status = "pass" if failures == 0 and elementary_test_results_row.get("test_type") == "anomaly_detection" else result.status %}
-
-      {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
-                                                'failed_row_count': elementary_test_failed_row_count}) %}
-      {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
-      {% if render_result_rows %}
-        {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
+      {# Materializing the test failed and therefore was not added to the cache. #}
+      {% if not elementary_test_results_rows %}
+        {% set flattened_test = elementary.flatten_test(node) %}
+        {% set elementary_test_results_rows = [elementary.get_dbt_test_result_row(flattened_test)] %}
       {% endif %}
-      {% do elementary_test_results.append(elementary_test_results_row) %}
-    {% endfor %}
+
+      {% for elementary_test_results_row in elementary_test_results_rows %}
+        {% set failures = elementary_test_results_row.get("failures", result.failures) %}
+        {% set status = elementary.get_normalized_test_status(result, elementary_test_results_row) %}
+
+        {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
+                                                  'failed_row_count': elementary_test_failed_row_count}) %}
+        {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
+        {% if render_result_rows %}
+          {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
+        {% endif %}
+        {% do elementary_test_results.append(elementary_test_results_row) %}
+      {% endfor %}
+    {% endif %}
   {% endfor %}
 
   {% do return(elementary_test_results) %}
@@ -115,7 +138,7 @@
     {% endset %}
 
     {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
-    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
 
     {% if not elementary.has_temp_table_support() %}
@@ -163,7 +186,7 @@
     {% endset %}
 
     {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
-    {%- do elementary.run_query(dbt.create_table_as(True, temp_relation, test_tables_union_query)) %}
+    {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
 
     {% if not elementary.has_temp_table_support() %}
@@ -174,13 +197,15 @@
 {% macro pop_test_result_rows(elementary_test_results) %}
   {% set result_rows = [] %}
   {% for test_result in elementary_test_results %}
-    {% for result_row in test_result.pop('result_rows', []) %}
-      {% do result_rows.append({
-        "elementary_test_results_id": test_result.id,
-        "detected_at": test_result.detected_at,
-        "result_row": result_row
-      }) %}
-    {% endfor %}
+    {% if 'result_rows' in test_result %}
+      {% for result_row in test_result.pop('result_rows') %}
+        {% do result_rows.append({
+          "elementary_test_results_id": test_result.id,
+          "detected_at": test_result.detected_at,
+          "result_row": result_row
+        }) %}
+      {% endfor %}
+    {% endif %}
   {% endfor %}
   {% do return(result_rows) %}
 {% endmacro %}

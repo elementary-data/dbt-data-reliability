@@ -10,7 +10,7 @@
         {% do metric_names.append(metric.name) %}
     {% endfor %}
 
-    {% set test_node = context["model"] %}
+    {% set test_node = elementary.get_test_model() %}
     {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(test_node) %}
 
     {% for graph_node in graph.nodes.values() %}
