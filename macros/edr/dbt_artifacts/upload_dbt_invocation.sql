@@ -87,7 +87,7 @@
 
 {%- macro get_invocation_select_filter() -%}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict and invocation_args_dict.select -%}
+    {%- if invocation_args_dict -%}
         {%- if invocation_args_dict.select -%}
             {{- return(invocation_args_dict.select) -}}
         {%- elif invocation_args_dict.SELECT -%}
