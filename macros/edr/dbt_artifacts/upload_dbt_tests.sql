@@ -82,7 +82,7 @@
     {% set test_models_owners = [] %}
     {% set test_models_tags = [] %}
     {% for test_model_node in test_model_nodes %}
-        {% set flatten_test_model_node = elementary.flatten_model(test_model_node) %}
+        {% set flatten_test_model_node = elementary.flatten_node(test_model_node) %}
         {% set test_model_owner = flatten_test_model_node.get('owner') %}
         {% if test_model_owner %}
             {% if test_model_owner is string %}
