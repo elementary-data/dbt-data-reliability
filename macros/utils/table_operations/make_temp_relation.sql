@@ -18,7 +18,12 @@
 
 {% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
     {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
-    {% set tmp_relation = api.Relation.create(identifier=tmp_identifier, type='view') %}
+    {% if elementary.is_dbt_fusion() %}
+        {# dbt-fusion databricks adapter doesn't support temp views, for consistency we still use views but regular ones #}
+        {% set tmp_relation = base_relation.incorporate(path={"identifier": tmp_identifier}, type='view') %}
+    {% else %}    
+        {% set tmp_relation = api.Relation.create(identifier=tmp_identifier, type='view') %}
+    {% endif %}
     {% do return(tmp_relation) %}
 {% endmacro %}
 
