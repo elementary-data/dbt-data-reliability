@@ -113,6 +113,9 @@
 
 {%- macro dremio__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'dbt_artifacts_chunk_size': 100}) %}
+    {% do default_config.update({
+      'dbt_artifacts_chunk_size': 100,
+      'cache_artifacts': false
+    }) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
