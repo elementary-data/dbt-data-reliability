@@ -114,5 +114,12 @@
 {%- macro dremio__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({'dbt_artifacts_chunk_size': 100}) %}
+
+    {# Caching does work in Dremio, but there is a race between the creation of the temp table
+       and its usage, and it's causing failures (querying the same table 2 seconds later works).
+       This is likely a bug in Dremio.
+       So to be safe we disable caching in Dremio by default. #}
+    {% do default_config.update({'cache_artifacts': false}) %}
+
     {{- return(default_config) -}}
 {%- endmacro -%}
