@@ -19,7 +19,8 @@
 {% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
     {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
     {% if elementary.is_dbt_fusion() %}
-        {# dbt-fusion databricks adapter doesn't support temp views, for consistency we still use views but regular ones #}
+        {# In dbt-fusion, the view will be created as non-temporary. Therefore, we need the relation to include database and schema.
+           So we use the same ones as the original relation and just change the identifier. #}
         {% set tmp_relation = base_relation.incorporate(path={"identifier": tmp_identifier}, type='view') %}
     {% else %}    
         {% set tmp_relation = api.Relation.create(identifier=tmp_identifier, type='view') %}
