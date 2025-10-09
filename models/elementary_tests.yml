@@ -7,21 +7,225 @@ models:
       This incremental table is used to store the metrics over time.
       On each anomaly detection test, the test queries this table for historical metrics, and compares to the latest values.
       The table is updated with new metrics on the on-run-end named handle_test_results that is executed at the end of dbt test invocations.
+    columns:
+      - name: bucket_duration_hours
+        data_type: number
+        description: ""
+
+      - name: bucket_end
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: bucket_start
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: dimension
+        data_type: string
+        description: ""
+
+      - name: dimension_value
+        data_type: string
+        description: ""
+
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: id
+        data_type: string
+        description: ""
+
+      - name: metric_name
+        data_type: string
+        description: ""
+
+      - name: metric_properties
+        data_type: string
+        description: ""
+
+      - name: metric_value
+        data_type: float
+        description: ""
+
+      - name: source_value
+        data_type: string
+        description: ""
+
+      - name: updated_at
+        data_type: timestamp_ntz
+        description: ""
+
 
   - name: metrics_anomaly_score
     description: >
       This is a view on `data_monitoring_metrics` that runs the same query the anomaly detection tests run to calculate anomaly scores.
       The purpose of this view is to provide visibility to the results of anomaly detection tests.
+    columns:
+      - name: anomaly_score
+        data_type: float
+        description: ""
+
+      - name: bucket_end
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: bucket_start
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: dimension
+        data_type: string
+        description: ""
+
+      - name: dimension_value
+        data_type: string
+        description: ""
+
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: id
+        data_type: string
+        description: ""
+
+      - name: is_anomaly
+        data_type: boolean
+        description: ""
+
+      - name: latest_metric_value
+        data_type: float
+        description: ""
+
+      - name: metric_name
+        data_type: string
+        description: ""
+
+      - name: training_avg
+        data_type: float
+        description: ""
+
+      - name: training_end
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: training_set_size
+        data_type: number
+        description: ""
+
+      - name: training_start
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: training_stddev
+        data_type: float
+        description: ""
+
+      - name: updated_at
+        data_type: timestamp_ntz
+        description: ""
+
 
   - name: anomaly_threshold_sensitivity
     description: >
       This is a view on `metrics_anomaly_score` that calculates if values of metrics from latest runs would have been considered anomalies in different anomaly scores.
       This can help you decide if there is a need to adjust the `anomaly_score_threshold`.
+    columns:
+      - name: anomaly_score
+        data_type: float
+        description: ""
+
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: latest_metric_value
+        data_type: float
+        description: ""
+
+      - name: metric_avg
+        data_type: float
+        description: ""
+
+      - name: metric_name
+        data_type: string
+        description: ""
+
+      - name: metric_stddev
+        data_type: float
+        description: ""
+
+      - name: is_anomaly_1_5
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_2
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_2_5
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_3
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_3_5
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_4
+        data_type: boolean
+        description: ""
+
+      - name: is_anomaly_4_5
+        data_type: boolean
+        description: ""
+
 
   - name: monitors_runs
     description: >
       This is a view on `data_monitoring_metrics` that is used to determine when a specific anomaly detection test was last executed.
       Each anomaly detection test queries this view to decide on a start time for collecting metrics.
+    columns:
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: first_bucket_end
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: last_bucket_end
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: metric_name
+        data_type: string
+        description: ""
+
+      - name: metric_properties
+        data_type: string
+        description: ""
+
 
   - name: schema_columns_snapshot
     description: >
@@ -29,3 +233,31 @@ models:
       In order to compare current schema to previous state, we must store the previous state.
       The data is from a view that queries the data warehouse information schema.
       This is an incremental table.
+    columns:
+      - name: column_name
+        data_type: string
+        description: ""
+
+      - name: column_state_id
+        data_type: string
+        description: ""
+
+      - name: data_type
+        data_type: string
+        description: ""
+
+      - name: detected_at
+        data_type: timestamp_ntz
+        description: ""
+
+      - name: full_column_name
+        data_type: string
+        description: ""
+
+      - name: full_table_name
+        data_type: string
+        description: ""
+
+      - name: is_new
+        description: ""
+        data_type: boolean
