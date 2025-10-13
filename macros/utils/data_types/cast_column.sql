@@ -29,7 +29,7 @@
 {%- endmacro -%}
 
 {%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
-    cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
+    cast(REGEXP_REPLACE({{ timestamp_field }}, '(\.\d{3})\d+', '$1') as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
 {%- macro edr_cast_as_float(column) -%}
