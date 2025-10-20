@@ -31,6 +31,12 @@
     {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
+    {# NEW: Calculate detection period start for exclusion logic #}
+    {%- if test_configuration.exclude_detection_period_from_training %}
+        {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
+        {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
+    {%- endif %}
+
     {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
        bucket end (which is the actual time of the test) #}
     {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
@@ -142,6 +148,12 @@
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
                 {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
+                {# NEW: Flag detection period metrics for exclusion from training #}
+                {% if test_configuration.exclude_detection_period_from_training %}
+                    bucket_end > {{ detection_period_start_expr }}
+                {% else %}
+                    FALSE
+                {% endif %} as is_detection_period,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -171,6 +183,7 @@
                 first_value(bucket_end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
             where not is_excluded
+              and not is_detection_period  {# NEW: Exclude detection period from training #}
             {{ dbt_utils.group_by(13) }}
         ),
 

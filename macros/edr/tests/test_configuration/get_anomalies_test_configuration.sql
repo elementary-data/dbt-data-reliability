@@ -23,7 +23,8 @@
                                           anomaly_exclude_metrics,
                                           detection_period,
                                           training_period,
-                                          exclude_final_results) %}
+                                          exclude_final_results,
+                                          exclude_detection_period_from_training) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {# Changes in these configs impact the metric id of the test. #}
@@ -53,6 +54,7 @@
 
     {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
     {% set exclude_final_results = elementary.get_exclude_final_results(exclude_final_results) %}
+    {% set exclude_detection_period_from_training = elementary.get_test_argument('exclude_detection_period_from_training', exclude_detection_period_from_training, model_graph_node) %}
 
     {% set test_configuration =
       {'timestamp_column': metric_props.timestamp_column,
@@ -71,7 +73,8 @@
        'fail_on_zero': fail_on_zero,
        'detection_delay': detection_delay,
        'anomaly_exclude_metrics': anomaly_exclude_metrics,
-       'exclude_final_results': exclude_final_results
+       'exclude_final_results': exclude_final_results,
+       'exclude_detection_period_from_training': exclude_detection_period_from_training
         } %}
     {%- set test_configuration = elementary.undefined_dict_keys_to_none(test_configuration) -%}
     {%- do elementary.validate_mandatory_configuration(test_configuration, mandatory_params) -%}
