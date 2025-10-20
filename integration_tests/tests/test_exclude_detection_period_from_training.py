@@ -14,29 +14,31 @@ def test_exclude_detection_period_from_training_baseline(
     test_id: str, dbt_project: DbtProject
 ):
     """
-    Test case for CORE-19: Demonstrates current behavior with detection period in training.
+    Test case for CORE-19: Validates the exclude_detection_period_from_training flag functionality.
 
-    This test shows how the current implementation handles anomalous data in the detection period.
-    The cumulative window function in get_anomaly_scores_query.sql includes all data up to the
-    current row in training, which means detection period data affects the training baseline.
+    This test demonstrates the core use case where:
+    1. Detection period contains anomalous data that gets absorbed into training baseline
+    2. WITHOUT exclusion: Anomaly is missed (test passes) because it's included in training
+    3. WITH exclusion: Anomaly is detected (test fails) because it's excluded from training
 
     Test Scenario:
     - 30 days of normal data: 100 rows per day (baseline pattern)
-    - 7 days of anomalous data: 500 rows per day (5x spike) in the detection period
+    - 7 days of anomalous data: 110 rows per day (10% increase) in the detection period
     - Training period: 30 days
     - Detection period: 7 days
     - Time bucket: Daily aggregation
-    - Sensitivity: 3 (default)
+    - Sensitivity: 10 (high threshold to demonstrate masking effect)
 
-    Current Behavior:
-    - The test FAILS (anomaly detected) because the 5x spike is large enough to be detected
-      even when included in the cumulative training average.
+    The 10% increase across 7 days gets absorbed into the cumulative training average,
+    making the anomaly undetectable with the current implementation.
 
-    Expected Behavior with exclude_detection_period_from_training flag:
-    - With the flag enabled, the detection period would be excluded from training,
-      making the anomaly detection more sensitive and reliable.
-    - This would be especially important for gradual anomalies that might be masked
-      by the cumulative training approach.
+    Current Behavior (WITHOUT flag):
+    - Test PASSES (no anomaly detected) because the 10% increase is absorbed into the
+      cumulative training baseline when detection period data is included.
+
+    Expected Behavior (WITH flag):
+    - Test FAILS (anomaly detected) because the detection period is excluded from training,
+      so the 10% increase is properly detected against the clean 30-day baseline.
     """
     now = datetime.utcnow()
 
@@ -49,7 +51,7 @@ def test_exclude_detection_period_from_training_baseline(
     anomalous_data = []
     for day_offset in range(7, 0, -1):
         date = now - timedelta(days=day_offset)
-        for _ in range(500):
+        for _ in range(110):
             anomalous_data.append({TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)})
 
     data = normal_data + anomalous_data
@@ -59,7 +61,7 @@ def test_exclude_detection_period_from_training_baseline(
         "time_bucket": {"period": "day", "count": 1},
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
-        "sensitivity": 3,
+        "sensitivity": 10,
     }
 
     test_result = dbt_project.test(
@@ -69,24 +71,26 @@ def test_exclude_detection_period_from_training_baseline(
         data=data,
     )
 
-    # Current behavior: Test FAILS (anomaly detected) because the spike is large enough
-    # Even though the detection period is included in training, the 5x spike is still detected
-    assert test_result["status"] == "fail", (
-        "Test should FAIL in current implementation. "
-        "The 5x spike is large enough to be detected even with detection period in training."
+    # Current behavior: Test PASSES (no anomaly detected)
+    # The 10% increase is absorbed into the cumulative training baseline
+    assert test_result["status"] == "pass", (
+        "Test should PASS in current implementation (without exclusion flag). "
+        "The 10% increase is absorbed into training, masking the anomaly."
     )
 
-    # TODO: When the exclude_detection_period_from_training flag is implemented,
-    # add a second test here that sets the flag to True:
+    # TODO: When the exclude_detection_period_from_training flag is implemented, (important-comment)
+    # add a second test here that sets the flag to True and expects FAIL: (important-comment)
     # test_args_with_exclusion = {
     #     **test_args,
-    #     "exclude_detection_period_from_training": True,
+    #     "exclude_detection_period_from_training": True, (important-comment)
     # }
     # test_result_with_exclusion = dbt_project.test( (important-comment)
     #     test_id,
     #     DBT_TEST_NAME,
     #     test_args_with_exclusion,
-    #     test_vars={"force_metrics_backfill": True},
+    #     test_vars={"force_metrics_backfill": True}, (important-comment)
     # )
-    # With the flag, the anomaly should still be detected (test fails)
-    # but the detection would be more reliable and sensitive.
+    # assert test_result_with_exclusion["status"] == "fail", ( (important-comment)
+    #     "Test should FAIL with exclusion flag enabled. " (important-comment)
+    #     "The 10% increase is detected against the clean baseline."
+    # )
