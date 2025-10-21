@@ -92,9 +92,7 @@ def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-def test_exclude_detection_period_from_training_event_freshness(
-    test_id: str, dbt_project: DbtProject
-):
+def test_exclude_detection_event_freshness(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag for event freshness anomalies.
 

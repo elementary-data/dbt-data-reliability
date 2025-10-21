@@ -237,9 +237,7 @@ def test_first_metric_null(test_id, dbt_project: DbtProject):
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-def test_exclude_detection_period_from_training_freshness(
-    test_id: str, dbt_project: DbtProject
-):
+def test_exclude_detection_freshness(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag for freshness anomalies.
 
@@ -260,12 +258,12 @@ def test_exclude_detection_period_from_training_freshness(
         )
     ]
 
-    # Generate 7 days of anomalous data (updates every 15 minutes - 50% slower)
+    # Generate 7 days of anomalous data (updates every 30 minutes - 200% slower)
     anomalous_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
             base_date=now - timedelta(days=7),
-            step=timedelta(minutes=15),
+            step=timedelta(minutes=30),
             days_back=7,
         )
     ]

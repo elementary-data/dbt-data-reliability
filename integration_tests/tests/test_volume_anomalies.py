@@ -542,39 +542,39 @@ def test_anomalyless_vol_anomalies_with_test_materialization(
 # 2. With exclude_detection_period_from_training=False: anomaly is missed (test passes) because training includes the anomaly
 # 3. With exclude_detection_period_from_training=True: anomaly is detected (test fails) because training excludes the anomaly
 @pytest.mark.skip_targets(["clickhouse"])
-def test_exclude_detection_period_from_training_use_case(
-    test_id: str, dbt_project: DbtProject
-):
+def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag functionality.
 
     Scenario:
-    - 30 days of normal data (100 rows per day)
-    - 7 days of anomalous data (150 rows per day) in detection period
+    - 30 days of normal data with variance (98, 100, 102 rows per day pattern)
+    - 7 days of anomalous data (114 rows per day) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
     utc_now = datetime.utcnow()
 
-    # Generate 30 days of normal data (100 rows per day)
+    # Generate 30 days of normal data with variance (98, 100, 102 pattern)
+    normal_pattern = [98, 100, 102]
     normal_data = []
     for i in range(30):
         date = utc_now - timedelta(days=37 - i)  # Days 37 to 8 ago
+        rows_per_day = normal_pattern[i % 3]  # Cycle through 98, 100, 102
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-                for _ in range(100)  # 100 rows per day
+                for _ in range(rows_per_day)
             ]
         )
 
-    # Generate 7 days of anomalous data (150 rows per day) - this will be in detection period
+    # Generate 7 days of anomalous data (114 rows per day) - this will be in detection period
     anomalous_data = []
     for i in range(7):
         date = utc_now - timedelta(days=7 - i)  # Days 7 to 1 ago
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-                for _ in range(150)  # 150 rows per day - 50% increase
+                for _ in range(114)  # 114 rows per day - 14% increase from mean
             ]
         )
 
@@ -587,7 +587,7 @@ def test_exclude_detection_period_from_training_use_case(
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 3,  # Standard sensitivity
+        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
         # exclude_detection_period_from_training is not set (defaults to False/None)
     }
 
