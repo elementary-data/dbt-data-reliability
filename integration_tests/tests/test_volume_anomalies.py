@@ -559,7 +559,7 @@ def test_exclude_detection_period_from_training_use_case(
     # Generate 30 days of normal data (100 rows per day)
     normal_data = []
     for i in range(30):
-        date = utc_now - timedelta(days=30 - i)
+        date = utc_now - timedelta(days=37 - i)  # Days 37 to 8 ago
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
@@ -570,7 +570,7 @@ def test_exclude_detection_period_from_training_use_case(
     # Generate 7 days of anomalous data (150 rows per day) - this will be in detection period
     anomalous_data = []
     for i in range(7):
-        date = utc_now - timedelta(days=7 - i)
+        date = utc_now - timedelta(days=7 - i)  # Days 7 to 1 ago
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
