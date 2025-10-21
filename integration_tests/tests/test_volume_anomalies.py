@@ -550,7 +550,7 @@ def test_exclude_detection_period_from_training_use_case(
 
     Scenario:
     - 30 days of normal data (100 rows per day)
-    - 7 days of anomalous data (500 rows per day) in detection period
+    - 7 days of anomalous data (110 rows per day) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
@@ -567,14 +567,14 @@ def test_exclude_detection_period_from_training_use_case(
             ]
         )
 
-    # Generate 7 days of anomalous data (500 rows per day) - this will be in detection period
+    # Generate 7 days of anomalous data (110 rows per day) - this will be in detection period
     anomalous_data = []
     for i in range(7):
         date = utc_now - timedelta(days=7 - i)
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-                for _ in range(500)  # 500 rows per day - 5x normal volume
+                for _ in range(110)  # 110 rows per day - 10% increase
             ]
         )
 
@@ -587,7 +587,7 @@ def test_exclude_detection_period_from_training_use_case(
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "anomaly_sensitivity": 3,  # High sensitivity to catch the 5x spike
+        "sensitivity": 10,  # High sensitivity to demonstrate masking effect
         # exclude_detection_period_from_training is not set (defaults to False/None)
     }
 
