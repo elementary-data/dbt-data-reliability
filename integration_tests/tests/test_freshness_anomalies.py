@@ -245,7 +245,7 @@ def test_exclude_detection_period_from_training_freshness(
 
     Scenario:
     - 30 days of normal data (updates every 10 minutes)
-    - 7 days of anomalous data (updates every 11 minutes - 10% slower) in detection period
+    - 7 days of anomalous data (updates every 15 minutes - 50% slower) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
@@ -260,12 +260,12 @@ def test_exclude_detection_period_from_training_freshness(
         )
     ]
 
-    # Generate 7 days of anomalous data (updates every 11 minutes - 10% slower)
+    # Generate 7 days of anomalous data (updates every 15 minutes - 50% slower)
     anomalous_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
             base_date=now - timedelta(days=7),
-            step=timedelta(minutes=11),
+            step=timedelta(minutes=15),
             days_back=7,
         )
     ]
@@ -278,7 +278,7 @@ def test_exclude_detection_period_from_training_freshness(
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 10,
+        "sensitivity": 3,
     }
 
     test_result_without_exclusion = dbt_project.test(

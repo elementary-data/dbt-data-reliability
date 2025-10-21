@@ -100,7 +100,7 @@ def test_exclude_detection_period_from_training_event_freshness(
 
     Scenario:
     - 30 days of normal data (event lag of 1 hour)
-    - 7 days of anomalous data (event lag of 1.1 hours - 10% slower) in detection period
+    - 7 days of anomalous data (event lag of 1.5 hours - 50% slower) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
@@ -116,11 +116,11 @@ def test_exclude_detection_period_from_training_event_freshness(
         )
     ]
 
-    # Generate 7 days of anomalous data (event lag of 1.1 hours - 10% slower)
+    # Generate 7 days of anomalous data (event lag of 1.5 hours - 50% slower)
     anomalous_data = [
         {
             EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
-            UPDATE_TIMESTAMP_COLUMN: (date + timedelta(hours=1, minutes=6)).strftime(
+            UPDATE_TIMESTAMP_COLUMN: (date + timedelta(hours=1, minutes=30)).strftime(
                 DATE_FORMAT
             ),
         }
@@ -138,7 +138,7 @@ def test_exclude_detection_period_from_training_event_freshness(
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 10,
+        "sensitivity": 3,
     }
 
     test_result_without_exclusion = dbt_project.test(
