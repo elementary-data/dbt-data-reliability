@@ -558,8 +558,8 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     normal_pattern = [98, 100, 102]
     normal_data = []
     for i in range(30):
-        date = utc_now - timedelta(days=37 - i)  # Days 37 to 8 ago
-        rows_per_day = normal_pattern[i % 3]  # Cycle through 98, 100, 102
+        date = utc_now - timedelta(days=37 - i)
+        rows_per_day = normal_pattern[i % 3]
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
@@ -570,15 +570,14 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     # Generate 7 days of anomalous data (114 rows per day) - this will be in detection period
     anomalous_data = []
     for i in range(7):
-        date = utc_now - timedelta(days=7 - i)  # Days 7 to 1 ago
+        date = utc_now - timedelta(days=7 - i)
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-                for _ in range(114)  # 114 rows per day - 14% increase from mean
+                for _ in range(114)  # 14% increase from mean
             ]
         )
 
-    # Combine all data
     all_data = normal_data + anomalous_data
 
     # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
@@ -606,7 +605,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
     test_args_with_exclusion = {
         **test_args_without_exclusion,
-        "exclude_detection_period_from_training": True,  # NEW FLAG
+        "exclude_detection_period_from_training": True,
     }
 
     test_result_with_exclusion = dbt_project.test(

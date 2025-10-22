@@ -31,7 +31,7 @@
     {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
-    {# NEW: Calculate detection period start for exclusion logic #}
+    {# Calculate detection period start for exclusion logic #}
     {%- if test_configuration.exclude_detection_period_from_training %}
         {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
         {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
@@ -148,7 +148,7 @@
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
                 {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
-                {# NEW: Flag detection period metrics for exclusion from training #}
+                {# Flag detection period metrics for exclusion from training #}
                 {% if test_configuration.exclude_detection_period_from_training %}
                     bucket_end > {{ detection_period_start_expr }}
                 {% else %}
