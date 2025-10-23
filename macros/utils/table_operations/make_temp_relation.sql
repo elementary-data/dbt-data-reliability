@@ -62,6 +62,8 @@
         identifier=tmp_identifier,
         schema=base_relation.schema,
         database=base_relation.database,
-        type='table') %}
+        type='table',
+        can_on_cluster=base_relation.can_on_cluster,
+        can_exchange=base_relation.can_exchange) %}
     {% do return(tmp_relation) %}
 {% endmacro %}
