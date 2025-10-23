@@ -31,7 +31,10 @@
     {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
-    {# Calculate detection period start for exclusion logic #}
+    {# Calculate detection period start for exclusion logic.
+       The detection period spans from (detection_end - backfill_days) to detection_end.
+       This ensures we exclude the most recent backfill_days worth of data from training,
+       which are the metrics being actively tested for anomalies. #}
     {%- if test_configuration.exclude_detection_period_from_training %}
         {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
         {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
@@ -153,7 +156,7 @@
                     bucket_end > {{ detection_period_start_expr }}
                 {% else %}
                     FALSE
-                {% endif %} as is_detection_period,
+                {% endif %} as should_exclude_from_training,
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -176,12 +179,12 @@
                 bucket_seasonality,
                 bucket_duration_hours,
                 updated_at,
-                is_detection_period,
-                avg(case when not is_detection_period then metric_value end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                {{ elementary.standard_deviation('case when not is_detection_period then metric_value end') }} over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(case when not is_detection_period then metric_value end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(case when not is_detection_period then bucket_end end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(case when not is_detection_period then bucket_end end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                should_exclude_from_training,
+                avg(case when not should_exclude_from_training then metric_value end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                {{ elementary.standard_deviation('case when not should_exclude_from_training then metric_value end') }} over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(case when not should_exclude_from_training then metric_value end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(case when not should_exclude_from_training then bucket_end end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(case when not should_exclude_from_training then bucket_end end) over (partition by metric_name, full_table_name, column_name, dimension, dimension_value, bucket_seasonality order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
             where not is_excluded
             {{ dbt_utils.group_by(14) }}
