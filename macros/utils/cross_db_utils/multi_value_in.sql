@@ -32,3 +32,15 @@
         from {{ target_table }}
     )
 {%- endmacro -%}
+
+{%- macro redshift__edr_multi_value_in(source_cols, target_cols, target_table) -%}
+    exists (
+        select 1
+        from {{ target_table }} as _edr_mv_target
+        where
+            {%- for i in range(source_cols | length) -%}
+                {{ source_cols[i] }} = _edr_mv_target.{{ target_cols[i] }}
+                {%- if not loop.last %} and {% endif %}
+            {%- endfor %}
+    )
+{%- endmacro -%}
