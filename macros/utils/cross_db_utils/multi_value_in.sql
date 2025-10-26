@@ -38,9 +38,9 @@
         select 1
         from {{ target_table }} as _edr_mv_target
         where
-            {%- for i in range(source_cols | length) -%}
+            {%- for i in range(source_cols | length) %}
                 {{ source_cols[i] }} = _edr_mv_target.{{ target_cols[i] }}
-                {%- if not loop.last %} and {% endif %}
+                {%- if not loop.last %} and {% endif -%}
             {%- endfor %}
     )
 {%- endmacro -%}
