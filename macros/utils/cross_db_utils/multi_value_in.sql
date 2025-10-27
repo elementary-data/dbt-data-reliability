@@ -32,3 +32,26 @@
         from {{ target_table }}
     )
 {%- endmacro -%}
+
+{%- macro redshift__edr_multi_value_in(source_cols, target_cols, target_table) -%}
+    {# Redshift doesn't support multi-column IN subqueries (tuple IN) like:
+       (col1, col2) IN (SELECT col1, col2 FROM table)
+       
+       This limitation causes the error: "This type of IN/NOT IN query is not supported yet"
+       
+       To work around this, we use CONCAT to combine multiple columns into a single scalar
+       value on both sides of the IN comparison, similar to the BigQuery implementation.
+       This maintains the same semantics while avoiding Redshift's tuple IN limitation. #}
+    concat(
+        {%- for val in source_cols -%}
+            {{ elementary.edr_cast_as_string(val) -}}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor %}
+    ) in (
+        select concat({%- for val in target_cols -%}
+            {{ elementary.edr_cast_as_string(val) -}}
+            {%- if not loop.last %}, {% endif %}
+        {%- endfor %})
+        from {{ target_table }}
+    )
+{%- endmacro -%}

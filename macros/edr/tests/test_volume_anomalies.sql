@@ -1,4 +1,4 @@
-{% test volume_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period) %}
+{% test volume_anomalies(model, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, exclude_detection_period_from_training=false) %}
   {{ config(tags = ['elementary-tests']) }}
 
   {{ elementary.test_table_anomalies(
@@ -20,7 +20,8 @@
       detection_delay=detection_delay,
       anomaly_exclude_metrics=anomaly_exclude_metrics,
       detection_period=detection_period,
-      training_period=training_period
+      training_period=training_period,
+      exclude_detection_period_from_training=exclude_detection_period_from_training
     )
   }}
 {% endtest %}
