@@ -32,9 +32,15 @@
         {%- set has_seasonality = false %}
     {%- endif %}
     
-    {# Build PARTITION BY clause for window functions.
-       Redshift doesn't support constant expressions in PARTITION BY, so we exclude
-       bucket_seasonality when it's a constant (i.e., when has_seasonality is false). #}
+    {# Build PARTITION BY clause for window functions dynamically to work around Redshift limitation.
+       
+       Redshift doesn't allow constant expressions in PARTITION BY of window functions. When seasonality 
+       is not configured, bucket_seasonality becomes a constant ('no_seasonality'::text), which triggers 
+       the error "constant expressions are not supported in partition by clauses."
+       
+       We build the partition keys dynamically, always including the core metric keys and only appending 
+       bucket_seasonality when it's computed from timestamps (has_seasonality = true). Partitioning by 
+       a constant has no effect anyway, so this preserves behavior while keeping Redshift happy. #}
     {%- set partition_by_keys = "metric_name, full_table_name, column_name, dimension, dimension_value" %}
     {%- if has_seasonality %}
         {%- set partition_by_keys = partition_by_keys ~ ", bucket_seasonality" %}
