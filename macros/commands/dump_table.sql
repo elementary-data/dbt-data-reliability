@@ -38,9 +38,9 @@
         {% endif %}
         {% if table_filter %}
             {% if timestamp_column %}
-                and {{ table_filter }}
+                and {{ render(table_filter) }}
             {% else %}
-                where {{ table_filter }}
+                where {{ render(table_filter) }}
             {% endif %}
         {% endif %}
     {% endset %}

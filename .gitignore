@@ -9,6 +9,7 @@ scripts/
 
 edr.log
 integration_tests/data
+integration_tests/clickhouse-data
 edr_target
 
 venv/
