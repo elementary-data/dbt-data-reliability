@@ -61,14 +61,15 @@
         {% set delete_query %}
             alter table {{ relation }} delete where
             {{ delete_column_key }} is null
-            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }})
+            {{ adapter.get_model_query_settings(model) }};
         {% endset %}
         {% do queries.append(delete_query) %}
     {% endif %}
 
     {% if insert_relation %}
         {% set insert_query %}
-            insert into {{ relation }} select * from {{ insert_relation }};
+            insert into {{ relation }} {{ adapter.get_model_query_settings(model) }} select * from {{ insert_relation }};
         {% endset %}
         {% do queries.append(insert_query) %}
     {% endif %}
