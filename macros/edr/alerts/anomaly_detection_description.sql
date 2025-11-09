@@ -10,7 +10,7 @@
 {% endmacro %}
 
 {% macro freshness_description() %}
-    'Last update was at ' || anomalous_value || ', ' || {{ elementary.edr_cast_as_string('abs(round(' ~ elementary.edr_cast_as_numeric('metric_value/3600') ~ ', 2))') }} || ' hours ago. Usually the table is updated within ' || {{ elementary.edr_cast_as_string('abs(round(' ~ elementary.edr_cast_as_numeric('training_avg/3600') ~ ', 2))') }} || ' hours.'
+    'Last update was at ' || anomalous_value || ', ' || {{ elementary.edr_cast_as_string('abs(round(' ~ elementary.edr_cast_as_numeric('metric_value/3600') ~ ', 2))') }} || ' hours before the execution of this test. Usually the table is updated within ' || {{ elementary.edr_cast_as_string('abs(round(' ~ elementary.edr_cast_as_numeric('training_avg/3600') ~ ', 2))') }} || ' hours.'
 {% endmacro %}
 
 {% macro table_metric_description() %}
