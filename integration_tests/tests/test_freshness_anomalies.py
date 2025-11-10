@@ -241,29 +241,29 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
 
     Scenario:
-    - 30 days of normal data with consistent update frequency (every 2 hours)
-    - 7 days of anomalous data (slower updates every 8 hours) in detection period
+    - 14 days of normal data with frequent updates (every 2 hours)
+    - 7 days of anomalous data (only 1 update per day at midnight) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
-    utc_now = datetime.utcnow()
+    utc_now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Generate 30 days of normal data with consistent update frequency (every 2 hours)
+    # Generate 14 days of normal data with frequent updates (every 2 hours)
     normal_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=utc_now - timedelta(days=37),
+            base_date=utc_now - timedelta(days=21),
             step=timedelta(hours=2),
-            days_back=30,
+            days_back=14,
         )
     ]
 
-    # Generate 7 days of anomalous data (slower updates every 8 hours) - this will be in detection period
+    # Generate 7 days of anomalous data (only 1 update per day at midnight)
     anomalous_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
             base_date=utc_now - timedelta(days=7),
-            step=timedelta(hours=8),  # 4x slower than normal
+            step=timedelta(hours=24),
             days_back=7,
         )
     ]
@@ -273,10 +273,10 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
     test_args_without_exclusion = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "training_period": {"period": "day", "count": 30},
+        "training_period": {"period": "day", "count": 14},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
+        "sensitivity": 3,
         # exclude_detection_period_from_training is not set (defaults to False/None)
     }
 
@@ -285,6 +285,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
+        test_vars={"custom_run_started_at": utc_now.isoformat()},
     )
 
     # This should PASS because the anomaly is included in training, making it part of the baseline
@@ -303,6 +304,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
+        test_vars={"custom_run_started_at": utc_now.isoformat()},
     )
 
     # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
