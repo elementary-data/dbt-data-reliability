@@ -241,20 +241,20 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
 
     Scenario:
-    - 14 days of normal data with frequent updates (every 2 hours)
-    - 7 days of anomalous data (only 1 update per day at midnight) in detection period
+    - 30 days of normal data with frequent updates (every 2 hours)
+    - 7 days of anomalous data (only 1 update per day at noon) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
     utc_now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Generate 14 days of normal data with frequent updates (every 2 hours)
+    # Generate 30 days of normal data with frequent updates (every 2 hours)
     normal_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=utc_now - timedelta(days=21),
+            base_date=utc_now - timedelta(days=37),
             step=timedelta(hours=2),
-            days_back=14,
+            days_back=30,
         )
     ]
 
@@ -273,12 +273,12 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
     test_args_without_exclusion = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "training_period": {"period": "day", "count": 14},
+        "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "days_back": 30,
-        "backfill_days": 7,
-        "sensitivity": 2,
+        "days_back": 40,
+        "backfill_days": 0,
+        "sensitivity": 3,
         "min_training_set_size": 5,
         "anomaly_direction": "spike",
         "ignore_small_changes": {
