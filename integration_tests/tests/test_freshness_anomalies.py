@@ -294,15 +294,17 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     ), "Test should pass when anomaly is included in training"
 
     # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
+    test_args_with_exclusion = {
+        **test_args_without_exclusion,
+        "exclude_detection_period_from_training": True,
+    }
+
     test_result_with_exclusion = dbt_project.test(
         test_id + "_with_exclusion",
         TEST_NAME,
-        test_args_without_exclusion,
+        test_args_with_exclusion,
         data=all_data,
-        test_vars={
-            "custom_run_started_at": utc_now.isoformat(),
-            "exclude_detection_period_from_training": True,
-        },
+        test_vars={"custom_run_started_at": utc_now.isoformat()},
     )
 
     # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
