@@ -233,3 +233,79 @@ def test_first_metric_null(test_id, dbt_project: DbtProject):
             materialization="incremental",
         )
         assert result["status"] == "pass"
+
+
+@pytest.mark.skip_targets(["clickhouse"])
+def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
+    """
+    Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
+
+    Scenario:
+    - 30 days of normal data with consistent update frequency (every 2 hours)
+    - 7 days of anomalous data (slower updates every 8 hours) in detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    """
+    utc_now = datetime.utcnow()
+
+    # Generate 30 days of normal data with consistent update frequency (every 2 hours)
+    normal_data = [
+        {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+        for date in generate_dates(
+            base_date=utc_now - timedelta(days=37),
+            step=timedelta(hours=2),
+            days_back=30,
+        )
+    ]
+
+    # Generate 7 days of anomalous data (slower updates every 8 hours) - this will be in detection period
+    anomalous_data = [
+        {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+        for date in generate_dates(
+            base_date=utc_now - timedelta(days=7),
+            step=timedelta(hours=8),  # 4x slower than normal
+            days_back=7,
+        )
+    ]
+
+    all_data = normal_data + anomalous_data
+
+    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
+    test_args_without_exclusion = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 7},
+        "time_bucket": {"period": "day", "count": 1},
+        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
+        # exclude_detection_period_from_training is not set (defaults to False/None)
+    }
+
+    test_result_without_exclusion = dbt_project.test(
+        test_id + "_without_exclusion",
+        TEST_NAME,
+        test_args_without_exclusion,
+        data=all_data,
+    )
+
+    # This should PASS because the anomaly is included in training, making it part of the baseline
+    assert (
+        test_result_without_exclusion["status"] == "pass"
+    ), "Test should pass when anomaly is included in training"
+
+    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
+    test_args_with_exclusion = {
+        **test_args_without_exclusion,
+        "exclude_detection_period_from_training": True,
+    }
+
+    test_result_with_exclusion = dbt_project.test(
+        test_id + "_with_exclusion",
+        TEST_NAME,
+        test_args_with_exclusion,
+        data=all_data,
+    )
+
+    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
+    assert (
+        test_result_with_exclusion["status"] == "fail"
+    ), "Test should fail when anomaly is excluded from training"
