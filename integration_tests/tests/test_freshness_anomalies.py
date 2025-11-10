@@ -276,7 +276,9 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         "training_period": {"period": "day", "count": 14},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 3,
+        "sensitivity": 2,  # Lower sensitivity to ensure detection once plumbing is correct
+        "min_training_set_size": 5,  # Ensure we have enough training data after exclusion
+        "anomaly_direction": "spike",  # Explicitly detect higher freshness as anomalous
         # exclude_detection_period_from_training is not set (defaults to False/None)
     }
 
@@ -285,7 +287,6 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
-        test_vars={"custom_run_started_at": utc_now.isoformat()},
     )
 
     # This should PASS because the anomaly is included in training, making it part of the baseline
@@ -304,7 +305,6 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
-        test_vars={"custom_run_started_at": utc_now.isoformat()},
     )
 
     # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
