@@ -276,17 +276,25 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         "training_period": {"period": "day", "count": 14},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
+        "days_back": 30,  # Explicitly cover entire training + detection span
         "sensitivity": 2,  # Lower sensitivity to ensure detection once plumbing is correct
         "min_training_set_size": 5,  # Ensure we have enough training data after exclusion
         "anomaly_direction": "spike",  # Explicitly detect higher freshness as anomalous
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": 0,
+            "drop_failure_percent_threshold": 0,
+        },  # Remove percent-based gating
         # exclude_detection_period_from_training is not set (defaults to False/None)
     }
+
+    detection_end = utc_now + timedelta(days=1)
 
     test_result_without_exclusion = dbt_project.test(
         test_id + "_without_exclusion",
         TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
+        test_vars={"custom_run_started_at": detection_end.isoformat()},
     )
 
     # This should PASS because the anomaly is included in training, making it part of the baseline
@@ -298,6 +306,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     test_args_with_exclusion = {
         **test_args_without_exclusion,
         "exclude_detection_period_from_training": True,
+        "sensitivity": 1,  # Force detection to validate wiring
     }
 
     test_result_with_exclusion = dbt_project.test(
@@ -305,6 +314,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
+        test_vars={"custom_run_started_at": detection_end.isoformat()},
     )
 
     # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
