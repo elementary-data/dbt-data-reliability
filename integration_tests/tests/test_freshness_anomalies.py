@@ -241,46 +241,44 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
 
     Scenario:
-    - 30 days of normal data with frequent updates (every 2 hours)
-    - 7 days of anomalous data (only 1 update per day at noon) in detection period
-    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
-    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    - 7 days of normal data with frequent updates (every 2 hours) from day -14 to day -8
+    - 7 days of anomalous data (only 1 update per day at noon) from day -7 to day -1
+    - Detection period: last 7 days (days -7 to -1)
+    - Training period: 14 days
+    - Without exclusion: training includes detection window → anomalies normalized → test PASSES
+    - With exclusion: training excludes detection window → anomalies detected → test FAILS
 
     Data Generation Details:
-    - Normal data: days -67 to -37 (generate_dates goes backward from base_date for days_back days)
-    - Anomalous data: days -14 to -7 at noon (once per day)
-    - detection_end: utc_now + 1 day (to include "today" in the detection period)
-    - Detection period: 7 days back from detection_end = days -6 to 0
+    - Normal data: days -14 to -8 (generate_dates goes backward from base_date for days_back days)
+    - Anomalous data: days -7 to -1 at noon (once per day)
+    - detection_end: utc_now (detection period covers the last 7 days ending at now)
+    - Detection period: 7 days back from detection_end = days -7 to -1
 
-    Why This Works:
-    The freshness metric measures the maximum time gap between consecutive updates within each
-    daily bucket. Even though the anomalous events are at days -14 to -7 (outside the detection
-    period of days -6 to 0), the freshness metric for days -6 to 0 is still high because the
-    last update was at day -7 noon. This "propagation effect" means the freshness values in the
-    detection period reflect the missing updates, making the test work correctly.
-
-    - Without exclusion: The high freshness values in days -6 to 0 are included in training,
-      normalizing them into the baseline → test PASSES
-    - With exclusion: The high freshness values in days -6 to 0 are excluded from training,
-      so they stand out against the normal baseline → test FAILS
+    Why This Configuration Works:
+    - training_period = 14 days ensures there are training buckets available when exclusion is enabled
+    - Without exclusion: Training window includes both normal (days -14 to -8) and anomalous
+      (days -7 to -1) data. The anomalous pattern becomes part of the baseline → test PASSES
+    - With exclusion: Training window includes only normal data (days -14 to -8). The anomalous
+      pattern in detection (days -7 to -1) stands out against the normal baseline → test FAILS
+    - min_training_set_size = 3 (reduced from 5) ensures enough buckets are evaluated
     """
     utc_now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Generate 30 days of normal data with frequent updates (every 2 hours)
+    # Generate 7 days of normal data with frequent updates (every 2 hours) from day -14 to day -8
     normal_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=utc_now - timedelta(days=37),
+            base_date=utc_now - timedelta(days=8),
             step=timedelta(hours=2),
-            days_back=30,
+            days_back=7,
         )
     ]
 
-    # Generate 7 days of anomalous data (only 1 update per day at noon)
+    # Generate 7 days of anomalous data (only 1 update per day at noon) from day -7 to day -1
     anomalous_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=(utc_now - timedelta(days=7)).replace(hour=12, minute=0),
+            base_date=(utc_now - timedelta(days=1)).replace(hour=12, minute=0),
             step=timedelta(hours=24),
             days_back=7,
         )
@@ -288,16 +286,16 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
 
     all_data = normal_data + anomalous_data
 
-    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
+    # Test 1: WITHOUT exclusion (should pass - training includes detection window with anomalous pattern)
     test_args_without_exclusion = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "training_period": {"period": "day", "count": 30},
+        "training_period": {"period": "day", "count": 14},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "days_back": 40,
+        "days_back": 20,
         "backfill_days": 0,
         "sensitivity": 3,
-        "min_training_set_size": 5,
+        "min_training_set_size": 3,
         "anomaly_direction": "spike",
         "ignore_small_changes": {
             "spike_failure_percent_threshold": 0,
@@ -305,7 +303,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         },
     }
 
-    detection_end = utc_now + timedelta(days=1)
+    detection_end = utc_now
 
     test_result_without_exclusion = dbt_project.test(
         test_id + "_without_exclusion",
