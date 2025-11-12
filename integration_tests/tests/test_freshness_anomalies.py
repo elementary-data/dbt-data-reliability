@@ -241,28 +241,30 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
 
     Scenario:
-    - 30 days of normal data with frequent updates (every 2 hours)
-    - 7 days of anomalous data (only 1 update per day at noon) in detection period
-    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
-    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    - 30 days of normal data with frequent updates (every 2 hours) from day -37 to day -7
+    - 7 days of anomalous data (only 1 update per day at noon) from day -7 to day -1
+    - Detection period: last 7 days (days -7 to -1)
+    - Training period: 30 days (days -37 to -7 when exclusion enabled)
+    - Without exclusion: anomaly included in training baseline → test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training → test fails (detects anomaly)
     """
     utc_now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Generate 30 days of normal data with frequent updates (every 2 hours)
+    # Generate 30 days of normal data with frequent updates (every 2 hours) from day -37 to day -7
     normal_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=utc_now - timedelta(days=37),
+            base_date=utc_now - timedelta(days=7),
             step=timedelta(hours=2),
             days_back=30,
         )
     ]
 
-    # Generate 7 days of anomalous data (only 1 update per day at noon)
+    # Generate 7 days of anomalous data (only 1 update per day at noon) from day -7 to day -1
     anomalous_data = [
         {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
         for date in generate_dates(
-            base_date=(utc_now - timedelta(days=7)).replace(hour=12, minute=0),
+            base_date=(utc_now - timedelta(days=1)).replace(hour=12, minute=0),
             step=timedelta(hours=24),
             days_back=7,
         )
@@ -287,7 +289,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         },
     }
 
-    detection_end = utc_now + timedelta(days=1)
+    detection_end = utc_now
 
     test_result_without_exclusion = dbt_project.test(
         test_id + "_without_exclusion",
