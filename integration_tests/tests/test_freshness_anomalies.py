@@ -238,29 +238,11 @@ def test_first_metric_null(test_id, dbt_project: DbtProject):
 @pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     """
-    Test the exclude_detection_period_from_training flag functionality for freshness anomalies.
+    Test exclude_detection_period_from_training flag for freshness anomalies.
 
-    Scenario:
-    - 7 days of normal data with frequent updates (every 2 hours) from day -14 to day -8
-    - 7 days of anomalous data (only 1 update per day at noon) from day -7 to day -1
-    - Detection period: last 7 days (days -7 to -1)
-    - Training period: 14 days
-    - Without exclusion: training includes detection window → anomalies normalized → test PASSES
-    - With exclusion: training excludes detection window → anomalies detected → test FAILS
-
-    Data Generation Details:
-    - Normal data: days -14 to -8 (generate_dates goes backward from base_date for days_back days)
-    - Anomalous data: days -7 to -1 at noon (once per day)
-    - detection_end: utc_now (detection period covers the last 7 days ending at now)
-    - Detection period: 7 days back from detection_end = days -7 to -1
-
-    Why This Configuration Works:
-    - training_period = 14 days ensures there are training buckets available when exclusion is enabled
-    - Without exclusion: Training window includes both normal (days -14 to -8) and anomalous
-      (days -7 to -1) data. The anomalous pattern becomes part of the baseline → test PASSES
-    - With exclusion: Training window includes only normal data (days -14 to -8). The anomalous
-      pattern in detection (days -7 to -1) stands out against the normal baseline → test FAILS
-    - min_training_set_size = 3 (reduced from 5) ensures enough buckets are evaluated
+    Data: 7 days normal (frequent updates, days -14 to -8) + 7 days anomalous (1 update/day, days -7 to -1)
+    Without exclusion: anomalous data in training baseline → test passes
+    With exclusion: anomalous data excluded from training → test fails
     """
     utc_now = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
