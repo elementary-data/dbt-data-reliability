@@ -1,4 +1,3 @@
-import random
 from datetime import datetime, timedelta
 
 import pytest
@@ -98,47 +97,66 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     Test the exclude_detection_period_from_training flag functionality for event freshness anomalies.
 
     Scenario:
-    - 14 days total: 7 days normal (small jitter) + 7 days anomalous (large lag)
-    - Without exclusion: 7 anomalous days contaminate training, test passes
-    - With exclusion: only 7 normal days in training, anomaly detected, test fails
-    """
-    test_started_at = datetime.utcnow().replace(hour=0, minute=0, second=0)
+    - 7 days of normal data (5 minute lag between event and update) - training period
+    - 7 days of anomalous data (5 hour lag) - detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
 
-    random.seed(42)
-    normal_start = test_started_at - timedelta(days=14)
+    Mirrors the volume anomalies test pattern with:
+    - Daily buckets (not hourly) to avoid boundary alignment issues
+    - Mid-day event times (12:00) to avoid spillover across day boundaries
+    - Explicit training_period and detection_period parameters
+    - Explicit backfill_days to ensure exclusion logic works correctly
+    """
+    utc_now = datetime.utcnow()
+    test_started_at = (utc_now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+
+    # Generate 7 days of normal data with varying lag (2-8 minutes) to ensure training_stddev > 0
+    training_lags_minutes = [2, 3, 4, 5, 6, 7, 8]
     normal_data = []
-    for date in generate_dates(normal_start, step=STEP, days_back=7):
-        jitter_minutes = random.randint(0, 10)
+    for i in range(7):
+        event_date = test_started_at - timedelta(days=14 - i)
+        event_time = event_date.replace(hour=12, minute=0, second=0, microsecond=0)
+        update_time = event_time + timedelta(minutes=training_lags_minutes[i])
         normal_data.append(
             {
-                EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
-                UPDATE_TIMESTAMP_COLUMN: (
-                    date + timedelta(minutes=jitter_minutes)
-                ).strftime(DATE_FORMAT),
+                EVENT_TIMESTAMP_COLUMN: event_time.strftime(DATE_FORMAT),
+                UPDATE_TIMESTAMP_COLUMN: update_time.strftime(DATE_FORMAT),
             }
         )
 
-    anomalous_start = test_started_at - timedelta(days=7)
+    # Generate 7 days of anomalous data with 5-hour lag (detection period)
     anomalous_data = []
-    for date in generate_dates(anomalous_start, step=STEP, days_back=7):
+    for i in range(7):
+        event_date = test_started_at - timedelta(days=7 - i)
+        event_time = event_date.replace(hour=12, minute=0, second=0, microsecond=0)
+        update_time = event_time + timedelta(hours=5)
         anomalous_data.append(
             {
-                EVENT_TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
-                UPDATE_TIMESTAMP_COLUMN: (date + timedelta(hours=5)).strftime(
-                    DATE_FORMAT
-                ),
+                EVENT_TIMESTAMP_COLUMN: event_time.strftime(DATE_FORMAT),
+                UPDATE_TIMESTAMP_COLUMN: update_time.strftime(DATE_FORMAT),
             }
         )
 
     all_data = normal_data + anomalous_data
 
+    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
     test_args_without_exclusion = {
         "event_timestamp_column": EVENT_TIMESTAMP_COLUMN,
         "update_timestamp_column": UPDATE_TIMESTAMP_COLUMN,
-        "days_back": 14,
-        "backfill_days": 7,
-        "time_bucket": {"period": "hour", "count": 1},
+        "training_period": {"period": "day", "count": 7},
+        "detection_period": {"period": "day", "count": 7},
+        "backfill_days": 7,  # Explicit backfill_days for exclusion logic
+        "time_bucket": {
+            "period": "day",
+            "count": 1,
+        },  # Daily buckets to avoid boundary issues
         "sensitivity": 3,
+        "anomaly_direction": "spike",  # Explicit direction since we're testing increased lag
+        "min_training_set_size": 5,  # Explicit minimum to avoid threshold issues
+        # exclude_detection_period_from_training is not set (defaults to False/None)
     }
 
     test_result_without_exclusion = dbt_project.test(
@@ -146,13 +164,18 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
-        test_vars={"custom_run_started_at": test_started_at.isoformat()},
+        test_vars={
+            "custom_run_started_at": test_started_at.isoformat(),
+            "force_metrics_backfill": True,
+        },
     )
 
+    # This should PASS because the anomaly is included in training, making it part of the baseline
     assert (
         test_result_without_exclusion["status"] == "pass"
     ), "Test should pass when anomaly is included in training"
 
+    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
     test_args_with_exclusion = {
         **test_args_without_exclusion,
         "exclude_detection_period_from_training": True,
@@ -163,9 +186,13 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
         TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
-        test_vars={"custom_run_started_at": test_started_at.isoformat()},
+        test_vars={
+            "custom_run_started_at": test_started_at.isoformat(),
+            "force_metrics_backfill": True,
+        },
     )
 
+    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
     assert (
         test_result_with_exclusion["status"] == "fail"
     ), "Test should fail when anomaly is excluded from training"
