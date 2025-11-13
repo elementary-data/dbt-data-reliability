@@ -14,6 +14,13 @@
 
     {% set columns = adapter.get_columns_in_relation(model_relation) %}
 
+    {% if not columns %}
+        {% set no_columns_error -%}
+            Failed to detect columns for {{ model_relation }}. Ensure it exists and authorized.
+        {%- endset %}
+        exceptions.raise_compiler_error(no_columns_error)
+    {% endif %}
+
     with table_info as (
         select
             {{ elementary.edr_cast_as_string(elementary.edr_quote(full_table_name)) }} as full_table_name,
