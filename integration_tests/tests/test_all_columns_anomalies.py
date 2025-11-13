@@ -153,3 +153,121 @@ def test_anomalyless_all_columns_anomalies_all_monitors_sanity(
         test_id, DBT_TEST_NAME, test_args, data=data, multiple_results=True
     )
     assert all([res["status"] == "pass" for res in test_results])
+
+
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
+def test_exclude_detection_from_training_all_columns(
+    test_id: str, dbt_project: DbtProject
+):
+    """
+    Test the exclude_detection_period_from_training flag functionality for column anomalies.
+
+    Scenario:
+    - 30 days of normal data with consistent null_count pattern (2 nulls per day)
+    - 7 days of anomalous data (10 nulls per day) in detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    """
+    utc_now = datetime.utcnow()
+
+    # Generate 30 days of normal data with consistent null_count (2 nulls per day)
+    normal_data = []
+    for i in range(30):
+        date = utc_now - timedelta(days=37 - i)
+        normal_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                for _ in range(2)
+            ]
+        )
+        normal_data.extend(
+            [
+                {
+                    TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+                    "superhero": "Superman" if i % 2 == 0 else "Batman",
+                }
+                for _ in range(8)
+            ]
+        )
+
+    # Generate 7 days of anomalous data (10 nulls per day) - this will be in detection period
+    anomalous_data = []
+    for i in range(7):
+        date = utc_now - timedelta(days=7 - i)
+        anomalous_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                for _ in range(10)
+            ]
+        )
+        anomalous_data.extend(
+            [
+                {
+                    TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+                    "superhero": "Superman" if i % 2 == 0 else "Batman",
+                }
+                for _ in range(0)  # No non-null values to keep total similar
+            ]
+        )
+
+    all_data = normal_data + anomalous_data
+
+    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
+    test_args_without_exclusion = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["null_count"],
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 7},
+        "time_bucket": {"period": "day", "count": 1},
+        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
+        # exclude_detection_period_from_training is not set (defaults to False/None)
+    }
+
+    test_results_without_exclusion = dbt_project.test(
+        test_id + "_without_exclusion",
+        DBT_TEST_NAME,
+        test_args_without_exclusion,
+        data=all_data,
+        multiple_results=True,
+    )
+
+    # This should PASS because the anomaly is included in training, making it part of the baseline
+    superhero_result = next(
+        (
+            res
+            for res in test_results_without_exclusion
+            if res["column_name"].lower() == "superhero"
+        ),
+        None,
+    )
+    assert (
+        superhero_result and superhero_result["status"] == "pass"
+    ), "Test should pass when anomaly is included in training"
+
+    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
+    test_args_with_exclusion = {
+        **test_args_without_exclusion,
+        "exclude_detection_period_from_training": True,
+    }
+
+    test_results_with_exclusion = dbt_project.test(
+        test_id + "_with_exclusion",
+        DBT_TEST_NAME,
+        test_args_with_exclusion,
+        data=all_data,
+        multiple_results=True,
+    )
+
+    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
+    superhero_result = next(
+        (
+            res
+            for res in test_results_with_exclusion
+            if res["column_name"].lower() == "superhero"
+        ),
+        None,
+    )
+    assert (
+        superhero_result and superhero_result["status"] == "fail"
+    ), "Test should fail when anomaly is excluded from training"
