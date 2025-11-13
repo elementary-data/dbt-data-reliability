@@ -38,7 +38,7 @@
                                                                                                    detection_period=detection_period,
                                                                                                    training_period=training_period,
                                                                                                    dimensions=dimensions,
-                                                                                                   exclude_detection_period_from_training=exclude_detection_period_from_training) %>
+                                                                                                   exclude_detection_period_from_training=exclude_detection_period_from_training) %}
 
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
