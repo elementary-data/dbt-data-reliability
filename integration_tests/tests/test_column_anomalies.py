@@ -476,3 +476,74 @@ def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProjec
         "count_true",
         "count_false",
     }
+
+
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
+def test_column_anomalies_exclude_detection_period_from_training(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for cur_date in training_dates
+        for superhero in ["Superman", "Batman"]
+    ]
+
+    data += [
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": None}
+        for _ in range(10)
+    ]
+
+    test_args_false = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["null_count"],
+        "time_bucket": {"period": "day", "count": 1},
+        "training_period": {"period": "day", "count": 1},
+        "detection_period": {"period": "day", "count": 1},
+        "min_training_set_size": 1,
+        "anomaly_sensitivity": 3,
+        "anomaly_direction": "spike",
+        "exclude_detection_period_from_training": False,
+    }
+    test_result_false = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args_false,
+        data=data,
+        test_column="superhero",
+        test_vars={"force_metrics_backfill": True},
+    )
+    assert test_result_false["status"] == "pass", (
+        "Expected PASS when exclude_detection_period_from_training=False "
+        "(detection data included in training baseline)"
+    )
+
+    test_args_true = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["null_count"],
+        "time_bucket": {"period": "day", "count": 1},
+        "training_period": {"period": "day", "count": 1},
+        "detection_period": {"period": "day", "count": 1},
+        "min_training_set_size": 1,
+        "anomaly_sensitivity": 3,
+        "anomaly_direction": "spike",
+        "exclude_detection_period_from_training": True,
+    }
+    test_result_true = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args_true,
+        data=data,
+        test_column="superhero",
+        test_vars={"force_metrics_backfill": True},
+    )
+    assert test_result_true["status"] == "fail", (
+        "Expected FAIL when exclude_detection_period_from_training=True "
+        "(detection data excluded from training baseline, anomaly detected)"
+    )
