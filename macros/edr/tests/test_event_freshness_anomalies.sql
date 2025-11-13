@@ -1,4 +1,4 @@
-{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, ignore_small_changes, detection_delay, anomaly_exclude_metrics, detection_period, training_period) %}
+{% test event_freshness_anomalies(model, event_timestamp_column, update_timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity, ignore_small_changes, detection_delay, anomaly_exclude_metrics, detection_period, training_period, exclude_detection_period_from_training=false) %}
   {{ config(tags = ['elementary-tests']) }}
   {% if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
     {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
@@ -32,7 +32,8 @@
       detection_delay=detection_delay,
       anomaly_exclude_metrics=anomaly_exclude_metrics,
       detection_period=detection_period,
-      training_period=training_period
+      training_period=training_period,
+      exclude_detection_period_from_training=exclude_detection_period_from_training
     )
   }}
 {% endtest %}
