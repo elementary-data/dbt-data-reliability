@@ -17,6 +17,7 @@ on:
           - trino
           - clickhouse
           - dremio
+          - vertica
       elementary-ref:
         type: string
         required: false
@@ -108,6 +109,11 @@ jobs:
         if: inputs.warehouse-type == 'dremio'
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-dremio.yml up -d
+
+      - name: Start Vertica
+        if: inputs.warehouse-type == 'vertica'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-vertica.yml up -d
 
       - name: Setup Python
         uses: actions/setup-python@v4
