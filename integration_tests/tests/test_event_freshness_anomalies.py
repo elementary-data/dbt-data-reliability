@@ -146,9 +146,8 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     test_args_without_exclusion = {
         "event_timestamp_column": EVENT_TIMESTAMP_COLUMN,
         "update_timestamp_column": UPDATE_TIMESTAMP_COLUMN,
-        "training_period": {"period": "day", "count": 7},
-        "detection_period": {"period": "day", "count": 7},
-        "backfill_days": 7,  # Explicit backfill_days for exclusion logic
+        "days_back": 14,  # Scoring window: 14 days to include both training and detection
+        "backfill_days": 7,  # Detection period: last 7 days (days 7-1 before test_started_at)
         "time_bucket": {
             "period": "day",
             "count": 1,
