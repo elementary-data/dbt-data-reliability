@@ -102,11 +102,6 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
 
-    Mirrors the volume anomalies test pattern with:
-    - Daily buckets (not hourly) to avoid boundary alignment issues
-    - Mid-day event times (12:00) to avoid spillover across day boundaries
-    - Explicit training_period and detection_period parameters
-    - Explicit backfill_days to ensure exclusion logic works correctly
     """
     utc_now = datetime.utcnow()
     test_started_at = (utc_now + timedelta(days=1)).replace(
