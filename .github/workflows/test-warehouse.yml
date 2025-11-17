@@ -111,6 +111,8 @@ jobs:
         run: docker compose -f docker-compose-dremio.yml up -d
 
       - name: Start Vertica
+        env:
+          VERTICA_PORT: 5433
         if: inputs.warehouse-type == 'vertica'
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-vertica.yml up -d
