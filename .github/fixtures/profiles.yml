@@ -1,0 +1,29 @@
+elementary:
+  target: vertica
+  outputs:
+    vertica:
+      type: vertica
+      host: "{{ env_var('VERTICA_HOST') }}"
+      port: "{{ env_var('VERTICA_PORT') | as_number }}"
+      username: "{{ env_var('VERTICA_USER') }}"
+      password: "{{ env_var('VERTICA_PASS') }}"
+      database: "{{ env_var('VERTICA_DATABASE') }}"
+      schema: "{{ env_var('SCHEMA_NAME') }}"
+      connection_load_balance: false
+      retries: 2
+      threads: 4
+
+elementary_tests:
+  target: vertica
+  outputs:
+    vertica:
+      type: vertica
+      host: "{{ env_var('VERTICA_HOST') }}"
+      port: "{{ env_var('VERTICA_PORT') | as_number }}"
+      username: "{{ env_var('VERTICA_USER') }}"
+      password: "{{ env_var('VERTICA_PASS') }}"
+      database: "{{ env_var('VERTICA_DATABASE') }}"
+      schema: "{{ env_var('SCHEMA_NAME') }}"
+      connection_load_balance: false
+      retries: 2
+      threads: 4
