@@ -186,6 +186,13 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-vertica.yml up -d
 
+      - name: Wait for Vertica to be ready
+        if: inputs.warehouse-type == 'vertica'
+        run: |
+          echo "Waiting for Vertica to be healthy..."
+          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" vertica)" == "healthy" ]; do echo "Waiting..."; sleep 5; done'
+          echo "Vertica is ready!"
+
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
         run: |

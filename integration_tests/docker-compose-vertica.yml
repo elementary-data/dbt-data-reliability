@@ -27,5 +27,10 @@ services:
       - type: volume
         source: vertica-data
         target: /data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/vertica/bin/vsql -U dbadmin -w vertica -c 'SELECT 1;'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 volumes:
   vertica-data:
