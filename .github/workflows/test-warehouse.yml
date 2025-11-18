@@ -171,13 +171,16 @@ jobs:
           ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
 
+      - name: Set Vertica environment variables
+        if: inputs.warehouse-type == 'vertica'
+        run: |
+          echo "VERTICA_PORT=5433" >> $GITHUB_ENV
+          echo "VERTICA_USER=dbadmin" >> $GITHUB_ENV
+          echo "VERTICA_PASS=vertica" >> $GITHUB_ENV
+          echo "VERTICA_DATABASE=elementary_tests" >> $GITHUB_ENV
+          echo "VERTICA_SCHEMA=$SCHEMA_NAME" >> $GITHUB_ENV
+
       - name: Start Vertica
-        env:
-          VERTICA_PORT: 5433
-          VERTICA_USER: dbadmin
-          VERTICA_PASS: vertica
-          VERTICA_DATABASE: elementary_tests
-          VERTICA_SCHEMA: ${{ env.SCHEMA_NAME }}
         if: inputs.warehouse-type == 'vertica'
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-vertica.yml up -d
