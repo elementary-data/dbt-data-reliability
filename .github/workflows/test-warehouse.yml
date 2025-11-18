@@ -119,17 +119,6 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         run: docker compose -f docker-compose-dremio.yml up -d
 
-      - name: Start Vertica
-        env:
-          VERTICA_PORT: 5433
-          VERTICA_USER: dbadmin
-          VERTICA_PASS: vertica
-          VERTICA_DATABASE: elementary_tests
-          VERTICA_SCHEMA: elementary_tests_vertica
-        if: inputs.warehouse-type == 'vertica'
-        working-directory: ${{ env.TESTS_DIR }}
-        run: docker compose -f docker-compose-vertica.yml up -d
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -171,7 +160,9 @@ jobs:
           mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+          SCHEMA_NAME="dbt_pkg_$UNDERSCORED_REF_NAME"
+          echo "SCHEMA_NAME=$SCHEMA_NAME" >> $GITHUB_ENV
+          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/$SCHEMA_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
@@ -179,6 +170,17 @@ jobs:
           ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
+
+      - name: Start Vertica
+        env:
+          VERTICA_PORT: 5433
+          VERTICA_USER: dbadmin
+          VERTICA_PASS: vertica
+          VERTICA_DATABASE: elementary_tests
+          VERTICA_SCHEMA: ${{ env.SCHEMA_NAME }}
+        if: inputs.warehouse-type == 'vertica'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-vertica.yml up -d
 
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}

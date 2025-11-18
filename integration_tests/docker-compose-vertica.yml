@@ -6,7 +6,7 @@ services:
       VERTICA_HOST: localhost
       VERTICA_PORT: 5433
       VERTICA_DATABASE: elementary_tests
-      VERTICA_SCHEMA: elementary_tests_vertica
+      VERTICA_SCHEMA: ${SCHEMA_NAME}
       APP_DB_USER: ${VERTICA_USER}
       APP_DB_PASSWORD: ${VERTICA_PASS}
       TZ: "America/Los_Angeles"
