@@ -134,7 +134,7 @@ jobs:
         run: pip install databricks-sql-connector==2.9.3
 
       - name: Install dbt-vertica
-        if: ${{ inputs.warehouse-type == 'vertica' }}
+        if: inputs.warehouse-type == 'vertica' 
         run:
           pip install "dbt-vertica==${{ inputs.dbt-vertica-version }}"
 
