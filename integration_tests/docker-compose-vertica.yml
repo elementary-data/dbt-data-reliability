@@ -13,7 +13,7 @@ services:
       VERTICA_DB_NAME: ${VERTICA_DATABASE}
       VMART_ETL_SCRIPT: ""
     container_name: vertica
-    image: ratiopbc/vertica-ce
+    image: ghcr.io/ratiopbc/vertica-ce
     ports:
       - "${VERTICA_PORT}:${VERTICA_PORT}"
       - "5444:5444"
