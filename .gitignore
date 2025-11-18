@@ -4,6 +4,7 @@ dbt_internal_packages/
 logs/
 scripts/
 
+.github/fixtures/.user.yml
 .idea
 .DS_Store
 
