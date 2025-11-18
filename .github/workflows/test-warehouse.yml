@@ -175,6 +175,7 @@ jobs:
         if: inputs.warehouse-type == 'vertica'
         run: |
           echo "VERTICA_PORT=5433" >> $GITHUB_ENV
+          echo "VERTICA_HOST=localhost" >> $GITHUB_ENV
           echo "VERTICA_USER=dbadmin" >> $GITHUB_ENV
           echo "VERTICA_PASS=vertica" >> $GITHUB_ENV
           echo "VERTICA_DATABASE=elementary_tests" >> $GITHUB_ENV
