@@ -28,7 +28,7 @@ services:
         source: vertica-data
         target: /data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/vertica/bin/vsql -U dbadmin -w vertica -c 'SELECT 1;'"]
+      test: ["CMD-SHELL", "/opt/vertica/bin/vsql -U ${VERTICA_USER} -w ${VERTICA_PASS} -c 'SELECT 1;'"]
       interval: 5s
       timeout: 5s
       retries: 10
