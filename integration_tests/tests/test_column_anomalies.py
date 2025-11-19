@@ -480,9 +480,7 @@ def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProjec
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-def test_column_anomalies_exclude_detection_period_from_training(
-    test_id: str, dbt_project: DbtProject
-):
+def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag functionality for column anomalies.
 
@@ -494,17 +492,18 @@ def test_column_anomalies_exclude_detection_period_from_training(
     """
     utc_today = datetime.utcnow().date()
 
-    # Generate 30 days of normal data with low null count (0-2 nulls per day)
+    # Generate 30 days of normal data with variance in null count (8, 10, 12 pattern)
+    normal_pattern = [8, 10, 12]
     normal_data = []
     for i in range(30):
         date = utc_today - timedelta(days=37 - i)
+        null_count = normal_pattern[i % 3]
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
-                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 5
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
             ]
         )
-        null_count = i % 3
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
@@ -512,14 +511,14 @@ def test_column_anomalies_exclude_detection_period_from_training(
             ]
         )
 
-    # Generate 7 days of anomalous data with high null count (20 nulls per day)
+    # Generate 7 days of anomalous data (20 nulls per day) - 100% increase from mean
     anomalous_data = []
     for i in range(7):
         date = utc_today - timedelta(days=7 - i)
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
-                for superhero in ["Superman", "Batman"]
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
             ]
         )
         anomalous_data.extend(
@@ -539,13 +538,13 @@ def test_column_anomalies_exclude_detection_period_from_training(
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "min_training_set_size": 5,
-        "anomaly_sensitivity": 3,
+        "anomaly_sensitivity": 5,
         "anomaly_direction": "spike",
         "exclude_detection_period_from_training": False,
     }
 
     test_result_without_exclusion = dbt_project.test(
-        test_id + "_without_exclusion",
+        test_id + "_f",
         DBT_TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
@@ -566,7 +565,7 @@ def test_column_anomalies_exclude_detection_period_from_training(
     }
 
     test_result_with_exclusion = dbt_project.test(
-        test_id + "_with_exclusion",
+        test_id + "_t",
         DBT_TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
