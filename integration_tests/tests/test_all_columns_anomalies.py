@@ -157,8 +157,19 @@ def test_anomalyless_all_columns_anomalies_all_monitors_sanity(
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-def test_exclude_detection_from_training_all_columns(
-    test_id: str, dbt_project: DbtProject
+@pytest.mark.parametrize(
+    "exclude_detection,expected_status",
+    [
+        (False, "pass"),
+        (True, "fail"),
+    ],
+    ids=["without_exclusion", "with_exclusion"],
+)
+def test_anomaly_in_detection_period(
+    test_id: str,
+    dbt_project: DbtProject,
+    exclude_detection: bool,
+    expected_status: str,
 ):
     """
     Test the exclude_detection_period_from_training flag functionality for column anomalies.
@@ -166,8 +177,8 @@ def test_exclude_detection_from_training_all_columns(
     Scenario:
     - 30 days of normal data with consistent null_count pattern (2 nulls per day)
     - 7 days of anomalous data (10 nulls per day) in detection period
-    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
-    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    - Without exclusion (exclude_detection=False): anomaly gets included in training baseline, test passes
+    - With exclusion (exclude_detection=True): anomaly excluded from training, test fails (detects anomaly)
     """
     utc_now = datetime.utcnow()
 
@@ -207,67 +218,37 @@ def test_exclude_detection_from_training_all_columns(
                     TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
                     "superhero": "Superman" if i % 2 == 0 else "Batman",
                 }
-                for _ in range(0)  # No non-null values to keep total similar
+                for _ in range(0)
             ]
         )
 
     all_data = normal_data + anomalous_data
 
-    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
-    test_args_without_exclusion = {
+    test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "column_anomalies": ["null_count"],
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
-        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
-        # exclude_detection_period_from_training is not set (defaults to False/None)
+        "sensitivity": 5,
     }
 
-    test_results_without_exclusion = dbt_project.test(
-        test_id + "_without_exclusion",
+    if exclude_detection:
+        test_args["exclude_detection_period_from_training"] = True
+
+    test_results = dbt_project.test(
+        test_id,
         DBT_TEST_NAME,
-        test_args_without_exclusion,
+        test_args,
         data=all_data,
         multiple_results=True,
     )
 
-    # This should PASS because the anomaly is included in training, making it part of the baseline
     superhero_result = next(
-        (
-            res
-            for res in test_results_without_exclusion
-            if res["column_name"].lower() == "superhero"
-        ),
+        (res for res in test_results if res["column_name"].lower() == "superhero"),
         None,
     )
+    assert superhero_result is not None, "superhero column result not found"
     assert (
-        superhero_result and superhero_result["status"] == "pass"
-    ), "Test should pass when anomaly is included in training"
-
-    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
-    test_args_with_exclusion = {
-        **test_args_without_exclusion,
-        "exclude_detection_period_from_training": True,
-    }
-
-    test_results_with_exclusion = dbt_project.test(
-        test_id + "_with_exclusion",
-        DBT_TEST_NAME,
-        test_args_with_exclusion,
-        data=all_data,
-        multiple_results=True,
-    )
-
-    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
-    superhero_result = next(
-        (
-            res
-            for res in test_results_with_exclusion
-            if res["column_name"].lower() == "superhero"
-        ),
-        None,
-    )
-    assert (
-        superhero_result and superhero_result["status"] == "fail"
-    ), "Test should fail when anomaly is excluded from training"
+        superhero_result["status"] == expected_status
+    ), f"Expected status '{expected_status}' but got '{superhero_result['status']}' (exclude_detection={exclude_detection})"
