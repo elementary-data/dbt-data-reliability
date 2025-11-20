@@ -3,4 +3,6 @@ pytest-xdist
 pytest-parametrization
 pytest-html
 filelock
-urllib3==2.0.6
+# urllib3>=2.2.2 fixes CVE-2023-45803 and CVE-2024-37891
+# Upper bound <3.0.0 prevents breaking changes from future major versions
+urllib3>=2.2.2,<3.0.0
