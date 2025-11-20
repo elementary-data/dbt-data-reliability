@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 import pytest
@@ -169,7 +169,7 @@ def test_exclude_detection_from_training_all_columns(
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
     """
-    utc_now = datetime.utcnow()
+    utc_now = datetime.now(timezone.utc)
 
     # Generate 30 days of normal data with variance in null_count (8, 10, 12 pattern)
     normal_pattern = [8, 10, 12]
