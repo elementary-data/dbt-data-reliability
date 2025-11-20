@@ -232,7 +232,10 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
         (False, "pass"),  # include detection in training → anomaly absorbed
         (True, "fail"),  # exclude detection from training → anomaly detected
     ],
-    ids=["include_detection_in_training", "exclude_detection_from_training"],
+    ids=[
+        "exclude_false",
+        "exclude_true",
+    ],  # Shortened to stay under Postgres 63-char limit
 )
 def test_anomaly_in_detection_period(
     test_id: str,
@@ -248,6 +251,8 @@ def test_anomaly_in_detection_period(
     - 7 days of anomalous data (72 Superman, 28 Spiderman per day) in detection period
     - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
     - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+
+    Note: Parametrize IDs are shortened to avoid Postgres 63-character identifier limit.
     """
     utc_now = datetime.utcnow()
 
@@ -306,9 +311,8 @@ def test_anomaly_in_detection_period(
     if exclude_detection:
         test_args["exclude_detection_period_from_training"] = True
 
-    suffix = "_excl" if exclude_detection else "_incl"
     test_result = dbt_project.test(
-        test_id + suffix,
+        test_id,
         DBT_TEST_NAME,
         test_args,
         data=all_data,
