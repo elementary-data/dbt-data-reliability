@@ -296,7 +296,7 @@ def test_dimension_exclude_detection_from_training(
     }
 
     test_result_without_exclusion = dbt_project.test(
-        test_id + "_without_exclusion",
+        test_id + "_f",
         DBT_TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
@@ -314,7 +314,7 @@ def test_dimension_exclude_detection_from_training(
     }
 
     test_result_with_exclusion = dbt_project.test(
-        test_id + "_with_exclusion",
+        test_id + "_t",
         DBT_TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
