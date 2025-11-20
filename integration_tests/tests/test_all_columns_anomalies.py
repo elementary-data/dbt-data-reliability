@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 
 import pytest
@@ -175,21 +175,23 @@ def test_anomaly_in_detection_period(
     Test the exclude_detection_period_from_training flag functionality for column anomalies.
 
     Scenario:
-    - 30 days of normal data with consistent null_count pattern (2 nulls per day)
-    - 7 days of anomalous data (10 nulls per day) in detection period
+    - 30 days of normal data with variance in null_count pattern (8, 10, 12 nulls per day)
+    - 7 days of anomalous data (20 nulls per day) in detection period
     - Without exclusion (exclude_detection=False): anomaly gets included in training baseline, test passes
     - With exclusion (exclude_detection=True): anomaly excluded from training, test fails (detects anomaly)
     """
-    utc_now = datetime.utcnow()
+    utc_now = datetime.now(timezone.utc)
 
-    # Generate 30 days of normal data with consistent null_count (2 nulls per day)
+    # Generate 30 days of normal data with variance in null_count (8, 10, 12 pattern)
+    normal_pattern = [8, 10, 12]
     normal_data = []
     for i in range(30):
         date = utc_now - timedelta(days=37 - i)
+        null_count = normal_pattern[i % 3]
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
-                for _ in range(2)
+                for _ in range(null_count)
             ]
         )
         normal_data.extend(
@@ -198,18 +200,18 @@ def test_anomaly_in_detection_period(
                     TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
                     "superhero": "Superman" if i % 2 == 0 else "Batman",
                 }
-                for _ in range(8)
+                for _ in range(40 - null_count)
             ]
         )
 
-    # Generate 7 days of anomalous data (10 nulls per day) - this will be in detection period
+    # Generate 7 days of anomalous data (20 nulls per day) - 100% increase from mean
     anomalous_data = []
     for i in range(7):
         date = utc_now - timedelta(days=7 - i)
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
-                for _ in range(10)
+                for _ in range(20)
             ]
         )
         anomalous_data.extend(
@@ -218,7 +220,7 @@ def test_anomaly_in_detection_period(
                     TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
                     "superhero": "Superman" if i % 2 == 0 else "Batman",
                 }
-                for _ in range(0)
+                for _ in range(20)
             ]
         )
 
