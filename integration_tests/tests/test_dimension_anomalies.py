@@ -223,11 +223,22 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
 # Test for exclude_detection_period_from_training functionality
 # This test demonstrates the use case where:
 # 1. Detection period contains anomalous distribution data that would normally be included in training
-# 2. With exclude_detection_period_from_training=False: anomaly is missed (test passes) because training includes the anomaly
-# 3. With exclude_detection_period_from_training=True: anomaly is detected (test fails) because training excludes the anomaly
+# 2. With exclude_detection=False: anomaly is missed (test passes) because training includes the anomaly
+# 3. With exclude_detection=True: anomaly is detected (test fails) because training excludes the anomaly
 @pytest.mark.skip_targets(["clickhouse"])
-def test_dimension_exclude_detection_from_training(
-    test_id: str, dbt_project: DbtProject
+@pytest.mark.parametrize(
+    "exclude_detection,expected_status",
+    [
+        (False, "pass"),  # include detection in training → anomaly absorbed
+        (True, "fail"),  # exclude detection from training → anomaly detected
+    ],
+    ids=["include_detection_in_training", "exclude_detection_from_training"],
+)
+def test_anomaly_in_detection_period(
+    test_id: str,
+    dbt_project: DbtProject,
+    exclude_detection: bool,
+    expected_status: str,
 ):
     """
     Test the exclude_detection_period_from_training flag functionality for dimension anomalies.
@@ -285,42 +296,22 @@ def test_dimension_exclude_detection_from_training(
 
     all_data = normal_data + anomalous_data
 
-    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
-    test_args_without_exclusion = {
+    test_args = {
         **DBT_TEST_ARGS,
         "training_period": {"period": "day", "count": 30},
         "detection_period": {"period": "day", "count": 7},
         "time_bucket": {"period": "day", "count": 1},
         "sensitivity": 5,
-        # exclude_detection_period_from_training is not set (defaults to False/None)
     }
+    if exclude_detection:
+        test_args["exclude_detection_period_from_training"] = True
 
-    test_result_without_exclusion = dbt_project.test(
-        test_id + "_f",
+    suffix = "_excl" if exclude_detection else "_incl"
+    test_result = dbt_project.test(
+        test_id + suffix,
         DBT_TEST_NAME,
-        test_args_without_exclusion,
+        test_args,
         data=all_data,
     )
 
-    # This should PASS because the anomaly is included in training, making it part of the baseline
-    assert (
-        test_result_without_exclusion["status"] == "pass"
-    ), "Test should pass when anomaly is included in training"
-
-    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
-    test_args_with_exclusion = {
-        **test_args_without_exclusion,
-        "exclude_detection_period_from_training": True,
-    }
-
-    test_result_with_exclusion = dbt_project.test(
-        test_id + "_t",
-        DBT_TEST_NAME,
-        test_args_with_exclusion,
-        data=all_data,
-    )
-
-    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
-    assert (
-        test_result_with_exclusion["status"] == "fail"
-    ), "Test should fail when anomaly is excluded from training"
+    assert test_result["status"] == expected_status
