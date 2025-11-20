@@ -476,3 +476,105 @@ def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProjec
         "count_true",
         "count_false",
     }
+
+
+# Anomalies currently not supported on ClickHouse
+@pytest.mark.skip_targets(["clickhouse"])
+def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
+    """
+    Test the exclude_detection_period_from_training flag functionality for column anomalies.
+
+    Scenario:
+    - 30 days of normal data with low null count (0-2 nulls per day)
+    - 7 days of anomalous data with high null count (20 nulls per day) in detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    """
+    utc_today = datetime.utcnow().date()
+
+    # Generate 30 days of normal data with variance in null count (8, 10, 12 pattern)
+    normal_pattern = [8, 10, 12]
+    normal_data = []
+    for i in range(30):
+        date = utc_today - timedelta(days=37 - i)
+        null_count = normal_pattern[i % 3]
+        normal_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
+            ]
+        )
+        normal_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                for _ in range(null_count)
+            ]
+        )
+
+    # Generate 7 days of anomalous data (20 nulls per day) - 100% increase from mean
+    anomalous_data = []
+    for i in range(7):
+        date = utc_today - timedelta(days=7 - i)
+        anomalous_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
+            ]
+        )
+        anomalous_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                for _ in range(20)
+            ]
+        )
+
+    all_data = normal_data + anomalous_data
+
+    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
+    test_args_without_exclusion = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["null_count"],
+        "time_bucket": {"period": "day", "count": 1},
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 7},
+        "min_training_set_size": 5,
+        "anomaly_sensitivity": 5,
+        "anomaly_direction": "spike",
+        "exclude_detection_period_from_training": False,
+    }
+
+    test_result_without_exclusion = dbt_project.test(
+        test_id + "_f",
+        DBT_TEST_NAME,
+        test_args_without_exclusion,
+        data=all_data,
+        test_column="superhero",
+        test_vars={"force_metrics_backfill": True},
+    )
+
+    # This should PASS because the anomaly is included in training, making it part of the baseline
+    assert test_result_without_exclusion["status"] == "pass", (
+        "Expected PASS when exclude_detection_period_from_training=False "
+        "(detection data included in training baseline)"
+    )
+
+    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
+    test_args_with_exclusion = {
+        **test_args_without_exclusion,
+        "exclude_detection_period_from_training": True,
+    }
+
+    test_result_with_exclusion = dbt_project.test(
+        test_id + "_t",
+        DBT_TEST_NAME,
+        test_args_with_exclusion,
+        data=all_data,
+        test_column="superhero",
+        test_vars={"force_metrics_backfill": True},
+    )
+
+    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
+    assert test_result_with_exclusion["status"] == "fail", (
+        "Expected FAIL when exclude_detection_period_from_training=True "
+        "(detection data excluded from training baseline, anomaly detected)"
+    )
