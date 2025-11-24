@@ -254,7 +254,7 @@ def test_anomaly_in_detection_period(
 
     Note: Parametrize IDs are shortened to avoid Postgres 63-character identifier limit.
     """
-    utc_now = datetime.utcnow()
+    utc_now = datetime.utcnow().date()
 
     # Generate 30 days of normal data with variance (45/50/55 pattern for Superman)
     normal_pattern = [45, 50, 55]
