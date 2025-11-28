@@ -1,4 +1,4 @@
-{% test dimension_anomalies(model, dimensions, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, exclude_final_results) %}
+{% test dimension_anomalies(model, dimensions, timestamp_column, where_expression, anomaly_sensitivity, anomaly_direction, min_training_set_size, time_bucket, days_back, backfill_days, seasonality, sensitivity,ignore_small_changes, fail_on_zero, detection_delay, anomaly_exclude_metrics, detection_period, training_period, exclude_final_results, exclude_detection_period_from_training=false) %}
     {{ config(tags = ['elementary-tests']) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
         {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
@@ -39,7 +39,8 @@
                                                                                                    anomaly_exclude_metrics=anomaly_exclude_metrics,
                                                                                                    detection_period=detection_period,
                                                                                                    training_period=training_period,
-                                                                                                   exclude_final_results=exclude_final_results) %}
+                                                                                                   exclude_final_results=exclude_final_results,
+                                                                                                   exclude_detection_period_from_training=exclude_detection_period_from_training) %}
 
         {%- if not test_configuration %}
             {{ exceptions.raise_compiler_error("Failed to create test configuration dict for test `{}`".format(test_table_name)) }}
