@@ -1,12 +1,12 @@
 <p align="center">
-<img alt="Logo" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/github_banner.png"/ width="1000">
+<img alt="Logo" src="https://res.cloudinary.com/do5hrgokq/image/upload/v1764493013/github_banner_zp5l2o.png" width="1000">
 </p>
 
 # [dbt-native data observability](https://www.elementary-data.com/)
 
 <p align="center">
 <a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
-<a href="https://docs.elementary-data.com/quickstart"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
+<a href="https://docs.elementary-data.com/data-tests/dbt/quickstart-package"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads/>
 </p>
@@ -17,20 +17,27 @@ This dbt-native package powers **Elementary**, helping data and analytics engin
 
 Choose the observability tool that fits your needs:
 
-✅ [**Elementary Open Source**](https://docs.elementary-data.com/oss/oss-introduction) – A powerful, self-hosted tool for teams that want full control.
+✅ [**Elementary OSS**](https://docs.elementary-data.com/oss/oss-introduction) – A powerful open-source data observability layer for dbt. It runs in your pipeline, captures rich metadata and artifacts, and includes alerting and reporting to help engineers surface issues early.
 
-✅ [**Elementary Cloud Platform**](https://docs.elementary-data.com/cloud/introduction) – A fully managed, enterprise-ready solution with **automated ML-powered anomaly detection, flexible data discovery, integrated incident management, and collaboration tools**—all with minimal setup and infrastructure maintenance.
+✅ [**Elementary Cloud**](https://docs.elementary-data.com/cloud/introduction) – A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place.
 
 ### Table of Contents
 
-- [What's Inside the Elementary dbt Package?](#whats-inside-the-elementary-dbt-package)
-- [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
-- [Data Anomaly Detection & Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
-- [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
-- [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
-- [Quickstart - dbt Package](#quickstart---dbt-package)
-- [Community & Support](#community--support)
-- [Contributions](#contributions)
+- [dbt-native data observability](#dbt-native-data-observability)
+  - [What is Elementary?](#what-is-elementary)
+    - [Table of Contents](#table-of-contents)
+    - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
+  - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
+  - [Data Anomaly Detection \& Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
+    - [**Anomaly Detection Tests**](#anomaly-detection-tests)
+    - [**Schema Tests**](#schema-tests)
+  - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
+    - [**Metadata Tables - dbt Artifacts**](#metadata-tables---dbt-artifacts)
+    - [**Run Results Tables**](#run-results-tables)
+  - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
+  - [Quickstart - dbt Package](#quickstart---dbt-package)
+  - [Community \& Support](#community--support)
+  - [Contributions](#contributions)
 
 ### **What's Inside the Elementary dbt Package?**
 
@@ -48,7 +55,7 @@ To generate observability reports, send alerts, and govern your data quality eff
 - **Elementary OSS**
 - **A self-maintained, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the self-hosted Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
 - **Elementary Cloud**
-  - A **fully managed, enterprise-ready** solution designed for **scalability and automation**. It offers automated **ML-powered anomaly detection**, flexible **data discovery**, an integrated **incident management system**, and **collaboration features.** Delivering **high value with minimal setup and infrastructure maintenance**, it's ideal for teams looking to enhance data reliability without operational overhead. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
+  - A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
 <kbd align="center">
 <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
