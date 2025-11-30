@@ -13,31 +13,27 @@
 
 ## What is Elementary?
 
-This dbt-native package powers **Elementary**, helping data and analytics engineers **detect data anomalies** and build **rich metadata tables** from their dbt runs and tests. Gain immediate visibility into data quality trend and uncover potential issues, all within dbt.
+This dbt package powers both Elementary OSS and Elementary Cloud, creating the foundation for dbt-native data observability. It collects metadata, artifacts, and test results from your dbt runs so you can detect anomalies, monitor data quality, and build rich metadata tables in your warehouse.
 
-Choose the observability tool that fits your needs:
+Choose the tool that fits your needs:
 
 ✅ [**Elementary OSS**](https://docs.elementary-data.com/oss/oss-introduction) – A powerful open-source data observability layer for dbt. It runs in your pipeline, captures rich metadata and artifacts, and includes alerting and reporting to help engineers surface issues early.
 
 ✅ [**Elementary Cloud**](https://docs.elementary-data.com/cloud/introduction) – A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place.
 
 ### Table of Contents
-
-- [dbt-native data observability](#dbt-native-data-observability)
-  - [What is Elementary?](#what-is-elementary)
-    - [Table of Contents](#table-of-contents)
-    - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
+- [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
   - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
   - [Data Anomaly Detection \& Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
     - [**Anomaly Detection Tests**](#anomaly-detection-tests)
     - [**Schema Tests**](#schema-tests)
-  - [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
+- [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
     - [**Metadata Tables - dbt Artifacts**](#metadata-tables---dbt-artifacts)
     - [**Run Results Tables**](#run-results-tables)
-  - [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
-  - [Quickstart - dbt Package](#quickstart---dbt-package)
-  - [Community \& Support](#community--support)
-  - [Contributions](#contributions)
+- [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
+- [Quickstart - dbt Package](#quickstart---dbt-package)
+- [Community \& Support](#community--support)
+- [Contributions](#contributions)
 
 ### **What's Inside the Elementary dbt Package?**
 
