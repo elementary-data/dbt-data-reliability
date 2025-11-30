@@ -23,17 +23,13 @@ Alongside the dbt-package, choose the tool that fits your needs:
 
 ### Table of Contents
 - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
-  - [Get more out of Elementary dbt package](#get-more-out-of-elementary-dbt-package)
-  - [Data Anomaly Detection \& Schema changes as dbt Tests](#data-anomaly-detection--schema-changes-as-dbt-tests)
-    - [**Anomaly Detection Tests**](#anomaly-detection-tests)
-    - [**Schema Tests**](#schema-tests)
-- [Elementary Tables - Run Results and dbt Artifacts](#elementary-tables---run-results-and-dbt-artifacts)
-    - [**Metadata Tables - dbt Artifacts**](#metadata-tables---dbt-artifacts)
-    - [**Run Results Tables**](#run-results-tables)
-- [AI-powered data validation and unstructured data tests](#ai-powered-data-validation-and-unstructured-data-tests)
-- [Quickstart - dbt Package](#quickstart---dbt-package)
-- [Community \& Support](#community--support)
-- [Contributions](#contributions)
+- [**Anomaly Detection Tests**](#anomaly-detection-tests)
+- [**Schema Tests**](#schema-tests)
+- [**Elementary Tables - Run Results and dbt Artifacts**](#elementary-tables---run-results-and-dbt-artifacts)
+- [**AI-powered data validation and unstructured data tests**](#ai-powered-data-validation-and-unstructured-data-tests)
+- [**Quickstart - dbt Package**](#quickstart---dbt-package)
+- [**Community & Support**](#community--support)
+- [**Contributions**](#contributions)
 
 ### **What's Inside the Elementary dbt Package?**
 
