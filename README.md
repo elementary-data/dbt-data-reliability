@@ -1,18 +1,16 @@
 <p align="center">
 <img alt="Logo" src="https://res.cloudinary.com/do5hrgokq/image/upload/v1764493013/github_banner_zp5l2o.png" width="1000">
 </p>
-
-# [dbt-native data observability](https://www.elementary-data.com/)
-
-From the [Elementary](https://www.elementary-data.com/) team, helping you deliver trusted data in the AI era.
-Ranked among the top 5 dbt packages and supported by a growing community of thousands.
-
 <p align="center">
 <a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
 <a href="https://docs.elementary-data.com/data-tests/dbt/quickstart-package"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads/>
 </p>
+# [dbt-native data observability](https://www.elementary-data.com/)
+
+From the [Elementary](https://www.elementary-data.com/) team, helping you deliver trusted data in the AI era.
+Ranked among the top 5 dbt packages and supported by a growing community of thousands.
 
 ### Table of Contents
 - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
