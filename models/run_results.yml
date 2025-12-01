@@ -197,7 +197,7 @@ models:
         description: End time of resource compile action.
 
       - name: rows_affected
-        data_type: int
+        data_type: bigint
         description: ""
 
       - name: full_refresh
@@ -209,7 +209,7 @@ models:
         description: The compiled code (SQL / Python) executed against the database.
 
       - name: failures
-        data_type: int
+        data_type: bigint
         description: Number of failures in this run.
 
       - name: query_id
