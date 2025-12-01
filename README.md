@@ -7,6 +7,7 @@
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads/>
 </p>
+
 # [dbt-native data observability](https://www.elementary-data.com/)
 
 From the [Elementary](https://www.elementary-data.com/) team, helping you deliver trusted data in the AI era.
