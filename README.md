@@ -11,18 +11,12 @@
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-lineage?period=total&units=international_system&left_color=grey&right_color=orange"&left_text=Downloads/>
 </p>
 
-## What is Elementary?
-
-This dbt package powers both Elementary OSS and Elementary Cloud, creating the foundation for dbt-native data observability. It collects metadata, artifacts, and test results from your dbt runs so you can detect anomalies, monitor data quality, and build rich metadata tables in your warehouse.
-
-Alongside the dbt-package, choose the tool that fits your needs:
-
-✅ [**Elementary OSS**](https://docs.elementary-data.com/oss/oss-introduction) – A powerful open-source data observability layer for dbt. It runs in your pipeline, captures rich metadata and artifacts, and includes alerting and reporting to help engineers surface issues early.
-
-✅ [**Elementary Cloud**](https://docs.elementary-data.com/cloud/introduction) – A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place.
+From the [Elementary](https://www.elementary-data.com/) team, helping you deliver trusted data in the AI era.
+Ranked among the top 5 dbt packages and supported by a growing community of thousands.
 
 ### Table of Contents
 - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
+- [**Get more out of Elementary dbt package**](#get-more-out-of-elementary-dbt-package)
 - [**Anomaly Detection Tests**](#anomaly-detection-tests)
 - [**Schema Tests**](#schema-tests)
 - [**Elementary Tables - Run Results and dbt Artifacts**](#elementary-tables---run-results-and-dbt-artifacts)
@@ -31,7 +25,7 @@ Alongside the dbt-package, choose the tool that fits your needs:
 - [**Community & Support**](#community--support)
 - [**Contributions**](#contributions)
 
-### **What's Inside the Elementary dbt Package?**
+## **What's Inside the Elementary dbt Package?**
 
 The **Elementary dbt package** is designed to enhance data observability within your dbt workflows. It includes two core components:
 
