@@ -110,7 +110,7 @@
     {% do return(queries) %}
 {% endmacro %}
 
-{% macro redshit__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+{% macro redshift__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
     {% if delete_relation %}
