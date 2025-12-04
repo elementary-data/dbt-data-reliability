@@ -14,6 +14,7 @@ From the [Elementary](https://www.elementary-data.com/) team, helping you delive
 Ranked among the top 5 dbt packages and supported by a growing community of thousands.
 
 ### Table of Contents
+
 - [**What's Inside the Elementary dbt Package?**](#whats-inside-the-elementary-dbt-package)
 - [**Get more out of Elementary dbt package**](#get-more-out-of-elementary-dbt-package)
 - [**Anomaly Detection Tests**](#anomaly-detection-tests)
@@ -37,10 +38,10 @@ The **Elementary dbt package** helps you find anomalies in your data and build m
 
 To generate observability reports, send alerts, and govern your data quality effectively, connect your dbt package to one of the following options:
 
-- **Elementary OSS**
-**A self-maintained, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the self-hosted Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
-- **Elementary Cloud**
-A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
+- **Elementary OSS**  
+  **A self-maintained, open-source CLI** that integrates seamlessly with your dbt project and the Elementary dbt package. It **enables alerting and provides the self-hosted Elementary data observability report**, offering a comprehensive view of your dbt runs, all dbt test results, data lineage, and test coverage. Quickstart [here](https://docs.elementary-data.com/oss/quickstart/quickstart-cli), and our team and community can provide great support on [Slack](https://www.elementary-data.com/community) if needed.
+- **Elementary Cloud**  
+  A managed, AI-driven control plane for observability, quality, governance, and discovery. It includes automated ML monitoring, column-level lineage from source to BI, a built-in catalog, and AI agents that scale reliability workflows. Cloud supports both engineers and business users, enabling technical depth and simple self-service in one place. To learn more, [book a demo](https://cal.com/maayansa/elementary-intro-github-package) or [start a trial](https://www.elementary-data.com/signup).
 
 <kbd align="center">
 <a href="https://storage.googleapis.com/elementary_static/elementary_demo.html"><img align="center" style="max-width:300px;" src="https://raw.githubusercontent.com/elementary-data/elementary/master/static/report_ui.gif"> </a>
