@@ -31,6 +31,10 @@
     {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
 {% endmacro %}
 
+-- {% macro redshift__get_clean_elementary_test_tables_queries(test_table_relations) %}
+--     {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
+-- {% endmacro %}
+
 {% macro spark__get_clean_elementary_test_tables_queries(test_table_relations) %}
     {% do return(elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations)) %}
 {% endmacro %}
