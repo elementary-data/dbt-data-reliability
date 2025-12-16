@@ -135,6 +135,7 @@
         metric_properties,
         {{ elementary.edr_current_timestamp() }} as created_at
       FROM {{ temp_relation }}
+      {{ elementary.get_query_settings() }}
     {% endset %}
 
     {{ elementary.file_log("Inserting metrics into {}.".format(target_relation)) }}
@@ -183,6 +184,7 @@
         detected_at,
         {{ elementary.edr_current_timestamp() }} as created_at
       FROM {{ temp_relation }}
+      {{ elementary.get_query_settings() }}
     {% endset %}
 
     {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
