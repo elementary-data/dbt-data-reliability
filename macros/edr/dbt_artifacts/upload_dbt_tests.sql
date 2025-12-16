@@ -83,23 +83,11 @@
     {% set test_models_tags = [] %}
     {% for test_model_node in test_model_nodes %}
         {% set flatten_test_model_node = elementary.flatten_node(test_model_node) %}
-        {% set test_model_owner = flatten_test_model_node.get('owner') %}
-        {% if test_model_owner %}
-            {% if test_model_owner is string %}
-                {% set owners = test_model_owner.split(',') %}
-                {% for owner in owners %}
-                    {% do test_models_owners.append(owner | trim) %}  
-                {% endfor %}
-            {% elif test_model_owner is iterable %}
-                {% do test_models_owners.extend(test_model_owner) %}
-            {% endif %}
-        {% endif %}
         {% set test_model_tags = flatten_test_model_node.get('tags') %}
         {% if test_model_tags and test_model_tags is sequence %}
             {% do test_models_tags.extend(test_model_tags) %}
         {% endif %}
     {% endfor %}
-    {% set test_models_owners = test_models_owners | unique | list %}
     {% set test_models_tags = test_models_tags | unique | list %}
 
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
@@ -143,6 +131,18 @@
             {% set primary_test_model_database = tested_model_node.get('database') %}
             {% set primary_test_model_schema = tested_model_node.get('schema') %}
             {% set group_name = group_name or tested_model_node.get('group') %}
+            {% set flatten_primary_model_node = elementary.flatten_node(tested_model_node) %}
+            {% set primary_model_owner = flatten_primary_model_node.get('owner') %}
+            {% if primary_model_owner %}
+                {% if primary_model_owner is string %}
+                    {% set owners = primary_model_owner.split(',') %}
+                    {% for owner in owners %}
+                        {% do test_models_owners.append(owner | trim) %}
+                    {% endfor %}
+                {% elif primary_model_owner is iterable %}
+                    {% do test_models_owners.extend(primary_model_owner) %}
+                {% endif %}
+            {% endif %}
         {%- endif -%}
     {%- endif -%}
 
