@@ -21,9 +21,7 @@ SAMPLES_QUERY = """
 
 
 @pytest.mark.skip_targets(["clickhouse"])
-def test_sample_count_unlimited(
-    test_id: str, dbt_project: DbtProject
-):
+def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
 
