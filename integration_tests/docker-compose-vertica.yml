@@ -1,0 +1,36 @@
+services:
+  vertica:
+    environment:
+      VERTICA_USER: dbadmin
+      VERTICA_PASS: vertica
+      VERTICA_HOST: localhost
+      VERTICA_PORT: 5433
+      VERTICA_DATABASE: elementary_tests
+      VERTICA_SCHEMA: ${SCHEMA_NAME}
+      APP_DB_USER: ${VERTICA_USER}
+      APP_DB_PASSWORD: ${VERTICA_PASS}
+      TZ: "America/Los_Angeles"
+      VERTICA_DB_NAME: ${VERTICA_DATABASE}
+      VMART_ETL_SCRIPT: ""
+    container_name: vertica
+    image: ghcr.io/ratiopbc/vertica-ce
+    ports:
+      - "${VERTICA_PORT}:${VERTICA_PORT}"
+      - "5444:5444"
+    deploy:
+      mode: global
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - type: volume
+        source: vertica-data
+        target: /data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/vertica/bin/vsql -U ${VERTICA_USER} -w ${VERTICA_PASS} -c 'SELECT 1;'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  vertica-data:
