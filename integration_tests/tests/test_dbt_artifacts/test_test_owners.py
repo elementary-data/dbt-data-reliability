@@ -137,8 +137,10 @@ def test_relationship_test_uses_primary_model_owner_only(
                         "tests": [
                             {
                                 "relationships": {
-                                    "to": f"ref('{referenced_model_name}')",
-                                    "field": "id",
+                                    "arguments": {
+                                        "to": f"ref('{referenced_model_name}')",
+                                        "field": "id",
+                                    }
                                 }
                             }
                         ],
@@ -221,8 +223,10 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tm
                         "tests": [
                             {
                                 "relationships": {
-                                    "to": f"ref('{referenced_model_name}')",
-                                    "field": "id",
+                                    "arguments": {
+                                        "to": f"ref('{referenced_model_name}')",
+                                        "field": "id",
+                                    }
                                 }
                             }
                         ],
