@@ -111,6 +111,8 @@ def test_relationship_test_uses_primary_model_owner_only(
     unique_id = str(uuid.uuid4()).replace("-", "_")
     primary_model_name = f"model_primary_{unique_id}"
     referenced_model_name = f"model_referenced_{unique_id}"
+    # Use explicit test name for reliable querying across dbt versions
+    test_name = f"rel_primary_owner_{unique_id}"
     primary_owner = "Alice"
     referenced_owner = "Bob"
 
@@ -137,10 +139,9 @@ def test_relationship_test_uses_primary_model_owner_only(
                         "tests": [
                             {
                                 "relationships": {
-                                    "arguments": {
-                                        "to": f"ref('{referenced_model_name}')",
-                                        "field": "id",
-                                    }
+                                    "name": test_name,
+                                    "to": f"ref('{referenced_model_name}')",
+                                    "field": "id",
                                 }
                             }
                         ],
@@ -175,27 +176,17 @@ def test_relationship_test_uses_primary_model_owner_only(
                 select=f"{primary_model_name} {referenced_model_name}"
             )
 
-            # Query by parent_model_unique_id and filter by test_original_name in Python
-            # This is more robust across dbt versions (fusion vs latest_official)
-            all_tests = dbt_project.read_table(
+            # Query by explicit test name - more robust across dbt versions
+            tests = dbt_project.read_table(
                 "dbt_tests",
-                where=f"parent_model_unique_id LIKE '%{primary_model_name}%'",
+                where=f"name LIKE '%{test_name}%'",
                 raise_if_empty=False,
             )
 
-            # Filter for relationship tests
-            relationship_tests = [
-                t
-                for t in all_tests
-                if t.get("test_original_name") == "relationships"
-                or "relationships" in (t.get("short_name") or "").lower()
-                or "relationships" in (t.get("name") or "").lower()
-            ]
-
             assert (
-                len(relationship_tests) == 1
-            ), f"Expected 1 relationship test, got {len(relationship_tests)}. All tests found: {[t.get('name') for t in all_tests]}"
-            test_row = relationship_tests[0]
+                len(tests) == 1
+            ), f"Expected 1 relationship test with name containing '{test_name}', got {len(tests)}. Tests found: {[t.get('name') for t in tests]}"
+            test_row = tests[0]
             model_owners = _parse_model_owners(test_row.get("model_owners"))
 
             assert model_owners == [
@@ -212,6 +203,8 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tm
     unique_id = str(uuid.uuid4()).replace("-", "_")
     primary_model_name = f"model_no_owner_{unique_id}"
     referenced_model_name = f"model_with_owner_{unique_id}"
+    # Use explicit test name for reliable querying across dbt versions
+    test_name = f"rel_no_owner_{unique_id}"
     referenced_owner = "Bob"
 
     primary_model_sql = """
@@ -236,10 +229,9 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tm
                         "tests": [
                             {
                                 "relationships": {
-                                    "arguments": {
-                                        "to": f"ref('{referenced_model_name}')",
-                                        "field": "id",
-                                    }
+                                    "name": test_name,
+                                    "to": f"ref('{referenced_model_name}')",
+                                    "field": "id",
                                 }
                             }
                         ],
@@ -274,27 +266,17 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tm
                 select=f"{primary_model_name} {referenced_model_name}"
             )
 
-            # Query by parent_model_unique_id and filter by test_original_name in Python
-            # This is more robust across dbt versions (fusion vs latest_official)
-            all_tests = dbt_project.read_table(
+            # Query by explicit test name - more robust across dbt versions
+            tests = dbt_project.read_table(
                 "dbt_tests",
-                where=f"parent_model_unique_id LIKE '%{primary_model_name}%'",
+                where=f"name LIKE '%{test_name}%'",
                 raise_if_empty=False,
             )
 
-            # Filter for relationship tests
-            relationship_tests = [
-                t
-                for t in all_tests
-                if t.get("test_original_name") == "relationships"
-                or "relationships" in (t.get("short_name") or "").lower()
-                or "relationships" in (t.get("name") or "").lower()
-            ]
-
             assert (
-                len(relationship_tests) == 1
-            ), f"Expected 1 relationship test, got {len(relationship_tests)}. All tests found: {[t.get('name') for t in all_tests]}"
-            test_row = relationship_tests[0]
+                len(tests) == 1
+            ), f"Expected 1 relationship test with name containing '{test_name}', got {len(tests)}. Tests found: {[t.get('name') for t in tests]}"
+            test_row = tests[0]
             model_owners = _parse_model_owners(test_row.get("model_owners"))
 
             assert (
