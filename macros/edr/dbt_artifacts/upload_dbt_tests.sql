@@ -145,6 +145,7 @@
             {% endif %}
         {%- endif -%}
     {%- endif -%}
+    {% set test_models_owners = test_models_owners | unique | list %}
 
     {%- if primary_test_model_database is none or primary_test_model_schema is none -%}
         {# This is mainly here to support singular test cases with multiple referred models, in this case the tested node is being used to extract the db and schema #}
