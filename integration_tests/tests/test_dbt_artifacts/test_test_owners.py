@@ -35,13 +35,13 @@ def _parse_model_owners(model_owners_value):
             return []
         try:
             parsed = json.loads(model_owners_value)
-            return parsed if isinstance(parsed, list) else [model_owners_value]
+            return parsed if isinstance(parsed, list) else [parsed]
         except json.JSONDecodeError:
             return [model_owners_value]
     return []
 
 
-def test_single_parent_test_owner_attribution(dbt_project: DbtProject, tmp_path):
+def test_single_parent_test_owner_attribution(dbt_project: DbtProject):
     """
     Test that a test on a single model correctly inherits the owner from that model.
     This is the baseline case - single parent tests should have the parent's owner.
@@ -98,7 +98,7 @@ def test_single_parent_test_owner_attribution(dbt_project: DbtProject, tmp_path)
 
 @pytest.mark.skip_targets(["dremio"])
 def test_relationship_test_uses_primary_model_owner_only(
-    dbt_project: DbtProject, tmp_path
+    dbt_project: DbtProject,
 ):
     """
     Test that a relationship test between two models with different owners
@@ -195,7 +195,7 @@ def test_relationship_test_uses_primary_model_owner_only(
 
 
 @pytest.mark.skip_targets(["dremio"])
-def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tmp_path):
+def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject):
     """
     Test that when the primary model has no owner but the referenced model does,
     the test should have empty model_owners (not inherit from referenced model).
@@ -284,7 +284,7 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject, tm
             ), f"Expected model_owners to be empty (primary model has no owner), got {model_owners}. Referenced model owner '{referenced_owner}' should NOT be inherited."
 
 
-def test_owner_deduplication(dbt_project: DbtProject, tmp_path):
+def test_owner_deduplication(dbt_project: DbtProject):
     """
     Test that duplicate owners in a model's owner field are deduplicated.
     For example, if owner is "Alice,Bob,Alice", the result should be ["Alice", "Bob"].
