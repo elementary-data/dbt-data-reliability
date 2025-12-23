@@ -115,6 +115,7 @@ def test_single_parent_test_owner_attribution(dbt_project: DbtProject) -> None:
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_relationship_test_uses_primary_model_owner_only(
     dbt_project: DbtProject,
 ) -> None:
@@ -210,6 +211,7 @@ def test_relationship_test_uses_primary_model_owner_only(
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject) -> None:
     """
     Test that when the primary model has no owner but the referenced model does,
