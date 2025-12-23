@@ -6,13 +6,15 @@ not aggregated from all parent models (CORE-196).
 import contextlib
 import json
 import uuid
+from pathlib import Path
+from typing import Generator, List, Optional, Union
 
 import pytest
 from dbt_project import DbtProject
 
 
 @contextlib.contextmanager
-def cleanup_file(path):
+def cleanup_file(path: Path) -> Generator[None, None, None]:
     """Context manager to clean up a file after the test."""
     try:
         yield
@@ -21,7 +23,9 @@ def cleanup_file(path):
             path.unlink()
 
 
-def _parse_model_owners(model_owners_value):
+def _parse_model_owners(
+    model_owners_value: Optional[Union[str, List[str]]]
+) -> List[str]:
     """
     Parse the model_owners column value which may be a JSON string or list.
     Returns a list of owner strings.
@@ -41,7 +45,28 @@ def _parse_model_owners(model_owners_value):
     return []
 
 
-def test_single_parent_test_owner_attribution(dbt_project: DbtProject):
+def _create_model_sql(owner: Optional[str] = None, columns: str = "1 as id") -> str:
+    """
+    Create a dbt model SQL string with optional owner configuration.
+
+    Args:
+        owner: The owner to set in the model's meta config. If None, no config is added.
+        columns: The SELECT clause columns. Defaults to "1 as id".
+
+    Returns:
+        A dbt model SQL string.
+    """
+    if owner is not None:
+        return f"""
+    {{{{ config(meta={{'owner': '{owner}'}}) }}}}
+    select {columns}
+    """
+    return f"""
+    select {columns}
+    """
+
+
+def test_single_parent_test_owner_attribution(dbt_project: DbtProject) -> None:
     """
     Test that a test on a single model correctly inherits the owner from that model.
     This is the baseline case - single parent tests should have the parent's owner.
@@ -50,14 +75,7 @@ def test_single_parent_test_owner_attribution(dbt_project: DbtProject):
     model_name = f"model_single_owner_{unique_id}"
     owner_name = "Alice"
 
-    model_sql = (
-        """
-    {{ config(meta={'owner': '"""
-        + owner_name
-        + """'}) }}
-    select 1 as id
-    """
-    )
+    model_sql = _create_model_sql(owner=owner_name)
 
     schema_yaml = {
         "version": 2,
@@ -99,7 +117,7 @@ def test_single_parent_test_owner_attribution(dbt_project: DbtProject):
 @pytest.mark.skip_targets(["dremio"])
 def test_relationship_test_uses_primary_model_owner_only(
     dbt_project: DbtProject,
-):
+) -> None:
     """
     Test that a relationship test between two models with different owners
     only uses the owner from the PRIMARY model (the one being tested),
@@ -116,15 +134,10 @@ def test_relationship_test_uses_primary_model_owner_only(
     primary_owner = "Alice"
     referenced_owner = "Bob"
 
-    primary_model_sql = f"""
-    {{{{ config(meta={{'owner': '{primary_owner}'}}) }}}}
-    select 1 as id, 1 as ref_id
-    """
-
-    referenced_model_sql = f"""
-    {{{{ config(meta={{'owner': '{referenced_owner}'}}) }}}}
-    select 1 as id
-    """
+    primary_model_sql = _create_model_sql(
+        owner=primary_owner, columns="1 as id, 1 as ref_id"
+    )
+    referenced_model_sql = _create_model_sql(owner=referenced_owner)
 
     schema_yaml = {
         "version": 2,
@@ -195,7 +208,7 @@ def test_relationship_test_uses_primary_model_owner_only(
 
 
 @pytest.mark.skip_targets(["dremio"])
-def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject):
+def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject) -> None:
     """
     Test that when the primary model has no owner but the referenced model does,
     the test should have empty model_owners (not inherit from referenced model).
@@ -207,14 +220,8 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject):
     test_name = f"rel_no_owner_{unique_id}"
     referenced_owner = "Bob"
 
-    primary_model_sql = """
-    select 1 as id, 1 as ref_id
-    """
-
-    referenced_model_sql = f"""
-    {{{{ config(meta={{'owner': '{referenced_owner}'}}) }}}}
-    select 1 as id
-    """
+    primary_model_sql = _create_model_sql(owner=None, columns="1 as id, 1 as ref_id")
+    referenced_model_sql = _create_model_sql(owner=referenced_owner)
 
     schema_yaml = {
         "version": 2,
@@ -284,7 +291,7 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject):
             ), f"Expected model_owners to be empty (primary model has no owner), got {model_owners}. Referenced model owner '{referenced_owner}' should NOT be inherited."
 
 
-def test_owner_deduplication(dbt_project: DbtProject):
+def test_owner_deduplication(dbt_project: DbtProject) -> None:
     """
     Test that duplicate owners in a model's owner field are deduplicated.
     For example, if owner is "Alice,Bob,Alice", the result should be ["Alice", "Bob"].
@@ -292,10 +299,7 @@ def test_owner_deduplication(dbt_project: DbtProject):
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_dup_owner_{unique_id}"
 
-    model_sql = """
-    {{ config(meta={'owner': 'Alice,Bob,Alice'}) }}
-    select 1 as id
-    """
+    model_sql = _create_model_sql(owner="Alice,Bob,Alice")
 
     schema_yaml = {
         "version": 2,
