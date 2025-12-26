@@ -1,4 +1,7 @@
 {% macro on_run_start() %}
+  {# Initialize the elemenatry graph no matter if elementary is enabled or not #}
+  {% do elementary.init_elementary_graph() %}
+
   {% if not elementary.is_elementary_enabled() %}
     {% do return('') %}
   {% endif %}
@@ -20,7 +23,6 @@
     "schema": elementary_schema,
   } %}
   {% do elementary.edr_log("Runtime data: " ~ tojson(runtime), info=True) %}
-  {% do elementary.init_elementary_graph() %}
 
   {% if elementary.is_test_command() %}
     {{ elementary.create_elementary_tests_schema() }}
