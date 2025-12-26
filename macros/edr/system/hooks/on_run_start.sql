@@ -1,5 +1,5 @@
 {% macro on_run_start() %}
-  {# Initialize the elemenatry graph no matter if elementary is enabled or not #}
+  {# Initialize the elementary graph no matter if elementary is enabled or not #}
   {% do elementary.init_elementary_graph() %}
 
   {% if not elementary.is_elementary_enabled() %}
