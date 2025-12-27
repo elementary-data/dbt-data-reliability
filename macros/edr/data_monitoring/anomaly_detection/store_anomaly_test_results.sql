@@ -48,12 +48,21 @@
       {% endif %}
   {% endset %}
   {% set failures = namespace(data=0) %}
+  {% set zscore_fallback_passed = namespace(data=0) %}
+  {% set zscore_fallback_failed = namespace(data=0) %}
   {% set filtered_anomaly_scores_rows = [] %}
   {% for row in anomaly_scores_rows %}
     {% if row.anomaly_score is not none %}
       {% do filtered_anomaly_scores_rows.append(row) %}
       {% if row.is_anomalous %}
         {% set failures.data = failures.data + 1 %}
+        {% if elementary.insensitive_get_dict_value(row, 'is_zscore_fallback') %}
+          {% set zscore_fallback_failed.data = zscore_fallback_failed.data + 1 %}
+        {% endif %}
+      {% else %}
+        {% if elementary.insensitive_get_dict_value(row, 'is_zscore_fallback') %}
+          {% set zscore_fallback_passed.data = zscore_fallback_passed.data + 1 %}
+        {% endif %}
       {% endif %}
     {% endif %}
   {% endfor %}
@@ -69,7 +78,9 @@
       'test_results_query': test_results_query,
       'test_params': test_params,
       'result_rows': filtered_anomaly_scores_rows,
-      'failures': failures.data
+      'failures': failures.data,
+      'zscore_fallback_passed_count': zscore_fallback_passed.data,
+      'zscore_fallback_failed_count': zscore_fallback_failed.data
   } %}
   {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
   {% do elementary_test_row.update(test_result_dict) %}
