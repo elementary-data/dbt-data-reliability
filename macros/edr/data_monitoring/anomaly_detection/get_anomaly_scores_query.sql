@@ -231,6 +231,10 @@
                     when training_stddev = 0 then 0  -- Stationary data case - valid, all values are identical
                     else (metric_value - training_avg) / (training_stddev)
                 end as anomaly_score,
+                case
+                    when training_stddev is not null and training_set_size > 1 and training_stddev = 0 then TRUE
+                    else FALSE
+                end as is_zscore_fallback,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
                 {{ elementary.edr_cast_as_timestamp('bucket_start') }} as bucket_start,

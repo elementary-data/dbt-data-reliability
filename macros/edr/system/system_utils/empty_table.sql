@@ -27,7 +27,9 @@
     ('test_short_name', 'string'),
     ('test_alias', 'string'),
     ('result_rows', 'long_string'),
-    ('failed_row_count', 'bigint')
+    ('failed_row_count', 'bigint'),
+    ('zscore_fallback_passed_count', 'bigint'),
+    ('zscore_fallback_failed_count', 'bigint')
     ]) }}
 {% endmacro %}
 

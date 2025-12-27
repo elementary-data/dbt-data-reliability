@@ -43,6 +43,7 @@
             column_name,
             metric_name,
             anomaly_score,
+            is_zscore_fallback,
             anomaly_score_threshold,
             anomalous_value,
             bucket_start,
