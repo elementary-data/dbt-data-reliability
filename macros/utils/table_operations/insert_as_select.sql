@@ -8,6 +8,7 @@
             {{ select_query }}
         )
         select * from tmp_table
+        {{ elementary.get_query_settings() }}
     {%- endset %}
 
     {{ return(insert_query) }}

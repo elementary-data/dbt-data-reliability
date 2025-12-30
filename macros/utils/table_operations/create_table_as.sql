@@ -8,6 +8,10 @@
     {% do dbt.drop_relation_if_exists(relation) %}
   {% endif %}
 
+  {% if not elementary.has_temp_table_support() %}
+      {% set temporary = false %}
+  {% endif %}
+
   {% set create_query = elementary.edr_get_create_table_as_sql(temporary, relation, sql_query) %}
   {% do elementary.run_query(create_query) %}
 
