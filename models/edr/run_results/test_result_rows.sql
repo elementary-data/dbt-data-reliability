@@ -20,4 +20,6 @@
     ('result_row', 'long_string'),
     ('detected_at','timestamp'),
     ('created_at','timestamp'),
+    ('row_index','int'),
+    ('test_type','string'),
 ]) }}
