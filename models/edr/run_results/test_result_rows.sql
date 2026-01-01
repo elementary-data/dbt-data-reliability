@@ -2,7 +2,6 @@
 {{
   config(
     materialized = 'incremental',
-    unique_key = 'elementary_test_results_id',
     on_schema_change = 'append_new_columns',
     indexes=[{'columns': ['created_at']}, {'columns': ['elementary_test_results_id']}, {'columns': ['detected_at']}] if target.type == "postgres" else [],
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
