@@ -67,3 +67,8 @@
   create or replace {{ relation_type }} {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
+
+{% macro clickhouse__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {# ClickHouse does not support database-scoped temporary tables, so we force temporary to be false. #}
+  {{ dbt.get_create_table_as_sql(false, relation, sql_query) }}
+{% endmacro %}
