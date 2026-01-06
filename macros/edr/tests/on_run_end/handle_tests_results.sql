@@ -202,7 +202,9 @@
         {% do result_rows.append({
           "elementary_test_results_id": test_result.id,
           "detected_at": test_result.detected_at,
-          "result_row": result_row
+          "result_row": result_row,
+          "row_index": loop.index,
+          "test_type": test_result.test_type
         }) %}
       {% endfor %}
     {% endif %}
