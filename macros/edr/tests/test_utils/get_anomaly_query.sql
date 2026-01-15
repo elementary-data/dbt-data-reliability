@@ -120,7 +120,8 @@ case when
 
 {%- macro is_score_anomalous_condition(sensitivity, anomaly_direction) -%}
     {%- set spikes_only_metrics = ['freshness', 'event_freshness'] -%}
-    case when metric_name IN {{ elementary.strings_list_to_tuple(spikes_only_metrics) }} then
+    {# For freshness metrics, default to spike-only detection unless anomaly_direction is explicitly set #}
+    case when metric_name IN {{ elementary.strings_list_to_tuple(spikes_only_metrics) }} and '{{ anomaly_direction | lower }}' = 'both' then
             anomaly_score > {{ sensitivity }}
     else
         {{ elementary.set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) }}
