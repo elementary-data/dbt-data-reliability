@@ -318,3 +318,57 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     assert (
         test_result_with_exclusion["status"] == "fail"
     ), "Test should fail when anomaly is excluded from training"
+
+
+@pytest.mark.skip_targets(["clickhouse"])
+def test_freshness_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProject):
+    """
+    Test that anomaly_direction parameter is correctly passed to test_table_anomalies.
+
+    This test creates a scenario where data becomes stale (a spike in freshness/staleness).
+    When anomaly_direction="drop" is set, the test should PASS because we're only looking
+    for drops (data becoming MORE fresh than expected), not spikes.
+
+    BUG: Currently, anomaly_direction is accepted as a parameter in freshness_anomalies
+    but is NOT passed to the underlying test_table_anomalies function, so it's silently
+    ignored. This test will FAIL until the bug is fixed.
+    """
+    config = DAILY_CONFIG
+    anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
+
+    # Generate normal training data
+    data = [
+        {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+        for date in generate_dates(
+            anomaly_date, step=config.step, days_back=config.days_back
+        )
+    ]
+
+    # Generate slow/stale data for the detection period (spike in staleness)
+    slow_data = [
+        {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+        for date in generate_dates(
+            datetime.now(), step=config.step * 4, days_back=config.backfill_days
+        )
+    ]
+    data.extend(slow_data)
+
+    # First verify that without anomaly_direction, the test fails (detects the spike)
+    test_args_base = dict(
+        timestamp_column=TIMESTAMP_COLUMN,
+        days_back=config.days_back,
+        backfill_days=config.backfill_days,
+        time_bucket=dict(period=config.period, count=1),
+    )
+    result = dbt_project.test(test_id, TEST_NAME, test_args_base, data=data)
+    assert (
+        result["status"] == "fail"
+    ), "Test should fail without anomaly_direction filter"
+
+    # Now with anomaly_direction="drop", the test should pass because we're only
+    # looking for drops, not spikes. But due to the bug, it will still fail.
+    test_args_with_direction = {**test_args_base, "anomaly_direction": "drop"}
+    result = dbt_project.test(test_id, TEST_NAME, test_args_with_direction)
+    assert (
+        result["status"] == "pass"
+    ), "Test should pass with anomaly_direction='drop' when there's only a spike"
