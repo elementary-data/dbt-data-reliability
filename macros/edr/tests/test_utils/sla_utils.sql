@@ -13,9 +13,8 @@
         {{ exceptions.raise_compiler_error("The 'timezone' parameter is required. Example: timezone: 'America/Los_Angeles'") }}
     {% endif %}
     
-    {% try %}
-        {% set _ = pytz.timezone(timezone) %}
-    {% except %}
+    {# Check if timezone is in pytz's list of all timezones #}
+    {% if timezone not in pytz.all_timezones %}
         {{ exceptions.raise_compiler_error(
             "Invalid timezone '" ~ timezone ~ "'. Must be a valid IANA timezone name.\n" ~
             "Common examples:\n" ~
@@ -26,7 +25,7 @@
             "  - Asia/Tokyo (Japan)\n" ~
             "See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones"
         ) }}
-    {% endtry %}
+    {% endif %}
 {% endmacro %}
 
 
