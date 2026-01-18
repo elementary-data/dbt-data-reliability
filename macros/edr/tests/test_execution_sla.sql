@@ -53,7 +53,7 @@
             {{ exceptions.raise_compiler_error("Unsupported model: " ~ model ~ " (this might happen if you override 'ref' or 'source')") }}
         {% endif %}
         
-        {# Get the model's unique_id for querying run results #}
+        {# Get the models unique_id for querying run results #}
         {% set test_node = elementary.get_test_model() %}
         {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(test_node) %}
         {% if parent_model_unique_ids | length == 0 %}
