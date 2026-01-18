@@ -54,8 +54,12 @@
         {% endif %}
         
         {# Get the model's unique_id for querying run results #}
-        {% set test_model = elementary.get_test_model() %}
-        {% set model_unique_id = elementary.get_parent_model_unique_id_from_test_node(test_model) %}
+        {% set test_node = elementary.get_test_model() %}
+        {% set parent_model_unique_ids = elementary.get_parent_model_unique_ids_from_test_node(test_node) %}
+        {% if parent_model_unique_ids | length == 0 %}
+            {{ exceptions.raise_compiler_error("Could not determine parent model for this test.") }}
+        {% endif %}
+        {% set model_unique_id = parent_model_unique_ids[0] %}
         
         {# Parse the SLA time #}
         {% set parsed_time = elementary.parse_sla_time(sla_time) %}
