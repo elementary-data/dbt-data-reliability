@@ -97,6 +97,8 @@ When the test fails, the result includes:
 | `sla_status`         | `MET_SLA`, `MISSED_SLA`, `NOT_RUN`, `ALL_FAILED` |
 | `result_description` | Human-readable explanation                       |
 
+**When the SLA deadline has not been reached yet:** The test passes and **no result row is returned**. This means if you run the test at 5:00 AM for a 7:00 AM SLA, the test will pass because there is still time to meet the deadline. Once the deadline passes, the test evaluates the actual run history and returns a row only if the SLA was missed.
+
 ---
 
 ## Notes
