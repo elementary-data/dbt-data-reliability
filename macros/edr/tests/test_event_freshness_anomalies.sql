@@ -20,6 +20,7 @@
       timestamp_column=update_timestamp_column,
       where_expression=where_expression,
       anomaly_sensitivity=anomaly_sensitivity,
+      anomaly_direction=anomaly_direction,
       min_training_set_size=min_training_set_size,
       time_bucket=time_bucket,
       days_back=days_back,
