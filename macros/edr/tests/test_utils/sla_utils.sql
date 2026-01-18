@@ -43,23 +43,24 @@
     {% set datetime = modules.datetime %}
     {% set pytz = modules.pytz %}
     
-    {# Get the target timezone #}
-    {% set tz = pytz.timezone(timezone) %}
+    {# Get timezone objects #}
+    {% set utc_tz = pytz.timezone('UTC') %}
+    {% set target_tz = pytz.timezone(timezone) %}
     
-    {# Get current time in UTC and local timezone #}
-    {% set now_utc = datetime.datetime.now(pytz.UTC) %}
-    {% set now_local = now_utc.astimezone(tz) %}
+    {# Get current time in UTC and target timezone #}
+    {% set now_utc = datetime.datetime.now(utc_tz) %}
+    {% set now_local = now_utc.astimezone(target_tz) %}
     
-    {# Target date is today in the local timezone #}
+    {# Target date is today in the target timezone #}
     {% set target_date_local = now_local.date() %}
     
-    {# Create the SLA deadline in local timezone #}
+    {# Create the SLA deadline in target timezone #}
     {% set sla_time_local = datetime.time(sla_hour, sla_minute, 0) %}
     {% set sla_deadline_naive = datetime.datetime.combine(target_date_local, sla_time_local) %}
-    {% set sla_deadline_local = tz.localize(sla_deadline_naive) %}
+    {% set sla_deadline_local = target_tz.localize(sla_deadline_naive) %}
     
     {# Convert to UTC #}
-    {% set sla_deadline_utc = sla_deadline_local.astimezone(pytz.UTC) %}
+    {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
     
     {# Check if deadline has passed #}
     {% set deadline_passed = now_utc > sla_deadline_utc %}
