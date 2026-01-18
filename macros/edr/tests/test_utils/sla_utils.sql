@@ -55,9 +55,10 @@
     {% set target_date_local = now_local.date() %}
     
     {# Create the SLA deadline in target timezone #}
+    {# Use is_dst=False to resolve ambiguous times during DST transitions to standard time #}
     {% set sla_time_local = datetime.time(sla_hour, sla_minute, 0) %}
     {% set sla_deadline_naive = datetime.datetime.combine(target_date_local, sla_time_local) %}
-    {% set sla_deadline_local = target_tz.localize(sla_deadline_naive) %}
+    {% set sla_deadline_local = target_tz.localize(sla_deadline_naive, is_dst=False) %}
     
     {# Convert to UTC #}
     {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}

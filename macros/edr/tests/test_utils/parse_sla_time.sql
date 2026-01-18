@@ -29,6 +29,11 @@
             {{ exceptions.raise_compiler_error("Invalid hour '" ~ hour ~ "' in time '" ~ sla_time ~ "'. For AM/PM format, hour must be 1-12.") }}
         {% endif %}
         
+        {# Validate minute #}
+        {% if minute < 0 or minute > 59 %}
+            {{ exceptions.raise_compiler_error("Invalid minute '" ~ minute ~ "' in time '" ~ sla_time ~ "'. Minute must be 0-59.") }}
+        {% endif %}
+        
         {# Convert to 24-hour format #}
         {% if period == 'am' %}
             {% if hour == 12 %}
