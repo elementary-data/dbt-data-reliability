@@ -329,9 +329,6 @@ def test_freshness_anomalies_with_direction_drop(test_id: str, dbt_project: DbtP
     When anomaly_direction="drop" is set, the test should PASS because we're only looking
     for drops (data becoming MORE fresh than expected), not spikes.
 
-    BUG: Currently, anomaly_direction is accepted as a parameter in freshness_anomalies
-    but is NOT passed to the underlying test_table_anomalies function, so it's silently
-    ignored. This test will FAIL until the bug is fixed.
     """
     config = DAILY_CONFIG
     anomaly_date = datetime.now() - timedelta(days=config.backfill_days)
@@ -366,9 +363,9 @@ def test_freshness_anomalies_with_direction_drop(test_id: str, dbt_project: DbtP
     ), "Test should fail without anomaly_direction filter"
 
     # Now with anomaly_direction="drop", the test should pass because we're only
-    # looking for drops, not spikes. But due to the bug, it will still fail.
+    # looking for drops, not spikes.
     test_args_with_direction = {**test_args_base, "anomaly_direction": "drop"}
-    result = dbt_project.test(test_id, TEST_NAME, test_args_with_direction)
+    result = dbt_project.test(test_id, TEST_NAME, test_args_with_direction, data=data)
     assert (
         result["status"] == "pass"
     ), "Test should pass with anomaly_direction='drop' when there's only a spike"
