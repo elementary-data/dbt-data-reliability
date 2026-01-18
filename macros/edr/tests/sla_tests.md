@@ -4,10 +4,10 @@ Verifies that a dbt model was executed successfully before a specified SLA deadl
 
 ## Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `sla_time` | Yes | Deadline time (e.g., `"07:00"`, `"7am"`, `"2:30pm"`) |
-| `timezone` | Yes | IANA timezone name (e.g., `"America/Los_Angeles"`) |
+| Parameter  | Required | Description                                          |
+| ---------- | -------- | ---------------------------------------------------- |
+| `sla_time` | Yes      | Deadline time (e.g., `"07:00"`, `"7am"`, `"2:30pm"`) |
+| `timezone` | Yes      | IANA timezone name (e.g., `"America/Los_Angeles"`)   |
 
 ## Examples
 
@@ -41,11 +41,11 @@ models:
 
 The test accepts flexible time formats:
 
-| Format | Example | Interpreted As |
-|--------|---------|----------------|
-| 24-hour | `"07:00"`, `"14:30"` | 7:00 AM, 2:30 PM |
-| 12-hour | `"7am"`, `"2:30pm"` | 7:00 AM, 2:30 PM |
-| Hour only | `"7"`, `"14"` | 7:00 AM, 2:00 PM |
+| Format    | Example              | Interpreted As   |
+| --------- | -------------------- | ---------------- |
+| 24-hour   | `"07:00"`, `"14:30"` | 7:00 AM, 2:30 PM |
+| 12-hour   | `"7am"`, `"2:30pm"`  | 7:00 AM, 2:30 PM |
+| Hour only | `"7"`, `"14"`        | 7:00 AM, 2:00 PM |
 
 **Recommendation:** Use 24-hour format for clarity.
 
@@ -57,24 +57,25 @@ Must be a valid IANA timezone name.
 
 ### Common Timezones
 
-| Region | IANA Name |
-|--------|-----------|
-| US Pacific | `America/Los_Angeles` |
-| US Eastern | `America/New_York` |
-| UK | `Europe/London` |
-| Netherlands | `Europe/Amsterdam` |
-| Germany | `Europe/Berlin` |
-| India | `Asia/Kolkata` |
-| Japan | `Asia/Tokyo` |
-| Australia | `Australia/Sydney` |
+| Region      | IANA Name             |
+| ----------- | --------------------- |
+| US Pacific  | `America/Los_Angeles` |
+| US Eastern  | `America/New_York`    |
+| UK          | `Europe/London`       |
+| Netherlands | `Europe/Amsterdam`    |
+| Germany     | `Europe/Berlin`       |
+| India       | `Asia/Kolkata`        |
+| Japan       | `Asia/Tokyo`          |
+| Australia   | `Australia/Sydney`    |
 
-Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Full list: <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>
 
 ---
 
 ## How Timezone Handling Works
 
 The test uses Python's `pytz` library at **compile time** to:
+
 1. Determine what "today" means in the specified timezone
 2. Convert the SLA deadline to UTC
 3. All SQL comparisons happen in UTC
@@ -87,14 +88,14 @@ This approach is **database-agnostic** - no database-specific timezone functions
 
 When the test fails, the result includes:
 
-| Field | Description |
-|-------|-------------|
-| `target_date` | The date being checked |
-| `sla_time` | The configured SLA time |
-| `timezone` | The configured timezone |
-| `sla_deadline_utc` | The SLA deadline in UTC |
-| `sla_status` | `MET_SLA`, `MISSED_SLA`, `NOT_RUN`, `ALL_FAILED` |
-| `result_description` | Human-readable explanation |
+| Field                | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| `target_date`        | The date being checked                           |
+| `sla_time`           | The configured SLA time                          |
+| `timezone`           | The configured timezone                          |
+| `sla_deadline_utc`   | The SLA deadline in UTC                          |
+| `sla_status`         | `MET_SLA`, `MISSED_SLA`, `NOT_RUN`, `ALL_FAILED` |
+| `result_description` | Human-readable explanation                       |
 
 ---
 
