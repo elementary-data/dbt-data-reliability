@@ -15,8 +15,8 @@
     {% set time_str = sla_time | string | trim | lower %}
     {% set re = modules.re %}
     
-    {# Check for AM/PM format #}
-    {% set am_pm_pattern = re.compile(r'^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$', re.IGNORECASE) %}
+    {# Check for AM/PM format - pattern: 1-2 digits, optional :MM, optional space, am/pm #}
+    {% set am_pm_pattern = re.compile('^(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)$', re.IGNORECASE) %}
     {% set am_pm_match = am_pm_pattern.match(time_str) %}
     
     {% if am_pm_match %}
@@ -44,7 +44,7 @@
     {% endif %}
     
     {# Check for 24-hour format (HH:MM or H:MM) #}
-    {% set time_24_pattern = re.compile(r'^(\d{1,2}):(\d{2})$') %}
+    {% set time_24_pattern = re.compile('^(\\d{1,2}):(\\d{2})$') %}
     {% set time_24_match = time_24_pattern.match(time_str) %}
     
     {% if time_24_match %}
@@ -63,7 +63,7 @@
     {% endif %}
     
     {# Check for hour-only format (just a number, interpreted as 24-hour) #}
-    {% set hour_only_pattern = re.compile(r'^(\d{1,2})$') %}
+    {% set hour_only_pattern = re.compile('^(\\d{1,2})$') %}
     {% set hour_only_match = hour_only_pattern.match(time_str) %}
     
     {% if hour_only_match %}
