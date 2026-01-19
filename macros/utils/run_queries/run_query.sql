@@ -35,7 +35,8 @@
 {% macro get_elementary_query_metadata() %}
     {% set metadata = {
         "invocation_id": invocation_id,
-        "command": flags.WHICH
+        "command": flags.WHICH,
+        "elementary_component": var('elementary_component', 'OSS')
     } %}
 
     {% if model %}
