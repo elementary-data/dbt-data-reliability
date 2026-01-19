@@ -4,36 +4,66 @@ Verifies that a dbt model was executed successfully before a specified SLA deadl
 
 ## Parameters
 
-| Parameter  | Required | Description                                          |
-| ---------- | -------- | ---------------------------------------------------- |
-| `sla_time` | Yes      | Deadline time (e.g., `"07:00"`, `"7am"`, `"2:30pm"`) |
-| `timezone` | Yes      | IANA timezone name (e.g., `"America/Los_Angeles"`)   |
+| Parameter      | Required | Description                                              |
+| -------------- | -------- | -------------------------------------------------------- |
+| `sla_time`     | Yes      | Deadline time (e.g., `"07:00"`, `"7am"`, `"2:30pm"`)     |
+| `timezone`     | Yes      | IANA timezone name (e.g., `"America/Los_Angeles"`)       |
+| `day_of_week`  | No       | Day(s) to check: `"Monday"` or `["Monday", "Wednesday"]` |
+| `day_of_month` | No       | Day(s) of month to check: `1` or `[1, 15]`               |
+
+## Schedule Behavior
+
+- **Default (no filters)**: Check every day
+- **day_of_week only**: Check only on specified days
+- **day_of_month only**: Check only on specified days of the month
+- **Both set**: Check if today matches **either** filter (OR logic)
 
 ## Examples
 
 ```yaml
 models:
+  # Daily check (default)
   - name: daily_revenue
     tests:
       - elementary.execution_sla:
           sla_time: "06:00"
           timezone: "America/New_York"
 
-  - name: customer_metrics
+  # Weekly check - Mondays and Wednesdays only
+  - name: weekly_report
     tests:
       - elementary.execution_sla:
           sla_time: "7am"
           timezone: "Europe/London"
+          day_of_week: ["Monday", "Wednesday"]
+
+  # Monthly check - 1st and 15th only
+  - name: monthly_close
+    tests:
+      - elementary.execution_sla:
+          sla_time: "09:00"
+          timezone: "Asia/Tokyo"
+          day_of_month: [1, 15]
+
+  # Combined - check on Mondays OR on the 1st of the month
+  - name: special_report
+    tests:
+      - elementary.execution_sla:
+          sla_time: "08:00"
+          timezone: "Europe/Amsterdam"
+          day_of_week: ["Monday"]
+          day_of_month: [1]
 ```
 
 ## Logic
 
-1. Query `dbt_run_results` for successful runs of this model today
-2. If any run completed before the SLA deadline: **PASS**
-3. If SLA deadline hasn't passed yet today: **PASS** (still time)
-4. If model ran but all runs were after the deadline: **FAIL** (MISSED_SLA)
-5. If model ran but all executions failed: **FAIL** (ALL_FAILED)
-6. If model didn't run today: **FAIL** (NOT_RUN)
+1. If today is not a scheduled check day (based on filters): **PASS** (skip)
+2. Query `dbt_run_results` for successful runs of this model today
+3. If any run completed before the SLA deadline: **PASS**
+4. If SLA deadline hasn't passed yet today: **PASS** (still time)
+5. If model ran but all runs were after the deadline: **FAIL** (MISSED_SLA)
+6. If model ran but all executions failed: **FAIL** (ALL_FAILED)
+7. If model didn't run today: **FAIL** (NOT_RUN)
 
 ---
 

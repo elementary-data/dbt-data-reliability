@@ -2,6 +2,10 @@
     Shared utilities for SLA tests.
 #}
 
+{# Valid day names (lowercase for comparison) #}
+{% set VALID_DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+
+
 {#
     Validate that a timezone string is a valid IANA timezone name.
     Raises a clear error if invalid.
@@ -73,6 +77,115 @@
     {{ return({
         'sla_deadline_utc': sla_deadline_utc_str,
         'target_date': target_date_str,
-        'deadline_passed': deadline_passed
+        'deadline_passed': deadline_passed,
+        'day_of_week': now_local.strftime('%A'),
+        'day_of_month': now_local.day
     }) }}
+{% endmacro %}
+
+
+{#
+    Normalize day_of_week parameter to a list of lowercase day names.
+    Accepts: single string, list of strings, or none.
+    Returns: list of lowercase day names, or empty list if none provided.
+#}
+{% macro normalize_day_of_week(day_of_week) %}
+    {% if day_of_week is none or day_of_week == '' %}
+        {{ return([]) }}
+    {% endif %}
+    
+    {# Convert single value to list #}
+    {% if day_of_week is string %}
+        {% set days = [day_of_week] %}
+    {% else %}
+        {% set days = day_of_week %}
+    {% endif %}
+    
+    {# Validate and normalize each day #}
+    {% set normalized = [] %}
+    {% for day in days %}
+        {% set day_lower = day | string | trim | lower %}
+        {% if day_lower not in VALID_DAYS_OF_WEEK %}
+            {{ exceptions.raise_compiler_error(
+                "Invalid day_of_week '" ~ day ~ "'. Must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
+            ) }}
+        {% endif %}
+        {% do normalized.append(day_lower) %}
+    {% endfor %}
+    
+    {{ return(normalized) }}
+{% endmacro %}
+
+
+{#
+    Normalize day_of_month parameter to a list of integers.
+    Accepts: single integer, list of integers, or none.
+    Returns: list of integers (1-31), or empty list if none provided.
+#}
+{% macro normalize_day_of_month(day_of_month) %}
+    {% if day_of_month is none or day_of_month == '' %}
+        {{ return([]) }}
+    {% endif %}
+    
+    {# Convert single value to list #}
+    {% if day_of_month is number %}
+        {% set days = [day_of_month] %}
+    {% elif day_of_month is string %}
+        {% set days = [day_of_month | int] %}
+    {% else %}
+        {% set days = day_of_month %}
+    {% endif %}
+    
+    {# Validate each day #}
+    {% set normalized = [] %}
+    {% for day in days %}
+        {% set day_int = day | int %}
+        {% if day_int < 1 or day_int > 31 %}
+            {{ exceptions.raise_compiler_error(
+                "Invalid day_of_month '" ~ day ~ "'. Must be between 1 and 31."
+            ) }}
+        {% endif %}
+        {% do normalized.append(day_int) %}
+    {% endfor %}
+    
+    {{ return(normalized) }}
+{% endmacro %}
+
+
+{#
+    Check if the SLA test should run today based on day_of_week and day_of_month filters.
+    
+    Logic (OR):
+    - If neither filter is set: run every day (return true)
+    - If only day_of_week is set: run if today matches any day in list
+    - If only day_of_month is set: run if today matches any day in list
+    - If both are set: run if today matches EITHER filter (OR logic)
+    
+    Parameters:
+        current_day_of_week: string (e.g., "Monday")
+        current_day_of_month: integer (e.g., 15)
+        day_of_week_filter: list of lowercase day names (e.g., ["monday", "wednesday"])
+        day_of_month_filter: list of integers (e.g., [1, 15])
+    
+    Returns: boolean
+#}
+{% macro should_check_sla_today(current_day_of_week, current_day_of_month, day_of_week_filter, day_of_month_filter) %}
+    {# If no filters are set, run every day #}
+    {% if day_of_week_filter | length == 0 and day_of_month_filter | length == 0 %}
+        {{ return(true) }}
+    {% endif %}
+    
+    {# Check day of week filter #}
+    {% set current_dow_lower = current_day_of_week | lower %}
+    {% if current_dow_lower in day_of_week_filter %}
+        {{ return(true) }}
+    {% endif %}
+    
+    {# Check day of month filter #}
+    {% if current_day_of_month in day_of_month_filter %}
+        {{ return(true) }}
+    {% endif %}
+    
+    {# No filter matched #}
+    {{ return(false) }}
 {% endmacro %}

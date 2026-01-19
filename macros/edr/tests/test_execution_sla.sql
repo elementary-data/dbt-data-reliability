@@ -9,6 +9,14 @@
     Parameters:
         sla_time (required): Deadline time. Supports formats like "07:00", "7am", "2:30pm", "14:30"
         timezone (required): IANA timezone name (e.g., "America/Los_Angeles", "Europe/London")
+        day_of_week (optional): Day(s) to check. String or list: "Monday", ["Monday", "Wednesday"]
+        day_of_month (optional): Day(s) of month to check. Integer or list: 1, [1, 15]
+    
+    Schedule behavior:
+        - If neither day_of_week nor day_of_month is set: check every day (default)
+        - If day_of_week is set: only check on those days
+        - If day_of_month is set: only check on those days
+        - If both are set: check if today matches EITHER filter (OR logic)
     
     Example usage:
         models:
@@ -18,23 +26,33 @@
                   sla_time: "07:00"
                   timezone: "America/Los_Angeles"
               
-          - name: critical_report
+          - name: weekly_report
             tests:
               - elementary.execution_sla:
                   sla_time: "6am"
                   timezone: "Europe/Amsterdam"
+                  day_of_week: ["Monday", "Wednesday"]
+                  
+          - name: monthly_close
+            tests:
+              - elementary.execution_sla:
+                  sla_time: "09:00"
+                  timezone: "Asia/Tokyo"
+                  day_of_month: [1, 15]
     
     Test passes if:
-        - The model was executed successfully before the SLA deadline today
+        - Today is not a scheduled check day (based on day_of_week/day_of_month)
+        - OR the model was executed successfully before the SLA deadline today
         - OR the SLA deadline for today hasn't passed yet
     
     Test fails if:
-        - The model was not executed today
-        - The model was executed but only after the SLA deadline
-        - All executions today failed
+        - Today is a scheduled check day AND:
+            - The model was not executed today
+            - The model was executed but only after the SLA deadline
+            - All executions today failed
 #}
 
-{% test execution_sla(model, sla_time, timezone) %}
+{% test execution_sla(model, sla_time, timezone, day_of_week=none, day_of_month=none) %}
     {{ config(tags=['elementary-tests']) }}
     
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
@@ -46,6 +64,10 @@
         
         {# Validate timezone #}
         {% do elementary.validate_timezone(timezone) %}
+        
+        {# Normalize and validate day filters #}
+        {% set day_of_week_filter = elementary.normalize_day_of_week(day_of_week) %}
+        {% set day_of_month_filter = elementary.normalize_day_of_month(day_of_month) %}
         
         {# Get model relation and validate #}
         {% set model_relation = elementary.get_model_relation_for_test(model, elementary.get_test_model()) %}
@@ -65,8 +87,22 @@
         {% set parsed_time = elementary.parse_sla_time(sla_time) %}
         {% set formatted_sla_time = elementary.format_sla_time(parsed_time) %}
         
-        {# Calculate SLA deadline in UTC #}
+        {# Calculate SLA deadline in UTC (also returns current day info) #}
         {% set sla_info = elementary.calculate_sla_deadline_utc(parsed_time.hour, parsed_time.minute, timezone) %}
+        
+        {# Check if today is a scheduled check day #}
+        {% set should_check = elementary.should_check_sla_today(
+            sla_info.day_of_week, 
+            sla_info.day_of_month, 
+            day_of_week_filter, 
+            day_of_month_filter
+        ) %}
+        
+        {# If today is not a scheduled check day, skip (pass) #}
+        {% if not should_check %}
+            {{ elementary.edr_log('Skipping execution_sla test for ' ~ model_relation.identifier ~ ' - not a scheduled check day (' ~ sla_info.day_of_week ~ ', day ' ~ sla_info.day_of_month ~ ')') }}
+            {{ elementary.no_results_query() }}
+        {% else %}
         
         {{ elementary.edr_log('Running execution_sla test for ' ~ model_relation.identifier ~ ' with SLA ' ~ formatted_sla_time ~ ' ' ~ timezone) }}
         
@@ -80,6 +116,8 @@
             formatted_sla_time=formatted_sla_time,
             timezone=timezone
         ) }}
+        
+        {% endif %}
         
     {%- else %}
         {{ elementary.no_results_query() }}
