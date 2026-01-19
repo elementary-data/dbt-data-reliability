@@ -2,9 +2,6 @@
     Shared utilities for SLA tests.
 #}
 
-{# Valid day names (lowercase for comparison) #}
-{% set VALID_DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
-
 
 {#
     Validate that a timezone string is a valid IANA timezone name.
@@ -90,6 +87,8 @@
     Returns: list of lowercase day names, or empty list if none provided.
 #}
 {% macro normalize_day_of_week(day_of_week) %}
+    {% set valid_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+    
     {% if day_of_week is none or day_of_week == '' %}
         {{ return([]) }}
     {% endif %}
@@ -105,7 +104,7 @@
     {% set normalized = [] %}
     {% for day in days %}
         {% set day_lower = day | string | trim | lower %}
-        {% if day_lower not in VALID_DAYS_OF_WEEK %}
+        {% if day_lower not in valid_days %}
             {{ exceptions.raise_compiler_error(
                 "Invalid day_of_week '" ~ day ~ "'. Must be one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday."
             ) }}
