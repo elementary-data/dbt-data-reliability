@@ -2,6 +2,8 @@
 
 Verifies that a dbt model was executed successfully before a specified SLA deadline time.
 
+**Note:** This test only works with dbt models (not sources), as it queries `dbt_run_results` which tracks model executions.
+
 ## Parameters
 
 | Parameter      | Required | Description                                              |
@@ -136,3 +138,5 @@ When the test fails, the result includes:
 1. **DST Handling**: IANA timezone names automatically handle daylight saving time.
 
 2. **Elementary Required**: Requires Elementary's `dbt_run_results` table to be populated.
+
+3. **Models Only**: This test only works with dbt models (`resource_type = 'model'`). It does not support sources, as sources are not tracked in `dbt_run_results`.
