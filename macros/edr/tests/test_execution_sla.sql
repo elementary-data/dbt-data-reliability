@@ -112,6 +112,8 @@
             model_name=model_relation.identifier,
             sla_deadline_utc=sla_info.sla_deadline_utc,
             target_date=sla_info.target_date,
+            target_date_start_utc=sla_info.target_date_start_utc,
+            target_date_end_utc=sla_info.target_date_end_utc,
             deadline_passed=sla_info.deadline_passed,
             formatted_sla_time=formatted_sla_time,
             timezone=timezone
@@ -130,12 +132,12 @@
     Build SQL query to check if model was executed before SLA deadline.
     
     Logic:
-    - Query dbt_run_results for successful runs of this model today
+    - Query dbt_run_results for successful runs of this model today (using UTC datetime range)
     - If any successful run completed before the deadline: SLA met
     - If deadline hasn't passed yet: Don't fail (still time)
     - Otherwise: SLA missed
 #}
-{% macro get_execution_sla_query(model_unique_id, model_name, sla_deadline_utc, target_date, deadline_passed, formatted_sla_time, timezone) %}
+{% macro get_execution_sla_query(model_unique_id, model_name, sla_deadline_utc, target_date, target_date_start_utc, target_date_end_utc, deadline_passed, formatted_sla_time, timezone) %}
     
     {# Get reference to dbt_run_results table #}
     {% set run_results_relation = elementary.get_elementary_relation('dbt_run_results') %}
@@ -149,10 +151,12 @@
     sla_deadline as (
         select 
             {{ elementary.edr_cast_as_timestamp("'" ~ sla_deadline_utc ~ "'") }} as deadline_utc,
+            {{ elementary.edr_cast_as_timestamp("'" ~ target_date_start_utc ~ "'") }} as target_date_start_utc,
+            {{ elementary.edr_cast_as_timestamp("'" ~ target_date_end_utc ~ "'") }} as target_date_end_utc,
             '{{ target_date }}' as target_date
     ),
     
-    {# Get all successful runs for this model today #}
+    {# Get all runs for this model today (using UTC datetime range for target timezone's day) #}
     todays_runs as (
         select
             rr.unique_id,
@@ -163,7 +167,8 @@
         cross join sla_deadline sd
         where rr.unique_id = '{{ model_unique_id }}'
           and rr.resource_type = 'model'
-          and cast({{ elementary.edr_cast_as_timestamp('rr.execute_completed_at') }} as date) = cast(sd.deadline_utc as date)
+          and {{ elementary.edr_cast_as_timestamp('rr.execute_completed_at') }} >= sd.target_date_start_utc
+          and {{ elementary.edr_cast_as_timestamp('rr.execute_completed_at') }} <= sd.target_date_end_utc
     ),
     
     successful_runs as (

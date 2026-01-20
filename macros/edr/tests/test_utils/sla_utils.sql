@@ -37,6 +37,8 @@
     Returns: {
         'sla_deadline_utc': string (YYYY-MM-DD HH:MM:SS),
         'target_date': string (YYYY-MM-DD),
+        'target_date_start_utc': string (YYYY-MM-DD HH:MM:SS) - start of day in UTC,
+        'target_date_end_utc': string (YYYY-MM-DD HH:MM:SS) - end of day in UTC,
         'deadline_passed': boolean
     }
 #}
@@ -55,6 +57,16 @@
     {# Target date is today in the target timezone #}
     {% set target_date_local = now_local.date() %}
     
+    {# Create start of day (00:00:00) in target timezone #}
+    {% set day_start_naive = datetime.datetime.combine(target_date_local, datetime.time(0, 0, 0)) %}
+    {% set day_start_local = target_tz.localize(day_start_naive, is_dst=False) %}
+    {% set day_start_utc = day_start_local.astimezone(utc_tz) %}
+    
+    {# Create end of day (23:59:59.999) in target timezone #}
+    {% set day_end_naive = datetime.datetime.combine(target_date_local, datetime.time(23, 59, 59)) %}
+    {% set day_end_local = target_tz.localize(day_end_naive, is_dst=False) %}
+    {% set day_end_utc = day_end_local.astimezone(utc_tz) %}
+    
     {# Create the SLA deadline in target timezone #}
     {# Use is_dst=False to resolve ambiguous times during DST transitions to standard time #}
     {% set sla_time_local = datetime.time(sla_hour, sla_minute, 0) %}
@@ -70,10 +82,14 @@
     {# Format for SQL #}
     {% set sla_deadline_utc_str = sla_deadline_utc.strftime('%Y-%m-%d %H:%M:%S') %}
     {% set target_date_str = target_date_local.strftime('%Y-%m-%d') %}
+    {% set day_start_utc_str = day_start_utc.strftime('%Y-%m-%d %H:%M:%S') %}
+    {% set day_end_utc_str = day_end_utc.strftime('%Y-%m-%d %H:%M:%S') %}
     
     {{ return({
         'sla_deadline_utc': sla_deadline_utc_str,
         'target_date': target_date_str,
+        'target_date_start_utc': day_start_utc_str,
+        'target_date_end_utc': day_end_utc_str,
         'deadline_passed': deadline_passed,
         'day_of_week': now_local.strftime('%A'),
         'day_of_month': now_local.day
