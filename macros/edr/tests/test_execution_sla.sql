@@ -216,7 +216,11 @@
             case
                 when sla_status = 'MET_SLA' then false
                 {# If deadline hasn't passed, don't fail yet #}
-                when not {{ 'true' if deadline_passed else 'false' }} then false
+                {% if deadline_passed %}
+                when not TRUE then false
+                {% else %}
+                when not FALSE then false
+                {% endif %}
                 else true
             end as is_failure,
             case
