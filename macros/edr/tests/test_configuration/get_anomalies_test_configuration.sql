@@ -99,7 +99,7 @@
     {%- endif %}
 
     {%- for mandatory_param in mandatory_configuration %}
-        {%- if not test_configuration.get(mandatory_param) %}
+        {%- if test_configuration.get(mandatory_param) is none %}
             {%- do missing_mandatory_params.append(mandatory_param) -%}
         {%- endif %}
     {%- endfor %}
