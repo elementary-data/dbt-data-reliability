@@ -22,7 +22,12 @@ def test_normalize_rows_affected(dbt_project: DbtProject, input_value, expected_
         "elementary_tests.test_normalize_rows_affected",
         macro_args={"rows_affected": input_value},
     )
-    actual_output = json.loads(result[0])
+    # When the macro returns None, log_macro_results doesn't log anything,
+    # so run_operation returns an empty list
+    if not result:
+        actual_output = None
+    else:
+        actual_output = json.loads(result[0])
     assert actual_output == expected_output, (
         f"normalize_rows_affected({input_value!r}) returned {actual_output!r}, "
         f"expected {expected_output!r}"
