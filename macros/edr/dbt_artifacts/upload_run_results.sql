@@ -37,10 +37,25 @@
     {{ return(dbt_run_results_empty_table_query) }}
 {% endmacro %}
 
+{% macro normalize_rows_affected(rows_affected) %}
+    {% if rows_affected is none %}
+        {{ return(none) }}
+    {% elif rows_affected is string %}
+        {% if rows_affected == '-1' %}
+            {{ return(none) }}
+        {% else %}
+            {{ return(rows_affected | int) }}
+        {% endif %}
+    {% else %}
+        {{ return(rows_affected) }}
+    {% endif %}
+{% endmacro %}
+
 {% macro flatten_run_result(run_result) %}
     {% set run_result_dict = elementary.get_run_result_dict(run_result) %}
     {% set node = elementary.safe_get_with_default(run_result_dict, 'node', {}) %}
     {% set config_dict = elementary.safe_get_with_default(node, 'config', {}) %}
+    {% set raw_rows_affected = run_result_dict.get('adapter_response', {}).get('rows_affected') %}
     {% set flatten_run_result_dict = {
         'model_execution_id': elementary.get_node_execution_id(node),
         'invocation_id': invocation_id,
@@ -48,7 +63,7 @@
         'name': node.get('name'),
         'message': run_result_dict.get('message'),
         'generated_at': elementary.datetime_now_utc_as_string(),
-        'rows_affected': run_result_dict.get('adapter_response', {}).get('rows_affected'),
+        'rows_affected': elementary.normalize_rows_affected(raw_rows_affected),
         'execution_time': run_result_dict.get('execution_time'),
         'status': run_result_dict.get('status'),
         'resource_type': node.get('resource_type'),
