@@ -43,7 +43,6 @@ def assert_test_results(test_results: List[dict]):
 
 # Schema changes currently not supported on targets
 @pytest.mark.skip_targets(["databricks", "spark", "athena", "trino", "clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_schema_changes(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes"
     test_result = dbt_project.test(test_id, dbt_test_name, data=DATASET1)
