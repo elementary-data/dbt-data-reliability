@@ -19,7 +19,7 @@ services:
       - "8123:8123"
       - "9000:9000"
     volumes:
-      - ./clickhouse-data:/var/lib/clickhouse
+      - clickhouse:/var/lib/clickhouse
     environment:
       CLICKHOUSE_DB: default
       CLICKHOUSE_USER: default
@@ -42,3 +42,4 @@ services:
 volumes:
   postgres:
   pgadmin:
+  clickhouse:
