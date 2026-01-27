@@ -12,7 +12,17 @@
         and lower(full_table_name) = lower('{{ full_table_name }}')
     {% endset %}
 
+    {# DEBUG: Log the model_relation before getting columns #}
+    {% do log('DEBUG get_columns_snapshot_query: model_relation = ' ~ model_relation, info=True) %}
+    {% do log('DEBUG get_columns_snapshot_query: full_table_name = ' ~ full_table_name, info=True) %}
+
     {% set columns = adapter.get_columns_in_relation(model_relation) %}
+
+    {# DEBUG: Log the columns returned by adapter #}
+    {% do log('DEBUG get_columns_snapshot_query: columns count = ' ~ columns | length, info=True) %}
+    {% for column in columns %}
+        {% do log('DEBUG get_columns_snapshot_query: column[' ~ loop.index ~ '] = ' ~ column.name ~ ' (' ~ column.data_type ~ ')', info=True) %}
+    {% endfor %}
 
     {% if not columns %}
         {% set no_columns_error -%}
