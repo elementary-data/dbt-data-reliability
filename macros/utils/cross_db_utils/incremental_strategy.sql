@@ -17,3 +17,15 @@
 {% macro default__get_default_incremental_strategy() %}
   {% do return(none) %}
 {% endmacro %}
+
+{% macro get_append_only_incremental_strategy() %}
+  {% do return(adapter.dispatch("get_append_only_incremental_strategy", "elementary")()) %}
+{% endmacro %}
+
+{%- macro athena__get_append_only_incremental_strategy() %}
+  {% do return("append") %}
+{% endmacro %}
+
+{% macro default__get_append_only_incremental_strategy() %}
+  {% do return(none) %}
+{% endmacro %}
