@@ -72,7 +72,7 @@
 
     {% set string_list = ['string'] | list %}
     {% set numeric_list = ['int','bigint','smallint','tinyint','float','double','long','short','decimal'] | list %}
-    {% set timestamp_list = ['timestamp','date'] | list %}
+    {% set timestamp_list = ['timestamp','date','timestamp_ltz','timestamp_ntz'] | list %}
     {% set boolean_list = ["boolean"] | list %}
 
     {%- if data_type == 'string' %}
