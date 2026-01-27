@@ -50,7 +50,10 @@
     {%- set detection_delay = elementary.get_detection_delay(detection_delay, model_graph_node) %}
 
     {%- set ignore_small_changes = elementary.get_test_argument('ignore_small_changes', ignore_small_changes, model_graph_node) %}
-    {# Validate ignore_small_changes #}
+    {# Normalize ignore_small_changes to ensure it's always a dict with expected keys #}
+    {%- if ignore_small_changes is none %}
+        {%- set ignore_small_changes = {"spike_failure_percent_threshold": none, "drop_failure_percent_threshold": none} %}
+    {%- endif %}
 
     {% set anomaly_exclude_metrics = elementary.get_test_argument('anomaly_exclude_metrics', anomaly_exclude_metrics, model_graph_node) %}
     {% set exclude_final_results = elementary.get_exclude_final_results(exclude_final_results) %}
@@ -109,6 +112,9 @@
 {% endmacro %}
 
 {% macro validate_ignore_small_changes(test_configuration) %}
+    {% if test_configuration.ignore_small_changes is none %}
+        {% do return(none) %}
+    {% endif %}
     {% for key, value in test_configuration.ignore_small_changes.items() %}
         {% if key not in ['spike_failure_percent_threshold', 'drop_failure_percent_threshold'] %}
           {% do exceptions.raise_compiler_error('Illegal configuration key: {}'.format(key)) %}
