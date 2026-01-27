@@ -51,12 +51,8 @@
 {% macro handle_dbt_test(flattened_test, materialization_macro) %}
   {% set result = materialization_macro() %}
   {% set sample_limit = elementary.get_config_var('test_sample_row_count') %}
-  {# DEBUG: Log sample_limit determination #}
-  {% do log('DEBUG handle_dbt_test: initial sample_limit from config = ' ~ sample_limit, info=True) %}
-  {% do log('DEBUG handle_dbt_test: flattened_test meta = ' ~ flattened_test.get("meta", {}), info=True) %}
   {% if "meta" in flattened_test and "test_sample_row_count" in flattened_test["meta"] %}
     {% set sample_limit = flattened_test["meta"]["test_sample_row_count"] %}
-    {% do log('DEBUG handle_dbt_test: sample_limit from meta = ' ~ sample_limit, info=True) %}
   {% endif %}
 
   {% set disable_test_samples = false %}
