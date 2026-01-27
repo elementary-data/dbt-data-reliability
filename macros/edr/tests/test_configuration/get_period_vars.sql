@@ -83,6 +83,6 @@
     {% endif %}
   {% endif %}
 
-  {% set period_count = period_count | int %}
+  {% set period_count = (period_count | round(0, 'ceil')) | int %}
   {{ return({'period': convert_to, 'count': period_count}) }}
 {% endmacro %}
