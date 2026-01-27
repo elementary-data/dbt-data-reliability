@@ -22,10 +22,10 @@
   {% do return(adapter.dispatch("get_append_only_incremental_strategy", "elementary")()) %}
 {% endmacro %}
 
-{%- macro athena__get_append_only_incremental_strategy() %}
-  {% do return("append") %}
+{%- macro bigquery__get_append_only_incremental_strategy() %}
+  {% do return("merge") %}
 {% endmacro %}
 
 {% macro default__get_append_only_incremental_strategy() %}
-  {% do return(none) %}
+  {% do return("append") %}
 {% endmacro %}
