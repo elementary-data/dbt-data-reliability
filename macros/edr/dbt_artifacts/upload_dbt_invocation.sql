@@ -102,9 +102,14 @@
 
 {% macro get_invocation_yaml_selector() %}
     {% set config = elementary.get_runtime_config() %}
+    {# DEBUG: Log invocation_args_dict to understand yaml_selector issue #}
+    {% do log('DEBUG get_invocation_yaml_selector: invocation_args_dict = ' ~ invocation_args_dict, info=True) %}
+    {% do log('DEBUG get_invocation_yaml_selector: config.args = ' ~ config.args, info=True) %}
     {% if invocation_args_dict and invocation_args_dict.selector %}
+        {% do log('DEBUG get_invocation_yaml_selector: using invocation_args_dict.selector = ' ~ invocation_args_dict.selector, info=True) %}
         {% do return(invocation_args_dict.selector) %}
     {% elif invocation_args_dict and invocation_args_dict.selector_name %}
+        {% do log('DEBUG get_invocation_yaml_selector: using invocation_args_dict.selector_name = ' ~ invocation_args_dict.selector_name, info=True) %}
         {% do return(invocation_args_dict.selector_name) %}
     {% elif invocation_args_dict and invocation_args_dict.INVOCATION_COMMAND %}
         {% set match = modules.re.search(
@@ -112,13 +117,17 @@
             invocation_args_dict.INVOCATION_COMMAND
         ) %}
         {% if match %}
+            {% do log('DEBUG get_invocation_yaml_selector: using INVOCATION_COMMAND match = ' ~ match.group(1), info=True) %}
             {% do return(match.group(1)) %}
         {% else %}
+            {% do log('DEBUG get_invocation_yaml_selector: INVOCATION_COMMAND no match, returning none', info=True) %}
             {% do return(none) %}
         {% endif %}
     {% elif config.args and config.args.selector_name %}
+        {% do log('DEBUG get_invocation_yaml_selector: using config.args.selector_name = ' ~ config.args.selector_name, info=True) %}
         {% do return(config.args.selector_name) %}
     {% else %}
+        {% do log('DEBUG get_invocation_yaml_selector: no selector found, returning none', info=True) %}
         {% do return(none) %}
     {% endif %}
 {% endmacro %}
