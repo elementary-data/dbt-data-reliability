@@ -9,7 +9,8 @@
       "timestamp_column": "created_at",
       "prev_timestamp_column": "detected_at",
       },
-    table_type=elementary.get_default_table_type()
+    table_type=elementary.get_default_table_type(),
+    incremental_strategy='append'
   )
 }}
 
