@@ -187,13 +187,7 @@ class DbtProject:
 
         test_yaml = {dbt_test_name: {"arguments": test_args}}
         if test_config:
-            # Extract meta from test_config and put it at top level for dbt-fusion compatibility
-            # dbt-fusion reads meta from the top level of the test definition, not from config.meta
-            test_config_copy = test_config.copy()
-            if "meta" in test_config_copy:
-                test_yaml[dbt_test_name]["meta"] = test_config_copy.pop("meta")
-            if test_config_copy:  # If there are other config items remaining
-                test_yaml[dbt_test_name]["config"] = test_config_copy
+            test_yaml[dbt_test_name]["config"] = test_config
 
         if test_column is None:
             table_yaml["tests"] = [test_yaml]
