@@ -87,12 +87,8 @@
 
 {%- macro get_invocation_select_filter() -%}
     {% set config = elementary.get_runtime_config() %}
-    {%- if invocation_args_dict -%}
-        {%- if invocation_args_dict.select -%}
-            {{- return(invocation_args_dict.select) -}}
-        {%- elif invocation_args_dict.SELECT -%}
-            {{- return(invocation_args_dict.SELECT) -}}
-        {%- endif -%}
+    {%- if invocation_args_dict and invocation_args_dict.select -%}
+        {{- return(invocation_args_dict.select) -}}
     {%- elif config.args and config.args.select -%}
         {{- return(config.args.select) -}}
     {%- else -%}
@@ -106,10 +102,10 @@
         {% do return(invocation_args_dict.selector) %}
     {% elif invocation_args_dict and invocation_args_dict.selector_name %}
         {% do return(invocation_args_dict.selector_name) %}
-    {% elif invocation_args_dict and invocation_args_dict.INVOCATION_COMMAND %}
+    {% elif invocation_args_dict and invocation_args_dict.invocation_command %}
         {% set match = modules.re.search(
             "--selector(?:\s+|=)(\S+)",
-            invocation_args_dict.INVOCATION_COMMAND
+            invocation_args_dict.invocation_command
         ) %}
         {% if match %}
             {% do return(match.group(1)) %}
@@ -132,8 +128,6 @@
         {% else %}
             {% set invocation_vars = fromyaml(invocation_args_dict.vars) %}
         {% endif %}
-    {% elif invocation_args_dict and invocation_args_dict.VARS %}
-        {% set invocation_vars = invocation_args_dict.VARS %}
     {% elif config.cli_vars %}
         {% set invocation_vars = config.cli_vars %}
     {% endif %}
