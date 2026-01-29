@@ -20,9 +20,7 @@ SAMPLES_QUERY = """
 """
 
 
-# dbt-fusion does not properly expose test config.meta to Jinja context where flatten_test macro reads it
 @pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -37,7 +35,7 @@ def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
         },
-        test_config={"meta": {"test_sample_row_count": None}},
+        test_config={"meta": {"test_sample_row_count": -1}},
     )
     assert test_result["status"] == "fail"
 
@@ -51,9 +49,7 @@ def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
         assert sample[COLUMN_NAME] is None
 
 
-# dbt-fusion does not properly expose test config.meta to Jinja context where flatten_test macro reads it
 @pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_sample_count_small(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
