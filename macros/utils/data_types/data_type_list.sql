@@ -71,7 +71,7 @@
 {% macro spark__data_type_list(data_type) %}
 
     {% set string_list = ['string'] | list %}
-    {% set numeric_list = ['int','bigint','smallint','tinyint','float','double','long','short','decimal'] | list %}
+    {% set numeric_list = ['int','bigint','smallint','tinyint','float','double','long','short','decimal','numeric'] | list %}
     {% set timestamp_list = ['timestamp','date','timestamp_ltz','timestamp_ntz'] | list %}
     {% set boolean_list = ["boolean"] | list %}
 
@@ -93,7 +93,7 @@
 {% macro athena__data_type_list(data_type) %}
 
     {% set string_list = ['string', 'varchar', 'char'] | list %}
-    {% set numeric_list = ['int','integer','bigint','smallint','tinyint','float','real','double','decimal'] | list %}
+    {% set numeric_list = ['int','integer','bigint','smallint','tinyint','float','real','double','decimal','numeric'] | list %}
     {% set timestamp_list = ['timestamp','date'] | list %}
     {% set boolean_list = ["boolean"] | list %}
 
@@ -114,7 +114,7 @@
 {% macro trino__data_type_list(data_type) %}
 
     {% set string_list = ['string', 'varchar', 'char'] | list %}
-    {% set numeric_list = ['int','integer','bigint','smallint','tinyint','float','real','double','decimal'] | list %}
+    {% set numeric_list = ['int','integer','bigint','smallint','tinyint','float','real','double','decimal','numeric'] | list %}
     {% set timestamp_list = ['timestamp','date'] | list %}
     {% set boolean_list = ["boolean"] | list %}
 
@@ -134,7 +134,7 @@
 
 {% macro clickhouse__data_type_list(data_type) %}
     {% set string_list = ['String', 'FixedString', 'LowCardinality(String)'] | list %}
-    {% set numeric_list = ['Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Float32', 'Float64', 'Decimal', 'Decimal32', 'Decimal64', 'Decimal128'] | list %}
+    {% set numeric_list = ['Int8', 'Int16', 'Int32', 'Int64', 'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Float32', 'Float64', 'Decimal', 'Decimal32', 'Decimal64', 'Decimal128', 'numeric'] | list %}
     {% set timestamp_list = ['DateTime', 'Date', 'Date32'] | list %}
     {% set boolean_list = ["UInt8","Bool"] | list %}
 
@@ -154,7 +154,7 @@
 
 {% macro dremio__data_type_list(data_type) %}
     {% set string_list = ['varchar', 'character varying'] | list %}
-    {% set numeric_list = ['int','integer','bigint','double','decimal','float','smallint','tinyint'] | list %}
+    {% set numeric_list = ['int','integer','bigint','double','decimal','float','smallint','tinyint','numeric'] | list %}
     {% set timestamp_list = ['date','time','timestamp', 'time with time zone', 'timestamp with time zone'] | list %}
     {% set boolean_list = ['boolean', 'bit'] | list %}
 
