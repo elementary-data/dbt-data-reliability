@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -261,6 +262,20 @@ class DbtProject:
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         ).seed(data, table_name):
             self._fix_seed_if_needed(table_name)
+            self._clear_fusion_schema_cache_if_needed()
+
+    def _clear_fusion_schema_cache_if_needed(self):
+        """Clear dbt-fusion's schema cache after seeding.
+
+        dbt-fusion caches column information for relations. When a table is recreated
+        with different columns (e.g., in test_schema_changes), the cache becomes stale.
+        Clearing the cache after seeding ensures the next get_columns_in_relation call
+        queries the warehouse for fresh column information.
+        """
+        if self.runner_method == RunnerMethod.FUSION:
+            schema_cache_path = self.project_dir_path / "target" / "schemas"
+            if schema_cache_path.exists():
+                shutil.rmtree(schema_cache_path, ignore_errors=True)
 
     def _fix_seed_if_needed(self, table_name: str):
         # Hack for BigQuery - seems like we get empty strings instead of nulls in seeds, so we
