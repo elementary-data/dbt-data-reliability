@@ -278,12 +278,16 @@ class DbtProject:
         This is useful for dbt-fusion which caches column information. When tables
         are recreated with different columns, the cache becomes stale. Running clean
         invalidates the cache and forces fresh queries to the warehouse.
+
+        Note: dbt clean removes the dbt_packages directory, so we need to run
+        dbt deps afterwards to reinstall the packages.
         """
         cmd = ["dbt", "clean", "--project-dir", str(self.project_dir_path)]
         if self.target:
             cmd.extend(["--target", self.target])
         logger.info(f"Running dbt clean: {' '.join(cmd)}")
         subprocess.run(cmd, check=True, capture_output=True)
+        self.dbt_runner.deps(quiet=True)
 
     @contextmanager
     def seed_context(
