@@ -35,7 +35,7 @@ def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
             "enable_elementary_test_materialization": True,
             "test_sample_row_count": 5,
         },
-        test_config={"meta": {"test_sample_row_count": None}},
+        test_config={"meta": {"test_sample_row_count": -1}},
     )
     assert test_result["status"] == "fail"
 

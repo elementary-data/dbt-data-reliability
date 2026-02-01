@@ -47,6 +47,9 @@ def test_schema_changes(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes"
     test_result = dbt_project.test(test_id, dbt_test_name, data=DATASET1)
     assert test_result["status"] == "pass"
+    # dbt-fusion caches column information. Run clean to invalidate the cache
+    # before recreating the table with different columns.
+    dbt_project.clean()
     test_results = dbt_project.test(
         test_id, dbt_test_name, data=DATASET2, multiple_results=True
     )
