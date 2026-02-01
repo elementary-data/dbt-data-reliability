@@ -14,7 +14,7 @@
 {% endmaterialization %}
 
 {% macro materialize_test(materialization_macro) %}
-  {% if not elementary.is_elementary_enabled() %}
+  {% if not elementary.should_collect_test_results() %}
     {% do return(materialization_macro()) %}
   {% endif %}
 
