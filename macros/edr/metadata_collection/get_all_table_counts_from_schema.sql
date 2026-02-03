@@ -16,8 +16,8 @@
         {% do log(msg='Number of counts to perform: ' ~ loop.length, info=true) %}
     {%- endif -%}
 
-    select '{{run_started_at}}' as date_time, '{{results['table_catalog'][loop.index-1]}}' as catalog_name, '{{results['table_schema'][loop.index-1]}}' as schema_name, '{{relation}}' as table_name, count(*) as count
-    from {{results['table_catalog'][loop.index-1]}}.{{results['table_schema'][loop.index-1]}}.{{results['table_name'][loop.index-1]}} tab
+    select '{{run_started_at}}' as date_time, '{{results['table_catalog'][loop.index0]}}' as catalog_name, '{{results['table_schema'][loop.index0]}}' as schema_name, '{{relation}}' as table_name, count(*) as count
+    from {{ adapter.quote(results['table_catalog'][loop.index0]) }}.{{ adapter.quote(results['table_schema'][loop.index0]) }}.{{ adapter.quote(results['table_name'][loop.index0]) }} tab
 
     {% if not ( loop.last ) -%}
         union all
