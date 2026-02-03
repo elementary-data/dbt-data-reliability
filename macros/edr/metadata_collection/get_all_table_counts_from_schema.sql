@@ -1,4 +1,4 @@
-{%- macro get_all_table_counts_from_schema(schema_name, catalog_name = target.catalog) -%}
+{%- macro get_all_table_counts_from_schema(schema_name, catalog_name = target.catalog | default(target.database, true)) -%}
 
 {%- set schema_to_use = target.schema ~ '_' ~ schema_name -%}
 
