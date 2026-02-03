@@ -1,7 +1,7 @@
 {%- macro upload_dbt_sources(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation('dbt_sources') %}
     {% if execute and relation %}
-        {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') %}
+        {% set sources = graph.sources.values() | selectattr('resource_type', '==', 'source') | selectattr('package_name', '==', project_name) %}
         {% do elementary.upload_artifacts_to_table(relation, sources, elementary.flatten_source, should_commit=should_commit, metadata_hashes=metadata_hashes) %}
     {%- endif -%}
     {{- return('') -}}
