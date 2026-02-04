@@ -150,7 +150,6 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
 
 # Anomalies currently not supported on ClickHouse
 @pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_collect_metrics_unique_metric_name(test_id: str, dbt_project: DbtProject):
     args = DBT_TEST_ARGS.copy()
     args["metrics"].append(args["metrics"][0])
