@@ -46,6 +46,23 @@
   as {{ sql_query }}
 {% endmacro %}
 
+{% macro redshift__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {% if temporary and elementary.is_dbt_fusion() %}
+    {# Workaround for dbt-fusion 2.0.0-preview.104 ADBC 0.22 bug
+       where metadata queries on temp tables return empty catalog/schema
+       causing panic: "Either resolved_catalog or resolved_schema must be present"
+       at fs/sa/crates/dbt-adapter/src/metadata/mod.rs:91:9
+
+       Create regular tables instead of temporary when using dbt-fusion.
+       These will be cleaned up normally by Elementary's cleanup logic. #}
+    create or replace table {{ relation }}
+    as {{ sql_query }}
+  {% else %}
+    create {% if temporary %} temporary {% endif %} table {{ relation.include(database=(not temporary), schema=(not temporary)) }}
+    as {{ sql_query }}
+  {% endif %}
+{% endmacro %}
+
 {% macro databricks__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
   {% if temporary %}
     {% if elementary.is_dbt_fusion() %}
