@@ -54,8 +54,9 @@
        at fs/sa/crates/dbt-adapter/src/metadata/mod.rs:91:9
 
        Create regular tables instead of temporary when using dbt-fusion.
-       These will be cleaned up normally by Elementary's cleanup logic. #}
-    create or replace table {{ relation }}
+       These will be cleaned up normally by Elementary's cleanup logic.
+       Note: Redshift doesn't support CREATE OR REPLACE for tables, only for views. #}
+    create table {{ relation }}
     as {{ sql_query }}
   {% else %}
     create {% if temporary %} temporary {% endif %} table {{ relation.include(database=(not temporary), schema=(not temporary)) }}

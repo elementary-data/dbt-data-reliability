@@ -16,13 +16,29 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro redshift__edr_make_temp_relation(base_relation, suffix) %}
+    {% if elementary.is_dbt_fusion() %}
+        {# Workaround for dbt-fusion temp table metadata bug - create regular relations
+           with explicit schema/database instead of temp relations #}
+        {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
+        {% set tmp_relation = api.Relation.create(
+            identifier=tmp_identifier,
+            schema=base_relation.schema,
+            database=base_relation.database,
+            type='table') %}
+        {% do return(tmp_relation) %}
+    {% else %}
+        {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
+    {% endif %}
+{% endmacro %}
+
 {% macro databricks__edr_make_temp_relation(base_relation, suffix) %}
     {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, suffix) %}
     {% if elementary.is_dbt_fusion() %}
         {# In dbt-fusion, the view will be created as non-temporary. Therefore, we need the relation to include database and schema.
            So we use the same ones as the original relation and just change the identifier. #}
         {% set tmp_relation = base_relation.incorporate(path={"identifier": tmp_identifier}, type='view') %}
-    {% else %}    
+    {% else %}
         {% set tmp_relation = api.Relation.create(identifier=tmp_identifier, type='view') %}
     {% endif %}
     {% do return(tmp_relation) %}

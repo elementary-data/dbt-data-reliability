@@ -28,6 +28,22 @@
     {% do return(elementary.make_temp_table_relation(base_relation)) %}
 {% endmacro %}
 
+{% macro redshift__edr_make_intermediate_relation(base_relation) %}
+    {% if elementary.is_dbt_fusion() %}
+        {# Workaround for dbt-fusion temp table metadata bug - create regular relations
+           with explicit schema/database instead of temp relations #}
+        {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, elementary.get_timestamped_table_suffix()) %}
+        {% set tmp_relation = api.Relation.create(
+            identifier=tmp_identifier,
+            schema=base_relation.schema,
+            database=base_relation.database,
+            type='table') %}
+        {% do return(tmp_relation) %}
+    {% else %}
+        {% do return(elementary.make_temp_table_relation(base_relation)) %}
+    {% endif %}
+{% endmacro %}
+
 {% macro databricks__edr_make_intermediate_relation(base_relation) %}
     {% set tmp_identifier = elementary.table_name_with_suffix(base_relation.identifier, elementary.get_timestamped_table_suffix()) %}
     {% set tmp_relation = api.Relation.create(
