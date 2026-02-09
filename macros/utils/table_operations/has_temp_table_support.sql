@@ -27,17 +27,9 @@
 {% endmacro %}
 
 {% macro redshift__has_temp_table_support() %}
-    {# Workaround for dbt-fusion 2.0.0-preview.104 ADBC 0.22 bug
-       where metadata queries on temp tables return empty catalog/schema
-       causing panic: "Either resolved_catalog or resolved_schema must be present"
-       at fs/sa/crates/dbt-adapter/src/metadata/mod.rs:91:9
-
-       This disables temp tables for create_intermediate_relation(),
-       and redshift__edr_get_create_table_as_sql() handles other paths
-       that create temp tables (like test materializations).
-
-       Bug introduced in preview.104, not present in preview.102.
-       TODO: Re-enable once dbt-fusion fixes this in a future release. #}
+    {# dbt-fusion uses connection pooling, so temp tables created in one session
+       are not visible in other sessions, causing "relation does not exist" errors.
+       Use regular tables with cleanup instead. #}
     {% if elementary.is_dbt_fusion() %}
         {% do return(false) %}
     {% else %}
