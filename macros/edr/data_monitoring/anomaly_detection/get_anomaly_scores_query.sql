@@ -53,11 +53,24 @@
     {# Calculate detection period start for exclusion logic.
        backfill_days defines the window of recent data to test for anomalies on each run.
        It defaults to 2 days (configurable via vars.backfill_days or test-level parameter).
-       The detection period spans from (detection_end - backfill_days) to detection_end.
+       The detection period spans from (detection_end - exclusion_period_days) to detection_end.
        When exclude_detection_period_from_training is enabled, metrics in this detection period
-       are excluded from training statistics to prevent contamination from potentially anomalous data. #}
+       are excluded from training statistics to prevent contamination from potentially anomalous data.
+
+       The exclusion window must be at least one full time bucket to work correctly.
+       When backfill_days is smaller than the time bucket period (e.g., backfill_days=2
+       with weekly buckets), the detection period would be too narrow to contain any
+       bucket_end, making the exclusion ineffective. We extend it to at least one full
+       time bucket in that case. #}
     {%- if test_configuration.exclude_detection_period_from_training %}
-        {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
+        {%- set exclusion_period_days = test_configuration.backfill_days %}
+        {%- if metric_properties and metric_properties.time_bucket %}
+            {%- set bucket_in_days = elementary.convert_period(metric_properties.time_bucket, 'day').count %}
+            {%- if bucket_in_days > exclusion_period_days %}
+                {%- set exclusion_period_days = bucket_in_days %}
+            {%- endif %}
+        {%- endif %}
+        {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=exclusion_period_days)) %}
         {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
     {%- endif %}
 
