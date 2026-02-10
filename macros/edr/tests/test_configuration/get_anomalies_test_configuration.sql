@@ -39,6 +39,12 @@
     {%- set anomaly_direction = elementary.get_anomaly_direction(anomaly_direction, model_graph_node) %}
     {%- set detection_period = elementary.get_test_argument('detection_period', detection_period, model_graph_node) -%}
     {%- set backfill_days = elementary.detection_period_to_backfill_days(detection_period, backfill_days, model_graph_node) -%}
+    {%- if metric_props.time_bucket %}
+        {%- set bucket_in_days = elementary.convert_period(metric_props.time_bucket, 'day').count %}
+        {%- if bucket_in_days > backfill_days %}
+            {%- set backfill_days = bucket_in_days %}
+        {%- endif %}
+    {%- endif %}
     {%- set fail_on_zero = elementary.get_test_argument('fail_on_zero', fail_on_zero, model_graph_node) %}
     
 
