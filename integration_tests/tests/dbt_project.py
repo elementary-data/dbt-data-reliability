@@ -214,9 +214,7 @@ class DbtProject:
                 "models": [table_yaml],
             }
             temp_table_ctx = self.create_temp_model_for_existing_table(
-                test_id,
-                materialization="table",
-                raw_code=f"SELECT * FROM {{{{ ref('{seed_name}') }}}}",
+                test_id, materialization="table"
             )
         elif as_model:
             props_yaml = {
@@ -244,12 +242,12 @@ class DbtProject:
             temp_table_ctx = nullcontext()
 
         if data:
-            self.seed(data, seed_name)
+            if create_real_model:
+                self._seed_and_run_model(data, seed_name, test_id)
+            else:
+                self.seed(data, seed_name)
 
         with temp_table_ctx:
-            if create_real_model:
-                self.dbt_runner.run(select=test_id)
-
             with NamedTemporaryFile(
                 dir=self.tmp_models_dir_path,
                 prefix="integration_tests_",
@@ -275,6 +273,18 @@ class DbtProject:
                 "status": "pass" if test_process_success else "fail_or_error"
             }
             return [test_result] if multiple_results else test_result
+
+    def _seed_and_run_model(self, data: List[dict], seed_name: str, model_name: str):
+        with DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, seed_name):
+            self._fix_seed_if_needed(seed_name)
+            with self.create_temp_model_for_existing_table(
+                model_name,
+                materialization="table",
+                raw_code=f"SELECT * FROM {{{{ ref('{seed_name}') }}}}",
+            ):
+                self.dbt_runner.run(select=model_name)
 
     def seed(self, data: List[dict], table_name: str):
         with DbtDataSeeder(
