@@ -637,7 +637,7 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
 
     Scenario:
     - 12 months of normal data (~20 rows/day, ~600/month)
-    - 1 month of anomalous data (~40 rows/day, ~1240/month)
+    - 1 month of anomalous data (~30 rows/day, ~930/month)
     - time_bucket: month (30 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
     - With exclusion + fix: anomaly excluded from training → test fails
@@ -665,7 +665,7 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     day = anomaly_month_start
     while day < utc_now:
         anomalous_data.extend(
-            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(40)]
+            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(30)]
         )
         day += timedelta(days=1)
 
@@ -675,7 +675,7 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         **DBT_TEST_ARGS,
         "training_period": {"period": "day", "count": 365},
         "time_bucket": {"period": "month", "count": 1},
-        "sensitivity": 5,
+        "sensitivity": 10,
     }
 
     test_result_without = dbt_project.test(

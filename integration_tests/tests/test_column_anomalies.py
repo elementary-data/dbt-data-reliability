@@ -639,7 +639,7 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": None}
-                for _ in range(25)
+                for _ in range(18)
             ]
         )
         day += timedelta(days=1)
@@ -652,7 +652,7 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         "time_bucket": {"period": "month", "count": 1},
         "training_period": {"period": "day", "count": 365},
         "min_training_set_size": 5,
-        "anomaly_sensitivity": 5,
+        "anomaly_sensitivity": 10,
         "anomaly_direction": "spike",
         "exclude_detection_period_from_training": False,
     }
