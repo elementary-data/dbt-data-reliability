@@ -124,6 +124,12 @@
   {% if sample_limit == 0 %} {# performance: no need to run a sql query that we know returns an empty list #}
     {% do return([]) %}
   {% endif %}
+
+  {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}
+  {% if sample_limit == -1 %}
+    {% set sample_limit = none %}
+  {% endif %}
+
   {% if ignore_passed_tests and elementary.did_test_pass() %}
     {% do elementary.debug_log("Skipping sample query because the test passed.") %}
     {% do return([]) %}

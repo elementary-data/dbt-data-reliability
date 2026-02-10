@@ -37,16 +37,6 @@
     {% set status = "pass" %}
   {% endif %}
 
-  {% if elementary.is_dbt_fusion() %}
-    {% if status == 'error' %}
-      {# dbt-fusion currently doesn't distinguish between failure and error #}
-      {% set status = "fail" %}
-    {% elif status == 'success' %}
-      {# dbt-fusion seems to sometime return 'pass' and sometimes 'success', so we normalize to 'pass' #}
-      {% set status = "pass" %}
-    {% endif %}
-  {% endif %}
-
   {% do return(status) %}
 {% endmacro %}
 

@@ -1,7 +1,24 @@
+import json
+
 import pytest
 from dbt_project import DbtProject
 
 DBT_TEST_NAME = "elementary.exposure_schema_validity"
+
+
+INVALID_EXPOSURES_QUERY = """
+    with latest_elementary_test_result as (
+        select id
+        from {{{{ ref("elementary_test_results") }}}}
+        where lower(table_name) = lower('{test_id}')
+        order by created_at desc
+        limit 1
+    )
+
+    select result_row
+    from {{{{ ref("test_result_rows") }}}}
+    where elementary_test_results_id in (select * from latest_elementary_test_result)
+"""
 
 
 def seed(dbt_project: DbtProject):
@@ -9,7 +26,6 @@ def seed(dbt_project: DbtProject):
     assert seed_result is True
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -28,7 +44,6 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
     assert test_result.success is False
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_existing_exposure_yml_valid(
     test_id: str, dbt_project: DbtProject
 ):
@@ -47,7 +62,6 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
 
 
 @pytest.mark.skip_targets(["spark"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(test_id, DBT_TEST_NAME)
     assert test_result["status"] == "pass"
@@ -55,7 +69,6 @@ def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtPro
 
 # Schema validity currently not supported on ClickHouse
 @pytest.mark.skip_targets(["spark", "clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
@@ -88,7 +101,6 @@ def test_exposure_schema_validity_correct_columns_and_types(
 
 
 @pytest.mark.skip_targets(["spark"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_invalid_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -111,17 +123,25 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, DBT_TEST_ARGS, columns=[dict(name="bla")], as_model=True
     )
-
-    assert (
-        "different data type for the column order_id string vs"
-        in test_result["test_results_query"]
-    )
     assert test_result["status"] == "fail"
+
+    invalid_exposures = [
+        json.loads(row["result_row"])
+        for row in dbt_project.run_query(
+            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+        )
+    ]
+    assert len(invalid_exposures) == 1
+    assert invalid_exposures[0]["exposure"] == "ZOMG"
+    assert invalid_exposures[0]["url"] == "http://bla.com"
+    assert (
+        invalid_exposures[0]["error"]
+        == "different data type for the column order_id string vs numeric"
+    )
 
 
 # Schema validity currently not supported on ClickHouse
 @pytest.mark.skip_targets(["spark", "clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_id: str, dbt_project: DbtProject
 ):
@@ -155,16 +175,24 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, DBT_TEST_ARGS, columns=[dict(name="bla")], as_model=True
     )
-
-    assert (
-        "different data type for the column order_id string vs numeric"
-        in test_result["test_results_query"]
-    )
     assert test_result["status"] == "fail"
+
+    invalid_exposures = [
+        json.loads(row["result_row"])
+        for row in dbt_project.run_query(
+            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+        )
+    ]
+    assert len(invalid_exposures) == 1
+    assert invalid_exposures[0]["exposure"] == "ZOMG"
+    assert invalid_exposures[0]["url"] == "http://bla.com"
+    assert (
+        invalid_exposures[0]["error"]
+        == "different data type for the column order_id string vs numeric"
+    )
 
 
 @pytest.mark.skip_targets(["spark"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_correct_columns_and_missing_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -188,7 +216,6 @@ def test_exposure_schema_validity_correct_columns_and_missing_type(
 
 
 @pytest.mark.skip_targets(["spark"])
-@pytest.mark.skip_for_dbt_fusion
 def test_exposure_schema_validity_missing_columns(
     test_id: str, dbt_project: DbtProject
 ):
@@ -211,6 +238,15 @@ def test_exposure_schema_validity_missing_columns(
     test_result = dbt_project.test(
         test_id, DBT_TEST_NAME, DBT_TEST_ARGS, columns=[dict(name="bla")], as_model=True
     )
-
-    assert "order_id column missing in the model" in test_result["test_results_query"]
     assert test_result["status"] == "fail"
+
+    invalid_exposures = [
+        json.loads(row["result_row"])
+        for row in dbt_project.run_query(
+            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+        )
+    ]
+    assert len(invalid_exposures) == 1
+    assert invalid_exposures[0]["exposure"] == "ZOMG"
+    assert invalid_exposures[0]["url"] == "http://bla.com"
+    assert invalid_exposures[0]["error"] == "order_id column missing in the model"

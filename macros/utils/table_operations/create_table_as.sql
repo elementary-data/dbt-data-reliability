@@ -46,6 +46,19 @@
   as {{ sql_query }}
 {% endmacro %}
 
+{% macro redshift__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {% if temporary and elementary.is_dbt_fusion() %}
+    {# dbt-fusion uses connection pooling - temp tables created in one session
+       aren't visible in other sessions. Create regular tables instead.
+       These are cleaned up by Elementary's normal cleanup logic. #}
+    create table {{ relation }}
+    as {{ sql_query }}
+  {% else %}
+    create {% if temporary %} temporary {% endif %} table {{ relation.include(database=(not temporary), schema=(not temporary)) }}
+    as {{ sql_query }}
+  {% endif %}
+{% endmacro %}
+
 {% macro databricks__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
   {% if temporary %}
     {% if elementary.is_dbt_fusion() %}
