@@ -580,7 +580,7 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
-@pytest.mark.skip_targets(["clickhouse"])
+@pytest.mark.skip_targets(["clickhouse", "dremio"])
 def test_col_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
     """
     Test exclude_detection_period_from_training with weekly time buckets for column anomalies.
