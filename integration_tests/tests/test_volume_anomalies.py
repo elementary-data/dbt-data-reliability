@@ -621,54 +621,61 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     ), "Test should fail when anomaly is excluded from training"
 
 
-# Dremio is skipped because its weekly bucket boundary alignment differs from other
-# databases, causing the baseline assertion (anomaly absorbed into training) to fail
-# even without exclusion enabled.
-@pytest.mark.skip_targets(["clickhouse", "dremio"])
-def test_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
+@pytest.mark.skip_targets(["clickhouse"])
+def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
-    Test exclude_detection_period_from_training with weekly time buckets.
+    Test exclude_detection_period_from_training with monthly time buckets.
 
-    This tests the fix for the bug where backfill_days (default 2) was smaller
-    than the time bucket period (7 days for weekly), causing the exclusion window
-    to be too narrow to contain any weekly bucket_end.
+    This tests the fix where the detection period is set to the bucket size
+    when the bucket period exceeds backfill_days. With monthly buckets (30 days)
+    and default backfill_days (2), without the fix the 2-day exclusion window
+    cannot contain any monthly bucket_end, making exclusion ineffective.
+
+    detection_period is intentionally NOT set so that backfill_days stays at
+    its default (2), which is smaller than the monthly bucket (30 days).
+    Setting detection_period would override backfill_days and mask the bug.
 
     Scenario:
-    - 12 weeks of normal data (~100 rows/day, ~700/week) with variance
-    - 2 weeks of anomalous data (~150 rows/day, ~1050/week)
-    - time_bucket: week (7 days > default backfill_days of 2)
+    - 12 months of normal data (~20 rows/day, ~600/month)
+    - 1 month of anomalous data (~40 rows/day, ~1240/month)
+    - time_bucket: month (30 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
-    - With exclusion: anomaly excluded from training → test fails
+    - With exclusion + fix: anomaly excluded from training → test fails
     """
     utc_now = datetime.utcnow()
+    current_month_1st = utc_now.replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
+    )
 
-    normal_pattern = [98, 100, 102]
+    anomaly_month_start = (current_month_1st - timedelta(days=31)).replace(day=1)
+    normal_month_start = (anomaly_month_start - timedelta(days=365)).replace(day=1)
+
     normal_data = []
-    for day_offset in range(84):
-        date = utc_now - timedelta(days=98 - day_offset)
-        rows_per_day = normal_pattern[day_offset % 3]
+    day = normal_month_start
+    day_idx = 0
+    while day < anomaly_month_start:
+        rows_per_day = 17 + (day_idx % 7)
         normal_data.extend(
-            [
-                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
-                for _ in range(rows_per_day)
-            ]
+            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(rows_per_day)]
         )
+        day += timedelta(days=1)
+        day_idx += 1
 
     anomalous_data = []
-    for day_offset in range(14):
-        date = utc_now - timedelta(days=14 - day_offset)
+    day = anomaly_month_start
+    while day < utc_now:
         anomalous_data.extend(
-            [{TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)} for _ in range(150)]
+            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(40)]
         )
+        day += timedelta(days=1)
 
     all_data = normal_data + anomalous_data
 
     test_args_without_exclusion = {
         **DBT_TEST_ARGS,
-        "training_period": {"period": "day", "count": 90},
-        "detection_period": {"period": "day", "count": 14},
-        "time_bucket": {"period": "week", "count": 1},
-        "sensitivity": 5,
+        "training_period": {"period": "day", "count": 365},
+        "time_bucket": {"period": "month", "count": 1},
+        "sensitivity": 4,
     }
 
     test_result_without = dbt_project.test(
@@ -676,6 +683,7 @@ def test_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
         DBT_TEST_NAME,
         test_args_without_exclusion,
         data=all_data,
+        test_vars={"force_metrics_backfill": True},
     )
     assert (
         test_result_without["status"] == "pass"
@@ -691,7 +699,8 @@ def test_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
         DBT_TEST_NAME,
         test_args_with_exclusion,
         data=all_data,
+        test_vars={"force_metrics_backfill": True},
     )
     assert (
         test_result_with["status"] == "fail"
-    ), "Test should fail when anomaly is excluded from training (weekly bucket fix)"
+    ), "Test should fail when anomaly is excluded from training (large bucket fix)"

@@ -580,71 +580,79 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
-# Dremio is skipped because its weekly bucket boundary alignment differs from other
-# databases, causing the baseline assertion (anomaly absorbed into training) to fail
-# even without exclusion enabled.
-@pytest.mark.skip_targets(["clickhouse", "dremio"])
-def test_col_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
+@pytest.mark.skip_targets(["clickhouse"])
+def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
-    Test exclude_detection_period_from_training with weekly time buckets for column anomalies.
+    Test exclude_detection_period_from_training with monthly time buckets for column anomalies.
 
-    This tests the fix for the bug where backfill_days (default 2) was smaller
-    than the time bucket period (7 days for weekly), causing the exclusion window
-    to be too narrow to contain any weekly bucket_end.
+    This tests the fix where the detection period is set to the bucket size
+    when the bucket period exceeds backfill_days. With monthly buckets (30 days)
+    and default backfill_days (2), without the fix the 2-day exclusion window
+    cannot contain any monthly bucket_end, making exclusion ineffective.
+
+    detection_period is intentionally NOT set so that backfill_days stays at
+    its default (2), which is smaller than the monthly bucket (30 days).
+    Setting detection_period would override backfill_days and mask the bug.
 
     Scenario:
-    - 12 weeks of normal data with low null count (8-12 nulls/day, ~70/week)
-    - 2 weeks of anomalous data with high null count (25 nulls/day, ~175/week)
-    - time_bucket: week (7 days > default backfill_days of 2)
+    - 12 months of normal data with low null count (~10 nulls/day, ~300/month)
+    - 1 month of anomalous data with high null count (25 nulls/day, ~775/month)
+    - time_bucket: month (30 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
-    - With exclusion: anomaly excluded from training → test fails
+    - With exclusion + fix: anomaly excluded from training → test fails
     """
     utc_now = datetime.utcnow().date()
+    current_month_1st = utc_now.replace(day=1)
 
-    normal_pattern = [8, 10, 12]
+    anomaly_month_start = (current_month_1st - timedelta(days=31)).replace(day=1)
+    normal_month_start = (anomaly_month_start - timedelta(days=365)).replace(day=1)
+
     normal_data: List[Dict[str, Any]] = []
-    for day_offset in range(84):
-        date = utc_now - timedelta(days=98 - day_offset)
-        null_count = normal_pattern[day_offset % 3]
+    day = normal_month_start
+    day_idx = 0
+    while day < anomaly_month_start:
+        null_count = 7 + (day_idx % 7)
         normal_data.extend(
             [
-                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
+                {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": superhero}
                 for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
             ]
         )
         normal_data.extend(
             [
-                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": None}
                 for _ in range(null_count)
             ]
         )
+        day += timedelta(days=1)
+        day_idx += 1
 
     anomalous_data: List[Dict[str, Any]] = []
-    for day_offset in range(14):
-        date = utc_now - timedelta(days=14 - day_offset)
+    day = anomaly_month_start
+    while day < utc_now:
         anomalous_data.extend(
             [
-                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": superhero}
+                {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": superhero}
                 for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
             ]
         )
         anomalous_data.extend(
             [
-                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": None}
+                {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": None}
                 for _ in range(25)
             ]
         )
+        day += timedelta(days=1)
 
     all_data = normal_data + anomalous_data
 
     test_args_without_exclusion = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "column_anomalies": ["null_count"],
-        "time_bucket": {"period": "week", "count": 1},
-        "training_period": {"period": "day", "count": 90},
-        "detection_period": {"period": "day", "count": 14},
+        "time_bucket": {"period": "month", "count": 1},
+        "training_period": {"period": "day", "count": 365},
         "min_training_set_size": 5,
-        "anomaly_sensitivity": 5,
+        "anomaly_sensitivity": 4,
         "anomaly_direction": "spike",
         "exclude_detection_period_from_training": False,
     }
@@ -677,5 +685,5 @@ def test_col_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
     )
     assert test_result_with["status"] == "fail", (
         "Expected FAIL when exclude_detection_period_from_training=True "
-        "(weekly bucket fix: exclusion window extended to cover full time bucket)"
+        "(large bucket fix: detection period set to bucket size)"
     )
