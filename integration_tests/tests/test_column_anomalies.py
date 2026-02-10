@@ -580,6 +580,11 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
+# Redshift and Dremio are skipped because their floating-point stddev/avg computations
+# produce slightly different z-scores than other engines. With monthly buckets the margin
+# between "absorbed anomaly passes" and "excluded anomaly fails" is narrow enough that
+# these engines' z-score differences cause the "without exclusion" case to also flag
+# as anomalous, making the test flaky.
 @pytest.mark.skip_targets(["clickhouse", "redshift", "dremio"])
 def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
@@ -604,8 +609,12 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     utc_now = datetime.utcnow().date()
     current_month_1st = utc_now.replace(day=1)
 
-    anomaly_month_start = (current_month_1st - timedelta(days=31)).replace(day=1)
-    normal_month_start = (anomaly_month_start - timedelta(days=365)).replace(day=1)
+    anomaly_month_start = (current_month_1st - timedelta(days=1)).replace(day=1)
+    normal_month_start = (
+        (anomaly_month_start - timedelta(days=1))
+        .replace(day=1)
+        .replace(year=anomaly_month_start.year - 1)
+    )
 
     normal_data: List[Dict[str, Any]] = []
     day = normal_month_start

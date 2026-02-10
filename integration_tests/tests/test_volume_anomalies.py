@@ -621,6 +621,11 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     ), "Test should fail when anomaly is excluded from training"
 
 
+# Redshift and Dremio are skipped because their floating-point stddev/avg computations
+# produce slightly different z-scores than other engines. With monthly buckets the margin
+# between "absorbed anomaly passes" and "excluded anomaly fails" is narrow enough that
+# these engines' z-score differences cause the "without exclusion" case to also flag
+# as anomalous, making the test flaky.
 @pytest.mark.skip_targets(["clickhouse", "redshift", "dremio"])
 def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
@@ -647,8 +652,12 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         day=1, hour=0, minute=0, second=0, microsecond=0
     )
 
-    anomaly_month_start = (current_month_1st - timedelta(days=31)).replace(day=1)
-    normal_month_start = (anomaly_month_start - timedelta(days=365)).replace(day=1)
+    anomaly_month_start = (current_month_1st - timedelta(days=1)).replace(day=1)
+    normal_month_start = (
+        (anomaly_month_start - timedelta(days=1))
+        .replace(day=1)
+        .replace(year=anomaly_month_start.year - 1)
+    )
 
     normal_data = []
     day = normal_month_start
