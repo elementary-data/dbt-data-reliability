@@ -653,11 +653,7 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     )
 
     anomaly_month_start = (current_month_1st - timedelta(days=1)).replace(day=1)
-    normal_month_start = (
-        (anomaly_month_start - timedelta(days=1))
-        .replace(day=1)
-        .replace(year=anomaly_month_start.year - 1)
-    )
+    normal_month_start = anomaly_month_start.replace(year=anomaly_month_start.year - 1)
 
     normal_data = []
     day = normal_month_start
