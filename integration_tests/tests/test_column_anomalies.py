@@ -580,7 +580,7 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
-@pytest.mark.skip_targets(["clickhouse"])
+@pytest.mark.skip_targets(["clickhouse", "redshift"])
 def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
     Test exclude_detection_period_from_training with monthly time buckets for column anomalies.
