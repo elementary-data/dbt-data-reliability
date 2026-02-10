@@ -122,6 +122,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -143,6 +144,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -164,6 +166,7 @@ class DbtProject:
         model_config: Optional[Dict[str, Any]] = None,
         column_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -175,6 +178,10 @@ class DbtProject:
         test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
             table_name = test_id
+
+        seed_name = table_name
+        if create_real_model:
+            seed_name = f"{table_name}_seed"
 
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {"name": test_id}
@@ -201,7 +208,17 @@ class DbtProject:
             table_yaml["columns"] = [column_def]
 
         temp_table_ctx: Any
-        if as_model:
+        if create_real_model:
+            props_yaml = {
+                "version": 2,
+                "models": [table_yaml],
+            }
+            temp_table_ctx = self.create_temp_model_for_existing_table(
+                test_id,
+                materialization="table",
+                raw_code=f"SELECT * FROM {{{{ ref('{seed_name}') }}}}",
+            )
+        elif as_model:
             props_yaml = {
                 "version": 2,
                 "models": [table_yaml],
@@ -227,9 +244,12 @@ class DbtProject:
             temp_table_ctx = nullcontext()
 
         if data:
-            self.seed(data, table_name)
+            self.seed(data, seed_name)
 
         with temp_table_ctx:
+            if create_real_model:
+                self.dbt_runner.run(select=test_id)
+
             with NamedTemporaryFile(
                 dir=self.tmp_models_dir_path,
                 prefix="integration_tests_",
