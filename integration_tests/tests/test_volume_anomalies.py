@@ -675,7 +675,7 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         **DBT_TEST_ARGS,
         "training_period": {"period": "day", "count": 365},
         "time_bucket": {"period": "month", "count": 1},
-        "sensitivity": 4,
+        "sensitivity": 5,
     }
 
     test_result_without = dbt_project.test(

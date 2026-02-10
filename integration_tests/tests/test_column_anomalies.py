@@ -652,7 +652,7 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         "time_bucket": {"period": "month", "count": 1},
         "training_period": {"period": "day", "count": 365},
         "min_training_set_size": 5,
-        "anomaly_sensitivity": 4,
+        "anomaly_sensitivity": 5,
         "anomaly_direction": "spike",
         "exclude_detection_period_from_training": False,
     }
