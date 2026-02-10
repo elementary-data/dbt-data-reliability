@@ -74,6 +74,12 @@
         detection_end, metric_properties, test_configuration.days_back
     ) %}
 
+    {# Calculate detection period start for exclusion logic.
+       backfill_days defines the window of recent data to test for anomalies on each run.
+       It defaults to 2 days (configurable via vars.backfill_days or test-level parameter).
+       The detection period spans from (detection_end - backfill_days) to detection_end.
+       When exclude_detection_period_from_training is enabled, metrics in this detection period
+       are excluded from training statistics to prevent contamination from potentially anomalous data. #}
     {%- if test_configuration.exclude_detection_period_from_training %}
         {%- set detection_period_start = detection_end - modules.datetime.timedelta(
             days=test_configuration.backfill_days
