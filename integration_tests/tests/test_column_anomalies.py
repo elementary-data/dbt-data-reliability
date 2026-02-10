@@ -582,7 +582,7 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
 
 # Dremio is skipped because its weekly bucket boundary alignment differs from other
 # databases, causing the baseline assertion (anomaly absorbed into training) to fail
-# even without exclusion enabled. The fix itself is not Dremio-specific.
+# even without exclusion enabled.
 @pytest.mark.skip_targets(["clickhouse", "dremio"])
 def test_col_excl_detect_train_weekly(test_id: str, dbt_project: DbtProject):
     """
