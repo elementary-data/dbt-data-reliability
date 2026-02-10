@@ -117,19 +117,3 @@ jobs:
       elementary-ref: ${{ inputs.elementary-ref }}
       dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || ((github.event_name == 'pull_request_target' || github.event_name == 'pull_request') && github.event.pull_request.head.sha) || '' }}
     secrets: inherit
-
-  notify_failures:
-    name: Notify Slack
-    secrets: inherit
-    needs: [test]
-    if: |
-      always() &&
-      ! contains(needs.test.result, 'success') &&
-      ! contains(needs.test.result, 'cancelled') &&
-      contains(github.event_name, 'schedule') &&
-      ! cancelled()
-    uses: elementary-data/elementary/.github/workflows/notify_slack.yml@master
-    with:
-      result: "failure"
-      run_id: ${{ github.run_id }}
-      workflow_name: ${{ github.workflow }}
