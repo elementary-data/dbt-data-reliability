@@ -65,6 +65,7 @@
             metric_props.time_bucket, "day"
         ).count %}
         {%- if bucket_in_days > backfill_days %}
+            {%- do elementary.edr_log("backfill_days increased from " ~ backfill_days ~ " to " ~ bucket_in_days ~ " to match time bucket size.") %}
             {%- set backfill_days = bucket_in_days %}
         {%- endif %}
     {%- endif %}
