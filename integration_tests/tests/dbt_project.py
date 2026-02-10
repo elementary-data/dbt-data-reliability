@@ -122,6 +122,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: Literal[False] = False,
     ) -> Dict[str, Any]:
@@ -143,6 +144,7 @@ class DbtProject:
         elementary_enabled: bool = True,
         model_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: Literal[True],
     ) -> List[Dict[str, Any]]:
@@ -164,6 +166,7 @@ class DbtProject:
         model_config: Optional[Dict[str, Any]] = None,
         column_config: Optional[Dict[str, Any]] = None,
         test_config: Optional[Dict[str, Any]] = None,
+        create_real_model: bool = False,
         *,
         multiple_results: bool = False,
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
@@ -175,6 +178,10 @@ class DbtProject:
         test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
             table_name = test_id
+
+        seed_name = table_name
+        if create_real_model:
+            seed_name = f"{table_name}_seed"
 
         test_args = test_args or {}
         table_yaml: Dict[str, Any] = {"name": test_id}
@@ -201,7 +208,15 @@ class DbtProject:
             table_yaml["columns"] = [column_def]
 
         temp_table_ctx: Any
-        if as_model:
+        if create_real_model:
+            props_yaml = {
+                "version": 2,
+                "models": [table_yaml],
+            }
+            temp_table_ctx = self.create_temp_model_for_existing_table(
+                test_id, materialization="table"
+            )
+        elif as_model:
             props_yaml = {
                 "version": 2,
                 "models": [table_yaml],
@@ -227,7 +242,10 @@ class DbtProject:
             temp_table_ctx = nullcontext()
 
         if data:
-            self.seed(data, table_name)
+            if create_real_model:
+                self._seed_and_run_model(data, seed_name, test_id)
+            else:
+                self.seed(data, seed_name)
 
         with temp_table_ctx:
             with NamedTemporaryFile(
@@ -255,6 +273,18 @@ class DbtProject:
                 "status": "pass" if test_process_success else "fail_or_error"
             }
             return [test_result] if multiple_results else test_result
+
+    def _seed_and_run_model(self, data: List[dict], seed_name: str, model_name: str):
+        with DbtDataSeeder(
+            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        ).seed(data, seed_name):
+            self._fix_seed_if_needed(seed_name)
+            with self.create_temp_model_for_existing_table(
+                model_name,
+                materialization="table",
+                raw_code=f"SELECT * FROM {{{{ ref('{seed_name}') }}}}",
+            ):
+                self.dbt_runner.run(select=model_name)
 
     def seed(self, data: List[dict], table_name: str):
         with DbtDataSeeder(
