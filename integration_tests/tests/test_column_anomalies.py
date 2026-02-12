@@ -580,12 +580,7 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
-# Redshift and Dremio are skipped because their floating-point stddev/avg computations
-# produce slightly different z-scores than other engines. With monthly buckets the margin
-# between "absorbed anomaly passes" and "excluded anomaly fails" is narrow enough that
-# these engines' z-score differences cause the "without exclusion" case to also flag
-# as anomalous, making the test flaky.
-@pytest.mark.skip_targets(["clickhouse", "redshift", "dremio"])
+@pytest.mark.skip_targets(["clickhouse"])
 def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
     Test exclude_detection_period_from_training with monthly time buckets for column anomalies.
@@ -601,7 +596,7 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
 
     Scenario:
     - 12 months of normal data with low null count (~10 nulls/day, ~300/month)
-    - 1 month of anomalous data with high null count (25 nulls/day, ~775/month)
+    - 1 month of anomalous data with high null count (~50 nulls/day, ~1500/month)
     - time_bucket: month (30 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
     - With exclusion + fix: anomaly excluded from training → test fails
@@ -644,7 +639,7 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": None}
-                for _ in range(18)
+                for _ in range(50)
             ]
         )
         day += timedelta(days=1)
