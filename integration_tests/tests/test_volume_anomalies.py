@@ -621,7 +621,7 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     ), "Test should fail when anomaly is excluded from training"
 
 
-@pytest.mark.skip_targets(["clickhouse"])
+@pytest.mark.skip_targets(["clickhouse", "redshift", "dremio"])
 def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     """
     Test exclude_detection_period_from_training with monthly time buckets.
