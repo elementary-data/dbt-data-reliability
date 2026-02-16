@@ -30,3 +30,4 @@ jobs:
             } else {
               console.log('Could not determine requesting user from PR description');
             }
+            // test: verify workflow triggers correctly
