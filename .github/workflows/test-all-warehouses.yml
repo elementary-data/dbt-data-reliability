@@ -98,6 +98,7 @@ jobs:
             trino,
             clickhouse,
             dremio,
+            vertica,
           ]
         include:
           - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
@@ -110,6 +111,8 @@ jobs:
             warehouse-type: redshift
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: databricks_catalog
+          - dbt-version: "${{ inputs.dbt-version || '1.8.5' }}"
+            warehouse-type: vertica
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}

@@ -17,6 +17,7 @@ on:
           - trino
           - clickhouse
           - dremio
+          - vertica
       elementary-ref:
         type: string
         required: false
@@ -30,6 +31,11 @@ on:
         required: false
         default: "latest_official"
         description: dbt's version to test with
+      dbt-vertica-version:
+        type: string
+        required: false
+        default: "1.8.5"
+        description: dbt-vertica's version to test with
 
   workflow_call:
     inputs:
@@ -45,6 +51,10 @@ on:
       dbt-version:
         type: string
         default: "latest_official"
+        required: false
+      dbt-vertica-version:
+        type: string
+        default: "1.8.5"
         required: false
 
 env:
@@ -106,8 +116,13 @@ jobs:
         if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
         run: pip install databricks-sql-connector==2.9.3
 
+      - name: Install dbt-vertica
+        if: inputs.warehouse-type == 'vertica' 
+        run:
+          pip install "dbt-vertica==${{ inputs.dbt-vertica-version }}"
+
       - name: Install dbt
-        if: ${{ inputs.dbt-version != 'fusion' }}
+        if: ${{ inputs.dbt-version != 'fusion' && inputs.warehouse-type != 'vertica' }}
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
@@ -128,7 +143,9 @@ jobs:
           mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+          SCHEMA_NAME="dbt_pkg_$UNDERSCORED_REF_NAME"
+          echo "SCHEMA_NAME=$SCHEMA_NAME" >> $GITHUB_ENV
+          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/$SCHEMA_NAME/g" > ~/.dbt/profiles.yml
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
@@ -136,6 +153,28 @@ jobs:
           ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
+
+      - name: Set Vertica environment variables
+        if: inputs.warehouse-type == 'vertica'
+        run: |
+          echo "VERTICA_PORT=5433" >> $GITHUB_ENV
+          echo "VERTICA_HOST=localhost" >> $GITHUB_ENV
+          echo "VERTICA_USER=dbadmin" >> $GITHUB_ENV
+          echo "VERTICA_PASS=vertica" >> $GITHUB_ENV
+          echo "VERTICA_DATABASE=elementary_tests" >> $GITHUB_ENV
+          echo "VERTICA_SCHEMA=$SCHEMA_NAME" >> $GITHUB_ENV
+
+      - name: Start Vertica
+        if: inputs.warehouse-type == 'vertica'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-vertica.yml up -d
+
+      - name: Wait for Vertica to be ready
+        if: inputs.warehouse-type == 'vertica'
+        run: |
+          echo "Waiting for Vertica to be healthy..."
+          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" vertica)" == "healthy" ]; do echo "Waiting..."; sleep 5; done'
+          echo "Vertica is ready!"
 
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
