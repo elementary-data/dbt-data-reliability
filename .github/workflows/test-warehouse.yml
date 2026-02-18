@@ -116,7 +116,7 @@ jobs:
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
         run: |
-          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version 2.0.0-preview.119
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
