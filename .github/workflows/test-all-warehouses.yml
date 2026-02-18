@@ -106,8 +106,10 @@ jobs:
             warehouse-type: snowflake
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: bigquery
-          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-            warehouse-type: redshift
+          # fusion/redshift temporarily disabled - Fusion sidecar can't resolve
+          # source schemas via SVV_COLUMNS on Redshift (see dbt-labs/dbt-fusion issues)
+          # - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+          #   warehouse-type: redshift
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: databricks_catalog
     uses: ./.github/workflows/test-warehouse.yml
