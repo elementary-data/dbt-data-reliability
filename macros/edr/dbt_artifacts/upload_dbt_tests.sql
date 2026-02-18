@@ -88,7 +88,7 @@
     {% set test_kwargs = elementary.safe_get_with_default(test_metadata, 'kwargs', {}) %}
 
     {% set primary_test_model_id = namespace(data=none) %}
-    {% set override_primary_test_model_id = elementary.safe_get_with_default(config_dict, 'override_primary_test_model_id')%}
+    {% set override_primary_test_model_id = elementary.safe_get_with_default(config_dict, 'override_primary_test_model_id') or elementary.safe_get_with_default(meta, 'override_primary_test_model_id') %}
 
     {% if override_primary_test_model_id %}
         {% set primary_test_model_id.data = override_primary_test_model_id %}
