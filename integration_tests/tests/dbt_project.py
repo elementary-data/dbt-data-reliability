@@ -99,7 +99,14 @@ class DbtProject:
         query = self.read_table_query(
             table_name, where, group_by, order_by, limit, column_names
         )
-        results = self.run_query(query)
+        try:
+            results = self.run_query(query)
+        except IndexError:
+            # run_operation returns [] when the query fails (e.g. table/view not found).
+            # When raise_if_empty=False, treat missing table as empty result.
+            if raise_if_empty:
+                raise
+            return []
         if raise_if_empty and len(results) == 0:
             raise ValueError(
                 f"Table '{table_name}' with the '{where}' condition is empty."
