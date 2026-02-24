@@ -65,7 +65,7 @@
         {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
         {# Add note when test uses sampling #}
         {% set test_params = elementary_test_results_row.get('test_params', {}) %}
-        {% if test_params is mapping and test_params.get('sample_percent') %}
+        {% if test_params is mapping and test_params.get('sample_percent') is number and test_params.get('sample_percent') > 0 and test_params.get('sample_percent') < 100 %}
           {% do elementary_test_results_row.update({
             'test_results_description': (elementary_test_results_row.get('test_results_description') or '') ~ ' Note: this test uses sample_percent, so result samples may not exactly match the failure count.'
           }) %}
