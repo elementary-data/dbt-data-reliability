@@ -69,6 +69,16 @@
   {% endif %}
 
   {% set result_rows = elementary.query_test_result_rows(sample_limit=sample_limit, ignore_passed_tests=true) %}
+
+  {# Truncate result rows if they exceed dbt's failure count (can happen with non-deterministic queries) #}
+  {% if result_rows | length > 0 %}
+    {% set test_result = elementary.get_test_result() %}
+    {% set dbt_failures = test_result.failures | int %}
+    {% if dbt_failures > 0 and result_rows | length > dbt_failures %}
+      {% set result_rows = result_rows[:dbt_failures] %}
+    {% endif %}
+  {% endif %}
+
   {% set elementary_test_results_row = elementary.get_dbt_test_result_row(flattened_test, result_rows) %}
   {% do elementary.cache_elementary_test_results_rows([elementary_test_results_row]) %}
   {% do return(result) %}

@@ -63,6 +63,13 @@
         {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                   'failed_row_count': elementary_test_failed_row_count}) %}
         {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
+        {# Add note when test uses sampling #}
+        {% set test_params = elementary_test_results_row.get('test_params', {}) %}
+        {% if test_params is mapping and test_params.get('sample_percent') %}
+          {% do elementary_test_results_row.update({
+            'test_results_description': (elementary_test_results_row.get('test_results_description') or '') ~ ' Note: this test uses sample_percent, so result samples may not exactly match the failure count.'
+          }) %}
+        {% endif %}
         {% if render_result_rows %}
           {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
         {% endif %}
