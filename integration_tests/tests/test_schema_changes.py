@@ -58,9 +58,7 @@ def test_schema_changes(test_id: str, dbt_project: DbtProject):
 
 
 # Schema changes currently not supported on targets
-@pytest.mark.skip_targets(
-    ["databricks", "spark", "athena", "trino", "clickhouse", "duckdb"]
-)
+@pytest.mark.skip_targets(["databricks", "spark", "athena", "trino", "clickhouse"])
 def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
     dbt_test_name = "elementary.schema_changes_from_baseline"
     test_results = dbt_project.test(
