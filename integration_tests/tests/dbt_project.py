@@ -59,14 +59,27 @@ class DbtProject:
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
         self.seeds_dir_path = self.project_dir_path / "data"
 
+    _RUN_QUERY_MAX_RETRIES = 3
+
     def run_query(self, prerendered_query: str):
-        results = json.loads(
-            self.dbt_runner.run_operation(
+        for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
+            run_operation_results = self.dbt_runner.run_operation(
                 "elementary.render_run_query",
                 macro_args={"prerendered_query": prerendered_query},
-            )[0]
+            )
+            if run_operation_results:
+                return json.loads(run_operation_results[0])
+            logger.warning(
+                "run_operation('elementary.render_run_query') returned no output "
+                "(attempt %d/%d)",
+                attempt,
+                self._RUN_QUERY_MAX_RETRIES,
+            )
+        raise RuntimeError(
+            f"run_operation('elementary.render_run_query') returned no output "
+            f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
+            f"Query: {prerendered_query!r}"
         )
-        return results
 
     @staticmethod
     def read_table_query(
