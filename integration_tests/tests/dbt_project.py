@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -60,6 +61,7 @@ class DbtProject:
         self.seeds_dir_path = self.project_dir_path / "data"
 
     _RUN_QUERY_MAX_RETRIES = 3
+    _RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
 
     def run_query(self, prerendered_query: str):
         for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
@@ -75,6 +77,8 @@ class DbtProject:
                 attempt,
                 self._RUN_QUERY_MAX_RETRIES,
             )
+            if attempt < self._RUN_QUERY_MAX_RETRIES:
+                time.sleep(self._RUN_QUERY_RETRY_DELAY_SECONDS)
         raise RuntimeError(
             f"run_operation('elementary.render_run_query') returned no output "
             f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
