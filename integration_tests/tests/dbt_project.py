@@ -1,14 +1,12 @@
 import json
 import os
-import re
-import urllib.parse
-import urllib.request
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
+from clickhouse_utils import fix_clickhouse_seed_nulls
 from data_seeder import DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
@@ -278,144 +276,7 @@ class DbtProject:
         # Nullable and updating default values back to NULLs directly via the ClickHouse HTTP
         # API, since dbt's run_query/statement don't reliably execute DDL on ClickHouse.
         elif self.target == "clickhouse" and data:
-            self._fix_clickhouse_seed_nulls(table_name, data)
-
-    def _get_clickhouse_schema(self) -> str:
-        """Get the ClickHouse database (schema) name from dbt profiles.yml.
-
-        In ClickHouse, database and schema are the same concept. The schema
-        name comes from the dbt profile's 'schema' property, with the
-        SCHEMA_NAME_SUFFIX appended for parallel test workers.
-        """
-        profiles_path = Path.home() / ".dbt" / "profiles.yml"
-        yaml = YAML()
-        with open(profiles_path) as f:
-            profiles = yaml.load(f)
-        # Navigate to the clickhouse target schema
-        base_schema = (
-            profiles.get("elementary_tests", {})
-            .get("outputs", {})
-            .get("clickhouse", {})
-            .get("schema", "default")
-        )
-        return f"{base_schema}{SCHEMA_NAME_SUFFIX}"
-
-    def _fix_clickhouse_seed_nulls(self, table_name: str, data: List[dict]):
-        """Fix ClickHouse seed tables where NULL values became default values.
-
-        ClickHouse columns are non-Nullable by default, so NULL values in CSV seeds
-        become default values (0 for Int, '' for String, etc.). This method:
-        1. Determines which columns had NULL values in the original data
-        2. ALTERs those columns to Nullable types
-        3. Rebuilds the table via INSERT SELECT with nullIf() to restore NULLs
-
-        Uses the ClickHouse HTTP API directly because dbt's run_query/statement
-        don't reliably execute DDL on ClickHouse.
-        """
-        # Find columns that contain at least one NULL in the original data
-        nullable_columns: set = set()
-        for row in data:
-            for col_name, value in row.items():
-                if value is None:
-                    nullable_columns.add(col_name)
-        if not nullable_columns:
-            return
-
-        schema = self._get_clickhouse_schema()
-        ch_host = os.environ.get("CLICKHOUSE_HOST", "localhost")
-        ch_port = os.environ.get("CLICKHOUSE_PORT", "8123")
-        ch_user = os.environ.get("CLICKHOUSE_USER", "default")
-        ch_password = os.environ.get("CLICKHOUSE_PASSWORD", "default")
-        ch_url = f"http://{ch_host}:{ch_port}"
-
-        def ch_query(query: str) -> str:
-            encoded = query.encode("utf-8")
-            query_string = urllib.parse.urlencode(
-                {"user": ch_user, "password": ch_password, "mutations_sync": 1}
-            )
-            req = urllib.request.Request(
-                f"{ch_url}/?{query_string}",
-                data=encoded,
-            )
-            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
-                return resp.read().decode("utf-8")
-
-        # Get all columns and their types
-        # Validate identifiers to prevent SQL injection
-        if not re.fullmatch(r"[A-Za-z0-9_]+", schema):
-            raise ValueError(f"Invalid schema name: {schema!r}")
-        if not re.fullmatch(r"[A-Za-z0-9_]+", table_name):
-            raise ValueError(f"Invalid table name: {table_name!r}")
-
-        cols_result = ch_query(
-            f"SELECT name, type FROM system.columns "
-            f"WHERE database = '{schema}' AND table = '{table_name}'"
-        ).strip()
-        if not cols_result:
-            logger.warning(
-                "ClickHouse fix: no columns found for %s.%s – "
-                "schema may be wrong (using '%s'). NULLs will not be repaired.",
-                schema,
-                table_name,
-                schema,
-            )
-            return
-
-        columns = []
-        for line in cols_result.split("\n"):
-            parts = line.strip().split("\t")
-            if len(parts) == 2:
-                columns.append((parts[0], parts[1]))
-
-        # Build SELECT expressions: use nullIf() for nullable columns
-        select_exprs = []
-        for col_name, col_type in columns:
-            if col_name in nullable_columns:
-                # Strip Nullable(...) wrapper from a prior run to avoid
-                # Nullable(Nullable(...)) nesting
-                base_type = col_type
-                if base_type.startswith("Nullable(") and base_type.endswith(")"):
-                    base_type = base_type[len("Nullable(") : -1]
-                # Get the default value for this type to use with nullIf
-                if (
-                    base_type == "String"
-                    or base_type.startswith("FixedString")
-                    or base_type.startswith("LowCardinality")
-                ):
-                    default_val = "''"
-                elif base_type.startswith("Int") or base_type.startswith("UInt"):
-                    default_val = "0"
-                elif base_type.startswith("Float"):
-                    default_val = "0"
-                else:
-                    default_val = "defaultValueOfTypeName('" + base_type + "')"
-                select_exprs.append(
-                    f"nullIf(`{col_name}`, {default_val})::Nullable({base_type}) as `{col_name}`"
-                )
-            else:
-                select_exprs.append(f"`{col_name}`")
-
-        # Rebuild the table: CREATE temp AS SELECT with nullIf, EXCHANGE, DROP
-        tmp_name = f"{table_name}_tmp_nullable"
-        select_sql = ", ".join(select_exprs)
-
-        logger.info(
-            "ClickHouse fix: rebuilding %s.%s with Nullable columns: %s",
-            schema,
-            table_name,
-            nullable_columns,
-        )
-
-        ch_query(f"DROP TABLE IF EXISTS {schema}.{tmp_name}")
-        try:
-            ch_query(
-                f"CREATE TABLE {schema}.{tmp_name} "
-                f"ENGINE = MergeTree() ORDER BY tuple() "
-                f"AS SELECT {select_sql} FROM {schema}.{table_name}"
-            )
-            ch_query(f"EXCHANGE TABLES {schema}.{table_name} AND {schema}.{tmp_name}")
-        finally:
-            ch_query(f"DROP TABLE IF EXISTS {schema}.{tmp_name}")
+            fix_clickhouse_seed_nulls(table_name, data, SCHEMA_NAME_SUFFIX)
 
     @contextmanager
     def seed_context(
