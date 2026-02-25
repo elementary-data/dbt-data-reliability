@@ -35,6 +35,11 @@
         {% do adapter.drop_relation(insert_relation) %}
     {% endif %}
 
+    {# DuckDB: commit cleanup drops so they survive dbt's post-on-run-end ROLLBACK too #}
+    {% if target.type == 'duckdb' and (delete_relation or insert_relation) %}
+        {% do adapter.commit() %}
+    {% endif %}
+
     {% do elementary.file_log("Finished deleting from and inserting to: {}".format(relation)) %}
 {% endmacro %}
 
@@ -184,7 +189,7 @@
     {% do return(queries) %}
 {% endmacro %}
 
-{# DuckDB - separate queries without transaction wrapping (commit handled by caller via should_commit) #}
+{# DuckDB - separate queries without transaction wrapping (commit handled in delete_and_insert) #}
 {% macro duckdb__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
