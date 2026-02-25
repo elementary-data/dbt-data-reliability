@@ -80,11 +80,9 @@
         missing_bucket_starts as (
             select all_buckets.bucket_start
             from all_buckets
-            left outer join buckets_with_existing_metrics existing on (
-                existing.bucket_start = all_buckets.bucket_start and
-                existing.bucket_end = all_buckets.bucket_end
+            where (all_buckets.bucket_start, all_buckets.bucket_end) not in (
+                select bucket_start, bucket_end from buckets_with_existing_metrics
             )
-            where existing.bucket_start is NULL
         ),
         min_bucket_start_candidates as (
             select bucket_start from missing_bucket_starts
