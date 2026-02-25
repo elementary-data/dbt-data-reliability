@@ -66,7 +66,6 @@ def _create_model_sql(owner: Optional[str] = None, columns: str = "1 as id") -> 
     """
 
 
-@pytest.mark.skip_targets(["duckdb"])
 def test_single_parent_test_owner_attribution(dbt_project: DbtProject) -> None:
     """
     Test that a test on a single model correctly inherits the owner from that model.
@@ -115,7 +114,7 @@ def test_single_parent_test_owner_attribution(dbt_project: DbtProject) -> None:
             ], f"Expected model_owners to be ['{owner_name}'], got {model_owners}"
 
 
-@pytest.mark.skip_targets(["dremio", "duckdb"])
+@pytest.mark.skip_targets(["dremio"])
 @pytest.mark.skip_for_dbt_fusion
 def test_relationship_test_uses_primary_model_owner_only(
     dbt_project: DbtProject,
@@ -211,7 +210,7 @@ def test_relationship_test_uses_primary_model_owner_only(
             ], f"Expected model_owners to be ['{primary_owner}'] (primary model only), got {model_owners}. Referenced model owner '{referenced_owner}' should NOT be included."
 
 
-@pytest.mark.skip_targets(["dremio", "duckdb"])
+@pytest.mark.skip_targets(["dremio"])
 @pytest.mark.skip_for_dbt_fusion
 def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject) -> None:
     """
@@ -298,7 +297,6 @@ def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject) ->
             ), f"Expected model_owners to be empty (primary model has no owner), got {model_owners}. Referenced model owner '{referenced_owner}' should NOT be inherited."
 
 
-@pytest.mark.skip_targets(["duckdb"])
 def test_owner_deduplication(dbt_project: DbtProject) -> None:
     """
     Test that duplicate owners in a model's owner field are deduplicated.

@@ -1,4 +1,4 @@
-{% macro delete_and_insert(relation, insert_rows=none, delete_values=none, delete_column_key=none) %}
+{% macro delete_and_insert(relation, insert_rows=none, delete_values=none, delete_column_key=none, should_commit=false) %}
     {% do elementary.file_log("Deleting from and inserting to: {}".format(relation)) %}
     {% set delete_rows = [] %}
     {% for delete_val in delete_values %}
@@ -21,6 +21,10 @@
     {% for query in queries %}
         {% do elementary.run_query(query) %}
     {% endfor %}
+
+    {% if should_commit %}
+        {% do adapter.commit() %}
+    {% endif %}
 
     {# Make sure we delete the temp tables we created #}
     {% if delete_relation %}
@@ -179,6 +183,7 @@
     {% do return(queries) %}
 {% endmacro %}
 
+{# DuckDB - separate queries without transaction wrapping (commit handled by caller via should_commit) #}
 {% macro duckdb__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
