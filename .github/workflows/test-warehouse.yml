@@ -121,6 +121,14 @@ jobs:
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
           cat > ~/.dbt/profiles.yml <<EOFPROFILE
+          elementary:
+            target: duckdb
+            outputs:
+              duckdb:
+                type: duckdb
+                path: ":memory:"
+                schema: "dbt_pkg_${UNDERSCORED_REF_NAME}"
+                threads: 8
           elementary_tests:
             target: duckdb
             outputs:
