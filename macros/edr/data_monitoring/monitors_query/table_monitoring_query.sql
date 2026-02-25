@@ -312,10 +312,13 @@
         {{ elementary.const_as_string(metric.name) }} as metric_name,
         {{ elementary.const_as_string("event_freshness") }} as metric_type,
         cast(max(monitored_table_event_timestamp_column) as Nullable({{ elementary.edr_type_string() }})) as source_value,
-        {{ 'coalesce(max({}), {})'.format(
-                elementary.timediff('second', elementary.edr_cast_as_timestamp('monitored_table_event_timestamp_column'), elementary.edr_cast_as_timestamp('monitored_table_timestamp_column')),
-                elementary.timediff('second', 'edr_bucket_start', 'edr_bucket_end')
-            ) }} as metric_value
+        {# In ClickHouse, edr_cast_as_timestamp coalesces NULL to epoch and edr_datediff coalesces NULL to 0,
+           so we must explicitly check for NULL before computing timediff to preserve the coalesce fallback logic #}
+        case
+            when max(monitored_table_event_timestamp_column) is not null
+            then max(dateDiff('second', monitored_table_event_timestamp_column, monitored_table_timestamp_column))
+            else {{ elementary.timediff('second', 'edr_bucket_start', 'edr_bucket_end') }}
+        end as metric_value
     from buckets left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
     group by 1,2
 {% endmacro %}
