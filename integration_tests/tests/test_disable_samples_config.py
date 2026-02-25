@@ -1,6 +1,5 @@
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "sensitive_data"
@@ -20,7 +19,6 @@ SAMPLES_QUERY = """
 """
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_config_prevents_sampling(
     test_id: str, dbt_project: DbtProject
 ):
@@ -48,7 +46,6 @@ def test_disable_samples_config_prevents_sampling(
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_false_allows_sampling(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -77,7 +74,6 @@ def test_disable_samples_false_allows_sampling(test_id: str, dbt_project: DbtPro
         assert sample[COLUMN_NAME] is None
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_config_overrides_pii_tags(
     test_id: str, dbt_project: DbtProject
 ):
@@ -106,7 +102,6 @@ def test_disable_samples_config_overrides_pii_tags(
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProject):
     """Test that disable_test_samples and PII columns both get excluded"""
     data = [
@@ -137,7 +132,6 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_disable_samples_with_multiple_columns(test_id: str, dbt_project: DbtProject):
     """Test that disable_test_samples excludes only the disabled column"""
     data = [{"col1": None, "col2": f"value{i}"} for i in range(10)]
