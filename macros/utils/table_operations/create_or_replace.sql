@@ -32,3 +32,7 @@
 {% macro clickhouse__create_or_replace(temporary, relation, sql_query) %}
     {% do elementary.edr_create_table_as(temporary, relation, sql_query, drop_first=true) %}
 {% endmacro %}
+
+{% macro duckdb__create_or_replace(temporary, relation, sql_query) %}
+    {% do elementary.edr_create_table_as(temporary, relation, sql_query, drop_first=true, should_commit=true) %}
+{% endmacro %}

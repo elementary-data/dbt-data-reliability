@@ -258,6 +258,7 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
                 dbt_model_path_2.unlink()
 
 
+@pytest.mark.skip_targets(["duckdb"])
 def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a test on a model assigned to a group inherits the group attribute in the dbt_tests artifact table.
@@ -320,7 +321,7 @@ def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.requires_dbt_version("1.9.4")
-@pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_targets(["dremio", "duckdb"])
 def test_test_override_group(dbt_project: DbtProject, tmp_path):
     """
     Test that a singular test defined in schema.yml, which belongs to a model with a group, but also has a config: section with another group,

@@ -17,6 +17,7 @@ on:
           - trino
           - clickhouse
           - dremio
+          - duckdb
       elementary-ref:
         type: string
         required: false
@@ -113,15 +114,34 @@ jobs:
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
+      - name: Write DuckDB profiles
+        if: inputs.warehouse-type == 'duckdb'
+        run: |
+          mkdir -p ~/.dbt
+          DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
+          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
+          cat > ~/.dbt/profiles.yml <<EOFPROFILE
+          elementary_tests:
+            target: duckdb
+            outputs:
+              duckdb:
+                type: duckdb
+                path: ":memory:"
+                schema: "dbt_pkg_${UNDERSCORED_REF_NAME}"
+                threads: 8
+          EOFPROFILE
+          sed -i 's/^          //' ~/.dbt/profiles.yml
+
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
         run: |
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
 
       - name: Install Elementary
-        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
+        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'duckdb' && 'postgres') || inputs.warehouse-type }}]"
 
       - name: Write dbt profiles
+        if: inputs.warehouse-type != 'duckdb'
         env:
           PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
         run: |

@@ -41,6 +41,10 @@
     date_format({{ date_expr }}, '%W')
 {% endmacro %}
 
+{% macro duckdb__edr_day_of_week_expression(date_expr) %}
+    dayname({{ date_expr }})
+{% endmacro %}
+
 {% macro dremio__edr_day_of_week_expression(date_expr) %}
     TO_CHAR({{ date_expr }}, 'DAY')
 {% endmacro %}
