@@ -97,7 +97,7 @@
             upper(table_schema) as schema_name,
             upper(table_name) as table_name
         from information_schema.tables
-            where upper(table_schema) = upper('{{ schema_name }}')
+            where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
 
     )
 

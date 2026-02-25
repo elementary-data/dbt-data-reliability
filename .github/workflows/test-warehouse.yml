@@ -120,14 +120,14 @@ jobs:
           mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          cat > ~/.dbt/profiles.yml <<EOFPROFILE
+          cat > ~/.dbt/profiles.yml << 'EOFPROFILE'
           elementary:
             target: duckdb
             outputs:
               duckdb:
                 type: duckdb
                 path: ":memory:"
-                schema: "dbt_pkg_${UNDERSCORED_REF_NAME}"
+                schema: "SCHEMA_PLACEHOLDER"
                 threads: 8
           elementary_tests:
             target: duckdb
@@ -135,10 +135,11 @@ jobs:
               duckdb:
                 type: duckdb
                 path: ":memory:"
-                schema: "dbt_pkg_${UNDERSCORED_REF_NAME}"
+                schema: "SCHEMA_PLACEHOLDER"
                 threads: 8
           EOFPROFILE
           sed -i 's/^          //' ~/.dbt/profiles.yml
+          sed -i "s/SCHEMA_PLACEHOLDER/dbt_pkg_${UNDERSCORED_REF_NAME}/g" ~/.dbt/profiles.yml
 
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'

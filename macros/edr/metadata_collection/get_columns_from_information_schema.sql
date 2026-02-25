@@ -98,7 +98,7 @@
         upper(column_name) as column_name,
         data_type
     from information_schema.columns
-    where upper(table_schema) = upper('{{ schema_name }}')
+    where upper(table_schema) = upper('{{ schema_name }}') and upper(table_catalog) = upper('{{ database_name }}')
     {% if table_name %}
       and upper(table_name) = upper('{{ table_name }}')
     {% endif %}

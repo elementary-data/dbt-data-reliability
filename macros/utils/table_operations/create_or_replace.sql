@@ -33,6 +33,8 @@
     {% do elementary.edr_create_table_as(temporary, relation, sql_query, drop_first=true) %}
 {% endmacro %}
 
+{# DuckDB uses CREATE OR REPLACE TABLE, so drop_first is not needed.
+   should_commit=true ensures the table survives the ROLLBACK issued by test connections. #}
 {% macro duckdb__create_or_replace(temporary, relation, sql_query) %}
-    {% do elementary.edr_create_table_as(temporary, relation, sql_query, drop_first=true, should_commit=true) %}
+    {% do elementary.edr_create_table_as(temporary, relation, sql_query, should_commit=true) %}
 {% endmacro %}
