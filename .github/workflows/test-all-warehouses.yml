@@ -87,7 +87,31 @@ jobs:
         dbt-version:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official"]') }}
-        warehouse-type: [clickhouse]
+        warehouse-type:
+          [
+            postgres,
+            snowflake,
+            bigquery,
+            redshift,
+            databricks_catalog,
+            athena,
+            trino,
+            clickhouse,
+            dremio,
+          ]
+        include:
+          - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
+            warehouse-type: postgres
+          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+            warehouse-type: snowflake
+          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+            warehouse-type: bigquery
+          # fusion/redshift temporarily disabled - Fusion sidecar can't resolve
+          # source schemas via SVV_COLUMNS on Redshift (see dbt-labs/dbt-fusion issues)
+          # - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+          #   warehouse-type: redshift
+          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+            warehouse-type: databricks_catalog
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
