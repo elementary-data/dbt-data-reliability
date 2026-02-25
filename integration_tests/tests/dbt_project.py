@@ -280,6 +280,26 @@ class DbtProject:
         elif self.target == "clickhouse" and data:
             self._fix_clickhouse_seed_nulls(table_name, data)
 
+    def _get_clickhouse_schema(self) -> str:
+        """Get the ClickHouse database (schema) name from dbt profiles.yml.
+
+        In ClickHouse, database and schema are the same concept. The schema
+        name comes from the dbt profile's 'schema' property, with the
+        SCHEMA_NAME_SUFFIX appended for parallel test workers.
+        """
+        profiles_path = Path.home() / ".dbt" / "profiles.yml"
+        yaml = YAML()
+        with open(profiles_path) as f:
+            profiles = yaml.load(f)
+        # Navigate to the clickhouse target schema
+        base_schema = (
+            profiles.get("elementary_tests", {})
+            .get("outputs", {})
+            .get("clickhouse", {})
+            .get("schema", "default")
+        )
+        return f"{base_schema}{SCHEMA_NAME_SUFFIX}"
+
     def _fix_clickhouse_seed_nulls(self, table_name: str, data: List[dict]):
         """Fix ClickHouse seed tables where NULL values became default values.
 
@@ -301,7 +321,7 @@ class DbtProject:
         if not nullable_columns:
             return
 
-        schema = f"default{SCHEMA_NAME_SUFFIX}"
+        schema = self._get_clickhouse_schema()
         ch_host = os.environ.get("CLICKHOUSE_HOST", "localhost")
         ch_port = os.environ.get("CLICKHOUSE_PORT", "8123")
         ch_user = os.environ.get("CLICKHOUSE_USER", "default")
