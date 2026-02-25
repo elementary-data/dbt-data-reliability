@@ -258,6 +258,8 @@ def test_two_groups(dbt_project: DbtProject, tmp_path):
                 dbt_model_path_2.unlink()
 
 
+# DuckDB skipped: dynamically created models/tests are not re-parsed within the same :memory:
+# session, so the dbt_tests artifact table is not populated for mid-run YAML additions.
 @pytest.mark.skip_targets(["duckdb"])
 def test_test_group_attribute(dbt_project: DbtProject, tmp_path):
     """
