@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import urllib.request
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -289,8 +291,6 @@ class DbtProject:
         Uses the ClickHouse HTTP API directly because dbt's run_query/statement
         don't reliably execute DDL on ClickHouse.
         """
-        import urllib.request
-
         # Find columns that contain at least one NULL in the original data
         nullable_columns: set = set()
         for row in data:
@@ -300,19 +300,29 @@ class DbtProject:
         if not nullable_columns:
             return
 
-        schema = f"default{SCHEMA_NAME_SUFFIX}" if SCHEMA_NAME_SUFFIX else "default"
-        ch_url = "http://localhost:8123"
+        schema = f"default{SCHEMA_NAME_SUFFIX}"
+        ch_host = os.environ.get("CLICKHOUSE_HOST", "localhost")
+        ch_port = os.environ.get("CLICKHOUSE_PORT", "8123")
+        ch_user = os.environ.get("CLICKHOUSE_USER", "default")
+        ch_password = os.environ.get("CLICKHOUSE_PASSWORD", "default")
+        ch_url = f"http://{ch_host}:{ch_port}"
 
         def ch_query(query: str) -> str:
             encoded = query.encode("utf-8")
             req = urllib.request.Request(
-                f"{ch_url}/?user=default&password=default&mutations_sync=1",
+                f"{ch_url}/?user={ch_user}&password={ch_password}&mutations_sync=1",
                 data=encoded,
             )
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310
                 return resp.read().decode("utf-8")
 
         # Get all columns and their types
+        # Validate identifiers to prevent SQL injection
+        if not re.fullmatch(r"[A-Za-z0-9_]+", schema):
+            raise ValueError(f"Invalid schema name: {schema!r}")
+        if not re.fullmatch(r"[A-Za-z0-9_]+", table_name):
+            raise ValueError(f"Invalid table name: {table_name!r}")
+
         cols_result = ch_query(
             f"SELECT name, type FROM system.columns "
             f"WHERE database = '{schema}' AND table = '{table_name}'"

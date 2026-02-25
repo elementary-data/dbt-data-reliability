@@ -15,7 +15,7 @@
                     alter table {{ relation }} modify column `{{ col['name'] }}` Nullable(String)
                 {% endcall %}
                 {% call statement('update_nulls_' ~ col['name'], fetch_result=False) %}
-                    alter table {{ relation }} update `{{ col['name'] }}` = NULL where `{{ col['name'] }}` = ''
+                    alter table {{ relation }} update `{{ col['name'] }}` = NULL where `{{ col['name'] }}` = '' settings mutations_sync = 1
                 {% endcall %}
             {% endif %}
         {% endfor %}
