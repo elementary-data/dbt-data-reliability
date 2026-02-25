@@ -1,4 +1,4 @@
-{% macro delete_and_insert(relation, insert_rows=none, delete_values=none, delete_column_key=none, should_commit=false) %}
+{% macro delete_and_insert(relation, insert_rows=none, delete_values=none, delete_column_key=none) %}
     {% do elementary.file_log("Deleting from and inserting to: {}".format(relation)) %}
     {% set delete_rows = [] %}
     {% for delete_val in delete_values %}
@@ -22,7 +22,8 @@
         {% do elementary.run_query(query) %}
     {% endfor %}
 
-    {% if should_commit %}
+    {# DuckDB: explicit commit so changes survive dbt's post-on-run-end ROLLBACK #}
+    {% if target.type == 'duckdb' %}
         {% do adapter.commit() %}
     {% endif %}
 

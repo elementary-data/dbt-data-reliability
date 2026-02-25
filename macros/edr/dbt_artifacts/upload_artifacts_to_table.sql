@@ -31,7 +31,7 @@
                 {% do elementary.file_log("[{}] Artifacts changed.".format(table_relation.identifier)) %}
                 {% set added_artifacts = flatten_artifact_dicts | rejectattr("metadata_hash", "in", upload_artifact_method.metadata_hashes) | list %}
                 {% set removed_artifact_hashes = upload_artifact_method.metadata_hashes | reject("in", new_metadata_hashes) | list %}
-                {% do elementary.delete_and_insert(table_relation, insert_rows=added_artifacts, delete_values=removed_artifact_hashes, delete_column_key="metadata_hash", should_commit=should_commit) %}
+                {% do elementary.delete_and_insert(table_relation, insert_rows=added_artifacts, delete_values=removed_artifact_hashes, delete_column_key="metadata_hash") %}
             {% endif %}
         {% else %}
             {% do elementary.replace_table_data(table_relation, flatten_artifact_dicts) %}
