@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import urllib.parse
 import urllib.request
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
@@ -309,8 +310,11 @@ class DbtProject:
 
         def ch_query(query: str) -> str:
             encoded = query.encode("utf-8")
+            query_string = urllib.parse.urlencode(
+                {"user": ch_user, "password": ch_password, "mutations_sync": 1}
+            )
             req = urllib.request.Request(
-                f"{ch_url}/?user={ch_user}&password={ch_password}&mutations_sync=1",
+                f"{ch_url}/?{query_string}",
                 data=encoded,
             )
             with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310

@@ -38,3 +38,7 @@
 {% macro trino__edr_hour_of_week_expression(date_expr) %}
     date_format({{ date_expr }}, '%W%H')
 {% endmacro %}
+
+{% macro clickhouse__edr_hour_of_week_expression(date_expr) %}
+    concat(formatDateTime({{ date_expr }}, '%W'), formatDateTime({{ date_expr }}, '%H'))
+{% endmacro %}
