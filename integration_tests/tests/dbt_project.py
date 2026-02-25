@@ -318,6 +318,13 @@ class DbtProject:
             f"WHERE database = '{schema}' AND table = '{table_name}'"
         ).strip()
         if not cols_result:
+            logger.warning(
+                "ClickHouse fix: no columns found for %s.%s – "
+                "schema may be wrong (using '%s'). NULLs will not be repaired.",
+                schema,
+                table_name,
+                schema,
+            )
             return
 
         columns = []
@@ -330,17 +337,26 @@ class DbtProject:
         select_exprs = []
         for col_name, col_type in columns:
             if col_name in nullable_columns:
+                # Strip Nullable(...) wrapper from a prior run to avoid
+                # Nullable(Nullable(...)) nesting
+                base_type = col_type
+                if base_type.startswith("Nullable(") and base_type.endswith(")"):
+                    base_type = base_type[len("Nullable(") : -1]
                 # Get the default value for this type to use with nullIf
-                if col_type == "String":
+                if (
+                    base_type == "String"
+                    or base_type.startswith("FixedString")
+                    or base_type.startswith("LowCardinality")
+                ):
                     default_val = "''"
-                elif col_type.startswith("Int") or col_type.startswith("UInt"):
+                elif base_type.startswith("Int") or base_type.startswith("UInt"):
                     default_val = "0"
-                elif col_type.startswith("Float"):
+                elif base_type.startswith("Float"):
                     default_val = "0"
                 else:
-                    default_val = "defaultValueOfTypeName('" + col_type + "')"
+                    default_val = "defaultValueOfTypeName('" + base_type + "')"
                 select_exprs.append(
-                    f"nullIf(`{col_name}`, {default_val})::Nullable({col_type}) as `{col_name}`"
+                    f"nullIf(`{col_name}`, {default_val})::Nullable({base_type}) as `{col_name}`"
                 )
             else:
                 select_exprs.append(f"`{col_name}`")
@@ -357,13 +373,15 @@ class DbtProject:
         )
 
         ch_query(f"DROP TABLE IF EXISTS {schema}.{tmp_name}")
-        ch_query(
-            f"CREATE TABLE {schema}.{tmp_name} "
-            f"ENGINE = MergeTree() ORDER BY tuple() "
-            f"AS SELECT {select_sql} FROM {schema}.{table_name}"
-        )
-        ch_query(f"EXCHANGE TABLES {schema}.{table_name} AND {schema}.{tmp_name}")
-        ch_query(f"DROP TABLE {schema}.{tmp_name}")
+        try:
+            ch_query(
+                f"CREATE TABLE {schema}.{tmp_name} "
+                f"ENGINE = MergeTree() ORDER BY tuple() "
+                f"AS SELECT {select_sql} FROM {schema}.{table_name}"
+            )
+            ch_query(f"EXCHANGE TABLES {schema}.{table_name} AND {schema}.{tmp_name}")
+        finally:
+            ch_query(f"DROP TABLE IF EXISTS {schema}.{tmp_name}")
 
     @contextmanager
     def seed_context(
@@ -372,6 +390,7 @@ class DbtProject:
         with DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         ).seed(data, table_name):
+            self._fix_seed_if_needed(table_name, data)
             yield
 
     @contextmanager

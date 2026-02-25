@@ -12,10 +12,10 @@
             {% set normalized_data_type = elementary.normalize_data_type(data_type) %}
             {% if normalized_data_type == "string" %}
                 {% call statement('alter_nullable_' ~ col['name'], fetch_result=False) %}
-                    alter table {{ relation }} modify column {{ col['name'] }} Nullable(String)
+                    alter table {{ relation }} modify column `{{ col['name'] }}` Nullable(String)
                 {% endcall %}
                 {% call statement('update_nulls_' ~ col['name'], fetch_result=False) %}
-                    alter table {{ relation }} update {{ col['name'] }} = NULL where {{ col['name'] }} = ''
+                    alter table {{ relation }} update `{{ col['name'] }}` = NULL where `{{ col['name'] }}` = ''
                 {% endcall %}
             {% endif %}
         {% endfor %}
