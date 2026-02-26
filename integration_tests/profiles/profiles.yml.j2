@@ -80,17 +80,9 @@ elementary_tests:
       http_path: {{ databricks_http_path }}
       catalog: {{ databricks_catalog }}
       schema: {{ schema_name }}
+      auth_type: oauth
       client_id: {{ databricks_client_id }}
       client_secret: {{ databricks_client_secret }}
-      threads: 4
-
-    spark: &spark
-      type: spark
-      method: http
-      host: {{ spark_host }}
-      token: {{ spark_token }}
-      cluster: {{ spark_cluster }}
-      schema: {{ schema_name }}
       threads: 4
 
     athena: &athena
@@ -109,7 +101,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'spark', 'athena'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}
