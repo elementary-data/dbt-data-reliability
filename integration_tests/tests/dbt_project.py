@@ -60,28 +60,36 @@ class DbtProject:
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
         self.seeds_dir_path = self.project_dir_path / "data"
 
-    _RUN_QUERY_MAX_RETRIES = 3
-    _RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
+    # dbt-fusion occasionally drops the MACRO_RESULT_PATTERN log line,
+    # causing run_operation() to return an empty list.  Retry only when
+    # running under fusion to work around this log-capture race.
+    _FUSION_RUN_QUERY_MAX_RETRIES = 3
+    _FUSION_RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
 
     def run_query(self, prerendered_query: str):
-        for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
+        max_attempts = (
+            self._FUSION_RUN_QUERY_MAX_RETRIES
+            if self.runner_method == RunnerMethod.FUSION
+            else 1
+        )
+        for attempt in range(1, max_attempts + 1):
             run_operation_results = self.dbt_runner.run_operation(
                 "elementary.render_run_query",
                 macro_args={"prerendered_query": prerendered_query},
             )
             if run_operation_results:
                 return json.loads(run_operation_results[0])
-            logger.warning(
-                "run_operation('elementary.render_run_query') returned no output "
-                "(attempt %d/%d)",
-                attempt,
-                self._RUN_QUERY_MAX_RETRIES,
-            )
-            if attempt < self._RUN_QUERY_MAX_RETRIES:
-                time.sleep(self._RUN_QUERY_RETRY_DELAY_SECONDS)
+            if attempt < max_attempts:
+                logger.warning(
+                    "run_operation('elementary.render_run_query') returned no "
+                    "output on fusion runner (attempt %d/%d, retrying)",
+                    attempt,
+                    max_attempts,
+                )
+                time.sleep(self._FUSION_RUN_QUERY_RETRY_DELAY_SECONDS)
         raise RuntimeError(
             f"run_operation('elementary.render_run_query') returned no output "
-            f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
+            f"after {max_attempts} attempt(s). "
             f"Query: {prerendered_query!r}"
         )
 
