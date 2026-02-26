@@ -1,6 +1,6 @@
 elementary_tests:
   target: postgres
-  outputs:
+  outputs: &outputs
 
     # ── Docker targets (plaintext, no secrets needed) ──────────────────
 
@@ -103,3 +103,8 @@ elementary_tests:
       aws_access_key_id: ${ATHENA_AWS_ACCESS_KEY_ID}
       aws_secret_access_key: ${ATHENA_AWS_SECRET_ACCESS_KEY}
       threads: 4
+
+# The root dbt_project.yml uses profile "elementary", so we alias the same outputs.
+elementary:
+  target: postgres
+  outputs: *outputs
