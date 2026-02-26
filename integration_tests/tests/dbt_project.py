@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -14,11 +13,12 @@ from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
+from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
 
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
 
-# Retry constants for the run_operation fallback path.  run_operation() can
+# Retry settings for the run_operation fallback path.  run_operation() can
 # intermittently return an empty list when the MACRO_RESULT_PATTERN log line
 # is not captured from dbt's output.
 _RUN_QUERY_MAX_RETRIES = 3
@@ -87,32 +87,39 @@ class DbtProject:
         # Slow path: full Jinja rendering via run_operation (with retry).
         return self._run_query_with_run_operation(prerendered_query)
 
+    @retry(
+        retry=retry_if_result(lambda r: r is None),
+        stop=stop_after_attempt(_RUN_QUERY_MAX_RETRIES),
+        wait=wait_fixed(_RUN_QUERY_RETRY_DELAY_SECONDS),
+        reraise=True,
+    )
+    def _run_operation_with_retry(self, prerendered_query: str) -> Optional[list]:
+        """Call run_operation and return the parsed result, or None to trigger retry."""
+        run_operation_results = self.dbt_runner.run_operation(
+            "elementary.render_run_query",
+            macro_args={"prerendered_query": prerendered_query},
+        )
+        if run_operation_results:
+            return json.loads(run_operation_results[0])
+        logger.warning(
+            "run_operation('elementary.render_run_query') returned no output, retrying"
+        )
+        return None
+
     def _run_query_with_run_operation(self, prerendered_query: str):
         """Execute a query via run_operation with retry on empty output.
 
         run_operation() can intermittently return an empty list when the
         MACRO_RESULT_PATTERN log line is not captured from dbt's output.
         """
-        for attempt in range(1, _RUN_QUERY_MAX_RETRIES + 1):
-            run_operation_results = self.dbt_runner.run_operation(
-                "elementary.render_run_query",
-                macro_args={"prerendered_query": prerendered_query},
+        result = self._run_operation_with_retry(prerendered_query)
+        if result is None:
+            raise RuntimeError(
+                f"run_operation('elementary.render_run_query') returned no output "
+                f"after {_RUN_QUERY_MAX_RETRIES} attempts. "
+                f"Query: {prerendered_query!r}"
             )
-            if run_operation_results:
-                return json.loads(run_operation_results[0])
-            if attempt < _RUN_QUERY_MAX_RETRIES:
-                logger.warning(
-                    "run_operation('elementary.render_run_query') returned no "
-                    "output (attempt %d/%d, retrying)",
-                    attempt,
-                    _RUN_QUERY_MAX_RETRIES,
-                )
-                time.sleep(_RUN_QUERY_RETRY_DELAY_SECONDS)
-        raise RuntimeError(
-            f"run_operation('elementary.render_run_query') returned no output "
-            f"after {_RUN_QUERY_MAX_RETRIES} attempts. "
-            f"Query: {prerendered_query!r}"
-        )
+        return result
 
     @staticmethod
     def read_table_query(
