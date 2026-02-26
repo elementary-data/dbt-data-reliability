@@ -40,7 +40,14 @@ elementary_tests:
       user: dremio
       password: dremio123
       use_ssl: false
+      datalake: S3Source
+      database: elementary_ci
       schema: {{ schema_name }}
+      object_storage_source: S3Source
+      object_storage_path: datalake.elementary_ci.{{ schema_name }}
+      root_path: datalake.elementary_ci.{{ schema_name }}
+      dremio_space: elementary_ci
+      dremio_space_folder: {{ schema_name }}
       threads: 4
 
     # ── Cloud targets (secrets substituted at CI time) ─────────────────
@@ -62,6 +69,8 @@ elementary_tests:
       project: {{ bigquery_project }}
       dataset: {{ schema_name }}
       keyfile_json: {{ bigquery_keyfile | toyaml }}
+      location: US
+      priority: interactive
       threads: 4
 
     redshift: &redshift
