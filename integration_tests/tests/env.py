@@ -33,14 +33,19 @@ class Environment:
                 "Subsequent seeds and queries will likely fail with "
                 "SCHEMA_NOT_FOUND or TABLE_OR_VIEW_NOT_FOUND."
             )
+            raise RuntimeError(
+                "Test environment initialization failed during "
+                "'dbt run --selector init'. Check the dbt output above "
+                "for the root cause."
+            )
         elementary_success = self.dbt_runner.run(select="elementary")
         if not elementary_success:
             logger.error(
                 "Environment init failed: 'dbt run --select elementary' "
                 "returned failure. Elementary models may not be available."
             )
-        if not init_success or not elementary_success:
             raise RuntimeError(
-                "Test environment initialization failed. Check the dbt "
-                "output above for the root cause."
+                "Test environment initialization failed during "
+                "'dbt run --select elementary'. Check the dbt output "
+                "above for the root cause."
             )
