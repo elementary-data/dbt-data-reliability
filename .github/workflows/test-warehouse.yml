@@ -123,12 +123,21 @@ jobs:
 
       - name: Write dbt profiles
         env:
-          PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
+          SECRETS_JSON: ${{ secrets.CI_WAREHOUSE_SECRETS && format('{0}', secrets.CI_WAREHOUSE_SECRETS) || '' }}
         run: |
           mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+          export SCHEMA_NAME="dbt_pkg_$UNDERSCORED_REF_NAME"
+
+          if [ -n "$SECRETS_JSON" ]; then
+            DECODED=$(echo "$SECRETS_JSON" | base64 -d)
+            echo "$DECODED" | jq -r '.BIGQUERY_KEYFILE' > /tmp/bigquery_keyfile.json
+            export BIGQUERY_KEYFILE_PATH=/tmp/bigquery_keyfile.json
+            eval "$(echo "$DECODED" | jq -r 'to_entries[] | select(.value | type == "string") | "export \(.key)=\(.value | @sh)"')"
+          fi
+
+          envsubst < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
