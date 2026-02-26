@@ -1,4 +1,6 @@
+import json
 import os
+import time
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -61,8 +63,42 @@ class DbtProject:
 
         self._query_runner = AdapterQueryRunner(project_dir, target)
 
+    # Retry constants for the run_operation fallback path.  run_operation()
+    # can intermittently return an empty list when the MACRO_RESULT_PATTERN
+    # log line is not captured from dbt's output.
+    _RUN_QUERY_MAX_RETRIES = 3
+    _RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
+
     def run_query(self, prerendered_query: str):
-        return self._query_runner.run_query(prerendered_query)
+        # Fast path: queries that only contain {{ ref() }} can be executed
+        # directly through the adapter, bypassing run_operation log parsing.
+        try:
+            return self._query_runner.run_query(prerendered_query)
+        except ValueError:
+            # Query contains Jinja beyond ref(); fall back to run_operation.
+            pass
+
+        # Slow path: full Jinja rendering via run_operation (with retry).
+        for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
+            run_operation_results = self.dbt_runner.run_operation(
+                "elementary.render_run_query",
+                macro_args={"prerendered_query": prerendered_query},
+            )
+            if run_operation_results:
+                return json.loads(run_operation_results[0])
+            if attempt < self._RUN_QUERY_MAX_RETRIES:
+                logger.warning(
+                    "run_operation('elementary.render_run_query') returned no "
+                    "output (attempt %d/%d, retrying)",
+                    attempt,
+                    self._RUN_QUERY_MAX_RETRIES,
+                )
+                time.sleep(self._RUN_QUERY_RETRY_DELAY_SECONDS)
+        raise RuntimeError(
+            f"run_operation('elementary.render_run_query') returned no output "
+            f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
+            f"Query: {prerendered_query!r}"
+        )
 
     @staticmethod
     def read_table_query(

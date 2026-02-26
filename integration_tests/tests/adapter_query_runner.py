@@ -21,6 +21,9 @@ logger = get_logger(__name__)
 # Pattern that matches {{ ref('name') }} or {{ ref("name") }} with optional whitespace
 _REF_PATTERN = re.compile(r"\{\{\s*ref\(\s*['\"]([^'\"]+)['\"]\s*\)\s*\}\}")
 
+# Pattern that matches any Jinja expression {{ ... }}
+_JINJA_EXPR_PATTERN = re.compile(r"\{\{.*?\}\}")
+
 
 def _serialize_value(val: Any) -> Any:
     """Mimic elementary's ``agate_to_dicts`` serialisation.
@@ -138,12 +141,29 @@ class AdapterQueryRunner:
     # Query execution
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def has_non_ref_jinja(query: str) -> bool:
+        """Return True if *query* contains Jinja expressions other than ``{{ ref(...) }}``."""
+        stripped = _REF_PATTERN.sub("", query)
+        return bool(_JINJA_EXPR_PATTERN.search(stripped))
+
     def run_query(self, prerendered_query: str) -> List[Dict[str, Any]]:
         """Render Jinja refs and execute a query, returning rows as dicts.
 
         Column names are lower-cased and values are serialised to match the
         behaviour of ``elementary.agate_to_dicts``.
+
+        If the query contains Jinja expressions beyond simple ``{{ ref() }}``
+        calls (e.g. ``{{ elementary.missing_count(...) }}``), this method
+        raises ``ValueError`` so the caller can fall back to
+        ``run_operation`` which handles full Jinja rendering.
         """
+        if self.has_non_ref_jinja(prerendered_query):
+            raise ValueError(
+                "Query contains Jinja expressions that cannot be resolved "
+                "from the manifest alone (only {{ ref() }} is supported)."
+            )
+
         sql = self.resolve_refs(prerendered_query)
         with self._adapter.connection_named("run_query"):
             _response, table = self._adapter.execute(sql, fetch=True)
