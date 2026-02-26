@@ -114,6 +114,9 @@ jobs:
           fromJSON('["latest_official"]') }}
         warehouse-type:
           [snowflake, bigquery, redshift, databricks_catalog, athena, spark]
+        # Fusion includes: always run fusion alongside the base version for
+        # supported warehouses.  When inputs.dbt-version is already 'fusion' the
+        # matrix deduplicates automatically.
         include:
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: snowflake

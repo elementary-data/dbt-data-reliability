@@ -124,7 +124,7 @@ jobs:
       - name: Write dbt profiles
         env:
           # New lean JSON secret (base64 encoded)
-          SECRETS_JSON: ${{ secrets.CI_WAREHOUSE_SECRETS && format('{0}', secrets.CI_WAREHOUSE_SECRETS) || '' }}
+          SECRETS_JSON: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
           # Backwards-compat fallback while migrating secrets
           PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
         run: |
@@ -141,10 +141,13 @@ jobs:
 
           if [ -n "$SECRETS_JSON" ]; then
             DECODED=$(echo "$SECRETS_JSON" | base64 -d)
-            BIGQUERY_KEYFILE_PATH="$(mktemp /tmp/bigquery_keyfile.XXXXXX.json)"
-            echo "$DECODED" | jq -r '.BIGQUERY_KEYFILE' > "$BIGQUERY_KEYFILE_PATH"
-            chmod 600 "$BIGQUERY_KEYFILE_PATH"
-            export BIGQUERY_KEYFILE_PATH
+            BQ_KEYFILE_CONTENT=$(echo "$DECODED" | jq -r '.BIGQUERY_KEYFILE // empty')
+            if [ -n "$BQ_KEYFILE_CONTENT" ]; then
+              BIGQUERY_KEYFILE_PATH="$(mktemp /tmp/bigquery_keyfile.XXXXXX.json)"
+              echo "$BQ_KEYFILE_CONTENT" > "$BIGQUERY_KEYFILE_PATH"
+              chmod 600 "$BIGQUERY_KEYFILE_PATH"
+              export BIGQUERY_KEYFILE_PATH
+            fi
 
             while IFS= read -r entry; do
               key=$(jq -r '.key' <<<"$entry")
@@ -161,8 +164,9 @@ jobs:
           elif [ -n "$PROFILES_YML" ]; then
             echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/$SCHEMA_NAME/g" > ~/.dbt/profiles.yml
           else
-            # Fork PRs: no secrets available, but docker targets are still runnable.
-            envsubst < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
+            # Fork PRs: no secrets available — only substitute SCHEMA_NAME so
+            # cloud-target placeholders stay as-is (only docker targets work).
+            envsubst '$SCHEMA_NAME' < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
           fi
 
       - name: Install dependencies
