@@ -82,7 +82,9 @@
     'fail_on_zero': false,
     'anomaly_exclude_metrics': none,
     'disable_samples_on_pii_tags': false,
-    'pii_tags': ['pii']
+    'pii_tags': ['pii'],
+    'partition_run_results': false,
+    'run_results_partition_by': none,
   } %}
   {{- return(default_config) -}}
 {%- endmacro -%}
@@ -90,6 +92,9 @@
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({'query_max_size': 250000}) %}
+    {% do default_config.update({
+      'run_results_partition_by': {'field': 'created_at', 'data_type': 'timestamp', 'granularity': 'day'},
+    }) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 

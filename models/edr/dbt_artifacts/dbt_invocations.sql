@@ -4,6 +4,7 @@
     transient=False,
     unique_key = 'invocation_id',
     on_schema_change = 'append_new_columns',
+    partition_by=elementary.get_config_var('run_results_partition_by') if elementary.get_config_var('partition_run_results') else none,
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
     meta={
       "timestamp_column": "created_at",

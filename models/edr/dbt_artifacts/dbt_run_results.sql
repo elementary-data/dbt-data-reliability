@@ -9,6 +9,7 @@
       {'columns': ['unique_id', 'created_at']},
       {'columns': ['model_execution_id']},
     ] if target.type == "postgres" else [],
+    partition_by=elementary.get_config_var('run_results_partition_by') if elementary.get_config_var('partition_run_results') else none,
     full_refresh=elementary.get_config_var('elementary_full_refresh'),
     meta={
       "dedup_by_column": "model_execution_id",
