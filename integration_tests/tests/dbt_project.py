@@ -60,36 +60,31 @@ class DbtProject:
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
         self.seeds_dir_path = self.project_dir_path / "data"
 
-    # dbt-fusion occasionally drops the MACRO_RESULT_PATTERN log line,
-    # causing run_operation() to return an empty list.  Retry only when
-    # running under fusion to work around this log-capture race.
-    _FUSION_RUN_QUERY_MAX_RETRIES = 3
-    _FUSION_RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
+    # run_operation() can intermittently return an empty list when the
+    # MACRO_RESULT_PATTERN log line is not captured from dbt's output.
+    # Observed on both dbt-fusion (bigquery) and dbt-core (databricks).
+    _RUN_QUERY_MAX_RETRIES = 3
+    _RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
 
     def run_query(self, prerendered_query: str):
-        max_attempts = (
-            self._FUSION_RUN_QUERY_MAX_RETRIES
-            if self.runner_method == RunnerMethod.FUSION
-            else 1
-        )
-        for attempt in range(1, max_attempts + 1):
+        for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
             run_operation_results = self.dbt_runner.run_operation(
                 "elementary.render_run_query",
                 macro_args={"prerendered_query": prerendered_query},
             )
             if run_operation_results:
                 return json.loads(run_operation_results[0])
-            if attempt < max_attempts:
+            if attempt < self._RUN_QUERY_MAX_RETRIES:
                 logger.warning(
                     "run_operation('elementary.render_run_query') returned no "
-                    "output on fusion runner (attempt %d/%d, retrying)",
+                    "output (attempt %d/%d, retrying)",
                     attempt,
-                    max_attempts,
+                    self._RUN_QUERY_MAX_RETRIES,
                 )
-                time.sleep(self._FUSION_RUN_QUERY_RETRY_DELAY_SECONDS)
+                time.sleep(self._RUN_QUERY_RETRY_DELAY_SECONDS)
         raise RuntimeError(
             f"run_operation('elementary.render_run_query') returned no output "
-            f"after {max_attempts} attempt(s). "
+            f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
             f"Query: {prerendered_query!r}"
         )
 
