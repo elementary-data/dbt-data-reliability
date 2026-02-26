@@ -13,7 +13,13 @@ from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
-from tenacity import retry, retry_if_result, stop_after_attempt, wait_fixed
+from tenacity import (
+    RetryCallState,
+    retry,
+    retry_if_result,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
@@ -84,15 +90,27 @@ class DbtProject:
         try:
             return self._get_query_runner().run_query(prerendered_query)
         except UnsupportedJinjaError:
-            pass
+            logger.debug("Query contains complex Jinja; falling back to run_operation")
 
         # Slow path: full Jinja rendering via run_operation (with retry).
         return self._run_query_with_run_operation(prerendered_query)
+
+    @staticmethod
+    def _log_retry(retry_state: RetryCallState) -> None:
+        """Tenacity before_sleep callback — logs each retry with attempt number."""
+        logger.warning(
+            "run_operation('elementary.render_run_query') returned no output; "
+            "retry %d/%d in %.1fs",
+            retry_state.attempt_number,
+            _RUN_QUERY_MAX_RETRIES,
+            _RUN_QUERY_RETRY_DELAY_SECONDS,
+        )
 
     @retry(
         retry=retry_if_result(lambda r: r is None),
         stop=stop_after_attempt(_RUN_QUERY_MAX_RETRIES),
         wait=wait_fixed(_RUN_QUERY_RETRY_DELAY_SECONDS),
+        before_sleep=_log_retry.__func__,
         reraise=True,
     )
     def _run_operation_with_retry(self, prerendered_query: str) -> Optional[list]:
@@ -103,9 +121,6 @@ class DbtProject:
         )
         if run_operation_results:
             return json.loads(run_operation_results[0])
-        logger.warning(
-            "run_operation('elementary.render_run_query') returned no output, retrying"
-        )
         return None
 
     def _run_query_with_run_operation(self, prerendered_query: str):
