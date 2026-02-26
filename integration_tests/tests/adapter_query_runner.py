@@ -14,9 +14,23 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dbt.adapters.base import BaseAdapter
 from logger import get_logger
 
 logger = get_logger(__name__)
+
+
+class UnsupportedJinjaError(Exception):
+    """Raised when a query contains Jinja expressions beyond ref()/source()."""
+
+    def __init__(self, query: str) -> None:
+        self.query = query
+        super().__init__(
+            "Query contains Jinja expressions beyond {{ ref() }} / {{ source() }} "
+            "which cannot be executed via the direct adapter path. "
+            "Use the run_operation fallback instead."
+        )
+
 
 # Pattern that matches {{ ref('name') }} or {{ ref("name") }} with optional whitespace
 _REF_PATTERN = re.compile(r"\{\{\s*ref\(\s*['\"]([^'\"]+)['\"]\s*\)\s*\}\}")
@@ -62,7 +76,7 @@ class AdapterQueryRunner:
     def __init__(self, project_dir: str, target: str) -> None:
         self._project_dir = project_dir
         self._target = target
-        self._adapter = self._create_adapter(project_dir, target)
+        self._adapter: BaseAdapter = self._create_adapter(project_dir, target)
         self._ref_map: Optional[Dict[str, str]] = None
         self._source_map: Optional[Dict[tuple, str]] = None
 
@@ -71,7 +85,7 @@ class AdapterQueryRunner:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _create_adapter(project_dir: str, target: str) -> Any:
+    def _create_adapter(project_dir: str, target: str) -> BaseAdapter:
         from argparse import Namespace
 
         from dbt.adapters.factory import get_adapter, register_adapter, reset_adapters
@@ -190,9 +204,11 @@ class AdapterQueryRunner:
         behaviour of ``elementary.agate_to_dicts``.
 
         Only ``{{ ref() }}`` and ``{{ source() }}`` Jinja expressions are
-        supported.  The caller should check ``has_non_ref_jinja()`` first and
-        use a different execution path for complex Jinja.
+        supported.  Raises ``UnsupportedJinjaError`` if the query contains
+        other Jinja expressions.
         """
+        if self.has_non_ref_jinja(prerendered_query):
+            raise UnsupportedJinjaError(prerendered_query)
         sql = self.resolve_refs(prerendered_query)
         with self._adapter.connection_named("run_query"):
             _response, table = self._adapter.execute(sql, fetch=True)

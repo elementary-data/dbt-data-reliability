@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
-from adapter_query_runner import AdapterQueryRunner
+from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
 from data_seeder import DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
@@ -81,8 +81,10 @@ class DbtProject:
         # Fast path: queries that only contain {{ ref() }} / {{ source() }}
         # can be executed directly through the adapter, bypassing
         # run_operation log parsing entirely.
-        if not AdapterQueryRunner.has_non_ref_jinja(prerendered_query):
+        try:
             return self._get_query_runner().run_query(prerendered_query)
+        except UnsupportedJinjaError:
+            pass
 
         # Slow path: full Jinja rendering via run_operation (with retry).
         return self._run_query_with_run_operation(prerendered_query)
