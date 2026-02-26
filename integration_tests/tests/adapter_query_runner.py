@@ -21,6 +21,11 @@ logger = get_logger(__name__)
 # Pattern that matches {{ ref('name') }} or {{ ref("name") }} with optional whitespace
 _REF_PATTERN = re.compile(r"\{\{\s*ref\(\s*['\"]([^'\"]+)['\"]\s*\)\s*\}\}")
 
+# Pattern that matches {{ source('source_name', 'table_name') }}
+_SOURCE_PATTERN = re.compile(
+    r"\{\{\s*source\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'\"]+)['\"]\s*\)\s*\}\}"
+)
+
 # Pattern that matches any Jinja expression {{ ... }}
 _JINJA_EXPR_PATTERN = re.compile(r"\{\{.*?\}\}")
 
@@ -59,6 +64,7 @@ class AdapterQueryRunner:
         self._target = target
         self._adapter = self._create_adapter(project_dir, target)
         self._ref_map: Optional[Dict[str, str]] = None
+        self._source_map: Optional[Dict[tuple, str]] = None
 
     # ------------------------------------------------------------------
     # Adapter bootstrap
@@ -72,14 +78,15 @@ class AdapterQueryRunner:
         from dbt.config.runtime import RuntimeConfig
         from dbt.flags import set_from_args
 
+        profiles_dir = os.environ.get("DBT_PROFILES_DIR", os.path.expanduser("~/.dbt"))
         args = Namespace(
             project_dir=project_dir,
-            profiles_dir=os.path.expanduser("~/.dbt"),
+            profiles_dir=profiles_dir,
             target=target,
             threads=1,
             vars={},
             profile=None,
-            PROFILES_DIR=os.path.expanduser("~/.dbt"),
+            PROFILES_DIR=profiles_dir,
             PROJECT_DIR=project_dir,
         )
         set_from_args(args, None)
@@ -94,8 +101,8 @@ class AdapterQueryRunner:
     # Ref resolution
     # ------------------------------------------------------------------
 
-    def _load_ref_map(self) -> Dict[str, str]:
-        """Build a ``{model_name: relation_name}`` map from the dbt manifest."""
+    def _load_manifest_maps(self) -> None:
+        """Load ref and source maps from the dbt manifest."""
         manifest_path = Path(self._project_dir) / "target" / "manifest.json"
         if not manifest_path.exists():
             raise FileNotFoundError(
@@ -112,30 +119,58 @@ class AdapterQueryRunner:
             if relation_name and name:
                 ref_map[name] = relation_name
 
-        # Also include sources (some queries reference source tables)
+        source_map: Dict[tuple, str] = {}
         for source in manifest.get("sources", {}).values():
             relation_name = source.get("relation_name")
             name = source.get("name")
-            if relation_name and name:
-                ref_map[name] = relation_name
+            source_name = source.get("source_name")
+            if relation_name and source_name and name:
+                source_map[(source_name, name)] = relation_name
+                # Also register source tables by name for simple ref() lookups
+                ref_map.setdefault(name, relation_name)
 
-        return ref_map
+        self._ref_map = ref_map
+        self._source_map = source_map
+
+    def _ensure_maps_loaded(self) -> None:
+        """Lazily load manifest maps on first use."""
+        if self._ref_map is None:
+            self._load_manifest_maps()
 
     def resolve_refs(self, query: str) -> str:
-        """Replace ``{{ ref('name') }}`` with the fully-qualified relation name."""
-        if self._ref_map is None:
-            self._ref_map = self._load_ref_map()
+        """Replace ``{{ ref('name') }}`` and ``{{ source('x','y') }}`` with relation names."""
+        self._ensure_maps_loaded()
+        assert self._ref_map is not None
+        assert self._source_map is not None
 
-        def _replace(match: re.Match) -> str:  # type: ignore[type-arg]
+        def _replace_ref(match: re.Match) -> str:  # type: ignore[type-arg]
             name = match.group(1)
             if name not in self._ref_map:
-                raise ValueError(
-                    f"Cannot resolve ref('{name}'): not found in dbt manifest.  "
-                    f"Known models: {sorted(self._ref_map)!r}"
-                )
+                # Manifest may have changed (temp models/seeds); reload once.
+                self._load_manifest_maps()
+                assert self._ref_map is not None
+                if name not in self._ref_map:
+                    raise ValueError(
+                        f"Cannot resolve ref('{name}'): not found in dbt manifest."
+                    )
             return self._ref_map[name]
 
-        return _REF_PATTERN.sub(_replace, query)
+        def _replace_source(match: re.Match) -> str:  # type: ignore[type-arg]
+            source_name, table_name = match.group(1), match.group(2)
+            key = (source_name, table_name)
+            if self._source_map is None or key not in self._source_map:
+                self._load_manifest_maps()
+                assert self._source_map is not None
+                if key not in self._source_map:
+                    raise ValueError(
+                        f"Cannot resolve source('{source_name}', '{table_name}'): "
+                        "not found in dbt manifest."
+                    )
+            return self._source_map[key]
+
+        query = _REF_PATTERN.sub(_replace_ref, query)
+        query = _SOURCE_PATTERN.sub(_replace_source, query)
+        return query
 
     # ------------------------------------------------------------------
     # Query execution
@@ -143,27 +178,21 @@ class AdapterQueryRunner:
 
     @staticmethod
     def has_non_ref_jinja(query: str) -> bool:
-        """Return True if *query* contains Jinja expressions other than ``{{ ref(...) }}``."""
+        """Return True if *query* contains Jinja beyond ``{{ ref() }}`` / ``{{ source() }}``."""
         stripped = _REF_PATTERN.sub("", query)
+        stripped = _SOURCE_PATTERN.sub("", stripped)
         return bool(_JINJA_EXPR_PATTERN.search(stripped))
 
     def run_query(self, prerendered_query: str) -> List[Dict[str, Any]]:
-        """Render Jinja refs and execute a query, returning rows as dicts.
+        """Render Jinja refs/sources and execute a query, returning rows as dicts.
 
         Column names are lower-cased and values are serialised to match the
         behaviour of ``elementary.agate_to_dicts``.
 
-        If the query contains Jinja expressions beyond simple ``{{ ref() }}``
-        calls (e.g. ``{{ elementary.missing_count(...) }}``), this method
-        raises ``ValueError`` so the caller can fall back to
-        ``run_operation`` which handles full Jinja rendering.
+        Only ``{{ ref() }}`` and ``{{ source() }}`` Jinja expressions are
+        supported.  The caller should check ``has_non_ref_jinja()`` first and
+        use a different execution path for complex Jinja.
         """
-        if self.has_non_ref_jinja(prerendered_query):
-            raise ValueError(
-                "Query contains Jinja expressions that cannot be resolved "
-                "from the manifest alone (only {{ ref() }} is supported)."
-            )
-
         sql = self.resolve_refs(prerendered_query)
         with self._adapter.connection_named("run_query"):
             _response, table = self._adapter.execute(sql, fetch=True)

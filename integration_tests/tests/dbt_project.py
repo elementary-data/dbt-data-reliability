@@ -18,6 +18,12 @@ from ruamel.yaml import YAML
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
 
+# Retry constants for the run_operation fallback path.  run_operation() can
+# intermittently return an empty list when the MACRO_RESULT_PATTERN log line
+# is not captured from dbt's output.
+_RUN_QUERY_MAX_RETRIES = 3
+_RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
+
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
@@ -61,42 +67,50 @@ class DbtProject:
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
         self.seeds_dir_path = self.project_dir_path / "data"
 
-        self._query_runner = AdapterQueryRunner(project_dir, target)
+        self._query_runner: Optional[AdapterQueryRunner] = None
 
-    # Retry constants for the run_operation fallback path.  run_operation()
-    # can intermittently return an empty list when the MACRO_RESULT_PATTERN
-    # log line is not captured from dbt's output.
-    _RUN_QUERY_MAX_RETRIES = 3
-    _RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
+    def _get_query_runner(self) -> AdapterQueryRunner:
+        """Lazily initialize the direct adapter query runner."""
+        if self._query_runner is None:
+            self._query_runner = AdapterQueryRunner(
+                str(self.project_dir_path), self.target
+            )
+        return self._query_runner
 
     def run_query(self, prerendered_query: str):
-        # Fast path: queries that only contain {{ ref() }} can be executed
-        # directly through the adapter, bypassing run_operation log parsing.
-        try:
-            return self._query_runner.run_query(prerendered_query)
-        except ValueError:
-            # Query contains Jinja beyond ref(); fall back to run_operation.
-            pass
+        # Fast path: queries that only contain {{ ref() }} / {{ source() }}
+        # can be executed directly through the adapter, bypassing
+        # run_operation log parsing entirely.
+        if not AdapterQueryRunner.has_non_ref_jinja(prerendered_query):
+            return self._get_query_runner().run_query(prerendered_query)
 
         # Slow path: full Jinja rendering via run_operation (with retry).
-        for attempt in range(1, self._RUN_QUERY_MAX_RETRIES + 1):
+        return self._run_query_with_run_operation(prerendered_query)
+
+    def _run_query_with_run_operation(self, prerendered_query: str):
+        """Execute a query via run_operation with retry on empty output.
+
+        run_operation() can intermittently return an empty list when the
+        MACRO_RESULT_PATTERN log line is not captured from dbt's output.
+        """
+        for attempt in range(1, _RUN_QUERY_MAX_RETRIES + 1):
             run_operation_results = self.dbt_runner.run_operation(
                 "elementary.render_run_query",
                 macro_args={"prerendered_query": prerendered_query},
             )
             if run_operation_results:
                 return json.loads(run_operation_results[0])
-            if attempt < self._RUN_QUERY_MAX_RETRIES:
+            if attempt < _RUN_QUERY_MAX_RETRIES:
                 logger.warning(
                     "run_operation('elementary.render_run_query') returned no "
                     "output (attempt %d/%d, retrying)",
                     attempt,
-                    self._RUN_QUERY_MAX_RETRIES,
+                    _RUN_QUERY_MAX_RETRIES,
                 )
-                time.sleep(self._RUN_QUERY_RETRY_DELAY_SECONDS)
+                time.sleep(_RUN_QUERY_RETRY_DELAY_SECONDS)
         raise RuntimeError(
             f"run_operation('elementary.render_run_query') returned no output "
-            f"after {self._RUN_QUERY_MAX_RETRIES} attempts. "
+            f"after {_RUN_QUERY_MAX_RETRIES} attempts. "
             f"Query: {prerendered_query!r}"
         )
 
