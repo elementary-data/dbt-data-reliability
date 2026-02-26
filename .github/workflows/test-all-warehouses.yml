@@ -113,7 +113,7 @@ jobs:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official"]') }}
         warehouse-type:
-          [snowflake, bigquery, redshift, databricks_catalog, athena]
+          [snowflake, bigquery, redshift, databricks_catalog, athena, spark]
         include:
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: snowflake

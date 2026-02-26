@@ -123,21 +123,47 @@ jobs:
 
       - name: Write dbt profiles
         env:
+          # New lean JSON secret (base64 encoded)
           SECRETS_JSON: ${{ secrets.CI_WAREHOUSE_SECRETS && format('{0}', secrets.CI_WAREHOUSE_SECRETS) || '' }}
+          # Backwards-compat fallback while migrating secrets
+          PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
         run: |
           mkdir -p ~/.dbt
+
+          if ! command -v envsubst >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y gettext-base
+          fi
+
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
           export SCHEMA_NAME="dbt_pkg_$UNDERSCORED_REF_NAME"
 
           if [ -n "$SECRETS_JSON" ]; then
             DECODED=$(echo "$SECRETS_JSON" | base64 -d)
-            echo "$DECODED" | jq -r '.BIGQUERY_KEYFILE' > /tmp/bigquery_keyfile.json
-            export BIGQUERY_KEYFILE_PATH=/tmp/bigquery_keyfile.json
-            eval "$(echo "$DECODED" | jq -r 'to_entries[] | select(.value | type == "string") | "export \(.key)=\(.value | @sh)"')"
-          fi
+            BIGQUERY_KEYFILE_PATH="$(mktemp /tmp/bigquery_keyfile.XXXXXX.json)"
+            echo "$DECODED" | jq -r '.BIGQUERY_KEYFILE' > "$BIGQUERY_KEYFILE_PATH"
+            chmod 600 "$BIGQUERY_KEYFILE_PATH"
+            export BIGQUERY_KEYFILE_PATH
 
-          envsubst < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
+            while IFS= read -r entry; do
+              key=$(jq -r '.key' <<<"$entry")
+              value=$(jq -r '.value' <<<"$entry")
+              if [[ "$key" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+                printf -v "$key" '%s' "$value"
+                export "$key"
+              else
+                echo "Skipping invalid secret key: $key" >&2
+              fi
+            done < <(echo "$DECODED" | jq -c 'to_entries[] | select(.key != "BIGQUERY_KEYFILE" and (.value | type == "string"))')
+
+            envsubst < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
+          elif [ -n "$PROFILES_YML" ]; then
+            echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/$SCHEMA_NAME/g" > ~/.dbt/profiles.yml
+          else
+            # Fork PRs: no secrets available, but docker targets are still runnable.
+            envsubst < "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.template" > ~/.dbt/profiles.yml
+          fi
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
