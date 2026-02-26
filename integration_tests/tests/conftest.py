@@ -6,7 +6,7 @@ from typing import Optional
 import pytest
 import yaml
 from dbt.version import __version__ as dbt_version
-from dbt_project import DbtProject
+from dbt_project import PYTEST_XDIST_WORKER, SCHEMA_NAME_SUFFIX, DbtProject
 from elementary.clients.dbt.factory import RunnerMethod
 from env import Environment
 from logger import get_logger
@@ -90,10 +90,17 @@ def init_tests_env(
 ):
     env = Environment(target, project_dir_copy, runner_method)
     if not skip_init:
-        logger.info("Initializing test environment")
+        logger.info(
+            "Initializing test environment (worker=%s, schema_suffix='%s')",
+            PYTEST_XDIST_WORKER or "main",
+            SCHEMA_NAME_SUFFIX,
+        )
         env.clear()
         env.init()
-        logger.info("Initialization complete")
+        logger.info(
+            "Initialization complete (worker=%s)",
+            PYTEST_XDIST_WORKER or "main",
+        )
 
     yield
 

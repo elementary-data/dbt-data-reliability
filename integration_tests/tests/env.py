@@ -2,6 +2,9 @@ from typing import Optional
 
 import dbt_project
 from elementary.clients.dbt.factory import RunnerMethod
+from logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class Environment:
@@ -22,5 +25,22 @@ class Environment:
             self.dbt_runner.run_operation("elementary_tests.clear_env")
 
     def init(self):
-        self.dbt_runner.run(selector="init")
-        self.dbt_runner.run(select="elementary")
+        init_success = self.dbt_runner.run(selector="init")
+        if not init_success:
+            logger.error(
+                "Environment init failed: 'dbt run --selector init' returned "
+                "failure. The target schema may not have been created. "
+                "Subsequent seeds and queries will likely fail with "
+                "SCHEMA_NOT_FOUND or TABLE_OR_VIEW_NOT_FOUND."
+            )
+        elementary_success = self.dbt_runner.run(select="elementary")
+        if not elementary_success:
+            logger.error(
+                "Environment init failed: 'dbt run --select elementary' "
+                "returned failure. Elementary models may not be available."
+            )
+        if not init_success or not elementary_success:
+            raise RuntimeError(
+                "Test environment initialization failed. Check the dbt "
+                "output above for the root cause."
+            )
