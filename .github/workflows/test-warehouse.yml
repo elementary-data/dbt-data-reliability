@@ -134,20 +134,22 @@ jobs:
           # names like databricks_catalog, causing cross-branch schema
           # collisions when CI jobs ran concurrently.
           #
-          # New approach: <truncated_branch>_<8-char SHA-256 of concurrency group>
+          # New approach: <truncated_branch>_<YYMMDD>_<8-char SHA-256 of concurrency group>
           # The hash guarantees uniqueness across concurrent jobs (different
           # warehouse types, dbt versions, or branches).  The truncated branch
-          # name keeps schemas human-readable in the data platform.
+          # name keeps schemas human-readable in the data platform.  The date
+          # stamp (YYMMDD) makes it easy to identify and clean up old schemas.
           #
           # Schema name budget (PostgreSQL = most restrictive at 63 chars):
           #   dbt_pkg_  (8)  +  ref (≤40)  +  _elementary (11)  +  _gw7 (4)  = 63
-          # ref = branch (≤31 chars) + _ (1) + hash (8) = 40
+          # ref = branch (≤24) + _ (1) + date (6) + _ (1) + hash (8) = 40
           CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
           SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
-          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 31)
-          SCHEMA_SUFFIX="${SAFE_BRANCH}_${SHORT_HASH}"
+          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 24)
+          DATE_STAMP=$(date +%y%m%d)
+          SCHEMA_SUFFIX="${SAFE_BRANCH}_${DATE_STAMP}_${SHORT_HASH}"
 
-          echo "Schema suffix: $SCHEMA_SUFFIX (branch='${BRANCH_NAME}', hash of concurrency group)"
+          echo "Schema suffix: $SCHEMA_SUFFIX (branch='${BRANCH_NAME}', date=${DATE_STAMP}, hash of concurrency group)"
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
