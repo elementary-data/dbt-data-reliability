@@ -56,8 +56,16 @@ class Environment:
         short delay is sufficient to recover.
         """
         for attempt in range(1, _INIT_MAX_RETRIES + 1):
-            if run_fn():
-                return
+            try:
+                if run_fn():
+                    return
+            except Exception:
+                logger.exception(
+                    "'%s' raised an exception (attempt %d/%d).",
+                    label,
+                    attempt,
+                    _INIT_MAX_RETRIES,
+                )
             if attempt < _INIT_MAX_RETRIES:
                 logger.warning(
                     "'%s' failed (attempt %d/%d). Retrying in %ds...",

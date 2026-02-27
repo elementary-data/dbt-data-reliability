@@ -65,7 +65,18 @@ class DbtDataSeeder:
         A simple retry with a back-off delay is sufficient to recover.
         """
         for attempt in range(1, _SEED_MAX_RETRIES + 1):
-            success = self.dbt_runner.seed(select=relative_seed_path, full_refresh=True)
+            try:
+                success = self.dbt_runner.seed(
+                    select=relative_seed_path, full_refresh=True
+                )
+            except Exception:
+                logger.exception(
+                    "dbt seed raised an exception for '%s' (attempt %d/%d).",
+                    table_name,
+                    attempt,
+                    _SEED_MAX_RETRIES,
+                )
+                success = False
             if success:
                 return True
             if attempt < _SEED_MAX_RETRIES:
