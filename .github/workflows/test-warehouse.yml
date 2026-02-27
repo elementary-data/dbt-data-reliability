@@ -90,7 +90,13 @@ jobs:
       - name: Start Dremio
         if: inputs.warehouse-type == 'dremio'
         working-directory: ${{ env.TESTS_DIR }}
-        run: docker compose -f docker-compose-dremio.yml up -d --wait
+        run: |
+          docker compose -f docker-compose-dremio.yml up -d
+          # Wait for Dremio to be healthy (one-shot containers like
+          # minio-setup exit immediately, so --wait would fail).
+          echo "Waiting for Dremio to become healthy..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "Dremio is healthy."
 
       - name: Setup Python
         uses: actions/setup-python@v6
