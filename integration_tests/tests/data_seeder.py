@@ -29,7 +29,21 @@ class DbtDataSeeder:
                 writer.writeheader()
                 writer.writerows(data)
                 seed_file.flush()
-                self.dbt_runner.seed(select=str(relative_seed_path), full_refresh=True)
+                success = self.dbt_runner.seed(
+                    select=str(relative_seed_path), full_refresh=True
+                )
+                if not success:
+                    logger.error(
+                        "dbt seed failed for '%s'. This usually means the "
+                        "target schema does not exist or could not be created. "
+                        "Downstream queries will fail with "
+                        "TABLE_OR_VIEW_NOT_FOUND.",
+                        table_name,
+                    )
+                    raise RuntimeError(
+                        f"dbt seed failed for '{table_name}'. Check the dbt "
+                        f"output above for the root cause (e.g. SCHEMA_NOT_FOUND)."
+                    )
 
                 yield
         finally:

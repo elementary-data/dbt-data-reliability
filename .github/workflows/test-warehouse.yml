@@ -123,12 +123,15 @@ jobs:
 
       - name: Write dbt profiles
         env:
-          PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
+          CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+
+          python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
+            --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
+            --output ~/.dbt/profiles.yml \
+            --schema-name "dbt_pkg_$UNDERSCORED_REF_NAME"
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
