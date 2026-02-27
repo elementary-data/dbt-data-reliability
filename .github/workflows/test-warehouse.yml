@@ -126,25 +126,25 @@ jobs:
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          # Schema suffix = <branch≤24>_<YYMMDD>_<8-char SHA-256 of concurrency group>
+          # Schema name = dbt_<YYMMDD>_<branch≤28>_<8-char hash>
           # The hash prevents collisions across concurrent jobs; the branch
           # keeps it human-readable; the date helps with stale schema cleanup.
           #
           # Budget (PostgreSQL 63-char limit):
-          #   dbt_pkg_(8) + ref(≤40) + _elementary(11) + _gw7(4) = 63
-          #   ref = branch(≤24) + _(1) + date(6) + _(1) + hash(8) = 40
+          #   dbt_(4) + date(6) + _(1) + branch(≤28) + _(1) + hash(8) = 48
+          #   + _elementary(11) + _gw7(4) = 63
           CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
           SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
-          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 24)
+          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 28)
           DATE_STAMP=$(date +%y%m%d)
-          SCHEMA_SUFFIX="${SAFE_BRANCH}_${DATE_STAMP}_${SHORT_HASH}"
+          SCHEMA_NAME="dbt_${DATE_STAMP}_${SAFE_BRANCH}_${SHORT_HASH}"
 
-          echo "Schema suffix: $SCHEMA_SUFFIX (branch='${BRANCH_NAME}', date=${DATE_STAMP}, hash of concurrency group)"
+          echo "Schema name: $SCHEMA_NAME (branch='${BRANCH_NAME}', date=${DATE_STAMP}, hash of concurrency group)"
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
             --output ~/.dbt/profiles.yml \
-            --schema-name "dbt_pkg_$SCHEMA_SUFFIX"
+            --schema-name "$SCHEMA_NAME"
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
