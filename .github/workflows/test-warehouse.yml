@@ -126,26 +126,28 @@ jobs:
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          # Build a short, collision-free schema identifier.
+          # Build a short, collision-free schema identifier from the branch
+          # name and an 8-char hash of the full concurrency group.
           #
           # Previous approach used `head -c 40` on the full ref string, which
           # left only 1 character for branch differentiation on long warehouse
           # names like databricks_catalog, causing cross-branch schema
           # collisions when CI jobs ran concurrently.
           #
-          # New approach: <pr_number|run_id>_<8-char hash of concurrency group>
-          # This guarantees uniqueness across concurrent jobs while staying
-          # well within the 63-char PostgreSQL schema name limit.
+          # New approach: <truncated_branch>_<8-char SHA-256 of concurrency group>
+          # The hash guarantees uniqueness across concurrent jobs (different
+          # warehouse types, dbt versions, or branches).  The truncated branch
+          # name keeps schemas human-readable in the data platform.
+          #
+          # Schema name budget (PostgreSQL = most restrictive at 63 chars):
+          #   dbt_pkg_  (8)  +  ref (≤40)  +  _elementary (11)  +  _gw7 (4)  = 63
+          # ref = branch (≤31 chars) + _ (1) + hash (8) = 40
           CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
           SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
+          SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 31)
+          SCHEMA_SUFFIX="${SAFE_BRANCH}_${SHORT_HASH}"
 
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          if [ -n "$PR_NUMBER" ]; then
-            SCHEMA_SUFFIX="pr${PR_NUMBER}_${SHORT_HASH}"
-          else
-            # workflow_dispatch or other non-PR triggers — use run id
-            SCHEMA_SUFFIX="run${{ github.run_id }}_${SHORT_HASH}"
-          fi
+          echo "Schema suffix: $SCHEMA_SUFFIX (branch='${BRANCH_NAME}', hash of concurrency group)"
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
