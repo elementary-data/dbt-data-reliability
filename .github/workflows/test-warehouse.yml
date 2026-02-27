@@ -90,7 +90,7 @@ jobs:
       - name: Start Dremio
         if: inputs.warehouse-type == 'dremio'
         working-directory: ${{ env.TESTS_DIR }}
-        run: docker compose -f docker-compose-dremio.yml up -d
+        run: docker compose -f docker-compose-dremio.yml up -d --wait
 
       - name: Setup Python
         uses: actions/setup-python@v6
