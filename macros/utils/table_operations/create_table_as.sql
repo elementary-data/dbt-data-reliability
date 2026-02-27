@@ -87,8 +87,6 @@
 {% endmacro %}
 
 {% macro duckdb__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
-  {# DuckDB runs in :memory: mode where temp tables are not visible across connections/sessions.
-     We always create regular tables instead, relying on has_temp_table_support=false for cleanup. #}
-  create or replace table {{ relation }}
+  create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}

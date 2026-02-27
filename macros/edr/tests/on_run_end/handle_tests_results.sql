@@ -140,11 +140,6 @@
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}
     {% endif %}
-
-    {# DuckDB: commit cleanup drop so it survives dbt's post-on-run-end ROLLBACK too #}
-    {% if target.type == 'duckdb' %}
-        {% do adapter.commit() %}
-    {% endif %}
 {% endmacro %}
 
 {% macro insert_schema_columns_snapshot(database_name, schema_name, test_columns_snapshot_tables) %}
@@ -198,11 +193,6 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}
-    {% endif %}
-
-    {# DuckDB: commit cleanup drop so it survives dbt's post-on-run-end ROLLBACK too #}
-    {% if target.type == 'duckdb' %}
-        {% do adapter.commit() %}
     {% endif %}
 {% endmacro %}
 

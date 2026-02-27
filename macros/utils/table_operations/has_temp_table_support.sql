@@ -27,7 +27,10 @@
 {% endmacro %}
 
 {% macro duckdb__has_temp_table_support() %}
-    {% do return(false) %}
+    {# DuckDB supports temp tables within a single dbt invocation because the dbt-duckdb adapter
+       reuses the same cursor (DuckDBConnectionWrapper.cursor() returns a cached cursor instance).
+       All queries share one cursor, so temp tables are visible across all queries in the session. #}
+    {% do return(true) %}
 {% endmacro %}
 
 {% macro redshift__has_temp_table_support() %}
