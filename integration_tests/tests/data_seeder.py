@@ -63,13 +63,19 @@ class DbtDataSeeder:
         concurrent load from pytest-xdist workers, producing
         ``RemoteDisconnected`` / ``ConnectionError`` during seed.
         A simple retry with a back-off delay is sufficient to recover.
+
+        If every attempt fails due to an exception, the last exception is
+        preserved via ``raise ... from last_error`` so the caller gets the
+        original traceback.
         """
+        last_error: BaseException | None = None
         for attempt in range(1, _SEED_MAX_RETRIES + 1):
             try:
                 success = self.dbt_runner.seed(
                     select=relative_seed_path, full_refresh=True
                 )
-            except Exception:
+            except Exception as exc:
+                last_error = exc
                 logger.exception(
                     "dbt seed raised an exception for '%s' (attempt %d/%d).",
                     table_name,
@@ -88,4 +94,9 @@ class DbtDataSeeder:
                     _SEED_RETRY_DELAY_SECONDS,
                 )
                 time.sleep(_SEED_RETRY_DELAY_SECONDS)
+        if last_error is not None:
+            raise RuntimeError(
+                f"dbt seed failed for '{table_name}' after "
+                f"{_SEED_MAX_RETRIES} attempts."
+            ) from last_error
         return False

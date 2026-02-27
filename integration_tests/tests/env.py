@@ -55,11 +55,13 @@ class Environment:
         ``RemoteDisconnected`` / ``ConnectionError``.  Retrying after a
         short delay is sufficient to recover.
         """
+        last_error: BaseException | None = None
         for attempt in range(1, _INIT_MAX_RETRIES + 1):
             try:
                 if run_fn():
                     return
-            except Exception:
+            except Exception as exc:
+                last_error = exc
                 logger.exception(
                     "'%s' raised an exception (attempt %d/%d).",
                     label,
@@ -82,8 +84,11 @@ class Environment:
             _INIT_MAX_RETRIES,
             error_detail,
         )
-        raise RuntimeError(
+        message = (
             f"Test environment initialization failed during "
             f"'{label}' after {_INIT_MAX_RETRIES} attempts. "
             f"Check the dbt output above for the root cause."
         )
+        if last_error is not None:
+            raise RuntimeError(message) from last_error
+        raise RuntimeError(message)
