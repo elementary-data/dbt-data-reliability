@@ -55,7 +55,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     concurrency:
-      # This is what eventually defines the schema name in the data platform.
+      # Serialises runs for the same warehouse × dbt-version × branch.
+      # The schema name is derived from a hash of this group (see "Write dbt profiles").
       group: tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
@@ -125,13 +126,31 @@ jobs:
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
-          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
+          # Build a short, collision-free schema identifier.
+          #
+          # Previous approach used `head -c 40` on the full ref string, which
+          # left only 1 character for branch differentiation on long warehouse
+          # names like databricks_catalog, causing cross-branch schema
+          # collisions when CI jobs ran concurrently.
+          #
+          # New approach: <pr_number|run_id>_<8-char hash of concurrency group>
+          # This guarantees uniqueness across concurrent jobs while staying
+          # well within the 63-char PostgreSQL schema name limit.
+          CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
+          SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [ -n "$PR_NUMBER" ]; then
+            SCHEMA_SUFFIX="pr${PR_NUMBER}_${SHORT_HASH}"
+          else
+            # workflow_dispatch or other non-PR triggers — use run id
+            SCHEMA_SUFFIX="run${{ github.run_id }}_${SHORT_HASH}"
+          fi
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
             --output ~/.dbt/profiles.yml \
-            --schema-name "dbt_pkg_$UNDERSCORED_REF_NAME"
+            --schema-name "dbt_pkg_$SCHEMA_SUFFIX"
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
