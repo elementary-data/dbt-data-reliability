@@ -120,7 +120,7 @@ jobs:
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
 
       - name: Install Elementary
-        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'duckdb' && 'postgres') || inputs.warehouse-type }}]"
+        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
 
       - name: Write dbt profiles
         env:

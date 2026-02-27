@@ -60,8 +60,6 @@
 
 {# DuckDB - truncate and insert with commit to survive ROLLBACK on in-memory databases #}
 {% macro duckdb__replace_table_data(relation, rows) %}
-    {% call statement('truncate_relation') -%}
-        delete from {{ relation }} where 1=1
-    {%- endcall %}
+    {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_rows(relation, rows, should_commit=true, chunk_size=elementary.get_config_var('dbt_artifacts_chunk_size')) %}
 {% endmacro %}
