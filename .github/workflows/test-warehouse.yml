@@ -114,33 +114,6 @@ jobs:
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
           "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
-      - name: Write DuckDB profiles
-        if: inputs.warehouse-type == 'duckdb'
-        run: |
-          mkdir -p ~/.dbt
-          DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
-          UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          cat > ~/.dbt/profiles.yml << 'EOFPROFILE'
-          elementary:
-            target: duckdb
-            outputs:
-              duckdb:
-                type: duckdb
-                path: ":memory:"
-                schema: "SCHEMA_PLACEHOLDER"
-                threads: 8
-          elementary_tests:
-            target: duckdb
-            outputs:
-              duckdb:
-                type: duckdb
-                path: ":memory:"
-                schema: "SCHEMA_PLACEHOLDER"
-                threads: 8
-          EOFPROFILE
-          sed -i 's/^          //' ~/.dbt/profiles.yml
-          sed -i "s/SCHEMA_PLACEHOLDER/dbt_pkg_${UNDERSCORED_REF_NAME}/g" ~/.dbt/profiles.yml
-
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
         run: |
@@ -150,14 +123,16 @@ jobs:
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'duckdb' && 'postgres') || inputs.warehouse-type }}]"
 
       - name: Write dbt profiles
-        if: inputs.warehouse-type != 'duckdb'
         env:
-          PROFILES_YML: ${{ (inputs.dbt-version == 'fusion' && secrets.CI_PROFILES_YML_FUSION) || secrets.CI_PROFILES_YML }}
+          CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          mkdir -p ~/.dbt
           DBT_VERSION=$(echo "${{ inputs.dbt-version }}" | sed 's/\.//g')
           UNDERSCORED_REF_NAME=$(echo "${{ inputs.warehouse-type }}_dbt_${DBT_VERSION}_${BRANCH_NAME}" | awk '{print tolower($0)}' | head -c 40 | sed "s/[-\/]/_/g")
-          echo "$PROFILES_YML" | base64 -d | sed "s/<SCHEMA_NAME>/dbt_pkg_$UNDERSCORED_REF_NAME/g" > ~/.dbt/profiles.yml
+
+          python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
+            --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
+            --output ~/.dbt/profiles.yml \
+            --schema-name "dbt_pkg_$UNDERSCORED_REF_NAME"
 
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}

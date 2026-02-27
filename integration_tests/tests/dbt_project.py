@@ -6,15 +6,29 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
 from uuid import uuid4
 
+from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
 from data_seeder import DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
+from tenacity import (
+    RetryCallState,
+    retry,
+    retry_if_result,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
+
+# Retry settings for the run_operation fallback path.  run_operation() can
+# intermittently return an empty list when the MACRO_RESULT_PATTERN log line
+# is not captured from dbt's output.
+_RUN_QUERY_MAX_RETRIES = 3
+_RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
@@ -59,14 +73,70 @@ class DbtProject:
         self.tmp_models_dir_path = self.models_dir_path / "tmp"
         self.seeds_dir_path = self.project_dir_path / "data"
 
+        self._query_runner: Optional[AdapterQueryRunner] = None
+
+    def _get_query_runner(self) -> AdapterQueryRunner:
+        """Lazily initialize the direct adapter query runner."""
+        if self._query_runner is None:
+            self._query_runner = AdapterQueryRunner(
+                str(self.project_dir_path), self.target
+            )
+        return self._query_runner
+
     def run_query(self, prerendered_query: str):
-        results = json.loads(
-            self.dbt_runner.run_operation(
-                "elementary.render_run_query",
-                macro_args={"prerendered_query": prerendered_query},
-            )[0]
+        # Fast path: queries that only contain {{ ref() }} / {{ source() }}
+        # can be executed directly through the adapter, bypassing
+        # run_operation log parsing entirely.
+        try:
+            return self._get_query_runner().run_query(prerendered_query)
+        except UnsupportedJinjaError:
+            logger.debug("Query contains complex Jinja; falling back to run_operation")
+
+        # Slow path: full Jinja rendering via run_operation (with retry).
+        return self._run_query_with_run_operation(prerendered_query)
+
+    @staticmethod
+    def _log_retry(retry_state: RetryCallState) -> None:
+        """Tenacity before_sleep callback — logs each retry with attempt number."""
+        logger.warning(
+            "run_operation('elementary.render_run_query') returned no output; "
+            "retry %d/%d in %.1fs",
+            retry_state.attempt_number,
+            _RUN_QUERY_MAX_RETRIES,
+            _RUN_QUERY_RETRY_DELAY_SECONDS,
         )
-        return results
+
+    @retry(
+        retry=retry_if_result(lambda r: r is None),
+        stop=stop_after_attempt(_RUN_QUERY_MAX_RETRIES),
+        wait=wait_fixed(_RUN_QUERY_RETRY_DELAY_SECONDS),
+        before_sleep=_log_retry.__func__,
+        reraise=True,
+    )
+    def _run_operation_with_retry(self, prerendered_query: str) -> Optional[list]:
+        """Call run_operation and return the parsed result, or None to trigger retry."""
+        run_operation_results = self.dbt_runner.run_operation(
+            "elementary.render_run_query",
+            macro_args={"prerendered_query": prerendered_query},
+        )
+        if run_operation_results:
+            return json.loads(run_operation_results[0])
+        return None
+
+    def _run_query_with_run_operation(self, prerendered_query: str):
+        """Execute a query via run_operation with retry on empty output.
+
+        run_operation() can intermittently return an empty list when the
+        MACRO_RESULT_PATTERN log line is not captured from dbt's output.
+        """
+        result = self._run_operation_with_retry(prerendered_query)
+        if result is None:
+            raise RuntimeError(
+                f"run_operation('elementary.render_run_query') returned no output "
+                f"after {_RUN_QUERY_MAX_RETRIES} attempts. "
+                f"Query: {prerendered_query!r}"
+            )
+        return result
 
     @staticmethod
     def read_table_query(
