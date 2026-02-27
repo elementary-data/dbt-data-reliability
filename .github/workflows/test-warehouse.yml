@@ -126,23 +126,13 @@ jobs:
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          # Build a short, collision-free schema identifier from the branch
-          # name and an 8-char hash of the full concurrency group.
+          # Schema suffix = <branch≤24>_<YYMMDD>_<8-char SHA-256 of concurrency group>
+          # The hash prevents collisions across concurrent jobs; the branch
+          # keeps it human-readable; the date helps with stale schema cleanup.
           #
-          # Previous approach used `head -c 40` on the full ref string, which
-          # left only 1 character for branch differentiation on long warehouse
-          # names like databricks_catalog, causing cross-branch schema
-          # collisions when CI jobs ran concurrently.
-          #
-          # New approach: <truncated_branch>_<YYMMDD>_<8-char SHA-256 of concurrency group>
-          # The hash guarantees uniqueness across concurrent jobs (different
-          # warehouse types, dbt versions, or branches).  The truncated branch
-          # name keeps schemas human-readable in the data platform.  The date
-          # stamp (YYMMDD) makes it easy to identify and clean up old schemas.
-          #
-          # Schema name budget (PostgreSQL = most restrictive at 63 chars):
-          #   dbt_pkg_  (8)  +  ref (≤40)  +  _elementary (11)  +  _gw7 (4)  = 63
-          # ref = branch (≤24) + _ (1) + date (6) + _ (1) + hash (8) = 40
+          # Budget (PostgreSQL 63-char limit):
+          #   dbt_pkg_(8) + ref(≤40) + _elementary(11) + _gw7(4) = 63
+          #   ref = branch(≤24) + _(1) + date(6) + _(1) + hash(8) = 40
           CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
           SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
           SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g" | head -c 24)
