@@ -11,16 +11,20 @@
 {% endmacro %}
 
 {% macro default__edr_schema_exists(database, schema_name) %}
-  {% set result = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(catalog_name) = lower('" ~ database ~ "') AND lower(schema_name) = lower('" ~ schema_name ~ "')") %}
+  {% set safe_db = database | replace("'", "''") %}
+  {% set safe_schema = schema_name | replace("'", "''") %}
+  {% set result = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(catalog_name) = lower('" ~ safe_db ~ "') AND lower(schema_name) = lower('" ~ safe_schema ~ "')") %}
   {% do return(result | length > 0) %}
 {% endmacro %}
 
 {% macro bigquery__edr_schema_exists(database, schema_name) %}
-  {% set result = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA WHERE lower(schema_name) = lower('" ~ schema_name ~ "')") %}
+  {% set safe_schema = schema_name | replace("'", "''") %}
+  {% set result = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA WHERE lower(schema_name) = lower('" ~ safe_schema ~ "')") %}
   {% do return(result | length > 0) %}
 {% endmacro %}
 
 {% macro clickhouse__edr_schema_exists(database, schema_name) %}
-  {% set result = run_query("SELECT 1 FROM system.databases WHERE name = '" ~ schema_name ~ "' LIMIT 1") %}
+  {% set safe_schema = schema_name | replace("'", "''") %}
+  {% set result = run_query("SELECT 1 FROM system.databases WHERE name = '" ~ safe_schema ~ "' LIMIT 1") %}
   {% do return(result | length > 0) %}
 {% endmacro %}

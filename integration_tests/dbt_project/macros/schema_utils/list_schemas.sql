@@ -11,7 +11,8 @@
 {% endmacro %}
 
 {% macro default__edr_list_schemas(database) %}
-  {% set results = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(catalog_name) = lower('" ~ database ~ "')") %}
+  {% set safe_db = database | replace("'", "''") %}
+  {% set results = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(catalog_name) = lower('" ~ safe_db ~ "')") %}
   {% set schemas = [] %}
   {% for row in results %}
     {% do schemas.append(row[0]) %}
