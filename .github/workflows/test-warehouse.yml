@@ -99,6 +99,15 @@ jobs:
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Dremio is healthy."
 
+      - name: Start Spark
+        if: inputs.warehouse-type == 'spark'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          docker compose -f docker-compose-spark.yml up -d --build
+          echo "Waiting for Spark Thrift Server to accept connections on port 10000..."
+          timeout 120 bash -c 'until nc -z 127.0.0.1 10000 2>/dev/null; do sleep 3; done'
+          echo "Spark Thrift Server is ready."
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -107,7 +116,7 @@ jobs:
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
-        run: sudo apt-get install python-dev libsasl2-dev gcc
+        run: sudo apt-get update && sudo apt-get install -y python3-dev libsasl2-dev gcc
 
       - name: Install compatible databricks connector (not limited in older dbt-databricks versions)
         if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'

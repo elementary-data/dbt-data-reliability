@@ -46,7 +46,7 @@ jobs:
         dbt-version:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official", "latest_pre"]') }}
-        warehouse-type: [postgres, clickhouse, trino, dremio]
+        warehouse-type: [postgres, clickhouse, trino, dremio, spark]
         exclude:
           # latest_pre is only tested on postgres
           - dbt-version: latest_pre
@@ -55,6 +55,8 @@ jobs:
             warehouse-type: trino
           - dbt-version: latest_pre
             warehouse-type: dremio
+          - dbt-version: latest_pre
+            warehouse-type: spark
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
