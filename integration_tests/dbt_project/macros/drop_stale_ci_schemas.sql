@@ -13,7 +13,7 @@
           --args '{prefixes: ["dbt_", "py_"], max_age_hours: 24}'
 
   Helper macros (list_ci_schemas, ci_schema_exists, drop_ci_schema,
-  parse_timestamp_from_ci_schema_name) live in the schema_utils/ folder.
+  parse_timestamp_from_ci_schema_name) live in the ci_schema_utils/ folder.
 #}
 
 {% macro drop_stale_ci_schemas(prefixes=none, max_age_hours=24) %}
