@@ -22,7 +22,7 @@
   {% set all_schemas = adapter.list_schemas(database) %}
   {% set now = modules.datetime.datetime.utcnow() %}
   {% set max_age_seconds = max_age_hours * 3600 %}
-  {% set ns = namespace(dropped=0, errors=0) %}
+  {% set ns = namespace(dropped=0) %}
 
   {{ log("CI schema cleanup: scanning " ~ all_schemas | length ~ " schema(s) in database '" ~ database ~ "' for prefixes " ~ prefixes | string, info=true) }}
 
