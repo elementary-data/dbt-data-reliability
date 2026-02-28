@@ -84,8 +84,15 @@
   {% do return(adapter.dispatch('list_ci_schemas', 'elementary')(database)) %}
 {% endmacro %}
 
+{# adapter.list_schemas() is not available in run-operation context
+   (RuntimeDatabaseWrapper does not expose it). Use information_schema instead. #}
 {% macro default__list_ci_schemas(database) %}
-  {% do return(adapter.list_schemas(database)) %}
+  {% set results = run_query("SELECT schema_name FROM information_schema.schemata") %}
+  {% set schemas = [] %}
+  {% for row in results %}
+    {% do schemas.append(row[0]) %}
+  {% endfor %}
+  {% do return(schemas) %}
 {% endmacro %}
 
 {% macro clickhouse__list_ci_schemas(database) %}
@@ -113,4 +120,23 @@
 {% macro clickhouse__drop_ci_schema(database, schema_name) %}
   {% do run_query("DROP DATABASE IF EXISTS `" ~ schema_name ~ "`") %}
   {% do adapter.commit() %}
+{% endmacro %}
+
+
+{# ── Per-adapter schema existence check (run-operation safe) ──────── #}
+{# adapter.check_schema_exists() is not available in run-operation context.
+   This is only used by the integration test; the main macro does not need it. #}
+
+{% macro ci_schema_exists(database, schema_name) %}
+  {% do return(adapter.dispatch('ci_schema_exists', 'elementary')(database, schema_name)) %}
+{% endmacro %}
+
+{% macro default__ci_schema_exists(database, schema_name) %}
+  {% set result = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(schema_name) = lower('" ~ schema_name ~ "')") %}
+  {% do return(result | length > 0) %}
+{% endmacro %}
+
+{% macro clickhouse__ci_schema_exists(database, schema_name) %}
+  {% set result = run_query("SELECT 1 FROM system.databases WHERE name = '" ~ schema_name ~ "' LIMIT 1") %}
+  {% do return(result | length > 0) %}
 {% endmacro %}
