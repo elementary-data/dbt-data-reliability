@@ -21,7 +21,7 @@ services:
       - WAIT_FOR=spark-hive-metastore:5432
 
   spark-hive-metastore:
-    image: postgres:9-alpine
+    image: postgres:15-alpine
     volumes:
       - hive-metastore:/var/lib/postgresql/data
     environment:

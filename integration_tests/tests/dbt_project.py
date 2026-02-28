@@ -283,16 +283,16 @@ class DbtProject:
             database_property, schema_property = get_database_and_schema_properties(
                 self.target
             )
+            source_def: Dict[str, Any] = {
+                "name": "test_data",
+                "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
+                "tables": [table_yaml],
+            }
+            if database_property is not None:
+                source_def["database"] = f"{{{{ target.{database_property} }}}}"
             props_yaml = {
                 "version": 2,
-                "sources": [
-                    {
-                        "name": "test_data",
-                        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
-                        "database": f"{{{{ target.{database_property} }}}}",
-                        "tables": [table_yaml],
-                    }
-                ],
+                "sources": [source_def],
             }
             temp_table_ctx = nullcontext()
 

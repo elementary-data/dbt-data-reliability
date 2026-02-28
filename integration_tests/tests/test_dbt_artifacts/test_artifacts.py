@@ -110,29 +110,29 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         if dbt_project.target != "dremio"
         else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
     )
-    source_config = {
-        "version": 2,
-        "sources": [
+    source_def = {
+        "name": "test_source",
+        "schema": f"{{{{ target.{schema_property} }}}}",
+        "tables": [
             {
-                "name": "test_source",
-                "database": f"{{{{ target.{database_property} }}}}",
-                "schema": f"{{{{ target.{schema_property} }}}}",
-                "tables": [
-                    {
-                        "name": test_id,
-                        "config": {
-                            "loaded_at_field": loaded_at_field,
-                            "freshness": {
-                                "warn_after": {
-                                    "count": 1,
-                                    "period": "hour",
-                                },
-                            },
+                "name": test_id,
+                "config": {
+                    "loaded_at_field": loaded_at_field,
+                    "freshness": {
+                        "warn_after": {
+                            "count": 1,
+                            "period": "hour",
                         },
-                    }
-                ],
+                    },
+                },
             }
         ],
+    }
+    if database_property is not None:
+        source_def["database"] = f"{{{{ target.{database_property} }}}}"
+    source_config = {
+        "version": 2,
+        "sources": [source_def],
     }
     dbt_project.seed(
         [
