@@ -21,7 +21,10 @@
   {% set max_age_hours = max_age_hours | int %}
   {% set database = elementary.target_database() %}
   {% set all_schemas = elementary.list_ci_schemas(database) %}
-  {% set now = modules.datetime.datetime.now(modules.datetime.timezone.utc) %}
+  {# utcnow() is deprecated in Python 3.12+ but modules.datetime.timezone is not
+     available in dbt's Jinja context. Both now and strptime produce naive datetimes
+     so comparisons are safe. #}
+  {% set now = modules.datetime.datetime.utcnow() %}
   {% set max_age_seconds = max_age_hours * 3600 %}
   {% set ns = namespace(dropped=0) %}
 
@@ -51,7 +54,7 @@
             {% set mi = ts_str[9:11] | int %}
             {% set ss = ts_str[11:13] | int %}
             {% if 1 <= mm <= 12 and 1 <= dd <= 31 and 0 <= hh <= 23 and 0 <= mi <= 59 and 0 <= ss <= 59 %}
-              {% set schema_ts = modules.datetime.datetime.strptime(ts_str, '%y%m%d_%H%M%S').replace(tzinfo=modules.datetime.timezone.utc) %}
+              {% set schema_ts = modules.datetime.datetime.strptime(ts_str, '%y%m%d_%H%M%S') %}
               {% set age_seconds = (now - schema_ts).total_seconds() %}
               {% if age_seconds > max_age_seconds %}
                 {{ log("  DROP " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
