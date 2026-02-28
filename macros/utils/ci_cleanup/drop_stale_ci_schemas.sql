@@ -95,6 +95,15 @@
   {% do return(schemas) %}
 {% endmacro %}
 
+{% macro bigquery__list_ci_schemas(database) %}
+  {% set results = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA") %}
+  {% set schemas = [] %}
+  {% for row in results %}
+    {% do schemas.append(row[0]) %}
+  {% endfor %}
+  {% do return(schemas) %}
+{% endmacro %}
+
 {% macro clickhouse__list_ci_schemas(database) %}
   {% set results = run_query('SHOW DATABASES') %}
   {% set schemas = [] %}
@@ -133,6 +142,11 @@
 
 {% macro default__ci_schema_exists(database, schema_name) %}
   {% set result = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(schema_name) = lower('" ~ schema_name ~ "')") %}
+  {% do return(result | length > 0) %}
+{% endmacro %}
+
+{% macro bigquery__ci_schema_exists(database, schema_name) %}
+  {% set result = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA WHERE lower(schema_name) = lower('" ~ schema_name ~ "')") %}
   {% do return(result | length > 0) %}
 {% endmacro %}
 
