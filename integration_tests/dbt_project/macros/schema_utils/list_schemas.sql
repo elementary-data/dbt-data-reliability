@@ -21,7 +21,8 @@
 {% endmacro %}
 
 {% macro bigquery__edr_list_schemas(database) %}
-  {% set results = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA") %}
+  {% set safe_db = database | replace("`", "\`") %}
+  {% set results = run_query("SELECT schema_name FROM `" ~ safe_db ~ "`.INFORMATION_SCHEMA.SCHEMATA") %}
   {% set schemas = [] %}
   {% for row in results %}
     {% do schemas.append(row[0]) %}

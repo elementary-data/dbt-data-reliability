@@ -18,8 +18,9 @@
 {% endmacro %}
 
 {% macro bigquery__edr_schema_exists(database, schema_name) %}
+  {% set safe_db = database | replace("`", "\`") %}
   {% set safe_schema = schema_name | replace("'", "''") %}
-  {% set result = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA WHERE lower(schema_name) = lower('" ~ safe_schema ~ "')") %}
+  {% set result = run_query("SELECT schema_name FROM `" ~ safe_db ~ "`.INFORMATION_SCHEMA.SCHEMATA WHERE lower(schema_name) = lower('" ~ safe_schema ~ "')") %}
   {% do return(result | length > 0) %}
 {% endmacro %}
 
