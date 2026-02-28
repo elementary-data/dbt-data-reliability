@@ -103,7 +103,8 @@ jobs:
         if: inputs.warehouse-type == 'spark'
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          docker compose -f docker-compose-spark.yml up -d --build
+          docker compose -f docker-compose-spark.yml build
+          docker compose -f docker-compose-spark.yml up -d
           echo "Waiting for Spark Thrift Server to accept connections on port 10000..."
           timeout 120 bash -c 'until nc -z 127.0.0.1 10000 2>/dev/null; do sleep 3; done'
           echo "Spark Thrift Server is ready."
@@ -176,7 +177,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
+        run: py.test -n${{ (inputs.warehouse-type == 'spark' && '4') || '8' }} -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
 
       - name: Upload test results
         if: always()

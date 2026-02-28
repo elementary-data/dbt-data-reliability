@@ -59,14 +59,13 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
     assert test_result.success is True
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(test_id, DBT_TEST_NAME)
     assert test_result["status"] == "pass"
 
 
 # Schema validity currently not supported on ClickHouse
-@pytest.mark.skip_targets(["spark", "clickhouse"])
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
@@ -98,7 +97,6 @@ def test_exposure_schema_validity_correct_columns_and_types(
     assert test_result["status"] == "pass"
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_correct_columns_and_invalid_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -139,7 +137,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 
 
 # Schema validity currently not supported on ClickHouse
-@pytest.mark.skip_targets(["spark", "clickhouse"])
+@pytest.mark.skip_targets(["clickhouse"])
 def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_id: str, dbt_project: DbtProject
 ):
@@ -190,7 +188,6 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
     )
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_correct_columns_and_missing_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -213,7 +210,6 @@ def test_exposure_schema_validity_correct_columns_and_missing_type(
     assert test_result["status"] == "pass"
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_missing_columns(
     test_id: str, dbt_project: DbtProject
 ):
