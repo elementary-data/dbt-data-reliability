@@ -38,3 +38,12 @@
   {% endfor %}
   {% do return(schemas) %}
 {% endmacro %}
+
+{% macro spark__edr_list_schemas(database) %}
+  {% set results = run_query('SHOW DATABASES') %}
+  {% set schemas = [] %}
+  {% for row in results %}
+    {% do schemas.append(row[0]) %}
+  {% endfor %}
+  {% do return(schemas) %}
+{% endmacro %}

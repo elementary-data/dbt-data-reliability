@@ -53,6 +53,7 @@ elementary_tests:
       port: 10000
       user: dbt
       schema: {{ schema_name }}
+      file_format: delta
       threads: 4
 
     # ── Cloud targets (secrets substituted at CI time) ─────────────────

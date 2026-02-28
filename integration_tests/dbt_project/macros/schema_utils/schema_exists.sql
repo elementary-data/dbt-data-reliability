@@ -29,3 +29,9 @@
   {% set result = run_query("SELECT 1 FROM system.databases WHERE name = '" ~ safe_schema ~ "' LIMIT 1") %}
   {% do return(result | length > 0) %}
 {% endmacro %}
+
+{% macro spark__edr_schema_exists(database, schema_name) %}
+  {% set safe_schema = schema_name | replace("'", "''") %}
+  {% set result = run_query("SHOW DATABASES LIKE '" ~ safe_schema ~ "'") %}
+  {% do return(result | length > 0) %}
+{% endmacro %}

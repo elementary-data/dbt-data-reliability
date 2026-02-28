@@ -164,7 +164,7 @@
 {%- endmacro -%}
 
 {%- macro spark__escape_special_chars(string_value) -%}
-    {{- return(string_value | replace("'", "''") | replace("\n", " ") | replace("\r", " ")) -}}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ")) -}}
 {%- endmacro -%}
 
 {%- macro render_value(value, data_type) -%}

@@ -18,3 +18,7 @@
     {% do run_query("DROP DATABASE IF EXISTS " ~ schema_name) %}
     {% do adapter.commit() %}
 {% endmacro %}
+
+{% macro spark__edr_drop_schema(database_name, schema_name) %}
+    {% do run_query("DROP DATABASE IF EXISTS `" ~ schema_name ~ "` CASCADE") %}
+{% endmacro %}
