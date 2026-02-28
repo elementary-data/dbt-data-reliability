@@ -40,7 +40,9 @@
   {% if old_exists_after %}
     {% do elementary.drop_ci_schema(database, old_schema) %}
   {% endif %}
-  {% do elementary.drop_ci_schema(database, recent_schema) %}
+  {% if recent_exists_after %}
+    {% do elementary.drop_ci_schema(database, recent_schema) %}
+  {% endif %}
 
   {# ── Return results ────────────────────────────────────────────────── #}
   {% set results = {
