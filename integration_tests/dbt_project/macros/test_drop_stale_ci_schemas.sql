@@ -1,5 +1,5 @@
 {#
-  Integration-test helper for elementary.drop_stale_ci_schemas.
+  Integration-test helper for drop_stale_ci_schemas.
 
   Creates two CI-style schemas (one with an old timestamp, one recent),
   runs the cleanup macro, checks which schemas survived, cleans up,
@@ -20,30 +20,30 @@
   {{ log("TEST: creating recent schema: " ~ recent_schema, info=true) }}
 
   {# ── Create both schemas ───────────────────────────────────────────── #}
-  {% do elementary_tests.edr_create_schema(database, old_schema) %}
-  {% do elementary_tests.edr_create_schema(database, recent_schema) %}
+  {% do edr_create_schema(database, old_schema) %}
+  {% do edr_create_schema(database, recent_schema) %}
 
   {# ── Verify both exist before running cleanup ──────────────────────── #}
-  {% set old_exists_before = elementary.ci_schema_exists(database, old_schema) %}
-  {% set recent_exists_before = elementary.ci_schema_exists(database, recent_schema) %}
+  {% set old_exists_before = ci_schema_exists(database, old_schema) %}
+  {% set recent_exists_before = ci_schema_exists(database, recent_schema) %}
   {{ log("TEST: old_exists_before=" ~ old_exists_before ~ ", recent_exists_before=" ~ recent_exists_before, info=true) }}
 
   {# ── Run cleanup with a large threshold so only the artificially old
        schema (year 2020) is caught, and real CI schemas from parallel
        workers are safely below the threshold. ──────────────────────────── #}
-  {% do elementary.drop_stale_ci_schemas(prefixes=['dbt_'], max_age_hours=8760) %}
+  {% do drop_stale_ci_schemas(prefixes=['dbt_'], max_age_hours=8760) %}
 
   {# ── Check which schemas survived ─────────────────────────────────── #}
-  {% set old_exists_after = elementary.ci_schema_exists(database, old_schema) %}
-  {% set recent_exists_after = elementary.ci_schema_exists(database, recent_schema) %}
+  {% set old_exists_after = ci_schema_exists(database, old_schema) %}
+  {% set recent_exists_after = ci_schema_exists(database, recent_schema) %}
   {{ log("TEST: old_exists_after=" ~ old_exists_after ~ ", recent_exists_after=" ~ recent_exists_after, info=true) }}
 
   {# ── Cleanup: drop any remaining test schemas ─────────────────────── #}
   {% if old_exists_after is true %}
-    {% do elementary.drop_ci_schema(database, old_schema) %}
+    {% do drop_ci_schema(database, old_schema) %}
   {% endif %}
   {% if recent_exists_after %}
-    {% do elementary.drop_ci_schema(database, recent_schema) %}
+    {% do drop_ci_schema(database, recent_schema) %}
   {% endif %}
 
   {# ── Return results ────────────────────────────────────────────────── #}

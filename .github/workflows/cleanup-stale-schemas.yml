@@ -68,6 +68,6 @@ jobs:
         # Only dbt_ prefixed schemas are created in this repo's CI.
         # The elementary repo has its own workflow for py_ prefixed schemas.
         run: >
-          dbt run-operation elementary.drop_stale_ci_schemas
+          dbt run-operation drop_stale_ci_schemas
           --args '{prefixes: ["dbt_"], max_age_hours: ${{ inputs.max-age-hours || '24' }}}'
           -t "${{ matrix.warehouse-type }}"
