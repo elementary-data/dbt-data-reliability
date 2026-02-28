@@ -51,7 +51,7 @@
     "old_dropped": not old_exists_after,
     "recent_kept": recent_exists_after
   } %}
-  {% do return(tojson(results)) %}
+  {% do return(results) %}
 {% endmacro %}
 
 
