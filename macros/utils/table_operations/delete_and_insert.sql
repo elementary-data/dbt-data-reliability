@@ -87,9 +87,9 @@
        and non-Delta tables would fail with DELETE anyway. #}
     {% if delete_relation %}
         {% set delete_query %}
-            merge into {{ relation }} as source
-            using {{ delete_relation }} as target
-            on (source.{{ delete_column_key }} = target.{{ delete_column_key }}) or source.{{ delete_column_key }} is null
+            merge into {{ relation }} as target
+            using {{ delete_relation }} as source
+            on (target.{{ delete_column_key }} = source.{{ delete_column_key }}) or target.{{ delete_column_key }} is null
             when matched then delete;
         {% endset %}
         {% do queries.append(delete_query) %}
