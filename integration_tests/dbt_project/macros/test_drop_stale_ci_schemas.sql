@@ -29,7 +29,7 @@
   {{ log("TEST: old_exists_before=" ~ old_exists_before ~ ", recent_exists_before=" ~ recent_exists_before, info=true) }}
 
   {# ── Run cleanup with a large threshold so only the artificially old
-       schema (year 2000) is caught, and real CI schemas from parallel
+       schema (year 2020) is caught, and real CI schemas from parallel
        workers are safely below the threshold. ──────────────────────────── #}
   {% do elementary.drop_stale_ci_schemas(prefixes=['dbt_'], max_age_hours=8760) %}
 
