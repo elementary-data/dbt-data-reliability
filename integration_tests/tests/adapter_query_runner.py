@@ -115,8 +115,38 @@ class AdapterQueryRunner:
     # Ref resolution
     # ------------------------------------------------------------------
 
+    def _build_relation_name(self, node: Dict[str, Any]) -> Optional[str]:
+        """Construct a relation name from node metadata.
+
+        Uses the adapter's ``Relation`` class so that quoting and include
+        policies are applied correctly for the target warehouse.
+        The adapter's ``include_policy`` determines whether ``database`` is
+        passed (e.g. ClickHouse sets ``database=False``).
+        """
+        schema = node.get("schema")
+        identifier = node.get("alias") or node.get("name")
+        if not identifier:
+            return None
+
+        include_policy = self._adapter.Relation.get_default_include_policy()
+        database = (node.get("database") or "") if include_policy.database else ""
+
+        relation = self._adapter.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+        )
+        return relation.render()
+
     def _load_manifest_maps(self) -> None:
-        """Load ref and source maps from the dbt manifest."""
+        """Load ref and source maps from the dbt manifest.
+
+        Scans both ``nodes`` (enabled models) and ``disabled`` (models
+        disabled via config, e.g. ``elementary_enabled = False``).
+        For disabled nodes whose ``relation_name`` is ``None`` (dbt skips
+        compilation for disabled nodes), the relation name is synthesised
+        from ``database`` / ``schema`` / ``alias`` via the adapter.
+        """
         manifest_path = Path(self._project_dir) / "target" / "manifest.json"
         if not manifest_path.exists():
             raise FileNotFoundError(
@@ -126,12 +156,24 @@ class AdapterQueryRunner:
         with open(manifest_path) as fh:
             manifest = json.load(fh)
 
+        # Collect every node dict: enabled nodes first, then disabled.
+        all_nodes: List[Dict[str, Any]] = list(manifest.get("nodes", {}).values())
+        disabled = manifest.get("disabled", {})
+        for versions in disabled.values():
+            all_nodes.extend(versions)
+
         ref_map: Dict[str, str] = {}
-        for node in manifest.get("nodes", {}).values():
-            relation_name = node.get("relation_name")
+        for node in all_nodes:
             name = node.get("name")
-            if relation_name and name:
-                ref_map[name] = relation_name
+            if not name:
+                continue
+            relation_name = node.get("relation_name")
+            if not relation_name:
+                relation_name = self._build_relation_name(node)
+            if relation_name:
+                # First writer wins — enabled nodes are processed first,
+                # so a disabled duplicate won't overwrite an enabled one.
+                ref_map.setdefault(name, relation_name)
 
         source_map: Dict[tuple, str] = {}
         for source in manifest.get("sources", {}).values():
