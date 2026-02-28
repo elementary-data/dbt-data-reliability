@@ -120,43 +120,23 @@ class AdapterQueryRunner:
 
         Uses the adapter's ``Relation`` class so that quoting and include
         policies are applied correctly for the target warehouse.
-        Falls back to simple dot-joining if the adapter rejects the inputs.
+        The adapter's ``include_policy`` determines whether ``database`` is
+        passed (e.g. ClickHouse sets ``database=False``).
         """
         schema = node.get("schema")
         identifier = node.get("alias") or node.get("name")
         if not identifier:
             return None
 
-        database = node.get("database") or ""
-        try:
-            relation = self._adapter.Relation.create(
-                database=database,
-                schema=schema,
-                identifier=identifier,
-            )
-            return relation.render()
-        except Exception:
-            # Some adapters (e.g. ClickHouse) reject certain database values.
-            # Retry without database, then fall back to simple dot-join.
-            logger.debug(
-                "Relation.create failed with database=%r for %s; retrying without database",
-                database,
-                identifier,
-            )
-            try:
-                relation = self._adapter.Relation.create(
-                    database="",
-                    schema=schema,
-                    identifier=identifier,
-                )
-                return relation.render()
-            except Exception:
-                logger.debug(
-                    "Relation.create failed without database for %s; using dot-join fallback",
-                    identifier,
-                )
-                parts = [p for p in (schema, identifier) if p]
-                return ".".join(parts) if parts else None
+        include_policy = self._adapter.Relation.get_default_include_policy()
+        database = (node.get("database") or "") if include_policy.database else ""
+
+        relation = self._adapter.Relation.create(
+            database=database,
+            schema=schema,
+            identifier=identifier,
+        )
+        return relation.render()
 
     def _load_manifest_maps(self) -> None:
         """Load ref and source maps from the dbt manifest.
