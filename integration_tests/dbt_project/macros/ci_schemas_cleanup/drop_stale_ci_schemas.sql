@@ -12,9 +12,9 @@
       dbt run-operation drop_stale_ci_schemas \
           --args '{prefixes: ["dbt_", "py_"], max_age_hours: 24}'
 
-  Generic schema helpers (edr_list_schemas, edr_schema_exists, edr_drop_schema)
-  live in the schema_utils/ folder. CI-specific helpers
-  (parse_timestamp_from_ci_schema_name) live alongside this file.
+  Generic schema helpers (edr_list_schemas, edr_schema_exists) live in the
+  schema_utils/ folder. edr_drop_schema lives in clear_env.sql. CI-specific
+  helpers (parse_timestamp_from_ci_schema_name) live alongside this file.
 #}
 
 {% macro drop_stale_ci_schemas(prefixes=none, max_age_hours=24) %}
