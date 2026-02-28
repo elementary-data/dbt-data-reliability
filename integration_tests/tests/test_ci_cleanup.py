@@ -2,9 +2,11 @@
 
 import json
 
+import pytest
 from dbt_project import DbtProject
 
 
+@pytest.mark.skip_targets(["dremio"])
 def test_drop_stale_ci_schemas(dbt_project: DbtProject):
     """Verify that old CI schemas are dropped and recent ones are kept."""
     result = dbt_project.dbt_runner.run_operation(
