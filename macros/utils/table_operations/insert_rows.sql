@@ -163,6 +163,10 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{%- macro spark__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''") | replace("\n", " ") | replace("\r", " ")) -}}
+{%- endmacro -%}
+
 {%- macro render_value(value, data_type) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}

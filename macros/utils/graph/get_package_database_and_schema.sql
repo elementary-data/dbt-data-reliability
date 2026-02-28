@@ -26,6 +26,20 @@
     {{ return([none, none]) }}
 {% endmacro %}
 
+{% macro spark__get_package_database_and_schema(package_name='elementary') %}
+    {% if execute %}
+        {% set node_in_package = graph.nodes.values()
+                                 | selectattr("resource_type", "==", "model")
+                                 | selectattr("package_name", "==", package_name) | first %}
+        {% if node_in_package %}
+            {# Spark without a catalog has no database, so use the schema for both #}
+            {% set database = node_in_package.database or node_in_package.schema %}
+            {{ return([database, node_in_package.schema]) }}
+        {% endif %}
+    {% endif %}
+    {{ return([none, none]) }}
+{% endmacro %}
+
 {% macro dremio__get_package_database_and_schema(package_name='elementary') %}
     {% if execute %}
         {% set node_in_package = graph.nodes.values()
