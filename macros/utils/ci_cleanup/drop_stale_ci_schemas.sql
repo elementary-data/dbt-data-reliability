@@ -18,9 +18,10 @@
     {% set prefixes = ['dbt_', 'py_'] %}
   {% endif %}
 
+  {% set max_age_hours = max_age_hours | int %}
   {% set database = elementary.target_database() %}
   {% set all_schemas = elementary.list_ci_schemas(database) %}
-  {% set now = modules.datetime.datetime.utcnow() %}
+  {% set now = modules.datetime.datetime.now(modules.datetime.timezone.utc) %}
   {% set max_age_seconds = max_age_hours * 3600 %}
   {% set ns = namespace(dropped=0) %}
 
@@ -43,14 +44,24 @@
             {% endif %}
           {% endfor %}
           {% if ns_valid.ok %}
-            {% set schema_ts = modules.datetime.datetime.strptime(ts_str, '%y%m%d_%H%M%S') %}
-            {% set age_seconds = (now - schema_ts).total_seconds() %}
-            {% if age_seconds > max_age_seconds %}
-              {{ log("  DROP " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
-              {% do elementary.drop_ci_schema(database, schema_name) %}
-              {% set ns.dropped = ns.dropped + 1 %}
+            {# Validate date component ranges before strptime to avoid ValueError #}
+            {% set mm = ts_str[2:4] | int %}
+            {% set dd = ts_str[4:6] | int %}
+            {% set hh = ts_str[7:9] | int %}
+            {% set mi = ts_str[9:11] | int %}
+            {% set ss = ts_str[11:13] | int %}
+            {% if 1 <= mm <= 12 and 1 <= dd <= 31 and 0 <= hh <= 23 and 0 <= mi <= 59 and 0 <= ss <= 59 %}
+              {% set schema_ts = modules.datetime.datetime.strptime(ts_str, '%y%m%d_%H%M%S').replace(tzinfo=modules.datetime.timezone.utc) %}
+              {% set age_seconds = (now - schema_ts).total_seconds() %}
+              {% if age_seconds > max_age_seconds %}
+                {{ log("  DROP " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
+                {% do elementary.drop_ci_schema(database, schema_name) %}
+                {% set ns.dropped = ns.dropped + 1 %}
+              {% else %}
+                {{ log("  keep " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
+              {% endif %}
             {% else %}
-              {{ log("  keep " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
+              {{ log("  skip " ~ schema_name ~ "  (invalid timestamp: " ~ ts_str ~ ")", info=true) }}
             {% endif %}
           {% endif %}
         {% endif %}
@@ -97,6 +108,6 @@
 {% endmacro %}
 
 {% macro clickhouse__drop_ci_schema(database, schema_name) %}
-  {% do run_query("DROP DATABASE IF EXISTS " ~ schema_name) %}
+  {% do run_query("DROP DATABASE IF EXISTS `" ~ schema_name ~ "`") %}
   {% do adapter.commit() %}
 {% endmacro %}

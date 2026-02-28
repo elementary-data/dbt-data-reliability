@@ -8,7 +8,7 @@
 
 {% macro test_drop_stale_ci_schemas() %}
   {% set database = elementary.target_database() %}
-  {% set now = modules.datetime.datetime.utcnow() %}
+  {% set now = modules.datetime.datetime.now(modules.datetime.timezone.utc) %}
 
   {# Old schema: timestamp in the past (2020-01-01 00:00:00) #}
   {% set old_schema = 'dbt_200101_000000_citest_00000000' %}
@@ -68,6 +68,6 @@
 {% endmacro %}
 
 {% macro clickhouse__edr_create_schema(database, schema_name) %}
-  {% do run_query("CREATE DATABASE IF NOT EXISTS " ~ schema_name) %}
+  {% do run_query("CREATE DATABASE IF NOT EXISTS `" ~ schema_name ~ "`") %}
   {% do adapter.commit() %}
 {% endmacro %}

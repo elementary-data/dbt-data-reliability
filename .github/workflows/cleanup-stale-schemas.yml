@@ -65,6 +65,8 @@ jobs:
 
       - name: Drop stale CI schemas
         working-directory: ${{ env.TESTS_DIR }}/dbt_project
+        # Only dbt_ prefixed schemas are created in this repo's CI.
+        # The elementary repo has its own workflow for py_ prefixed schemas.
         run: >
           dbt run-operation elementary.drop_stale_ci_schemas
           --args '{prefixes: ["dbt_"], max_age_hours: ${{ inputs.max-age-hours || '24' }}}'
