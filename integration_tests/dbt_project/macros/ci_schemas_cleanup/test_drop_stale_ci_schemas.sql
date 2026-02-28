@@ -24,8 +24,8 @@
   {% do edr_create_schema(database, recent_schema) %}
 
   {# ── Verify both exist before running cleanup ──────────────────────── #}
-  {% set old_exists_before = schema_exists_sql(database, old_schema) %}
-  {% set recent_exists_before = schema_exists_sql(database, recent_schema) %}
+  {% set old_exists_before = edr_schema_exists(database, old_schema) %}
+  {% set recent_exists_before = edr_schema_exists(database, recent_schema) %}
   {{ log("TEST: old_exists_before=" ~ old_exists_before ~ ", recent_exists_before=" ~ recent_exists_before, info=true) }}
 
   {# ── Run cleanup with a large threshold so only the artificially old
@@ -34,16 +34,16 @@
   {% do drop_stale_ci_schemas(prefixes=['dbt_'], max_age_hours=8760) %}
 
   {# ── Check which schemas survived ─────────────────────────────────── #}
-  {% set old_exists_after = schema_exists_sql(database, old_schema) %}
-  {% set recent_exists_after = schema_exists_sql(database, recent_schema) %}
+  {% set old_exists_after = edr_schema_exists(database, old_schema) %}
+  {% set recent_exists_after = edr_schema_exists(database, recent_schema) %}
   {{ log("TEST: old_exists_after=" ~ old_exists_after ~ ", recent_exists_after=" ~ recent_exists_after, info=true) }}
 
   {# ── Cleanup: drop any remaining test schemas ─────────────────────── #}
   {% if old_exists_after is true %}
-    {% do drop_schema_sql(database, old_schema) %}
+    {% do edr_drop_schema(database, old_schema) %}
   {% endif %}
   {% if recent_exists_after %}
-    {% do drop_schema_sql(database, recent_schema) %}
+    {% do edr_drop_schema(database, recent_schema) %}
   {% endif %}
 
   {# ── Return results ────────────────────────────────────────────────── #}

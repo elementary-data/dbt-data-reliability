@@ -12,7 +12,7 @@
       dbt run-operation drop_stale_ci_schemas \
           --args '{prefixes: ["dbt_", "py_"], max_age_hours: 24}'
 
-  Generic schema helpers (list_schemas_sql, schema_exists_sql, drop_schema_sql)
+  Generic schema helpers (edr_list_schemas, edr_schema_exists, edr_drop_schema)
   live in the schema_utils/ folder. CI-specific helpers
   (parse_timestamp_from_ci_schema_name) live alongside this file.
 #}
@@ -27,7 +27,7 @@
 
   {% set max_age_hours = max_age_hours | int %}
   {% set database = elementary.target_database() %}
-  {% set all_schemas = list_schemas_sql(database) %}
+  {% set all_schemas = edr_list_schemas(database) %}
   {# utcnow() is deprecated in Python 3.12+ but modules.datetime.timezone is not
      available in dbt's Jinja context. Both now and the constructed datetime are
      naive, so comparisons are safe. #}
@@ -43,7 +43,7 @@
       {% set age_seconds = (now - schema_ts).total_seconds() %}
       {% if age_seconds > max_age_seconds %}
         {{ log("  DROP " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}
-        {% do drop_schema_sql(database, schema_name) %}
+        {% do edr_drop_schema(database, schema_name) %}
         {% set ns.dropped = ns.dropped + 1 %}
       {% else %}
         {{ log("  keep " ~ schema_name ~ "  (age: " ~ (age_seconds / 3600) | round(1) ~ " h)", info=true) }}

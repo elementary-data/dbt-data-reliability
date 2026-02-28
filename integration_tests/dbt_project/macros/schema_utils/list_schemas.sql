@@ -6,11 +6,11 @@
   does not expose it).
 #}
 
-{% macro list_schemas_sql(database) %}
-  {% do return(adapter.dispatch('list_schemas_sql', 'elementary_tests')(database)) %}
+{% macro edr_list_schemas(database) %}
+  {% do return(adapter.dispatch('edr_list_schemas', 'elementary_tests')(database)) %}
 {% endmacro %}
 
-{% macro default__list_schemas_sql(database) %}
+{% macro default__edr_list_schemas(database) %}
   {% set results = run_query("SELECT schema_name FROM information_schema.schemata WHERE lower(catalog_name) = lower('" ~ database ~ "')") %}
   {% set schemas = [] %}
   {% for row in results %}
@@ -19,7 +19,7 @@
   {% do return(schemas) %}
 {% endmacro %}
 
-{% macro bigquery__list_schemas_sql(database) %}
+{% macro bigquery__edr_list_schemas(database) %}
   {% set results = run_query("SELECT schema_name FROM `" ~ database ~ "`.INFORMATION_SCHEMA.SCHEMATA") %}
   {% set schemas = [] %}
   {% for row in results %}
@@ -28,7 +28,7 @@
   {% do return(schemas) %}
 {% endmacro %}
 
-{% macro clickhouse__list_schemas_sql(database) %}
+{% macro clickhouse__edr_list_schemas(database) %}
   {% set results = run_query('SHOW DATABASES') %}
   {% set schemas = [] %}
   {% for row in results %}
