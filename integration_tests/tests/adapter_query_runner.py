@@ -138,6 +138,11 @@ class AdapterQueryRunner:
         except Exception:
             # Some adapters (e.g. ClickHouse) reject certain database values.
             # Retry without database, then fall back to simple dot-join.
+            logger.debug(
+                "Relation.create failed with database=%r for %s; retrying without database",
+                database,
+                identifier,
+            )
             try:
                 relation = self._adapter.Relation.create(
                     database="",
@@ -146,6 +151,10 @@ class AdapterQueryRunner:
                 )
                 return relation.render()
             except Exception:
+                logger.debug(
+                    "Relation.create failed without database for %s; using dot-join fallback",
+                    identifier,
+                )
                 parts = [p for p in (schema, identifier) if p]
                 return ".".join(parts) if parts else None
 
@@ -170,12 +179,8 @@ class AdapterQueryRunner:
         # Collect every node dict: enabled nodes first, then disabled.
         all_nodes: List[Dict[str, Any]] = list(manifest.get("nodes", {}).values())
         disabled = manifest.get("disabled", {})
-        if isinstance(disabled, dict):
-            for versions in disabled.values():
-                if isinstance(versions, list):
-                    all_nodes.extend(versions)
-                else:
-                    all_nodes.append(versions)
+        for versions in disabled.values():
+            all_nodes.extend(versions)
 
         ref_map: Dict[str, str] = {}
         for node in all_nodes:
