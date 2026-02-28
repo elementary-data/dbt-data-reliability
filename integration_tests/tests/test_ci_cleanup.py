@@ -2,13 +2,9 @@
 
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 
-# Dremio does not support DROP SCHEMA reliably; skip it.
-# ClickHouse uses a custom dispatch (CREATE/DROP DATABASE) which is tested implicitly.
-@pytest.mark.skip_targets(["dremio"])
 def test_drop_stale_ci_schemas(dbt_project: DbtProject):
     """Verify that old CI schemas are dropped and recent ones are kept."""
     result = dbt_project.dbt_runner.run_operation(
