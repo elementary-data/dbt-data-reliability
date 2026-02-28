@@ -37,7 +37,6 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_orders"],
         log_format="text",
-        capture_output=True,
         quiet=True,
         log_output=False,
     )
@@ -54,7 +53,6 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
     assert run_result is True
     test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_customers"],
-        capture_output=True,
         quiet=True,
         log_output=False,
     )
