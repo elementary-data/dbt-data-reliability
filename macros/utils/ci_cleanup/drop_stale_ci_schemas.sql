@@ -19,7 +19,7 @@
   {% endif %}
 
   {% set database = elementary.target_database() %}
-  {% set all_schemas = adapter.list_schemas(database) %}
+  {% set all_schemas = elementary.list_ci_schemas(database) %}
   {% set now = modules.datetime.datetime.utcnow() %}
   {% set max_age_seconds = max_age_hours * 3600 %}
   {% set ns = namespace(dropped=0) %}
@@ -59,6 +59,28 @@
   {% endfor %}
 
   {{ log("CI schema cleanup complete. Dropped " ~ ns.dropped ~ " stale schema(s).", info=true) }}
+{% endmacro %}
+
+
+{# ── Per-adapter schema drop ─────────────────────────────────────────── #}
+
+{# ── Per-adapter schema listing ─────────────────────────────────────── #}
+
+{% macro list_ci_schemas(database) %}
+  {% do return(adapter.dispatch('list_ci_schemas', 'elementary')(database)) %}
+{% endmacro %}
+
+{% macro default__list_ci_schemas(database) %}
+  {% do return(adapter.list_schemas(database)) %}
+{% endmacro %}
+
+{% macro clickhouse__list_ci_schemas(database) %}
+  {% set results = run_query('SHOW DATABASES') %}
+  {% set schemas = [] %}
+  {% for row in results %}
+    {% do schemas.append(row[0]) %}
+  {% endfor %}
+  {% do return(schemas) %}
 {% endmacro %}
 
 
