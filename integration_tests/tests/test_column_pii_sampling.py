@@ -1,6 +1,5 @@
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 SENSITIVE_COLUMN = "email"
@@ -23,7 +22,6 @@ SAMPLES_QUERY = """
 TEST_SAMPLE_ROW_COUNT = 5
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
     """Test that PII columns are excluded when column-level PII protection is enabled"""
     data = [
@@ -55,7 +53,6 @@ def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
     """Test that all columns are included when column-level PII protection is disabled"""
     data = [
@@ -91,7 +88,6 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
     assert samples[0]["n_records"] == 10
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_default_tag_override(test_id: str, dbt_project: DbtProject):
     """Test that default PII tag can be overridden with a custom tag"""
     data = [
@@ -128,7 +124,6 @@ def test_column_pii_default_tag_override(test_id: str, dbt_project: DbtProject):
     assert samples[0]["n_records"] == 10
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_sampling_tags_exist_but_flag_disabled(
     test_id: str, dbt_project: DbtProject
 ):
@@ -166,7 +161,6 @@ def test_column_pii_sampling_tags_exist_but_flag_disabled(
     assert samples[0]["n_records"] == 10
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProject):
     """Test behavior when all columns are tagged as PII"""
     data = [
@@ -201,7 +195,6 @@ def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProje
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_unique_test_custom_tag(test_id: str, dbt_project: DbtProject):
     """Test that column mapping correctly maps unique test columns"""
     data = [{SENSITIVE_COLUMN: "user@example.com", SAFE_COLUMN: i} for i in range(10)]
@@ -232,7 +225,6 @@ def test_unique_test_custom_tag(test_id: str, dbt_project: DbtProject):
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_accepted_values_multi_tags(test_id: str, dbt_project: DbtProject):
     """Test that column mapping correctly maps accepted_values test columns"""
     data = [{SENSITIVE_COLUMN: "invalid_value", SAFE_COLUMN: i} for i in range(10)]
@@ -263,7 +255,6 @@ def test_accepted_values_multi_tags(test_id: str, dbt_project: DbtProject):
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_not_null_test_multi_matched_tags(test_id: str, dbt_project: DbtProject):
     """Test that column mapping correctly handles not_null test columns"""
     data = [{SENSITIVE_COLUMN: None, SAFE_COLUMN: i} for i in range(10)]
@@ -294,7 +285,6 @@ def test_not_null_test_multi_matched_tags(test_id: str, dbt_project: DbtProject)
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_multiple_pii_columns_mapping(test_id: str, dbt_project: DbtProject):
     """Test that column mapping handles multiple PII columns correctly"""
     data = [
@@ -328,7 +318,6 @@ def test_multiple_pii_columns_mapping(test_id: str, dbt_project: DbtProject):
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_custom_sql_test_with_pii_column_simple(test_id: str, dbt_project: DbtProject):
     """Test that custom SQL tests with PII columns are handled correctly"""
     data = [{SENSITIVE_COLUMN: "user@example.com", SAFE_COLUMN: i} for i in range(10)]
@@ -359,7 +348,6 @@ def test_custom_sql_test_with_pii_column_simple(test_id: str, dbt_project: DbtPr
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_meta_tags_and_accepted_values(test_id: str, dbt_project: DbtProject):
     data = [{SENSITIVE_COLUMN: "user@example.com", SAFE_COLUMN: i} for i in range(10)]
 

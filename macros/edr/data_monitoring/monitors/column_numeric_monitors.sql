@@ -31,7 +31,7 @@
 {%- endmacro %}
 
 {% macro clickhouse__standard_deviation(column_name) -%}
-    stddevPop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    stddevPop(cast({{ column_name }} as Nullable({{ elementary.edr_type_float() }})))
 {%- endmacro %}
 
 {% macro dremio__standard_deviation(column_name) -%}
@@ -50,7 +50,7 @@
 {%- endmacro %}
 
 {% macro clickhouse__variance(column_name) -%}
-    varSamp(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    varSamp(cast({{ column_name }} as Nullable({{ elementary.edr_type_float() }})))
 {%- endmacro %}
 
 {% macro sum(column_name) -%}

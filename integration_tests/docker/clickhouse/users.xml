@@ -1,0 +1,8 @@
+<clickhouse>
+    <profiles>
+        <default>
+            <join_use_nulls>1</join_use_nulls>
+            <mutations_sync>1</mutations_sync>
+        </default>
+    </profiles>
+</clickhouse>

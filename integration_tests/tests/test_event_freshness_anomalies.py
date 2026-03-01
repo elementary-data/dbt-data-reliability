@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
@@ -10,8 +9,6 @@ UPDATE_TIMESTAMP_COLUMN = "update_timestamp"
 STEP = timedelta(hours=1)
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
     data = [
         {
@@ -32,8 +29,6 @@ def test_anomalyless_event_freshness(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
     anomaly_date = datetime.now() - timedelta(days=2)
     data = [
@@ -55,8 +50,6 @@ def test_stop_event_freshness(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
     # To avoid races, set the "custom_started_at" to the beginning of the day
     test_started_at = datetime.utcnow().replace(hour=0, minute=0, second=0)
@@ -90,8 +83,6 @@ def test_slower_rate_event_freshness(test_id: str, dbt_project: DbtProject):
     assert result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag functionality for event freshness anomalies.
