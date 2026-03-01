@@ -7,7 +7,7 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from data_seeder import DbtDataSeeder
+from data_seeder import DbtDataSeeder, SparkDirectSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
@@ -326,10 +326,18 @@ class DbtProject:
             }
             return [test_result] if multiple_results else test_result
 
-    def seed(self, data: List[dict], table_name: str):
-        with DbtDataSeeder(
+    def _create_seeder(self) -> Union[DbtDataSeeder, SparkDirectSeeder]:
+        """Return the fastest available seeder for the current target."""
+        if self.target == "spark":
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return SparkDirectSeeder(runner, schema)
+        return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
+        )
+
+    def seed(self, data: List[dict], table_name: str):
+        with self._create_seeder().seed(data, table_name):
             self._fix_seed_if_needed(table_name)
 
     def _fix_seed_if_needed(self, table_name: str):
@@ -345,9 +353,7 @@ class DbtProject:
     def seed_context(
         self, data: List[dict], table_name: str
     ) -> Generator[None, None, None]:
-        with DbtDataSeeder(
-            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
+        with self._create_seeder().seed(data, table_name):
             yield
 
     @contextmanager
