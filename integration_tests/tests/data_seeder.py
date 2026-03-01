@@ -59,9 +59,10 @@ class ClickHouseDirectSeeder:
     """Fast seeder for ClickHouse: executes CREATE TABLE + INSERT directly.
 
     Bypasses ``dbt seed`` entirely, avoiding the subprocess overhead and
-    the need for post-hoc NULL repair.  All columns are created as
-    ``Nullable(String)`` so that NULL values are preserved correctly
-    (ClickHouse columns are non-Nullable by default).
+    the need for post-hoc NULL repair.  Column types are inferred from the
+    Python values in the seed data and wrapped in ``Nullable()`` so that
+    NULL values are preserved correctly (ClickHouse columns are
+    non-Nullable by default).
     """
 
     def __init__(self, query_runner: "AdapterQueryRunner", schema: str) -> None:
@@ -69,10 +70,41 @@ class ClickHouseDirectSeeder:
         self._schema = schema
 
     @staticmethod
+    def _infer_column_type(values: List[object]) -> str:
+        """Infer a ClickHouse column type from a list of Python values.
+
+        Examines non-None, non-empty-string values and returns a
+        ``Nullable(...)`` type string.  Falls back to ``Nullable(String)``
+        when all values are None/empty or when types are mixed.
+        """
+        non_null = [v for v in values if v is not None and v != ""]
+        if not non_null:
+            return "Nullable(String)"
+
+        # bool is a subclass of int in Python, so check it first.
+        if all(isinstance(v, bool) for v in non_null):
+            return "Nullable(UInt8)"
+        if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+            return "Nullable(Int64)"
+        if all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null
+        ):
+            return "Nullable(Float64)"
+        return "Nullable(String)"
+
+    @staticmethod
     def _escape(value: object) -> str:
-        """Escape a value for a ClickHouse SQL string literal."""
+        """Escape a value for a ClickHouse SQL literal.
+
+        Returns ``NULL`` for None / empty-string, unquoted literals for
+        numeric / boolean types, and a quoted+escaped string otherwise.
+        """
         if value is None or (isinstance(value, str) and value == ""):
             return "NULL"
+        if isinstance(value, bool):
+            return "1" if value else "0"
+        if isinstance(value, (int, float)):
+            return str(value)
         text = str(value)
         text = text.replace("\\", "\\\\")
         text = text.replace("'", "\\'")
@@ -80,9 +112,13 @@ class ClickHouseDirectSeeder:
 
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
-        """Create a table with Nullable(String) columns and insert data."""
+        """Create a table with correctly-typed Nullable columns and insert data."""
         columns = list(data[0].keys())
-        col_defs = ", ".join(f"`{col}` Nullable(String)" for col in columns)
+        col_types = {
+            col: self._infer_column_type([row.get(col) for row in data])
+            for col in columns
+        }
+        col_defs = ", ".join(f"`{col}` {col_types[col]}" for col in columns)
         fq_table = f"`{self._schema}`.`{table_name}`"
 
         self._query_runner.execute_sql(f"DROP TABLE IF EXISTS {fq_table}")
@@ -100,7 +136,10 @@ class ClickHouseDirectSeeder:
             self._query_runner.execute_sql(f"INSERT INTO {fq_table} VALUES {rows_sql}")
 
         logger.info(
-            "ClickHouseDirectSeeder: loaded %d rows into %s", len(data), fq_table
+            "ClickHouseDirectSeeder: loaded %d rows into %s (%s)",
+            len(data),
+            fq_table,
+            ", ".join(f"{c}: {t}" for c, t in col_types.items()),
         )
 
         yield
