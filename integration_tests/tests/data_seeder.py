@@ -81,9 +81,11 @@ class ClickHouseDirectSeeder:
         if not non_null:
             return "Nullable(String)"
 
-        # bool is a subclass of int in Python — exclude from numeric checks.
-        # Booleans are stored as String (matching dbt seed CSV behaviour where
-        # Python True/False are written as "True"/"False" strings).
+        # bool is a subclass of int in Python, so check it first.
+        # dbt seed infers "True"/"False" CSV values as boolean; dbt-clickhouse
+        # maps this to Bool (alias for UInt8).
+        if all(isinstance(v, bool) for v in non_null):
+            return "Nullable(Bool)"
         if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
             return "Nullable(Int64)"
         if all(
@@ -101,9 +103,9 @@ class ClickHouseDirectSeeder:
         """
         if value is None or (isinstance(value, str) and value == ""):
             return "NULL"
-        # Booleans → quoted strings "True"/"False" to match dbt seed CSV output.
+        # Booleans → ClickHouse Bool literals (true/false).
         if isinstance(value, bool):
-            return "'True'" if value else "'False'"
+            return "true" if value else "false"
         if isinstance(value, (int, float)):
             return str(value)
         text = str(value)
