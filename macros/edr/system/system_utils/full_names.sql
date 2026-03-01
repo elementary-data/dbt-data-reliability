@@ -145,6 +145,21 @@
 {% endmacro %}
 
 
+{% macro trino__full_name_split(part_name) %}
+    {# Trino arrays are 1-based, so we use 1/2/3 instead of 0/1/2 #}
+    {%- if part_name == 'database_name' -%}
+        {%- set part_index = 1 -%}
+    {%- elif part_name == 'schema_name' -%}
+        {%- set part_index = 2 -%}
+    {%- elif part_name == 'table_name' -%}
+        {%- set part_index = 3 -%}
+    {%- else -%}
+        {{ return('') }}
+    {%- endif -%}
+    trim(split(full_table_name,'.')[{{ part_index }}],'"') as {{ part_name }}
+{% endmacro %}
+
+
 {% macro dremio__full_name_split(part_name) %}
     {%- if part_name == 'database_name' -%}
         trim('"' from split_part(full_table_name,'.',1)) as {{ part_name }}
