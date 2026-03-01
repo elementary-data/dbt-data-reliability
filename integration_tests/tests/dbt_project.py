@@ -287,12 +287,43 @@ class DbtProject:
         self,
     ) -> Union[DbtDataSeeder, SparkDirectSeeder, ClickHouseDirectSeeder]:
         """Return the fastest available seeder for the current target."""
+        if self.target == "spark":
+            # SparkDirectSeeder uses PyHive directly (not AdapterQueryRunner)
+            # to avoid corrupting global dbt state that the in-process
+            # APIDbtRunner depends on.  Read connection details from the
+            # dbt profile YAML.
+            spark_creds = self._read_profile_credentials()
+            return SparkDirectSeeder(
+                host=spark_creds["host"],
+                port=int(spark_creds["port"]),
+                schema=spark_creds["schema"] + SCHEMA_NAME_SUFFIX,
+                seeds_dir_path=self.seeds_dir_path,
+            )
         if self.target == "clickhouse":
             runner = self._get_query_runner()
             schema = runner.schema_name + SCHEMA_NAME_SUFFIX
             return ClickHouseDirectSeeder(runner, schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
+        )
+
+    def _read_profile_credentials(self) -> dict:
+        """Read raw credentials for the current target from profiles.yml."""
+        import yaml as _yaml
+
+        profiles_dir = Path(
+            os.environ.get("DBT_PROFILES_DIR", os.path.expanduser("~/.dbt"))
+        )
+        with (profiles_dir / "profiles.yml").open() as fh:
+            profiles = _yaml.safe_load(fh)
+        # Try both profile names used in the project.
+        for profile_name in ("elementary_tests", "elementary"):
+            outputs = profiles.get(profile_name, {}).get("outputs", {})
+            if self.target in outputs:
+                return outputs[self.target]
+        raise ValueError(
+            f"Cannot find target '{self.target}' in profiles.yml "
+            f"(profiles_dir={profiles_dir})"
         )
 
     def seed(self, data: List[dict], table_name: str):

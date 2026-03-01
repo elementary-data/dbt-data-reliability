@@ -9,6 +9,7 @@ from logger import get_logger
 
 if TYPE_CHECKING:
     from adapter_query_runner import AdapterQueryRunner
+    from pyhive.hive import Connection as HiveConnection
 
 logger = get_logger(__name__)
 
@@ -216,41 +217,167 @@ class BaseDirectSeeder(ABC):
             seed_path.unlink(missing_ok=True)
 
 
-class SparkDirectSeeder(BaseDirectSeeder):
-    """Fast seeder for Spark: executes CREATE TABLE + INSERT directly.
+class SparkDirectSeeder:
+    """Fast seeder for Spark using a direct PyHive/Thrift connection.
 
-    Bypasses the ``dbt seed`` subprocess entirely, avoiding the ~4 s
-    Python/manifest-parsing overhead per invocation.
+    Uses PyHive to execute ``CREATE TABLE`` + ``INSERT INTO`` directly,
+    bypassing both ``dbt seed`` and the ``AdapterQueryRunner``.  This is
+    important because ``AdapterQueryRunner._create_adapter()`` calls
+    ``set_from_args()`` / ``reset_adapters()`` which corrupt global dbt
+    state.  Since the test runner uses the in-process ``APIDbtRunner``
+    (``dbtRunner().invoke()``), corrupted global state causes subsequent
+    ``dbt test`` calls to run with wrong flags, leading to 3-10x
+    regressions on multi-call tests (e.g. volume_anomaly).
     """
 
-    def _type_string(self) -> str:
+    _INSERT_BATCH_SIZE = 500
+
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        schema: str,
+        seeds_dir_path: Path,
+    ) -> None:
+        self._host = host
+        self._port = port
+        self._schema = schema
+        self._seeds_dir_path = seeds_dir_path
+
+    # ------------------------------------------------------------------
+    # Connection helper
+    # ------------------------------------------------------------------
+
+    def _connect(self) -> "HiveConnection":
+        from pyhive import hive
+
+        return hive.connect(host=self._host, port=self._port)
+
+    def _execute(self, conn: "HiveConnection", sql: str) -> None:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+        finally:
+            cursor.close()
+
+    # ------------------------------------------------------------------
+    # Type inference (same logic as BaseDirectSeeder)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _infer_column_type(values: List[object]) -> str:
+        non_null = [
+            v for v in values if v is not None and not (isinstance(v, str) and v == "")
+        ]
+        if not non_null:
+            return "STRING"
+
+        if all(isinstance(v, bool) for v in non_null):
+            return "BOOLEAN"
+        if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+            return "BIGINT"
+        if all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null
+        ):
+            return "DOUBLE"
+
+        all_int = True
+        all_float = True
+        for v in non_null:
+            text = str(v)
+            try:
+                int(text)
+            except (ValueError, TypeError):
+                all_int = False
+            try:
+                float(text)
+            except (ValueError, TypeError):
+                all_float = False
+            if not all_int and not all_float:
+                break
+
+        if all_int:
+            return "BIGINT"
+        if all_float:
+            return "DOUBLE"
         return "STRING"
 
-    def _type_boolean(self) -> str:
-        return "BOOLEAN"
+    # ------------------------------------------------------------------
+    # Value formatting
+    # ------------------------------------------------------------------
 
-    def _type_integer(self) -> str:
-        return "BIGINT"
-
-    def _type_float(self) -> str:
-        return "DOUBLE"
-
-    def _format_value(self, value: object, col_type: str) -> str:
+    @staticmethod
+    def _format_value(value: object, col_type: str) -> str:
         if value is None or (isinstance(value, str) and value == ""):
             return "NULL"
         if col_type == "BOOLEAN":
             return "TRUE" if str(value).lower() in ("true", "1") else "FALSE"
         if col_type in ("BIGINT", "DOUBLE"):
             return str(value)
-        # STRING -- escape for Spark SQL literal.
         text = str(value)
         text = text.replace("\\", "\\\\")
         text = text.replace("'", "\\'")
         text = text.replace("\n", " ").replace("\r", " ")
         return f"'{text}'"
 
-    def _create_table_sql(self, fq_table: str, col_defs: str) -> str:
-        return f"CREATE TABLE {fq_table} ({col_defs}) USING DELTA"
+    # ------------------------------------------------------------------
+    # CSV helper
+    # ------------------------------------------------------------------
+
+    def _write_csv(self, data: List[dict], table_name: str) -> Path:
+        columns = list(data[0].keys())
+        seed_path = self._seeds_dir_path / f"{table_name}.csv"
+        with seed_path.open("w") as f:
+            writer = csv.DictWriter(f, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(data)
+        return seed_path
+
+    # ------------------------------------------------------------------
+    # Seed
+    # ------------------------------------------------------------------
+
+    @contextmanager
+    def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
+        """Create a Delta table via PyHive and insert data."""
+        columns = list(data[0].keys())
+        col_types: Dict[str, str] = {
+            col: self._infer_column_type([row.get(col) for row in data])
+            for col in columns
+        }
+        col_defs = ", ".join(f"`{col}` {col_types[col]}" for col in columns)
+        fq_table = f"`{self._schema}`.`{table_name}`"
+
+        seed_path = self._write_csv(data, table_name)
+
+        conn = self._connect()
+        try:
+            self._execute(conn, f"DROP TABLE IF EXISTS {fq_table}")
+            self._execute(conn, f"CREATE TABLE {fq_table} ({col_defs}) USING DELTA")
+
+            for batch_start in range(0, len(data), self._INSERT_BATCH_SIZE):
+                batch = data[batch_start : batch_start + self._INSERT_BATCH_SIZE]
+                rows_sql = ", ".join(
+                    "("
+                    + ", ".join(
+                        self._format_value(row.get(c), col_types[c]) for c in columns
+                    )
+                    + ")"
+                    for row in batch
+                )
+                self._execute(conn, f"INSERT INTO {fq_table} VALUES {rows_sql}")
+
+            logger.info(
+                "SparkDirectSeeder: loaded %d rows into %s (%s)",
+                len(data),
+                fq_table,
+                ", ".join(f"{c}: {t}" for c, t in col_types.items()),
+            )
+
+            yield
+        finally:
+            seed_path.unlink(missing_ok=True)
+            conn.close()
 
 
 class ClickHouseDirectSeeder(BaseDirectSeeder):
