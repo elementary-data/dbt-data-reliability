@@ -39,6 +39,10 @@
     date_format({{ date_expr }}, '%W%H')
 {% endmacro %}
 
+{% macro clickhouse__edr_hour_of_week_expression(date_expr) %}
+    concat(formatDateTime({{ date_expr }}, '%W'), formatDateTime({{ date_expr }}, '%H'))
+{% endmacro %}
+
 {% macro duckdb__edr_hour_of_week_expression(date_expr) %}
     concat(cast(dayname({{ date_expr }}) as {{ elementary.edr_type_string() }}), cast(EXTRACT(hour from {{ date_expr }}) as {{ elementary.edr_type_string() }}))
 {% endmacro %}

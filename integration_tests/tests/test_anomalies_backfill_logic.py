@@ -2,7 +2,6 @@ import json
 from datetime import datetime, time, timedelta
 
 import dateutil.parser
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
@@ -74,8 +73,6 @@ def get_latest_anomaly_test_metrics(dbt_project: DbtProject, test_id: str):
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_full_backfill_for_non_incremental_model(dbt_project: DbtProject, test_id: str):
     utc_today = datetime.utcnow().date()
     data_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -109,8 +106,6 @@ def test_full_backfill_for_non_incremental_model(dbt_project: DbtProject, test_i
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_partial_backfill_for_incremental_models(dbt_project: DbtProject, test_id: str):
     utc_today = datetime.utcnow().date()
     data_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -157,8 +152,6 @@ def test_partial_backfill_for_incremental_models(dbt_project: DbtProject, test_i
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str):
     date_gap_size = 5
     utc_today = datetime.utcnow().date()
@@ -211,8 +204,6 @@ def test_longer_backfill_in_case_of_a_gap(dbt_project: DbtProject, test_id: str)
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_full_backfill_if_metric_not_updated_for_a_long_time(
     dbt_project: DbtProject, test_id: str
 ):
@@ -272,8 +263,6 @@ def test_full_backfill_if_metric_not_updated_for_a_long_time(
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_backfill_when_metric_doesnt_exist_back_enough(
     dbt_project: DbtProject, test_id: str
 ):
@@ -318,8 +307,6 @@ def test_backfill_when_metric_doesnt_exist_back_enough(
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_backfill_with_middle_buckets_gap(dbt_project: DbtProject, test_id: str):
     utc_today = datetime.utcnow().date()
     data_start = utc_today - timedelta(21)
@@ -388,8 +375,6 @@ def test_backfill_with_middle_buckets_gap(dbt_project: DbtProject, test_id: str)
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_bucket_size_not_aligned_with_days(dbt_project: DbtProject, test_id: str):
     """
     In this test we choose a bucket size that is not aligned with one day - specifically 7 hours.

@@ -1,6 +1,5 @@
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "some_data"
@@ -20,7 +19,6 @@ SAMPLES_QUERY = """
 """
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -49,7 +47,6 @@ def test_sample_count_unlimited(test_id: str, dbt_project: DbtProject):
         assert sample[COLUMN_NAME] is None
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sample_count_small(test_id: str, dbt_project: DbtProject):
     null_count = 20
     data = [{COLUMN_NAME: None} for _ in range(null_count)]

@@ -31,8 +31,6 @@ def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
     return [json.loads(result["result_row"]) for result in results]
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -51,8 +49,6 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert len(anomaly_test_points) == 0
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -73,8 +69,6 @@ def test_dimension_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -114,8 +108,6 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert any(x["is_anomalous"] for x in superman_anomaly_test_points)
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimensions_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject
 ):
@@ -166,8 +158,6 @@ def test_dimensions_anomalies_with_where_parameter(
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_id: str, dbt_project: DbtProject
 ):
@@ -225,7 +215,6 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
 # 1. Detection period contains anomalous distribution data that would normally be included in training
 # 2. With exclude_detection=False: anomaly is missed (test passes) because training includes the anomaly
 # 3. With exclude_detection=True: anomaly is detected (test fails) because training excludes the anomaly
-@pytest.mark.skip_targets(["clickhouse"])
 @pytest.mark.parametrize(
     "exclude_detection,expected_status",
     [

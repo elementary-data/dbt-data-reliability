@@ -7,28 +7,15 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from data_seeder import DbtDataSeeder
+from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
 from logger import get_logger
 from ruamel.yaml import YAML
-from tenacity import (
-    RetryCallState,
-    retry,
-    retry_if_result,
-    stop_after_attempt,
-    wait_fixed,
-)
 
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
-
-# Retry settings for the run_operation fallback path.  run_operation() can
-# intermittently return an empty list when the MACRO_RESULT_PATTERN log line
-# is not captured from dbt's output.
-_RUN_QUERY_MAX_RETRIES = 3
-_RUN_QUERY_RETRY_DELAY_SECONDS = 0.5
 
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
@@ -92,51 +79,21 @@ class DbtProject:
         except UnsupportedJinjaError:
             logger.debug("Query contains complex Jinja; falling back to run_operation")
 
-        # Slow path: full Jinja rendering via run_operation (with retry).
+        # Slow path: full Jinja rendering via run_operation.
         return self._run_query_with_run_operation(prerendered_query)
 
-    @staticmethod
-    def _log_retry(retry_state: RetryCallState) -> None:
-        """Tenacity before_sleep callback — logs each retry with attempt number."""
-        logger.warning(
-            "run_operation('elementary.render_run_query') returned no output; "
-            "retry %d/%d in %.1fs",
-            retry_state.attempt_number,
-            _RUN_QUERY_MAX_RETRIES,
-            _RUN_QUERY_RETRY_DELAY_SECONDS,
-        )
-
-    @retry(
-        retry=retry_if_result(lambda r: r is None),
-        stop=stop_after_attempt(_RUN_QUERY_MAX_RETRIES),
-        wait=wait_fixed(_RUN_QUERY_RETRY_DELAY_SECONDS),
-        before_sleep=_log_retry.__func__,
-        reraise=True,
-    )
-    def _run_operation_with_retry(self, prerendered_query: str) -> Optional[list]:
-        """Call run_operation and return the parsed result, or None to trigger retry."""
+    def _run_query_with_run_operation(self, prerendered_query: str):
+        """Execute a query via run_operation."""
         run_operation_results = self.dbt_runner.run_operation(
             "elementary.render_run_query",
             macro_args={"prerendered_query": prerendered_query},
         )
-        if run_operation_results:
-            return json.loads(run_operation_results[0])
-        return None
-
-    def _run_query_with_run_operation(self, prerendered_query: str):
-        """Execute a query via run_operation with retry on empty output.
-
-        run_operation() can intermittently return an empty list when the
-        MACRO_RESULT_PATTERN log line is not captured from dbt's output.
-        """
-        result = self._run_operation_with_retry(prerendered_query)
-        if result is None:
+        if not run_operation_results:
             raise RuntimeError(
-                f"run_operation('elementary.render_run_query') returned no output "
-                f"after {_RUN_QUERY_MAX_RETRIES} attempts. "
+                f"run_operation('elementary.render_run_query') returned no output. "
                 f"Query: {prerendered_query!r}"
             )
-        return result
+        return json.loads(run_operation_results[0])
 
     @staticmethod
     def read_table_query(
@@ -326,15 +283,25 @@ class DbtProject:
             }
             return [test_result] if multiple_results else test_result
 
-    def seed(self, data: List[dict], table_name: str):
-        with DbtDataSeeder(
+    def _create_seeder(
+        self,
+    ) -> Union[DbtDataSeeder, "ClickHouseDirectSeeder"]:
+        """Return the appropriate seeder for the current target."""
+        if self.target == "clickhouse":
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return ClickHouseDirectSeeder(runner, schema, self.seeds_dir_path)
+        return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
+        )
+
+    def seed(self, data: List[dict], table_name: str):
+        with self._create_seeder().seed(data, table_name):
             self._fix_seed_if_needed(table_name)
 
-    def _fix_seed_if_needed(self, table_name: str):
+    def _fix_seed_if_needed(self, table_name: str) -> None:
         # Hack for BigQuery - seems like we get empty strings instead of nulls in seeds, so we
-        # fix them here
+        # fix them here.
         if self.runner_method == RunnerMethod.FUSION and self.target == "bigquery":
             self.dbt_runner.run_operation(
                 "elementary_tests.replace_empty_strings_with_nulls",
@@ -345,9 +312,8 @@ class DbtProject:
     def seed_context(
         self, data: List[dict], table_name: str
     ) -> Generator[None, None, None]:
-        with DbtDataSeeder(
-            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
+        with self._create_seeder().seed(data, table_name):
+            self._fix_seed_if_needed(table_name)
             yield
 
     @contextmanager

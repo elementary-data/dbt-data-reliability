@@ -1,12 +1,13 @@
 import csv
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator, List
+from typing import TYPE_CHECKING, Generator, List
 
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from logger import get_logger
 
-# TODO: Write more performant data seeders per adapter.
+if TYPE_CHECKING:
+    from adapter_query_runner import AdapterQueryRunner
 
 logger = get_logger(__name__)
 
@@ -48,3 +49,126 @@ class DbtDataSeeder:
                 yield
         finally:
             seed_path.unlink()
+
+
+# Maximum number of rows per INSERT VALUES statement.
+_INSERT_BATCH_SIZE = 500
+
+
+class ClickHouseDirectSeeder:
+    """Fast seeder for ClickHouse: executes CREATE TABLE + INSERT directly.
+
+    Bypasses the ``dbt seed`` *subprocess* (and its post-hoc NULL repair),
+    but still writes a CSV file to the seeds directory so that dbt can
+    discover the seed node for ``{{ ref() }}`` resolution during
+    ``run_operation``.
+
+    Column types are inferred from the Python values in the seed data and
+    wrapped in ``Nullable()`` so that NULL values are preserved correctly
+    (ClickHouse columns are non-Nullable by default).
+    """
+
+    def __init__(
+        self,
+        query_runner: "AdapterQueryRunner",
+        schema: str,
+        seeds_dir_path: Path,
+    ) -> None:
+        self._query_runner = query_runner
+        self._schema = schema
+        self._seeds_dir_path = seeds_dir_path
+
+    @staticmethod
+    def _infer_column_type(values: List[object]) -> str:
+        """Infer a ClickHouse column type from a list of Python values.
+
+        Examines non-None, non-empty-string values and returns a
+        ``Nullable(...)`` type string.  Falls back to ``Nullable(String)``
+        when all values are None/empty or when types are mixed.
+        """
+        non_null = [v for v in values if v is not None and v != ""]
+        if not non_null:
+            return "Nullable(String)"
+
+        # bool is a subclass of int in Python, so check it first.
+        # dbt seed infers "True"/"False" CSV values as boolean; dbt-clickhouse
+        # maps this to Bool (alias for UInt8).
+        if all(isinstance(v, bool) for v in non_null):
+            return "Nullable(Bool)"
+        if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+            return "Nullable(Int64)"
+        if all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null
+        ):
+            return "Nullable(Float64)"
+        return "Nullable(String)"
+
+    @staticmethod
+    def _escape(value: object) -> str:
+        """Escape a value for a ClickHouse SQL literal.
+
+        Returns ``NULL`` for None / empty-string, unquoted literals for
+        numeric / boolean types, and a quoted+escaped string otherwise.
+        """
+        if value is None or (isinstance(value, str) and value == ""):
+            return "NULL"
+        # Booleans → ClickHouse Bool literals (true/false).
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (int, float)):
+            return str(value)
+        text = str(value)
+        text = text.replace("\\", "\\\\")
+        text = text.replace("'", "\\'")
+        return f"'{text}'"
+
+    @contextmanager
+    def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
+        """Create a table with correctly-typed Nullable columns and insert data.
+
+        A CSV file is written to the seeds directory so that dbt can
+        discover the seed node for ``{{ ref() }}`` resolution.  The file
+        is removed when the context manager exits.
+        """
+        columns = list(data[0].keys())
+        col_types = {
+            col: self._infer_column_type([row.get(col) for row in data])
+            for col in columns
+        }
+        col_defs = ", ".join(f"`{col}` {col_types[col]}" for col in columns)
+        fq_table = f"`{self._schema}`.`{table_name}`"
+
+        # Write a CSV so dbt discovers the seed node (needed for {{ ref() }}).
+        seed_path = self._seeds_dir_path / f"{table_name}.csv"
+        with seed_path.open("w") as f:
+            writer = csv.DictWriter(f, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(data)
+
+        try:
+            self._query_runner.execute_sql(f"DROP TABLE IF EXISTS {fq_table}")
+            self._query_runner.execute_sql(
+                f"CREATE TABLE {fq_table} ({col_defs}) "
+                f"ENGINE = MergeTree() ORDER BY tuple()"
+            )
+
+            for batch_start in range(0, len(data), _INSERT_BATCH_SIZE):
+                batch = data[batch_start : batch_start + _INSERT_BATCH_SIZE]
+                rows_sql = ", ".join(
+                    "(" + ", ".join(self._escape(row.get(c)) for c in columns) + ")"
+                    for row in batch
+                )
+                self._query_runner.execute_sql(
+                    f"INSERT INTO {fq_table} VALUES {rows_sql}"
+                )
+
+            logger.info(
+                "ClickHouseDirectSeeder: loaded %d rows into %s (%s)",
+                len(data),
+                fq_table,
+                ", ".join(f"{c}: {t}" for c, t in col_types.items()),
+            )
+
+            yield
+        finally:
+            seed_path.unlink(missing_ok=True)

@@ -1,6 +1,5 @@
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "some_column"
@@ -23,7 +22,6 @@ SAMPLES_QUERY = """
 TEST_SAMPLE_ROW_COUNT = 7
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_pii_disabled(test_id: str, dbt_project: DbtProject):
     """Test that PII-tagged tables don't upload samples even when tests fail"""
     null_count = 50
@@ -52,7 +50,6 @@ def test_sampling_pii_disabled(test_id: str, dbt_project: DbtProject):
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_pii_disabled_with_default_config_and_casing(
     test_id: str, dbt_project: DbtProject
 ):
@@ -81,7 +78,6 @@ def test_sampling_pii_disabled_with_default_config_and_casing(
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_pii_enabled_with_default_config(
     test_id: str, dbt_project: DbtProject
 ):
@@ -110,7 +106,6 @@ def test_sampling_pii_enabled_with_default_config(
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_non_pii_enabled(test_id: str, dbt_project: DbtProject):
     """Test that non-PII tables still collect samples normally"""
     null_count = 50
@@ -139,7 +134,6 @@ def test_sampling_non_pii_enabled(test_id: str, dbt_project: DbtProject):
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_pii_feature_disabled(test_id: str, dbt_project: DbtProject):
     """Test that when PII feature is disabled, PII tables still collect samples"""
     null_count = 50
@@ -168,7 +162,6 @@ def test_sampling_pii_feature_disabled(test_id: str, dbt_project: DbtProject):
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_disable_samples_overrides_pii(test_id: str, dbt_project: DbtProject):
     """Test that disable_test_samples flag overrides PII detection when both are present"""
     null_count = 50
@@ -199,7 +192,6 @@ def test_sampling_disable_samples_overrides_pii(test_id: str, dbt_project: DbtPr
     assert len(samples) == 0
 
 
-@pytest.mark.skip_targets(["clickhouse"])
 def test_sampling_disable_samples_false_allows_samples(
     test_id: str, dbt_project: DbtProject
 ):

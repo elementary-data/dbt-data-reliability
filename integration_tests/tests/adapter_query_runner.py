@@ -239,6 +239,16 @@ class AdapterQueryRunner:
         stripped = _SOURCE_PATTERN.sub("", stripped)
         return bool(_JINJA_EXPR_PATTERN.search(stripped))
 
+    def execute_sql(self, sql: str) -> None:
+        """Execute a SQL statement that does not return results (DDL/DML)."""
+        with self._adapter.connection_named("execute_sql"):
+            self._adapter.execute(sql, fetch=False)
+
+    @property
+    def schema_name(self) -> str:
+        """Return the base schema name from the adapter credentials."""
+        return self._adapter.config.credentials.schema
+
     def run_query(self, prerendered_query: str) -> List[Dict[str, Any]]:
         """Render Jinja refs/sources and execute a query, returning rows as dicts.
 

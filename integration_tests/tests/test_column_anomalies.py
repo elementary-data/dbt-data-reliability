@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 from parametrization import Parametrization
@@ -14,8 +13,6 @@ DBT_TEST_ARGS = {
 }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -32,8 +29,6 @@ def test_anomalyless_column_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_no_timestamp_column_anomalies(
     test_id: str, dbt_project: DbtProject
 ):
@@ -54,8 +49,6 @@ def test_anomalyless_no_timestamp_column_anomalies(
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -79,8 +72,6 @@ def test_anomalous_column_anomalies(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -138,8 +129,6 @@ def test_column_anomalies_with_where_parameter(test_id: str, dbt_project: DbtPro
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -182,8 +171,6 @@ def test_column_anomalies_with_timestamp_as_sql_expression(
     drop_failure_percent_threshold=5,
     metric_value=1,
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomaly_static_data_drop(
     test_id: str,
     dbt_project: DbtProject,
@@ -228,8 +215,6 @@ def test_volume_anomaly_static_data_drop(
     assert test_result["status"] == expected_result
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -246,8 +231,6 @@ def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -301,8 +284,6 @@ def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
     assert test_result["failures"] == 2
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies_group_by_none_dimension(
     test_id: str, dbt_project: DbtProject
 ):
@@ -347,8 +328,6 @@ def test_anomalyless_column_anomalies_group_by_none_dimension(
     assert test_result["failures"] == 2
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies_group_by_multi(
     test_id: str, dbt_project: DbtProject
 ):
@@ -400,8 +379,6 @@ def test_anomalyless_column_anomalies_group_by_multi(
     assert test_result["failures"] == 3
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_column_anomalies_group_by_description(
     test_id: str, dbt_project: DbtProject
 ):
@@ -436,8 +413,6 @@ def test_anomalyless_column_anomalies_group_by_description(
     assert "not enough data" not in test_result["test_results_description"].lower()
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -478,8 +453,6 @@ def test_anomalous_boolean_column_anomalies(test_id: str, dbt_project: DbtProjec
     }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     """
     Test the exclude_detection_period_from_training flag functionality for column anomalies.
