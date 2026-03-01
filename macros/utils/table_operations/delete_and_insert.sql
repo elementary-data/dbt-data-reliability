@@ -95,17 +95,7 @@
        On plain dbt-spark (thrift) relation.metadata is None – we default to
        MERGE because file_format=delta is configured.  Non-Delta tables on
        dbt-databricks fall through to a plain DELETE. #}
-    {% if delete_relation and relation.metadata and relation.is_delta %}
-        {% set delete_query %}
-            merge into {{ relation }} as target
-            using {{ delete_relation }} as source
-            on (target.{{ delete_column_key }} = source.{{ delete_column_key }}) or target.{{ delete_column_key }} is null
-            when matched then delete;
-        {% endset %}
-        {% do queries.append(delete_query) %}
-
-    {% elif delete_relation and not relation.metadata %}
-        {# dbt-spark (thrift): metadata is unavailable, assume Delta (configured via file_format). #}
+    {% if delete_relation and ((relation.metadata and relation.is_delta) or not relation.metadata) %}
         {% set delete_query %}
             merge into {{ relation }} as target
             using {{ delete_relation }} as source
