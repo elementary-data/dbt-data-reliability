@@ -156,7 +156,7 @@
     {%- else -%}
         {{ return('') }}
     {%- endif -%}
-    trim(split(full_table_name,'.')[{{ part_index }}],'"') as {{ part_name }}
+    trim(BOTH '"' FROM split(full_table_name,'.')[{{ part_index }}]) as {{ part_name }}
 {% endmacro %}
 
 
