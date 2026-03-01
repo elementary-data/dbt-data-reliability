@@ -167,6 +167,14 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{# spark__escape_special_chars: Newlines and carriage returns are replaced with
+   spaces (not escape sequences) because Spark SQL does not support multi-line
+   string literals inside INSERT VALUES. Backslashes and single quotes use
+   C-style escaping (\\, \') which is the Spark SQL convention. #}
+{%- macro spark__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("\\", "\\\\") | replace("'", "\\'") | replace("\n", " ") | replace("\r", " ")) -}}
+{%- endmacro -%}
+
 {%- macro render_value(value, data_type) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%}

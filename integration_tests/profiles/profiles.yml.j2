@@ -46,6 +46,16 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
+    spark: &spark
+      type: spark
+      method: thrift
+      host: 127.0.0.1
+      port: 10000
+      user: dbt
+      schema: {{ schema_name }}
+      file_format: delta
+      threads: 4
+
     duckdb: &duckdb
       type: duckdb
       path: ":memory:"
@@ -112,7 +122,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'duckdb', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}

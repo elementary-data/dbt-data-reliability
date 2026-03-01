@@ -73,3 +73,8 @@
   {% do run_query("CREATE DATABASE IF NOT EXISTS `" ~ schema_name ~ "`") %}
   {% do adapter.commit() %}
 {% endmacro %}
+
+{% macro spark__edr_create_schema(database, schema_name) %}
+  {% set safe_schema = schema_name | replace("`", "``") %}
+  {% do run_query("CREATE DATABASE IF NOT EXISTS `" ~ safe_schema ~ "`") %}
+{% endmacro %}

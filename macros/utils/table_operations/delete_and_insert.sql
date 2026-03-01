@@ -90,12 +90,16 @@
 {% macro spark__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
-    {# Calling `is_delta` raises an error if `metadata` is None - https://github.com/databricks/dbt-databricks/blob/33dca4b66b05f268741030b33659d34ff69591c1/dbt/adapters/databricks/relation.py#L71 #}
-    {% if delete_relation and relation.metadata and relation.is_delta %}
+    {# Delta tables do not support DELETE … WHERE … IN (subquery), so use MERGE.
+       On dbt-databricks relation.metadata is set and is_delta can be checked.
+       On plain dbt-spark (thrift) relation.metadata is None – we default to
+       MERGE because file_format=delta is configured.  Non-Delta tables on
+       dbt-databricks fall through to a plain DELETE. #}
+    {% if delete_relation and ((relation.metadata and relation.is_delta) or not relation.metadata) %}
         {% set delete_query %}
-            merge into {{ relation }} as source
-            using {{ delete_relation }} as target
-            on (source.{{ delete_column_key }} = target.{{ delete_column_key }}) or source.{{ delete_column_key }} is null
+            merge into {{ relation }} as target
+            using {{ delete_relation }} as source
+            on (target.{{ delete_column_key }} = source.{{ delete_column_key }}) or target.{{ delete_column_key }} is null
             when matched then delete;
         {% endset %}
         {% do queries.append(delete_query) %}

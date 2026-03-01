@@ -100,6 +100,16 @@ jobs:
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Dremio is healthy."
 
+      - name: Start Spark
+        if: inputs.warehouse-type == 'spark'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          docker compose -f docker-compose-spark.yml build
+          docker compose -f docker-compose-spark.yml up -d
+          echo "Waiting for Spark Thrift Server to become healthy..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-thrift 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "Spark Thrift Server is healthy."
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -108,7 +118,7 @@ jobs:
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
-        run: sudo apt-get install python-dev libsasl2-dev gcc
+        run: sudo apt-get update && sudo apt-get install -y python3-dev libsasl2-dev gcc
 
       - name: Install compatible databricks connector (not limited in older dbt-databricks versions)
         if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
@@ -168,7 +178,7 @@ jobs:
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n8 -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
+        run: py.test -n${{ (inputs.warehouse-type == 'spark' && '4') || '8' }} -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
 
       - name: Upload test results
         if: always()
