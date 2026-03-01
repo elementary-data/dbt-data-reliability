@@ -58,16 +58,25 @@ _INSERT_BATCH_SIZE = 500
 class ClickHouseDirectSeeder:
     """Fast seeder for ClickHouse: executes CREATE TABLE + INSERT directly.
 
-    Bypasses ``dbt seed`` entirely, avoiding the subprocess overhead and
-    the need for post-hoc NULL repair.  Column types are inferred from the
-    Python values in the seed data and wrapped in ``Nullable()`` so that
-    NULL values are preserved correctly (ClickHouse columns are
-    non-Nullable by default).
+    Bypasses the ``dbt seed`` *subprocess* (and its post-hoc NULL repair),
+    but still writes a CSV file to the seeds directory so that dbt can
+    discover the seed node for ``{{ ref() }}`` resolution during
+    ``run_operation``.
+
+    Column types are inferred from the Python values in the seed data and
+    wrapped in ``Nullable()`` so that NULL values are preserved correctly
+    (ClickHouse columns are non-Nullable by default).
     """
 
-    def __init__(self, query_runner: "AdapterQueryRunner", schema: str) -> None:
+    def __init__(
+        self,
+        query_runner: "AdapterQueryRunner",
+        schema: str,
+        seeds_dir_path: Path,
+    ) -> None:
         self._query_runner = query_runner
         self._schema = schema
+        self._seeds_dir_path = seeds_dir_path
 
     @staticmethod
     def _infer_column_type(values: List[object]) -> str:
@@ -115,7 +124,12 @@ class ClickHouseDirectSeeder:
 
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
-        """Create a table with correctly-typed Nullable columns and insert data."""
+        """Create a table with correctly-typed Nullable columns and insert data.
+
+        A CSV file is written to the seeds directory so that dbt can
+        discover the seed node for ``{{ ref() }}`` resolution.  The file
+        is removed when the context manager exits.
+        """
         columns = list(data[0].keys())
         col_types = {
             col: self._infer_column_type([row.get(col) for row in data])
@@ -124,25 +138,37 @@ class ClickHouseDirectSeeder:
         col_defs = ", ".join(f"`{col}` {col_types[col]}" for col in columns)
         fq_table = f"`{self._schema}`.`{table_name}`"
 
-        self._query_runner.execute_sql(f"DROP TABLE IF EXISTS {fq_table}")
-        self._query_runner.execute_sql(
-            f"CREATE TABLE {fq_table} ({col_defs}) "
-            f"ENGINE = MergeTree() ORDER BY tuple()"
-        )
+        # Write a CSV so dbt discovers the seed node (needed for {{ ref() }}).
+        seed_path = self._seeds_dir_path / f"{table_name}.csv"
+        with seed_path.open("w") as f:
+            writer = csv.DictWriter(f, fieldnames=columns)
+            writer.writeheader()
+            writer.writerows(data)
 
-        for batch_start in range(0, len(data), _INSERT_BATCH_SIZE):
-            batch = data[batch_start : batch_start + _INSERT_BATCH_SIZE]
-            rows_sql = ", ".join(
-                "(" + ", ".join(self._escape(row.get(c)) for c in columns) + ")"
-                for row in batch
+        try:
+            self._query_runner.execute_sql(f"DROP TABLE IF EXISTS {fq_table}")
+            self._query_runner.execute_sql(
+                f"CREATE TABLE {fq_table} ({col_defs}) "
+                f"ENGINE = MergeTree() ORDER BY tuple()"
             )
-            self._query_runner.execute_sql(f"INSERT INTO {fq_table} VALUES {rows_sql}")
 
-        logger.info(
-            "ClickHouseDirectSeeder: loaded %d rows into %s (%s)",
-            len(data),
-            fq_table,
-            ", ".join(f"{c}: {t}" for c, t in col_types.items()),
-        )
+            for batch_start in range(0, len(data), _INSERT_BATCH_SIZE):
+                batch = data[batch_start : batch_start + _INSERT_BATCH_SIZE]
+                rows_sql = ", ".join(
+                    "(" + ", ".join(self._escape(row.get(c)) for c in columns) + ")"
+                    for row in batch
+                )
+                self._query_runner.execute_sql(
+                    f"INSERT INTO {fq_table} VALUES {rows_sql}"
+                )
 
-        yield
+            logger.info(
+                "ClickHouseDirectSeeder: loaded %d rows into %s (%s)",
+                len(data),
+                fq_table,
+                ", ".join(f"{c}: {t}" for c, t in col_types.items()),
+            )
+
+            yield
+        finally:
+            seed_path.unlink(missing_ok=True)

@@ -333,7 +333,7 @@ class DbtProject:
         if self.target == "clickhouse":
             runner = self._get_query_runner()
             schema = runner.schema_name + SCHEMA_NAME_SUFFIX
-            return ClickHouseDirectSeeder(runner, schema)
+            return ClickHouseDirectSeeder(runner, schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         )
