@@ -7,7 +7,7 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from data_seeder import DbtDataSeeder, SparkDirectSeeder
+from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder, SparkDirectSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
@@ -326,12 +326,18 @@ class DbtProject:
             }
             return [test_result] if multiple_results else test_result
 
-    def _create_seeder(self) -> Union[DbtDataSeeder, SparkDirectSeeder]:
+    def _create_seeder(
+        self,
+    ) -> Union[DbtDataSeeder, SparkDirectSeeder, ClickHouseDirectSeeder]:
         """Return the fastest available seeder for the current target."""
         if self.target == "spark":
             runner = self._get_query_runner()
             schema = runner.schema_name + SCHEMA_NAME_SUFFIX
-            return SparkDirectSeeder(runner, schema)
+            return SparkDirectSeeder(runner, schema, self.seeds_dir_path)
+        if self.target == "clickhouse":
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return ClickHouseDirectSeeder(runner, schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         )
