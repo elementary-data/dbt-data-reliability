@@ -287,10 +287,6 @@ class DbtProject:
         self,
     ) -> Union[DbtDataSeeder, SparkDirectSeeder, ClickHouseDirectSeeder]:
         """Return the fastest available seeder for the current target."""
-        if self.target == "spark":
-            runner = self._get_query_runner()
-            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
-            return SparkDirectSeeder(runner, schema, self.seeds_dir_path)
         if self.target == "clickhouse":
             runner = self._get_query_runner()
             schema = runner.schema_name + SCHEMA_NAME_SUFFIX
