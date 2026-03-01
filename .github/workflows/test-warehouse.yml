@@ -106,9 +106,9 @@ jobs:
         run: |
           docker compose -f docker-compose-spark.yml build
           docker compose -f docker-compose-spark.yml up -d
-          echo "Waiting for Spark Thrift Server to accept connections on port 10000..."
-          timeout 120 bash -c 'until nc -z 127.0.0.1 10000 2>/dev/null; do sleep 3; done'
-          echo "Spark Thrift Server is ready."
+          echo "Waiting for Spark Thrift Server to become healthy..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-thrift 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "Spark Thrift Server is healthy."
 
       - name: Setup Python
         uses: actions/setup-python@v6

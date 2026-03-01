@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   spark-thrift:
+    container_name: spark-thrift
     build:
       context: ./docker/spark
       dockerfile: Dockerfile
@@ -13,6 +14,12 @@ services:
     command: >
       --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
       --name Thrift JDBC/ODBC Server
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     volumes:
       - spark-warehouse:/spark-warehouse/
       - ./docker/spark/hive-site.xml:/usr/spark/conf/hive-site.xml
