@@ -132,6 +132,11 @@
     {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
 
+    {# DuckDB: commit so insert survives dbt's post-on-run-end ROLLBACK #}
+    {% if target.type == 'duckdb' %}
+        {% do adapter.commit() %}
+    {% endif %}
+
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}
     {% endif %}
@@ -180,6 +185,11 @@
     {{ elementary.file_log("Inserting schema columns snapshot into {}.".format(target_relation)) }}
     {%- do elementary.edr_create_table_as(true, temp_relation, test_tables_union_query) %}
     {% do elementary.run_query(insert_query) %}
+
+    {# DuckDB: commit so insert survives dbt's post-on-run-end ROLLBACK #}
+    {% if target.type == 'duckdb' %}
+        {% do adapter.commit() %}
+    {% endif %}
 
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}

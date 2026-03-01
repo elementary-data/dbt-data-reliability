@@ -152,6 +152,27 @@
 
 {% endmacro %}
 
+{% macro duckdb__data_type_list(data_type) %}
+
+    {% set string_list = ['character varying','varchar','character','char','text','nchar','bpchar','string'] | list %}
+    {% set numeric_list = ['integer', 'bigint','smallint','tinyint','decimal','numeric','real','double','double precision','float','int2','int4','int','int8','float4','float8','hugeint','ubigint','uinteger','usmallint','utinyint','uhugeint'] | list %}
+    {% set timestamp_list = ['date', 'timestamp','timestamptz','timestamp without time zone','timestamp with time zone'] | list %}
+    {% set boolean_list = ["boolean"] | list %}
+
+    {%- if data_type == 'string' %}
+        {{ return(string_list) }}
+    {%- elif data_type == 'numeric' %}
+        {{ return(numeric_list) }}
+    {%- elif data_type == 'timestamp' %}
+        {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %}
+        {{ return(boolean_list) }}
+    {%- else %}
+        {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}
+
 {% macro dremio__data_type_list(data_type) %}
     {% set string_list = ['varchar', 'character varying'] | list %}
     {% set numeric_list = ['int','integer','bigint','double','decimal','float','smallint','tinyint','numeric'] | list %}

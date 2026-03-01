@@ -17,6 +17,7 @@ on:
           - trino
           - clickhouse
           - dremio
+          - duckdb
       elementary-ref:
         type: string
         required: false

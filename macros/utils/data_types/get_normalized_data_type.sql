@@ -90,6 +90,42 @@
 {% endmacro %}
 
 
+{% macro duckdb__get_normalized_data_type(exact_data_type) %}
+{# understanding DuckDB data type synonyms:
+ https://duckdb.org/docs/sql/data_types/overview #}
+ {% set exact_data_type_to_data_type_returned_by_the_info_schema = {'INT': 'INTEGER',
+                'INT4': 'INTEGER',
+                'INT8': 'BIGINT',
+                'INT2': 'SMALLINT',
+                'SHORT': 'SMALLINT',
+                'LONG': 'BIGINT',
+                'SIGNED': 'INTEGER',
+                'NUMERIC': 'DECIMAL',
+                'CHAR': 'VARCHAR',
+                'BPCHAR': 'VARCHAR',
+                'TEXT': 'VARCHAR',
+                'STRING': 'VARCHAR',
+                'NVARCHAR': 'VARCHAR',
+                'CHARACTER VARYING': 'VARCHAR',
+                'FLOAT4': 'FLOAT',
+                'FLOAT8': 'DOUBLE',
+                'REAL': 'FLOAT',
+                'DOUBLE PRECISION': 'DOUBLE',
+                'BOOL': 'BOOLEAN',
+                'DATETIME': 'TIMESTAMP',
+                'TIMESTAMP WITHOUT TIME ZONE': 'TIMESTAMP',
+                'TIMESTAMPTZ': 'TIMESTAMP WITH TIME ZONE',
+                'INT1': 'TINYINT',
+                'LOGICAL': 'BOOLEAN'
+                }%}
+ {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema%}
+   {{ return (exact_data_type_to_data_type_returned_by_the_info_schema[exact_data_type])}}
+ {%- else %}
+   {{return (exact_data_type) }}
+ {%- endif%}
+{% endmacro %}
+
+
 {% macro postgres__get_normalized_data_type(exact_data_type) %}
 {# understanding Postgres data type synonyms:
  https://www.postgresql.org/docs/current/datatype.html #}

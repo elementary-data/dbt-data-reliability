@@ -144,6 +144,21 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
+{% macro duckdb__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
+    {%- set complete_buckets_cte %}
+        select
+          unnest(generate_series({{ min_bucket_start_expr }}, {{ max_bucket_end_expr }}, interval '{{ time_bucket.count }} {{ time_bucket.period }}')) as edr_bucket_start
+    {%- endset %}
+    {%- set complete_buckets_cte %}
+        select
+          edr_bucket_start,
+          {{ bucket_end_expr }} as edr_bucket_end
+        from ({{ complete_buckets_cte }}) as _buckets
+        where {{ bucket_end_expr }} <= {{ max_bucket_end_expr }}
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
+{% endmacro %}
+
 {% macro dremio__complete_buckets_cte(time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr) %}
     {%- set complete_buckets_cte %}
         with integers as (
