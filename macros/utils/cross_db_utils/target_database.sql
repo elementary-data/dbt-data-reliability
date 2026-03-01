@@ -30,3 +30,7 @@
 {% macro clickhouse__target_database() %}
     {% do return(target.schema) %}
 {% endmacro %}
+
+{% macro duckdb__target_database() %}
+    {% do return(target.database) %}
+{% endmacro %}

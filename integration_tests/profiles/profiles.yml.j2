@@ -2,7 +2,7 @@ elementary_tests:
   target: postgres
   outputs:
 
-    # ── Docker targets (plaintext, no secrets needed) ──────────────────
+    # ── Local targets (plaintext, no secrets needed) ─────────────────
 
     postgres: &postgres
       type: postgres
@@ -55,6 +55,12 @@ elementary_tests:
       schema: {{ schema_name }}
       file_format: delta
       threads: 4
+
+    duckdb: &duckdb
+      type: duckdb
+      path: ":memory:"
+      schema: {{ schema_name }}
+      threads: 8
 
     # ── Cloud targets (secrets substituted at CI time) ─────────────────
 
@@ -116,7 +122,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}

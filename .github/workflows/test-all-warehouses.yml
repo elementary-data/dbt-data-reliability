@@ -35,10 +35,12 @@ on:
         required: false
 
 jobs:
-  # ── Docker targets ────────────────────────────────────────────────────
+  # ── Local targets ─────────────────────────────────────────────────────
   # No secrets needed — run on pull_request (works for forks without approval).
   # Skipped on pull_request_target to avoid duplicate runs for internal PRs.
-  test-docker:
+  # Includes Docker-based adapters (postgres, clickhouse, trino, dremio) and
+  # fully in-process adapters (duckdb).
+  test-local:
     if: github.event_name != 'pull_request_target'
     strategy:
       fail-fast: false
@@ -46,7 +48,7 @@ jobs:
         dbt-version:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official", "latest_pre"]') }}
-        warehouse-type: [postgres, clickhouse, trino, dremio, spark]
+        warehouse-type: [postgres, clickhouse, trino, dremio, spark, duckdb]
         exclude:
           # latest_pre is only tested on postgres
           - dbt-version: latest_pre
@@ -57,6 +59,8 @@ jobs:
             warehouse-type: dremio
           - dbt-version: latest_pre
             warehouse-type: spark
+          - dbt-version: latest_pre
+            warehouse-type: duckdb
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
