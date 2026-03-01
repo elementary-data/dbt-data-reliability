@@ -1,21 +1,21 @@
 version: "3.8"
 
 services:
-  spark-thrift:
-    container_name: spark-thrift
+  spark-connect:
+    container_name: spark-connect
     build:
       context: ./docker/spark
       dockerfile: Dockerfile
     ports:
-      - "10000:10000"
+      - "15002:15002"
       - "4040:4040"
     depends_on:
       - spark-hive-metastore
     command: >
-      --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
-      --name Thrift JDBC/ODBC Server
+      --class org.apache.spark.sql.connect.service.SparkConnectServer
+      --name Spark Connect Server
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 10000"]
+      test: ["CMD-SHELL", "nc -z localhost 15002"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -26,6 +26,7 @@ services:
       - ./docker/spark/spark-defaults.conf:/usr/spark/conf/spark-defaults.conf
     environment:
       - WAIT_FOR=spark-hive-metastore:5432
+      - SPARK_CONNECT_GRPC_BINDING_PORT=15002
 
   spark-hive-metastore:
     image: postgres:15-alpine

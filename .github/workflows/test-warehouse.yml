@@ -106,9 +106,9 @@ jobs:
         run: |
           docker compose -f docker-compose-spark.yml build
           docker compose -f docker-compose-spark.yml up -d
-          echo "Waiting for Spark Thrift Server to become healthy..."
-          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-thrift 2>/dev/null)" = "healthy" ]; do sleep 5; done'
-          echo "Spark Thrift Server is healthy."
+          echo "Waiting for Spark Connect Server to become healthy..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-connect 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "Spark Connect Server is healthy."
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -118,7 +118,7 @@ jobs:
 
       - name: Install Spark requirements
         if: inputs.warehouse-type == 'spark'
-        run: sudo apt-get update && sudo apt-get install -y python3-dev libsasl2-dev gcc
+        run: pip install 'pyspark[connect]==3.5.3'
 
       - name: Install compatible databricks connector (not limited in older dbt-databricks versions)
         if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
@@ -129,7 +129,7 @@ jobs:
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
+          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[session]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'

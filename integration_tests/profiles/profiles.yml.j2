@@ -48,12 +48,11 @@ elementary_tests:
 
     spark: &spark
       type: spark
-      method: thrift
+      method: session
       host: 127.0.0.1
-      port: 10000
-      user: dbt
       schema: {{ schema_name }}
-      file_format: delta
+      server_side_parameters:
+        spark.remote: "sc://127.0.0.1:15002"
       threads: 4
 
     duckdb: &duckdb
