@@ -62,8 +62,9 @@ class SparkDirectSeeder:
     """Fast seeder for Spark: executes CREATE TABLE + INSERT directly.
 
     Bypasses the ``dbt seed`` subprocess entirely, avoiding the ~4 s
-    Python/manifest-parsing overhead per invocation.  All columns are
-    created as STRING, which matches ``dbt seed`` behaviour.
+    Python/manifest-parsing overhead per invocation.  Column types are
+    inferred from the data to match ``dbt seed`` behaviour (which uses
+    agate for type inference).
     """
 
     def __init__(self, query_runner: "AdapterQueryRunner", schema: str) -> None:
@@ -75,15 +76,65 @@ class SparkDirectSeeder:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _escape(value: object) -> str:
-        """Escape a value for a Spark SQL string literal."""
+    def _infer_spark_type(values: List[object]) -> str:
+        """Infer the best Spark SQL type from a column's values."""
+        non_null = [
+            v for v in values if v is not None and not (isinstance(v, str) and v == "")
+        ]
+        if not non_null:
+            return "STRING"
+
+        # Python booleans must be checked before int (bool is subclass of int)
+        if all(isinstance(v, bool) for v in non_null):
+            return "BOOLEAN"
+
+        # Check native Python types first (before stringifying)
+        if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+            return "BIGINT"
+        if all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null
+        ):
+            return "DOUBLE"
+
+        # Fallback: try parsing string representations
+        all_int = True
+        all_float = True
+        for v in non_null:
+            text = str(v)
+            try:
+                int(text)
+            except (ValueError, TypeError):
+                all_int = False
+            try:
+                float(text)
+            except (ValueError, TypeError):
+                all_float = False
+            if not all_int and not all_float:
+                break
+
+        if all_int:
+            return "BIGINT"
+        if all_float:
+            return "DOUBLE"
+        return "STRING"
+
+    @staticmethod
+    def _format_value(value: object, col_type: str) -> str:
+        """Format a single value for a Spark SQL INSERT VALUES clause."""
         if value is None or (isinstance(value, str) and value == ""):
             return "NULL"
+
+        if col_type == "BOOLEAN":
+            # Python bool or string "True"/"False"
+            return "TRUE" if str(value).lower() in ("true", "1") else "FALSE"
+
+        if col_type in ("BIGINT", "DOUBLE"):
+            return str(value)
+
+        # STRING — escape for Spark SQL literal
         text = str(value)
-        # Replace backslashes first, then single-quotes.
         text = text.replace("\\", "\\\\")
         text = text.replace("'", "\\'")
-        # Spark INSERT VALUES doesn't support embedded newlines.
         text = text.replace("\n", " ").replace("\r", " ")
         return f"'{text}'"
 
@@ -94,7 +145,14 @@ class SparkDirectSeeder:
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
         columns = list(data[0].keys())
-        col_defs = ", ".join(f"`{col}` STRING" for col in columns)
+
+        # Infer types from the actual data values.
+        col_types = {}
+        for col in columns:
+            col_values = [row.get(col) for row in data]
+            col_types[col] = self._infer_spark_type(col_values)
+
+        col_defs = ", ".join(f"`{col}` {col_types[col]}" for col in columns)
         fq_table = f"`{self._schema}`.`{table_name}`"
 
         # DROP + CREATE is the fastest way to get a clean table.
@@ -107,7 +165,11 @@ class SparkDirectSeeder:
         for batch_start in range(0, len(data), _INSERT_BATCH_SIZE):
             batch = data[batch_start : batch_start + _INSERT_BATCH_SIZE]
             rows_sql = ", ".join(
-                "(" + ", ".join(self._escape(row.get(c)) for c in columns) + ")"
+                "("
+                + ", ".join(
+                    self._format_value(row.get(c), col_types[c]) for c in columns
+                )
+                + ")"
                 for row in batch
             )
             self._query_runner.execute_sql(f"INSERT INTO {fq_table} VALUES {rows_sql}")
