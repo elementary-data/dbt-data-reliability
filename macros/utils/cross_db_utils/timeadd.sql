@@ -34,6 +34,10 @@
     date_add('{{ date_part }}', {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}
 
+{% macro duckdb__edr_timeadd(date_part, number, timestamp_expression) %}
+    {{ elementary.edr_cast_as_timestamp(timestamp_expression) }} + {{ elementary.edr_cast_as_int(number) }} * INTERVAL '1 {{ date_part }}'
+{% endmacro %}
+
 {% macro dremio__edr_timeadd(date_part, number, timestamp_expression) %}
      timestampadd({{date_part}}, {{ elementary.edr_cast_as_int(number) }}, {{ elementary.edr_cast_as_timestamp(timestamp_expression) }})
 {% endmacro %}

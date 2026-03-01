@@ -22,12 +22,22 @@
         {% do elementary.run_query(query) %}
     {% endfor %}
 
+    {# DuckDB: explicit commit so changes survive dbt's post-on-run-end ROLLBACK #}
+    {% if target.type == 'duckdb' %}
+        {% do adapter.commit() %}
+    {% endif %}
+
     {# Make sure we delete the temp tables we created #}
     {% if delete_relation %}
         {% do adapter.drop_relation(delete_relation) %}
     {% endif %}
     {% if insert_relation %}
         {% do adapter.drop_relation(insert_relation) %}
+    {% endif %}
+
+    {# DuckDB: commit cleanup drops so they survive dbt's post-on-run-end ROLLBACK too #}
+    {% if target.type == 'duckdb' and (delete_relation or insert_relation) %}
+        {% do adapter.commit() %}
     {% endif %}
 
     {% do elementary.file_log("Finished deleting from and inserting to: {}".format(relation)) %}
@@ -157,6 +167,30 @@
 {% endmacro %}
 
 {% macro dremio__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
+    {% set queries = [] %}
+
+    {% if delete_relation %}
+        {% set delete_query %}
+            delete from {{ relation }}
+            where
+            {{ delete_column_key }} is null
+            or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }});
+        {% endset %}
+        {% do queries.append(delete_query) %}
+    {% endif %}
+
+    {% if insert_relation %}
+        {% set insert_query %}
+            insert into {{ relation }} select * from {{ insert_relation }};
+        {% endset %}
+        {% do queries.append(insert_query) %}
+    {% endif %}
+
+    {% do return(queries) %}
+{% endmacro %}
+
+{# DuckDB - separate queries without transaction wrapping (commit handled in delete_and_insert) #}
+{% macro duckdb__get_delete_and_insert_queries(relation, insert_relation, delete_relation, delete_column_key) %}
     {% set queries = [] %}
 
     {% if delete_relation %}

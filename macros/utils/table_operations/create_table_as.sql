@@ -85,3 +85,8 @@
   {# ClickHouse does not support database-scoped temporary tables, so we force temporary to be false. #}
   {{ dbt.get_create_table_as_sql(false, relation, sql_query) }}
 {% endmacro %}
+
+{% macro duckdb__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
+  as {{ sql_query }}
+{% endmacro %}

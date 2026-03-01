@@ -18,3 +18,8 @@
     {% do run_query("DROP DATABASE IF EXISTS " ~ schema_name) %}
     {% do adapter.commit() %}
 {% endmacro %}
+
+{% macro duckdb__edr_drop_schema(database_name, schema_name) %}
+    {% do run_query("DROP SCHEMA IF EXISTS " ~ schema_name ~ " CASCADE") %}
+    {% do adapter.commit() %}
+{% endmacro %}

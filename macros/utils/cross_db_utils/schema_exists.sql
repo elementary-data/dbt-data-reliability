@@ -29,6 +29,11 @@
   {% do return(adapter.check_schema_exists(database, schema)) %}
 {% endmacro %}
 
+{% macro clickhouse__schema_exists(database, schema) %}
+  {% set result = run_query("SELECT 1 FROM system.databases WHERE name = '" ~ schema ~ "' LIMIT 1") %}
+  {% do return(result | length > 0) %}
+{% endmacro %}
+
 {% macro default__schema_exists(database, schema) %}
   {% do return(adapter.check_schema_exists(database, schema)) %}
 {% endmacro %}
