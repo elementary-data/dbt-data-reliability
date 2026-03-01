@@ -1,6 +1,6 @@
 {# This macro is only used for BigQuery fusion seeds (see dbt_project.py _fix_seed_if_needed).
-   ClickHouse seed NULL repair is handled separately by fix_clickhouse_seed_nulls() in
-   clickhouse_utils.py via the HTTP API (covers all column types, not just strings). #}
+   ClickHouse uses ClickHouseDirectSeeder (data_seeder.py) which creates Nullable(String)
+   columns directly, so no post-hoc repair is needed. #}
 {% macro replace_empty_strings_with_nulls(table_name) %}
     {% set relation = ref(table_name) %}
     {% set columns = adapter.get_columns_in_relation(relation) %}

@@ -7,8 +7,7 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from clickhouse_utils import fix_clickhouse_seed_nulls
-from data_seeder import DbtDataSeeder
+from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
@@ -327,13 +326,23 @@ class DbtProject:
             }
             return [test_result] if multiple_results else test_result
 
-    def seed(self, data: List[dict], table_name: str):
-        with DbtDataSeeder(
+    def _create_seeder(
+        self,
+    ) -> Union[DbtDataSeeder, "ClickHouseDirectSeeder"]:
+        """Return the appropriate seeder for the current target."""
+        if self.target == "clickhouse":
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return ClickHouseDirectSeeder(runner, schema)
+        return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
-            self._fix_seed_if_needed(table_name, data)
+        )
 
-    def _fix_seed_if_needed(self, table_name: str, data: Optional[List[dict]] = None):
+    def seed(self, data: List[dict], table_name: str):
+        with self._create_seeder().seed(data, table_name):
+            self._fix_seed_if_needed(table_name)
+
+    def _fix_seed_if_needed(self, table_name: str) -> None:
         # Hack for BigQuery - seems like we get empty strings instead of nulls in seeds, so we
         # fix them here.
         if self.runner_method == RunnerMethod.FUSION and self.target == "bigquery":
@@ -341,21 +350,13 @@ class DbtProject:
                 "elementary_tests.replace_empty_strings_with_nulls",
                 macro_args={"table_name": table_name},
             )
-        # On ClickHouse, columns are non-Nullable by default, so NULL values in CSVs become
-        # default values (0 for Int, '' for String, etc.). We fix this by altering columns to
-        # Nullable and updating default values back to NULLs directly via the ClickHouse HTTP
-        # API, since dbt's run_query/statement don't reliably execute DDL on ClickHouse.
-        elif self.target == "clickhouse" and data:
-            fix_clickhouse_seed_nulls(table_name, data, SCHEMA_NAME_SUFFIX)
 
     @contextmanager
     def seed_context(
         self, data: List[dict], table_name: str
     ) -> Generator[None, None, None]:
-        with DbtDataSeeder(
-            self.dbt_runner, self.project_dir_path, self.seeds_dir_path
-        ).seed(data, table_name):
-            self._fix_seed_if_needed(table_name, data)
+        with self._create_seeder().seed(data, table_name):
+            self._fix_seed_if_needed(table_name)
             yield
 
     @contextmanager
