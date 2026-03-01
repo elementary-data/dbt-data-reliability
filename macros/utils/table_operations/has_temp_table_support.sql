@@ -23,6 +23,12 @@
 {% endmacro %}
 
 {% macro clickhouse__has_temp_table_support() %}
+    {# ClickHouse CREATE TEMPORARY TABLE is session-scoped (Memory engine only,
+       no database qualification).  The dbt-clickhouse adapter does not guarantee
+       session persistence across execute() calls, so a temp table created in one
+       statement may not be visible in the next.  Elementary's intermediate
+       relations need cross-statement visibility and MergeTree engine, so we fall
+       back to regular tables with cleanup instead. #}
     {% do return(false) %}
 {% endmacro %}
 
