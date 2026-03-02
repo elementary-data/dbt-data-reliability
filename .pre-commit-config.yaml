@@ -44,8 +44,9 @@ repos:
         exclude: |
           (?x)^(
             macros/.*|
-            integration_tests/dbt_project/macros/python\.sql|
-            integration_tests/dbt_project/dbt_packages/.*
+            models/.*|
+            integration_tests/.*|
+            dbt_packages/.*
           )$
 
   - repo: local
