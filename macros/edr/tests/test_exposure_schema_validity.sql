@@ -119,9 +119,9 @@
             {%- for invalid_exposure in invalid_exposures %}
                 {{ 'UNION ALL ' if not loop.first }}
                 select
-                    '{{ invalid_exposure[' exposure '] }}' as exposure,
-                    '{{ invalid_exposure[' url '] }}' as url,
-                    '{{ invalid_exposure[' error '] }}' as error
+                    '{{ invalid_exposure["exposure"] }}' as exposure,
+                    '{{ invalid_exposure["url"] }}' as url,
+                    '{{ invalid_exposure["error"] }}' as error
             {%- endfor -%}
         {%- else -%} {{ elementary.no_results_query() }}
         {%- endif -%}
