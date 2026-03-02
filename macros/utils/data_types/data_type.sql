@@ -1,5 +1,5 @@
 {% macro is_primitive(val) %}
-    {% do return val is none or val is boolean or val is number or val is string %}
+    {% do return(val is none or val is boolean or val is number or val is string) %}
 {% endmacro %}
 
 {%- macro edr_type_bool() -%}
