@@ -35,9 +35,11 @@
   {% set execute_timing = {} %}
   {% for timing in node_dict['timing'] %}
     {% if timing['name'] == 'compile' %}
-      {%- set compile_timing = elementary.dict_merge(compile_timing, timing) %}
+      {% do compile_timing.setdefault('started_at', timing.get('started_at')) %}
+      {% do compile_timing.setdefault('completed_at', timing.get('completed_at')) %}
     {% elif timing['name'] == 'execute' %}
-      {%- set execute_timing = elementary.dict_merge(execute_timing, timing) %}
+      {% do execute_timing.setdefault('started_at', timing.get('started_at')) %}
+      {% do execute_timing.setdefault('completed_at', timing.get('completed_at')) %}
     {% endif %}
   {% endfor %}
   {% set metadata_dict = elementary.safe_get_with_default(node_dict, 'metadata', {}) %}

@@ -9,7 +9,7 @@
       {% set var_value = var(var_name, unset) %}
     {% endif %}
     {% if var_value != unset %}
-      {% set runtime_config = elementary.dict_merge(runtime_config, {var_name: var_value}) %}
+      {% do runtime_config.setdefault(var_name, var_value) %}
     {% endif %}
   {% endfor %}
   {% do return(runtime_config) %}

@@ -86,9 +86,15 @@
         {% for timing in timings %}
             {% if timing is mapping %}
                 {% if timing.get('name') == 'execute' %}
-                    {% set flatten_run_result_dict = elementary.dict_merge(flatten_run_result_dict, {'execute_started_at': timing.get('started_at'), 'execute_completed_at': timing.get('completed_at')}) %}
+                    {% do flatten_run_result_dict.pop('execute_started_at', none) %}
+                    {% do flatten_run_result_dict.setdefault('execute_started_at', timing.get('started_at')) %}
+                    {% do flatten_run_result_dict.pop('execute_completed_at', none) %}
+                    {% do flatten_run_result_dict.setdefault('execute_completed_at', timing.get('completed_at')) %}
                 {% elif timing.get('name') == 'compile' %}
-                    {% set flatten_run_result_dict = elementary.dict_merge(flatten_run_result_dict, {'compile_started_at': timing.get('started_at'), 'compile_completed_at': timing.get('completed_at')}) %}
+                    {% do flatten_run_result_dict.pop('compile_started_at', none) %}
+                    {% do flatten_run_result_dict.setdefault('compile_started_at', timing.get('started_at')) %}
+                    {% do flatten_run_result_dict.pop('compile_completed_at', none) %}
+                    {% do flatten_run_result_dict.setdefault('compile_completed_at', timing.get('completed_at')) %}
                 {% endif %}
             {% endif %}
         {% endfor %}
