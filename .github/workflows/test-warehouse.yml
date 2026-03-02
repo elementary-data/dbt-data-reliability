@@ -106,6 +106,9 @@ jobs:
         run: |
           docker compose -f docker-compose-spark.yml build
           docker compose -f docker-compose-spark.yml up -d
+          echo "Waiting for MinIO setup to complete..."
+          timeout 60 bash -c 'until [ "$(docker inspect -f {{.State.Status}} spark-minio-setup 2>/dev/null)" = "exited" ]; do sleep 2; done'
+          echo "MinIO is ready."
           echo "Waiting for Spark Thrift Server to become healthy..."
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-thrift 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Spark Thrift Server is healthy."

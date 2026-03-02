@@ -216,6 +216,161 @@ class BaseDirectSeeder(ABC):
             seed_path.unlink(missing_ok=True)
 
 
+class SparkS3CsvSeeder:
+    """Seeder for Spark that uploads CSVs to MinIO (S3) and creates external tables.
+
+    Bypasses ``dbt seed`` entirely — Spark reads the CSV natively via
+    ``CREATE TABLE ... USING CSV``.  This avoids the ``_fix_binding`` bug
+    in dbt-spark's session adapter that converts Python ``None`` to the
+    string literal ``'None'`` instead of SQL NULL.
+
+    SQL commands are executed via PyHive directly (not through dbt's
+    adapter) to avoid corrupting dbt global state (``set_from_args`` /
+    ``reset_adapters``).
+
+    NULL handling: Python ``None`` values are written as empty cells in the
+    CSV.  Spark's CSV reader treats empty strings as NULL for non-string
+    columns by default.  For string columns we set ``nullValue=''`` so
+    that empty cells are also read as NULL.
+
+    The S3 CSV files are **not** deleted after the test — they live in
+    ephemeral MinIO storage that is destroyed with ``docker compose down``.
+    The external table continues to reference the S3 path throughout the
+    test lifecycle.
+    """
+
+    # MinIO connection defaults (matching docker-compose-spark.yml).
+    _MINIO_ENDPOINT = "http://127.0.0.1:9000"
+    _MINIO_ACCESS_KEY = "minioadmin"
+    _MINIO_SECRET_KEY = "minioadmin"
+    _S3_BUCKET = "spark-seeds"
+
+    # Spark Thrift Server connection defaults.
+    _THRIFT_HOST = "127.0.0.1"
+    _THRIFT_PORT = 10000
+
+    def __init__(
+        self,
+        schema: str,
+        seeds_dir_path: Path,
+    ) -> None:
+        self._schema = schema
+        self._seeds_dir_path = seeds_dir_path
+
+    def _get_s3_client(self):  # type: ignore[no-untyped-def]
+        import boto3
+
+        return boto3.client(
+            "s3",
+            endpoint_url=self._MINIO_ENDPOINT,
+            aws_access_key_id=self._MINIO_ACCESS_KEY,
+            aws_secret_access_key=self._MINIO_SECRET_KEY,
+        )
+
+    def _execute_spark_sql(self, sql: str) -> None:
+        """Execute SQL directly via PyHive — no dbt adapter involvement."""
+        from pyhive import hive
+
+        conn = hive.connect(
+            host=self._THRIFT_HOST,
+            port=self._THRIFT_PORT,
+            username="dbt",
+        )
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            cursor.close()
+        finally:
+            conn.close()
+
+    def _write_seed_csv(self, data: List[dict], table_name: str) -> Path:
+        """Write a CSV with proper NULL handling.
+
+        ``None`` values are written as empty strings so that Spark's CSV
+        reader interprets them as SQL NULL.
+        """
+        columns = list(data[0].keys())
+        seed_path = self._seeds_dir_path / f"{table_name}.csv"
+        with seed_path.open("w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(columns)
+            for row in data:
+                writer.writerow(
+                    "" if row.get(c) is None else row.get(c) for c in columns
+                )
+        return seed_path
+
+    def _infer_spark_schema(self, data: List[dict]) -> str:
+        """Build a Spark SQL schema string from the data."""
+        columns = list(data[0].keys())
+        parts = []
+        for col in columns:
+            values = [row.get(col) for row in data]
+            non_null = [
+                v
+                for v in values
+                if v is not None and not (isinstance(v, str) and v == "")
+            ]
+            if not non_null:
+                col_type = "STRING"
+            elif all(isinstance(v, bool) for v in non_null):
+                col_type = "BOOLEAN"
+            elif all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+                col_type = "BIGINT"
+            elif all(
+                isinstance(v, (int, float)) and not isinstance(v, bool)
+                for v in non_null
+            ):
+                col_type = "DOUBLE"
+            else:
+                col_type = "STRING"
+            parts.append(f"`{col}` {col_type}")
+        return ", ".join(parts)
+
+    @contextmanager
+    def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
+        """Upload CSV to MinIO and create a Spark external table.
+
+        The CSV is also written locally so dbt discovers the seed node
+        for ``{{ ref() }}`` resolution.  Neither the S3 object nor the
+        local CSV is deleted — S3 because the external table references
+        it for the rest of the test, and the local CSV so that dbt can
+        resolve ``{{ ref() }}`` in subsequent commands.
+        """
+        seed_path = self._write_seed_csv(data, table_name)
+        s3_key = f"{self._schema}/{table_name}.csv"
+        fq_table = f"`{self._schema}`.`{table_name}`"
+
+        # Upload CSV to MinIO.
+        s3 = self._get_s3_client()
+        s3.upload_file(str(seed_path), self._S3_BUCKET, s3_key)
+
+        # Create external table in Spark reading from S3.
+        schema_ddl = self._infer_spark_schema(data)
+        s3_path = f"s3a://{self._S3_BUCKET}/{s3_key}"
+
+        self._execute_spark_sql(f"CREATE DATABASE IF NOT EXISTS `{self._schema}`")
+        self._execute_spark_sql(f"DROP TABLE IF EXISTS {fq_table}")
+        self._execute_spark_sql(
+            f"CREATE TABLE {fq_table} ({schema_ddl}) "
+            f"USING CSV "
+            f"OPTIONS ("
+            f"  path '{s3_path}',"
+            f"  header 'true',"
+            f"  nullValue ''"
+            f")"
+        )
+
+        logger.info(
+            "SparkS3CsvSeeder: loaded %d rows into %s via %s",
+            len(data),
+            fq_table,
+            s3_path,
+        )
+
+        yield
+
+
 class ClickHouseDirectSeeder(BaseDirectSeeder):
     """Fast seeder for ClickHouse: executes CREATE TABLE + INSERT directly.
 
