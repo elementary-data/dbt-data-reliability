@@ -128,15 +128,13 @@
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
 
-            {% do parent_context.durations.pop(full_sub_context_name, none) %}
-            {% do parent_context.durations.setdefault(full_sub_context_name, existing_duration + sub_context_duration) %}
+            {% do elementary.dict_set(parent_context.durations, full_sub_context_name, existing_duration + sub_context_duration) %}
         {% endfor %}
         {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
 
-            {% do parent_context.num_runs.pop(full_sub_context_name, none) %}
-            {% do parent_context.num_runs.setdefault(full_sub_context_name, existing_num_runs + sub_context_num_runs) %}
+            {% do elementary.dict_set(parent_context.num_runs, full_sub_context_name, existing_num_runs + sub_context_num_runs) %}
         {% endfor %}
     {% endif %}
 

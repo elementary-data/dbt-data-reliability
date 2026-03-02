@@ -22,8 +22,7 @@
      we need to create the user. #}
   {% set profile_parameters = elementary.generate_elementary_profile_args(overwrite_values=parameter_values) %}  
   {% for parameter in profile_parameters %}
-    {% do parameter_values.pop(parameter["name"], none) %}
-    {% do parameter_values.setdefault(parameter["name"], parameter["value"]) %}
+    {% do elementary.dict_set(parameter_values, parameter["name"], parameter["value"]) %}
   {% endfor %}
 
   {% set profile_creation_query = elementary.get_user_creation_query(parameter_values) %}

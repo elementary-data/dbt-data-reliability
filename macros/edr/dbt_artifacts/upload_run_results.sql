@@ -86,15 +86,11 @@
         {% for timing in timings %}
             {% if timing is mapping %}
                 {% if timing.get('name') == 'execute' %}
-                    {% do flatten_run_result_dict.pop('execute_started_at', none) %}
-                    {% do flatten_run_result_dict.setdefault('execute_started_at', timing.get('started_at')) %}
-                    {% do flatten_run_result_dict.pop('execute_completed_at', none) %}
-                    {% do flatten_run_result_dict.setdefault('execute_completed_at', timing.get('completed_at')) %}
+                    {% do elementary.dict_set(flatten_run_result_dict, 'execute_started_at', timing.get('started_at')) %}
+                    {% do elementary.dict_set(flatten_run_result_dict, 'execute_completed_at', timing.get('completed_at')) %}
                 {% elif timing.get('name') == 'compile' %}
-                    {% do flatten_run_result_dict.pop('compile_started_at', none) %}
-                    {% do flatten_run_result_dict.setdefault('compile_started_at', timing.get('started_at')) %}
-                    {% do flatten_run_result_dict.pop('compile_completed_at', none) %}
-                    {% do flatten_run_result_dict.setdefault('compile_completed_at', timing.get('completed_at')) %}
+                    {% do elementary.dict_set(flatten_run_result_dict, 'compile_started_at', timing.get('started_at')) %}
+                    {% do elementary.dict_set(flatten_run_result_dict, 'compile_completed_at', timing.get('completed_at')) %}
                 {% endif %}
             {% endif %}
         {% endfor %}
@@ -103,6 +99,5 @@
 {% endmacro %}
 
 {% macro on_run_result_query_exceed(flattened_node) %}
-    {% do flattened_node.pop("compiled_code", none) %}
-    {% do flattened_node.setdefault("compiled_code", elementary.get_compiled_code_too_long_err_msg()) %}
+    {% do elementary.dict_set(flattened_node, "compiled_code", elementary.get_compiled_code_too_long_err_msg()) %}
 {% endmacro %}

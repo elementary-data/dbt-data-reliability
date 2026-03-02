@@ -11,8 +11,7 @@
   {% if overwrite_values %}
     {% for parameter in parameters %}
       {% if parameter["name"] in overwrite_values %}
-        {% do parameter.pop("value", none) %}
-        {% do parameter.setdefault("value", overwrite_values[parameter["name"]]) %}
+        {% do elementary.dict_set(parameter, "value", overwrite_values[parameter["name"]]) %}
       {% endif %}
     {% endfor %}
   {% endif %}

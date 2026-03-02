@@ -22,8 +22,7 @@
   {% do elementary.debug_log(test_unique_id ~ ": starting test materialization hook") %}
   {% if elementary.get_config_var("tests_use_temp_tables") %}
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
-    {% do context.pop("sql", none) %}
-    {% do context.setdefault("sql", temp_table_sql) %}
+    {% do elementary.dict_set(context, "sql", temp_table_sql) %}
     {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
   {% endif %}
 
