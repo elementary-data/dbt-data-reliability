@@ -40,12 +40,16 @@ repos:
         #   - Non-SQL content: files containing embedded Python or YAML that sqlfmt
         #     destroys (broken indentation, collapsed structure)
         #   - Unparsable Jinja: complex Jinja patterns sqlfmt cannot parse correctly
+        #   - dbt-fusion compatibility: sqlfmt reformatting of dict utility macros
+        #     causes fusion's minijinja to treat dicts as immutable maps, breaking
+        #     .update() calls ("map has no method named update")
         #   - dbt_packages: symlink to repo root causes infinite recursion
         exclude: |
           (?x)^(
             macros/commands/generate_elementary_cli_profile\.sql|
             macros/commands/generate_json_schema_test\.sql|
             macros/commands/generate_schema_baseline_test\.sql|
+            macros/edr/data_monitoring/anomaly_detection/store_anomaly_test_results\.sql|
             macros/edr/data_monitoring/monitors/column_numeric_monitors\.sql|
             macros/edr/data_monitoring/monitors_query/table_monitoring_query\.sql|
             macros/edr/system/system_utils/buckets_cte\.sql|
@@ -57,6 +61,8 @@ repos:
             macros/utils/cross_db_utils/get_user_creation_query\.sql|
             macros/utils/cross_db_utils/lag\.sql|
             macros/utils/data_types/null_as\.sql|
+            macros/utils/dict_utils/insensitive_get_dict_value\.sql|
+            macros/utils/dict_utils/safe_get_with_default_value\.sql|
             macros/utils/table_operations/get_row_count\.sql|
             integration_tests/dbt_project/macros/python\.sql|
             integration_tests/dbt_project/dbt_packages/.*
