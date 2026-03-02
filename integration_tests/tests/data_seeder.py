@@ -3,7 +3,8 @@ import os
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Generator, List
+from types import MappingProxyType
+from typing import TYPE_CHECKING, ClassVar, Dict, Generator, List, Mapping
 
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from logger import get_logger
@@ -28,6 +29,8 @@ class DbtDataSeeder:
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
         """Write *data* as a CSV, run ``dbt seed``, and clean up on exit."""
+        if not data:
+            raise ValueError(f"Seed data for '{table_name}' must not be empty")
         seed_path = self.seeds_dir_path.joinpath(f"{table_name}.csv")
         try:
             with seed_path.open("w") as seed_file:
@@ -160,12 +163,14 @@ class BaseDirectSeeder(ABC):
     # ------------------------------------------------------------------
 
     # Mapping from abstract type tags to adapter-specific type getters.
-    _TYPE_TAG_MAP = {
-        "string": "_type_string",
-        "boolean": "_type_boolean",
-        "integer": "_type_integer",
-        "float": "_type_float",
-    }
+    _TYPE_TAG_MAP: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {
+            "string": "_type_string",
+            "boolean": "_type_boolean",
+            "integer": "_type_integer",
+            "float": "_type_float",
+        }
+    )
 
     def _infer_column_type(self, values: List[object]) -> str:
         """Infer the best SQL type from a column's Python values.
@@ -334,12 +339,14 @@ class SparkS3CsvSeeder:
         return seed_path
 
     # Mapping from abstract type tags to Spark SQL type names.
-    _SPARK_TYPE_MAP = {
-        "string": "STRING",
-        "boolean": "BOOLEAN",
-        "integer": "BIGINT",
-        "float": "DOUBLE",
-    }
+    _SPARK_TYPE_MAP: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {
+            "string": "STRING",
+            "boolean": "BOOLEAN",
+            "integer": "BIGINT",
+            "float": "DOUBLE",
+        }
+    )
 
     def _infer_spark_schema(self, data: List[dict]) -> str:
         """Build a Spark SQL schema string from the data."""
