@@ -90,3 +90,21 @@
   create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
+
+{% macro trino__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {# dbt-trino's create_table_as accesses model.config which fails when called
+     outside a model context (e.g. from edr_create_table_as). Use simplified SQL. #}
+  create table {{ relation }}
+  as {{ sql_query }}
+{% endmacro %}
+
+{% macro spark__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+  {# Spark: use a temporary view for temp tables, regular table otherwise #}
+  {% if temporary %}
+    create or replace temporary view {{ relation }}
+    as {{ sql_query }}
+  {% else %}
+    create table {{ relation }}
+    as {{ sql_query }}
+  {% endif %}
+{% endmacro %}
