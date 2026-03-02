@@ -1,6 +1,6 @@
 {# We create tables and some databases limit the length of table names #}
 {% macro get_relation_max_name_length() %}
-    {{ return(adapter.dispatch("get_relation_max_name_length", "elementary")()) }}
+    {{ return(adapter.dispatch('get_relation_max_name_length', 'elementary')()) }}
 {% endmacro %}
 
 {% macro default__get_relation_max_name_length(temporary, relation, sql_query) %}

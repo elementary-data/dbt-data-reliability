@@ -33,33 +33,17 @@ repos:
       - id: sqlfmt
         additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
         # Excluded files — sqlfmt damages these in ways that break runtime behavior:
-        #   - macros/edr/: dbt-fusion compatibility — sqlfmt's Jinja reformatting
-        #     (trailing commas, collapsed conditionals, multi-line macro calls) causes
+        #   - macros/: dbt-fusion compatibility — sqlfmt's Jinja reformatting
+        #     (whitespace changes, trailing commas, collapsed conditionals) causes
         #     fusion's minijinja engine to mishandle dict types, breaking .update()
-        #     calls with "map has no method named update". The exact triggering pattern
-        #     is in the deep Jinja execution chain and not isolatable to specific files.
-        #   - macros/utils/dict_utils/ and macros/utils/graph/: Same fusion issue —
-        #     these are called from macros/edr/ during test execution.
-        #   - macros/commands/generate_*: Non-SQL content (embedded Python/YAML) or
-        #     complex Jinja patterns sqlfmt cannot parse correctly.
-        #   - ClickHouse/BigQuery files: sqlfmt lowercases case-sensitive identifiers
-        #     (e.g. Nullable, stddevPop, lagInFrame, splitByChar, dateDiff, OFFSET).
-        #     "-- fmt: off" inline comments can't be used because these macros are
-        #     inlined into compiled SQL, and the comments break ClickHouse's parser.
+        #     calls with "map has no method named update". The issue is systemic
+        #     across the deep Jinja execution chain (macros/edr/ calls into
+        #     macros/utils/ extensively) and not isolatable to specific files.
+        #   - integration_tests macros: python.sql contains embedded Python
         #   - dbt_packages: symlink to repo root causes infinite recursion
         exclude: |
           (?x)^(
-            macros/edr/.*|
-            macros/utils/dict_utils/.*|
-            macros/utils/graph/.*|
-            macros/commands/generate_elementary_cli_profile\.sql|
-            macros/commands/generate_json_schema_test\.sql|
-            macros/commands/generate_schema_baseline_test\.sql|
-            macros/utils/cross_db_utils/datediff\.sql|
-            macros/utils/cross_db_utils/get_user_creation_query\.sql|
-            macros/utils/cross_db_utils/lag\.sql|
-            macros/utils/data_types/null_as\.sql|
-            macros/utils/table_operations/get_row_count\.sql|
+            macros/.*|
             integration_tests/dbt_project/macros/python\.sql|
             integration_tests/dbt_project/dbt_packages/.*
           )$
