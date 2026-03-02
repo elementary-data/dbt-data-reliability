@@ -38,24 +38,28 @@
 
             {%- if enforce_owners and flattened_node.owner | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have an owner") %}
-                {% set validation_result = elementary.dict_merge(validation_result, {'success': false}) %}
+                {% do validation_result.pop('success', none) %}
+                {% do validation_result.setdefault('success', false) %}
             {%- endif -%}
 
             {%- if enforce_tags and flattened_node.tags | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have tags") %}
-                {% set validation_result = elementary.dict_merge(validation_result, {'success': false}) %}
+                {% do validation_result.pop('success', none) %}
+                {% do validation_result.setdefault('success', false) %}
             {%- endif -%}
 
             {%- if enforce_description and not flattened_node.description -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have a description") %}
-                {% set validation_result = elementary.dict_merge(validation_result, {'success': false}) %}
+                {% do validation_result.pop('success', none) %}
+                {% do validation_result.setdefault('success', false) %}
             {%- endif -%}
 
             {%- if required_meta_keys | length > 0 -%}
                 {%- for meta_param in required_meta_keys -%}
                     {%- if meta_param not in flattened_node.meta -%}
                         {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required meta param " ~ meta_param) %}
-                        {% set validation_result = elementary.dict_merge(validation_result, {'success': false}) %}
+                        {% do validation_result.pop('success', none) %}
+                        {% do validation_result.setdefault('success', false) %}
                     {%- endif -%}
                 {%- endfor -%}
             {%- endif -%}
@@ -67,7 +71,8 @@
                     {%- if config_dict is not none -%}
                         {%- if config_param not in config_dict -%}
                             {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required config param " ~ config_param) %}
-                            {% set validation_result = elementary.dict_merge(validation_result, {'success': false}) %}
+                            {% do validation_result.pop('success', none) %}
+                            {% do validation_result.setdefault('success', false) %}
                         {%- endif -%}
                     {%- endif -%}
                 {%- endfor -%}

@@ -28,7 +28,7 @@
     {%- if matching_exposures | length > 0 -%}
         {%- set columns_dict = {} -%}
         {%- for column in columns -%}
-            {%- set columns_dict = elementary.dict_merge(columns_dict, { column['name'].strip('"').strip("'") | upper : elementary.normalize_data_type(elementary.get_column_data_type(column)) }) -%}
+            {%- do columns_dict.setdefault(column['name'].strip('"').strip("'") | upper, elementary.normalize_data_type(elementary.get_column_data_type(column))) -%}
         {%- endfor -%}
         {%- for exposure in matching_exposures -%}
             {%- set meta = elementary.get_node_meta(exposure) -%}

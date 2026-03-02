@@ -12,7 +12,7 @@
         {% for col_name, col_value in agate_row.items() %}
             {% set serializable_col_value = elementary.agate_val_serialize(col_value) %}
             {% set serializable_col_name = col_name | lower %}
-            {% set serializable_row = elementary.dict_merge(serializable_row, {serializable_col_name: serializable_col_value}) %}
+            {% do serializable_row.setdefault(serializable_col_name, serializable_col_value) %}
         {% endfor %}
         {% do serializable_rows.append(serializable_row) %}
     {% endfor %}

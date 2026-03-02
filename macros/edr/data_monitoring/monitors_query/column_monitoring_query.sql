@@ -10,7 +10,7 @@
     {% set metric_name_to_type = {} %}
     {% for metric in column_metrics %}
         {% do metric_types.append(metric.type) %}
-        {% set metric_name_to_type = elementary.dict_merge(metric_name_to_type, {metric.name: metric.type}) %}
+        {% do metric_name_to_type.setdefault(metric.name, metric.type) %}
     {% endfor %}
 
     with monitored_table as (

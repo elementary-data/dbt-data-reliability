@@ -145,7 +145,7 @@
     {%- set metric_name_to_query = {} %}
     {%- for metric in table_metrics %}
         {% set metric_query = elementary.get_metric_query(metric, metric_properties) %}
-        {% set metric_name_to_query = elementary.dict_merge(metric_name_to_query, {metric.name: metric_query}) %}
+        {% do metric_name_to_query.setdefault(metric.name, metric_query) %}
     {%- endfor %}
 
     {% if not metric_name_to_query %}
