@@ -7,7 +7,7 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder
+from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder, SparkS3CsvSeeder
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
@@ -283,14 +283,36 @@ class DbtProject:
             }
             return [test_result] if multiple_results else test_result
 
+    def _read_profile_schema(self) -> str:
+        """Read the base schema name from the rendered dbt profiles.yml."""
+        profiles_dir = os.environ.get("DBT_PROFILES_DIR", os.path.expanduser("~/.dbt"))
+        profiles_path = Path(profiles_dir) / "profiles.yml"
+        if not profiles_path.exists():
+            raise RuntimeError(f"dbt profiles not found at: {profiles_path}")
+        yaml = YAML()
+        with profiles_path.open() as fh:
+            profiles = yaml.load(fh) or {}
+        try:
+            return profiles["elementary_tests"]["outputs"][self.target]["schema"]
+        except KeyError as exc:
+            raise RuntimeError(
+                f"Missing schema for target '{self.target}' in {profiles_path}"
+            ) from exc
+
     def _create_seeder(
         self,
-    ) -> Union[DbtDataSeeder, ClickHouseDirectSeeder]:
+    ) -> Union[DbtDataSeeder, ClickHouseDirectSeeder, SparkS3CsvSeeder]:
         """Return the fastest available seeder for the current target."""
         if self.target == "clickhouse":
             runner = self._get_query_runner()
             schema = runner.schema_name + SCHEMA_NAME_SUFFIX
             return ClickHouseDirectSeeder(runner, schema, self.seeds_dir_path)
+        if self.target == "spark":
+            # Read schema from dbt profiles directly — avoids creating an
+            # AdapterQueryRunner (which corrupts dbt global state via
+            # set_from_args / reset_adapters).
+            schema = self._read_profile_schema() + SCHEMA_NAME_SUFFIX
+            return SparkS3CsvSeeder(schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         )
