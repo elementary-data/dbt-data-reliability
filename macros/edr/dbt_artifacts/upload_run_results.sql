@@ -86,9 +86,9 @@
         {% for timing in timings %}
             {% if timing is mapping %}
                 {% if timing.get('name') == 'execute' %}
-                    {% do flatten_run_result_dict.update({'execute_started_at': timing.get('started_at'), 'execute_completed_at': timing.get('completed_at')}) %}
+                    {% set flatten_run_result_dict = elementary.dict_merge(flatten_run_result_dict, {'execute_started_at': timing.get('started_at'), 'execute_completed_at': timing.get('completed_at')}) %}
                 {% elif timing.get('name') == 'compile' %}
-                    {% do flatten_run_result_dict.update({'compile_started_at': timing.get('started_at'), 'compile_completed_at': timing.get('completed_at')}) %}
+                    {% set flatten_run_result_dict = elementary.dict_merge(flatten_run_result_dict, {'compile_started_at': timing.get('started_at'), 'compile_completed_at': timing.get('completed_at')}) %}
                 {% endif %}
             {% endif %}
         {% endfor %}
@@ -97,5 +97,6 @@
 {% endmacro %}
 
 {% macro on_run_result_query_exceed(flattened_node) %}
-    {% do flattened_node.update({"compiled_code": elementary.get_compiled_code_too_long_err_msg()}) %}
+    {% do flattened_node.pop("compiled_code", none) %}
+    {% do flattened_node.setdefault("compiled_code", elementary.get_compiled_code_too_long_err_msg()) %}
 {% endmacro %}

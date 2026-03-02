@@ -62,6 +62,6 @@
         'generated_at': elementary.datetime_now_utc_as_string(),
         'group_name': config_dict.get("group"),
     }%}
-    {% do flatten_metric_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_metric_metadata_dict)}) %}
+    {% set flatten_metric_metadata_dict = elementary.dict_merge(flatten_metric_metadata_dict, {"metadata_hash": elementary.get_artifact_metadata_hash(flatten_metric_metadata_dict)}) %}
     {{ return(flatten_metric_metadata_dict) }}
 {% endmacro %}

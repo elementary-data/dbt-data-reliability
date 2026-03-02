@@ -45,10 +45,10 @@
 
   {% set test_params = {} %}
   {% if fail_on_added %}
-    {% do test_params.update({"fail_on_added": "true"}) %}
+    {% set test_params = elementary.dict_merge(test_params, {"fail_on_added": "true"}) %}
   {% endif %}
   {% if enforce_types %}
-    {% do test_params.update({"enforce_types": "true"}) %}
+    {% set test_params = elementary.dict_merge(test_params, {"enforce_types": "true"}) %}
   {% endif %}
 
   {# Full yaml for sources and models #}

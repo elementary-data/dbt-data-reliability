@@ -5,7 +5,7 @@
   {% elif val is mapping %}
     {% set new_dict = {} %}
     {% for k, v in val.items() %}
-      {% do new_dict.update({k: elementary.to_primitive(v)}) %}
+      {% set new_dict = elementary.dict_merge(new_dict, {k: elementary.to_primitive(v)}) %}
     {% endfor %}
     {% do return(new_dict) %}
 

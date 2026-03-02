@@ -9,7 +9,7 @@
       {% set var_value = var(var_name, unset) %}
     {% endif %}
     {% if var_value != unset %}
-      {% do runtime_config.update({var_name: var_value}) %}
+      {% set runtime_config = elementary.dict_merge(runtime_config, {var_name: var_value}) %}
     {% endif %}
   {% endfor %}
   {% do return(runtime_config) %}
@@ -89,37 +89,37 @@
 
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 250000}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'query_max_size': 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro clickhouse__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 250000}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'query_max_size': 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro athena__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 250000}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'query_max_size': 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro trino__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 250000}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'query_max_size': 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro dremio__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'dbt_artifacts_chunk_size': 100}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'dbt_artifacts_chunk_size': 100}) %}
 
     {# Caching does work in Dremio, but there is a race between the creation of the temp table
        and its usage, and it's causing failures (querying the same table 2 seconds later works).
        This is likely a bug in Dremio.
        So to be safe we disable caching in Dremio by default. #}
-    {% do default_config.update({'cache_artifacts': false}) %}
+    {% set default_config = elementary.dict_merge(default_config, {'cache_artifacts': false}) %}
 
     {{- return(default_config) -}}
 {%- endmacro -%}

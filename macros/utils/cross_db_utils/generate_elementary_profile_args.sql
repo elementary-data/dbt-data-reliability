@@ -11,7 +11,7 @@
   {% if overwrite_values %}
     {% for parameter in parameters %}
       {% if parameter["name"] in overwrite_values %}
-        {% do parameter.update({"value": overwrite_values[parameter["name"]]}) %}
+        {% set parameter = elementary.dict_merge(parameter, {"value": overwrite_values[parameter["name"]]}) %}
       {% endif %}
     {% endfor %}
   {% endif %}

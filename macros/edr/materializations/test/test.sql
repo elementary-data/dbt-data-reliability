@@ -22,7 +22,8 @@
   {% do elementary.debug_log(test_unique_id ~ ": starting test materialization hook") %}
   {% if elementary.get_config_var("tests_use_temp_tables") %}
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
-    {% do context.update({"sql": temp_table_sql}) %}
+    {% do context.pop("sql", none) %}
+    {% do context.setdefault("sql", temp_table_sql) %}
     {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
   {% endif %}
 
@@ -40,7 +41,7 @@
   {% if elementary.get_config_var("calculate_failed_count") %}
     {% set failed_row_count = elementary.get_failed_row_count(flattened_test) %}
     {% if failed_row_count is not none %}
-      {% do elementary.get_cache("elementary_test_failed_row_counts").update({model.unique_id: failed_row_count}) %}
+      {% do elementary.get_cache("elementary_test_failed_row_counts").setdefault(model.unique_id, failed_row_count) %}
       {% do elementary.debug_log(test_unique_id ~ ": calculated failed row count") %}
     {% endif %}
   {% endif %}
@@ -217,5 +218,5 @@
 
 
 {% macro cache_elementary_test_results_rows(elementary_test_results_rows) %}
-  {% do elementary.get_cache("elementary_test_results").update({model.unique_id: elementary_test_results_rows}) %}
+  {% do elementary.get_cache("elementary_test_results").setdefault(model.unique_id, elementary_test_results_rows) %}
 {% endmacro %}

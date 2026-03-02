@@ -28,9 +28,9 @@
      We prefer to change this behavior and use Elementary's database and schema instead (this also guarantees the test
      will work for sources).
      #}
-  {% do test_node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
+  {% set test_node = elementary.dict_merge(test_node, {'database': elementary_database_name, 'schema': elementary_schema_name}) %}
 
-  {% do test_node.config.update(test_args) %}
+  {% set test_node = elementary.dict_merge(test_node, {'config': elementary.dict_merge(test_node.config, test_args)}) %}
 
   {% if code_macro is string %}
     {% set user_py_code_macro = context[code_macro] %}

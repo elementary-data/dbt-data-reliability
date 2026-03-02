@@ -179,7 +179,7 @@
         'quality_dimension': meta.get('quality_dimension') or elementary.get_quality_dimension(test_original_name, test_namespace),
         'group_name': group_name,
     }%}
-    {% do flatten_test_metadata_dict.update({"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
+    {% set flatten_test_metadata_dict = elementary.dict_merge(flatten_test_metadata_dict, {"metadata_hash": elementary.get_artifact_metadata_hash(flatten_test_metadata_dict)}) %}
     {{ return(flatten_test_metadata_dict) }}
 {% endmacro %}
 

@@ -98,7 +98,7 @@
 
   {% set thread_stack = global_duration_context_stack.get(thread_id) %}
   {% if not thread_stack %}
-    {% do global_duration_context_stack.update({thread_id: [elementary.init_duration_context_dict('main')]}) %}
+    {% do global_duration_context_stack.setdefault(thread_id, [elementary.init_duration_context_dict('main')]) %}
   {% endif %}
   {{ return(global_duration_context_stack.get(thread_id)) }}
 {% endmacro %}
@@ -118,12 +118,8 @@
 
     {# Pop current context and calculate total duration for it #}
     {% set cur_context = duration_context_stack.pop() %}
-    {% do cur_context.durations.update({
-        cur_context.name: modules.datetime.datetime.utcnow() - cur_context.start_time
-    }) %}
-    {% do cur_context.num_runs.update({
-        cur_context.name: 1
-    }) %}
+    {% do cur_context.durations.setdefault(cur_context.name, modules.datetime.datetime.utcnow() - cur_context.start_time) %}
+    {% do cur_context.num_runs.setdefault(cur_context.name, 1) %}
 
     {# Merge durations and num runs to parent context #}
     {% if duration_context_stack | length > 0 %}
@@ -132,17 +128,15 @@
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
 
-            {% do parent_context.durations.update({
-                full_sub_context_name: existing_duration + sub_context_duration,
-            }) %}
+            {% do parent_context.durations.pop(full_sub_context_name, none) %}
+            {% do parent_context.durations.setdefault(full_sub_context_name, existing_duration + sub_context_duration) %}
         {% endfor %}
         {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
 
-            {% do parent_context.num_runs.update({
-                full_sub_context_name: existing_num_runs + sub_context_num_runs
-            }) %}
+            {% do parent_context.num_runs.pop(full_sub_context_name, none) %}
+            {% do parent_context.num_runs.setdefault(full_sub_context_name, existing_num_runs + sub_context_num_runs) %}
         {% endfor %}
     {% endif %}
 

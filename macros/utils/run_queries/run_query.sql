@@ -3,7 +3,7 @@
     {% if lowercase_column_names %}
         {% set lowercased_column_names = {} %}
         {% for column_name in query_result.column_names %}
-            {% do lowercased_column_names.update({column_name: column_name.lower()}) %}
+            {% set lowercased_column_names = elementary.dict_merge(lowercased_column_names, {column_name: column_name.lower()}) %}
         {% endfor %}
         {% set query_result = query_result.rename(lowercased_column_names) %}
     {% endif %}
@@ -40,14 +40,14 @@
     } %}
 
     {% if model %}
-        {% do metadata.update({
+        {% set metadata = elementary.dict_merge(metadata, {
             'package_name': model['package_name'],
             'resource_name': model['name'],
             'resource_type': model['resource_type']
         }) %}
         {% if model.resource_type == 'test' %}
             {% set test_metadata = model.get('test_metadata', {}) %}
-            {% do metadata.update({
+            {% set metadata = elementary.dict_merge(metadata, {
                 'test_short_name': test_metadata.get("name"),
                 'test_namespace': test_metadata.get("namespace")
             }) %}

@@ -60,11 +60,11 @@
         {% set failures = elementary_test_results_row.get("failures", result.failures) %}
         {% set status = elementary.get_normalized_test_status(result, elementary_test_results_row) %}
 
-        {% do elementary_test_results_row.update({'status': status, 'failures': failures, 'invocation_id': invocation_id, 
+        {% set elementary_test_results_row = elementary.dict_merge(elementary_test_results_row, {'status': status, 'failures': failures, 'invocation_id': invocation_id, 
                                                   'failed_row_count': elementary_test_failed_row_count}) %}
         {% do elementary_test_results_row.setdefault('test_results_description', result.message) %}
         {% if render_result_rows %}
-          {% do elementary_test_results_row.update({"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
+          {% set elementary_test_results_row = elementary.dict_merge(elementary_test_results_row, {"result_rows": elementary.render_result_rows(elementary_test_results_row.result_rows)}) %}
         {% endif %}
         {% do elementary_test_results.append(elementary_test_results_row) %}
       {% endfor %}

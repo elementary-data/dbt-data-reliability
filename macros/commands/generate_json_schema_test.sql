@@ -15,11 +15,11 @@
 
     {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
 
-    {% do node.config.update({"packages": ["genson"]}) %}
-    {% do node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
+    {% set node = elementary.dict_merge(node, {'config': elementary.dict_merge(node.config, {"packages": ["genson"]})}) %}
+    {% set node = elementary.dict_merge(node, {'database': elementary_database_name, 'schema': elementary_schema_name}) %}
     {% if node.resource_type == 'source' %}
       {# Source nodes don't have alias, and submit_python_job expects it #}
-      {% do node.update({'alias': "jsonschemagen_{}_{}".format(node.source_name, node.name)}) %}
+      {% set node = elementary.dict_merge(node, {'alias': "jsonschemagen_{}_{}".format(node.source_name, node.name)}) %}
     {% endif %}
 
     {% set output_table = api.Relation.create(database=elementary_database_name, schema=elementary_schema_name,

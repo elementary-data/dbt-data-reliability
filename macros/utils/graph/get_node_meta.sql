@@ -5,8 +5,8 @@
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
 
     {% set unified_meta = {} %}
-    {% do unified_meta.update(config_meta_dict) %}
-    {% do unified_meta.update(meta_dict) %}
+    {%- set unified_meta = elementary.dict_merge(unified_meta, config_meta_dict) %}
+    {%- set unified_meta = elementary.dict_merge(unified_meta, meta_dict) %}
 
     {% do return(unified_meta) %}
 {% endmacro %}

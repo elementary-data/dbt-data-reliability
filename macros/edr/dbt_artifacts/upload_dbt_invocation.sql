@@ -138,9 +138,9 @@
     {% set all_vars = {} %}
     {% set config = elementary.get_runtime_config() %}
     {%- if config.vars -%}
-        {% do all_vars.update(elementary.dbt_object_to_dict(config.vars)) %}
+        {%- set all_vars = elementary.dict_merge(all_vars, elementary.dbt_object_to_dict(config.vars)) %}
     {%- endif -%}
-    {% do all_vars.update(elementary.get_invocation_vars()) %}
+    {%- set all_vars = elementary.dict_merge(all_vars, elementary.get_invocation_vars()) %}
     {{- return(all_vars) -}}
 {%- endmacro -%}
 
