@@ -33,36 +33,32 @@ repos:
       - id: sqlfmt
         additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
         # Excluded files — sqlfmt damages these in ways that break runtime behavior:
+        #   - macros/edr/: dbt-fusion compatibility — sqlfmt's Jinja reformatting
+        #     (trailing commas, collapsed conditionals, multi-line macro calls) causes
+        #     fusion's minijinja engine to mishandle dict types, breaking .update()
+        #     calls with "map has no method named update". The exact triggering pattern
+        #     is in the deep Jinja execution chain and not isolatable to specific files.
+        #   - macros/utils/dict_utils/ and macros/utils/graph/: Same fusion issue —
+        #     these are called from macros/edr/ during test execution.
+        #   - macros/commands/generate_*: Non-SQL content (embedded Python/YAML) or
+        #     complex Jinja patterns sqlfmt cannot parse correctly.
         #   - ClickHouse/BigQuery files: sqlfmt lowercases case-sensitive identifiers
         #     (e.g. Nullable, stddevPop, lagInFrame, splitByChar, dateDiff, OFFSET).
-        #     "-- fmt: off" inline comments can't be used here because these macros are
+        #     "-- fmt: off" inline comments can't be used because these macros are
         #     inlined into compiled SQL, and the comments break ClickHouse's parser.
-        #   - Non-SQL content: files containing embedded Python or YAML that sqlfmt
-        #     destroys (broken indentation, collapsed structure)
-        #   - Unparsable Jinja: complex Jinja patterns sqlfmt cannot parse correctly
-        #   - dbt-fusion compatibility: sqlfmt reformatting of dict utility macros
-        #     causes fusion's minijinja to treat dicts as immutable maps, breaking
-        #     .update() calls ("map has no method named update")
         #   - dbt_packages: symlink to repo root causes infinite recursion
         exclude: |
           (?x)^(
+            macros/edr/.*|
+            macros/utils/dict_utils/.*|
+            macros/utils/graph/.*|
             macros/commands/generate_elementary_cli_profile\.sql|
             macros/commands/generate_json_schema_test\.sql|
             macros/commands/generate_schema_baseline_test\.sql|
-            macros/edr/data_monitoring/anomaly_detection/store_anomaly_test_results\.sql|
-            macros/edr/data_monitoring/monitors/column_numeric_monitors\.sql|
-            macros/edr/data_monitoring/monitors_query/table_monitoring_query\.sql|
-            macros/edr/system/system_utils/buckets_cte\.sql|
-            macros/edr/system/system_utils/empty_table\.sql|
-            macros/edr/system/system_utils/full_names\.sql|
-            macros/edr/tests/test_json_schema\.sql|
-            macros/edr/tests/test_utils/compile_py_code\.sql|
             macros/utils/cross_db_utils/datediff\.sql|
             macros/utils/cross_db_utils/get_user_creation_query\.sql|
             macros/utils/cross_db_utils/lag\.sql|
             macros/utils/data_types/null_as\.sql|
-            macros/utils/dict_utils/insensitive_get_dict_value\.sql|
-            macros/utils/dict_utils/safe_get_with_default_value\.sql|
             macros/utils/table_operations/get_row_count\.sql|
             integration_tests/dbt_project/macros/python\.sql|
             integration_tests/dbt_project/dbt_packages/.*

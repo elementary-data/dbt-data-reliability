@@ -1,39 +1,33 @@
 {%- macro get_anomaly_query(flattened_test=none) -%}
-    {%- set query -%}
+  {%- set query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
-    {%- endset -%}
-    {{- return(query) -}}
+  {%- endset -%}
+  {{- return(query) -}}
 {%- endmacro -%}
 
 {%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
-    {%- set dimension_values_query -%}
+  {%- set dimension_values_query -%}
     select distinct dimension_value from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where is_anomalous = true
-    {%- endset -%}
+  {%- endset -%}
 
-    {% set dimension_anomalies_query -%}
+  {% set dimension_anomalies_query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
     where dimension_value in ({{ dimension_values_query }})
-    {%- endset -%}
+  {%- endset -%}
 
-    {{- return(dimension_anomalies_query) -}}
+  {{- return(dimension_anomalies_query) -}}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(flattened_test=none) %}
     {% if not flattened_test %}
-        {% set flattened_test = elementary.flatten_test(model) %}
+      {% set flattened_test = elementary.flatten_test(model) %}
     {% endif %}
     {%- set test_unique_id = flattened_test.unique_id %}
     {%- set test_configuration = elementary.get_cache(test_unique_id) %}
     {%- if not test_configuration %}
-        {{
-            exceptions.raise_compiler_error(
-                "Failed to load configuration dict from cache for test `{}`".format(
-                    test_unique_id
-                )
-            )
-        }}
+        {{ exceptions.raise_compiler_error("Failed to load configuration dict from cache for test `{}`".format(test_unique_id)) }}
     {%- endif %}
     {%- set backfill_period = "'-" ~ test_configuration.backfill_days ~ "'" %}
 
@@ -115,89 +109,76 @@ case when
 {% endmacro %}
 
 {%- macro set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) -%}
-    {% if anomaly_direction | lower == "spike" %} anomaly_score > {{ sensitivity }}
-    {% elif anomaly_direction | lower == "drop" %}
+    {% if anomaly_direction | lower == 'spike' %}
+        anomaly_score > {{ sensitivity }}
+    {% elif anomaly_direction | lower == 'drop' %}
         anomaly_score < {{ sensitivity * -1 }}
-    {% else %} abs(anomaly_score) > {{ sensitivity }}
+    {% else %}
+        abs(anomaly_score) > {{ sensitivity }}
     {% endif %}
 {% endmacro %}
 
 {%- macro is_score_anomalous_condition(sensitivity, anomaly_direction) -%}
-    {%- set spikes_only_metrics = ["freshness", "event_freshness"] -%}
-    case
-        when metric_name in {{ elementary.strings_list_to_tuple(spikes_only_metrics) }}
-        then anomaly_score > {{ sensitivity }}
-        else
-            {{
-                elementary.set_directional_anomaly(
-                    anomaly_direction, anomaly_score, sensitivity
-                )
-            }}
-    end
+    {%- set spikes_only_metrics = ['freshness', 'event_freshness'] -%}
+    case when metric_name IN {{ elementary.strings_list_to_tuple(spikes_only_metrics) }} then
+            anomaly_score > {{ sensitivity }}
+    else
+        {{ elementary.set_directional_anomaly(anomaly_direction, anomaly_score, sensitivity) }}
+     end
 {%- endmacro -%}
 
-{%- macro avg_percent_anomalous_condition(
-    spike_failure_percent_threshold,
-    drop_failure_percent_threshold,
-    anomaly_direction
-) -%}
-    (
-        {% set spike_filter %}
+{%- macro avg_percent_anomalous_condition(spike_failure_percent_threshold, drop_failure_percent_threshold, anomaly_direction) -%}
+  (
+  {% set spike_filter %}
     (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
-        {% set drop_filter %}
+  {% endset %}
+  {% set drop_filter %}
     (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
+  {% endset %}
 
-        {% if spike_failure_percent_threshold and drop_failure_percent_threshold and (
-            anomaly_direction | lower
-        ) == "both" %}
-            {{ spike_filter }} or {{ drop_filter }}
-        {% else %}
-            {% if spike_failure_percent_threshold and anomaly_direction | lower in [
-                "spike",
-                "both",
-            ] %}
-                {{ spike_filter }}
-            {% else %} (1 = 1)
-            {% endif %} and
+  {% if spike_failure_percent_threshold and drop_failure_percent_threshold and (anomaly_direction | lower) == 'both' %}
+      {{ spike_filter }} or {{ drop_filter }}
+  {% else %}
+    {% if spike_failure_percent_threshold and anomaly_direction | lower in ['spike', 'both'] %}
+      {{ spike_filter }}
+    {% else %}
+        (1 = 1)
+    {% endif %}
 
-            {% if drop_failure_percent_threshold and anomaly_direction | lower in [
-                "drop",
-                "both",
-            ] %}
-                {{ drop_filter }}
-            {% else %} (1 = 1)
-            {% endif %}
-        {% endif %}
-    )
+    and
+
+    {% if drop_failure_percent_threshold and anomaly_direction | lower in ['drop', 'both'] %}
+        {{ drop_filter }}
+    {% else %}
+        (1 = 1)
+    {% endif %}
+  {% endif %}
+  )
 {%- endmacro -%}
 
 {% macro fail_on_zero(fail_on_zero) %}
-    (metric_value = 0 and {% if fail_on_zero %} 1 = 1 {% else %} 1 = 2 {% endif %})
+  (
+    metric_value = 0 and
+    {% if fail_on_zero %}
+      1 = 1
+    {% else %}
+      1 = 2
+    {% endif %}
+  )
 {% endmacro %}
 
 {% macro anomaly_score_condition(test_configuration) %}
+  (anomaly_score is not null and
+  (
+    {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }} or
     (
-        anomaly_score is not null
-        and (
-            {{ elementary.fail_on_zero(test_configuration.fail_on_zero) }}
-            or (
-                {{
-                    elementary.is_score_anomalous_condition(
-                        test_configuration.anomaly_sensitivity,
-                        test_configuration.anomaly_direction,
-                    )
-                }}
-                and
-                {{
-                    elementary.avg_percent_anomalous_condition(
-                        test_configuration.ignore_small_changes.spike_failure_percent_threshold,
-                        test_configuration.ignore_small_changes.drop_failure_percent_threshold,
-                        test_configuration.anomaly_direction,
-                    )
-                }}
-            )
+      {{ elementary.is_score_anomalous_condition(test_configuration.anomaly_sensitivity, test_configuration.anomaly_direction) }} and
+      {{ elementary.avg_percent_anomalous_condition(
+          test_configuration.ignore_small_changes.spike_failure_percent_threshold,
+          test_configuration.ignore_small_changes.drop_failure_percent_threshold,
+          test_configuration.anomaly_direction
         )
+      }}
     )
+  ))
 {% endmacro %}

@@ -3,9 +3,7 @@
 
     {%- if monitors and monitors | length > 0 %}
         {%- set allowed_table_monitors = elementary.get_allowed_table_monitors() %}
-        {%- set final_table_monitors = elementary.lists_intersection(
-            monitors, allowed_table_monitors
-        ) %}
+        {%- set final_table_monitors = elementary.lists_intersection(monitors, allowed_table_monitors) %}
     {%- else %}
         {%- set final_table_monitors = elementary.get_default_table_monitors() %}
     {%- endif %}
@@ -14,9 +12,7 @@
 
 
 {% macro get_default_table_monitors() %}
-    {%- set default_table_monitors = (
-        elementary.get_config_var("edr_monitors")["table"] | list
-    ) %}
+    {%- set default_table_monitors = elementary.get_config_var('edr_monitors')['table'] | list %}
     {{ return(default_table_monitors) }}
 {% endmacro %}
 

@@ -1,13 +1,4 @@
-{% macro get_anomaly_scores_query(
-    test_metrics_table_relation,
-    model_relation,
-    test_configuration,
-    metric_names,
-    column_name=none,
-    columns_only=false,
-    metric_properties=none,
-    data_monitoring_metrics_table=none
-) %}
+{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, metric_names, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -15,41 +6,32 @@
     {%- if not data_monitoring_metrics_table %}
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
-        {%- set data_monitoring_metrics_table = elementary.get_elementary_relation(
-            "data_monitoring_metrics"
-        ) %}
+        {%- set data_monitoring_metrics_table = elementary.get_elementary_relation('data_monitoring_metrics') %}
     {%- endif %}
 
     {%- if elementary.is_incremental_model(model_graph_node) %}
-        {%- set latest_full_refresh = elementary.get_latest_full_refresh(
-            model_graph_node
-        ) %}
-    {%- else %} {%- set latest_full_refresh = none %}
+      {%- set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
+    {%- else %}
+      {%- set latest_full_refresh = none %}
     {%- endif %}
 
-    {%- if test_configuration.seasonality == "day_of_week" %}
-        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression(
-            "bucket_end"
-        ) %}
+    {%- if test_configuration.seasonality == 'day_of_week' %}
+        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
         {%- set has_seasonality = true %}
 
-    {%- elif test_configuration.seasonality == "hour_of_day" %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression(
-            "bucket_end"
-        ) %}
+    {%- elif test_configuration.seasonality == 'hour_of_day' %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression('bucket_end') %}
         {%- set has_seasonality = true %}
 
-    {%- elif test_configuration.seasonality == "hour_of_week" %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression(
-            "bucket_end"
-        ) %}
+    {%- elif test_configuration.seasonality == 'hour_of_week' %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression('bucket_end') %}
         {%- set has_seasonality = true %}
 
     {%- else %}
-        {%- set bucket_seasonality_expr = elementary.const_as_text("no_seasonality") %}
+        {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
         {%- set has_seasonality = false %}
     {%- endif %}
-
+    
     {# Build PARTITION BY clause for window functions dynamically to work around Redshift limitation.
        
        Redshift doesn't allow constant expressions in PARTITION BY of window functions. When seasonality 
@@ -63,16 +45,10 @@
     {%- if has_seasonality %}
         {%- set partition_by_keys = partition_by_keys ~ ", bucket_seasonality" %}
     {%- endif %}
-
-    {%- set detection_end = elementary.get_detection_end(
-        test_configuration.detection_delay
-    ) %}
-    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(
-        elementary.edr_datetime_to_sql(detection_end)
-    ) %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
-        detection_end, metric_properties, test_configuration.days_back
-    ) %}
+    
+    {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
 
     {# Calculate detection period start for exclusion logic.
        backfill_days defines the window of recent data to test for anomalies on each run.
@@ -81,17 +57,13 @@
        When exclude_detection_period_from_training is enabled, metrics in this detection period
        are excluded from training statistics to prevent contamination from potentially anomalous data. #}
     {%- if test_configuration.exclude_detection_period_from_training %}
-        {%- set detection_period_start = detection_end - modules.datetime.timedelta(
-            days=test_configuration.backfill_days
-        ) %}
-        {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(
-            elementary.edr_datetime_to_sql(detection_period_start)
-        ) %}
+        {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
+        {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
     {%- endif %}
 
     {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
        bucket end (which is the actual time of the test) #}
-    {%- set metric_time_bucket_expr = "case when bucket_start is not null then bucket_start else bucket_end end" %}
+    {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
 
     {%- set anomaly_scores_query %}
         {% if test_configuration.timestamp_column %}
@@ -304,12 +276,12 @@
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
-        {%- set drop_avg_threshold -%}
+      {%- set drop_avg_threshold -%}
         ((1 - {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
-        {%- endset -%}
-        {%- set min_val -%}
+      {%- endset -%}
+      {%- set min_val -%}
         {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
-        {%- endset -%}
+      {%- endset -%}
     {% endif %}
 
     {%- set max_val -%}
@@ -317,12 +289,12 @@
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}
-        {%- set spike_avg_threshold -%}
+      {%- set spike_avg_threshold -%}
         ((1 + {{ test_configuration.ignore_small_changes.spike_failure_percent_threshold }}/100.0) * training_avg)
-        {%- endset -%}
-        {%- set max_val -%}
+      {%- endset -%}
+      {%- set max_val -%}
         {{ elementary.arithmetic_max(spike_avg_threshold, max_val) }}
-        {%- endset -%}
+      {%- endset -%}
     {% endif %}
 
     {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}

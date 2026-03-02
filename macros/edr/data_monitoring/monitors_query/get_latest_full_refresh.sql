@@ -1,7 +1,5 @@
 {% macro get_latest_full_refresh(model_node) %}
-    {%- set dbt_run_results_relation = elementary.get_elementary_relation(
-        "dbt_run_results"
-    ) %}
+    {%- set dbt_run_results_relation = elementary.get_elementary_relation('dbt_run_results') %}
     {% set query %}
         select generated_at from {{ dbt_run_results_relation }}
         where
