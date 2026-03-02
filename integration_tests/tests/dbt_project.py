@@ -287,10 +287,17 @@ class DbtProject:
         """Read the base schema name from the rendered dbt profiles.yml."""
         profiles_dir = os.environ.get("DBT_PROFILES_DIR", os.path.expanduser("~/.dbt"))
         profiles_path = Path(profiles_dir) / "profiles.yml"
+        if not profiles_path.exists():
+            raise RuntimeError(f"dbt profiles not found at: {profiles_path}")
         yaml = YAML()
-        with open(profiles_path) as fh:
-            profiles = yaml.load(fh)
-        return profiles["elementary_tests"]["outputs"][self.target]["schema"]
+        with profiles_path.open() as fh:
+            profiles = yaml.load(fh) or {}
+        try:
+            return profiles["elementary_tests"]["outputs"][self.target]["schema"]
+        except KeyError as exc:
+            raise RuntimeError(
+                f"Missing schema for target '{self.target}' in {profiles_path}"
+            ) from exc
 
     def _create_seeder(
         self,

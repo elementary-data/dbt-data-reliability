@@ -10,8 +10,10 @@ services:
       - "10000:10000"
       - "4040:4040"
     depends_on:
-      - spark-hive-metastore
-      - minio-setup
+      spark-hive-metastore:
+        condition: service_started
+      minio-setup:
+        condition: service_completed_successfully
     command: >
       --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
       --name Thrift JDBC/ODBC Server

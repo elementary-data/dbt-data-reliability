@@ -267,8 +267,9 @@ class SparkS3CsvSeeder:
             aws_secret_access_key=self._MINIO_SECRET_KEY,
         )
 
-    def _execute_spark_sql(self, sql: str) -> None:
-        """Execute SQL directly via PyHive — no dbt adapter involvement."""
+    @contextmanager
+    def _spark_connection(self):  # type: ignore[no-untyped-def]
+        """Open a single PyHive connection for the duration of a seed operation."""
         from pyhive import hive
 
         conn = hive.connect(
@@ -277,11 +278,18 @@ class SparkS3CsvSeeder:
             username="dbt",
         )
         try:
-            cursor = conn.cursor()
-            cursor.execute(sql)
-            cursor.close()
+            yield conn
         finally:
             conn.close()
+
+    @staticmethod
+    def _execute(conn, sql: str) -> None:  # type: ignore[no-untyped-def]
+        """Execute a single SQL statement on an existing connection."""
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+        finally:
+            cursor.close()
 
     def _write_seed_csv(self, data: List[dict], table_name: str) -> Path:
         """Write a CSV with proper NULL handling.
@@ -337,6 +345,9 @@ class SparkS3CsvSeeder:
         it for the rest of the test, and the local CSV so that dbt can
         resolve ``{{ ref() }}`` in subsequent commands.
         """
+        if not data:
+            raise ValueError(f"Seed data for '{table_name}' must not be empty")
+
         seed_path = self._write_seed_csv(data, table_name)
         s3_key = f"{self._schema}/{table_name}.csv"
         fq_table = f"`{self._schema}`.`{table_name}`"
@@ -349,17 +360,19 @@ class SparkS3CsvSeeder:
         schema_ddl = self._infer_spark_schema(data)
         s3_path = f"s3a://{self._S3_BUCKET}/{s3_key}"
 
-        self._execute_spark_sql(f"CREATE DATABASE IF NOT EXISTS `{self._schema}`")
-        self._execute_spark_sql(f"DROP TABLE IF EXISTS {fq_table}")
-        self._execute_spark_sql(
-            f"CREATE TABLE {fq_table} ({schema_ddl}) "
-            f"USING CSV "
-            f"OPTIONS ("
-            f"  path '{s3_path}',"
-            f"  header 'true',"
-            f"  nullValue ''"
-            f")"
-        )
+        with self._spark_connection() as conn:
+            self._execute(conn, f"CREATE DATABASE IF NOT EXISTS `{self._schema}`")
+            self._execute(conn, f"DROP TABLE IF EXISTS {fq_table}")
+            self._execute(
+                conn,
+                f"CREATE TABLE {fq_table} ({schema_ddl}) "
+                f"USING CSV "
+                f"OPTIONS ("
+                f"  path '{s3_path}',"
+                f"  header 'true',"
+                f"  nullValue ''"
+                f")",
+            )
 
         logger.info(
             "SparkS3CsvSeeder: loaded %d rows into %s via %s",
