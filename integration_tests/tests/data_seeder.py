@@ -378,36 +378,36 @@ class SparkS3CsvSeeder:
         s3_key = f"{self._schema}/{table_name}.csv"
         fq_table = f"`{self._schema}`.`{table_name}`"
 
-        # Upload CSV to MinIO.
-        s3 = self._get_s3_client()
-        s3.upload_file(str(seed_path), self._S3_BUCKET, s3_key)
+        try:
+            # Upload CSV to MinIO.
+            s3 = self._get_s3_client()
+            s3.upload_file(str(seed_path), self._S3_BUCKET, s3_key)
 
-        # Create external table in Spark reading from S3.
-        schema_ddl = self._infer_spark_schema(data)
-        s3_path = f"s3a://{self._S3_BUCKET}/{s3_key}"
+            # Create external table in Spark reading from S3.
+            schema_ddl = self._infer_spark_schema(data)
+            s3_path = f"s3a://{self._S3_BUCKET}/{s3_key}"
 
-        with self._spark_connection() as conn:
-            self._execute(conn, f"CREATE DATABASE IF NOT EXISTS `{self._schema}`")
-            self._execute(conn, f"DROP TABLE IF EXISTS {fq_table}")
-            self._execute(
-                conn,
-                f"CREATE TABLE {fq_table} ({schema_ddl}) "
-                f"USING CSV "
-                f"OPTIONS ("
-                f"  path '{s3_path}',"
-                f"  header 'true',"
-                f"  nullValue ''"
-                f")",
+            with self._spark_connection() as conn:
+                self._execute(conn, f"CREATE DATABASE IF NOT EXISTS `{self._schema}`")
+                self._execute(conn, f"DROP TABLE IF EXISTS {fq_table}")
+                self._execute(
+                    conn,
+                    f"CREATE TABLE {fq_table} ({schema_ddl}) "
+                    f"USING CSV "
+                    f"OPTIONS ("
+                    f"  path '{s3_path}',"
+                    f"  header 'true',"
+                    f"  nullValue ''"
+                    f")",
+                )
+
+            logger.info(
+                "SparkS3CsvSeeder: loaded %d rows into %s via %s",
+                len(data),
+                fq_table,
+                s3_path,
             )
 
-        logger.info(
-            "SparkS3CsvSeeder: loaded %d rows into %s via %s",
-            len(data),
-            fq_table,
-            s3_path,
-        )
-
-        try:
             yield
         finally:
             seed_path.unlink(missing_ok=True)
