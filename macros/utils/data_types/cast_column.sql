@@ -33,12 +33,14 @@
     )
 {%- endmacro -%}
 
+-- fmt: off
 {%- macro clickhouse__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(
-        parsedatetimebesteffortornull(tostring({{ timestamp_field }}), 'UTC'),
-        todatetime('1970-01-01 00:00:00', 'UTC')
+        parseDateTimeBestEffortOrNull(toString({{ timestamp_field }}), 'UTC'),
+        toDateTime('1970-01-01 00:00:00', 'UTC')
     )
 {%- endmacro -%}
+-- fmt: on
 
 {%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
     cast(

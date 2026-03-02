@@ -12,7 +12,7 @@
         ) %}
         {{ elementary.file_log("Uploaded run results successfully.") }}
     {% endif %}
-    {{ return "" }}
+    {{ return("") }}
 {% endmacro %}
 
 

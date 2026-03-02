@@ -32,6 +32,13 @@ repos:
     hooks:
       - id: sqlfmt
         additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
+        exclude: |
+          (?x)^(
+            macros/commands/generate_elementary_cli_profile\.sql|
+            macros/commands/generate_json_schema_test\.sql|
+            macros/utils/cross_db_utils/get_user_creation_query\.sql|
+            macros/utils/table_operations/get_row_count\.sql
+          )$
 
   - repo: local
     hooks:

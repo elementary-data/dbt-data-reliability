@@ -63,6 +63,8 @@
     to_char({{ date_expr }}, 'DAY')
 {% endmacro %}
 
+-- fmt: off
 {% macro clickhouse__edr_day_of_week_expression(date_expr) %}
-    formatdatetime({{ date_expr }}, '%W')
+    formatDateTime({{ date_expr }}, '%W')
 {% endmacro %}
+-- fmt: on

@@ -24,9 +24,11 @@
 {% macro validate_time_bucket(time_bucket) %}
     {% if time_bucket %}
         {%- if time_bucket is not mapping %}
+            {# fmt: off #}
             {% do exceptions.raise_compiler_error(
                 "             Invalid time_bucket format. Expected format:                 time_bucket:                  count: int                  period: string             "
             ) %}
+        {# fmt: on #}
         {%- endif %}
         {%- if time_bucket is mapping %}
             {%- set invalid_keys = [] %}
@@ -37,11 +39,13 @@
                 {%- endif %}
             {%- endfor %}
             {%- if invalid_keys | length > 0 %}
+                {# fmt: off #}
                 {% do exceptions.raise_compiler_error(
-                    (
-                        "                 Found invalid keys in time_bucket: {0}.                 Supported keys: {1}.                 Expected format:                     time_bucket:                      count: int                      period: string                 "
-                    ).format(invalid_keys, valid_keys)
+                    "                 Found invalid keys in time_bucket: {0}.                 Supported keys: {1}.                 Expected format:                     time_bucket:                      count: int                      period: string                 ".format(
+                        invalid_keys, valid_keys
+                    )
                 ) %}
+            {# fmt: on #}
             {%- endif %}
         {%- endif %}
 

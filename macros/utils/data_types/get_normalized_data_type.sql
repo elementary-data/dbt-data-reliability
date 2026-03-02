@@ -1,5 +1,5 @@
 {% macro get_normalized_data_type(exact_data_type) %}
-    {% if exact_data_type is none %} {{ return exact_data_type }} {% endif %}
+    {% if exact_data_type is none %} {{ return(exact_data_type) }} {% endif %}
     {% set exact_data_type_uppercase = exact_data_type | upper %}
     {% set result = adapter.dispatch("get_normalized_data_type", "elementary")(
         exact_data_type_uppercase
@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro default__get_normalized_data_type(exact_data_type) %}
-    {{ return exact_data_type }}
+    {{ return(exact_data_type) }}
 {% endmacro %}
 
 {% macro bigquery__get_normalized_data_type(exact_data_type) %}
@@ -19,11 +19,13 @@
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
-            return exact_data_type_to_data_type_returned_by_the_info_schema[
-                exact_data_type
-            ]
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
         }}
-    {%- else %} {{ return exact_data_type }}
+    {%- else %} {{ return(exact_data_type) }}
     {%- endif %}
 {% endmacro %}
 
@@ -49,11 +51,13 @@
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
-            return exact_data_type_to_data_type_returned_by_the_info_schema[
-                exact_data_type
-            ]
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
         }}
-    {%- else %} {{ return exact_data_type }}
+    {%- else %} {{ return(exact_data_type) }}
     {%- endif %}
 {% endmacro %}
 
@@ -61,7 +65,7 @@
 {% macro spark__get_normalized_data_type(exact_data_type) %}
     {# spark also has no concept of data type synonyms :
    see https://spark.apache.org/docs/latest/sql-ref-datatypes.html #}
-    {{ return exact_data_type }}
+    {{ return(exact_data_type) }}
 {% endmacro %}
 
 
@@ -93,11 +97,13 @@
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
-            return exact_data_type_to_data_type_returned_by_the_info_schema[
-                exact_data_type
-            ]
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
         }}
-    {%- else %} {{ return exact_data_type }}
+    {%- else %} {{ return(exact_data_type) }}
     {%- endif %}
 {% endmacro %}
 
@@ -133,11 +139,13 @@
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
-            return exact_data_type_to_data_type_returned_by_the_info_schema[
-                exact_data_type
-            ]
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
         }}
-    {%- else %} {{ return exact_data_type }}
+    {%- else %} {{ return(exact_data_type) }}
     {%- endif %}
 {% endmacro %}
 
@@ -164,10 +172,12 @@
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
-            return exact_data_type_to_data_type_returned_by_the_info_schema[
-                exact_data_type
-            ]
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
         }}
-    {%- else %} {{ return exact_data_type }}
+    {%- else %} {{ return(exact_data_type) }}
     {%- endif %}
 {% endmacro %}
