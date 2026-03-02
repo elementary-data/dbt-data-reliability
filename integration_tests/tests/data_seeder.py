@@ -110,8 +110,8 @@ def infer_column_type_tag(values: List[object]) -> str:
     return "string"
 
 
-class BaseDirectSeeder(ABC):
-    """Base class for direct SQL seeders that bypass ``dbt seed``.
+class BaseSqlInsertSeeder(ABC):
+    """Base class for seeders that load data via SQL INSERT statements.
 
     Subclasses only need to define adapter-specific type names, value
     formatting, and CREATE TABLE syntax.  The shared logic -- CSV writing
@@ -418,7 +418,7 @@ class SparkS3CsvSeeder:
             seed_path.unlink(missing_ok=True)
 
 
-class ClickHouseDirectSeeder(BaseDirectSeeder):
+class ClickHouseDirectSeeder(BaseSqlInsertSeeder):
     """Fast seeder for ClickHouse: executes CREATE TABLE + INSERT directly.
 
     Column types are wrapped in ``Nullable()`` so that NULL values are
