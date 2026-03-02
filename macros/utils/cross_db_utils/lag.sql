@@ -1,5 +1,5 @@
 {% macro lag(column, offset=1) %}
-    {{ return(adapter.dispatch('lag', 'elementary')(column, offset)) }}
+    {{ return(adapter.dispatch("lag", "elementary")(column, offset)) }}
 {% endmacro %}
 
 {% macro default__lag(column, offset=1) %}
@@ -7,5 +7,5 @@
 {% endmacro %}
 
 {% macro clickhouse__lag(column, offset=1) %}
-    lagInFrame({{ column }}, {{ offset }})
+    laginframe({{ column }}, {{ offset }})
 {% endmacro %}

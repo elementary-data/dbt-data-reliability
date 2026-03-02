@@ -27,6 +27,12 @@ repos:
     hooks:
       - id: typos
 
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: v0.29.0
+    hooks:
+      - id: sqlfmt
+        additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
+
   - repo: local
     hooks:
       - id: no_commit

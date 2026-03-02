@@ -3,40 +3,79 @@
         {% do return(elementary.get_run_started_at().replace(microsecond=0)) %}
     {% endif %}
 
-    {%- set kwargs = {detection_delay.period+'s': detection_delay.count} %}
-    {%- set detection_end = elementary.get_run_started_at().replace(microsecond=0) - modules.datetime.timedelta(**kwargs) %}
+    {%- set kwargs = {detection_delay.period + "s": detection_delay.count} %}
+    {%- set detection_end = elementary.get_run_started_at().replace(
+        microsecond=0
+    ) - modules.datetime.timedelta(**kwargs) %}
     {% do return(detection_end) %}
 {% endmacro %}
 
 {% macro get_trunc_min_bucket_start_expr(detection_end, metric_properties, days_back) %}
-    {%- set untruncated_min = (detection_end - modules.datetime.timedelta(days_back | int)).strftime("%Y-%m-%d 00:00:00") %}
-    {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(metric_properties.time_bucket.period, elementary.edr_cast_as_timestamp(elementary.edr_quote(untruncated_min)))%}
+    {%- set untruncated_min = (
+        detection_end - modules.datetime.timedelta(days_back | int)
+    ).strftime("%Y-%m-%d 00:00:00") %}
+    {%- set trunc_min_bucket_start_expr = elementary.edr_date_trunc(
+        metric_properties.time_bucket.period,
+        elementary.edr_cast_as_timestamp(
+            elementary.edr_quote(untruncated_min)
+        ),
+    ) %}
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
 {# This macro cant be used without truncating to full buckets #}
 {% macro get_backfill_bucket_start(detection_end, backfill_days) %}
-    {% do return((detection_end - modules.datetime.timedelta(backfill_days)).strftime("%Y-%m-%d 00:00:00")) %}
+    {% do return(
+        (detection_end - modules.datetime.timedelta(backfill_days)).strftime(
+            "%Y-%m-%d 00:00:00"
+        )
+    ) %}
 {% endmacro %}
 
 
-{% macro get_metric_buckets_min_and_max(model_relation, backfill_days, days_back, detection_delay=none, metric_names=none, column_name=none, metric_properties=none, unit_test=false, unit_test_relation=none) %}
+{% macro get_metric_buckets_min_and_max(
+    model_relation,
+    backfill_days,
+    days_back,
+    detection_delay=none,
+    metric_names=none,
+    column_name=none,
+    metric_properties=none,
+    unit_test=false,
+    unit_test_relation=none
+) %}
 
     {%- set detection_end = elementary.get_detection_end(detection_delay) %}
-    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
-    {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, days_back) %}
-    {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(elementary.get_backfill_bucket_start(detection_end, backfill_days))) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(
+        elementary.edr_datetime_to_sql(detection_end)
+    ) %}
+    {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
+        detection_end, metric_properties, days_back
+    ) %}
+    {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(
+        elementary.edr_datetime_to_sql(
+            elementary.get_backfill_bucket_start(
+                detection_end, backfill_days
+            )
+        )
+    ) %}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
-    {%- set force_metrics_backfill = elementary.get_config_var('force_metrics_backfill') %}
+    {%- set force_metrics_backfill = elementary.get_config_var(
+        "force_metrics_backfill"
+    ) %}
 
     {%- if metric_names %}
         {%- set metric_names_tuple = elementary.strings_list_to_tuple(metric_names) %}
     {%- endif %}
 
     {%- if unit_test %}
-        {%- set data_monitoring_metrics_relation = dbt.load_relation(unit_test_relation) %}
+        {%- set data_monitoring_metrics_relation = dbt.load_relation(
+            unit_test_relation
+        ) %}
     {%- else %}
-        {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation('data_monitoring_metrics') %}
+        {%- set data_monitoring_metrics_relation = (
+            elementary.get_elementary_relation("data_monitoring_metrics")
+        ) %}
     {%- endif %}
     {%- set regular_bucket_times_query %}
         with bucket_times as (
@@ -98,18 +137,36 @@
     {% endset %}
 
     {# We assume we should also cosider sources as incremental #}
-    {% if force_metrics_backfill or not (elementary.is_incremental_model(elementary.get_model_graph_node(model_relation), source_included=true) or unit_test) %}
- 
-        {%- set buckets = elementary.agate_to_dicts(elementary.run_query(regular_bucket_times_query))[0] %}
+    {% if force_metrics_backfill or not (
+        elementary.is_incremental_model(
+            elementary.get_model_graph_node(model_relation),
+            source_included=true,
+        )
+        or unit_test
+    ) %}
+
+        {%- set buckets = elementary.agate_to_dicts(
+            elementary.run_query(regular_bucket_times_query)
+        )[0] %}
     {%- else %}
-        {%- set buckets = elementary.agate_to_dicts(elementary.run_query(incremental_bucket_times_query))[0] %}
+        {%- set buckets = elementary.agate_to_dicts(
+            elementary.run_query(incremental_bucket_times_query)
+        )[0] %}
     {% endif %}
     {%- if buckets %}
-        {%- set min_bucket_start = elementary.edr_datetime_to_sql(buckets.get('min_bucket_start')) %}
-        {%- set max_bucket_end = elementary.edr_datetime_to_sql(buckets.get('max_bucket_end')) %}
+        {%- set min_bucket_start = elementary.edr_datetime_to_sql(
+            buckets.get("min_bucket_start")
+        ) %}
+        {%- set max_bucket_end = elementary.edr_datetime_to_sql(
+            buckets.get("max_bucket_end")
+        ) %}
         {{ return([min_bucket_start, max_bucket_end]) }}
     {%- else %}
-        {{ exceptions.raise_compiler_error("Failed to calc test buckets min and max") }}
+        {{
+            exceptions.raise_compiler_error(
+                "Failed to calc test buckets min and max"
+            )
+        }}
     {%- endif %}
 
 {% endmacro %}

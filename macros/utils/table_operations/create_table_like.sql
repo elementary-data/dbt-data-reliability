@@ -1,4 +1,6 @@
-{% macro create_table_like(relation, like_relation, temporary=False, like_columns=none) %}
+{% macro create_table_like(
+    relation, like_relation, temporary=False, like_columns=none
+) %}
     {% set empty_table_query %}
         SELECT
         {% if like_columns %}
