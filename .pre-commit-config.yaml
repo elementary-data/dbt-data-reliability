@@ -32,6 +32,13 @@ repos:
     hooks:
       - id: sqlfmt
         additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
+        # Excluded files — sqlfmt damages these in ways that break runtime behavior:
+        #   - ClickHouse/BigQuery files: sqlfmt lowercases case-sensitive identifiers
+        #     (e.g. Nullable, stddevPop, lagInFrame, splitByChar, dateDiff, OFFSET)
+        #   - Non-SQL content: files containing embedded Python or YAML that sqlfmt
+        #     destroys (broken indentation, collapsed structure)
+        #   - Unparsable Jinja: complex Jinja patterns sqlfmt cannot parse correctly
+        #   - dbt_packages: symlink to repo root causes infinite recursion
         exclude: |
           (?x)^(
             macros/commands/generate_elementary_cli_profile\.sql|
