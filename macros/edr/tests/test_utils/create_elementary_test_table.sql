@@ -15,7 +15,7 @@
 
         {# Cache the test table for easy access later #}
         {% set test_entry = elementary.get_cache("temp_test_table_relations_map").setdefault(test_name, {}) %}
-        {% set test_entry = elementary.dict_merge(test_entry, {table_type: temp_table_relation}) %}
+        {% do test_entry.setdefault(table_type, temp_table_relation) %}
         {{ return(temp_table_relation) }}
     {% endif %}
     {{ return(none) }}
