@@ -325,12 +325,17 @@ class SparkS3CsvSeeder:
         """Write a CSV with proper NULL handling.
 
         ``None`` values are written as empty strings so that Spark's CSV
-        reader interprets them as SQL NULL.
+        reader interprets them as SQL NULL (via ``nullValue ''``).
+
+        ``QUOTE_ALL`` is used so that empty-string cells are emitted as
+        ``""`` rather than blank lines — Spark's CSV reader silently
+        skips blank lines, which would lose rows containing only NULL
+        columns.
         """
         columns = list(data[0].keys())
         seed_path = self._seeds_dir_path / f"{table_name}.csv"
         with seed_path.open("w", newline="") as f:
-            writer = csv.writer(f)
+            writer = csv.writer(f, quoting=csv.QUOTE_ALL)
             writer.writerow(columns)
             for row in data:
                 writer.writerow(
