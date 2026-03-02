@@ -1,4 +1,5 @@
 import csv
+import os
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
@@ -60,6 +61,52 @@ class DbtDataSeeder:
 _INSERT_BATCH_SIZE = 500
 
 
+def infer_column_type_tag(values: List[object]) -> str:
+    """Infer an abstract type tag for a column from its Python values.
+
+    Returns one of ``'string'``, ``'boolean'``, ``'integer'``, or
+    ``'float'``.  Checks native Python types first (bool before int,
+    since ``bool`` is a subclass of ``int``).  Falls back to parsing
+    string representations for numeric detection.
+    """
+    non_null = [
+        v for v in values if v is not None and not (isinstance(v, str) and v == "")
+    ]
+    if not non_null:
+        return "string"
+
+    # Python booleans must be checked before int (bool is subclass of int).
+    if all(isinstance(v, bool) for v in non_null):
+        return "boolean"
+
+    if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
+        return "integer"
+    if all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null):
+        return "float"
+
+    # Fallback: try parsing string representations.
+    all_int = True
+    all_float = True
+    for v in non_null:
+        text = str(v)
+        try:
+            int(text)
+        except (ValueError, TypeError):
+            all_int = False
+        try:
+            float(text)
+        except (ValueError, TypeError):
+            all_float = False
+        if not all_int and not all_float:
+            break
+
+    if all_int:
+        return "integer"
+    if all_float:
+        return "float"
+    return "string"
+
+
 class BaseDirectSeeder(ABC):
     """Base class for direct SQL seeders that bypass ``dbt seed``.
 
@@ -112,51 +159,24 @@ class BaseDirectSeeder(ABC):
     # Shared logic
     # ------------------------------------------------------------------
 
+    # Mapping from abstract type tags to adapter-specific type getters.
+    _TYPE_TAG_MAP = {
+        "string": "_type_string",
+        "boolean": "_type_boolean",
+        "integer": "_type_integer",
+        "float": "_type_float",
+    }
+
     def _infer_column_type(self, values: List[object]) -> str:
         """Infer the best SQL type from a column's Python values.
 
-        Checks native Python types first (bool before int, since bool is
-        a subclass of int).  Falls back to parsing string representations
-        for numeric detection.
+        Delegates to the shared :func:`infer_column_type_tag` helper and
+        maps the abstract tag to the adapter-specific type name via the
+        subclass's ``_type_*`` methods.
         """
-        non_null = [
-            v for v in values if v is not None and not (isinstance(v, str) and v == "")
-        ]
-        if not non_null:
-            return self._type_string()
-
-        # Python booleans must be checked before int (bool is subclass of int).
-        if all(isinstance(v, bool) for v in non_null):
-            return self._type_boolean()
-
-        if all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
-            return self._type_integer()
-        if all(
-            isinstance(v, (int, float)) and not isinstance(v, bool) for v in non_null
-        ):
-            return self._type_float()
-
-        # Fallback: try parsing string representations.
-        all_int = True
-        all_float = True
-        for v in non_null:
-            text = str(v)
-            try:
-                int(text)
-            except (ValueError, TypeError):
-                all_int = False
-            try:
-                float(text)
-            except (ValueError, TypeError):
-                all_float = False
-            if not all_int and not all_float:
-                break
-
-        if all_int:
-            return self._type_integer()
-        if all_float:
-            return self._type_float()
-        return self._type_string()
+        tag = infer_column_type_tag(values)
+        getter = getattr(self, self._TYPE_TAG_MAP[tag])
+        return getter()
 
     def _write_csv(self, data: List[dict], table_name: str) -> Path:
         """Write a CSV so dbt discovers the seed node (needed for ``{{ ref() }}``)."""
@@ -243,14 +263,14 @@ class SparkS3CsvSeeder:
     """
 
     # MinIO connection defaults (matching docker-compose-spark.yml).
-    _MINIO_ENDPOINT = "http://127.0.0.1:9000"
-    _MINIO_ACCESS_KEY = "minioadmin"
-    _MINIO_SECRET_KEY = "minioadmin"
-    _S3_BUCKET = "spark-seeds"
+    _MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "http://127.0.0.1:9000")
+    _MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")  # noqa: S105
+    _MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin")  # noqa: S105
+    _S3_BUCKET = os.environ.get("MINIO_BUCKET", "spark-seeds")
 
     # Spark Thrift Server connection defaults.
-    _THRIFT_HOST = "127.0.0.1"
-    _THRIFT_PORT = 10000
+    _THRIFT_HOST = os.environ.get("SPARK_THRIFT_HOST", "127.0.0.1")
+    _THRIFT_PORT = int(os.environ.get("SPARK_THRIFT_PORT", "10000"))
 
     def __init__(
         self,
@@ -313,30 +333,22 @@ class SparkS3CsvSeeder:
                 )
         return seed_path
 
+    # Mapping from abstract type tags to Spark SQL type names.
+    _SPARK_TYPE_MAP = {
+        "string": "STRING",
+        "boolean": "BOOLEAN",
+        "integer": "BIGINT",
+        "float": "DOUBLE",
+    }
+
     def _infer_spark_schema(self, data: List[dict]) -> str:
         """Build a Spark SQL schema string from the data."""
         columns = list(data[0].keys())
         parts = []
         for col in columns:
             values = [row.get(col) for row in data]
-            non_null = [
-                v
-                for v in values
-                if v is not None and not (isinstance(v, str) and v == "")
-            ]
-            if not non_null:
-                col_type = "STRING"
-            elif all(isinstance(v, bool) for v in non_null):
-                col_type = "BOOLEAN"
-            elif all(isinstance(v, int) and not isinstance(v, bool) for v in non_null):
-                col_type = "BIGINT"
-            elif all(
-                isinstance(v, (int, float)) and not isinstance(v, bool)
-                for v in non_null
-            ):
-                col_type = "DOUBLE"
-            else:
-                col_type = "STRING"
+            tag = infer_column_type_tag(values)
+            col_type = self._SPARK_TYPE_MAP[tag]
             parts.append(f"`{col}` {col_type}")
         return ", ".join(parts)
 

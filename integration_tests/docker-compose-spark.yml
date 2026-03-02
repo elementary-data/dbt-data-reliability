@@ -66,6 +66,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
+      set -e;
       mc alias set myminio http://minio:9000 minioadmin minioadmin;
       mc mb --ignore-existing myminio/spark-seeds;
       echo 'MinIO bucket spark-seeds created.';
