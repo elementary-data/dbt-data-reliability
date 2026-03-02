@@ -1,5 +1,11 @@
 {% macro edr_date_trunc(date_part, date_expression) -%}
-    {{ return(adapter.dispatch('edr_date_trunc', 'elementary') (date_part, date_expression)) }}
+    {{
+        return(
+            adapter.dispatch("edr_date_trunc", "elementary")(
+                date_part, date_expression
+            )
+        )
+    }}
 {%- endmacro %}
 
 {% macro default__edr_date_trunc(datepart, date_expression) %}

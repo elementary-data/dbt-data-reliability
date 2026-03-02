@@ -1,5 +1,5 @@
 {% macro validate_permissions() %}
-    {% do return(adapter.dispatch('validate_permissions','elementary')()) %}
+    {% do return(adapter.dispatch("validate_permissions", "elementary")()) %}
 {% endmacro %}
 
 {% macro bigquery__validate_permissions() %}
@@ -10,5 +10,9 @@
 {% endmacro %}
 
 {% macro default__validate_permissions() %}
-  {{ exceptions.raise_compiler_error("This macro is not supported on '{}'.".format(target.type)) }}
+    {{
+        exceptions.raise_compiler_error(
+            "This macro is not supported on '{}'.".format(target.type)
+        )
+    }}
 {% endmacro %}

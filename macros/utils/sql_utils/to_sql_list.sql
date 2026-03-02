@@ -4,5 +4,5 @@
         {% do rendered_items.append(elementary.render_value(item)) %}
     {% endfor %}
 
-({{ rendered_items | join(', ') }})
+    ({{ rendered_items | join(", ") }})
 {% endmacro %}
