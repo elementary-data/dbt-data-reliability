@@ -19,12 +19,14 @@ class DbtDataSeeder:
     def __init__(
         self, dbt_runner: BaseDbtRunner, dbt_project_path: Path, seeds_dir_path: Path
     ):
+        """Initialise with a dbt runner, project path and seeds directory."""
         self.dbt_runner = dbt_runner
         self.dbt_project_path = dbt_project_path
         self.seeds_dir_path = seeds_dir_path
 
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
+        """Write *data* as a CSV, run ``dbt seed``, and clean up on exit."""
         seed_path = self.seeds_dir_path.joinpath(f"{table_name}.csv")
         try:
             with seed_path.open("w") as seed_file:
@@ -73,6 +75,7 @@ class BaseDirectSeeder(ABC):
         schema: str,
         seeds_dir_path: Path,
     ) -> None:
+        """Initialise with a query runner, target schema and seeds directory."""
         self._query_runner = query_runner
         self._schema = schema
         self._seeds_dir_path = seeds_dir_path
@@ -254,10 +257,12 @@ class SparkS3CsvSeeder:
         schema: str,
         seeds_dir_path: Path,
     ) -> None:
+        """Initialise with the target Spark schema and seeds directory."""
         self._schema = schema
         self._seeds_dir_path = seeds_dir_path
 
     def _get_s3_client(self):  # type: ignore[no-untyped-def]
+        """Return a boto3 S3 client configured for the local MinIO endpoint."""
         import boto3
 
         return boto3.client(
