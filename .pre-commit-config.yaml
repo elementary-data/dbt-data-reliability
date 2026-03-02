@@ -37,12 +37,20 @@ repos:
             macros/commands/generate_elementary_cli_profile\.sql|
             macros/commands/generate_json_schema_test\.sql|
             macros/commands/generate_schema_baseline_test\.sql|
+            macros/edr/data_monitoring/monitors/column_numeric_monitors\.sql|
+            macros/edr/data_monitoring/monitors_query/table_monitoring_query\.sql|
+            macros/edr/system/system_utils/buckets_cte\.sql|
             macros/edr/system/system_utils/empty_table\.sql|
+            macros/edr/system/system_utils/full_names\.sql|
             macros/edr/tests/test_json_schema\.sql|
             macros/edr/tests/test_utils/compile_py_code\.sql|
+            macros/utils/cross_db_utils/datediff\.sql|
             macros/utils/cross_db_utils/get_user_creation_query\.sql|
+            macros/utils/cross_db_utils/lag\.sql|
+            macros/utils/data_types/null_as\.sql|
             macros/utils/table_operations/get_row_count\.sql|
-            integration_tests/dbt_project/macros/python\.sql
+            integration_tests/dbt_project/macros/python\.sql|
+            integration_tests/dbt_project/dbt_packages/.*
           )$
 
   - repo: local
