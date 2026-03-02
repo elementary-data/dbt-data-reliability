@@ -364,10 +364,12 @@ class SparkS3CsvSeeder:
         """Upload CSV to MinIO and create a Spark external table.
 
         The CSV is also written locally so dbt discovers the seed node
-        for ``{{ ref() }}`` resolution.  Neither the S3 object nor the
-        local CSV is deleted — S3 because the external table references
-        it for the rest of the test, and the local CSV so that dbt can
-        resolve ``{{ ref() }}`` in subsequent commands.
+        for ``{{ ref() }}`` resolution.  The local CSV is cleaned up
+        when the context manager exits to prevent dbt compilation
+        errors (duplicate resource names).  The S3 object is **not**
+        deleted — the external table references it throughout the test,
+        and MinIO storage is ephemeral (destroyed with
+        ``docker compose down``).
         """
         if not data:
             raise ValueError(f"Seed data for '{table_name}' must not be empty")
@@ -405,7 +407,10 @@ class SparkS3CsvSeeder:
             s3_path,
         )
 
-        yield
+        try:
+            yield
+        finally:
+            seed_path.unlink(missing_ok=True)
 
 
 class ClickHouseDirectSeeder(BaseDirectSeeder):
