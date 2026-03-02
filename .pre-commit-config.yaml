@@ -36,8 +36,13 @@ repos:
           (?x)^(
             macros/commands/generate_elementary_cli_profile\.sql|
             macros/commands/generate_json_schema_test\.sql|
+            macros/commands/generate_schema_baseline_test\.sql|
+            macros/edr/system/system_utils/empty_table\.sql|
+            macros/edr/tests/test_json_schema\.sql|
+            macros/edr/tests/test_utils/compile_py_code\.sql|
             macros/utils/cross_db_utils/get_user_creation_query\.sql|
-            macros/utils/table_operations/get_row_count\.sql
+            macros/utils/table_operations/get_row_count\.sql|
+            integration_tests/dbt_project/macros/python\.sql
           )$
 
   - repo: local
