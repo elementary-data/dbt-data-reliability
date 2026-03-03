@@ -23,7 +23,7 @@
 {% macro dremio__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
     {% set datepart = datepart | lower %}
     {% set interval = interval | string %}
-    {% set interval = interval.replace('order by 1', '') %}
+    {% set interval = interval.replace('order by 1', '').replace('ORDER BY 1', '') %}
     {% if datepart == 'year' %}
         TIMESTAMPADD(YEAR, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
     {% elif datepart == 'quarter' %}

@@ -35,7 +35,21 @@
   This override normalizes ISO 8601 format to 'YYYY-MM-DD HH:MM:SS.sss'.
 #}
 {%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
-    cast(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE({{ timestamp_field }}, '(\d)T(\d)', '$1 $2'), '(\.\d{3})\d+', '$1'), 'Z$', '') as {{ elementary.edr_type_timestamp() }})
+    cast(
+        REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                REGEXP_REPLACE(
+                    cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
+                    '(\d)T(\d)',
+                    '$1 $2'
+                ),
+                '(\.\d{3})\d+',
+                '$1'
+            ),
+            'Z$',
+            ''
+        ) as {{ elementary.edr_type_timestamp() }}
+    )
 {%- endmacro -%}
 
 {%- macro edr_cast_as_float(column) -%}
