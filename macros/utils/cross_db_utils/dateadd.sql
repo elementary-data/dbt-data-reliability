@@ -1,5 +1,11 @@
 {% macro edr_dateadd(datepart, interval, from_date_or_timestamp) %}
-    {{ return(adapter.dispatch('edr_dateadd', 'elementary')(datepart, interval, from_date_or_timestamp)) }}
+    {{
+        return(
+            adapter.dispatch("edr_dateadd", "elementary")(
+                datepart, interval, from_date_or_timestamp
+            )
+        )
+    }}
 {% endmacro %}
 
 {% macro default__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
@@ -20,23 +26,61 @@
 #}
 {% macro dremio__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
     {% set datepart = datepart | lower %}
-    {% if datepart == 'year' %}
-        TIMESTAMPADD(YEAR, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'quarter' %}
-        TIMESTAMPADD(QUARTER, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'month' %}
-        TIMESTAMPADD(MONTH, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'week' %}
-        TIMESTAMPADD(WEEK, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'hour' %}
-        TIMESTAMPADD(HOUR, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'minute' %}
-        TIMESTAMPADD(MINUTE, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'second' %}
-        TIMESTAMPADD(SECOND, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
-    {% elif datepart == 'day' %}
-        TIMESTAMPADD(DAY, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
+    {% if datepart == "year" %}
+        timestampadd(
+            year,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "quarter" %}
+        timestampadd(
+            quarter,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "month" %}
+        timestampadd(
+            month,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "week" %}
+        timestampadd(
+            week,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "hour" %}
+        timestampadd(
+            hour,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "minute" %}
+        timestampadd(
+            minute,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "second" %}
+        timestampadd(
+            second,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
+    {% elif datepart == "day" %}
+        timestampadd(
+            day,
+            cast({{ interval }} as int),
+            cast({{ from_date_or_timestamp }} as timestamp)
+        )
     {% else %}
-        {{ exceptions.raise_compiler_error("dremio__edr_dateadd: unrecognized datepart '" ~ datepart ~ "'. Supported: year, quarter, month, week, day, hour, minute, second.") }}
+        {{
+            exceptions.raise_compiler_error(
+                "dremio__edr_dateadd: unrecognized datepart '"
+                ~ datepart
+                ~ "'. Supported: year, quarter, month, week, day, hour, minute, second."
+            )
+        }}
     {% endif %}
 {% endmacro %}
