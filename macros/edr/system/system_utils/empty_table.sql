@@ -174,7 +174,7 @@
         ) as {{ column_name }}
     {%- elif data_type == "timestamp" -%}
         cast(
-            '{{ dummy_values[' timestamp '] }}' as {{ elementary.edr_type_timestamp() }}
+            '{{ dummy_values['timestamp'] }}' as {{ elementary.edr_type_timestamp() }}
         ) as {{ column_name }}
     {%- elif data_type == "int" %}
         cast(
@@ -190,18 +190,18 @@
         ) as {{ column_name }}
     {%- elif data_type == "long_string" %}
         cast(
-            '{{ dummy_values[' long_string '] }}'
+            '{{ dummy_values['long_string'] }}'
             as {{ elementary.edr_type_long_string() }}
         ) as {{ column_name }}
     {%- elif data_type == "Nullable(string)" %}
         cast(
-            '{{ dummy_values[' string '] }}' as Nullable(
+            '{{ dummy_values['string'] }}' as Nullable(
                 {{ elementary.edr_type_string() }}
             )
         ) as {{ column_name }}
     {%- elif data_type == "Nullable(timestamp)" -%}
         cast(
-            '{{ dummy_values[' timestamp '] }}' as Nullable(
+            '{{ dummy_values['timestamp'] }}' as Nullable(
                 {{ elementary.edr_type_timestamp() }}
             )
         ) as {{ column_name }}
@@ -215,7 +215,7 @@
         ) as {{ column_name }}
     {%- else %}
         cast(
-            '{{ dummy_values[' string '] }}' as {{ elementary.edr_type_string() }}
+            '{{ dummy_values['string'] }}' as {{ elementary.edr_type_string() }}
         ) as {{ column_name }}
     {%- endif %}
 
