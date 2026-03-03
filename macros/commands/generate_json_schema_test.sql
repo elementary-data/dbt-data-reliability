@@ -15,8 +15,11 @@
 
     {% set elementary_database_name, elementary_schema_name = elementary.get_package_database_and_schema() %}
 
-    {% do node.config.update({"packages": ["genson"]}) %}
-    {% do node.update({'database': elementary_database_name, 'schema': elementary_schema_name}) %}
+    {# Copy node dict so we can mutate it — dbt graph nodes may be immutable maps in fusion #}
+    {% set node = dict(node) %}
+    {% set node_config = dict(node.get('config', {})) %}
+    {% do node_config.update({"packages": ["genson"]}) %}
+    {% do node.update({'config': node_config, 'database': elementary_database_name, 'schema': elementary_schema_name}) %}
     {% if node.resource_type == 'source' %}
       {# Source nodes don't have alias, and submit_python_job expects it #}
       {% do node.update({'alias': "jsonschemagen_{}_{}".format(node.source_name, node.name)}) %}
