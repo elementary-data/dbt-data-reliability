@@ -58,6 +58,6 @@
         'path': node_dict.get('path'),
         'generated_at': elementary.datetime_now_utc_as_string()
       }%}
-    {% do elementary.dict_set(flatten_exposure_metadata_dict, "metadata_hash", elementary.get_artifact_metadata_hash(flatten_exposure_metadata_dict)) %}
+    {% do flatten_exposure_metadata_dict.setdefault("metadata_hash", elementary.get_artifact_metadata_hash(flatten_exposure_metadata_dict)) %}
     {{ return(flatten_exposure_metadata_dict) }}
 {% endmacro %}

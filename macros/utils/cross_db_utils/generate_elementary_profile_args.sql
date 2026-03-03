@@ -8,12 +8,18 @@
   #}
   {% set elementary_database, elementary_schema = elementary.get_package_database_and_schema() %}
   {% set parameters = adapter.dispatch('generate_elementary_profile_args', 'elementary')(method, elementary_database, elementary_schema) %}
+  {# Apply overwrite values by rebuilding the parameters list with updated values.
+     This avoids in-place dict key overwrite (which requires pop(), unavailable in fusion). #}
   {% if overwrite_values %}
+    {% set _updated_parameters = [] %}
     {% for parameter in parameters %}
       {% if parameter["name"] in overwrite_values %}
-        {% do elementary.dict_set(parameter, "value", overwrite_values[parameter["name"]]) %}
+        {% do _updated_parameters.append({"name": parameter["name"], "value": overwrite_values[parameter["name"]], "comment": parameter.get("comment")}) %}
+      {% else %}
+        {% do _updated_parameters.append(parameter) %}
       {% endif %}
     {% endfor %}
+    {% set parameters = _updated_parameters %}
   {% endif %}
   {% do return(parameters) %}
 {% endmacro %}

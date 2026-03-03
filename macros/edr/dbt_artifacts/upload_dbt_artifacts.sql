@@ -13,7 +13,7 @@
     %}
 
     {% if elementary.get_config_var('columns_upload_strategy') != 'none' %}
-      {% set model_upload_func_map = elementary.dict_update(model_upload_func_map, {"dbt_columns": elementary.upload_dbt_columns}) %}
+      {% set model_upload_func_map = elementary.dict_merge(model_upload_func_map, {"dbt_columns": elementary.upload_dbt_columns}) %}
     {% endif %}
 
     {% set artifacts_hashes = elementary.get_artifacts_hashes() %}

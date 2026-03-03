@@ -82,10 +82,12 @@
         {% if new_insert_query | length > query_max_size %}
           {% if on_query_exceed %}
             {% do elementary.begin_duration_measure_context('on_query_exceed') %}
-            {% do on_query_exceed(row) %}
+            {% set _modified_row = on_query_exceed(row) %}
             {% do elementary.end_duration_measure_context('on_query_exceed') %}
 
-            {% set row_sql = elementary.render_row_to_sql(row, columns) %}
+            {# Use the callback's return value if it returns a new dict (fusion-compatible),
+               otherwise fall back to the original row (legacy in-place mutation). #}
+            {% set row_sql = elementary.render_row_to_sql(_modified_row if _modified_row is mapping else row, columns) %}
             {% set new_insert_query = base_insert_query + row_sql %}
           {% endif %}
 

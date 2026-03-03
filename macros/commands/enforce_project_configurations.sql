@@ -26,7 +26,9 @@
 {%- endmacro -%}
 
 {%- macro enforce_configuration(nodes, flatten_callback, enforce_owners, enforce_tags, enforce_description, required_meta_keys, required_config_keys) -%}
-    {% set validation_result = {'success': true} %}
+    {# Use a list to track failures — appending to a list works inside for-loops
+       without needing in-place dict overwrite (which requires pop(), unavailable in fusion). #}
+    {% set validation_failures = [] %}
     {% for node in nodes -%}
         {% set flattened_node = flatten_callback(node) %}
         {%- if flattened_node.package_name == project_name -%}
@@ -38,24 +40,24 @@
 
             {%- if enforce_owners and flattened_node.owner | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have an owner") %}
-                {% do elementary.dict_set(validation_result, 'success', false) %}
+                {% do validation_failures.append(true) %}
             {%- endif -%}
 
             {%- if enforce_tags and flattened_node.tags | length == 0 -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have tags") %}
-                {% do elementary.dict_set(validation_result, 'success', false) %}
+                {% do validation_failures.append(true) %}
             {%- endif -%}
 
             {%- if enforce_description and not flattened_node.description -%}
                 {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have a description") %}
-                {% do elementary.dict_set(validation_result, 'success', false) %}
+                {% do validation_failures.append(true) %}
             {%- endif -%}
 
             {%- if required_meta_keys | length > 0 -%}
                 {%- for meta_param in required_meta_keys -%}
                     {%- if meta_param not in flattened_node.meta -%}
                         {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required meta param " ~ meta_param) %}
-                        {% do elementary.dict_set(validation_result, 'success', false) %}
+                        {% do validation_failures.append(true) %}
                     {%- endif -%}
                 {%- endfor -%}
             {%- endif -%}
@@ -67,12 +69,12 @@
                     {%- if config_dict is not none -%}
                         {%- if config_param not in config_dict -%}
                             {% do elementary.edr_log(node.resource_type ~ " " ~ node.name ~ " does not have required config param " ~ config_param) %}
-                            {% do elementary.dict_set(validation_result, 'success', false) %}
+                            {% do validation_failures.append(true) %}
                         {%- endif -%}
                     {%- endif -%}
                 {%- endfor -%}
             {%- endif -%}
         {%- endif -%}
     {%- endfor -%}
-    {{- return(validation_result['success']) -}}
+    {{- return(validation_failures | length == 0) -}}
 {%- endmacro -%}

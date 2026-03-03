@@ -98,7 +98,7 @@
 
   {% set thread_stack = global_duration_context_stack.get(thread_id) %}
   {% if not thread_stack %}
-    {% do elementary.dict_set(global_duration_context_stack, thread_id, [elementary.init_duration_context_dict('main')]) %}
+    {% do global_duration_context_stack.setdefault(thread_id, [elementary.init_duration_context_dict('main')]) %}
   {% endif %}
   {{ return(global_duration_context_stack.get(thread_id)) }}
 {% endmacro %}
@@ -121,21 +121,32 @@
     {% do cur_context.durations.setdefault(cur_context.name, modules.datetime.datetime.utcnow() - cur_context.start_time) %}
     {% do cur_context.num_runs.setdefault(cur_context.name, 1) %}
 
-    {# Merge durations and num runs to parent context #}
+    {# Merge durations and num runs to parent context.
+       We build new dicts with accumulated values and replace the parent's dicts
+       via dict_merge (fusion-compatible, no pop needed). #}
     {% if duration_context_stack | length > 0 %}
         {% set parent_context = duration_context_stack[-1] %}
+        {% set _duration_updates = {} %}
         {% for sub_context_name, sub_context_duration in cur_context.durations.items() %}
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_duration = parent_context.durations.get(full_sub_context_name, modules.datetime.timedelta()) %}
-
-            {% do elementary.dict_set(parent_context.durations, full_sub_context_name, existing_duration + sub_context_duration) %}
+            {% do _duration_updates.setdefault(full_sub_context_name, existing_duration + sub_context_duration) %}
         {% endfor %}
+        {% set _num_runs_updates = {} %}
         {% for sub_context_name, sub_context_num_runs in cur_context.num_runs.items() %}
             {% set full_sub_context_name = parent_context.name ~ '.' ~ sub_context_name %}
             {% set existing_num_runs = parent_context.num_runs.get(full_sub_context_name, 0) %}
-
-            {% do elementary.dict_set(parent_context.num_runs, full_sub_context_name, existing_num_runs + sub_context_num_runs) %}
+            {% do _num_runs_updates.setdefault(full_sub_context_name, existing_num_runs + sub_context_num_runs) %}
         {% endfor %}
+        {# Replace parent_context's duration/num_runs dicts in the stack entry.
+           We pop the parent from the stack, merge in updates, and re-append. #}
+        {% set _parent = duration_context_stack.pop() %}
+        {% do duration_context_stack.append({
+            "name": _parent.name,
+            "start_time": _parent.start_time,
+            "durations": elementary.dict_merge(_parent.durations, _duration_updates),
+            "num_runs": elementary.dict_merge(_parent.num_runs, _num_runs_updates)
+        }) %}
     {% endif %}
 
     {% do return(cur_context) %}

@@ -22,7 +22,11 @@
   {% do elementary.debug_log(test_unique_id ~ ": starting test materialization hook") %}
   {% if elementary.get_config_var("tests_use_temp_tables") %}
     {% set temp_table_sql = elementary.create_test_result_temp_table() %}
-    {% do elementary.dict_set(context, "sql", temp_table_sql) %}
+    {# Overwrite 'sql' in the dbt materialization context.
+       The context object is always handled by dbt-core's Jinja2 engine (not fusion's
+       minijinja), so pop() is safe here. Materializations are a dbt-core concept. #}
+    {% do context.pop("sql", none) %}
+    {% do context.setdefault("sql", temp_table_sql) %}
     {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
   {% endif %}
 

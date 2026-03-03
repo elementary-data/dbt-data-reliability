@@ -67,12 +67,7 @@
         'execution_time': run_result_dict.get('execution_time'),
         'status': run_result_dict.get('status'),
         'resource_type': node.get('resource_type'),
-        'execute_started_at': none,
-        'execute_completed_at': none,
-        'compile_started_at': none,
-        'compile_completed_at': none,
         'full_refresh': flags.FULL_REFRESH,
-        'compiled_code': elementary.get_compiled_code(node, as_column_value=true),
         'failures': run_result_dict.get('failures'),
         'query_id': run_result_dict.get('adapter_response', {}).get('query_id'),
         'thread_id': run_result_dict.get('thread_id'),
@@ -86,18 +81,21 @@
         {% for timing in timings %}
             {% if timing is mapping %}
                 {% if timing.get('name') == 'execute' %}
-                    {% do elementary.dict_set(flatten_run_result_dict, 'execute_started_at', timing.get('started_at')) %}
-                    {% do elementary.dict_set(flatten_run_result_dict, 'execute_completed_at', timing.get('completed_at')) %}
+                    {% do flatten_run_result_dict.setdefault('execute_started_at', timing.get('started_at')) %}
+                    {% do flatten_run_result_dict.setdefault('execute_completed_at', timing.get('completed_at')) %}
                 {% elif timing.get('name') == 'compile' %}
-                    {% do elementary.dict_set(flatten_run_result_dict, 'compile_started_at', timing.get('started_at')) %}
-                    {% do elementary.dict_set(flatten_run_result_dict, 'compile_completed_at', timing.get('completed_at')) %}
+                    {% do flatten_run_result_dict.setdefault('compile_started_at', timing.get('started_at')) %}
+                    {% do flatten_run_result_dict.setdefault('compile_completed_at', timing.get('completed_at')) %}
                 {% endif %}
             {% endif %}
         {% endfor %}
     {% endif %}
+    {% do flatten_run_result_dict.setdefault('compiled_code', elementary.get_compiled_code(node, as_column_value=true)) %}
     {{ return(flatten_run_result_dict) }}
 {% endmacro %}
 
 {% macro on_run_result_query_exceed(flattened_node) %}
-    {% do elementary.dict_set(flattened_node, "compiled_code", elementary.get_compiled_code_too_long_err_msg()) %}
+    {# Return a new dict with compiled_code replaced (fusion-compatible, no pop needed). 
+       The caller (get_insert_rows_queries) uses the return value if provided. #}
+    {% do return(elementary.dict_merge(flattened_node, {"compiled_code": elementary.get_compiled_code_too_long_err_msg()})) %}
 {% endmacro %}

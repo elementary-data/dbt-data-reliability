@@ -153,10 +153,18 @@ GRANT VIEW REFLECTION ON {{ db_type }} "{{ db_name }}" TO USER "{{ parameters["u
     {% endset %}
     {% set configured_dbs = elementary.get_configured_databases_from_graph() | map('lower') | list %}
 
+    {# Build the db_name_to_type mapping. Process CATALOGs first so they take precedence
+       via setdefault() (first-write-wins), avoiding in-place dict overwrite. #}
+    {% set _query_rows = elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
     {% set db_name_to_type = {} %}
-    {% for row in elementary.agate_to_dicts(elementary.run_query(dremio_databases_query)) %}
-        {% if row["database_name"] | lower in configured_dbs and (row["database_name"] not in db_name_to_type or row["database_type"] == "CATALOG") %}
-            {% do elementary.dict_set(db_name_to_type, row["database_name"], row["database_type"]) %}
+    {% for row in _query_rows %}
+        {% if row["database_name"] | lower in configured_dbs and row["database_type"] == "CATALOG" %}
+            {% do db_name_to_type.setdefault(row["database_name"], row["database_type"]) %}
+        {% endif %}
+    {% endfor %}
+    {% for row in _query_rows %}
+        {% if row["database_name"] | lower in configured_dbs %}
+            {% do db_name_to_type.setdefault(row["database_name"], row["database_type"]) %}
         {% endif %}
     {% endfor %}
 

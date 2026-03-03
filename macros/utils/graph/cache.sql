@@ -1,6 +1,6 @@
 {% macro set_cache(entry, val) %}
     {% set _elem = graph.setdefault("elementary", {}) %}
-    {% do elementary.dict_set(_elem, entry, val) %}
+    {% do _elem.setdefault(entry, val) %}
 {% endmacro %}
 
 {% macro get_cache(entry, default=none) %}
