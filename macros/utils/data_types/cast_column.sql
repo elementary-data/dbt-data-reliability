@@ -30,26 +30,15 @@
 
 {#
   Dremio's Gandiva (Arrow execution engine) cannot parse ISO 8601 timestamps:
-  1. The 'Z' UTC timezone suffix is rejected as an unknown zone
-  2. The 'T' date-time separator is not recognized (needs space)
-  This override normalizes ISO 8601 format to 'YYYY-MM-DD HH:MM:SS.sss'.
+  1. The 'T' date-time separator is not recognized (needs space)
+  2. Sub-millisecond precision causes overflow
+  3. The 'Z' UTC timezone suffix is rejected as an unknown zone
+  This normalizes '2024-01-15T12:30:00.123456Z' to '2024-01-15 12:30:00.123'.
+  Three separate REGEXP_REPLACE calls are needed because each has a different
+  replacement pattern (space, truncation, removal) that can't be combined into one.
 #}
 {%- macro dremio__edr_cast_as_timestamp(timestamp_field) -%}
-    cast(
-        REGEXP_REPLACE(
-            REGEXP_REPLACE(
-                REGEXP_REPLACE(
-                    cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
-                    '(\d)T(\d)',
-                    '$1 $2'
-                ),
-                '(\.\d{3})\d+',
-                '$1'
-            ),
-            'Z$',
-            ''
-        ) as {{ elementary.edr_type_timestamp() }}
-    )
+    cast(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}), '(\d)T(\d)', '$1 $2'), '(\.\d{3})\d+', '$1'), 'Z$', '') as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
 {%- macro edr_cast_as_float(column) -%}

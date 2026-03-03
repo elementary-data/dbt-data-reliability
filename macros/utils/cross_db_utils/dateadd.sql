@@ -16,14 +16,10 @@
   2. Wraps result in "select TIMESTAMPADD(...)" which creates a scalar subquery when
      embedded in larger SQL expressions, causing $SCALAR_QUERY errors in Dremio
 
-  This override:
-  - Casts interval to string before calling .replace()
-  - Outputs just TIMESTAMPADD(...) as an expression (no "select" prefix)
+  This override outputs just TIMESTAMPADD(...) as an expression (no "select" prefix).
 #}
 {% macro dremio__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
     {% set datepart = datepart | lower %}
-    {% set interval = interval | string %}
-    {% set interval = interval.replace('order by 1', '').replace('ORDER BY 1', '') %}
     {% if datepart == 'year' %}
         TIMESTAMPADD(YEAR, CAST({{interval}} as int), CAST({{from_date_or_timestamp}} as TIMESTAMP))
     {% elif datepart == 'quarter' %}
