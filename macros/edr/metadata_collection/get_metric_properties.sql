@@ -23,7 +23,7 @@
       'dimensions': dimensions
     } %}
     {% if collected_by %}
-      {% set metric_props = elementary.dict_merge(metric_props, {'collected_by': collected_by}) %}
+      {% do elementary.dict_set(metric_props, 'collected_by', collected_by) %}
     {% endif %}
     {% do return(metric_props) %}
 {% endmacro %}

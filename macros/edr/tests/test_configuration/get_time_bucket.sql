@@ -15,7 +15,7 @@
         {{ return(default_time_bucket) }}
     {%- else %}
         {%- set time_bucket = default_time_bucket.copy() %}
-        {%- set time_bucket = elementary.dict_merge(time_bucket, configured_time_bucket) %}
+        {%- do elementary.dict_update(time_bucket, configured_time_bucket) %}
         {{ return(time_bucket) }}
     {%- endif %}
 {% endmacro %}

@@ -57,7 +57,7 @@
     {% set config_dict = elementary.safe_get_with_default(column_node, 'config', {}) %}
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(column_node, 'meta', {}) %}
-    {%- set meta_dict = elementary.dict_merge(meta_dict, config_meta_dict) %}
+    {%- do elementary.dict_update(meta_dict, config_meta_dict) %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(column_node, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}
@@ -77,6 +77,6 @@
         'resource_type': table_node.get('resource_type'),
         'generated_at': elementary.datetime_now_utc_as_string(),
     } %}
-    {% set flatten_column_metadata_dict = elementary.dict_merge(flatten_column_metadata_dict, {"metadata_hash": elementary.get_artifact_metadata_hash(flatten_column_metadata_dict)}) %}
+    {% do elementary.dict_set(flatten_column_metadata_dict, "metadata_hash", elementary.get_artifact_metadata_hash(flatten_column_metadata_dict)) %}
     {% do return(flatten_column_metadata_dict) %}
 {% endmacro %}

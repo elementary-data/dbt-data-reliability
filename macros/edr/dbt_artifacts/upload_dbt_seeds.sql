@@ -35,7 +35,7 @@
 
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, 'meta', {}) %}
-    {%- set meta_dict = elementary.dict_merge(meta_dict, config_meta_dict) %}
+    {%- do elementary.dict_update(meta_dict, config_meta_dict) %}
     {% set formatted_owner = [] %}
     {% set raw_owner = meta_dict.get('owner') or config_dict.get('owner') %}
     {% if raw_owner is string %}
@@ -69,6 +69,6 @@
         'generated_at': elementary.datetime_now_utc_as_string(),
         'group_name': config_dict.get("group") or node_dict.get("group"),
     }%}
-    {% set flatten_seed_metadata_dict = elementary.dict_merge(flatten_seed_metadata_dict, {"metadata_hash": elementary.get_artifact_metadata_hash(flatten_seed_metadata_dict)}) %}
+    {% do elementary.dict_set(flatten_seed_metadata_dict, "metadata_hash", elementary.get_artifact_metadata_hash(flatten_seed_metadata_dict)) %}
     {{ return(flatten_seed_metadata_dict) }}
 {% endmacro %}

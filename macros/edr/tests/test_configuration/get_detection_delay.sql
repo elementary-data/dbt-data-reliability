@@ -19,7 +19,7 @@
         {{ return(default_detection_delay) }}
     {%- else %}
         {%- set detection_delay = default_detection_delay.copy() %}
-        {%- set detection_delay = elementary.dict_merge(detection_delay, configured_detection_delay) %}
+        {%- do elementary.dict_update(detection_delay, configured_detection_delay) %}
         {{ return(detection_delay) }}
     {%- endif %}
 {% endmacro %}

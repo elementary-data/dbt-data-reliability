@@ -40,14 +40,14 @@
     } %}
 
     {% if model %}
-        {% set metadata = elementary.dict_merge(metadata, {
+        {% do elementary.dict_update(metadata, {
             'package_name': model['package_name'],
             'resource_name': model['name'],
             'resource_type': model['resource_type']
         }) %}
         {% if model.resource_type == 'test' %}
             {% set test_metadata = model.get('test_metadata', {}) %}
-            {% set metadata = elementary.dict_merge(metadata, {
+            {% do elementary.dict_update(metadata, {
                 'test_short_name': test_metadata.get("name"),
                 'test_namespace': test_metadata.get("namespace")
             }) %}

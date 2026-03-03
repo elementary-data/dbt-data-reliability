@@ -7,15 +7,15 @@
 
   {% if auth_method == "password" %}
     {% if password is none %}
-      {% set parameter_values = elementary.dict_merge(parameter_values, {"password": elementary.generate_password()}) %}
+      {% do elementary.dict_set(parameter_values, "password", elementary.generate_password()) %}
     {% else %}
-      {% set parameter_values = elementary.dict_merge(parameter_values, {"password": password}) %}
+      {% do elementary.dict_set(parameter_values, "password", password) %}
     {% endif %}
   {% elif auth_method == "keypair" %}
     {%- if public_key is none or public_key == "" -%}
       {%- do exceptions.raise_compiler_error("ERROR: A public key must be provided to generate a Snowflake user!") -%}
     {%- endif -%}
-    {% set parameter_values = elementary.dict_merge(parameter_values, {"public_key": public_key}) %}
+    {% do elementary.dict_set(parameter_values, "public_key", public_key) %}
   {% endif %}
 
   {# Unify the parameters above with auto-generated profile parameters, to get everything

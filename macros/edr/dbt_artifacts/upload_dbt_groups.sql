@@ -31,6 +31,6 @@
         'owner_name': owner_dict.get('name'),
         'generated_at': elementary.datetime_now_utc_as_string(),
     } %}
-    {% set flatten_group_metadata_dict = elementary.dict_merge(flatten_group_metadata_dict, {'metadata_hash': elementary.get_artifact_metadata_hash(flatten_group_metadata_dict)}) %}
+    {% do elementary.dict_set(flatten_group_metadata_dict, 'metadata_hash', elementary.get_artifact_metadata_hash(flatten_group_metadata_dict)) %}
     {{ return(flatten_group_metadata_dict) }}
 {% endmacro %}
