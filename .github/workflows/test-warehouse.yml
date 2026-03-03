@@ -141,7 +141,9 @@ jobs:
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
         run: |
-          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
+          # Pin to preview.127 — later versions (134+) regress dict .update()/.pop().
+          # See https://github.com/elementary-data/dbt-data-reliability/pull/956 for bisect details.
+          curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --version 2.0.0-preview.127
 
       - name: Install Elementary
         run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
