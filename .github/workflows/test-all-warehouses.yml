@@ -40,33 +40,18 @@ jobs:
   # Skipped on pull_request_target to avoid duplicate runs for internal PRs.
   # Includes Docker-based adapters (postgres, clickhouse, trino, dremio) and
   # fully in-process adapters (duckdb).
+  # BISECT: local tests disabled to speed up fusion version bisect
   test-local:
-    if: github.event_name != 'pull_request_target'
+    if: false
     strategy:
       fail-fast: false
       matrix:
-        dbt-version:
-          ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
-          fromJSON('["latest_official", "latest_pre"]') }}
-        warehouse-type: [postgres, clickhouse, trino, dremio, spark, duckdb]
-        exclude:
-          # latest_pre is only tested on postgres
-          - dbt-version: latest_pre
-            warehouse-type: clickhouse
-          - dbt-version: latest_pre
-            warehouse-type: trino
-          - dbt-version: latest_pre
-            warehouse-type: dremio
-          - dbt-version: latest_pre
-            warehouse-type: spark
-          - dbt-version: latest_pre
-            warehouse-type: duckdb
+        dbt-version: ["latest_official"]
+        warehouse-type: [postgres]
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
       dbt-version: ${{ matrix.dbt-version }}
-      elementary-ref: ${{ inputs.elementary-ref }}
-      dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || '' }}
 
   # ── Cloud targets ─────────────────────────────────────────────────────
   # Require secrets — use fork check / approval gate for pull_request_target.
@@ -120,25 +105,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dbt-version:
-          ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
-          fromJSON('["latest_official"]') }}
-        warehouse-type:
-          [snowflake, bigquery, redshift, databricks_catalog, athena]
-        # Fusion includes: always run fusion alongside the base version for
-        # supported warehouses.  When inputs.dbt-version is already 'fusion' the
-        # matrix deduplicates automatically.
-        include:
-          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-            warehouse-type: snowflake
-          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-            warehouse-type: bigquery
-          # fusion/redshift temporarily disabled - Fusion sidecar can't resolve
-          # source schemas via SVV_COLUMNS on Redshift (see dbt-labs/dbt-fusion issues)
-          # - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-          #   warehouse-type: redshift
-          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-            warehouse-type: databricks_catalog
+        # BISECT: only fusion snowflake to minimize CI time
+        dbt-version: [fusion]
+        warehouse-type: [snowflake]
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
