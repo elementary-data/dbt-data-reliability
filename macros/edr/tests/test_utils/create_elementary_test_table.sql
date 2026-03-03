@@ -13,9 +13,13 @@
         {# Create the table if it doesnt exist #}
         {%- do elementary.create_or_replace(false, temp_table_relation, sql_query) %}
 
-        {# Cache the test table for easy access later #}
+        {# Cache the test table for easy access later.
+           We use a list per table_type and always append, reading the last element
+           on retrieval. This avoids in-place dict key overwrite (which requires
+           pop(), unavailable in fusion's minijinja). #}
         {% set test_entry = elementary.get_cache("temp_test_table_relations_map").setdefault(test_name, {}) %}
-        {% do test_entry.setdefault(table_type, temp_table_relation) %}
+        {% do test_entry.setdefault(table_type, []) %}
+        {% do test_entry[table_type].append(temp_table_relation) %}
         {{ return(temp_table_relation) }}
     {% endif %}
     {{ return(none) }}
