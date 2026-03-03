@@ -202,3 +202,14 @@ jobs:
         with:
           name: detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}
           path: ${{ env.TESTS_DIR }}/tests/detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html
+
+      - name: Drop test schemas
+        if: >-
+          always() &&
+          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena"]'), inputs.warehouse-type)
+        working-directory: ${{ env.TESTS_DIR }}
+        continue-on-error: true
+        run: |
+          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} run-operation elementary_tests.drop_test_schemas \
+            --project-dir dbt_project \
+            -t "${{ inputs.warehouse-type }}"
