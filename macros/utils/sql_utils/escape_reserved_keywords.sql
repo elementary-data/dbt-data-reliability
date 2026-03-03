@@ -15,7 +15,7 @@
 
 {% macro dremio__is_reserved_keywords(keyword) %}
     {% set cleaned_keyword = (keyword | trim | lower) %}
-    {% do return(cleaned_keyword in ['filter', 'sql', 'timestamp', 'value', 'one', 'min', 'max', 'sum', 'count']) %}
+    {% do return(cleaned_keyword in ['filter', 'sql', 'timestamp', 'value', 'one', 'min', 'max', 'sum', 'count', 'row_number', 'snapshots']) %}
 {% endmacro %}
 
 {% macro escape_keywords(keyword) %}
