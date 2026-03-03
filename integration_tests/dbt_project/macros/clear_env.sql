@@ -8,6 +8,32 @@
     ) %}
 {% endmacro %}
 
+{% macro drop_test_schemas(num_workers=8) %}
+    {#
+      Drop every schema that a CI test run may have created.
+      This covers the base schema (no xdist suffix) as well as
+      each pytest-xdist worker schema (_gw0 … _gw<N-1>).
+      Called from the workflow with `if: always()` so that schemas
+      are cleaned up even when the pytest process is cancelled or
+      crashes before its own teardown runs.
+    #}
+    {% set database = elementary.target_database() %}
+    {% set base_schema = target.schema %}
+    {% set suffixes = [""] %}
+    {% for i in range(num_workers) %} {% do suffixes.append("_gw" ~ i) %} {% endfor %}
+
+    {% for suffix in suffixes %}
+        {% set test_schema = base_schema ~ suffix %}
+        {% set elementary_schema = base_schema ~ "_elementary" ~ suffix %}
+        {% do log(
+            "Dropping schemas: " ~ test_schema ~ ", " ~ elementary_schema,
+            info=true,
+        ) %}
+        {% do elementary_tests.edr_drop_schema(database, elementary_schema) %}
+        {% do elementary_tests.edr_drop_schema(database, test_schema) %}
+    {% endfor %}
+{% endmacro %}
+
 {% macro edr_drop_schema(database_name, schema_name) %}
     {% do return(
         adapter.dispatch("edr_drop_schema", "elementary_tests")(
