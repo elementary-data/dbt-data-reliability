@@ -22,7 +22,7 @@
   {%- set test_unique_id = flattened_test.unique_id %}
   {%- set test_configuration = elementary.get_cache(test_unique_id) %}
   {%- set test_params = elementary.insensitive_get_dict_value(flattened_test, 'test_params') %}
-  {%- do elementary.dict_update(test_params, test_configuration) %}
+  {%- set test_params = elementary.dict_update(test_params, test_configuration) %}
   {%- set parent_model_unique_id = elementary.insensitive_get_dict_value(flattened_test, 'parent_model_unique_id') %}
   {%- set column_name = elementary.insensitive_get_dict_value(latest_row, 'column_name') %}
   {%- set metric_name = elementary.insensitive_get_dict_value(latest_row, 'metric_name') %}
@@ -72,6 +72,6 @@
       'failures': failures.data
   } %}
   {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
-  {%- do elementary.dict_update(elementary_test_row, test_result_dict) %}
+  {%- set elementary_test_row = elementary.dict_update(elementary_test_row, test_result_dict) %}
   {% do return(elementary_test_row) %}
 {% endmacro %}

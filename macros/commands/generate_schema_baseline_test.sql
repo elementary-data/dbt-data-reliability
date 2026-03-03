@@ -45,10 +45,10 @@
 
   {% set test_params = {} %}
   {% if fail_on_added %}
-    {% do elementary.dict_set(test_params, "fail_on_added", "true") %}
+    {% set test_params = elementary.dict_update(test_params, {"fail_on_added": "true"}) %}
   {% endif %}
   {% if enforce_types %}
-    {% do elementary.dict_set(test_params, "enforce_types", "true") %}
+    {% set test_params = elementary.dict_update(test_params, {"enforce_types": "true"}) %}
   {% endif %}
 
   {# Full yaml for sources and models #}

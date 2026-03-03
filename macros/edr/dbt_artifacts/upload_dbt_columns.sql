@@ -57,7 +57,7 @@
     {% set config_dict = elementary.safe_get_with_default(column_node, 'config', {}) %}
     {% set config_meta_dict = elementary.safe_get_with_default(config_dict, 'meta', {}) %}
     {% set meta_dict = elementary.safe_get_with_default(column_node, 'meta', {}) %}
-    {%- do elementary.dict_update(meta_dict, config_meta_dict) %}
+    {%- set meta_dict = elementary.dict_update(meta_dict, config_meta_dict) %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, 'tags', []) %}
     {% set global_tags = elementary.safe_get_with_default(column_node, 'tags', []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, 'tags', []) %}

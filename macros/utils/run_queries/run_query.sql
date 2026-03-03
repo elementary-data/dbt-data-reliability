@@ -40,14 +40,14 @@
     } %}
 
     {% if model %}
-        {% do elementary.dict_update(metadata, {
+        {% set metadata = elementary.dict_update(metadata, {
             'package_name': model['package_name'],
             'resource_name': model['name'],
             'resource_type': model['resource_type']
         }) %}
         {% if model.resource_type == 'test' %}
             {% set test_metadata = model.get('test_metadata', {}) %}
-            {% do elementary.dict_update(metadata, {
+            {% set metadata = elementary.dict_update(metadata, {
                 'test_short_name': test_metadata.get("name"),
                 'test_namespace': test_metadata.get("namespace")
             }) %}
