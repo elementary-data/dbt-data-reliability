@@ -163,3 +163,28 @@ def test_timings(dbt_project: DbtProject):
 
     assert len(results) == 1
     assert results[0]["execute_started_at"]
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_run_results_partitioned(dbt_project: DbtProject):
+    # BigQuery default sets run_results_partition_by to partition on created_at.
+    # Verify enabling partition_run_results=True doesn't break the model and data is readable.
+    dbt_project.dbt_runner.vars["disable_run_results"] = False
+    dbt_project.dbt_runner.vars["partition_run_results"] = True
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    results = dbt_project.run_query(
+        """select * from {{ ref("dbt_run_results") }} where name='%s'""" % TEST_MODEL
+    )
+    assert len(results) >= 1
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_dbt_invocations_partitioned(dbt_project: DbtProject):
+    # BigQuery default sets run_results_partition_by to partition on created_at.
+    # Verify enabling partition_run_results=True doesn't break dbt_invocations.
+    dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
+    dbt_project.dbt_runner.vars["partition_run_results"] = True
+    dbt_project.dbt_runner.run(selector="one")
+    dbt_project.read_table(
+        "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
+    )
