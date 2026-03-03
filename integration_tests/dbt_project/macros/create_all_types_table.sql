@@ -1,15 +1,21 @@
 {# 
   Those macros are used to generate a table with all of the supported data types for each DWH.
 #}
-
 {% macro create_all_types_table() %}
-    {% do return(adapter.dispatch('create_all_types_table','elementary')()) %}
+    {% do return(adapter.dispatch("create_all_types_table", "elementary")()) %}
 {% endmacro %}
 
 {% macro bigquery__create_all_types_table() %}
     {# see https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types #}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {% set _, relation = dbt.get_or_create_relation(database=database_name, schema=schema_name, identifier='all_types', type="table") %}
+    {% set database_name, schema_name = elementary.get_package_database_and_schema(
+        "elementary"
+    ) %}
+    {% set _, relation = dbt.get_or_create_relation(
+        database=database_name,
+        schema=schema_name,
+        identifier="all_types",
+        type="table",
+    ) %}
     {% set sql_query %}
       select 
         struct("string" as col1, 42 as col2) as flat_struct_col,
@@ -36,8 +42,15 @@
 
 {% macro snowflake__create_all_types_table() %}
     {# see https://docs.snowflake.com/en/sql-reference/intro-summary-data-types.html #}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {% set _, relation = dbt.get_or_create_relation(database=database_name, schema=schema_name, identifier='all_types', type="table") %}
+    {% set database_name, schema_name = elementary.get_package_database_and_schema(
+        "elementary"
+    ) %}
+    {% set _, relation = dbt.get_or_create_relation(
+        database=database_name,
+        schema=schema_name,
+        identifier="all_types",
+        type="table",
+    ) %}
     {% set sql_query %}
       select 
         'str'::STRING as str_col,
@@ -84,8 +97,15 @@
 
 {% macro redshift__create_all_types_table() %}
     {# see https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html #}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {% set _, relation = dbt.get_or_create_relation(database=database_name, schema=schema_name, identifier='all_types', type="table") %}
+    {% set database_name, schema_name = elementary.get_package_database_and_schema(
+        "elementary"
+    ) %}
+    {% set _, relation = dbt.get_or_create_relation(
+        database=database_name,
+        schema=schema_name,
+        identifier="all_types",
+        type="table",
+    ) %}
     {% set sql_query %}
       select 
         1::SMALLINT as smallint_col,
@@ -120,13 +140,20 @@
         JSON_PARSE('{"data_type": "super"}') as super_col
     {% endset %}
     {% do elementary.edr_create_table_as(false, relation, sql_query) %}
-  
+
 {% endmacro %}
 
 {% macro postgres__create_all_types_table() %}
     {# see https://www.postgresql.org/docs/current/datatype.html #}
-    {% set database_name, schema_name = elementary.get_package_database_and_schema('elementary') %}
-    {% set _, relation = dbt.get_or_create_relation(database=database_name, schema=schema_name, identifier='all_types', type="table") %}
+    {% set database_name, schema_name = elementary.get_package_database_and_schema(
+        "elementary"
+    ) %}
+    {% set _, relation = dbt.get_or_create_relation(
+        database=database_name,
+        schema=schema_name,
+        identifier="all_types",
+        type="table",
+    ) %}
     {% set sql_query %}
       select 
         CAST(1 as BIGINT) as bigint_col,
@@ -182,37 +209,68 @@
 {% endmacro %}
 
 {% macro default__create_all_types_table() %}
-  {{ exceptions.raise_compiler_error("This macro is not supported on '{}'.".format(target.type)) }}
+    {{
+        exceptions.raise_compiler_error(
+            "This macro is not supported on '{}'.".format(target.type)
+        )
+    }}
 {% endmacro %}
 
 
 {% macro compare_relation_types_and_information_schema_types() %}
     {% do elementary_tests.create_all_types_table() %}
 
-    {% set schema_tuple = elementary.get_package_database_and_schema('elementary') %}
+    {% set schema_tuple = elementary.get_package_database_and_schema("elementary") %}
     {% set database_name, schema_name = schema_tuple %}
-    {% set _, relation = dbt.get_or_create_relation(database=database_name, schema=schema_name, identifier='all_types', type="table") %}
+    {% set _, relation = dbt.get_or_create_relation(
+        database=database_name,
+        schema=schema_name,
+        identifier="all_types",
+        type="table",
+    ) %}
 
     {% set relation_column_types = {} %}
     {% set columns = adapter.get_columns_in_relation(relation) %}
     {% for column in columns %}
-      {% do relation_column_types.update({column.name.lower(): elementary.get_normalized_data_type(elementary.get_column_data_type(column))}) %}
+        {% do relation_column_types.update(
+            {
+                column.name.lower(): elementary.get_normalized_data_type(
+                    elementary.get_column_data_type(column)
+                )
+            }
+        ) %}
     {% endfor %}
     {% do elementary.edr_log(relation_column_types) %}
 
     {% set information_schema_column_types = {} %}
-    {% set information_schema_column_types_rows = elementary.agate_to_dicts(elementary.run_query(elementary.get_columns_from_information_schema(schema_tuple, 'all_types'))) %}
+    {% set information_schema_column_types_rows = elementary.agate_to_dicts(
+        elementary.run_query(
+            elementary.get_columns_from_information_schema(
+                schema_tuple, "all_types"
+            )
+        )
+    ) %}
     {% for row in information_schema_column_types_rows %}
-      {% do information_schema_column_types.update({row.column_name.lower(): elementary.get_normalized_data_type(row.data_type)}) %}
+        {% do information_schema_column_types.update(
+            {
+                row.column_name.lower(): elementary.get_normalized_data_type(
+                    row.data_type
+                )
+            }
+        ) %}
     {% endfor %}
     {% do elementary.edr_log(information_schema_column_types) %}
 
     {% set unmatched_types = [] %}
     {% for col, relation_value in relation_column_types.items() %}
-      {% set info_schema_value = information_schema_column_types[col] %}
-      {% if relation_value != info_schema_value %}
-        {% do unmatched_types.append('Column "{}" types do not match: {} != {} '.format(col, relation_value, info_schema_value)) %}
-      {% endif %}
+        {% set info_schema_value = information_schema_column_types[col] %}
+        {% if relation_value != info_schema_value %}
+            {% do unmatched_types.append(
+                'Column "{}" types do not match: {} != {} '.format(
+                    col, relation_value, info_schema_value
+                )
+            ) %}
+        {% endif %}
     {% endfor %}
     {% do elementary.edr_log(unmatched_types) %}
     {% do return(unmatched_types) %}

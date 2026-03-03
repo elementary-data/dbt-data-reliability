@@ -1,19 +1,11 @@
-{{
-  config(
-    materialized = 'view',
-    bind=False
-  )
-}}
+{{ config(materialized="view", bind=False) }}
 
-with dbt_run_results as (
-    select * from {{ ref('dbt_run_results') }}
-),
+with
+    dbt_run_results as (select * from {{ ref("dbt_run_results") }}),
 
-dbt_snapshots as (
-    select * from {{ ref('dbt_snapshots') }}
-)
+    dbt_snapshots as (select * from {{ ref("dbt_snapshots") }})
 
-SELECT
+select
     run_results.model_execution_id,
     run_results.unique_id,
     run_results.invocation_id,
@@ -34,12 +26,14 @@ SELECT
     run_results.group_name,
     model_snapshots.database_name,
     model_snapshots.schema_name,
-    coalesce(run_results.materialization, model_snapshots.materialization) as materialization,
+    coalesce(
+        run_results.materialization, model_snapshots.materialization
+    ) as materialization,
     model_snapshots.tags,
     model_snapshots.package_name,
     model_snapshots.path,
     model_snapshots.original_path,
     model_snapshots.owner,
     model_snapshots.alias
-FROM dbt_run_results run_results
-JOIN dbt_snapshots model_snapshots ON run_results.unique_id = model_snapshots.unique_id
+from dbt_run_results run_results
+join dbt_snapshots model_snapshots on run_results.unique_id = model_snapshots.unique_id

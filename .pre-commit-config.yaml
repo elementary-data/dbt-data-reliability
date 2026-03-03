@@ -27,6 +27,41 @@ repos:
     hooks:
       - id: typos
 
+  - repo: https://github.com/tconbeer/sqlfmt
+    rev: v0.29.0
+    hooks:
+      - id: sqlfmt
+        additional_dependencies: ["shandy-sqlfmt[jinjafmt]"]
+        # Excluded files — sqlfmt damages these in ways that break runtime behavior:
+        #   - ClickHouse/BigQuery files: sqlfmt lowercases case-sensitive identifiers
+        #     (e.g. Nullable, stddevPop, lagInFrame, splitByChar, dateDiff, OFFSET).
+        #     "-- fmt: off" inline comments can't be used here because these macros are
+        #     inlined into compiled SQL, and the comments break ClickHouse's parser.
+        #   - Non-SQL content: files containing embedded Python or YAML that sqlfmt
+        #     destroys (broken indentation, collapsed structure)
+        #   - Unparsable Jinja: complex Jinja patterns sqlfmt cannot parse correctly
+        #   - dbt_packages: symlink to repo root causes infinite recursion
+        exclude: |
+          (?x)^(
+            macros/commands/generate_elementary_cli_profile\.sql|
+            macros/commands/generate_json_schema_test\.sql|
+            macros/commands/generate_schema_baseline_test\.sql|
+            macros/edr/data_monitoring/monitors/column_numeric_monitors\.sql|
+            macros/edr/data_monitoring/monitors_query/table_monitoring_query\.sql|
+            macros/edr/system/system_utils/buckets_cte\.sql|
+            macros/edr/system/system_utils/empty_table\.sql|
+            macros/edr/system/system_utils/full_names\.sql|
+            macros/edr/tests/test_json_schema\.sql|
+            macros/edr/tests/test_utils/compile_py_code\.sql|
+            macros/utils/cross_db_utils/datediff\.sql|
+            macros/utils/cross_db_utils/get_user_creation_query\.sql|
+            macros/utils/cross_db_utils/lag\.sql|
+            macros/utils/data_types/null_as\.sql|
+            macros/utils/table_operations/get_row_count\.sql|
+            integration_tests/dbt_project/macros/python\.sql|
+            integration_tests/dbt_project/dbt_packages/.*
+          )$
+
   - repo: local
     hooks:
       - id: no_commit
