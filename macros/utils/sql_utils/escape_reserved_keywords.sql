@@ -25,6 +25,8 @@
             "max",
             "sum",
             "count",
+            "row_number",
+            "snapshots",
         ]
     ) %}
 {% endmacro %}

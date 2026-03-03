@@ -23,7 +23,7 @@
     {% if not macro_args %} {% set macro_args = {} %} {% endif %}
 
     {% set test_args = kwargs %}
-    {% set test_node = context.model %}
+    {% set test_node = dict(context.model) %}
     {% set model_relation = model.quote(false, false, false) %}
     {% set elementary_database_name, elementary_schema_name = (
         elementary.get_package_database_and_schema()
@@ -46,7 +46,9 @@
         }
     ) %}
 
-    {% do test_node.config.update(test_args) %}
+    {% set config_copy = dict(test_node.get("config", {})) %}
+    {% do config_copy.update(test_args) %}
+    {% do test_node.update({"config": config_copy}) %}
 
     {% if code_macro is string %} {% set user_py_code_macro = context[code_macro] %}
     {% else %} {% set user_py_code_macro = code_macro %}

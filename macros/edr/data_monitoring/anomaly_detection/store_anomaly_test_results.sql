@@ -41,8 +41,8 @@
     ) %}
     {%- set test_unique_id = flattened_test.unique_id %}
     {%- set test_configuration = elementary.get_cache(test_unique_id) %}
-    {%- set test_params = elementary.insensitive_get_dict_value(
-        flattened_test, "test_params"
+    {%- set test_params = dict(
+        elementary.insensitive_get_dict_value(flattened_test, "test_params")
     ) %}
     {%- do test_params.update(test_configuration) %}
     {%- set parent_model_unique_id = elementary.insensitive_get_dict_value(
