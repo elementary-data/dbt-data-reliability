@@ -1,5 +1,5 @@
 {% macro get_required_permissions() %}
-    {% do return(adapter.dispatch('get_required_permissions','elementary')()) %}
+    {% do return(adapter.dispatch("get_required_permissions", "elementary")()) %}
 {% endmacro %}
 
 {% macro bigquery__get_required_permissions() %}
@@ -8,5 +8,9 @@
 {% endmacro %}
 
 {% macro default__get_required_permissions() %}
-  {{ exceptions.raise_compiler_error("This macro is not supported on '{}'.".format(target.type)) }}
+    {{
+        exceptions.raise_compiler_error(
+            "This macro is not supported on '{}'.".format(target.type)
+        )
+    }}
 {% endmacro %}
