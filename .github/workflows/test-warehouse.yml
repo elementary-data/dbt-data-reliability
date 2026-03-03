@@ -208,6 +208,6 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         continue-on-error: true
         run: |
-          dbt run-operation elementary_tests.drop_test_schemas \
+          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} run-operation elementary_tests.drop_test_schemas \
             --project-dir dbt_project \
             -t "${{ inputs.warehouse-type }}"
