@@ -188,7 +188,9 @@
     {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
-{% macro fabric__query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+{% macro sqlserver__query_test_result_rows(
+    sample_limit=none, ignore_passed_tests=false
+) %}
     {% if sample_limit == 0 %} {% do return([]) %} {% endif %}
 
     {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}

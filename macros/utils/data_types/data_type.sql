@@ -10,7 +10,7 @@
 
 {% macro bigquery__edr_type_bool() %} {% do return("BOOL") %} {% endmacro %}
 
-{% macro fabric__edr_type_bool() %} {% do return("bit") %} {% endmacro %}
+{% macro sqlserver__edr_type_bool() %} {% do return("bit") %} {% endmacro %}
 
 
 {%- macro edr_type_string() -%}
@@ -46,7 +46,7 @@
 
 {% macro trino__edr_type_string() %} {% do return("varchar") %} {% endmacro %}
 
-{% macro fabric__edr_type_string() %} {% do return("varchar(4096)") %} {% endmacro %}
+{% macro sqlserver__edr_type_string() %} {% do return("varchar(4096)") %} {% endmacro %}
 
 
 {%- macro edr_type_long_string() -%}
@@ -137,4 +137,4 @@
 
 {% macro dremio__edr_type_timestamp() %} timestamp {% endmacro %}
 
-{% macro fabric__edr_type_timestamp() %} datetime2 {% endmacro %}
+{% macro sqlserver__edr_type_timestamp() %} datetime2 {% endmacro %}

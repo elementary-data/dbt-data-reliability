@@ -63,7 +63,7 @@
     to_char({{ date_expr }}, 'DAY')
 {% endmacro %}
 
-{% macro fabric__edr_day_of_week_expression(date_expr) %}
+{% macro sqlserver__edr_day_of_week_expression(date_expr) %}
     datename(weekday, {{ date_expr }})
 {% endmacro %}
 

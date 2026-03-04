@@ -246,7 +246,7 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{%- macro fabric__escape_special_chars(string_value) -%}
+{%- macro sqlserver__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 

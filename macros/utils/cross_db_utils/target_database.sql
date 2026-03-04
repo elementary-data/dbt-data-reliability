@@ -23,4 +23,4 @@
 
 {% macro duckdb__target_database() %} {% do return(target.database) %} {% endmacro %}
 
-{% macro fabric__target_database() %} {% do return(target.database) %} {% endmacro %}
+{% macro sqlserver__target_database() %} {% do return(target.database) %} {% endmacro %}

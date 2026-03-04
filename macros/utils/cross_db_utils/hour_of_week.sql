@@ -78,7 +78,7 @@
 {% endmacro %}
 -- fmt: on
 
-{% macro fabric__edr_hour_of_week_expression(date_expr) %}
+{% macro sqlserver__edr_hour_of_week_expression(date_expr) %}
     concat(
         cast(datename(weekday, {{ date_expr }}) as {{ elementary.edr_type_string() }}),
         cast(datepart(hour, {{ date_expr }}) as {{ elementary.edr_type_string() }})

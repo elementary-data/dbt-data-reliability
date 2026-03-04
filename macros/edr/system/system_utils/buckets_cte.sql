@@ -231,7 +231,7 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
-{% macro fabric__complete_buckets_cte(
+{% macro sqlserver__complete_buckets_cte(
     time_bucket,
     bucket_end_expr,
     min_bucket_start_expr,

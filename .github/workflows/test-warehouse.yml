@@ -157,7 +157,7 @@ jobs:
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || (inputs.warehouse-type == 'fabric' && 'fabric') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
+          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || (inputs.warehouse-type == 'fabric' && 'sqlserver') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
@@ -165,7 +165,7 @@ jobs:
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
 
       - name: Install Elementary
-        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'fabric' && 'fabric') || inputs.warehouse-type }}]"
+        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'fabric' && 'sqlserver') || inputs.warehouse-type }}]"
 
       - name: Write dbt profiles
         env:

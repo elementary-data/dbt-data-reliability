@@ -20,7 +20,7 @@
     {% do return("merge") %}
 {% endmacro %}
 
-{%- macro fabric__get_default_incremental_strategy() %}
+{%- macro sqlserver__get_default_incremental_strategy() %}
     {% do return("merge") %}
 {% endmacro %}
 

@@ -150,7 +150,7 @@
 {% endmacro %}
 
 
-{% macro fabric__get_normalized_data_type(exact_data_type) %}
+{% macro sqlserver__get_normalized_data_type(exact_data_type) %}
     {# understanding Fabric / SQL Server data type synonyms:
  https://learn.microsoft.com/en-us/sql/t-sql/data-types/data-type-synonyms-transact-sql #}
     {% set exact_data_type_to_data_type_returned_by_the_info_schema = {

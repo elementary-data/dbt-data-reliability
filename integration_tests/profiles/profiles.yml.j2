@@ -63,7 +63,7 @@ elementary_tests:
       threads: 8
 
     fabric: &fabric
-      type: fabric
+      type: sqlserver
       driver: "ODBC Driver 18 for SQL Server"
       server: 127.0.0.1
       port: 1433
@@ -71,6 +71,7 @@ elementary_tests:
       schema: {{ schema_name }}
       user: sa
       password: "{{ env_var('MSSQL_SA_PASSWORD') }}"
+      encrypt: false
       trust_cert: true
       threads: 4
 

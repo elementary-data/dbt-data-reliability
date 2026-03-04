@@ -256,7 +256,7 @@
     ) %}
 {% endmacro %}
 
-{% macro fabric__generate_elementary_profile_args(
+{% macro sqlserver__generate_elementary_profile_args(
     method, elementary_database, elementary_schema
 ) %}
     {% set parameters = [

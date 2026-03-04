@@ -59,7 +59,7 @@
     from results
 {% endmacro %}
 
-{% macro fabric__get_failed_row_count_calc_query(failed_row_count_calc) %}
+{% macro sqlserver__get_failed_row_count_calc_query(failed_row_count_calc) %}
     {# Fabric / T-SQL does not support nested CTEs.
        We create a temp table from the test SQL, then select from it. #}
     {% set tmp_relation = elementary.make_temp_relation(model) %}

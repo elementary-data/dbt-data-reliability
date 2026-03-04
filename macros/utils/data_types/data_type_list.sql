@@ -285,7 +285,7 @@
 
 {% endmacro %}
 
-{% macro fabric__data_type_list(data_type) %}
+{% macro sqlserver__data_type_list(data_type) %}
 
     {% set string_list = [
         "varchar",

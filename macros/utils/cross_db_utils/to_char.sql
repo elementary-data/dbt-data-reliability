@@ -24,7 +24,7 @@
     {%- endif %}
 {% endmacro %}
 
-{% macro fabric__edr_to_char(column, format) %}
+{% macro sqlserver__edr_to_char(column, format) %}
     convert(varchar, {{ column }}
     {%- if format %}, {{ format }})
     {%- else %}, 120)
