@@ -315,7 +315,7 @@ def main(
     )
     glue_client = _get_glue_client(region, aws_access_key_id, aws_secret_access_key)
 
-    target_schemas: list[str] = list(schemas)
+    target_schemas: list[str] = [s.strip() for s in schemas if s and s.strip()]
 
     # Expand CI test schemas (base + workers + elementary)
     if ci_test_schemas:
@@ -366,7 +366,7 @@ def main(
     seen: set[str] = set()
     unique_schemas: list[str] = []
     for s in target_schemas:
-        if s not in seen:
+        if s and s.strip() and s not in seen:
             seen.add(s)
             unique_schemas.append(s)
 
