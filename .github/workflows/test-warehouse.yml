@@ -165,6 +165,7 @@ jobs:
           SCHEMA_NAME="dbt_${DATE_STAMP}_${SAFE_BRANCH}_${SHORT_HASH}"
 
           echo "Schema name: $SCHEMA_NAME (branch='${BRANCH_NAME}', timestamp=${DATE_STAMP}, hash of concurrency group)"
+          echo "SCHEMA_NAME=$SCHEMA_NAME" >> "$GITHUB_ENV"
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
@@ -206,10 +207,22 @@ jobs:
       - name: Drop test schemas
         if: >-
           always() &&
-          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena"]'), inputs.warehouse-type)
+          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog"]'), inputs.warehouse-type)
         working-directory: ${{ env.TESTS_DIR }}
         continue-on-error: true
         run: |
           ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} run-operation elementary_tests.drop_test_schemas \
             --project-dir dbt_project \
             -t "${{ inputs.warehouse-type }}"
+
+      - name: Drop test schemas (Athena)
+        if: >-
+          always() &&
+          inputs.warehouse-type == 'athena'
+        env:
+          CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
+        continue-on-error: true
+        run: |
+          pip install boto3 click
+          python "${{ env.TESTS_DIR }}/ci_tools/athena_drop_schemas.py" \
+            --ci-test-schemas "$SCHEMA_NAME"
