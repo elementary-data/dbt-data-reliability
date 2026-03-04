@@ -250,7 +250,7 @@
           {{ bucket_end_expr }} as edr_bucket_end
         from timestamps
         where {{ bucket_end_expr }} <= {{ max_bucket_end_expr }}
-        option (maxrecursion 10000)
+        option (maxrecursion 0)
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}

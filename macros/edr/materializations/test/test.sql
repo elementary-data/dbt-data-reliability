@@ -203,7 +203,7 @@
 
     {# Fabric / T-SQL does not support nested CTEs or LIMIT.
        We create a temp table from the test SQL, then select from it using TOP. #}
-    {% set tmp_relation = elementary.make_temp_relation(model) %}
+    {% set tmp_relation = elementary.edr_make_temp_relation(model) %}
     {% do run_query(
         "select * into " ~ tmp_relation ~ " from (" ~ sql ~ ") as __edr_inner"
     ) %}

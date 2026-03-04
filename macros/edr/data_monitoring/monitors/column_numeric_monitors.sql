@@ -78,6 +78,11 @@
     varSamp(cast({{ column_name }} as Nullable({{ elementary.edr_type_float() }})))
 {%- endmacro %}
 
+{# T-SQL uses VAR instead of variance #}
+{% macro sqlserver__variance(column_name) -%}
+    var(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro sum(column_name) -%}
     sum(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
