@@ -45,8 +45,8 @@ select
                 rows between unbounded preceding and unbounded following
             )
             = invocation_id
-        then true
-        else false
+        then {{ elementary.edr_boolean_literal(true) }}
+        else {{ elementary.edr_boolean_literal(false) }}
     end as is_the_first_invocation_of_the_day,
     case
         when
@@ -57,8 +57,8 @@ select
                 rows between unbounded preceding and unbounded following
             )
             = invocation_id
-        then true
-        else false
+        then {{ elementary.edr_boolean_literal(true) }}
+        else {{ elementary.edr_boolean_literal(false) }}
     end as is_the_last_invocation_of_the_day
 
 from dbt_run_results run_results

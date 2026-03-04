@@ -19,4 +19,3 @@
         union all
     {% endif %}
 {% endfor %}
-order by metadata_hash

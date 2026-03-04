@@ -88,7 +88,6 @@ with
                 )
             }}
             {{ dbt_utils.group_by(15) }}
-        order by bucket_end desc
 
     ),
 
@@ -115,8 +114,8 @@ with
                 when
                     abs(anomaly_score)
                     > {{ elementary.get_config_var("anomaly_sensitivity") }}
-                then true
-                else false
+                then {{ elementary.edr_boolean_literal(true) }}
+                else {{ elementary.edr_boolean_literal(false) }}
             end as is_anomaly
         from metrics_anomaly_score
     )

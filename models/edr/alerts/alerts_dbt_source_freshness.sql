@@ -38,5 +38,8 @@ select
 from results
 join sources on results.unique_id = sources.unique_id
 where
-    {{ not elementary.get_config_var("disable_source_freshness_alerts") }}
-    and lower(status) != 'pass'
+    {{
+        elementary.render_bool_config_var(
+            "disable_source_freshness_alerts", negate=true
+        )
+    }} and lower(status) != 'pass'

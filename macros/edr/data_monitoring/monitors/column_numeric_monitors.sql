@@ -61,6 +61,11 @@
     stddev_pop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
+{# T-SQL uses STDEV instead of stddev #}
+{% macro sqlserver__standard_deviation(column_name) -%}
+    stdev(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro variance(column_name) -%}
     {{ return(adapter.dispatch("variance", "elementary")(column_name)) }}
 {%- endmacro %}

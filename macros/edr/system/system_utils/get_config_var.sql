@@ -25,6 +25,30 @@
     {% do return(var_value) %}
 {% endmacro %}
 
+{# Render a boolean config var as a SQL-compatible boolean expression.
+   Standard SQL uses TRUE/FALSE but T-SQL does not support bare boolean literals.
+   This macro outputs '1=1' or '1=0' which works across all dialects. #}
+{% macro render_bool_config_var(var_name, negate=false) %}
+    {% set val = elementary.get_config_var(var_name) %}
+    {% if negate %} {% if val %} (1 = 0) {% else %} (1 = 1){% endif %}
+    {% else %} {% if val %} (1 = 1) {% else %} (1 = 0){% endif %}
+    {% endif %}
+{% endmacro %}
+
+{# Render a SQL boolean literal that works across all dialects.
+   Standard SQL uses TRUE/FALSE but T-SQL requires cast(1/0 as bit). #}
+{% macro edr_boolean_literal(value) %}
+    {{ return(adapter.dispatch("edr_boolean_literal", "elementary")(value)) }}
+{% endmacro %}
+
+{% macro default__edr_boolean_literal(value) %}
+    {% if value %} true {% else %} false{% endif %}
+{% endmacro %}
+
+{% macro sqlserver__edr_boolean_literal(value) %}
+    {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
+{% endmacro %}
+
 {% macro get_default_config(var_name) %}
     {{ return(adapter.dispatch("get_default_config", "elementary")()) }}
 {%- endmacro -%}

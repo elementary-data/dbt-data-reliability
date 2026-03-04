@@ -241,9 +241,9 @@
         with timestamps as (
           select {{ min_bucket_start_expr }} as edr_bucket_start
           union all
-          select {{ bucket_end_expr }} as next_bucket
+          select {{ bucket_end_expr }}
           from timestamps
-          where next_bucket < {{ max_bucket_end_expr }}
+          where {{ bucket_end_expr }} < {{ max_bucket_end_expr }}
         )
         select
           edr_bucket_start,
