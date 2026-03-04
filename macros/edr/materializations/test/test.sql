@@ -188,6 +188,31 @@
     {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
+{% macro fabric__query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {% if sample_limit == 0 %} {% do return([]) %} {% endif %}
+
+    {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}
+    {% if sample_limit == -1 %} {% set sample_limit = none %} {% endif %}
+
+    {% if ignore_passed_tests and elementary.did_test_pass() %}
+        {% do elementary.debug_log("Skipping sample query because the test passed.") %}
+        {% do return([]) %}
+    {% endif %}
+
+    {# Fabric / T-SQL does not support nested CTEs or LIMIT.
+       We create a temp table from the test SQL, then select from it using TOP. #}
+    {% set tmp_relation = elementary.make_temp_relation(model) %}
+    {% do run_query(
+        "select * into " ~ tmp_relation ~ " from (" ~ sql ~ ") as __edr_inner"
+    ) %}
+    {% set query %}
+    select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} * from {{ tmp_relation }}
+    {% endset %}
+    {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
+    {% do run_query("drop table if exists " ~ tmp_relation) %}
+    {% do return(result) %}
+{% endmacro %}
+
 {% macro get_columns_to_exclude_from_sampling(flattened_test) %}
     {% set columns_to_exclude = [] %}
 

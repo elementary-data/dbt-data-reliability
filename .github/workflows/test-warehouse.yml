@@ -18,6 +18,7 @@ on:
           - clickhouse
           - dremio
           - duckdb
+          - fabric
       elementary-ref:
         type: string
         required: false
@@ -51,6 +52,7 @@ on:
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
+  MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'Elementary123!' }}
 
 jobs:
   test:
@@ -100,6 +102,25 @@ jobs:
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Dremio is healthy."
 
+      - name: Start SQL Server
+        if: inputs.warehouse-type == 'fabric'
+        working-directory: ${{ env.TESTS_DIR }}
+        env:
+          MSSQL_SA_PASSWORD: ${{ env.MSSQL_SA_PASSWORD }}
+        run: |
+          docker compose -f docker-compose-sqlserver.yml up -d
+          echo "Waiting for SQL Server to become healthy..."
+          timeout 120 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} sqlserver 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "SQL Server is healthy."
+
+      - name: Install ODBC Driver
+        if: inputs.warehouse-type == 'fabric'
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+
       - name: Start Spark
         if: inputs.warehouse-type == 'spark'
         working-directory: ${{ env.TESTS_DIR }}
@@ -136,7 +157,7 @@ jobs:
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
+          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || (inputs.warehouse-type == 'fabric' && 'fabric') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
 
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
@@ -144,11 +165,12 @@ jobs:
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
 
       - name: Install Elementary
-        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
+        run: pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'fabric' && 'fabric') || inputs.warehouse-type }}]"
 
       - name: Write dbt profiles
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
+          MSSQL_SA_PASSWORD: ${{ env.MSSQL_SA_PASSWORD }}
         run: |
           # Schema name = dbt_<YYMMDD_HHMMSS>_<branch≤18>_<8-char hash>
           # The hash prevents collisions across concurrent jobs; the branch

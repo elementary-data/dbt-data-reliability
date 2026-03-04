@@ -42,9 +42,32 @@
 {% endmacro %}
 
 {% macro get_failed_row_count_calc_query(failed_row_count_calc) %}
+    {{
+        return(
+            adapter.dispatch("get_failed_row_count_calc_query", "elementary")(
+                failed_row_count_calc
+            )
+        )
+    }}
+{% endmacro %}
+
+{% macro default__get_failed_row_count_calc_query(failed_row_count_calc) %}
     with results as ({{ sql }})
     select
         {{ failed_row_count_calc }}
         as {{ elementary.escape_reserved_keywords("count") }}
     from results
+{% endmacro %}
+
+{% macro fabric__get_failed_row_count_calc_query(failed_row_count_calc) %}
+    {# Fabric / T-SQL does not support nested CTEs.
+       We create a temp table from the test SQL, then select from it. #}
+    {% set tmp_relation = elementary.make_temp_relation(model) %}
+    {% do run_query(
+        "select * into " ~ tmp_relation ~ " from (" ~ sql ~ ") as __edr_inner"
+    ) %}
+    select
+        {{ failed_row_count_calc }}
+        as {{ elementary.escape_reserved_keywords("count") }}
+    from {{ tmp_relation }}
 {% endmacro %}

@@ -231,6 +231,30 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
+{% macro fabric__complete_buckets_cte(
+    time_bucket,
+    bucket_end_expr,
+    min_bucket_start_expr,
+    max_bucket_end_expr
+) -%}
+    {%- set complete_buckets_cte %}
+        with timestamps as (
+          select {{ min_bucket_start_expr }} as edr_bucket_start
+          union all
+          select {{ bucket_end_expr }} as next_bucket
+          from timestamps
+          where next_bucket < {{ max_bucket_end_expr }}
+        )
+        select
+          edr_bucket_start,
+          {{ bucket_end_expr }} as edr_bucket_end
+        from timestamps
+        where {{ bucket_end_expr }} <= {{ max_bucket_end_expr }}
+        option (maxrecursion 10000)
+    {%- endset %}
+    {{ return(complete_buckets_cte) }}
+{% endmacro %}
+
 {% macro dremio__complete_buckets_cte(
     time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
 ) %}

@@ -150,6 +150,35 @@
 {% endmacro %}
 
 
+{% macro fabric__get_normalized_data_type(exact_data_type) %}
+    {# understanding Fabric / SQL Server data type synonyms:
+ https://learn.microsoft.com/en-us/sql/t-sql/data-types/data-type-synonyms-transact-sql #}
+    {% set exact_data_type_to_data_type_returned_by_the_info_schema = {
+        "NVARCHAR": "VARCHAR",
+        "NCHAR": "CHAR",
+        "NTEXT": "TEXT",
+        "ROWVERSION": "TIMESTAMP",
+        "DATETIME": "DATETIME2",
+        "SMALLDATETIME": "DATETIME2",
+        "MONEY": "DECIMAL",
+        "SMALLMONEY": "DECIMAL",
+        "DOUBLE PRECISION": "FLOAT",
+        "REAL": "FLOAT",
+        "INTEGER": "INT",
+        "BOOLEAN": "BIT",
+    } %}
+    {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
+        {{
+            return(
+                exact_data_type_to_data_type_returned_by_the_info_schema[
+                    exact_data_type
+                ]
+            )
+        }}
+    {%- else %} {{ return(exact_data_type) }}
+    {%- endif %}
+{% endmacro %}
+
 {% macro postgres__get_normalized_data_type(exact_data_type) %}
     {# understanding Postgres data type synonyms:
  https://www.postgresql.org/docs/current/datatype.html #}

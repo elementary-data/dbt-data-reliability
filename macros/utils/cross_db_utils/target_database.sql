@@ -22,3 +22,5 @@
 {% macro dremio__target_database() %} {% do return(target.database) %} {% endmacro %}
 
 {% macro duckdb__target_database() %} {% do return(target.database) %} {% endmacro %}
+
+{% macro fabric__target_database() %} {% do return(target.database) %} {% endmacro %}

@@ -256,6 +256,31 @@
     ) %}
 {% endmacro %}
 
+{% macro fabric__generate_elementary_profile_args(
+    method, elementary_database, elementary_schema
+) %}
+    {% set parameters = [
+        _parameter("type", target.type),
+        _parameter("driver", target.driver),
+        _parameter("server", target.server),
+        _parameter("port", target.port),
+        _parameter("database", elementary_database),
+        _parameter("schema", elementary_schema),
+    ] %}
+    {% if method == "cli" %} {% do parameters.append(_parameter("method", "cli")) %}
+    {% elif method == "service-principal" %}
+        {% do parameters.append(_parameter("method", "service-principal")) %}
+        {% do parameters.append(_parameter("tenant_id", "<TENANT_ID>")) %}
+        {% do parameters.append(_parameter("client_id", "<CLIENT_ID>")) %}
+        {% do parameters.append(_parameter("client_secret", "<CLIENT_SECRET>")) %}
+    {% else %}
+        {% do parameters.append(_parameter("user", target.user)) %}
+        {% do parameters.append(_parameter("password", "<PASSWORD>")) %}
+    {% endif %}
+    {% do parameters.append(_parameter("threads", target.threads)) %}
+    {% do return(parameters) %}
+{% endmacro %}
+
 {% macro duckdb__generate_elementary_profile_args(
     method, elementary_database, elementary_schema
 ) %}
