@@ -92,7 +92,6 @@ jobs:
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
         run: |
-          pip install boto3 click
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/ci_tools/athena_drop_schemas.py" \
             --stale --prefixes "dbt_" \
             --max-age-hours ${{ inputs.max-age-hours || '24' }}
