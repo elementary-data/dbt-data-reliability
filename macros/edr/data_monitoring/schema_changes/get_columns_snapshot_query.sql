@@ -100,14 +100,8 @@
                         {{ elementary.full_column_name() }}
                         not in ({{ known_columns_query }})
                         and full_table_name in ({{ known_tables_query }})
-                    then
-                        {% if target.type in ["fabric", "sqlserver"] %} cast(1 as bit)
-                        {% else %} true
-                        {% endif %}
-                    else
-                        {% if target.type in ["fabric", "sqlserver"] %} cast(0 as bit)
-                        {% else %} false
-                        {% endif %}
+                    then {{ elementary.edr_boolean_literal(true) }}
+                    else {{ elementary.edr_boolean_literal(false) }}
                 end as is_new
             from columns_info
         ),

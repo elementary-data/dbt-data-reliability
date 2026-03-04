@@ -281,6 +281,23 @@
     {% do return(parameters) %}
 {% endmacro %}
 
+{% macro sqlserver__generate_elementary_profile_args(
+    method, elementary_database, elementary_schema
+) %}
+    {% set parameters = [
+        _parameter("type", "sqlserver"),
+        _parameter("driver", target.driver),
+        _parameter("server", target.server),
+        _parameter("port", target.port),
+        _parameter("database", elementary_database),
+        _parameter("schema", elementary_schema),
+        _parameter("user", target.user),
+        _parameter("password", "<PASSWORD>"),
+    ] %}
+    {% do parameters.append(_parameter("threads", target.threads)) %}
+    {% do return(parameters) %}
+{% endmacro %}
+
 {% macro duckdb__generate_elementary_profile_args(
     method, elementary_database, elementary_schema
 ) %}

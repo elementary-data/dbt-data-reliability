@@ -62,7 +62,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 8
 
-    fabric: &fabric
+    sqlserver: &sqlserver
       type: sqlserver
       driver: "ODBC Driver 18 for SQL Server"
       server: 127.0.0.1
@@ -135,7 +135,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'fabric', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}

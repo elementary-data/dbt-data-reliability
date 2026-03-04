@@ -60,9 +60,7 @@
     {% set vw_ref = vw_relation.include(database=false) %}
     {% set tbl_ref = table_relation.include(database=false) %}
 
-    {% do elementary.run_query(
-        "IF OBJECT_ID('" ~ vw_ref ~ "', 'V') IS NOT NULL DROP VIEW " ~ vw_ref
-    ) %}
+    {% do elementary.run_query("DROP VIEW IF EXISTS " ~ vw_ref) %}
     {% do elementary.run_query("CREATE VIEW " ~ vw_ref ~ " AS " ~ sql_query) %}
     {% do elementary.run_query("SELECT * INTO " ~ tbl_ref ~ " FROM " ~ vw_ref) %}
     {% do elementary.run_query("DROP VIEW " ~ vw_ref) %}

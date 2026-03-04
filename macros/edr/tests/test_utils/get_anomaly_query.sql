@@ -1,54 +1,68 @@
 {%- macro get_anomaly_query(flattened_test=none) -%}
-    {%- if target.type in ["fabric", "sqlserver"] -%}
-        {#- T-SQL does not allow CTEs inside subqueries / derived tables.
-            Pass the filter directly into the final SELECT of the CTE chain. -#}
-        {{-
-            return(
-                elementary.get_read_anomaly_scores_query(
-                    flattened_test,
-                    additional_where="is_anomalous = "
-                    ~ elementary.edr_boolean_literal(true),
-                )
+    {{- return(adapter.dispatch("get_anomaly_query", "elementary")(flattened_test)) -}}
+{%- endmacro -%}
+
+{%- macro default__get_anomaly_query(flattened_test=none) -%}
+    {%- set query -%}
+    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
+    {%- endset -%}
+    {{- return(query) -}}
+{%- endmacro -%}
+
+{%- macro fabric__get_anomaly_query(flattened_test=none) -%}
+    {#- T-SQL does not allow CTEs inside subqueries / derived tables.
+        Pass the filter directly into the final SELECT of the CTE chain. -#}
+    {{-
+        return(
+            elementary.get_read_anomaly_scores_query(
+                flattened_test,
+                additional_where="is_anomalous = "
+                ~ elementary.edr_boolean_literal(true),
             )
-        -}}
-    {%- else -%}
-        {%- set query -%}
-        select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-        where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
-        {%- endset -%}
-        {{- return(query) -}}
-    {%- endif -%}
+        )
+    -}}
 {%- endmacro -%}
 
 {%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
-    {%- if target.type in ["fabric", "sqlserver"] -%}
-        {#- T-SQL: CTEs cannot appear inside subqueries or IN (...) clauses.
-            Build a single CTE chain that adds an extra CTE to identify anomalous
-            dimension values, then filter the final SELECT by that set. -#}
-        {{-
-            return(
-                elementary.get_read_anomaly_scores_query(
-                    flattened_test,
-                    extra_cte="anomalous_dimensions as (select distinct dimension_value from final_results where is_anomalous = "
-                    ~ elementary.edr_boolean_literal(true)
-                    ~ ")",
-                    additional_where="dimension_value in (select dimension_value from anomalous_dimensions)",
-                )
+    {{-
+        return(
+            adapter.dispatch(
+                "get_anomaly_query_for_dimension_anomalies", "elementary"
+            )(flattened_test)
+        )
+    -}}
+{%- endmacro -%}
+
+{%- macro default__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
+    {%- set dimension_values_query -%}
+    select distinct dimension_value from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
+    {%- endset -%}
+
+    {% set dimension_anomalies_query -%}
+    select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
+    where dimension_value in ({{ dimension_values_query }})
+    {%- endset -%}
+
+    {{- return(dimension_anomalies_query) -}}
+{%- endmacro -%}
+
+{%- macro fabric__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
+    {#- T-SQL: CTEs cannot appear inside subqueries or IN (...) clauses.
+        Build a single CTE chain that adds an extra CTE to identify anomalous
+        dimension values, then filter the final SELECT by that set. -#}
+    {{-
+        return(
+            elementary.get_read_anomaly_scores_query(
+                flattened_test,
+                extra_cte="anomalous_dimensions as (select distinct dimension_value from final_results where is_anomalous = "
+                ~ elementary.edr_boolean_literal(true)
+                ~ ")",
+                additional_where="dimension_value in (select dimension_value from anomalous_dimensions)",
             )
-        -}}
-    {%- else -%}
-        {%- set dimension_values_query -%}
-        select distinct dimension_value from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-        where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
-        {%- endset -%}
-
-        {% set dimension_anomalies_query -%}
-        select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-        where dimension_value in ({{ dimension_values_query }})
-        {%- endset -%}
-
-        {{- return(dimension_anomalies_query) -}}
-    {%- endif -%}
+        )
+    -}}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(
