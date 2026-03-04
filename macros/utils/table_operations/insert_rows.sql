@@ -283,8 +283,35 @@
 {%- endmacro -%}
 
 {%- macro render_value(value, data_type) -%}
+    {{- adapter.dispatch("render_value", "elementary")(value, data_type) -}}
+{%- endmacro -%}
+
+{%- macro default__render_value(value, data_type) -%}
     {%- if value is defined and value is not none -%}
         {%- if value is number -%} {{- value -}}
+        {%- elif value is string and data_type == "timestamp" -%}
+            {{-
+                elementary.edr_cast_as_timestamp(
+                    elementary.edr_datetime_to_sql(value)
+                )
+            -}}
+        {%- elif value is string -%} '{{- elementary.escape_special_chars(value) -}}'
+        {%- elif value is mapping or value is sequence -%}
+            '{{- elementary.escape_special_chars(tojson(value)) -}}'
+        {%- else -%} null
+        {%- endif -%}
+    {%- else -%} null
+    {%- endif -%}
+{%- endmacro -%}
+
+{# Fabric/T-SQL: Python booleans (True/False) pass Jinja's "is number" test
+   but T-SQL has no TRUE/FALSE keywords, so they must be rendered as
+   cast(1 as bit) / cast(0 as bit). #}
+{%- macro fabric__render_value(value, data_type) -%}
+    {%- if value is defined and value is not none -%}
+        {%- if value is boolean -%}
+            {%- if value -%} cast(1 as bit) {%- else -%} cast(0 as bit) {%- endif -%}
+        {%- elif value is number -%} {{- value -}}
         {%- elif value is string and data_type == "timestamp" -%}
             {{-
                 elementary.edr_cast_as_timestamp(
