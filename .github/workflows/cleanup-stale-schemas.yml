@@ -26,7 +26,6 @@ jobs:
           - bigquery
           - redshift
           - databricks_catalog
-          - athena
     steps:
       - name: Checkout dbt package
         uses: actions/checkout@v4
@@ -43,7 +42,7 @@ jobs:
         run: >
           pip install
           "dbt-core"
-          "dbt-${{ (matrix.warehouse-type == 'databricks_catalog' && 'databricks') || (matrix.warehouse-type == 'athena' && 'athena-community') || matrix.warehouse-type }}"
+          "dbt-${{ (matrix.warehouse-type == 'databricks_catalog' && 'databricks') || matrix.warehouse-type }}"
 
       - name: Write dbt profiles
         env:
@@ -71,3 +70,28 @@ jobs:
           dbt run-operation drop_stale_ci_schemas
           --args '{prefixes: ["dbt_"], max_age_hours: ${{ inputs.max-age-hours || '24' }}}'
           -t "${{ matrix.warehouse-type }}"
+
+  cleanup-athena:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dbt package
+        uses: actions/checkout@v4
+        with:
+          path: dbt-data-reliability
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install boto3 click
+
+      - name: Drop stale Athena schemas
+        env:
+          CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
+        run: |
+          python "${{ github.workspace }}/dbt-data-reliability/integration_tests/ci_tools/athena_drop_schemas.py" \
+            --stale --prefixes "dbt_" \
+            --max-age-hours ${{ inputs.max-age-hours || '24' }}
