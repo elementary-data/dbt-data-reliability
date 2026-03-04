@@ -6,17 +6,26 @@ COLUMN_NAME = "sensitive_data"
 
 SAMPLES_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
     from {{{{ ref("test_result_rows") }}}}
     where elementary_test_results_id in (select * from latest_elementary_test_result)
 """
+
+
+def _fmt_samples_query(dbt_project: DbtProject, test_id: str) -> str:
+    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    return SAMPLES_QUERY.format(
+        test_id=test_id,
+        top_clause="TOP 1 " if is_tsql else "",
+        limit_clause="" if is_tsql else "limit 1",
+    )
 
 
 def test_disable_samples_config_prevents_sampling(
@@ -41,7 +50,7 @@ def test_disable_samples_config_prevents_sampling(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 0
 
@@ -66,7 +75,7 @@ def test_disable_samples_false_allows_sampling(test_id: str, dbt_project: DbtPro
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 5
     for sample in samples:
@@ -97,7 +106,7 @@ def test_disable_samples_config_overrides_pii_tags(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 0
 
@@ -126,7 +135,7 @@ def test_disable_samples_and_pii_interaction(test_id: str, dbt_project: DbtProje
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
 
     assert len(samples) == 0
@@ -152,7 +161,7 @@ def test_disable_samples_with_multiple_columns(test_id: str, dbt_project: DbtPro
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
 
     assert len(samples) == 0

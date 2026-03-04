@@ -21,7 +21,9 @@
     {% do elementary.debug_log(
         test_unique_id ~ ": starting test materialization hook"
     ) %}
-    {% if elementary.get_config_var("tests_use_temp_tables") %}
+    {% if target.type in ("fabric", "sqlserver") or elementary.get_config_var(
+        "tests_use_temp_tables"
+    ) %}
         {% set temp_table_sql = elementary.create_test_result_temp_table() %}
         {% do context.update({"sql": temp_table_sql}) %}
         {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
@@ -167,6 +169,18 @@
 {% endmacro %}
 
 {% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {{
+        return(
+            adapter.dispatch("query_test_result_rows", "elementary")(
+                sample_limit=sample_limit, ignore_passed_tests=ignore_passed_tests
+            )
+        )
+    }}
+{% endmacro %}
+
+{% macro default__query_test_result_rows(
+    sample_limit=none, ignore_passed_tests=false
+) %}
     {% if sample_limit == 0 %}  {# performance: no need to run a sql query that we know returns an empty list #}
         {% do return([]) %}
     {% endif %}
@@ -199,17 +213,16 @@
         {% do return([]) %}
     {% endif %}
 
-    {# Fabric / T-SQL does not support nested CTEs or LIMIT.
-       We create a temp table from the test SQL, then select from it using TOP. #}
-    {% set tmp_relation = elementary.edr_make_temp_relation(model) %}
-    {% do run_query(
-        "select * into " ~ tmp_relation ~ " from (" ~ sql ~ ") as __edr_inner"
-    ) %}
-    {% set query %}
-    select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} * from {{ tmp_relation }}
-    {% endset %}
-    {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
-    {% do run_query("drop table if exists " ~ tmp_relation) %}
+    {#
+        Fabric / T-SQL does not support LIMIT, and also does not allow CTEs nested
+        inside derived tables/subqueries.
+
+        Many dbt generic tests (e.g. accepted_values) compile to CTE-based SQL.
+        To avoid nesting those CTEs, we execute the compiled test SQL as-is (top-level)
+        and apply sampling in Jinja.
+    #}
+    {% set result = elementary.agate_to_dicts(elementary.run_query(sql)) %}
+    {% if sample_limit is not none %} {% do return(result[:sample_limit]) %} {% endif %}
     {% do return(result) %}
 {% endmacro %}
 

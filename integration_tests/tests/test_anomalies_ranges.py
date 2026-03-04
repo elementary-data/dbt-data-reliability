@@ -15,11 +15,11 @@ DBT_TEST_ARGS = {
 
 ANOMALY_TEST_POINTS_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
@@ -29,7 +29,13 @@ ANOMALY_TEST_POINTS_QUERY = """
 
 
 def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
-    results = dbt_project.run_query(ANOMALY_TEST_POINTS_QUERY.format(test_id=test_id))
+    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    query = ANOMALY_TEST_POINTS_QUERY.format(
+        test_id=test_id,
+        top_clause="TOP 1 " if is_tsql else "",
+        limit_clause="" if is_tsql else "limit 1",
+    )
+    results = dbt_project.run_query(query)
     return [json.loads(result["result_row"]) for result in results]
 
 

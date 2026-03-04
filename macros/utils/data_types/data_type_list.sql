@@ -294,6 +294,7 @@
         "nchar",
         "text",
         "ntext",
+        "string",
     ] | list %}
     {% set numeric_list = [
         "int",

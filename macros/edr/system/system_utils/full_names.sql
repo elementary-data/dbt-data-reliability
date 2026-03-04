@@ -13,6 +13,19 @@
     )
 {%- endmacro %}
 
+{% macro fabric__full_table_name(alias) -%}
+    {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
+    upper(
+        concat(
+            {{ alias_dot }}database_name,
+            '.',
+            {{ alias_dot }}schema_name,
+            '.',
+            {{ alias_dot }}table_name
+        )
+    )
+{%- endmacro %}
+
 {% macro clickhouse__full_table_name(alias) -%}
     {# ClickHouse uses database=schema, so use 2-part names (schema.table) #}
     {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
@@ -28,6 +41,10 @@
     upper(database_name || '.' || schema_name)
 {%- endmacro %}
 
+{% macro fabric__full_schema_name() -%}
+    upper(concat(database_name, '.', schema_name))
+{%- endmacro %}
+
 {% macro clickhouse__full_schema_name() -%}
     {# ClickHouse uses database=schema, so schema_name alone is the full schema name #}
     upper(schema_name)
@@ -41,6 +58,12 @@
 {% macro default__full_column_name() -%}
     upper(
         database_name || '.' || schema_name || '.' || table_name || '.' || column_name
+    )
+{%- endmacro %}
+
+{% macro fabric__full_column_name() -%}
+    upper(
+        concat(database_name, '.', schema_name, '.', table_name, '.', column_name)
     )
 {%- endmacro %}
 
@@ -78,6 +101,16 @@
     {%- endif -%}
 {% endmacro %}
 
+
+{% macro fabric__full_name_split(part_name) %}
+    {# T-SQL: use PARSENAME which splits dotted names (parts numbered right-to-left) #}
+    {%- if part_name == "database_name" -%} {%- set part_index = 3 -%}
+    {%- elif part_name == "schema_name" -%} {%- set part_index = 2 -%}
+    {%- elif part_name == "table_name" -%} {%- set part_index = 1 -%}
+    {%- else -%} {{ return("") }}
+    {%- endif -%}
+    replace(parsename(full_table_name, {{ part_index }}), '"', '') as {{ part_name }}
+{% endmacro %}
 
 {% macro bigquery__full_name_split(part_name) %}
     {%- if part_name == "database_name" -%} {%- set part_index = 0 %}

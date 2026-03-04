@@ -7,17 +7,26 @@ DBT_TEST_NAME = "elementary.exposure_schema_validity"
 
 INVALID_EXPOSURES_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
     from {{{{ ref("test_result_rows") }}}}
     where elementary_test_results_id in (select * from latest_elementary_test_result)
 """
+
+
+def _fmt_invalid_exposures_query(dbt_project: DbtProject, test_id: str) -> str:
+    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    return INVALID_EXPOSURES_QUERY.format(
+        test_id=test_id,
+        top_clause="TOP 1 " if is_tsql else "",
+        limit_clause="" if is_tsql else "limit 1",
+    )
 
 
 def seed(dbt_project: DbtProject):
@@ -121,7 +130,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
     invalid_exposures = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+            _fmt_invalid_exposures_query(dbt_project, test_id)
         )
     ]
     assert len(invalid_exposures) == 1
@@ -171,7 +180,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
     invalid_exposures = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+            _fmt_invalid_exposures_query(dbt_project, test_id)
         )
     ]
     assert len(invalid_exposures) == 1
@@ -232,7 +241,7 @@ def test_exposure_schema_validity_missing_columns(
     invalid_exposures = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
+            _fmt_invalid_exposures_query(dbt_project, test_id)
         )
     ]
     assert len(invalid_exposures) == 1

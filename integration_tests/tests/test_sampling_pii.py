@@ -7,17 +7,27 @@ COLUMN_NAME = "some_column"
 
 SAMPLES_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc, id desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
     from {{{{ ref("test_result_rows") }}}}
     where elementary_test_results_id in (select * from latest_elementary_test_result)
 """
+
+
+def _fmt_samples_query(dbt_project: DbtProject, test_id: str) -> str:
+    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    return SAMPLES_QUERY.format(
+        test_id=test_id,
+        top_clause="TOP 1 " if is_tsql else "",
+        limit_clause="" if is_tsql else "limit 1",
+    )
+
 
 TEST_SAMPLE_ROW_COUNT = 7
 
@@ -45,7 +55,7 @@ def test_sampling_pii_disabled(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 0
 
@@ -73,7 +83,7 @@ def test_sampling_pii_disabled_with_default_config_and_casing(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 0
 
@@ -101,7 +111,7 @@ def test_sampling_pii_enabled_with_default_config(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
@@ -129,7 +139,7 @@ def test_sampling_non_pii_enabled(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
@@ -157,7 +167,7 @@ def test_sampling_pii_feature_disabled(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
 
@@ -187,7 +197,7 @@ def test_sampling_disable_samples_overrides_pii(test_id: str, dbt_project: DbtPr
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == 0
 
@@ -219,6 +229,6 @@ def test_sampling_disable_samples_false_allows_samples(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(SAMPLES_QUERY.format(test_id=test_id))
+        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
     ]
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
