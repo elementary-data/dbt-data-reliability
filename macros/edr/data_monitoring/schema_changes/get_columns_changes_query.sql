@@ -200,7 +200,7 @@
                         )
                     else null
                 end as test_results_description
-            from all_column_changes {{ dbt_utils.group_by(9) }}
+            from all_column_changes {{ elementary.schema_changes_query_group_by() }}
 
         )
 
@@ -240,6 +240,22 @@
     left join
         baseline on (lower(columns_snapshot.column_name) = lower(baseline.column_name))
     where lower(columns_snapshot.full_table_name) = lower('{{ full_table_name }}')
+{% endmacro %}
+
+{% macro schema_changes_query_group_by() %}
+    {{ return(adapter.dispatch("schema_changes_query_group_by", "elementary")()) }}
+{% endmacro %}
+
+{% macro default__schema_changes_query_group_by() %}
+    {{ dbt_utils.group_by(9) }}
+{% endmacro %}
+
+{% macro fabric__schema_changes_query_group_by() %}
+    {#- T-SQL does not support positional GROUP BY references and rejects
+        GROUP BY on constant expressions (e.g. 'schema_change').
+        Group by the 6 source columns from all_column_changes instead;
+        all 9 output columns are deterministic functions of these. -#}
+    group by full_table_name, change, column_name, data_type, pre_data_type, detected_at
 {% endmacro %}
 
 {% macro fabric__get_column_changes_from_baseline_cur(
