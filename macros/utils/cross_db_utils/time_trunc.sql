@@ -20,6 +20,13 @@
     timestamp_trunc(cast({{ date_expression }} as timestamp), {{ date_part }})
 {% endmacro %}
 
+{% macro fabric__edr_time_trunc(date_part, date_expression) %}
+    datetrunc(
+        {{ date_part }},
+        cast({{ date_expression }} as {{ elementary.edr_type_timestamp() }})
+    )
+{% endmacro %}
+
 {% macro sqlserver__edr_time_trunc(date_part, date_expression) %}
     datetrunc(
         {{ date_part }},

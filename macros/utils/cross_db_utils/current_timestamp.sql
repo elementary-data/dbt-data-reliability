@@ -84,8 +84,10 @@
     cast(current_timestamp at time zone 'UTC' as timestamp(6))
 {%- endmacro -%}
 
+{% macro fabric__edr_current_timestamp() -%} getdate() {%- endmacro -%}
 {% macro sqlserver__edr_current_timestamp() -%} getdate() {%- endmacro -%}
 
+{% macro fabric__edr_current_timestamp_in_utc() -%} sysutcdatetime() {%- endmacro -%}
 {% macro sqlserver__edr_current_timestamp_in_utc() -%} sysutcdatetime() {%- endmacro -%}
 
 {% macro dremio__edr_current_timestamp() -%} current_timestamp() {%- endmacro -%}

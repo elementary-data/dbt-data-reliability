@@ -246,6 +246,10 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{%- macro fabric__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
+{%- endmacro -%}
+
 {%- macro sqlserver__escape_special_chars(string_value) -%}
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}

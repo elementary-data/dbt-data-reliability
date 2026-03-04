@@ -285,6 +285,47 @@
 
 {% endmacro %}
 
+{% macro fabric__data_type_list(data_type) %}
+
+    {% set string_list = [
+        "varchar",
+        "nvarchar",
+        "char",
+        "nchar",
+        "text",
+        "ntext",
+    ] | list %}
+    {% set numeric_list = [
+        "int",
+        "bigint",
+        "smallint",
+        "tinyint",
+        "decimal",
+        "numeric",
+        "float",
+        "real",
+        "money",
+        "smallmoney",
+    ] | list %}
+    {% set timestamp_list = [
+        "datetime",
+        "datetime2",
+        "date",
+        "smalldatetime",
+        "datetimeoffset",
+        "time",
+    ] | list %}
+    {% set boolean_list = ["bit"] | list %}
+
+    {%- if data_type == "string" %} {{ return(string_list) }}
+    {%- elif data_type == "numeric" %} {{ return(numeric_list) }}
+    {%- elif data_type == "timestamp" %} {{ return(timestamp_list) }}
+    {%- elif data_type == "boolean" %} {{ return(boolean_list) }}
+    {%- else %} {{ return([]) }}
+    {%- endif %}
+
+{% endmacro %}
+
 {% macro sqlserver__data_type_list(data_type) %}
 
     {% set string_list = [

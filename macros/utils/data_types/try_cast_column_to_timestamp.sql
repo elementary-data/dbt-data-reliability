@@ -27,7 +27,7 @@
     {{ return(false) }}
 {% endmacro %}
 
-{% macro sqlserver__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
+{% macro fabric__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {%- set query %}
         select top 1 try_cast({{ timestamp_column }} as {{ elementary.edr_type_timestamp() }}) as timestamp_column
         from {{ table_relation }}
@@ -38,4 +38,14 @@
     {%- if result is not none %} {{ return(true) }} {%- endif %}
     {{ return(false) }}
 
+{% endmacro %}
+
+{% macro sqlserver__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
+    {{
+        return(
+            elementary.fabric__try_cast_column_to_timestamp(
+                table_relation, timestamp_column
+            )
+        )
+    }}
 {% endmacro %}

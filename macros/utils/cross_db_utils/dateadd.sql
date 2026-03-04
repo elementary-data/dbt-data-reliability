@@ -24,6 +24,10 @@
 
   This override outputs just TIMESTAMPADD(...) as an expression (no "select" prefix).
 #}
+{% macro fabric__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
+    dateadd({{ datepart }}, {{ interval }}, {{ from_date_or_timestamp }})
+{% endmacro %}
+
 {% macro sqlserver__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
     dateadd({{ datepart }}, {{ interval }}, {{ from_date_or_timestamp }})
 {% endmacro %}

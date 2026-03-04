@@ -188,9 +188,7 @@
     {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
 {% endmacro %}
 
-{% macro sqlserver__query_test_result_rows(
-    sample_limit=none, ignore_passed_tests=false
-) %}
+{% macro fabric__query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
     {% if sample_limit == 0 %} {% do return([]) %} {% endif %}
 
     {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}
@@ -213,6 +211,18 @@
     {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
     {% do run_query("drop table if exists " ~ tmp_relation) %}
     {% do return(result) %}
+{% endmacro %}
+
+{% macro sqlserver__query_test_result_rows(
+    sample_limit=none, ignore_passed_tests=false
+) %}
+    {{
+        return(
+            elementary.fabric__query_test_result_rows(
+                sample_limit, ignore_passed_tests
+            )
+        )
+    }}
 {% endmacro %}
 
 {% macro get_columns_to_exclude_from_sampling(flattened_test) %}

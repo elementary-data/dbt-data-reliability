@@ -62,6 +62,10 @@
 {%- endmacro %}
 
 {# T-SQL uses STDEV instead of stddev #}
+{% macro fabric__standard_deviation(column_name) -%}
+    stdev(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro sqlserver__standard_deviation(column_name) -%}
     stdev(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
@@ -79,6 +83,10 @@
 {%- endmacro %}
 
 {# T-SQL uses VAR instead of variance #}
+{% macro fabric__variance(column_name) -%}
+    var(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro sqlserver__variance(column_name) -%}
     var(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}

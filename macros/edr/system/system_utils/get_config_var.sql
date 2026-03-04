@@ -45,6 +45,10 @@
     {% if value %} true {% else %} false{% endif %}
 {% endmacro %}
 
+{% macro fabric__edr_boolean_literal(value) %}
+    {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
+{% endmacro %}
+
 {% macro sqlserver__edr_boolean_literal(value) %}
     {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
 {% endmacro %}

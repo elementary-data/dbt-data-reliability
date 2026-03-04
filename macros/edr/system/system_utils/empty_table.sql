@@ -241,6 +241,19 @@
 
 {# T-SQL does not have boolean literals True/False.
    Use 1 which can be cast to bit. #}
+{% macro fabric__dummy_values() %}
+    {%- set dummy_values = {
+        "string": "dummy_string",
+        "long_string": "this_is_just_a_long_dummy_string",
+        "boolean": 1,
+        "int": 123456789,
+        "bigint": 31474836478,
+        "float": 123456789.99,
+        "timestamp": "2091-02-17",
+    } %}
+    {{ return(dummy_values) }}
+{% endmacro %}
+
 {% macro sqlserver__dummy_values() %}
     {%- set dummy_values = {
         "string": "dummy_string",
