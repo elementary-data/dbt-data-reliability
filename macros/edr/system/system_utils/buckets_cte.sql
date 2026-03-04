@@ -255,17 +255,6 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
-{% macro sqlserver__complete_buckets_cte(
-    time_bucket,
-    bucket_end_expr,
-    min_bucket_start_expr,
-    max_bucket_end_expr
-) -%}
-    {{ return(elementary.fabric__complete_buckets_cte(
-        time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
-    )) }}
-{% endmacro %}
-
 {% macro dremio__complete_buckets_cte(
     time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
 ) %}

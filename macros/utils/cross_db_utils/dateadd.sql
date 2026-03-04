@@ -28,10 +28,6 @@
     dateadd({{ datepart }}, {{ interval }}, {{ from_date_or_timestamp }})
 {% endmacro %}
 
-{% macro sqlserver__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
-    dateadd({{ datepart }}, {{ interval }}, {{ from_date_or_timestamp }})
-{% endmacro %}
-
 {% macro dremio__edr_dateadd(datepart, interval, from_date_or_timestamp) %}
     {% set datepart = datepart | lower %}
     {% if datepart == "year" %}

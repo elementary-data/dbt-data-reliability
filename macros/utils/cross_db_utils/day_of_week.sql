@@ -67,10 +67,6 @@
     datename(weekday, {{ date_expr }})
 {% endmacro %}
 
-{% macro sqlserver__edr_day_of_week_expression(date_expr) %}
-    datename(weekday, {{ date_expr }})
-{% endmacro %}
-
 -- fmt: off
 {% macro clickhouse__edr_day_of_week_expression(date_expr) %}
     formatDateTime({{ date_expr }}, '%W')

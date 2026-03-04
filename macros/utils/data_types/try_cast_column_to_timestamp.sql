@@ -39,13 +39,3 @@
     {{ return(false) }}
 
 {% endmacro %}
-
-{% macro sqlserver__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
-    {{
-        return(
-            elementary.fabric__try_cast_column_to_timestamp(
-                table_relation, timestamp_column
-            )
-        )
-    }}
-{% endmacro %}

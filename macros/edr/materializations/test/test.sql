@@ -213,18 +213,6 @@
     {% do return(result) %}
 {% endmacro %}
 
-{% macro sqlserver__query_test_result_rows(
-    sample_limit=none, ignore_passed_tests=false
-) %}
-    {{
-        return(
-            elementary.fabric__query_test_result_rows(
-                sample_limit, ignore_passed_tests
-            )
-        )
-    }}
-{% endmacro %}
-
 {% macro get_columns_to_exclude_from_sampling(flattened_test) %}
     {% set columns_to_exclude = [] %}
 

@@ -49,10 +49,6 @@
     {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
 {% endmacro %}
 
-{% macro sqlserver__edr_boolean_literal(value) %}
-    {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
-{% endmacro %}
-
 {% macro get_default_config(var_name) %}
     {{ return(adapter.dispatch("get_default_config", "elementary")()) }}
 {%- endmacro -%}
