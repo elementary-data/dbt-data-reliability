@@ -62,9 +62,17 @@ def _list_tables(glue_client, database_name: str) -> list[str]:
 
 def _batch_delete_tables(
     glue_client, database_name: str, table_names: list[str]
-) -> int:
-    """Delete tables in batches of up to 100.  Returns the number deleted."""
+) -> tuple[int, int]:
+    """Delete tables in batches of up to 100.
+
+    Returns a tuple: (deleted, failed).
+
+    - "deleted" counts tables successfully deleted in Glue.
+    - "failed" counts tables that were attempted but failed to delete (either
+      returned in Glue errors or part of a failed batch request).
+    """
     deleted = 0
+    failed = 0
     for i in range(0, len(table_names), BATCH_DELETE_LIMIT):
         chunk = table_names[i : i + BATCH_DELETE_LIMIT]
         try:
@@ -73,6 +81,7 @@ def _batch_delete_tables(
             )
             errors = resp.get("Errors", [])
             deleted += len(chunk) - len(errors)
+            failed += len(errors)
             for err in errors:
                 click.echo(
                     f"  warning: failed to delete {database_name}.{err['TableName']}: "
@@ -84,7 +93,8 @@ def _batch_delete_tables(
                 f"  error: batch_delete_table failed for {database_name}: {exc}",
                 err=True,
             )
-    return deleted
+            failed += len(chunk)
+    return deleted, failed
 
 
 def _delete_database(glue_client, database_name: str) -> bool:
@@ -129,16 +139,18 @@ def _parse_ci_schema_timestamp(
         return None
 
 
-def drop_schemas(glue_client, schema_names: list[str]) -> None:
+def drop_schemas(glue_client, schema_names: list[str]) -> bool:
     """Drop a list of schemas efficiently using batch table deletion.
 
     1. List all tables in all schemas up-front.
     2. Batch-delete tables per schema (up to 100 per API call).
     3. Delete the now-empty schemas.
+
+    Returns True if all deletions succeeded, otherwise False.
     """
     if not schema_names:
         click.echo("No schemas to drop.")
-        return
+        return True
 
     # Phase 1: collect all tables across all schemas
     schema_tables: dict[str, list[str]] = {}
@@ -156,20 +168,35 @@ def drop_schemas(glue_client, schema_names: list[str]) -> None:
 
     # Phase 2: batch-delete all tables
     total_deleted = 0
+    total_failed = 0
     for schema, tables in schema_tables.items():
         click.echo(f"  Deleting {len(tables)} table(s) from {schema} ...")
-        deleted = _batch_delete_tables(glue_client, schema, tables)
+        deleted, failed = _batch_delete_tables(glue_client, schema, tables)
         total_deleted += deleted
+        total_failed += failed
 
     click.echo(f"Deleted {total_deleted} table(s).")
 
     # Phase 3: drop the now-empty schemas
     dropped = 0
+    db_delete_failures = 0
     for schema in schema_names:
         if _delete_database(glue_client, schema):
             dropped += 1
+        else:
+            db_delete_failures += 1
 
     click.echo(f"Dropped {dropped}/{len(schema_names)} schema(s).")
+
+    if total_failed or db_delete_failures:
+        click.echo(
+            "Cleanup completed with failures: "
+            f"table_failures={total_failed}, database_failures={db_delete_failures}",
+            err=True,
+        )
+        return False
+
+    return True
 
 
 def expand_ci_test_schemas(base_schema: str, num_workers: int) -> list[str]:
@@ -344,7 +371,9 @@ def main(
             unique_schemas.append(s)
 
     click.echo(f"\nTargeting {len(unique_schemas)} schema(s) for deletion.")
-    drop_schemas(glue_client, unique_schemas)
+    success = drop_schemas(glue_client, unique_schemas)
+    if not success:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
