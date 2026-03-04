@@ -123,6 +123,7 @@ def main(
         keep_trailing_newline=True,
     )
     env.filters["toyaml"] = _yaml_inline
+    env.globals["env_var"] = lambda key, default="": os.environ.get(key, default)
     tmpl = env.from_string(template.read_text())
     rendered = tmpl.render(**context)
     output.write_text(rendered)
