@@ -22,6 +22,7 @@ AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION) or from explicit options.
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 import os
 import re
@@ -193,33 +194,45 @@ def _resolve_credentials(
 ) -> tuple[str, Optional[str], Optional[str]]:
     """Resolve AWS credentials, falling back to the CI secrets blob.
 
-    When ``--region`` (or the matching env-var) is not supplied, the function
-    decodes the base64-encoded JSON blob stored in *secrets_json_env* and
-    extracts ``athena_region``, ``athena_aws_access_key_id``, and
-    ``athena_aws_secret_access_key``.
-    """
-    if region:
-        return region, aws_access_key_id, aws_secret_access_key
+    Fills any missing values (region, access key, secret) from the base64-encoded
+    JSON blob stored in *secrets_json_env*.
 
+    If the blob is present but malformed, exits with a clear error.
+    """
     blob = os.environ.get(secrets_json_env, "").strip()
-    if not blob:
+    secrets: dict = {}
+
+    if blob:
+        try:
+            secrets = json.loads(base64.b64decode(blob))
+        except (binascii.Error, json.JSONDecodeError, TypeError) as exc:
+            click.echo(f"error: failed to decode ${secrets_json_env}: {exc}", err=True)
+            sys.exit(1)
+
+    resolved_region = (
+        region or secrets.get("athena_region") or secrets.get("ATHENA_REGION", "")
+    )
+    resolved_key = (
+        aws_access_key_id
+        or secrets.get("athena_aws_access_key_id")
+        or secrets.get("ATHENA_AWS_ACCESS_KEY_ID")
+    )
+    resolved_secret = (
+        aws_secret_access_key
+        or secrets.get("athena_aws_secret_access_key")
+        or secrets.get("ATHENA_AWS_SECRET_ACCESS_KEY")
+    )
+
+    if not resolved_region:
         click.echo(
-            f"error: --region is required (or set ${secrets_json_env})", err=True
+            f"error: --region is required (or provide athena_region in ${secrets_json_env})",
+            err=True,
         )
         sys.exit(1)
 
-    secrets = json.loads(base64.b64decode(blob))
-    resolved_region = secrets.get("athena_region") or secrets.get("ATHENA_REGION", "")
-    resolved_key = secrets.get("athena_aws_access_key_id") or secrets.get(
-        "ATHENA_AWS_ACCESS_KEY_ID"
-    )
-    resolved_secret = secrets.get("athena_aws_secret_access_key") or secrets.get(
-        "ATHENA_AWS_SECRET_ACCESS_KEY"
-    )
-    if not resolved_region:
-        click.echo("error: could not find athena_region in secrets blob", err=True)
-        sys.exit(1)
-    click.echo(f"Resolved Athena credentials from ${secrets_json_env}.")
+    if secrets:
+        click.echo(f"Resolved Athena credentials from ${secrets_json_env}.")
+
     return resolved_region, resolved_key, resolved_secret
 
 
@@ -290,7 +303,13 @@ def main(
         if not prefixes:
             click.echo("error: --prefixes is required with --stale", err=True)
             sys.exit(1)
-        prefix_list = [p.strip() for p in prefixes.split(",")]
+        prefix_list = [p.strip() for p in prefixes.split(",") if p.strip()]
+        if not prefix_list:
+            click.echo("error: --prefixes must include at least one prefix", err=True)
+            sys.exit(1)
+        if max_age_hours < 0:
+            click.echo("error: --max-age-hours must be >= 0", err=True)
+            sys.exit(1)
         now = datetime.utcnow()
         cutoff = timedelta(hours=max_age_hours)
         all_databases = _list_all_databases(glue_client)
