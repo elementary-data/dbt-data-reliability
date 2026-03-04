@@ -192,12 +192,43 @@
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
-                {% if dimensions | length > 0 %}
-                    group by
-                        1,
-                        2,
-                        {{ elementary.select_dimensions_columns(prefixed_dimensions) }}
-                {% else %} group by 1, 2
+                {% if target.type in ["fabric", "sqlserver"] %}
+                    {# T-SQL does not support positional GROUP BY and rejects
+                       GROUP BY on constant expressions.  Use actual column
+                       names when there is a timestamp, otherwise omit GROUP BY
+                       for the constant-only case (unless dimensions exist). #}
+                    {% if timestamp_column %}
+                        group by
+                            edr_bucket_start,
+                            edr_bucket_end
+                            {% if dimensions | length > 0 %}
+                                ,
+                                {{
+                                    elementary.select_dimensions_columns(
+                                        prefixed_dimensions
+                                    )
+                                }}
+                            {% endif %}
+                    {% elif dimensions | length > 0 %}
+                        group by
+                            {{
+                                elementary.select_dimensions_columns(
+                                    prefixed_dimensions
+                                )
+                            }}
+                    {% endif %}
+                {% else %}
+                    {% if dimensions | length > 0 %}
+                        group by
+                            1,
+                            2,
+                            {{
+                                elementary.select_dimensions_columns(
+                                    prefixed_dimensions
+                                )
+                            }}
+                    {% else %} group by 1, 2
+                    {% endif %}
                 {% endif %}
             {%- else %}{{ elementary.empty_column_monitors_cte() }}
             {%- endif %}

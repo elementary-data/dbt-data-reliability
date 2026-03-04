@@ -95,8 +95,8 @@ class DbtProject:
             )
         return json.loads(run_operation_results[0])
 
-    @staticmethod
     def read_table_query(
+        self,
         table_name: str,
         where: Optional[str] = None,
         group_by: Optional[str] = None,
@@ -104,13 +104,17 @@ class DbtProject:
         limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
     ):
+        is_tsql = self.target in ("fabric", "sqlserver")
+        columns = ", ".join(column_names) if column_names else "*"
+        top_clause = f"TOP {limit} " if limit and is_tsql else ""
+        limit_clause = f"LIMIT {limit}" if limit and not is_tsql else ""
         return f"""
-            SELECT {', '.join(column_names) if column_names else '*'}
+            SELECT {top_clause}{columns}
             FROM {{{{ ref('{table_name}') }}}}
             {f"WHERE {where}" if where else ""}
             {f"GROUP BY {group_by}" if group_by else ""}
             {f"ORDER BY {order_by}" if order_by else ""}
-            {f"LIMIT {limit}" if limit else ""}
+            {limit_clause}
             """
 
     def read_table(

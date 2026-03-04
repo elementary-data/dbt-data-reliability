@@ -237,20 +237,22 @@
     min_bucket_start_expr,
     max_bucket_end_expr
 ) -%}
+    {# Fabric / T-SQL: use inline tally via VALUES cross-join instead of a recursive CTE.
+       This avoids a WITH clause so the result can safely be embedded in a subquery
+       or inside another CTE without triggering the T-SQL nested-CTE restriction.
+       Supports up to 10 000 buckets (10^4). #}
     {%- set complete_buckets_cte %}
-        with timestamps as (
-          select {{ min_bucket_start_expr }} as edr_bucket_start
-          union all
-          select {{ bucket_end_expr }}
-          from timestamps
-          where {{ bucket_end_expr }} < {{ max_bucket_end_expr }}
-        )
         select
-          edr_bucket_start,
-          {{ bucket_end_expr }} as edr_bucket_end
-        from timestamps
-        where {{ bucket_end_expr }} <= {{ max_bucket_end_expr }}
-        option (maxrecursion 0)
+            {{ elementary.edr_timeadd(time_bucket.period, "num * " ~ time_bucket.count, min_bucket_start_expr) }} as edr_bucket_start,
+            {{ elementary.edr_timeadd(time_bucket.period, "(num + 1) * " ~ time_bucket.count, min_bucket_start_expr) }} as edr_bucket_end
+        from (
+            select (row_number() over (order by (select null))) - 1 as num
+            from (values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) t1(val)
+            cross join (values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) t2(val)
+            cross join (values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) t3(val)
+            cross join (values (1),(2),(3),(4),(5),(6),(7),(8),(9),(10)) t4(val)
+        ) as integers
+        where {{ elementary.edr_timeadd(time_bucket.period, "(num + 1) * " ~ time_bucket.count, min_bucket_start_expr) }} <= {{ max_bucket_end_expr }}
     {%- endset %}
     {{ return(complete_buckets_cte) }}
 {% endmacro %}

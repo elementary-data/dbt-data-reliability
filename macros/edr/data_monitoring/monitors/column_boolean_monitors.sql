@@ -2,7 +2,9 @@
     coalesce(
         sum(
             case
-                when cast({{ column_name }} as {{ elementary.edr_type_bool() }}) = true
+                when
+                    cast({{ column_name }} as {{ elementary.edr_type_bool() }})
+                    = {{ elementary.edr_boolean_literal(true) }}
                 then 1
                 else 0
             end
@@ -15,7 +17,9 @@
     coalesce(
         sum(
             case
-                when cast({{ column_name }} as {{ elementary.edr_type_bool() }}) = true
+                when
+                    cast({{ column_name }} as {{ elementary.edr_type_bool() }})
+                    = {{ elementary.edr_boolean_literal(true) }}
                 then 0
                 else 1
             end

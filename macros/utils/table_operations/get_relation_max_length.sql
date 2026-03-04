@@ -38,3 +38,11 @@
 {% macro dremio__get_relation_max_name_length(temporary, relation, sql_query) %}
     {{ return(128) }}
 {% endmacro %}
+
+{% macro fabric__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {# SQL Server / Fabric limits identifiers to 128 chars.  The dbt-fabric
+       adapter may concatenate schema + table into a single identifier and
+       also append suffixes like __dbt_tmp_vw.  We use a conservative limit
+       so the final identifier stays within 128 chars. #}
+    {{ return(80) }}
+{% endmacro %}

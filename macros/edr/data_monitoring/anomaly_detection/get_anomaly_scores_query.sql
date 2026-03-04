@@ -199,13 +199,25 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
-                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
-                {# Flag detection period metrics for exclusion from training #}
-                {% if test_configuration.exclude_detection_period_from_training %}
-                    bucket_end > {{ detection_period_start_expr }}
+                {% if target.type in ['fabric', 'sqlserver'] %}
+                    case when {{ test_configuration.anomaly_exclude_metrics or '1=0' }} then 1 else 0 end as is_excluded,
                 {% else %}
-                    FALSE
-                {% endif %} as should_exclude_from_training,
+                    {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
+                {% endif %}
+                {# Flag detection period metrics for exclusion from training #}
+                {% if target.type in ['fabric', 'sqlserver'] %}
+                    {% if test_configuration.exclude_detection_period_from_training %}
+                        case when bucket_end > {{ detection_period_start_expr }} then 1 else 0 end
+                    {% else %}
+                        0
+                    {% endif %} as should_exclude_from_training,
+                {% else %}
+                    {% if test_configuration.exclude_detection_period_from_training %}
+                        bucket_end > {{ detection_period_start_expr }}
+                    {% else %}
+                        FALSE
+                    {% endif %} as should_exclude_from_training,
+                {% endif %}
                 bucket_duration_hours,
                 updated_at
             from grouped_metrics_duplicates
@@ -229,14 +241,30 @@
                 bucket_duration_hours,
                 updated_at,
                 should_exclude_from_training,
-                avg(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                {{ elementary.standard_deviation('case when not should_exclude_from_training then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                {% if target.type in ['fabric', 'sqlserver'] %}
+                    {%- set exclude_filter = 'should_exclude_from_training = 0' -%}
+                {% else %}
+                    {%- set exclude_filter = 'not should_exclude_from_training' -%}
+                {% endif %}
+                avg(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                {{ elementary.standard_deviation('case when ' ~ exclude_filter ~ ' then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            where not is_excluded
-            {{ dbt_utils.group_by(14) }}
+            {% if target.type in ['fabric', 'sqlserver'] %}
+                where is_excluded = 0
+            {% else %}
+                where not is_excluded
+            {% endif %}
+            {% if target.type in ['fabric', 'sqlserver'] %}
+                group by metric_id, full_table_name, column_name, dimension,
+                         dimension_value, metric_name, metric_value, source_value,
+                         bucket_start, bucket_end, bucket_seasonality,
+                         bucket_duration_hours, updated_at, should_exclude_from_training
+            {% else %}
+                {{ dbt_utils.group_by(14) }}
+            {% endif %}
         ),
 
         anomaly_scores as (

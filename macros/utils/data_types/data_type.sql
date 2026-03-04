@@ -69,6 +69,12 @@
     {% set long_string = "text" %} {{ return(long_string) }}
 {%- endmacro -%}
 
+{#- T-SQL: varchar(4096) is too small for compiled query text.
+    Use varchar(max) which supports up to 2 GB. -#}
+{%- macro fabric__edr_type_long_string() -%}
+    {% do return("varchar(max)") %}
+{%- endmacro -%}
+
 
 {% macro edr_type_bigint() %}
     {% set macro = dbt.type_bigint or dbt_utils.type_bigint %}

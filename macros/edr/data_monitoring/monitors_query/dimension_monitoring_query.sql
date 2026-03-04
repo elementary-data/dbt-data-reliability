@@ -80,9 +80,9 @@
                     dimension_value,
                     1 as joiner,
                     min(bucket_end) as dimension_min_bucket_end,
-                    sum(metric_value)
+                    sum(metric_value) as total_metric_value
                 from all_dimension_metrics
-                group by 1, 2
+                group by dimension_value
                 {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
                 having sum(metric_value) > 0
             ),
@@ -117,7 +117,11 @@
                 left join
                     time_filtered_monitored_table
                     on (edr_bucket_start = start_bucket_in_data)
-                group by 1, 2, 3, 4
+                group by
+                    edr_bucket_start,
+                    edr_bucket_end,
+                    start_bucket_in_data,
+                    dimension_value
             ),
 
             {# Merging between the row count and the dimensions buckets #}
@@ -212,9 +216,9 @@
             ),
 
             training_set_dimensions as (
-                select distinct dimension_value, sum(metric_value)
+                select distinct dimension_value, sum(metric_value) as total_metric_value
                 from all_dimension_metrics
-                group by 1
+                group by dimension_value
                 {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
                 having sum(metric_value) > 0
             ),
@@ -233,7 +237,7 @@
                     {{ elementary.edr_cast_as_float(elementary.row_count()) }}
                     as row_count_value
                 from filtered_monitored_table
-                group by 1, 2
+                group by dimension_value
             ),
 
             {# This way we make sure that if a dimension has no rows, it will get a metric with value 0 #}
