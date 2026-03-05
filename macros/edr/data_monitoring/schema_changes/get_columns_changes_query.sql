@@ -185,19 +185,33 @@
                 change as test_sub_type,
                 case
                     when change = 'column_added'
-                    then concat('The column "', column_name, '" was added')
+                    then
+                        {{
+                            dbt.concat(
+                                ["'The column \"'", "column_name", "'\" was added'"]
+                            )
+                        }}
                     when change = 'column_removed'
-                    then concat('The column "', column_name, '" was removed')
+                    then
+                        {{
+                            dbt.concat(
+                                ["'The column \"'", "column_name", "'\" was removed'"]
+                            )
+                        }}
                     when change = 'type_changed'
                     then
-                        concat(
-                            'The type of "',
-                            column_name,
-                            '" was changed from ',
-                            pre_data_type,
-                            ' to ',
-                            data_type
-                        )
+                        {{
+                            dbt.concat(
+                                [
+                                    "'The type of \"'",
+                                    "column_name",
+                                    "'\" was changed from '",
+                                    "pre_data_type",
+                                    "' to '",
+                                    "data_type",
+                                ]
+                            )
+                        }}
                     else null
                 end as test_results_description
             from all_column_changes {{ elementary.schema_changes_query_group_by() }}
