@@ -23,15 +23,18 @@
 {% endmacro %}
 
 {% macro fabric__insert_as_select(table_relation, select_query) %}
-    {#- T-SQL does not allow CTEs after INSERT INTO (WITH is parsed as a
-        table hint), and nested CTEs are also invalid.
-        Use INSERT ... EXEC(sp_executesql ...) to execute the select_query
-        as a nested batch whose result set feeds the INSERT. -#}
-    {%- set escaped_query = select_query | replace("'", "''") -%}
+    {#- Fabric does not support INSERT ... EXEC or CTEs after INSERT INTO.
+        Wrap the select_query in a temp view, then INSERT ... SELECT from it.
+        Fabric also forbids 3-part names in DROP VIEW, so use schema.identifier only. -#}
+    {%- set tmp_view_name = (
+        table_relation.schema ~ "." ~ table_relation.identifier ~ "__ins_vw"
+    ) -%}
     {%- set insert_query %}
-        insert into {{ table_relation }}
-        exec sp_executesql N'{{ escaped_query }}'
-        {{ elementary.get_query_settings() }}
+        IF OBJECT_ID('{{ tmp_view_name }}', 'V') IS NOT NULL DROP VIEW {{ tmp_view_name }};
+        EXEC('CREATE VIEW {{ tmp_view_name }} AS {{ select_query | replace("'", "''") }}');
+        INSERT INTO {{ table_relation }}
+        SELECT * FROM {{ tmp_view_name }};
+        DROP VIEW {{ tmp_view_name }};
     {%- endset %}
     {{ return(insert_query) }}
 {% endmacro %}

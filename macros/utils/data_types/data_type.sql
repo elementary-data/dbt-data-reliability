@@ -143,4 +143,4 @@
 
 {% macro dremio__edr_type_timestamp() %} timestamp {% endmacro %}
 
-{% macro fabric__edr_type_timestamp() %} datetime2 {% endmacro %}
+{% macro fabric__edr_type_timestamp() %} datetime2(6) {% endmacro %}

@@ -38,6 +38,27 @@
     {{ hash_macro(concat_macro(field_sqls)) }}
 {%- endmacro -%}
 
+{%- macro fabric__generate_surrogate_key(fields) -%}
+    {#- Fabric does not support nvarchar; dbt.concat() uses CONCAT() which returns
+        nvarchar(4000). Use + operator with explicit varchar casts instead. -#}
+    {% set hash_macro = dbt.hash or dbt_utils.hash %}
+    {% set default_null_value = "" %}
+    {%- set field_sqls = [] -%}
+    {%- for field in fields -%}
+        {%- do field_sqls.append(
+            "coalesce(cast("
+            ~ field
+            ~ " as "
+            ~ elementary.edr_type_string()
+            ~ "), '"
+            ~ default_null_value
+            ~ "')"
+        ) -%}
+        {%- if not loop.last %} {%- do field_sqls.append("'-'") -%} {%- endif -%}
+    {%- endfor -%}
+    {{ hash_macro(field_sqls | join(" + ")) }}
+{%- endmacro -%}
+
 {%- macro clickhouse__generate_surrogate_key(fields) -%}
     {% set concat_macro = dbt.concat or dbt_utils.concat %}
     {% set hash_macro = dbt.hash or dbt_utils.hash %}

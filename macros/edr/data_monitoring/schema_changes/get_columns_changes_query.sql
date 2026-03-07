@@ -183,37 +183,7 @@
                 column_name,
                 'schema_change' as test_type,
                 change as test_sub_type,
-                case
-                    when change = 'column_added'
-                    then
-                        {{
-                            dbt.concat(
-                                ["'The column \"'", "column_name", "'\" was added'"]
-                            )
-                        }}
-                    when change = 'column_removed'
-                    then
-                        {{
-                            dbt.concat(
-                                ["'The column \"'", "column_name", "'\" was removed'"]
-                            )
-                        }}
-                    when change = 'type_changed'
-                    then
-                        {{
-                            dbt.concat(
-                                [
-                                    "'The type of \"'",
-                                    "column_name",
-                                    "'\" was changed from '",
-                                    "pre_data_type",
-                                    "' to '",
-                                    "data_type",
-                                ]
-                            )
-                        }}
-                    else null
-                end as test_results_description
+                {{ elementary.schema_change_description_column() }}
             from all_column_changes {{ elementary.schema_changes_query_group_by() }}
 
         )
@@ -270,6 +240,62 @@
         Group by the 6 source columns from all_column_changes instead;
         all 9 output columns are deterministic functions of these. -#}
     group by full_table_name, change, column_name, data_type, pre_data_type, detected_at
+{% endmacro %}
+
+{% macro schema_change_description_column() %}
+    {{ return(adapter.dispatch("schema_change_description_column", "elementary")()) }}
+{% endmacro %}
+
+{% macro default__schema_change_description_column() %}
+    case
+        when change = 'column_added'
+        then {{ dbt.concat(["'The column \"'", "column_name", "'\" was added'"]) }}
+        when change = 'column_removed'
+        then {{ dbt.concat(["'The column \"'", "column_name", "'\" was removed'"]) }}
+        when change = 'type_changed'
+        then
+            {{
+                dbt.concat(
+                    [
+                        "'The type of \"'",
+                        "column_name",
+                        "'\" was changed from '",
+                        "pre_data_type",
+                        "' to '",
+                        "data_type",
+                    ]
+                )
+            }}
+        else null
+    end as test_results_description
+{% endmacro %}
+
+{% macro fabric__schema_change_description_column() %}
+    {#- Fabric does not support nvarchar; CONCAT() returns nvarchar so we cast to varchar. -#}
+    cast(
+        case
+            when change = 'column_added'
+            then {{ dbt.concat(["'The column \"'", "column_name", "'\" was added'"]) }}
+            when change = 'column_removed'
+            then
+                {{ dbt.concat(["'The column \"'", "column_name", "'\" was removed'"]) }}
+            when change = 'type_changed'
+            then
+                {{
+                    dbt.concat(
+                        [
+                            "'The type of \"'",
+                            "column_name",
+                            "'\" was changed from '",
+                            "pre_data_type",
+                            "' to '",
+                            "data_type",
+                        ]
+                    )
+                }}
+            else null
+        end as varchar(4000)
+    ) as test_results_description
 {% endmacro %}
 
 {% macro fabric__get_column_changes_from_baseline_cur(

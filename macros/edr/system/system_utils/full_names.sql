@@ -14,15 +14,14 @@
 {%- endmacro %}
 
 {% macro fabric__full_table_name(alias) -%}
+    {# Use + operator instead of concat() to avoid nvarchar return type #}
     {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
     upper(
-        concat(
-            {{ alias_dot }}database_name,
-            '.',
-            {{ alias_dot }}schema_name,
-            '.',
-            {{ alias_dot }}table_name
-        )
+        cast({{ alias_dot }}database_name as varchar(256))
+        + '.'
+        + cast({{ alias_dot }}schema_name as varchar(256))
+        + '.'
+        + cast({{ alias_dot }}table_name as varchar(256))
     )
 {%- endmacro %}
 
@@ -42,7 +41,7 @@
 {%- endmacro %}
 
 {% macro fabric__full_schema_name() -%}
-    upper(concat(database_name, '.', schema_name))
+    upper(cast(database_name as varchar(256)) + '.' + cast(schema_name as varchar(256)))
 {%- endmacro %}
 
 {% macro clickhouse__full_schema_name() -%}
@@ -63,7 +62,10 @@
 
 {% macro fabric__full_column_name() -%}
     upper(
-        concat(database_name, '.', schema_name, '.', table_name, '.', column_name)
+        cast(database_name as varchar(256))
+        + '.' + cast(schema_name as varchar(256))
+        + '.' + cast(table_name as varchar(256))
+        + '.' + cast(column_name as varchar(256))
     )
 {%- endmacro %}
 
@@ -103,13 +105,14 @@
 
 
 {% macro fabric__full_name_split(part_name) %}
-    {# T-SQL: use PARSENAME which splits dotted names (parts numbered right-to-left) #}
+    {# T-SQL: use PARSENAME which splits dotted names (parts numbered right-to-left).
+       PARSENAME returns nvarchar which Fabric does not support, so cast to varchar. #}
     {%- if part_name == "database_name" -%} {%- set part_index = 3 -%}
     {%- elif part_name == "schema_name" -%} {%- set part_index = 2 -%}
     {%- elif part_name == "table_name" -%} {%- set part_index = 1 -%}
     {%- else -%} {{ return("") }}
     {%- endif -%}
-    replace(parsename(full_table_name, {{ part_index }}), '"', '') as {{ part_name }}
+    cast(replace(parsename(full_table_name, {{ part_index }}), '"', '') as varchar(256)) as {{ part_name }}
 {% endmacro %}
 
 {% macro bigquery__full_name_split(part_name) %}
