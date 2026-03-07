@@ -158,7 +158,8 @@
     {% set exact_data_type_to_data_type_returned_by_the_info_schema = {
         "NVARCHAR": "VARCHAR",
         "NCHAR": "CHAR",
-        "NTEXT": "TEXT",
+        "NTEXT": "VARCHAR",
+        "TEXT": "VARCHAR",
         "ROWVERSION": "TIMESTAMP",
         "DOUBLE PRECISION": "FLOAT",
         "REAL": "FLOAT",
