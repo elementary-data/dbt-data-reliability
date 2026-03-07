@@ -84,15 +84,15 @@
 {% endmacro %}
 
 {% macro sqlserver__edr_make_temp_relation(base_relation, suffix) %}
-    {{ elementary.fabric__edr_make_temp_relation(base_relation, suffix) }}
+    {% do return(elementary.fabric__edr_make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
 {% macro sqlserver__get_relation_max_name_length(temporary, relation, sql_query) %}
-    {{
+    {% do return(
         elementary.fabric__get_relation_max_name_length(
             temporary, relation, sql_query
         )
-    }}
+    ) %}
 {% endmacro %}
 
 {# ── Boolean / config ───────────────────────────────────────────── #}
