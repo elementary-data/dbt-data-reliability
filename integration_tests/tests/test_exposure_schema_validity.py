@@ -21,11 +21,11 @@ INVALID_EXPOSURES_QUERY = """
 
 
 def _fmt_invalid_exposures_query(dbt_project: DbtProject, test_id: str) -> str:
-    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    sl = dbt_project.select_limit(1)
     return INVALID_EXPOSURES_QUERY.format(
         test_id=test_id,
-        top_clause="TOP 1 " if is_tsql else "",
-        limit_clause="" if is_tsql else "limit 1",
+        top_clause=sl.top,
+        limit_clause=sl.limit,
     )
 
 

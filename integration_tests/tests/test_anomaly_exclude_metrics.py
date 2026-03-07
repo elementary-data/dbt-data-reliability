@@ -101,9 +101,8 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     )
     assert test_result["status"] == "pass"
 
-    ts_type = (
-        "datetime2" if dbt_project.target in ("fabric", "sqlserver") else "timestamp"
-    )
+    # T-SQL uses datetime2 instead of timestamp.
+    ts_type = "datetime2" if dbt_project.is_tsql else "timestamp"
     excluded_buckets_str = ", ".join(
         [
             "cast('%s' as %s)" % (cur_ts.strftime(DATE_FORMAT), ts_type)

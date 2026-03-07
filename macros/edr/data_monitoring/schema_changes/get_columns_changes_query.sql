@@ -243,19 +243,25 @@
 {% endmacro %}
 
 {% macro schema_change_description_column() %}
-    {{ return(adapter.dispatch("schema_change_description_column", "elementary")()) }}
-{% endmacro %}
-
-{% macro default__schema_change_description_column() %}
     case
         when change = 'column_added'
-        then {{ dbt.concat(["'The column \"'", "column_name", "'\" was added'"]) }}
+        then
+            {{
+                elementary.edr_dbt_concat(
+                    ["'The column \"'", "column_name", "'\" was added'"]
+                )
+            }}
         when change = 'column_removed'
-        then {{ dbt.concat(["'The column \"'", "column_name", "'\" was removed'"]) }}
+        then
+            {{
+                elementary.edr_dbt_concat(
+                    ["'The column \"'", "column_name", "'\" was removed'"]
+                )
+            }}
         when change = 'type_changed'
         then
             {{
-                dbt.concat(
+                elementary.edr_dbt_concat(
                     [
                         "'The type of \"'",
                         "column_name",
@@ -268,34 +274,6 @@
             }}
         else null
     end as test_results_description
-{% endmacro %}
-
-{% macro fabric__schema_change_description_column() %}
-    {#- Fabric does not support nvarchar; CONCAT() returns nvarchar so we cast to varchar. -#}
-    cast(
-        case
-            when change = 'column_added'
-            then {{ dbt.concat(["'The column \"'", "column_name", "'\" was added'"]) }}
-            when change = 'column_removed'
-            then
-                {{ dbt.concat(["'The column \"'", "column_name", "'\" was removed'"]) }}
-            when change = 'type_changed'
-            then
-                {{
-                    dbt.concat(
-                        [
-                            "'The type of \"'",
-                            "column_name",
-                            "'\" was changed from '",
-                            "pre_data_type",
-                            "' to '",
-                            "data_type",
-                        ]
-                    )
-                }}
-            else null
-        end as varchar(4000)
-    ) as test_results_description
 {% endmacro %}
 
 {% macro fabric__get_column_changes_from_baseline_cur(

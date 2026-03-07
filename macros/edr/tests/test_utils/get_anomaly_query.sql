@@ -175,8 +175,6 @@ case when
 
 {%- macro is_score_anomalous_condition(sensitivity, anomaly_direction) -%}
     {%- set spikes_only_metrics = ["freshness", "event_freshness"] -%}
-    {#- T-SQL does not support CASE expressions that return boolean values.
-        Convert to equivalent AND/OR logic for fabric/sqlserver targets. -#}
     (
         (
             metric_name in {{ elementary.strings_list_to_tuple(spikes_only_metrics) }}

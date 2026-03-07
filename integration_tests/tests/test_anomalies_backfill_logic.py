@@ -62,11 +62,11 @@ def get_daily_row_count_metrics(dbt_project: DbtProject, test_id: str):
 
 
 def get_latest_anomaly_test_metrics(dbt_project: DbtProject, test_id: str):
-    is_tsql = dbt_project.target in ("fabric", "sqlserver")
+    sl = dbt_project.select_limit(1)
     query = ANOMALY_TEST_POINTS_QUERY.format(
         test_id=test_id,
-        top_clause="TOP 1 " if is_tsql else "",
-        limit_clause="" if is_tsql else "limit 1",
+        top_clause=sl.top,
+        limit_clause=sl.limit,
     )
     results = dbt_project.run_query(query)
     result_rows = [json.loads(result["result_row"]) for result in results]

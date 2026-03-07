@@ -403,7 +403,7 @@
             left join
                 time_filtered_monitored_table
                 on (edr_bucket_start = start_bucket_in_data)
-            group by 1, 2, 3
+            group by edr_bucket_start, edr_bucket_end, start_bucket_in_data
         )
 
     select
@@ -500,7 +500,7 @@
             from buckets
             cross join unique_timestamps
             where timestamp_val < edr_bucket_end
-            group by 1, 2
+            group by edr_bucket_start, edr_bucket_end
         ),
 
         -- create a single table with all the freshness values
@@ -647,37 +647,6 @@
         }} as metric_value
     from buckets
     left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
-    group by 1, 2
-{% endmacro %}
-
-{# T-SQL does not support positional GROUP BY (group by 1, 2). #}
-{% macro fabric__event_freshness_metric_query(metric, metric_properties) %}
-    select
-        edr_bucket_start,
-        edr_bucket_end,
-        {{ elementary.const_as_string(metric.name) }} as metric_name,
-        {{ elementary.const_as_string("event_freshness") }} as metric_type,
-        {{
-            elementary.edr_cast_as_string(
-                "max({})".format("monitored_table_event_timestamp_column")
-            )
-        }} as source_value,
-        {{
-            "coalesce(max({}), {})".format(
-                elementary.timediff(
-                    "second",
-                    elementary.edr_cast_as_timestamp(
-                        "monitored_table_event_timestamp_column"
-                    ),
-                    elementary.edr_cast_as_timestamp(
-                        "monitored_table_timestamp_column"
-                    ),
-                ),
-                elementary.timediff("second", "edr_bucket_start", "edr_bucket_end"),
-            )
-        }} as metric_value
-    from buckets
-    left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
     group by edr_bucket_start, edr_bucket_end
 {% endmacro %}
 
@@ -713,7 +682,7 @@
         end as metric_value
     from buckets
     left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
-    group by 1, 2
+    group by edr_bucket_start, edr_bucket_end
 {% endmacro %}
 
 {% macro get_no_timestamp_event_freshness_query(metric, metric_properties) %}

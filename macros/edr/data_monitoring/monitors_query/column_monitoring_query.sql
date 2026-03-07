@@ -329,31 +329,6 @@
 {% macro column_monitoring_group_by(
     timestamp_column, dimensions, prefixed_dimensions
 ) %}
-    {{
-        return(
-            adapter.dispatch("column_monitoring_group_by", "elementary")(
-                timestamp_column, dimensions, prefixed_dimensions
-            )
-        )
-    }}
-{% endmacro %}
-
-{% macro default__column_monitoring_group_by(
-    timestamp_column, dimensions, prefixed_dimensions
-) %}
-    {% if dimensions | length > 0 %}
-        group by 1, 2, {{ elementary.select_dimensions_columns(prefixed_dimensions) }}
-    {% else %} group by 1, 2
-    {% endif %}
-{% endmacro %}
-
-{% macro fabric__column_monitoring_group_by(
-    timestamp_column, dimensions, prefixed_dimensions
-) %}
-    {#- T-SQL does not support positional GROUP BY and rejects
-        GROUP BY on constant expressions.  Use actual column
-        names when there is a timestamp, otherwise omit GROUP BY
-        for the constant-only case (unless dimensions exist). -#}
     {% if timestamp_column %}
         group by
             edr_bucket_start,
