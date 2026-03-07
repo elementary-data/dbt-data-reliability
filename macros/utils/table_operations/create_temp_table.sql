@@ -68,6 +68,19 @@
     {{ return(table_relation) }}
 {% endmacro %}
 
+{% macro sqlserver__create_temp_table(
+    database_name, schema_name, table_name, sql_query
+) %}
+    {# SQL Server shares T-SQL limitations with Fabric — reuse the same workaround #}
+    {{
+        return(
+            elementary.fabric__create_temp_table(
+                database_name, schema_name, table_name, sql_query
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro snowflake__create_temp_table(
     database_name, schema_name, table_name, sql_query
 ) %}
