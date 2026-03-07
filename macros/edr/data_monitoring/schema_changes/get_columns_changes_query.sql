@@ -185,13 +185,19 @@
                 change as test_sub_type,
                 {{ elementary.schema_change_description_column() }}
             from all_column_changes
-            group by
-                full_table_name,
-                change,
-                column_name,
-                data_type,
-                pre_data_type,
-                detected_at
+            {% if elementary.is_tsql() %}
+                {#- T-SQL does not support positional GROUP BY references.
+                    Group by the 6 source columns from all_column_changes;
+                    all 9 output columns are deterministic functions of these. -#}
+                group by
+                    full_table_name,
+                    change,
+                    column_name,
+                    data_type,
+                    pre_data_type,
+                    detected_at
+                {% else %} {{ dbt_utils.group_by(9) }}
+                {% endif %}
 
         )
 
