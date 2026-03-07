@@ -19,6 +19,7 @@ on:
           - dremio
           - duckdb
           - sqlserver
+          - fabric
       elementary-ref:
         type: string
         required: false
@@ -114,7 +115,7 @@ jobs:
           echo "SQL Server is healthy."
 
       - name: Install ODBC Driver
-        if: inputs.warehouse-type == 'sqlserver'
+        if: inputs.warehouse-type == 'sqlserver' || inputs.warehouse-type == 'fabric'
         run: |
           curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
           curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
@@ -228,7 +229,7 @@ jobs:
       - name: Drop test schemas
         if: >-
           always() &&
-          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena"]'), inputs.warehouse-type)
+          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena","fabric"]'), inputs.warehouse-type)
         working-directory: ${{ env.TESTS_DIR }}
         continue-on-error: true
         run: |
