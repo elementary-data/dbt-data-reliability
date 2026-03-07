@@ -75,24 +75,24 @@
 {%- endmacro %}
 
 {% macro sqlserver__full_name_split(part_name) %}
-    {{ elementary.fabric__full_name_split(part_name) }}
+    {% do return(elementary.fabric__full_name_split(part_name)) %}
 {% endmacro %}
 
 {# ── Table operations ───────────────────────────────────────────── #}
 {% macro sqlserver__insert_as_select(table_relation, select_query) %}
-    {{ elementary.fabric__insert_as_select(table_relation, select_query) }}
+    {% do return(elementary.fabric__insert_as_select(table_relation, select_query)) %}
 {% endmacro %}
 
 {% macro sqlserver__edr_make_temp_relation(base_relation, suffix) %}
-    {{ elementary.fabric__edr_make_temp_relation(base_relation, suffix) }}
+    {% do return(elementary.fabric__edr_make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
 {% macro sqlserver__get_relation_max_name_length(temporary, relation, sql_query) %}
-    {{
+    {% do return(
         elementary.fabric__get_relation_max_name_length(
             temporary, relation, sql_query
         )
-    }}
+    ) %}
 {% endmacro %}
 
 {# ── Boolean / config ───────────────────────────────────────────── #}
@@ -153,7 +153,7 @@
 
 {# ── Insert rows ───────────────────────────────────────────────── #}
 {%- macro sqlserver__escape_special_chars(string_value) -%}
-    {{ elementary.fabric__escape_special_chars(string_value) }}
+    {% do return(elementary.fabric__escape_special_chars(string_value)) %}
 {%- endmacro -%}
 
 {%- macro sqlserver__render_value(value, data_type) -%}
@@ -172,7 +172,11 @@
 {% endmacro %}
 
 {% macro sqlserver__get_unified_metrics_query(table_metrics, metric_properties) %}
-    {{ elementary.fabric__get_unified_metrics_query(table_metrics, metric_properties) }}
+    {% do return(
+        elementary.fabric__get_unified_metrics_query(
+            table_metrics, metric_properties
+        )
+    ) %}
 {% endmacro %}
 
 {% macro sqlserver__row_count_metric_query(metric, metric_properties) %}
@@ -188,7 +192,7 @@
 {% endmacro %}
 
 {% macro sqlserver__get_latest_full_refresh(model_node) %}
-    {{ elementary.fabric__get_latest_full_refresh(model_node) }}
+    {% do return(elementary.fabric__get_latest_full_refresh(model_node)) %}
 {% endmacro %}
 
 {# ── Test utilities ────────────────────────────────────────────── #}
@@ -209,25 +213,30 @@
 {% endmacro %}
 
 {%- macro sqlserver__get_anomaly_query(flattened_test=none) -%}
-    {{ elementary.fabric__get_anomaly_query(flattened_test=flattened_test) }}
+    {% do return(
+        elementary.fabric__get_anomaly_query(flattened_test=flattened_test)
+    ) %}
 {%- endmacro -%}
 
 {%- macro sqlserver__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
-    {{
+    {% do return(
         elementary.fabric__get_anomaly_query_for_dimension_anomalies(
             flattened_test=flattened_test
         )
-    }}
+    ) %}
 {%- endmacro -%}
 
 {% macro sqlserver__complete_buckets_cte(
     time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
 ) %}
-    {{
+    {% do return(
         elementary.fabric__complete_buckets_cte(
-            time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
+            time_bucket,
+            bucket_end_expr,
+            min_bucket_start_expr,
+            max_bucket_end_expr,
         )
-    }}
+    ) %}
 {% endmacro %}
 
 {# ── Column monitors ───────────────────────────────────────────── #}
