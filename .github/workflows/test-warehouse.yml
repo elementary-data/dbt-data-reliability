@@ -58,6 +58,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     concurrency:
       # Serialises runs for the same warehouse × dbt-version × branch.
       # The schema name is derived from a hash of this group (see "Write dbt profiles").
