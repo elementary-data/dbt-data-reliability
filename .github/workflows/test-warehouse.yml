@@ -53,7 +53,6 @@ on:
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
-  MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD || 'Elementary123!' }}
 
 jobs:
   test:
@@ -107,8 +106,6 @@ jobs:
       - name: Start SQL Server
         if: inputs.warehouse-type == 'sqlserver'
         working-directory: ${{ env.TESTS_DIR }}
-        env:
-          MSSQL_SA_PASSWORD: ${{ env.MSSQL_SA_PASSWORD }}
         run: |
           docker compose -f docker-compose-sqlserver.yml up -d
           echo "Waiting for SQL Server to become healthy..."
@@ -172,7 +169,6 @@ jobs:
       - name: Write dbt profiles
         env:
           CI_WAREHOUSE_SECRETS: ${{ secrets.CI_WAREHOUSE_SECRETS || '' }}
-          MSSQL_SA_PASSWORD: ${{ env.MSSQL_SA_PASSWORD }}
         run: |
           # Schema name = dbt_<YYMMDD_HHMMSS>_<branch≤18>_<8-char hash>
           # The hash prevents collisions across concurrent jobs; the branch
