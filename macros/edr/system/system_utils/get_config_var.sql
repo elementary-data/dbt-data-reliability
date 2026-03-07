@@ -49,6 +49,15 @@
     {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
 {% endmacro %}
 
+{# Returns true if the current adapter uses T-SQL dialect (Fabric or SQL Server). #}
+{% macro is_tsql() %}
+    {{ return(adapter.dispatch("is_tsql", "elementary")()) }}
+{% endmacro %}
+
+{% macro default__is_tsql() %} {{ return(false) }} {% endmacro %}
+
+{% macro fabric__is_tsql() %} {{ return(true) }} {% endmacro %}
+
 {% macro get_default_config(var_name) %}
     {{ return(adapter.dispatch("get_default_config", "elementary")()) }}
 {%- endmacro -%}

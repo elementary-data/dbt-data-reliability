@@ -93,6 +93,11 @@
        bucket end (which is the actual time of the test) #}
     {%- set metric_time_bucket_expr = "case when bucket_start is not null then bucket_start else bucket_end end" %}
 
+    {%- set exclude_filter = (
+        "should_exclude_from_training = "
+        ~ elementary.edr_boolean_literal(false)
+    ) -%}
+
     {%- set anomaly_scores_query %}
         {% if test_configuration.timestamp_column %}
             with buckets as (
@@ -229,7 +234,6 @@
                 bucket_duration_hours,
                 updated_at,
                 should_exclude_from_training,
-                    {%- set exclude_filter = 'should_exclude_from_training = ' ~ elementary.edr_boolean_literal(false) -%}
                 avg(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
                 {{ elementary.standard_deviation('case when ' ~ exclude_filter ~ ' then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
                 count(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
