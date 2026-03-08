@@ -24,7 +24,7 @@
     {{ return(temp_table_relation) }}
 {% endmacro %}
 
-{% macro _tsql_create_temp_table(database_name, schema_name, table_name, sql_query) %}
+{% macro fabric__create_temp_table(database_name, schema_name, table_name, sql_query) %}
     {#
         T-SQL (Fabric + SQL Server) does not allow CTEs inside subqueries, so the usual
         CREATE TABLE … AS (sql) pattern fails when sql contains a CTE
@@ -37,6 +37,10 @@
 
         We use a regular table (not #temp) because the EXEC scope isolation
         of SQL Server makes #temp tables invisible to the caller.
+
+        sqlserver__ is not needed here because dbt-sqlserver declares
+        dependencies=["fabric"], so this macro is found automatically
+        via the dispatch chain: sqlserver__ → fabric__ → default__.
     #}
     {% set table_exists, table_relation = dbt.get_or_create_relation(
         database=database_name,
@@ -66,24 +70,6 @@
     {% do elementary.run_query("DROP VIEW " ~ vw_ref) %}
 
     {{ return(table_relation) }}
-{% endmacro %}
-
-{% macro fabric__create_temp_table(database_name, schema_name, table_name, sql_query) %}
-    {{
-        return(
-            _tsql_create_temp_table(database_name, schema_name, table_name, sql_query)
-        )
-    }}
-{% endmacro %}
-
-{% macro sqlserver__create_temp_table(
-    database_name, schema_name, table_name, sql_query
-) %}
-    {{
-        return(
-            _tsql_create_temp_table(database_name, schema_name, table_name, sql_query)
-        )
-    }}
 {% endmacro %}
 
 {% macro snowflake__create_temp_table(
