@@ -259,58 +259,8 @@
 {% endmacro %}
 
 {% macro default__get_unified_metrics_query(table_metrics, metric_properties) %}
-    {%- set metric_name_to_query = {} %}
-    {%- for metric in table_metrics %}
-        {% set metric_query = elementary.get_metric_query(metric, metric_properties) %}
-        {% do metric_name_to_query.update({metric.name: metric_query}) %}
-    {%- endfor %}
-
-    {% if not metric_name_to_query %}
-        {% if metric_properties.timestamp_column %}
-            {% do return(
-                elementary.empty_table(
-                    [
-                        ("edr_bucket_start", "timestamp"),
-                        ("edr_bucket_end", "timestamp"),
-                        ("metric_name", "string"),
-                        ("metric_type", "string"),
-                        ("source_value", "string"),
-                        ("metric_value", "int"),
-                    ]
-                )
-            ) %}
-        {% else %}
-            {% do return(
-                elementary.empty_table(
-                    [
-                        ("metric_name", "string"),
-                        ("metric_type", "string"),
-                        ("metric_value", "int"),
-                    ]
-                )
-            ) %}
-        {% endif %}
-    {% endif %}
-
-    with
-        {%- for metric_name, metric_query in metric_name_to_query.items() %}
-            {{ metric_name }} as ({{ metric_query }}){% if not loop.last %},{% endif %}
-        {%- endfor %}
-
-    {%- for metric_name in metric_name_to_query %}
-        select *
-        from {{ metric_name }}
-        {% if not loop.last %}
-            union all
-        {% endif %}
-    {%- endfor %}
-{% endmacro %}
-
-{% macro fabric__get_unified_metrics_query(table_metrics, metric_properties) %}
-    {# Fabric / T-SQL: CTEs cannot be nested.  This macro is embedded inside
-       a parent CTE ("metrics as (...)"), so we must NOT emit a WITH clause.
-       Instead we directly UNION ALL the metric queries.  Each metric query
-       for fabric must also avoid internal CTEs. #}
+    {# This macro is embedded inside a parent CTE ("metrics as (...)"),
+       so we directly UNION ALL the metric queries without a WITH clause. #}
     {%- set metric_queries = [] %}
     {%- for metric in table_metrics %}
         {% set metric_query = elementary.get_metric_query(metric, metric_properties) %}
