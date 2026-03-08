@@ -230,9 +230,11 @@
         ~ range(10000)
         | random
     ) %}
-    {# Use target.schema (always exists) rather than model.schema, which may be a
-       per-worker test audit schema that hasn't been created yet. #}
-    {% set view_schema = target.schema %}
+    {# Use the elementary package schema (guaranteed to exist) rather than
+       model.schema (per-worker test audit schema) or target.schema (base schema),
+       which may not have been created yet in parallel CI runs. #}
+    {% set _edr_db, _edr_schema = elementary.get_package_database_and_schema() %}
+    {% set view_schema = _edr_schema if _edr_schema else target.schema %}
     {% set full_view_name = view_schema ~ "." ~ view_name %}
 
     {# Create view from the compiled test SQL #}
