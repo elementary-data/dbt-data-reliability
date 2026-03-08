@@ -23,3 +23,10 @@
     {%- else %}, 'YYYY-MM-DD HH:MI:SS')
     {%- endif %}
 {% endmacro %}
+
+{% macro fabric__edr_to_char(column, format) %}
+    convert(varchar, {{ column }}
+    {%- if format %}, {{ format }})
+    {%- else %}, 120)
+    {%- endif %}
+{% endmacro %}

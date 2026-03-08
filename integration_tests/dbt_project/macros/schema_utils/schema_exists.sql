@@ -39,6 +39,16 @@
     {% do return(result | length > 0) %}
 {% endmacro %}
 
+{% macro fabric__edr_schema_exists(database, schema_name) %}
+    {% set safe_schema = schema_name | replace("'", "''") %}
+    {% set result = run_query(
+        "SELECT name FROM sys.schemas WHERE lower(name) = lower('"
+        ~ safe_schema
+        ~ "')"
+    ) %}
+    {% do return(result | length > 0) %}
+{% endmacro %}
+
 {% macro clickhouse__edr_schema_exists(database, schema_name) %}
     {% set safe_schema = schema_name | replace("'", "''") %}
     {% set result = run_query(

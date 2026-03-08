@@ -18,7 +18,6 @@
 {%- endmacro -%}
 
 {%- macro default__generate_surrogate_key(fields) -%}
-    {% set concat_macro = dbt.concat or dbt_utils.concat %}
     {% set hash_macro = dbt.hash or dbt_utils.hash %}
 
     {% set default_null_value = "" %}
@@ -35,7 +34,8 @@
         ) -%}
         {%- if not loop.last %} {%- do field_sqls.append("'-'") -%} {%- endif -%}
     {%- endfor -%}
-    {{ hash_macro(concat_macro(field_sqls)) }}
+    {%- set concat_result -%}{{ elementary.edr_concat(field_sqls) }}{%- endset -%}
+    {{ hash_macro(concat_result | trim) }}
 {%- endmacro -%}
 
 {%- macro clickhouse__generate_surrogate_key(fields) -%}

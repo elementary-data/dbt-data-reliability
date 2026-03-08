@@ -29,11 +29,11 @@ LATEST_METRICS_QUERY = """
 # This returns data points used in the latest anomaly test
 ANOMALY_TEST_POINTS_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
@@ -62,7 +62,13 @@ def get_daily_row_count_metrics(dbt_project: DbtProject, test_id: str):
 
 
 def get_latest_anomaly_test_metrics(dbt_project: DbtProject, test_id: str):
-    results = dbt_project.run_query(ANOMALY_TEST_POINTS_QUERY.format(test_id=test_id))
+    sl = dbt_project.select_limit(1)
+    query = ANOMALY_TEST_POINTS_QUERY.format(
+        test_id=test_id,
+        top_clause=sl.top,
+        limit_clause=sl.limit,
+    )
+    results = dbt_project.run_query(query)
     result_rows = [json.loads(result["result_row"]) for result in results]
     return {
         (

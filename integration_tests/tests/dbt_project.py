@@ -32,6 +32,23 @@ DEFAULT_DUMMY_CODE = "SELECT 1 AS col"
 logger = get_logger(__name__)
 
 
+class SelectLimit:
+    """Cross-adapter TOP / LIMIT helper.
+
+    On T-SQL (Fabric / SQL Server) ``SELECT TOP n ...`` is used instead of
+    ``... LIMIT n``.  Instances expose two string properties so that callers
+    can build dialect-agnostic queries::
+
+        sl = SelectLimit(1, is_tsql=True)
+        query = f"SELECT {sl.top}col FROM t ORDER BY x {sl.limit}"
+        # → "SELECT TOP 1 col FROM t ORDER BY x "
+    """
+
+    def __init__(self, n: int, is_tsql: bool) -> None:
+        self.top = f"TOP {n} " if is_tsql else ""
+        self.limit = "" if is_tsql else f"LIMIT {n}"
+
+
 def get_dbt_runner(
     target: str, project_dir: str, runner_method: Optional[RunnerMethod] = None
 ) -> BaseDbtRunner:
@@ -95,8 +112,44 @@ class DbtProject:
             )
         return json.loads(run_operation_results[0])
 
-    @staticmethod
+    @property
+    def is_tsql(self) -> bool:
+        """Return True when the target uses T-SQL dialect (Fabric / SQL Server)."""
+        return self.target in ("fabric", "sqlserver")
+
+    def select_limit(self, n: int = 1) -> "SelectLimit":
+        """Return cross-adapter TOP/LIMIT helpers for use in raw SQL strings.
+
+        Usage::
+
+            sl = dbt_project.select_limit(1)
+            query = f"SELECT {sl.top}col FROM t ORDER BY x {sl.limit}"
+        """
+        return SelectLimit(n, self.is_tsql)
+
+    def samples_query(self, test_id: str, order_by: str = "created_at desc") -> str:
+        """Build a cross-adapter query to fetch test result sample rows.
+
+        This is the shared implementation of the ``SAMPLES_QUERY`` template
+        that was previously duplicated across multiple test files.
+        """
+        sl = self.select_limit(1)
+        return f"""
+            with latest_elementary_test_result as (
+                select {sl.top}id
+                from {{{{ ref("elementary_test_results") }}}}
+                where lower(table_name) = lower('{test_id}')
+                order by {order_by}
+                {sl.limit}
+            )
+
+            select result_row
+            from {{{{ ref("test_result_rows") }}}}
+            where elementary_test_results_id in (select * from latest_elementary_test_result)
+        """
+
     def read_table_query(
+        self,
         table_name: str,
         where: Optional[str] = None,
         group_by: Optional[str] = None,
@@ -104,13 +157,16 @@ class DbtProject:
         limit: Optional[int] = None,
         column_names: Optional[List[str]] = None,
     ):
+        columns = ", ".join(column_names) if column_names else "*"
+        top_clause = f"TOP {limit} " if limit and self.is_tsql else ""
+        limit_clause = f"LIMIT {limit}" if limit and not self.is_tsql else ""
         return f"""
-            SELECT {', '.join(column_names) if column_names else '*'}
+            SELECT {top_clause}{columns}
             FROM {{{{ ref('{table_name}') }}}}
             {f"WHERE {where}" if where else ""}
             {f"GROUP BY {group_by}" if group_by else ""}
             {f"ORDER BY {order_by}" if order_by else ""}
-            {f"LIMIT {limit}" if limit else ""}
+            {limit_clause}
             """
 
     def read_table(

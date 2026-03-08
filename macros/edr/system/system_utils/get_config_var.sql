@@ -25,6 +25,69 @@
     {% do return(var_value) %}
 {% endmacro %}
 
+{# Render a boolean config var as a SQL-compatible boolean expression.
+   Standard SQL uses TRUE/FALSE but T-SQL does not support bare boolean literals.
+   This macro outputs '1=1' or '1=0' which works across all dialects. #}
+{% macro render_bool_config_var(var_name, negate=false) %}
+    {% set val = elementary.get_config_var(var_name) %}
+    {% if negate %} {% if val %} (1 = 0) {% else %} (1 = 1){% endif %}
+    {% else %} {% if val %} (1 = 1) {% else %} (1 = 0){% endif %}
+    {% endif %}
+{% endmacro %}
+
+{# Render a SQL boolean literal that works across all dialects.
+   Standard SQL uses TRUE/FALSE but T-SQL requires cast(1/0 as bit). #}
+{% macro edr_boolean_literal(value) %}
+    {{ return(adapter.dispatch("edr_boolean_literal", "elementary")(value)) }}
+{% endmacro %}
+
+{% macro default__edr_boolean_literal(value) %}
+    {% if value %} true {% else %} false{% endif %}
+{% endmacro %}
+
+{% macro fabric__edr_boolean_literal(value) %}
+    {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
+{% endmacro %}
+
+{# Render a SQL condition as a boolean column value.
+   Produces: case when <condition> then TRUE else FALSE end
+   On T-SQL, TRUE/FALSE become cast(1/0 as bit).
+   If condition is none/empty, defaults to FALSE. #}
+{% macro edr_condition_as_boolean(condition) %}
+    case
+        when {{ condition or "1=0" }}
+        then {{ elementary.edr_boolean_literal(true) }}
+        else {{ elementary.edr_boolean_literal(false) }}
+    end
+{% endmacro %}
+
+{# Compare a SQL expression to TRUE.  Works across all dialects including T-SQL (bit). #}
+{% macro edr_is_true(expr) %}
+    {{ return(adapter.dispatch("edr_is_true", "elementary")(expr)) }}
+{% endmacro %}
+
+{% macro default__edr_is_true(expr) %} {{ expr }} = true {% endmacro %}
+
+{% macro fabric__edr_is_true(expr) %} {{ expr }} = cast(1 as bit) {% endmacro %}
+
+{# Compare a SQL expression to FALSE.  Works across all dialects including T-SQL (bit). #}
+{% macro edr_is_false(expr) %}
+    {{ return(adapter.dispatch("edr_is_false", "elementary")(expr)) }}
+{% endmacro %}
+
+{% macro default__edr_is_false(expr) %} {{ expr }} = false {% endmacro %}
+
+{% macro fabric__edr_is_false(expr) %} {{ expr }} = cast(0 as bit) {% endmacro %}
+
+{# Returns true if the current adapter uses T-SQL dialect (Fabric or SQL Server). #}
+{% macro is_tsql() %}
+    {{ return(adapter.dispatch("is_tsql", "elementary")()) }}
+{% endmacro %}
+
+{% macro default__is_tsql() %} {{ return(false) }} {% endmacro %}
+
+{% macro fabric__is_tsql() %} {{ return(true) }} {% endmacro %}
+
 {% macro get_default_config(var_name) %}
     {{ return(adapter.dispatch("get_default_config", "elementary")()) }}
 {%- endmacro -%}

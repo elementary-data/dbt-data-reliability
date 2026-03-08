@@ -18,6 +18,8 @@ on:
           - clickhouse
           - dremio
           - duckdb
+          - sqlserver
+          - fabric
       elementary-ref:
         type: string
         required: false
@@ -55,6 +57,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     concurrency:
       # Serialises runs for the same warehouse × dbt-version × branch.
       # The schema name is derived from a hash of this group (see "Write dbt profiles").
@@ -99,6 +102,23 @@ jobs:
           echo "Waiting for Dremio to become healthy..."
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Dremio is healthy."
+
+      - name: Start SQL Server
+        if: inputs.warehouse-type == 'sqlserver'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: |
+          docker compose -f docker-compose-sqlserver.yml up -d
+          echo "Waiting for SQL Server to become healthy..."
+          timeout 120 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} sqlserver 2>/dev/null)" = "healthy" ]; do sleep 5; done'
+          echo "SQL Server is healthy."
+
+      - name: Install ODBC Driver
+        if: inputs.warehouse-type == 'sqlserver' || inputs.warehouse-type == 'fabric'
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
 
       - name: Start Spark
         if: inputs.warehouse-type == 'spark'
@@ -206,7 +226,7 @@ jobs:
       - name: Drop test schemas
         if: >-
           always() &&
-          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena"]'), inputs.warehouse-type)
+          contains(fromJSON('["snowflake","bigquery","redshift","databricks_catalog","athena","fabric"]'), inputs.warehouse-type)
         working-directory: ${{ env.TESTS_DIR }}
         continue-on-error: true
         run: |

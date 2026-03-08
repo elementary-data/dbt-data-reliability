@@ -75,7 +75,7 @@ select
     full_refresh
 from error_models
 where
-    {{ not elementary.get_config_var("disable_model_alerts") }}
+    {{ elementary.render_bool_config_var("disable_model_alerts", negate=true) }}
     and lower(status) != 'success'
     {%- if elementary.get_config_var("disable_skipped_model_alerts") -%}
         and lower(status) != 'skipped'

@@ -21,7 +21,7 @@
     {% do elementary.debug_log(
         test_unique_id ~ ": starting test materialization hook"
     ) %}
-    {% if elementary.get_config_var("tests_use_temp_tables") %}
+    {% if elementary.is_tsql() or elementary.get_config_var("tests_use_temp_tables") %}
         {% set temp_table_sql = elementary.create_test_result_temp_table() %}
         {% do context.update({"sql": temp_table_sql}) %}
         {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
@@ -167,6 +167,18 @@
 {% endmacro %}
 
 {% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {{
+        return(
+            adapter.dispatch("query_test_result_rows", "elementary")(
+                sample_limit=sample_limit, ignore_passed_tests=ignore_passed_tests
+            )
+        )
+    }}
+{% endmacro %}
+
+{% macro default__query_test_result_rows(
+    sample_limit=none, ignore_passed_tests=false
+) %}
     {% if sample_limit == 0 %}  {# performance: no need to run a sql query that we know returns an empty list #}
         {% do return([]) %}
     {% endif %}
@@ -186,6 +198,59 @@
     select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
     {% endset %}
     {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
+{% endmacro %}
+
+{% macro fabric__query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {% if sample_limit == 0 %} {% do return([]) %} {% endif %}
+
+    {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}
+    {% if sample_limit == -1 %} {% set sample_limit = none %} {% endif %}
+
+    {% if ignore_passed_tests and elementary.did_test_pass() %}
+        {% do elementary.debug_log("Skipping sample query because the test passed.") %}
+        {% do return([]) %}
+    {% endif %}
+
+    {#
+        Fabric / T-SQL does not support LIMIT, and also does not allow CTEs nested
+        inside derived tables/subqueries.
+
+        Many dbt generic tests (e.g. accepted_values) compile to CTE-based SQL.
+        To handle sampling efficiently, we materialise the compiled test SQL into a
+        temp view, then SELECT TOP from that view. This avoids fetching all rows into
+        Python memory.
+
+        We use a regular view (not a #temp table) because EXEC-based run_query
+        isolates #temp table scope. The view is dropped after the SELECT.
+    #}
+    {% set view_name = (
+        "edr_test_sample_"
+        ~ modules.datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        ~ "_"
+        ~ range(10000)
+        | random
+    ) %}
+    {# Use the elementary package schema (guaranteed to exist) rather than
+       model.schema (per-worker test audit schema) or target.schema (base schema),
+       which may not have been created yet in parallel CI runs. #}
+    {% set _edr_db, _edr_schema = elementary.get_package_database_and_schema() %}
+    {% set view_schema = _edr_schema if _edr_schema else target.schema %}
+    {% set full_view_name = view_schema ~ "." ~ view_name %}
+
+    {# Create view from the compiled test SQL #}
+    {% do run_query("create view " ~ full_view_name ~ " as " ~ sql) %}
+
+    {% set query %}
+        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} *
+        from {{ full_view_name }}
+    {% endset %}
+
+    {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
+
+    {# Clean up the temp view #}
+    {% do run_query("drop view if exists " ~ full_view_name) %}
+
+    {% do return(result) %}
 {% endmacro %}
 
 {% macro get_columns_to_exclude_from_sampling(flattened_test) %}

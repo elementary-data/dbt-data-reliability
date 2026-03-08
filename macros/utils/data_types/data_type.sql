@@ -10,6 +10,8 @@
 
 {% macro bigquery__edr_type_bool() %} {% do return("BOOL") %} {% endmacro %}
 
+{% macro fabric__edr_type_bool() %} {% do return("bit") %} {% endmacro %}
+
 
 {%- macro edr_type_string() -%}
     {{ return(adapter.dispatch("edr_type_string", "elementary")()) }}
@@ -44,6 +46,8 @@
 
 {% macro trino__edr_type_string() %} {% do return("varchar") %} {% endmacro %}
 
+{% macro fabric__edr_type_string() %} {% do return("varchar(4096)") %} {% endmacro %}
+
 
 {%- macro edr_type_long_string() -%}
     {{ return(adapter.dispatch("edr_type_long_string", "elementary")()) }}
@@ -63,6 +67,12 @@
 
 {%- macro postgres__edr_type_long_string() -%}
     {% set long_string = "text" %} {{ return(long_string) }}
+{%- endmacro -%}
+
+{#- T-SQL: varchar(4096) is too small for compiled query text.
+    Use varchar(max) which supports up to 2 GB. -#}
+{%- macro fabric__edr_type_long_string() -%}
+    {% do return("varchar(max)") %}
 {%- endmacro -%}
 
 
@@ -132,3 +142,5 @@
 {% macro trino__edr_type_timestamp() %} timestamp(6) {% endmacro %}
 
 {% macro dremio__edr_type_timestamp() %} timestamp {% endmacro %}
+
+{% macro fabric__edr_type_timestamp() %} datetime2(6) {% endmacro %}

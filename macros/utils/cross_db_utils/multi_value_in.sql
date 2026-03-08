@@ -39,6 +39,20 @@
     )
 {%- endmacro -%}
 
+{%- macro fabric__edr_multi_value_in(source_cols, target_cols, target_table) -%}
+    {# T-SQL does not support tuple IN subqueries like (col1, col2) IN (SELECT ...).
+       Use EXISTS with a correlated subquery instead. #}
+    exists (
+        select 1
+        from {{ target_table }} as __edr_mvi
+        where
+            {%- for i in range(source_cols | length) %}
+                __edr_mvi.{{ target_cols[i] }} = {{ source_cols[i] }}
+                {%- if not loop.last %} and {% endif %}
+            {%- endfor %}
+    )
+{%- endmacro -%}
+
 {%- macro redshift__edr_multi_value_in(source_cols, target_cols, target_table) -%}
     {# Redshift doesn't support multi-column IN subqueries (tuple IN) like:
        (col1, col2) IN (SELECT col1, col2 FROM table)

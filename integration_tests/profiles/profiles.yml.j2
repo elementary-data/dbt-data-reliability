@@ -62,6 +62,19 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 8
 
+    sqlserver: &sqlserver
+      type: sqlserver
+      driver: "ODBC Driver 18 for SQL Server"
+      server: 127.0.0.1
+      port: 1433
+      database: master
+      schema: {{ schema_name }}
+      user: sa
+      password: "Elementary123!"
+      encrypt: false
+      trust_cert: true
+      threads: 4
+
     # ── Cloud targets (secrets substituted at CI time) ─────────────────
 
     snowflake: &snowflake
@@ -106,6 +119,21 @@ elementary_tests:
       client_secret: {{ databricks_client_secret | toyaml }}
       threads: 4
 
+    fabric: &fabric
+      type: fabric
+      driver: "ODBC Driver 18 for SQL Server"
+      server: {{ fabric_server | toyaml }}
+      port: 1433
+      database: {{ fabric_database | toyaml }}
+      schema: {{ schema_name }}
+      authentication: ServicePrincipal
+      tenant_id: {{ fabric_tenant_id | toyaml }}
+      client_id: {{ fabric_client_id | toyaml }}
+      client_secret: {{ fabric_client_secret | toyaml }}
+      encrypt: true
+      trust_cert: false
+      threads: 4
+
     athena: &athena
       type: athena
       s3_staging_dir: {{ athena_s3_staging_dir | toyaml }}
@@ -122,7 +150,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena', 'fabric'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}

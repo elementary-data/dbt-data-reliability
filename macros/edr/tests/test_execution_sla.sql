@@ -291,12 +291,12 @@
                 successful_runs_today,
                 case
                     when sla_status = 'MET_SLA'
-                    then false
+                    then {{ elementary.edr_boolean_literal(false) }}
                     {# If deadline hasn't passed, don't fail yet #}
-                    {% if deadline_passed %} when not true then false
-                    {% else %} when not false then false
+                    {% if not deadline_passed %}
+                        when 1 = 1 then {{ elementary.edr_boolean_literal(false) }}
                     {% endif %}
-                    else true
+                    else {{ elementary.edr_boolean_literal(true) }}
                 end as is_failure,
                 case
                     when sla_status = 'NOT_RUN'
@@ -335,6 +335,6 @@
         successful_runs_today,
         result_description
     from final_result
-    where is_failure = true
+    where is_failure = {{ elementary.edr_boolean_literal(true) }}
 
 {% endmacro %}

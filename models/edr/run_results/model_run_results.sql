@@ -1,5 +1,18 @@
 {{ config(materialized="view", bind=False) }}
 
+{%- set day_partition = elementary.edr_time_trunc("day", "run_results.generated_at") -%}
+{%- set day_window = (
+    "over (partition by "
+    ~ day_partition
+    ~ " order by run_results.generated_at asc rows between unbounded preceding and unbounded following)"
+) -%}
+{%- set first_inv_cond = (
+    "first_value(invocation_id) " ~ day_window ~ " = invocation_id"
+) -%}
+{%- set last_inv_cond = (
+    "last_value(invocation_id) " ~ day_window ~ " = invocation_id"
+) -%}
+
 with
     dbt_run_results as (select * from {{ ref("dbt_run_results") }}),
 
@@ -36,30 +49,10 @@ select
     row_number() over (
         partition by run_results.unique_id order by run_results.generated_at desc
     ) as model_invocation_reverse_index,
-    case
-        when
-            first_value(invocation_id) over (
-                partition by
-                    {{ elementary.edr_time_trunc("day", "run_results.generated_at") }}
-                order by run_results.generated_at asc
-                rows between unbounded preceding and unbounded following
-            )
-            = invocation_id
-        then true
-        else false
-    end as is_the_first_invocation_of_the_day,
-    case
-        when
-            last_value(invocation_id) over (
-                partition by
-                    {{ elementary.edr_time_trunc("day", "run_results.generated_at") }}
-                order by run_results.generated_at asc
-                rows between unbounded preceding and unbounded following
-            )
-            = invocation_id
-        then true
-        else false
-    end as is_the_last_invocation_of_the_day
+    {{ elementary.edr_condition_as_boolean(first_inv_cond) }}
+    as is_the_first_invocation_of_the_day,
+    {{ elementary.edr_condition_as_boolean(last_inv_cond) }}
+    as is_the_last_invocation_of_the_day
 
 from dbt_run_results run_results
 join dbt_models models on run_results.unique_id = models.unique_id

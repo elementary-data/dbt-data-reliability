@@ -1,4 +1,6 @@
-{% macro get_columns_snapshot_query(model_relation, full_table_name) %}
+{% macro get_columns_snapshot_query(
+    model_relation, full_table_name, into_relation=none
+) %}
     {%- set schema_columns_snapshot_relation = elementary.get_elementary_relation(
         "schema_columns_snapshot"
     ) %}
@@ -93,14 +95,16 @@
                 column_name,
                 data_type,
                 detected_at,
-                case
-                    when
-                        {{ elementary.full_column_name() }}
-                        not in ({{ known_columns_query }})
-                        and full_table_name in ({{ known_tables_query }})
-                    then true
-                    else false
-                end as is_new
+                {{
+                    elementary.edr_condition_as_boolean(
+                        elementary.full_column_name()
+                        ~ " not in ("
+                        ~ known_columns_query
+                        ~ ") and full_table_name in ("
+                        ~ known_tables_query
+                        ~ ")"
+                    )
+                }} as is_new
             from columns_info
         ),
 
@@ -122,7 +126,18 @@
                 is_new,
                 detected_at
             from columns_snapshot
-            group by 1, 2, 3, 4, 5, 6, 7
+            group by
+                {{
+                    elementary.generate_surrogate_key(
+                        ["full_table_name", "column_name", "data_type"]
+                    )
+                }},
+                {{ elementary.full_column_name() }},
+                full_table_name,
+                column_name,
+                data_type,
+                is_new,
+                detected_at
         )
 
     select
@@ -133,6 +148,7 @@
         {{ elementary.edr_cast_as_string("data_type") }} as data_type,
         {{ elementary.edr_cast_as_bool("is_new") }} as is_new,
         {{ elementary.edr_cast_as_timestamp("detected_at") }} as detected_at
+        {% if into_relation %} into {{ into_relation }}{% endif %}
     from columns_snapshot_with_id
 
 {%- endmacro %}
