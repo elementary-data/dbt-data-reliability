@@ -218,6 +218,12 @@
         Many dbt generic tests (e.g. accepted_values) compile to CTE-based SQL.
         To avoid nesting those CTEs, we execute the compiled test SQL as-is (top-level)
         and apply sampling in Jinja.
+
+        Tradeoff: this fetches ALL result rows into memory, then slices in Python.
+        For tests with very large result sets this may be expensive. Wrapping in
+        SELECT TOP … FROM (<cte-query>) is not possible because T-SQL forbids CTEs
+        inside derived tables; materializing to a temp table first would work but
+        adds complexity and DDL overhead for every test execution.
     #}
     {% set result = elementary.agate_to_dicts(elementary.run_query(sql)) %}
     {% if sample_limit is not none %} {% do return(result[:sample_limit]) %} {% endif %}

@@ -24,9 +24,9 @@
     {{ return(temp_table_relation) }}
 {% endmacro %}
 
-{% macro fabric__create_temp_table(database_name, schema_name, table_name, sql_query) %}
+{% macro _tsql_create_temp_table(database_name, schema_name, table_name, sql_query) %}
     {#
-        Fabric / T-SQL does not allow CTEs inside subqueries, so the usual
+        T-SQL (Fabric + SQL Server) does not allow CTEs inside subqueries, so the usual
         CREATE TABLE … AS (sql) pattern fails when sql contains a CTE
         (e.g. the accepted_values test).
 
@@ -68,15 +68,20 @@
     {{ return(table_relation) }}
 {% endmacro %}
 
+{% macro fabric__create_temp_table(database_name, schema_name, table_name, sql_query) %}
+    {{
+        return(
+            _tsql_create_temp_table(database_name, schema_name, table_name, sql_query)
+        )
+    }}
+{% endmacro %}
+
 {% macro sqlserver__create_temp_table(
     database_name, schema_name, table_name, sql_query
 ) %}
-    {# SQL Server shares T-SQL limitations with Fabric — reuse the same workaround #}
     {{
         return(
-            elementary.fabric__create_temp_table(
-                database_name, schema_name, table_name, sql_query
-            )
+            _tsql_create_temp_table(database_name, schema_name, table_name, sql_query)
         )
     }}
 {% endmacro %}

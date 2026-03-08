@@ -25,7 +25,12 @@
 {% macro fabric__insert_as_select(table_relation, select_query) %}
     {#- Fabric does not support INSERT ... EXEC or CTEs after INSERT INTO.
         Wrap the select_query in a temp view, then INSERT ... SELECT from it.
-        Fabric also forbids 3-part names in DROP VIEW, so use schema.identifier only. -#}
+        Fabric also forbids 3-part names in DROP VIEW, so use schema.identifier only.
+
+        NOTE: The replace("'", "''") escaping is minimal — if select_query already
+        contains escaped quotes (e.g. from user-defined test configs), this could
+        double-escape and produce invalid SQL. In practice the queries passed here
+        are machine-generated and do not contain pre-escaped quotes. -#}
     {%- set tmp_view_name = (
         table_relation.schema ~ "." ~ table_relation.identifier ~ "__ins_vw"
     ) -%}

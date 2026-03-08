@@ -5,30 +5,6 @@ from dbt_project import DbtProject
 SENSITIVE_COLUMN = "email"
 SAFE_COLUMN = "order_count"
 
-SAMPLES_QUERY = """
-    with latest_elementary_test_result as (
-        select {top_clause}id
-        from {{{{ ref("elementary_test_results") }}}}
-        where lower(table_name) = lower('{test_id}')
-        order by created_at desc
-        {limit_clause}
-    )
-
-    select result_row
-    from {{{{ ref("test_result_rows") }}}}
-    where elementary_test_results_id in (select * from latest_elementary_test_result)
-"""
-
-
-def _fmt_samples_query(dbt_project: DbtProject, test_id: str) -> str:
-    sl = dbt_project.select_limit(1)
-    return SAMPLES_QUERY.format(
-        test_id=test_id,
-        top_clause=sl.top,
-        limit_clause=sl.limit,
-    )
-
-
 TEST_SAMPLE_ROW_COUNT = 5
 
 
@@ -57,7 +33,7 @@ def test_column_pii_sampling_enabled(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -87,7 +63,7 @@ def test_column_pii_sampling_disabled(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     # sample should be {'unique_field': 'user@example.com', 'n_records': 10}
@@ -123,7 +99,7 @@ def test_column_pii_default_tag_override(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     # sample should be {'unique_field': 'user@example.com', 'n_records': 10}
@@ -160,7 +136,7 @@ def test_column_pii_sampling_tags_exist_but_flag_disabled(
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     # When flag is disabled, we get the full sample (not limited by PII filtering)
@@ -198,7 +174,7 @@ def test_column_pii_sampling_all_columns_pii(test_id: str, dbt_project: DbtProje
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     # When all columns are PII, no samples should be collected
@@ -229,7 +205,7 @@ def test_unique_test_custom_tag(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -259,7 +235,7 @@ def test_accepted_values_multi_tags(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -289,7 +265,7 @@ def test_not_null_test_multi_matched_tags(test_id: str, dbt_project: DbtProject)
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -322,7 +298,7 @@ def test_multiple_pii_columns_mapping(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -352,7 +328,7 @@ def test_custom_sql_test_with_pii_column_simple(test_id: str, dbt_project: DbtPr
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0
@@ -382,7 +358,7 @@ def test_meta_tags_and_accepted_values(test_id: str, dbt_project: DbtProject):
 
     samples = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(_fmt_samples_query(dbt_project, test_id))
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
 
     assert len(samples) == 0

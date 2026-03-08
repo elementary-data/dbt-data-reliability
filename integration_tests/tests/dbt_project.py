@@ -127,6 +127,27 @@ class DbtProject:
         """
         return SelectLimit(n, self.is_tsql)
 
+    def samples_query(self, test_id: str, order_by: str = "created_at desc") -> str:
+        """Build a cross-adapter query to fetch test result sample rows.
+
+        This is the shared implementation of the ``SAMPLES_QUERY`` template
+        that was previously duplicated across multiple test files.
+        """
+        sl = self.select_limit(1)
+        return f"""
+            with latest_elementary_test_result as (
+                select {sl.top}id
+                from {{{{ ref("elementary_test_results") }}}}
+                where lower(table_name) = lower('{test_id}')
+                order by {order_by}
+                {sl.limit}
+            )
+
+            select result_row
+            from {{{{ ref("test_result_rows") }}}}
+            where elementary_test_results_id in (select * from latest_elementary_test_result)
+        """
+
     def read_table_query(
         self,
         table_name: str,
