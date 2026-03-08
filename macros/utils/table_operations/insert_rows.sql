@@ -246,6 +246,10 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{%- macro fabric__escape_special_chars(string_value) -%}
+    {{- return(string_value | replace("'", "''")) -}}
+{%- endmacro -%}
+
 {%- macro dremio__escape_special_chars(string_value) -%}
     {{-
         return(
@@ -279,8 +283,13 @@
 {%- endmacro -%}
 
 {%- macro render_value(value, data_type) -%}
+    {{- adapter.dispatch("render_value", "elementary")(value, data_type) -}}
+{%- endmacro -%}
+
+{%- macro default__render_value(value, data_type) -%}
     {%- if value is defined and value is not none -%}
-        {%- if value is number -%} {{- value -}}
+        {%- if value is boolean -%} {{- elementary.edr_boolean_literal(value) -}}
+        {%- elif value is number -%} {{- value -}}
         {%- elif value is string and data_type == "timestamp" -%}
             {{-
                 elementary.edr_cast_as_timestamp(
@@ -295,3 +304,7 @@
     {%- else -%} null
     {%- endif -%}
 {%- endmacro -%}
+
+{# Note: Python booleans pass Jinja's "is number" test, so we check
+   "is boolean" first. edr_boolean_literal renders the correct SQL literal
+   per adapter (TRUE/FALSE for standard SQL, cast(1/0 as bit) for T-SQL). #}

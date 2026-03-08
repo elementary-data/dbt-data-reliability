@@ -36,7 +36,7 @@ with
             result_rows
         from elementary_test_results
         where
-            {{ not elementary.get_config_var("disable_test_alerts") }}
+            {{ elementary.render_bool_config_var("disable_test_alerts", negate=true) }}
             and lower(status) != 'pass'
             {%- if elementary.get_config_var("disable_warn_alerts") -%}
                 and lower(status) != 'warn'

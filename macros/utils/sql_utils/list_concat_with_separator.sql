@@ -28,7 +28,8 @@
             {% do new_list.append(elementary.edr_quote(separator)) %}
         {% endif %}
     {% endfor %}
-    {{ return(elementary.join_list(new_list, " || ")) }}
+    {%- set result -%}{{ elementary.edr_dbt_concat(new_list) }}{%- endset -%}
+    {{ return(result | trim) }}
 {% endmacro %}
 
 {% macro clickhouse__list_concat_with_separator(

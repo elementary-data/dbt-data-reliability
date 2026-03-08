@@ -78,6 +78,13 @@
 {% endmacro %}
 -- fmt: on
 
+{% macro fabric__edr_hour_of_week_expression(date_expr) %}
+    concat(
+        cast(datename(weekday, {{ date_expr }}) as {{ elementary.edr_type_string() }}),
+        cast(datepart(hour, {{ date_expr }}) as {{ elementary.edr_type_string() }})
+    )
+{% endmacro %}
+
 {% macro duckdb__edr_hour_of_week_expression(date_expr) %}
     concat(
         cast(dayname({{ date_expr }}) as {{ elementary.edr_type_string() }}),

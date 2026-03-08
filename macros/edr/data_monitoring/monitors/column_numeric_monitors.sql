@@ -61,6 +61,11 @@
     stddev_pop(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
+{# T-SQL uses STDEV instead of stddev #}
+{% macro fabric__standard_deviation(column_name) -%}
+    stdev(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro variance(column_name) -%}
     {{ return(adapter.dispatch("variance", "elementary")(column_name)) }}
 {%- endmacro %}
@@ -71,6 +76,11 @@
 
 {% macro clickhouse__variance(column_name) -%}
     varSamp(cast({{ column_name }} as Nullable({{ elementary.edr_type_float() }})))
+{%- endmacro %}
+
+{# T-SQL uses VAR instead of variance #}
+{% macro fabric__variance(column_name) -%}
+    var(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
 {% macro sum(column_name) -%}

@@ -43,7 +43,37 @@ with
                 order by bucket_start asc
                 rows between unbounded preceding and current row
             ) as training_start
-        from data_monitoring_metrics {{ dbt_utils.group_by(12) }}
+        from data_monitoring_metrics
+        group by
+            id,
+            full_table_name,
+            column_name,
+            dimension,
+            dimension_value,
+            metric_name,
+            metric_value,
+            source_value,
+            bucket_start,
+            bucket_end,
+            bucket_duration_hours,
+            updated_at
+    ),
+
+    time_window_scored as (
+
+        select
+            *,
+            case
+                when training_stddev is null
+                then null
+                when training_set_size = 1
+                then null  -- Single value case - no historical context for anomaly detection
+                when training_stddev = 0
+                then 0  -- Stationary data case - valid, all values are identical
+                else (metric_value - training_avg) / (training_stddev)
+            end as anomaly_score
+        from time_window_aggregation
+
     ),
 
     metrics_anomaly_score as (
@@ -55,15 +85,7 @@ with
             dimension,
             dimension_value,
             metric_name,
-            case
-                when training_stddev is null
-                then null
-                when training_set_size = 1
-                then null  -- Single value case - no historical context for anomaly detection
-                when training_stddev = 0
-                then 0  -- Stationary data case - valid, all values are identical
-                else (metric_value - training_avg) / (training_stddev)
-            end as anomaly_score,
+            anomaly_score,
             metric_value as latest_metric_value,
             bucket_start,
             bucket_end,
@@ -73,7 +95,7 @@ with
             training_end,
             training_set_size,
             max(updated_at) as updated_at
-        from time_window_aggregation
+        from time_window_scored
         where
             metric_value is not null
             and training_avg is not null
@@ -87,8 +109,22 @@ with
                     ),
                 )
             }}
-            {{ dbt_utils.group_by(15) }}
-        order by bucket_end desc
+        group by
+            id,
+            full_table_name,
+            column_name,
+            dimension,
+            dimension_value,
+            metric_name,
+            anomaly_score,
+            metric_value,
+            bucket_start,
+            bucket_end,
+            training_avg,
+            training_stddev,
+            training_start,
+            training_end,
+            training_set_size
 
     ),
 
@@ -115,8 +151,8 @@ with
                 when
                     abs(anomaly_score)
                     > {{ elementary.get_config_var("anomaly_sensitivity") }}
-                then true
-                else false
+                then {{ elementary.edr_boolean_literal(true) }}
+                else {{ elementary.edr_boolean_literal(false) }}
             end as is_anomaly
         from metrics_anomaly_score
     )

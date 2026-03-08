@@ -48,7 +48,8 @@ jobs:
         dbt-version:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official", "latest_pre"]') }}
-        warehouse-type: [postgres, clickhouse, trino, dremio, spark, duckdb]
+        warehouse-type:
+          [postgres, clickhouse, trino, dremio, spark, duckdb, sqlserver]
         exclude:
           # latest_pre is only tested on postgres
           - dbt-version: latest_pre
@@ -61,6 +62,8 @@ jobs:
             warehouse-type: spark
           - dbt-version: latest_pre
             warehouse-type: duckdb
+          - dbt-version: latest_pre
+            warehouse-type: sqlserver
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
@@ -124,7 +127,7 @@ jobs:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official"]') }}
         warehouse-type:
-          [snowflake, bigquery, redshift, databricks_catalog, athena]
+          [snowflake, bigquery, redshift, databricks_catalog, athena, fabric]
         # Fusion includes: always run fusion alongside the base version for
         # supported warehouses.  When inputs.dbt-version is already 'fusion' the
         # matrix deduplicates automatically.

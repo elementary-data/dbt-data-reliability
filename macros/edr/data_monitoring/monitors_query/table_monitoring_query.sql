@@ -255,6 +255,10 @@
 {% endmacro %}
 
 {% macro get_unified_metrics_query(table_metrics, metric_properties) %}
+    {{ adapter.dispatch("get_unified_metrics_query", "elementary")(table_metrics, metric_properties) }}
+{% endmacro %}
+
+{% macro default__get_unified_metrics_query(table_metrics, metric_properties) %}
     {%- set metric_name_to_query = {} %}
     {%- for metric in table_metrics %}
         {% set metric_query = elementary.get_metric_query(metric, metric_properties) %}
@@ -302,6 +306,52 @@
     {%- endfor %}
 {% endmacro %}
 
+{% macro fabric__get_unified_metrics_query(table_metrics, metric_properties) %}
+    {# Fabric / T-SQL: CTEs cannot be nested.  This macro is embedded inside
+       a parent CTE ("metrics as (...)"), so we must NOT emit a WITH clause.
+       Instead we directly UNION ALL the metric queries.  Each metric query
+       for fabric must also avoid internal CTEs. #}
+    {%- set metric_queries = [] %}
+    {%- for metric in table_metrics %}
+        {% set metric_query = elementary.get_metric_query(metric, metric_properties) %}
+        {% do metric_queries.append(metric_query) %}
+    {%- endfor %}
+
+    {% if not metric_queries %}
+        {% if metric_properties.timestamp_column %}
+            {% do return(
+                elementary.empty_table(
+                    [
+                        ("edr_bucket_start", "timestamp"),
+                        ("edr_bucket_end", "timestamp"),
+                        ("metric_name", "string"),
+                        ("metric_type", "string"),
+                        ("source_value", "string"),
+                        ("metric_value", "int"),
+                    ]
+                )
+            ) %}
+        {% else %}
+            {% do return(
+                elementary.empty_table(
+                    [
+                        ("metric_name", "string"),
+                        ("metric_type", "string"),
+                        ("metric_value", "int"),
+                    ]
+                )
+            ) %}
+        {% endif %}
+    {% endif %}
+
+    {%- for metric_query in metric_queries %}
+        {{ metric_query }}
+        {% if not loop.last %}
+            union all
+        {% endif %}
+    {%- endfor %}
+{% endmacro %}
+
 {% macro get_metric_query(metric, metric_properties) %}
     {% if metric_properties.timestamp_column %}
         {% set metrics_macro_mapping = {
@@ -334,6 +384,10 @@
 {% endmacro %}
 
 {% macro row_count_metric_query(metric, metric_properties) %}
+    {{ adapter.dispatch("row_count_metric_query", "elementary")(metric, metric_properties) }}
+{% endmacro %}
+
+{% macro default__row_count_metric_query(metric, metric_properties) %}
     with
         row_count_values as (
             select
@@ -349,7 +403,7 @@
             left join
                 time_filtered_monitored_table
                 on (edr_bucket_start = start_bucket_in_data)
-            group by 1, 2, 3
+            group by edr_bucket_start, edr_bucket_end, start_bucket_in_data
         )
 
     select
@@ -362,7 +416,31 @@
     from row_count_values
 {% endmacro %}
 
+{% macro fabric__row_count_metric_query(metric, metric_properties) %}
+    {# Fabric / T-SQL: avoid CTE since this will be embedded inside a parent CTE. #}
+    select
+        edr_bucket_start,
+        edr_bucket_end,
+        {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("row_count") }} as metric_type,
+        {{ elementary.null_string() }} as source_value,
+        case
+            when start_bucket_in_data is null
+            then 0
+            else {{ elementary.edr_cast_as_float(elementary.row_count()) }}
+        end as metric_value
+    from buckets
+    left join
+        time_filtered_monitored_table
+        on (edr_bucket_start = start_bucket_in_data)
+    group by edr_bucket_start, edr_bucket_end, start_bucket_in_data
+{% endmacro %}
+
 {% macro freshness_metric_query(metric, metric_properties) %}
+    {{ adapter.dispatch("freshness_metric_query", "elementary")(metric, metric_properties) }}
+{% endmacro %}
+
+{% macro default__freshness_metric_query(metric, metric_properties) %}
     -- get ordered consecutive update timestamps in the source data
     with
         unique_timestamps as (
@@ -422,7 +500,7 @@
             from buckets
             cross join unique_timestamps
             where timestamp_val < edr_bucket_end
-            group by 1, 2
+            group by edr_bucket_start, edr_bucket_end
         ),
 
         -- create a single table with all the freshness values
@@ -455,6 +533,80 @@
         {{ elementary.edr_cast_as_string("update_timestamp") }} as source_value,
         freshness as metric_value
     from bucket_freshness_ranked
+    where row_num = 1
+{% endmacro %}
+
+{% macro fabric__freshness_metric_query(metric, metric_properties) %}
+    {# Fabric / T-SQL: rewrite without CTEs (nested CTEs are not allowed).
+       All intermediate results are expressed as inline subqueries. #}
+    select
+        edr_bucket_start,
+        edr_bucket_end,
+        {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("freshness") }} as metric_type,
+        {{ elementary.edr_cast_as_string("update_timestamp") }} as source_value,
+        freshness as metric_value
+    from (
+        select
+            *,
+            row_number() over (
+                partition by edr_bucket_end
+                order by case when freshness is null then 1 else 0 end, freshness desc
+            ) as row_num
+        from (
+            {# bucketed consecutive updates freshness #}
+            select edr_bucket_start, edr_bucket_end, update_timestamp, freshness
+            from buckets
+            cross join (
+                select *
+                from (
+                    select
+                        timestamp_val as update_timestamp,
+                        {{
+                            elementary.timediff(
+                                "second",
+                                elementary.lag("timestamp_val")
+                                ~ " over (order by timestamp_val)",
+                                "timestamp_val",
+                            )
+                        }} as freshness
+                    from (
+                        select distinct monitored_table_timestamp_column as timestamp_val
+                        from partially_time_filtered_monitored_table
+                    ) as unique_timestamps_inner
+                ) as consecutive_updates_freshness_inner
+                where update_timestamp >= (select min(edr_bucket_start) from buckets)
+            ) as time_filtered_cuf
+            where
+                update_timestamp >= edr_bucket_start
+                and update_timestamp < edr_bucket_end
+
+            union all
+
+            {# bucket end freshness #}
+            select
+                edr_bucket_start,
+                edr_bucket_end,
+                max(timestamp_val) as update_timestamp,
+                {{
+                    elementary.timediff(
+                        "second",
+                        elementary.edr_cast_as_timestamp("max(timestamp_val)"),
+                        "case when edr_bucket_end < {} then edr_bucket_end else {} end".format(
+                            elementary.current_timestamp_column(),
+                            elementary.current_timestamp_column(),
+                        ),
+                    )
+                }} as freshness
+            from buckets
+            cross join (
+                select distinct monitored_table_timestamp_column as timestamp_val
+                from partially_time_filtered_monitored_table
+            ) as unique_timestamps_end
+            where timestamp_val < edr_bucket_end
+            group by edr_bucket_start, edr_bucket_end
+        ) as bucket_all_freshness_metrics
+    ) as bucket_freshness_ranked
     where row_num = 1
 {% endmacro %}
 
@@ -495,7 +647,7 @@
         }} as metric_value
     from buckets
     left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
-    group by 1, 2
+    group by edr_bucket_start, edr_bucket_end
 {% endmacro %}
 
 {% macro clickhouse__event_freshness_metric_query(metric, metric_properties) %}
@@ -530,7 +682,7 @@
         end as metric_value
     from buckets
     left join time_filtered_monitored_table on (edr_bucket_start = start_bucket_in_data)
-    group by 1, 2
+    group by edr_bucket_start, edr_bucket_end
 {% endmacro %}
 
 {% macro get_no_timestamp_event_freshness_query(metric, metric_properties) %}

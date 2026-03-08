@@ -21,7 +21,7 @@
     {% do elementary.debug_log(
         test_unique_id ~ ": starting test materialization hook"
     ) %}
-    {% if elementary.get_config_var("tests_use_temp_tables") %}
+    {% if elementary.is_tsql() or elementary.get_config_var("tests_use_temp_tables") %}
         {% set temp_table_sql = elementary.create_test_result_temp_table() %}
         {% do context.update({"sql": temp_table_sql}) %}
         {% do elementary.debug_log(test_unique_id ~ ": created test temp table") %}
@@ -167,6 +167,18 @@
 {% endmacro %}
 
 {% macro query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {{
+        return(
+            adapter.dispatch("query_test_result_rows", "elementary")(
+                sample_limit=sample_limit, ignore_passed_tests=ignore_passed_tests
+            )
+        )
+    }}
+{% endmacro %}
+
+{% macro default__query_test_result_rows(
+    sample_limit=none, ignore_passed_tests=false
+) %}
     {% if sample_limit == 0 %}  {# performance: no need to run a sql query that we know returns an empty list #}
         {% do return([]) %}
     {% endif %}
@@ -186,6 +198,36 @@
     select * from test_results {% if sample_limit is not none %} limit {{ sample_limit }} {% endif %}
     {% endset %}
     {% do return(elementary.agate_to_dicts(elementary.run_query(query))) %}
+{% endmacro %}
+
+{% macro fabric__query_test_result_rows(sample_limit=none, ignore_passed_tests=false) %}
+    {% if sample_limit == 0 %} {% do return([]) %} {% endif %}
+
+    {# Allow setting -1 for unlimited, as none values are stripped from meta in dbt-fusion #}
+    {% if sample_limit == -1 %} {% set sample_limit = none %} {% endif %}
+
+    {% if ignore_passed_tests and elementary.did_test_pass() %}
+        {% do elementary.debug_log("Skipping sample query because the test passed.") %}
+        {% do return([]) %}
+    {% endif %}
+
+    {#
+        Fabric / T-SQL does not support LIMIT, and also does not allow CTEs nested
+        inside derived tables/subqueries.
+
+        Many dbt generic tests (e.g. accepted_values) compile to CTE-based SQL.
+        To avoid nesting those CTEs, we execute the compiled test SQL as-is (top-level)
+        and apply sampling in Jinja.
+
+        Tradeoff: this fetches ALL result rows into memory, then slices in Python.
+        For tests with very large result sets this may be expensive. Wrapping in
+        SELECT TOP … FROM (<cte-query>) is not possible because T-SQL forbids CTEs
+        inside derived tables; materializing to a temp table first would work but
+        adds complexity and DDL overhead for every test execution.
+    #}
+    {% set result = elementary.agate_to_dicts(elementary.run_query(sql)) %}
+    {% if sample_limit is not none %} {% do return(result[:sample_limit]) %} {% endif %}
+    {% do return(result) %}
 {% endmacro %}
 
 {% macro get_columns_to_exclude_from_sampling(flattened_test) %}

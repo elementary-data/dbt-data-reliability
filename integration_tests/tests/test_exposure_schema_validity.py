@@ -5,21 +5,6 @@ from dbt_project import DbtProject
 DBT_TEST_NAME = "elementary.exposure_schema_validity"
 
 
-INVALID_EXPOSURES_QUERY = """
-    with latest_elementary_test_result as (
-        select id
-        from {{{{ ref("elementary_test_results") }}}}
-        where lower(table_name) = lower('{test_id}')
-        order by created_at desc
-        limit 1
-    )
-
-    select result_row
-    from {{{{ ref("test_result_rows") }}}}
-    where elementary_test_results_id in (select * from latest_elementary_test_result)
-"""
-
-
 def seed(dbt_project: DbtProject):
     seed_result = dbt_project.dbt_runner.seed(full_refresh=True)
     assert seed_result is True
@@ -120,9 +105,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"
@@ -170,9 +153,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"
@@ -231,9 +212,7 @@ def test_exposure_schema_validity_missing_columns(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"

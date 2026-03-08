@@ -93,6 +93,11 @@
        bucket end (which is the actual time of the test) #}
     {%- set metric_time_bucket_expr = "case when bucket_start is not null then bucket_start else bucket_end end" %}
 
+    {%- set exclude_filter = (
+        "should_exclude_from_training = "
+        ~ elementary.edr_boolean_literal(false)
+    ) -%}
+
     {%- set anomaly_scores_query %}
         {% if test_configuration.timestamp_column %}
             with buckets as (
@@ -199,12 +204,12 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
-                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
+                case when {{ test_configuration.anomaly_exclude_metrics or '1=0' }} then {{ elementary.edr_boolean_literal(true) }} else {{ elementary.edr_boolean_literal(false) }} end as is_excluded,
                 {# Flag detection period metrics for exclusion from training #}
                 {% if test_configuration.exclude_detection_period_from_training %}
-                    bucket_end > {{ detection_period_start_expr }}
+                    case when bucket_end > {{ detection_period_start_expr }} then {{ elementary.edr_boolean_literal(true) }} else {{ elementary.edr_boolean_literal(false) }} end
                 {% else %}
-                    FALSE
+                    {{ elementary.edr_boolean_literal(false) }}
                 {% endif %} as should_exclude_from_training,
                 bucket_duration_hours,
                 updated_at
@@ -229,14 +234,17 @@
                 bucket_duration_hours,
                 updated_at,
                 should_exclude_from_training,
-                avg(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                {{ elementary.standard_deviation('case when not should_exclude_from_training then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                avg(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                {{ elementary.standard_deviation('case when ' ~ exclude_filter ~ ' then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            where not is_excluded
-            {{ dbt_utils.group_by(14) }}
+                where is_excluded = {{ elementary.edr_boolean_literal(false) }}
+                group by metric_id, full_table_name, column_name, dimension,
+                         dimension_value, metric_name, metric_value, source_value,
+                         bucket_start, bucket_end, bucket_seasonality,
+                         bucket_duration_hours, updated_at, should_exclude_from_training
         ),
 
         anomaly_scores as (

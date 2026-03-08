@@ -20,7 +20,6 @@
         from {{ schema_columns_snapshot_relation }}
         where lower(full_table_name) = lower('{{ full_table_name }}')
             and detected_at = {{ previous_schema_time_query }}
-        order by detected_at desc
     {% endset %}
 
     {{ elementary.get_columns_changes_query_generic(full_table_name, cur, pre) }}
@@ -33,22 +32,15 @@
     include_added=False
 ) %}
     {% set cur %}
-        with baseline as (
-            select lower(column_name) as column_name, data_type
-            from {{ model_baseline_relation }}
-        )
-
-        select
-            columns_snapshot.full_table_name,
-            lower(columns_snapshot.column_name) as column_name,
-            columns_snapshot.data_type,
-            (baseline.column_name IS NULL) as is_new,
-            {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
-        from ({{ elementary.get_columns_snapshot_query(model_relation, full_table_name) }}) columns_snapshot
-        left join baseline on (
-            lower(columns_snapshot.column_name) = lower(baseline.column_name)
-        )
-        where lower(columns_snapshot.full_table_name) = lower('{{ full_table_name }}')
+        {{
+            adapter.dispatch(
+                "get_column_changes_from_baseline_cur", "elementary"
+            )(
+                model_relation,
+                full_table_name,
+                model_baseline_relation,
+            )
+        }}
     {% endset %}
 
     {% set pre %}
@@ -114,7 +106,7 @@
                     {{ elementary.null_string() }} as pre_data_type,
                     detected_at as detected_at
                 from cur
-                where is_new = true
+                where is_new = {{ elementary.edr_boolean_literal(true) }}
 
             ),
         {% endif %}
@@ -191,22 +183,21 @@
                 column_name,
                 'schema_change' as test_type,
                 change as test_sub_type,
-                case
-                    when change = 'column_added'
-                    then 'The column "' || column_name || '" was added'
-                    when change = 'column_removed'
-                    then 'The column "' || column_name || '" was removed'
-                    when change = 'type_changed'
-                    then
-                        'The type of "'
-                        || column_name
-                        || '" was changed from '
-                        || pre_data_type
-                        || ' to '
-                        || data_type
-                    else null
-                end as test_results_description
-            from all_column_changes {{ dbt_utils.group_by(9) }}
+                {{ elementary.schema_change_description_column() }}
+            from all_column_changes
+            {% if elementary.is_tsql() %}
+                {#- T-SQL does not support positional GROUP BY references.
+                    Group by the 6 source columns from all_column_changes;
+                    all 9 output columns are deterministic functions of these. -#}
+                group by
+                    full_table_name,
+                    change,
+                    column_name,
+                    data_type,
+                    pre_data_type,
+                    detected_at
+                {% else %} {{ dbt_utils.group_by(9) }}
+                {% endif %}
 
         )
 
@@ -223,3 +214,102 @@
     from column_changes_test_results
 
 {%- endmacro %}
+
+{% macro default__get_column_changes_from_baseline_cur(
+    model_relation, full_table_name, model_baseline_relation
+) %}
+    with
+        baseline as (
+            select lower(column_name) as column_name, data_type
+            from {{ model_baseline_relation }}
+        )
+
+    select
+        columns_snapshot.full_table_name,
+        lower(columns_snapshot.column_name) as column_name,
+        columns_snapshot.data_type,
+        (baseline.column_name is null) as is_new,
+        {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
+    from
+        (
+            {{ elementary.get_columns_snapshot_query(model_relation, full_table_name) }}
+        ) columns_snapshot
+    left join
+        baseline on (lower(columns_snapshot.column_name) = lower(baseline.column_name))
+    where lower(columns_snapshot.full_table_name) = lower('{{ full_table_name }}')
+{% endmacro %}
+
+{% macro schema_change_description_column() %}
+    case
+        when change = 'column_added'
+        then
+            {{
+                elementary.edr_dbt_concat(
+                    ["'The column \"'", "column_name", "'\" was added'"]
+                )
+            }}
+        when change = 'column_removed'
+        then
+            {{
+                elementary.edr_dbt_concat(
+                    ["'The column \"'", "column_name", "'\" was removed'"]
+                )
+            }}
+        when change = 'type_changed'
+        then
+            {{
+                elementary.edr_dbt_concat(
+                    [
+                        "'The type of \"'",
+                        "column_name",
+                        "'\" was changed from '",
+                        "pre_data_type",
+                        "' to '",
+                        "data_type",
+                    ]
+                )
+            }}
+        else null
+    end as test_results_description
+{% endmacro %}
+
+{% macro fabric__get_column_changes_from_baseline_cur(
+    model_relation, full_table_name, model_baseline_relation
+) %}
+    {#- Fabric / T-SQL does not allow CTEs inside subqueries or derived tables.
+        get_columns_snapshot_query returns a CTE-based query, so we materialise
+        its result into a temp table first, then reference it with a plain SELECT.
+        We pass into_relation so the INTO clause is placed inside the CTE's final
+        SELECT (the only valid position in T-SQL). -#}
+    {% set tmp_snapshot = api.Relation.create(
+        database=model_relation.database,
+        schema=model_relation.schema,
+        identifier=model_relation.identifier ~ "__snap_tmp",
+        type="table",
+    ) %}
+    {% do run_query("drop table if exists " ~ tmp_snapshot) %}
+    {% do run_query(
+        elementary.get_columns_snapshot_query(
+            model_relation, full_table_name, into_relation=tmp_snapshot
+        )
+    ) %}
+
+    select
+        cs.full_table_name,
+        lower(cs.column_name) as column_name,
+        cs.data_type,
+        case
+            when bl.column_name is null
+            then {{ elementary.edr_boolean_literal(true) }}
+            else {{ elementary.edr_boolean_literal(false) }}
+        end as is_new,
+        {{ elementary.datetime_now_utc_as_timestamp_column() }} as detected_at
+    from {{ tmp_snapshot }} cs
+    left join
+        (
+            select lower(column_name) as column_name, data_type
+            from {{ model_baseline_relation }}
+        ) bl
+        on (lower(cs.column_name) = lower(bl.column_name))
+    where lower(cs.full_table_name) = lower('{{ full_table_name }}')
+{% endmacro %}

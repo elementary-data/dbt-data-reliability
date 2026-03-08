@@ -10,14 +10,15 @@ TIMESTAMP_COLUMN = "updated_at"
 DBT_TEST_NAME = "elementary.dimension_anomalies"
 DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]}
 
-# This returns data points used in the latest anomaly test
+# This returns data points used in the latest anomaly test.
+# T-SQL does not support LIMIT; use TOP instead when target is fabric/sqlserver.
 ANOMALY_TEST_POINTS_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
@@ -27,7 +28,13 @@ ANOMALY_TEST_POINTS_QUERY = """
 
 
 def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
-    results = dbt_project.run_query(ANOMALY_TEST_POINTS_QUERY.format(test_id=test_id))
+    sl = dbt_project.select_limit(1)
+    query = ANOMALY_TEST_POINTS_QUERY.format(
+        test_id=test_id,
+        top_clause=sl.top,
+        limit_clause=sl.limit,
+    )
+    results = dbt_project.run_query(query)
     return [json.loads(result["result_row"]) for result in results]
 
 

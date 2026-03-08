@@ -192,13 +192,11 @@
                 {%- if timestamp_column %}
                     left join buckets on (edr_bucket_start = start_bucket_in_data)
                 {%- endif %}
-                {% if dimensions | length > 0 %}
-                    group by
-                        1,
-                        2,
-                        {{ elementary.select_dimensions_columns(prefixed_dimensions) }}
-                {% else %} group by 1, 2
-                {% endif %}
+                    {{
+                        elementary.column_monitoring_group_by(
+                            timestamp_column, dimensions, prefixed_dimensions
+                        )
+                    }}
             {%- else %}{{ elementary.empty_column_monitors_cte() }}
             {%- endif %}
 
@@ -326,6 +324,21 @@
         metric_properties
     from metrics_final
 
+{% endmacro %}
+
+{% macro column_monitoring_group_by(
+    timestamp_column, dimensions, prefixed_dimensions
+) %}
+    {% if timestamp_column %}
+        group by
+            edr_bucket_start,
+            edr_bucket_end
+            {% if dimensions | length > 0 %}
+                , {{ elementary.select_dimensions_columns(prefixed_dimensions) }}
+            {% endif %}
+    {% elif dimensions | length > 0 %}
+        group by {{ elementary.select_dimensions_columns(prefixed_dimensions) }}
+    {% endif %}
 {% endmacro %}
 
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}

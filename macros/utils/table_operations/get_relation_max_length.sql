@@ -38,3 +38,12 @@
 {% macro dremio__get_relation_max_name_length(temporary, relation, sql_query) %}
     {{ return(128) }}
 {% endmacro %}
+
+{% macro fabric__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {# SQL Server / Fabric limits identifiers to 128 chars.  dbt-sqlserver
+       may prefix the schema name onto the table identifier when creating
+       relations, so we must reserve room for the full schema + separator.
+       Typical CI schema is ~60 chars; 128 - 60 - 1 = 67.  We use 60 to
+       leave headroom for longer schemas and __dbt_tmp_vw suffixes. #}
+    {{ return(60) }}
+{% endmacro %}
