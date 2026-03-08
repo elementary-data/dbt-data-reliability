@@ -230,7 +230,9 @@
         ~ range(10000)
         | random
     ) %}
-    {% set view_schema = model.schema if model.schema is defined else target.schema %}
+    {# Use target.schema (always exists) rather than model.schema, which may be a
+       per-worker test audit schema that hasn't been created yet. #}
+    {% set view_schema = target.schema %}
     {% set full_view_name = view_schema ~ "." ~ view_name %}
 
     {# Create view from the compiled test SQL #}
