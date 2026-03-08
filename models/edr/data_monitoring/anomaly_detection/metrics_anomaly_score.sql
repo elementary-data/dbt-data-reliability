@@ -42,16 +42,7 @@ with
                 partition by metric_name, full_table_name, column_name
                 order by bucket_start asc
                 rows between unbounded preceding and current row
-            ) as training_start,
-            case
-                when training_stddev is null
-                then null
-                when training_set_size = 1
-                then null  -- Single value case - no historical context for anomaly detection
-                when training_stddev = 0
-                then 0  -- Stationary data case - valid, all values are identical
-                else (metric_value - training_avg) / (training_stddev)
-            end as anomaly_score
+            ) as training_start
         from data_monitoring_metrics
         group by
             id,
@@ -66,6 +57,23 @@ with
             bucket_end,
             bucket_duration_hours,
             updated_at
+    ),
+
+    time_window_scored as (
+
+        select
+            *,
+            case
+                when training_stddev is null
+                then null
+                when training_set_size = 1
+                then null  -- Single value case - no historical context for anomaly detection
+                when training_stddev = 0
+                then 0  -- Stationary data case - valid, all values are identical
+                else (metric_value - training_avg) / (training_stddev)
+            end as anomaly_score
+        from time_window_aggregation
+
     ),
 
     metrics_anomaly_score as (
@@ -87,7 +95,7 @@ with
             training_end,
             training_set_size,
             max(updated_at) as updated_at
-        from time_window_aggregation
+        from time_window_scored
         where
             metric_value is not null
             and training_avg is not null
