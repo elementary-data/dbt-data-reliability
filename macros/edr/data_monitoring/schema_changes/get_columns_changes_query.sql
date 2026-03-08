@@ -244,21 +244,21 @@
         when change = 'column_added'
         then
             {{
-                elementary.edr_dbt_concat(
+                elementary.edr_concat(
                     ["'The column \"'", "column_name", "'\" was added'"]
                 )
             }}
         when change = 'column_removed'
         then
             {{
-                elementary.edr_dbt_concat(
+                elementary.edr_concat(
                     ["'The column \"'", "column_name", "'\" was removed'"]
                 )
             }}
         when change = 'type_changed'
         then
             {{
-                elementary.edr_dbt_concat(
+                elementary.edr_concat(
                     [
                         "'The type of \"'",
                         "column_name",

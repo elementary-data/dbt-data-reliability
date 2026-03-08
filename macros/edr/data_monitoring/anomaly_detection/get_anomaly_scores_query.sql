@@ -204,10 +204,10 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
-                case when {{ test_configuration.anomaly_exclude_metrics or '1=0' }} then {{ elementary.edr_boolean_literal(true) }} else {{ elementary.edr_boolean_literal(false) }} end as is_excluded,
+                {{ elementary.edr_condition_as_boolean(test_configuration.anomaly_exclude_metrics) }} as is_excluded,
                 {# Flag detection period metrics for exclusion from training #}
                 {% if test_configuration.exclude_detection_period_from_training %}
-                    case when bucket_end > {{ detection_period_start_expr }} then {{ elementary.edr_boolean_literal(true) }} else {{ elementary.edr_boolean_literal(false) }} end
+                    {{ elementary.edr_condition_as_boolean('bucket_end > ' ~ detection_period_start_expr) }}
                 {% else %}
                     {{ elementary.edr_boolean_literal(false) }}
                 {% endif %} as should_exclude_from_training,
@@ -240,7 +240,7 @@
                 last_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
                 first_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-                where is_excluded = {{ elementary.edr_boolean_literal(false) }}
+                where {{ elementary.edr_is_false('is_excluded') }}
                 group by metric_id, full_table_name, column_name, dimension,
                          dimension_value, metric_name, metric_value, source_value,
                          bucket_start, bucket_end, bucket_seasonality,

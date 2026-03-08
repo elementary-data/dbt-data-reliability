@@ -34,7 +34,7 @@
         ) -%}
         {%- if not loop.last %} {%- do field_sqls.append("'-'") -%} {%- endif -%}
     {%- endfor -%}
-    {%- set concat_result -%}{{ elementary.edr_dbt_concat(field_sqls) }}{%- endset -%}
+    {%- set concat_result -%}{{ elementary.edr_concat(field_sqls) }}{%- endset -%}
     {{ hash_macro(concat_result | trim) }}
 {%- endmacro -%}
 

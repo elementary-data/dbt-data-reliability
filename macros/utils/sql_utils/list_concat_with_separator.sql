@@ -28,7 +28,7 @@
             {% do new_list.append(elementary.edr_quote(separator)) %}
         {% endif %}
     {% endfor %}
-    {%- set result -%}{{ elementary.edr_dbt_concat(new_list) }}{%- endset -%}
+    {%- set result -%}{{ elementary.edr_concat(new_list) }}{%- endset -%}
     {{ return(result | trim) }}
 {% endmacro %}
 

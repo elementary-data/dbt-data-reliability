@@ -388,36 +388,8 @@
 {% endmacro %}
 
 {% macro default__row_count_metric_query(metric, metric_properties) %}
-    with
-        row_count_values as (
-            select
-                edr_bucket_start,
-                edr_bucket_end,
-                start_bucket_in_data,
-                case
-                    when start_bucket_in_data is null
-                    then 0
-                    else {{ elementary.edr_cast_as_float(elementary.row_count()) }}
-                end as row_count_value
-            from buckets
-            left join
-                time_filtered_monitored_table
-                on (edr_bucket_start = start_bucket_in_data)
-            group by edr_bucket_start, edr_bucket_end, start_bucket_in_data
-        )
-
-    select
-        edr_bucket_start,
-        edr_bucket_end,
-        {{ elementary.const_as_string(metric.name) }} as metric_name,
-        {{ elementary.const_as_string("row_count") }} as metric_type,
-        {{ elementary.null_string() }} as source_value,
-        row_count_value as metric_value
-    from row_count_values
-{% endmacro %}
-
-{% macro fabric__row_count_metric_query(metric, metric_properties) %}
-    {# Fabric / T-SQL: avoid CTE since this will be embedded inside a parent CTE. #}
+    {# CTE-free so it works both at top level and when embedded inside a parent CTE
+       (required by T-SQL / Fabric where nested CTEs are not allowed). #}
     select
         edr_bucket_start,
         edr_bucket_end,
@@ -440,6 +412,61 @@
     {{ adapter.dispatch("freshness_metric_query", "elementary")(metric, metric_properties) }}
 {% endmacro %}
 
+{#-- Helper: SQL expression for computing freshness as time since last update --#}
+{% macro _freshness_lag_expr() %}
+    {{
+        elementary.timediff(
+            "second",
+            elementary.lag("timestamp_val")
+            ~ " over (order by timestamp_val)",
+            "timestamp_val",
+        )
+    }}
+{% endmacro %}
+
+{#-- Helper: SQL expression for bucket-end freshness (time from last update to bucket end).
+    Uses dispatched _bucket_end_cap to handle least() vs CASE WHEN across dialects. --#}
+{% macro _bucket_end_freshness_expr() %}
+    {{ adapter.dispatch("_bucket_end_freshness_expr", "elementary")() }}
+{% endmacro %}
+
+{% macro default___bucket_end_freshness_expr() %}
+    {{
+        elementary.timediff(
+            "second",
+            elementary.edr_cast_as_timestamp("max(timestamp_val)"),
+            "least(edr_bucket_end, {})".format(
+                elementary.current_timestamp_column()
+            ),
+        )
+    }}
+{% endmacro %}
+
+{% macro fabric___bucket_end_freshness_expr() %}
+    {# T-SQL does not support least(); use CASE WHEN instead #}
+    {{
+        elementary.timediff(
+            "second",
+            elementary.edr_cast_as_timestamp("max(timestamp_val)"),
+            "case when edr_bucket_end < {} then edr_bucket_end else {} end".format(
+                elementary.current_timestamp_column(),
+                elementary.current_timestamp_column(),
+            ),
+        )
+    }}
+{% endmacro %}
+
+{#-- Helper: final SELECT columns for freshness metric --#}
+{% macro _freshness_final_select(metric) %}
+    select
+        edr_bucket_start,
+        edr_bucket_end,
+        {{ elementary.const_as_string(metric.name) }} as metric_name,
+        {{ elementary.const_as_string("freshness") }} as metric_type,
+        {{ elementary.edr_cast_as_string("update_timestamp") }} as source_value,
+        freshness as metric_value
+{% endmacro %}
+
 {% macro default__freshness_metric_query(metric, metric_properties) %}
     -- get ordered consecutive update timestamps in the source data
     with
@@ -454,14 +481,7 @@
         consecutive_updates_freshness as (
             select
                 timestamp_val as update_timestamp,
-                {{
-                    elementary.timediff(
-                        "second",
-                        elementary.lag("timestamp_val")
-                        ~ " over (order by timestamp_val)",
-                        "timestamp_val",
-                    )
-                }} as freshness
+                {{ elementary._freshness_lag_expr() }} as freshness
             from unique_timestamps
         ),
         time_filtered_consecutive_updates_freshness as (
@@ -488,15 +508,7 @@
                 edr_bucket_start,
                 edr_bucket_end,
                 max(timestamp_val) as update_timestamp,
-                {{
-                    elementary.timediff(
-                        "second",
-                        elementary.edr_cast_as_timestamp("max(timestamp_val)"),
-                        "least(edr_bucket_end, {})".format(
-                            elementary.current_timestamp_column()
-                        ),
-                    )
-                }} as freshness
+                {{ elementary._bucket_end_freshness_expr() }} as freshness
             from buckets
             cross join unique_timestamps
             where timestamp_val < edr_bucket_end
@@ -525,27 +537,16 @@
             from bucket_all_freshness_metrics
         )
 
-    select
-        edr_bucket_start,
-        edr_bucket_end,
-        {{ elementary.const_as_string(metric.name) }} as metric_name,
-        {{ elementary.const_as_string("freshness") }} as metric_type,
-        {{ elementary.edr_cast_as_string("update_timestamp") }} as source_value,
-        freshness as metric_value
+    {{ elementary._freshness_final_select(metric) }}
     from bucket_freshness_ranked
     where row_num = 1
 {% endmacro %}
 
 {% macro fabric__freshness_metric_query(metric, metric_properties) %}
     {# Fabric / T-SQL: rewrite without CTEs (nested CTEs are not allowed).
-       All intermediate results are expressed as inline subqueries. #}
-    select
-        edr_bucket_start,
-        edr_bucket_end,
-        {{ elementary.const_as_string(metric.name) }} as metric_name,
-        {{ elementary.const_as_string("freshness") }} as metric_type,
-        {{ elementary.edr_cast_as_string("update_timestamp") }} as source_value,
-        freshness as metric_value
+       All intermediate results are expressed as inline subqueries.
+       Uses the same helper macros as default__ for shared SQL expressions. #}
+    {{ elementary._freshness_final_select(metric) }}
     from (
         select
             *,
@@ -562,14 +563,7 @@
                 from (
                     select
                         timestamp_val as update_timestamp,
-                        {{
-                            elementary.timediff(
-                                "second",
-                                elementary.lag("timestamp_val")
-                                ~ " over (order by timestamp_val)",
-                                "timestamp_val",
-                            )
-                        }} as freshness
+                        {{ elementary._freshness_lag_expr() }} as freshness
                     from (
                         select distinct monitored_table_timestamp_column as timestamp_val
                         from partially_time_filtered_monitored_table
@@ -588,16 +582,7 @@
                 edr_bucket_start,
                 edr_bucket_end,
                 max(timestamp_val) as update_timestamp,
-                {{
-                    elementary.timediff(
-                        "second",
-                        elementary.edr_cast_as_timestamp("max(timestamp_val)"),
-                        "case when edr_bucket_end < {} then edr_bucket_end else {} end".format(
-                            elementary.current_timestamp_column(),
-                            elementary.current_timestamp_column(),
-                        ),
-                    )
-                }} as freshness
+                {{ elementary._bucket_end_freshness_expr() }} as freshness
             from buckets
             cross join (
                 select distinct monitored_table_timestamp_column as timestamp_val

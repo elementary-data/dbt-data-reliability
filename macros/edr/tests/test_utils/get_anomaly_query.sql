@@ -5,7 +5,7 @@
 {%- macro default__get_anomaly_query(flattened_test=none) -%}
     {%- set query -%}
     select * from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-    where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
+    where {{ elementary.edr_is_true('is_anomalous') }}
     {%- endset -%}
     {{- return(query) -}}
 {%- endmacro -%}
@@ -17,8 +17,7 @@
         return(
             elementary.get_read_anomaly_scores_query(
                 flattened_test,
-                additional_where="is_anomalous = "
-                ~ elementary.edr_boolean_literal(true),
+                additional_where=elementary.edr_is_true("is_anomalous"),
             )
         )
     -}}
@@ -37,7 +36,7 @@
 {%- macro default__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
     {%- set dimension_values_query -%}
     select distinct dimension_value from ({{ elementary.get_read_anomaly_scores_query(flattened_test) }}) results
-    where is_anomalous = {{ elementary.edr_boolean_literal(true) }}
+    where {{ elementary.edr_is_true('is_anomalous') }}
     {%- endset -%}
 
     {% set dimension_anomalies_query -%}
@@ -56,8 +55,8 @@
         return(
             elementary.get_read_anomaly_scores_query(
                 flattened_test,
-                extra_cte="anomalous_dimensions as (select distinct dimension_value from final_results where is_anomalous = "
-                ~ elementary.edr_boolean_literal(true)
+                extra_cte="anomalous_dimensions as (select distinct dimension_value from final_results where "
+                ~ elementary.edr_is_true("is_anomalous")
                 ~ ")",
                 additional_where="dimension_value in (select dimension_value from anomalous_dimensions)",
             )
@@ -121,12 +120,9 @@
       anomaly_scores_with_is_anomalous as (
         select
           *,
-case when
-          (
-            {{ elementary.anomaly_score_condition(test_configuration) }}
-          )
-          and bucket_end > {{ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end') }}
-          then {{ elementary.edr_boolean_literal(true) }} else {{ elementary.edr_boolean_literal(false) }} end as is_anomalous
+{{ elementary.edr_condition_as_boolean(
+            '(' ~ elementary.anomaly_score_condition(test_configuration) ~ ') and bucket_end > ' ~ elementary.edr_timeadd('day', backfill_period, 'max_bucket_end')
+          ) }} as is_anomalous
         from anomaly_scores
       ),
 
@@ -136,17 +132,17 @@ case when
             training_avg as average,
             {# when there is an anomaly we would want to use the last value of the metric (lag), otherwise visually the expectations would look out of bounds #}
             case
-                when is_anomalous = {{ elementary.edr_boolean_literal(true) }} and '{{ test_configuration.anomaly_direction }}' = 'spike' then
+                when {{ elementary.edr_is_true('is_anomalous') }} and '{{ test_configuration.anomaly_direction }}' = 'spike' then
                     {{ elementary.lag('metric_value') }} over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
-                when is_anomalous = {{ elementary.edr_boolean_literal(true) }} and '{{ test_configuration.anomaly_direction }}' != 'spike' then
+                when {{ elementary.edr_is_true('is_anomalous') }} and '{{ test_configuration.anomaly_direction }}' != 'spike' then
                     {{ elementary.lag('min_metric_value') }} over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
                 when '{{ test_configuration.anomaly_direction }}' = 'spike' then metric_value
                 else min_metric_value
             end as min_value,
             case
-                when is_anomalous = {{ elementary.edr_boolean_literal(true) }} and '{{ test_configuration.anomaly_direction }}' = 'drop' then
+                when {{ elementary.edr_is_true('is_anomalous') }} and '{{ test_configuration.anomaly_direction }}' = 'drop' then
                     {{ elementary.lag('metric_value') }} over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
-                when is_anomalous = {{ elementary.edr_boolean_literal(true) }} and '{{ test_configuration.anomaly_direction }}' != 'drop' then
+                when {{ elementary.edr_is_true('is_anomalous') }} and '{{ test_configuration.anomaly_direction }}' != 'drop' then
                     {{ elementary.lag('max_metric_value') }} over (partition by full_table_name, column_name, metric_name, dimension, dimension_value, bucket_seasonality order by bucket_end)
                 when '{{ test_configuration.anomaly_direction }}' = 'drop' then metric_value
                 else max_metric_value

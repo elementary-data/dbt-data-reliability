@@ -3,8 +3,15 @@
         sum(
             case
                 when
-                    cast({{ column_name }} as {{ elementary.edr_type_bool() }})
-                    = {{ elementary.edr_boolean_literal(true) }}
+                    {{
+                        elementary.edr_is_true(
+                            "cast("
+                            ~ column_name
+                            ~ " as "
+                            ~ elementary.edr_type_bool()
+                            ~ ")"
+                        )
+                    }}
                 then 1
                 else 0
             end
@@ -18,8 +25,15 @@
         sum(
             case
                 when
-                    cast({{ column_name }} as {{ elementary.edr_type_bool() }})
-                    = {{ elementary.edr_boolean_literal(true) }}
+                    {{
+                        elementary.edr_is_true(
+                            "cast("
+                            ~ column_name
+                            ~ " as "
+                            ~ elementary.edr_type_bool()
+                            ~ ")"
+                        )
+                    }}
                 then 0
                 else 1
             end

@@ -95,14 +95,16 @@
                 column_name,
                 data_type,
                 detected_at,
-                case
-                    when
-                        {{ elementary.full_column_name() }}
-                        not in ({{ known_columns_query }})
-                        and full_table_name in ({{ known_tables_query }})
-                    then {{ elementary.edr_boolean_literal(true) }}
-                    else {{ elementary.edr_boolean_literal(false) }}
-                end as is_new
+                {{
+                    elementary.edr_condition_as_boolean(
+                        elementary.full_column_name()
+                        ~ " not in ("
+                        ~ known_columns_query
+                        ~ ") and full_table_name in ("
+                        ~ known_tables_query
+                        ~ ")"
+                    )
+                }} as is_new
             from columns_info
         ),
 

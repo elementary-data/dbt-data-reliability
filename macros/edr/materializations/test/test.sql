@@ -216,17 +216,36 @@
         inside derived tables/subqueries.
 
         Many dbt generic tests (e.g. accepted_values) compile to CTE-based SQL.
-        To avoid nesting those CTEs, we execute the compiled test SQL as-is (top-level)
-        and apply sampling in Jinja.
+        To handle sampling efficiently, we materialise the compiled test SQL into a
+        temp view, then SELECT TOP from that view. This avoids fetching all rows into
+        Python memory.
 
-        Tradeoff: this fetches ALL result rows into memory, then slices in Python.
-        For tests with very large result sets this may be expensive. Wrapping in
-        SELECT TOP … FROM (<cte-query>) is not possible because T-SQL forbids CTEs
-        inside derived tables; materializing to a temp table first would work but
-        adds complexity and DDL overhead for every test execution.
+        We use a regular view (not a #temp table) because EXEC-based run_query
+        isolates #temp table scope. The view is dropped after the SELECT.
     #}
-    {% set result = elementary.agate_to_dicts(elementary.run_query(sql)) %}
-    {% if sample_limit is not none %} {% do return(result[:sample_limit]) %} {% endif %}
+    {% set view_name = (
+        "edr_test_sample_"
+        ~ modules.datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        ~ "_"
+        ~ range(10000)
+        | random
+    ) %}
+    {% set view_schema = model.schema if model.schema is defined else target.schema %}
+    {% set full_view_name = view_schema ~ "." ~ view_name %}
+
+    {# Create view from the compiled test SQL #}
+    {% do run_query("create view " ~ full_view_name ~ " as " ~ sql) %}
+
+    {% set query %}
+        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} *
+        from {{ full_view_name }}
+    {% endset %}
+
+    {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
+
+    {# Clean up the temp view #}
+    {% do run_query("drop view if exists " ~ full_view_name) %}
+
     {% do return(result) %}
 {% endmacro %}
 

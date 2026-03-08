@@ -5,23 +5,7 @@
 {% macro default__full_table_name(alias) -%}
     {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
     upper(
-        {{ alias_dot }}database_name
-        || '.'
-        || {{ alias_dot }}schema_name
-        || '.'
-        || {{ alias_dot }}table_name
-    )
-{%- endmacro %}
-
-{% macro fabric__full_table_name(alias) -%}
-    {# Use + operator instead of concat() to avoid nvarchar return type #}
-    {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
-    upper(
-        cast({{ alias_dot }}database_name as varchar(256))
-        + '.'
-        + cast({{ alias_dot }}schema_name as varchar(256))
-        + '.'
-        + cast({{ alias_dot }}table_name as varchar(256))
+        {{ elementary.edr_concat([alias_dot ~ 'database_name', "'.'", alias_dot ~ 'schema_name', "'.'", alias_dot ~ 'table_name']) }}
     )
 {%- endmacro %}
 
@@ -37,11 +21,7 @@
 {%- endmacro %}
 
 {% macro default__full_schema_name() -%}
-    upper(database_name || '.' || schema_name)
-{%- endmacro %}
-
-{% macro fabric__full_schema_name() -%}
-    upper(cast(database_name as varchar(256)) + '.' + cast(schema_name as varchar(256)))
+    upper({{ elementary.edr_concat(["database_name", "'.'", "schema_name"]) }})
 {%- endmacro %}
 
 {% macro clickhouse__full_schema_name() -%}
@@ -56,16 +36,7 @@
 
 {% macro default__full_column_name() -%}
     upper(
-        database_name || '.' || schema_name || '.' || table_name || '.' || column_name
-    )
-{%- endmacro %}
-
-{% macro fabric__full_column_name() -%}
-    upper(
-        cast(database_name as varchar(256))
-        + '.' + cast(schema_name as varchar(256))
-        + '.' + cast(table_name as varchar(256))
-        + '.' + cast(column_name as varchar(256))
+        {{ elementary.edr_concat(["database_name", "'.'", "schema_name", "'.'", "table_name", "'.'", "column_name"]) }}
     )
 {%- endmacro %}
 
