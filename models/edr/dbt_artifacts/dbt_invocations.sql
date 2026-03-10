@@ -4,12 +4,7 @@
         transient=False,
         unique_key="invocation_id",
         on_schema_change="append_new_columns",
-        partition_by=(
-            {"field": "created_at", "data_type": "timestamp", "granularity": "day"}
-            if target.type == "bigquery"
-            and not elementary.get_config_var("bigquery_disable_partitioning")
-            else none
-        ),
+        partition_by=elementary.get_default_partition_by(),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={
             "timestamp_column": "created_at",
