@@ -177,6 +177,15 @@ def test_run_results_partitioned(dbt_project: DbtProject):
     )
     assert len(results) >= 1
 
+    # Verify the partition is actually set in BigQuery by querying INFORMATION_SCHEMA
+    partition_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('dbt_run_results').database }}.{{ ref('dbt_run_results').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('dbt_run_results').identifier }}' "
+        "AND is_partitioning_column = 'YES'"
+    )
+    assert len(partition_cols) >= 1, "dbt_run_results should have a partitioning column set in BigQuery"
+
 
 @pytest.mark.only_on_targets(["bigquery"])
 def test_dbt_invocations_partitioned(dbt_project: DbtProject):
@@ -188,3 +197,12 @@ def test_dbt_invocations_partitioned(dbt_project: DbtProject):
     dbt_project.read_table(
         "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
     )
+
+    # Verify the partition is actually set in BigQuery by querying INFORMATION_SCHEMA
+    partition_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('dbt_invocations').database }}.{{ ref('dbt_invocations').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('dbt_invocations').identifier }}' "
+        "AND is_partitioning_column = 'YES'"
+    )
+    assert len(partition_cols) >= 1, "dbt_invocations should have a partitioning column set in BigQuery"
