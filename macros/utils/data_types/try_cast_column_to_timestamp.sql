@@ -1,5 +1,11 @@
 {% macro try_cast_column_to_timestamp(table_relation, timestamp_column) %}
-    {{ return(adapter.dispatch('try_cast_column_to_timestamp', 'elementary')(table_relation, timestamp_column)) }}
+    {{
+        return(
+            adapter.dispatch("try_cast_column_to_timestamp", "elementary")(
+                table_relation, timestamp_column
+            )
+        )
+    }}
 {%- endmacro %}
 
 {% macro default__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
@@ -12,13 +18,25 @@
     {%- endset %}
 
     {%- set result = elementary.result_value(query) %}
-    {%- if result is not none %}
-        {{ return(true) }}
-    {%- endif %}
+    {%- if result is not none %} {{ return(true) }} {%- endif %}
     {{ return(false) }}
 
 {% endmacro %}
 
 {% macro postgres__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
     {{ return(false) }}
+{% endmacro %}
+
+{% macro fabric__try_cast_column_to_timestamp(table_relation, timestamp_column) %}
+    {%- set query %}
+        select top 1 1
+        from {{ table_relation }}
+        where {{ timestamp_column }} is not null
+            and try_cast({{ timestamp_column }} as {{ elementary.edr_type_timestamp() }}) is not null
+    {%- endset %}
+
+    {%- set result = elementary.result_value(query) %}
+    {%- if result is not none %} {{ return(true) }} {%- endif %}
+    {{ return(false) }}
+
 {% endmacro %}

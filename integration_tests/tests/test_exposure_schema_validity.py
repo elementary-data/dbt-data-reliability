@@ -1,24 +1,8 @@
 import json
 
-import pytest
 from dbt_project import DbtProject
 
 DBT_TEST_NAME = "elementary.exposure_schema_validity"
-
-
-INVALID_EXPOSURES_QUERY = """
-    with latest_elementary_test_result as (
-        select id
-        from {{{{ ref("elementary_test_results") }}}}
-        where lower(table_name) = lower('{test_id}')
-        order by created_at desc
-        limit 1
-    )
-
-    select result_row
-    from {{{{ ref("test_result_rows") }}}}
-    where elementary_test_results_id in (select * from latest_elementary_test_result)
-"""
 
 
 def seed(dbt_project: DbtProject):
@@ -37,7 +21,6 @@ def test_exposure_schema_validity_existing_exposure_yml_invalid(
     test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_orders"],
         log_format="text",
-        capture_output=True,
         quiet=True,
         log_output=False,
     )
@@ -54,21 +37,17 @@ def test_exposure_schema_validity_existing_exposure_yml_valid(
     assert run_result is True
     test_result = dbt_project.dbt_runner._run_command(
         command_args=["test", "-s", "tag:exposure_customers"],
-        capture_output=True,
         quiet=True,
         log_output=False,
     )
     assert test_result.success is True
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_no_exposures(test_id: str, dbt_project: DbtProject):
     test_result = dbt_project.test(test_id, DBT_TEST_NAME)
     assert test_result["status"] == "pass"
 
 
-# Schema validity currently not supported on ClickHouse
-@pytest.mark.skip_targets(["spark", "clickhouse"])
 def test_exposure_schema_validity_correct_columns_and_types(
     test_id: str, dbt_project: DbtProject
 ):
@@ -100,7 +79,6 @@ def test_exposure_schema_validity_correct_columns_and_types(
     assert test_result["status"] == "pass"
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_correct_columns_and_invalid_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -127,9 +105,7 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"
@@ -140,8 +116,6 @@ def test_exposure_schema_validity_correct_columns_and_invalid_type(
     )
 
 
-# Schema validity currently not supported on ClickHouse
-@pytest.mark.skip_targets(["spark", "clickhouse"])
 def test_exposure_schema_validity_invalid_type_name_present_in_error(
     test_id: str, dbt_project: DbtProject
 ):
@@ -179,9 +153,7 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"
@@ -192,7 +164,6 @@ def test_exposure_schema_validity_invalid_type_name_present_in_error(
     )
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_correct_columns_and_missing_type(
     test_id: str, dbt_project: DbtProject
 ):
@@ -215,7 +186,6 @@ def test_exposure_schema_validity_correct_columns_and_missing_type(
     assert test_result["status"] == "pass"
 
 
-@pytest.mark.skip_targets(["spark"])
 def test_exposure_schema_validity_missing_columns(
     test_id: str, dbt_project: DbtProject
 ):
@@ -242,9 +212,7 @@ def test_exposure_schema_validity_missing_columns(
 
     invalid_exposures = [
         json.loads(row["result_row"])
-        for row in dbt_project.run_query(
-            INVALID_EXPOSURES_QUERY.format(test_id=test_id)
-        )
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(invalid_exposures) == 1
     assert invalid_exposures[0]["exposure"] == "ZOMG"

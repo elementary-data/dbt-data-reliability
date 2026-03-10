@@ -7,12 +7,13 @@
             where test_type = 'schema_change' and test_sub_type != 'table_added'
         {%- endset %}
 
-        {%- set last_schema_changes_query_result = elementary.result_value(last_schema_changes_time_query) %}
+        {%- set last_schema_changes_query_result = elementary.result_value(
+            last_schema_changes_time_query
+        ) %}
 
         {%- if last_schema_changes_query_result %}
             {{ return(last_schema_changes_query_result) }}
-        {%- else %}
-            {{ return(none) }}
+        {%- else %} {{ return(none) }}
         {%- endif %}
     {%- endif -%}
     {{- return(none) -}}

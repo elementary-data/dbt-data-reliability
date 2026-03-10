@@ -13,41 +13,48 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 #}
-
 {%- macro generate_surrogate_key(fields) -%}
-    {{ return(adapter.dispatch('generate_surrogate_key', 'elementary')(fields)) }}
+    {{ return(adapter.dispatch("generate_surrogate_key", "elementary")(fields)) }}
 {%- endmacro -%}
 
 {%- macro default__generate_surrogate_key(fields) -%}
-  {% set concat_macro = dbt.concat or dbt_utils.concat %}
-  {% set hash_macro = dbt.hash or dbt_utils.hash %}
+    {% set hash_macro = dbt.hash or dbt_utils.hash %}
 
-  {% set default_null_value = "" %}
-  {%- set field_sqls = [] -%}
-  {%- for field in fields -%}
-    {%- do field_sqls.append(
-        "coalesce(cast(" ~ field ~ " as " ~ elementary.edr_type_string() ~ "), '" ~ default_null_value  ~"')"
-    ) -%}
-    {%- if not loop.last %}
-        {%- do field_sqls.append("'-'") -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {{ hash_macro(concat_macro(field_sqls)) }}
+    {% set default_null_value = "" %}
+    {%- set field_sqls = [] -%}
+    {%- for field in fields -%}
+        {%- do field_sqls.append(
+            "coalesce(cast("
+            ~ field
+            ~ " as "
+            ~ elementary.edr_type_string()
+            ~ "), '"
+            ~ default_null_value
+            ~ "')"
+        ) -%}
+        {%- if not loop.last %} {%- do field_sqls.append("'-'") -%} {%- endif -%}
+    {%- endfor -%}
+    {%- set concat_result -%}{{ elementary.edr_concat(field_sqls) }}{%- endset -%}
+    {{ hash_macro(concat_result | trim) }}
 {%- endmacro -%}
 
 {%- macro clickhouse__generate_surrogate_key(fields) -%}
-  {% set concat_macro = dbt.concat or dbt_utils.concat %}
-  {% set hash_macro = dbt.hash or dbt_utils.hash %}
+    {% set concat_macro = dbt.concat or dbt_utils.concat %}
+    {% set hash_macro = dbt.hash or dbt_utils.hash %}
 
-  {% set default_null_value = "" %}
-  {%- set field_sqls = [] -%}
-  {%- for field in fields -%}
-    {%- do field_sqls.append(
-        "coalesce(cast(" ~ field ~ " as Nullable(" ~ elementary.edr_type_string() ~ ")), '" ~ default_null_value  ~"')"
-    ) -%}
-    {%- if not loop.last %}
-        {%- do field_sqls.append("'-'") -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {{ hash_macro(concat_macro(field_sqls)) }}
+    {% set default_null_value = "" %}
+    {%- set field_sqls = [] -%}
+    {%- for field in fields -%}
+        {%- do field_sqls.append(
+            "coalesce(cast("
+            ~ field
+            ~ " as Nullable("
+            ~ elementary.edr_type_string()
+            ~ ")), '"
+            ~ default_null_value
+            ~ "')"
+        ) -%}
+        {%- if not loop.last %} {%- do field_sqls.append("'-'") -%} {%- endif -%}
+    {%- endfor -%}
+    {{ hash_macro(concat_macro(field_sqls)) }}
 {%- endmacro -%}
