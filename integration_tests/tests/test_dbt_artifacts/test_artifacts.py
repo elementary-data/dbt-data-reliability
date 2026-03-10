@@ -171,6 +171,8 @@ def test_run_results_partitioned(dbt_project: DbtProject):
     # Verify enabling partition_run_results=True doesn't break the model and data is readable.
     dbt_project.dbt_runner.vars["disable_run_results"] = False
     dbt_project.dbt_runner.vars["partition_run_results"] = True
+    # Full-refresh dbt_run_results with partitioning enabled so we always start from a known state
+    dbt_project.dbt_runner.run(select="dbt_run_results", full_refresh=True)
     dbt_project.dbt_runner.run(select=TEST_MODEL)
     results = dbt_project.run_query(
         """select * from {{ ref("dbt_run_results") }} where name='%s'""" % TEST_MODEL
@@ -193,6 +195,8 @@ def test_dbt_invocations_partitioned(dbt_project: DbtProject):
     # Verify enabling partition_run_results=True doesn't break dbt_invocations.
     dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
     dbt_project.dbt_runner.vars["partition_run_results"] = True
+    # Full-refresh dbt_run_results with partitioning enabled so we always start from a known state
+    dbt_project.dbt_runner.run(select="dbt_invocations", full_refresh=True)
     dbt_project.dbt_runner.run(selector="one")
     dbt_project.read_table(
         "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True

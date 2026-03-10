@@ -18,7 +18,6 @@ clean-targets: # directories to be removed by `dbt clean`
 
 vars:
   debug_logs: "{{ env_var('DBT_EDR_DEBUG', False) }}"
-  partition_run_results: True
 
 models:
   elementary_tests:
