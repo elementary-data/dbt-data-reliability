@@ -95,66 +95,62 @@
 {%- macro default__get_default_config() -%}
     {# We use this macro to define and call vars, as the global vars defined in dbt_project.yml
    of the package are not accessible at on-run-start and on-run-end #}
-  {% set default_config = {
-    'days_back': 14,
-    'anomaly_sensitivity': 3,
-    'backfill_days': 2,
-    'tests_schema_name': '',
-    'debug_logs': false,
-    'disable_warn_alerts': false,
-    'disable_model_alerts': false,
-    'disable_test_alerts': false,
-    'disable_source_freshness_alerts': false,
-    'disable_run_results': false,
-    'disable_freshness_results': false,
-    'disable_tests_results': false,
-    'disable_dbt_artifacts_autoupload': false,
-    'columns_upload_strategy': 'enriched_only',
-    'disable_dbt_invocation_autoupload': false,
-    'disable_skipped_model_alerts': true,
-    'disable_skipped_test_alerts': true,
-    'dbt_artifacts_chunk_size': 5000,
-    'test_sample_row_count': 5,
-    'edr_cli_run': false,
-    'max_int': 2147483647,
-    'custom_run_started_at': none,
-    'edr_monitors': elementary.get_default_monitors(),
-    'long_string_size': 65535,
-    'collect_model_sql': true,
-    'query_max_size': 1000000,
-    'upload_artifacts_method': 'diff',
-    'project_name': none,
-    'elementary_full_refresh': false,
-    'min_training_set_size': 7,
-    'cache_artifacts': true,
-    'anomaly_direction': 'both',
-    'store_result_rows_in_own_table': true,
-    'mute_dbt_upgrade_recommendation': false,
-    'calculate_failed_count': true,
-    'tests_use_temp_tables': false,
-    'clean_elementary_temp_tables': true,
-    'force_metrics_backfill': false,
-    'ignore_small_changes': {
-      'spike_failure_percent_threshold': none,
-      'drop_failure_percent_threshold': none
-    },
-    'include_other_warehouse_specific_columns': false,
-    'fail_on_zero': false,
-    'anomaly_exclude_metrics': none,
-    'disable_samples_on_pii_tags': false,
-    'pii_tags': ['pii'],
-    'partition_run_results': false,
-    'run_results_partition_by': none,
-  } %}
-  {{- return(default_config) -}}
+    {% set default_config = {
+        "days_back": 14,
+        "anomaly_sensitivity": 3,
+        "backfill_days": 2,
+        "tests_schema_name": "",
+        "debug_logs": false,
+        "disable_warn_alerts": false,
+        "disable_model_alerts": false,
+        "disable_test_alerts": false,
+        "disable_source_freshness_alerts": false,
+        "disable_run_results": false,
+        "disable_freshness_results": false,
+        "disable_tests_results": false,
+        "disable_dbt_artifacts_autoupload": false,
+        "columns_upload_strategy": "enriched_only",
+        "disable_dbt_invocation_autoupload": false,
+        "disable_skipped_model_alerts": true,
+        "disable_skipped_test_alerts": true,
+        "dbt_artifacts_chunk_size": 5000,
+        "test_sample_row_count": 5,
+        "edr_cli_run": false,
+        "max_int": 2147483647,
+        "custom_run_started_at": none,
+        "edr_monitors": elementary.get_default_monitors(),
+        "long_string_size": 65535,
+        "collect_model_sql": true,
+        "query_max_size": 1000000,
+        "upload_artifacts_method": "diff",
+        "project_name": none,
+        "elementary_full_refresh": false,
+        "min_training_set_size": 7,
+        "cache_artifacts": true,
+        "anomaly_direction": "both",
+        "store_result_rows_in_own_table": true,
+        "mute_dbt_upgrade_recommendation": false,
+        "calculate_failed_count": true,
+        "tests_use_temp_tables": false,
+        "clean_elementary_temp_tables": true,
+        "force_metrics_backfill": false,
+        "ignore_small_changes": {
+            "spike_failure_percent_threshold": none,
+            "drop_failure_percent_threshold": none,
+        },
+        "include_other_warehouse_specific_columns": false,
+        "fail_on_zero": false,
+        "anomaly_exclude_metrics": none,
+        "disable_samples_on_pii_tags": false,
+        "pii_tags": ["pii"],
+        "bigquery_disable_partitioning": false,
+    } %}
+    {{- return(default_config) -}}
 {%- endmacro -%}
 
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {% do default_config.update({'query_max_size': 250000}) %}
-    {% do default_config.update({
-      'run_results_partition_by': {'field': 'created_at', 'data_type': 'timestamp', 'granularity': 'day'},
-    }) %}
+    {% do default_config.update({"query_max_size": 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}
 
