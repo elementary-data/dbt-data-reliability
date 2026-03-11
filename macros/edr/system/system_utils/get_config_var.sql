@@ -171,6 +171,14 @@
     {{- return(default_config) -}}
 {%- endmacro -%}
 
+{%- macro vertica__get_default_config() -%}
+    {% set default_config = elementary.default__get_default_config() %}
+    {# Vertica varchar columns max out at 65000 bytes.  edr_type_long_string
+       is varchar(32000), so keep INSERT statements well within that limit. #}
+    {% do default_config.update({"query_max_size": 250000}) %}
+    {{- return(default_config) -}}
+{%- endmacro -%}
+
 {%- macro dremio__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({"dbt_artifacts_chunk_size": 100}) %}

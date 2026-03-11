@@ -26,3 +26,5 @@
 {% macro fabric__target_database() %} {% do return(target.database) %} {% endmacro %}
 
 {% macro sqlserver__target_database() %} {% do return(target.database) %} {% endmacro %}
+
+{% macro vertica__target_database() %} {% do return(target.database) %} {% endmacro %}

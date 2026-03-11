@@ -7,7 +7,12 @@ from typing import Any, Dict, Generator, List, Literal, Optional, Union, overloa
 from uuid import uuid4
 
 from adapter_query_runner import AdapterQueryRunner, UnsupportedJinjaError
-from data_seeder import ClickHouseDirectSeeder, DbtDataSeeder, SparkS3CsvSeeder
+from data_seeder import (
+    ClickHouseDirectSeeder,
+    DbtDataSeeder,
+    SparkS3CsvSeeder,
+    VerticaDirectSeeder,
+)
 from dbt_utils import get_database_and_schema_properties
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from elementary.clients.dbt.factory import RunnerMethod, create_dbt_runner
@@ -357,7 +362,9 @@ class DbtProject:
 
     def _create_seeder(
         self,
-    ) -> Union[DbtDataSeeder, ClickHouseDirectSeeder, SparkS3CsvSeeder]:
+    ) -> Union[
+        DbtDataSeeder, ClickHouseDirectSeeder, SparkS3CsvSeeder, VerticaDirectSeeder
+    ]:
         """Return the fastest available seeder for the current target."""
         if self.target == "clickhouse":
             runner = self._get_query_runner()
@@ -369,6 +376,12 @@ class DbtProject:
             # set_from_args / reset_adapters).
             schema = self._read_profile_schema() + SCHEMA_NAME_SUFFIX
             return SparkS3CsvSeeder(schema, self.seeds_dir_path)
+        if self.target == "vertica":
+            # Vertica's COPY command (used by dbt seed) rejects empty CSV
+            # fields for non-string columns.  Use direct INSERT instead.
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return VerticaDirectSeeder(runner, schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         )
