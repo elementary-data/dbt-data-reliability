@@ -155,12 +155,12 @@ jobs:
       - name: Install dbt-vertica
         if: inputs.warehouse-type == 'vertica'
         run: |
-          pip install dbt-vertica
           # dbt-vertica pins dbt-core~=1.8 which lacks native support for the
           # "arguments" test property used by the integration-test framework.
-          # Upgrade dbt-core to the latest release (dbt-vertica works fine with
-          # newer dbt-core versions).
-          pip install "dbt-core"
+          # Install dbt-vertica without deps, then install latest dbt-core
+          # separately (dbt-vertica works fine with newer dbt-core versions).
+          pip install dbt-vertica --no-deps
+          pip install vertica-python "dbt-core"
 
       - name: Install dbt
         if: ${{ inputs.dbt-version != 'fusion' && inputs.warehouse-type != 'vertica' }}
