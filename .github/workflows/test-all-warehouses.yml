@@ -1,5 +1,9 @@
 name: Test all warehouse platforms
 on:
+  # For internal PRs (non-forks) - no approval needed, can test workflow changes immediately
+  pull_request:
+    branches: ["master"]
+  # For fork PRs - requires approval before running (has access to secrets)
   pull_request_target:
     branches: ["master"]
   # Allows you to run this workflow manually from the Actions tab
@@ -31,7 +35,102 @@ on:
         required: false
 
 jobs:
-  test:
+  # ── Local targets ─────────────────────────────────────────────────────
+  # No secrets needed — run on pull_request (works for forks without approval).
+  # Skipped on pull_request_target to avoid duplicate runs for internal PRs.
+  # Includes Docker-based adapters (postgres, clickhouse, trino, dremio) and
+  # fully in-process adapters (duckdb).
+  test-local:
+    if: github.event_name != 'pull_request_target'
+    strategy:
+      fail-fast: false
+      matrix:
+        dbt-version:
+          ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
+          fromJSON('["latest_official", "latest_pre"]') }}
+        warehouse-type:
+          [
+            postgres,
+            clickhouse,
+            trino,
+            dremio,
+            spark,
+            duckdb,
+            sqlserver,
+            vertica,
+          ]
+        exclude:
+          # latest_pre is only tested on postgres
+          - dbt-version: latest_pre
+            warehouse-type: clickhouse
+          - dbt-version: latest_pre
+            warehouse-type: trino
+          - dbt-version: latest_pre
+            warehouse-type: dremio
+          - dbt-version: latest_pre
+            warehouse-type: spark
+          - dbt-version: latest_pre
+            warehouse-type: duckdb
+          - dbt-version: latest_pre
+            warehouse-type: sqlserver
+          - dbt-version: latest_pre
+            warehouse-type: vertica
+    uses: ./.github/workflows/test-warehouse.yml
+    with:
+      warehouse-type: ${{ matrix.warehouse-type }}
+      dbt-version: ${{ matrix.dbt-version }}
+      elementary-ref: ${{ inputs.elementary-ref }}
+      dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha) || '' }}
+
+  # ── Cloud targets ─────────────────────────────────────────────────────
+  # Require secrets — use fork check / approval gate for pull_request_target.
+
+  # Determine if this is a fork PR and skip if wrong trigger is used
+  check-fork-status:
+    runs-on: ubuntu-latest
+    outputs:
+      is_fork: ${{ steps.check.outputs.is_fork }}
+      should_skip: ${{ steps.check.outputs.should_skip }}
+    steps:
+      - name: Check if PR is from fork
+        id: check
+        run: |
+          IS_FORK="false"
+          SHOULD_SKIP="false"
+
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "pull_request_target" ]]; then
+            if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+              IS_FORK="true"
+            fi
+
+            # Skip if: pull_request from fork (should use pull_request_target) OR pull_request_target from non-fork (should use pull_request)
+            if [[ "${{ github.event_name }}" == "pull_request" && "$IS_FORK" == "true" ]]; then
+              SHOULD_SKIP="true"
+            elif [[ "${{ github.event_name }}" == "pull_request_target" && "$IS_FORK" == "false" ]]; then
+              SHOULD_SKIP="true"
+            fi
+          fi
+
+          echo "is_fork=$IS_FORK" >> $GITHUB_OUTPUT
+          echo "should_skip=$SHOULD_SKIP" >> $GITHUB_OUTPUT
+
+  # Approval gate for fork PRs (only runs once for all platforms)
+  approve-fork:
+    runs-on: ubuntu-latest
+    needs: [check-fork-status]
+    if: needs.check-fork-status.outputs.should_skip != 'true' && needs.check-fork-status.outputs.is_fork == 'true'
+    environment: elementary_test_env
+    steps:
+      - name: Approved
+        run: echo "Fork PR approved for testing"
+
+  test-cloud:
+    needs: [check-fork-status, approve-fork]
+    if: |
+      ! cancelled() &&
+      needs.check-fork-status.result == 'success' &&
+      needs.check-fork-status.outputs.should_skip != 'true' &&
+      (needs.check-fork-status.outputs.is_fork != 'true' || needs.approve-fork.result == 'success')
     strategy:
       fail-fast: false
       matrix:
@@ -39,51 +138,25 @@ jobs:
           ${{ inputs.dbt-version && fromJSON(format('["{0}"]', inputs.dbt-version)) ||
           fromJSON('["latest_official"]') }}
         warehouse-type:
-          [
-            postgres,
-            snowflake,
-            bigquery,
-            redshift,
-            databricks_catalog,
-            athena,
-            trino,
-            clickhouse,
-            dremio,
-            vertica,
-          ]
+          [snowflake, bigquery, redshift, databricks_catalog, athena, fabric]
+        # Fusion includes: always run fusion alongside the base version for
+        # supported warehouses.  When inputs.dbt-version is already 'fusion' the
+        # matrix deduplicates automatically.
         include:
-          - dbt-version: "${{ inputs.dbt-version || 'latest_pre' }}"
-            warehouse-type: postgres
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: snowflake
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: bigquery
-          - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
-            warehouse-type: redshift
+          # fusion/redshift temporarily disabled - Fusion sidecar can't resolve
+          # source schemas via SVV_COLUMNS on Redshift (see dbt-labs/dbt-fusion issues)
+          # - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
+          #   warehouse-type: redshift
           - dbt-version: "${{ inputs.dbt-version || 'fusion' }}"
             warehouse-type: databricks_catalog
-          - dbt-version: "${{ inputs.dbt-version || '1.8.5' }}"
-            warehouse-type: vertica
     uses: ./.github/workflows/test-warehouse.yml
     with:
       warehouse-type: ${{ matrix.warehouse-type }}
       dbt-version: ${{ matrix.dbt-version }}
       elementary-ref: ${{ inputs.elementary-ref }}
-      dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || (github.event_name == 'pull_request_target' && github.event.pull_request.head.sha) || '' }}
+      dbt-data-reliability-ref: ${{ inputs.dbt-data-reliability-ref || ((github.event_name == 'pull_request_target' || github.event_name == 'pull_request') && github.event.pull_request.head.sha) || '' }}
     secrets: inherit
-
-  notify_failures:
-    name: Notify Slack
-    secrets: inherit
-    needs: [test]
-    if: |
-      always() &&
-      ! contains(needs.test.result, 'success') &&
-      ! contains(needs.test.result, 'cancelled') &&
-      contains(github.event_name, 'schedule') &&
-      ! cancelled()
-    uses: elementary-data/elementary/.github/workflows/notify_slack.yml@master
-    with:
-      result: "failure"
-      run_id: ${{ github.run_id }}
-      workflow_name: ${{ github.workflow }}

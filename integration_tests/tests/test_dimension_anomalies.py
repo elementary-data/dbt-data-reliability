@@ -10,14 +10,15 @@ TIMESTAMP_COLUMN = "updated_at"
 DBT_TEST_NAME = "elementary.dimension_anomalies"
 DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]}
 
-# This returns data points used in the latest anomaly test
+# This returns data points used in the latest anomaly test.
+# T-SQL does not support LIMIT; use TOP instead when target is fabric/sqlserver.
 ANOMALY_TEST_POINTS_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
@@ -27,12 +28,16 @@ ANOMALY_TEST_POINTS_QUERY = """
 
 
 def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
-    results = dbt_project.run_query(ANOMALY_TEST_POINTS_QUERY.format(test_id=test_id))
+    sl = dbt_project.select_limit(1)
+    query = ANOMALY_TEST_POINTS_QUERY.format(
+        test_id=test_id,
+        top_clause=sl.top,
+        limit_clause=sl.limit,
+    )
+    results = dbt_project.run_query(query)
     return [json.loads(result["result_row"]) for result in results]
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -51,8 +56,6 @@ def test_anomalyless_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert len(anomaly_test_points) == 0
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -73,8 +76,6 @@ def test_dimension_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -114,8 +115,6 @@ def test_anomalous_dimension_anomalies(test_id: str, dbt_project: DbtProject):
     assert any(x["is_anomalous"] for x in superman_anomaly_test_points)
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimensions_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject
 ):
@@ -166,8 +165,6 @@ def test_dimensions_anomalies_with_where_parameter(
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_id: str, dbt_project: DbtProject
 ):
@@ -218,3 +215,103 @@ def test_dimension_anomalies_with_timestamp_exclude_final_results(
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 1
+
+
+# Test for exclude_detection_period_from_training functionality
+# This test demonstrates the use case where:
+# 1. Detection period contains anomalous distribution data that would normally be included in training
+# 2. With exclude_detection=False: anomaly is missed (test passes) because training includes the anomaly
+# 3. With exclude_detection=True: anomaly is detected (test fails) because training excludes the anomaly
+@pytest.mark.parametrize(
+    "exclude_detection,expected_status",
+    [
+        (False, "pass"),  # include detection in training → anomaly absorbed
+        (True, "fail"),  # exclude detection from training → anomaly detected
+    ],
+    ids=[
+        "exclude_false",
+        "exclude_true",
+    ],  # Shortened to stay under Postgres 63-char limit
+)
+def test_anomaly_in_detection_period(
+    test_id: str,
+    dbt_project: DbtProject,
+    exclude_detection: bool,
+    expected_status: str,
+):
+    """
+    Test the exclude_detection_period_from_training flag functionality for dimension anomalies.
+
+    Scenario:
+    - 30 days of normal data with variance (45/50/55 Superman, 55/50/45 Spiderman pattern)
+    - 7 days of anomalous data (72 Superman, 28 Spiderman per day) in detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+
+    Note: Parametrize IDs are shortened to avoid Postgres 63-character identifier limit.
+    """
+    utc_now = datetime.utcnow().date()
+
+    # Generate 30 days of normal data with variance (45/50/55 pattern for Superman)
+    normal_pattern = [45, 50, 55]
+    normal_data = []
+    for i in range(30):
+        date = utc_now - timedelta(days=37 - i)
+        superman_count = normal_pattern[i % 3]
+        spiderman_count = 100 - superman_count
+        normal_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": "Superman"}
+                for _ in range(superman_count)
+            ]
+        )
+        normal_data.extend(
+            [
+                {
+                    TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+                    "superhero": "Spiderman",
+                }
+                for _ in range(spiderman_count)
+            ]
+        )
+
+    # Generate 7 days of anomalous data (72 Superman, 28 Spiderman per day) - this will be in detection period
+    anomalous_data = []
+    for i in range(7):
+        date = utc_now - timedelta(days=7 - i)
+        anomalous_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT), "superhero": "Superman"}
+                for _ in range(72)
+            ]
+        )
+        anomalous_data.extend(
+            [
+                {
+                    TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT),
+                    "superhero": "Spiderman",
+                }
+                for _ in range(28)
+            ]
+        )
+
+    all_data = normal_data + anomalous_data
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 7},
+        "time_bucket": {"period": "day", "count": 1},
+        "sensitivity": 5,
+    }
+    if exclude_detection:
+        test_args["exclude_detection_period_from_training"] = True
+
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=all_data,
+    )
+
+    assert test_result["status"] == expected_status

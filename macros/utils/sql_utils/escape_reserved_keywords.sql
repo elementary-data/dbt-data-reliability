@@ -6,28 +6,37 @@
 {% endmacro %}
 
 {% macro is_reserved_keywords(keyword) %}
-    {% do return(adapter.dispatch('is_reserved_keywords', 'elementary')(keyword)) %}
+    {% do return(adapter.dispatch("is_reserved_keywords", "elementary")(keyword)) %}
 {% endmacro %}
 
-{% macro default__is_reserved_keywords(keyword) %}
-    {% do return(false) %}
-{% endmacro %}
+{% macro default__is_reserved_keywords(keyword) %} {% do return(false) %} {% endmacro %}
 
 {% macro dremio__is_reserved_keywords(keyword) %}
-    {% set cleaned_keyword = (keyword | trim | lower) %}
-    {% do return(cleaned_keyword in ['filter', 'sql', 'timestamp', 'value', 'one', 'min', 'max', 'sum', 'count']) %}
+    {% set cleaned_keyword = keyword | trim | lower %}
+    {% do return(
+        cleaned_keyword
+        in [
+            "filter",
+            "sql",
+            "timestamp",
+            "value",
+            "one",
+            "min",
+            "max",
+            "sum",
+            "count",
+            "row_number",
+            "snapshots",
+        ]
+    ) %}
 {% endmacro %}
 
 {% macro escape_keywords(keyword) %}
-    {% do return(adapter.dispatch('escape_keywords', 'elementary')(keyword)) %}
+    {% do return(adapter.dispatch("escape_keywords", "elementary")(keyword)) %}
 {% endmacro %}
 
-{% macro default__escape_keywords(keyword) %}
-    {% do return(keyword) %}
-{% endmacro %}
+{% macro default__escape_keywords(keyword) %} {% do return(keyword) %} {% endmacro %}
 
 {% macro dremio__escape_keywords(keyword) %}
     {% do return('"' ~ keyword ~ '"') %}
 {% endmacro %}
-
-

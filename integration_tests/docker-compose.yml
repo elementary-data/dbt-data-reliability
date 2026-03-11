@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   postgres:
-    image: postgres
+    image: postgres:15
     ports:
       - "127.0.0.1:5432:5432"
     command: postgres -c max_connections=500
@@ -19,7 +19,8 @@ services:
       - "8123:8123"
       - "9000:9000"
     volumes:
-      - ./clickhouse-data:/var/lib/clickhouse
+      - clickhouse:/var/lib/clickhouse
+      - ./docker/clickhouse/users.xml:/etc/clickhouse-server/users.d/elementary.xml
     environment:
       CLICKHOUSE_DB: default
       CLICKHOUSE_USER: default
@@ -42,3 +43,4 @@ services:
 volumes:
   postgres:
   pgadmin:
+  clickhouse:

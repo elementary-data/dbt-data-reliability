@@ -11,8 +11,6 @@ DBT_TEST_NAME = "elementary.volume_anomalies"
 DBT_TEST_ARGS = {"timestamp_column": TIMESTAMP_COLUMN}
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -23,8 +21,6 @@ def test_anomalyless_table_volume_anomalies(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_table_volume_anomalies_with_timestamp_as_sql_expression(
     test_id: str, dbt_project: DbtProject
 ):
@@ -40,8 +36,6 @@ def test_table_volume_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -53,11 +47,9 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="source", as_model=False)
 @Parametrization.case(name="model", as_model=True)
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_where_parameter(
     test_id: str, dbt_project: DbtProject, as_model: bool
 ):
@@ -100,8 +92,6 @@ def test_volume_anomalies_with_where_parameter(
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow() - timedelta(hours=2)
     data = [
@@ -133,8 +123,6 @@ def test_volume_anomalies_with_time_buckets(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -151,8 +139,6 @@ def test_volume_anomalies_with_direction_spike(test_id: str, dbt_project: DbtPro
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -168,8 +154,6 @@ def test_volume_anomalies_with_direction_drop(test_id: str, dbt_project: DbtProj
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     dates = generate_dates(
@@ -190,8 +174,6 @@ def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
@@ -209,8 +191,6 @@ def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
     data = [{"hello": "world"}]
     min_training_set_size = 4
@@ -230,7 +210,6 @@ def test_volume_anomalies_no_timestamp(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
 @pytest.mark.only_on_targets(["bigquery"])
 def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
@@ -269,8 +248,6 @@ def test_wildcard_name_table_volume_anomalies(test_id: str, dbt_project: DbtProj
     drop_failure_percent_threshold=5,
     metric_value=29,
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomaly_static_data_drop(
     test_id: str,
     dbt_project: DbtProject,
@@ -322,8 +299,6 @@ def test_volume_anomaly_static_data_drop(
     spike_failure_percent_threshold=5,
     metric_value=31,
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_volume_anomaly_static_data_spike(
     test_id: str,
     dbt_project: DbtProject,
@@ -356,8 +331,6 @@ def test_volume_anomaly_static_data_spike(
     assert test_result["status"] == expected_result
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
@@ -371,8 +344,6 @@ def test_not_fail_on_zero(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "pass"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     now = datetime.utcnow()
     data = [
@@ -399,8 +370,6 @@ def test_fail_on_zero(test_id: str, dbt_project: DbtProject):
     fail_value=4 * 24,
     pass_value=24,
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_table_volume_anomalies_periods_params(
     test_id: str, dbt_project: DbtProject, period: str, fail_value: int, pass_value: int
 ):
@@ -476,8 +445,6 @@ def test_anomalyless_table_volume_anomalies_periods_params(
     anomaly_sensitivity=3000,
     metric_value=44,
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_ignore_small_changes_both(
     test_id: str,
     dbt_project: DbtProject,
@@ -513,8 +480,6 @@ def test_ignore_small_changes_both(
     assert test_result["status"] == expected_result
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomalyless_vol_anomalies_with_test_materialization(
     test_id: str, dbt_project: DbtProject
 ):
@@ -534,3 +499,87 @@ def test_anomalyless_vol_anomalies_with_test_materialization(
         test_vars={"enable_elementary_test_materialization": True},
     )
     assert test_result["status"] == "pass"
+
+
+# Test for exclude_detection_period_from_training functionality
+# This test demonstrates the use case where:
+# 1. Detection period contains anomalous data that would normally be included in training
+# 2. With exclude_detection_period_from_training=False: anomaly is missed (test passes) because training includes the anomaly
+# 3. With exclude_detection_period_from_training=True: anomaly is detected (test fails) because training excludes the anomaly
+def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
+    """
+    Test the exclude_detection_period_from_training flag functionality.
+
+    Scenario:
+    - 30 days of normal data with variance (98, 100, 102 rows per day pattern)
+    - 7 days of anomalous data (114 rows per day) in detection period
+    - Without exclusion: anomaly gets included in training baseline, test passes (misses anomaly)
+    - With exclusion: anomaly excluded from training, test fails (detects anomaly)
+    """
+    utc_now = datetime.utcnow()
+
+    # Generate 30 days of normal data with variance (98, 100, 102 pattern)
+    normal_pattern = [98, 100, 102]
+    normal_data = []
+    for i in range(30):
+        date = utc_now - timedelta(days=37 - i)
+        rows_per_day = normal_pattern[i % 3]
+        normal_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+                for _ in range(rows_per_day)
+            ]
+        )
+
+    # Generate 7 days of anomalous data (114 rows per day) - this will be in detection period
+    anomalous_data = []
+    for i in range(7):
+        date = utc_now - timedelta(days=7 - i)
+        anomalous_data.extend(
+            [
+                {TIMESTAMP_COLUMN: date.strftime(DATE_FORMAT)}
+                for _ in range(114)  # 14% increase from mean
+            ]
+        )
+
+    all_data = normal_data + anomalous_data
+
+    # Test 1: WITHOUT exclusion (should pass - misses the anomaly because it's included in training)
+    test_args_without_exclusion = {
+        **DBT_TEST_ARGS,
+        "training_period": {"period": "day", "count": 30},
+        "detection_period": {"period": "day", "count": 7},
+        "time_bucket": {"period": "day", "count": 1},
+        "sensitivity": 5,  # Higher sensitivity to allow anomaly to be absorbed
+        # exclude_detection_period_from_training is not set (defaults to False/None)
+    }
+
+    test_result_without_exclusion = dbt_project.test(
+        test_id + "_without_exclusion",
+        DBT_TEST_NAME,
+        test_args_without_exclusion,
+        data=all_data,
+    )
+
+    # This should PASS because the anomaly is included in training, making it part of the baseline
+    assert (
+        test_result_without_exclusion["status"] == "pass"
+    ), "Test should pass when anomaly is included in training"
+
+    # Test 2: WITH exclusion (should fail - detects the anomaly because it's excluded from training)
+    test_args_with_exclusion = {
+        **test_args_without_exclusion,
+        "exclude_detection_period_from_training": True,
+    }
+
+    test_result_with_exclusion = dbt_project.test(
+        test_id + "_with_exclusion",
+        DBT_TEST_NAME,
+        test_args_with_exclusion,
+        data=all_data,
+    )
+
+    # This should FAIL because the anomaly is excluded from training, so it's detected as anomalous
+    assert (
+        test_result_with_exclusion["status"] == "fail"
+    ), "Test should fail when anomaly is excluded from training"
