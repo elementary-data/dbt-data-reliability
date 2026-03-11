@@ -199,7 +199,6 @@ jobs:
           SCHEMA_NAME="dbt_${DATE_STAMP}_${SAFE_BRANCH}_${SHORT_HASH}"
 
           echo "Schema name: $SCHEMA_NAME (branch='${BRANCH_NAME}', timestamp=${DATE_STAMP}, hash of concurrency group)"
-          echo "SCHEMA_NAME=$SCHEMA_NAME" >> $GITHUB_ENV
 
           python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
             --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
