@@ -262,10 +262,10 @@
                 column_name,
                 metric_name,
                 case
-                    when training_stddev is null then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null then null
                     when training_set_size = 1 then null  -- Single value case - no historical context for anomaly detection
-                    when training_stddev = 0 then 0  -- Stationary data case - valid, all values are identical
-                    else (metric_value - training_avg) / (training_stddev)
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} = 0 then 0  -- Stationary data case - valid, all values are identical
+                    else (metric_value - training_avg) / ({{ elementary.edr_normalize_stddev('training_stddev') }})
                 end as anomaly_score,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
@@ -276,16 +276,16 @@
                 
                 {% set limit_values =  elementary.get_limit_metric_values(test_configuration) %}
                 case
-                    when training_stddev is null or training_set_size = 1 then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null or training_set_size = 1 then null
                     when {{ limit_values.min_metric_value }} > 0 or metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ limit_values.min_metric_value }}
                     else 0
                 end as min_metric_value,
                 case 
-                    when training_stddev is null or training_set_size = 1 then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null or training_set_size = 1 then null
                     else {{ limit_values.max_metric_value }}
                 end as max_metric_value,
                 training_avg,
-                training_stddev,
+                {{ elementary.edr_normalize_stddev('training_stddev') }} as training_stddev,
                 training_set_size,
                 {{ elementary.edr_cast_as_timestamp('training_start') }} as training_start,
                 {{ elementary.edr_cast_as_timestamp('training_end') }} as training_end,
@@ -307,8 +307,9 @@
 {% endmacro %}
 
 {% macro get_limit_metric_values(test_configuration) %}
+    {%- set normalized_stddev = elementary.edr_normalize_stddev("training_stddev") -%}
     {%- set min_val -%}
-      ((-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+      ((-1) * {{ test_configuration.anomaly_sensitivity }} * {{ normalized_stddev }} + training_avg)
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
@@ -321,7 +322,7 @@
     {% endif %}
 
     {%- set max_val -%}
-      ({{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+      ({{ test_configuration.anomaly_sensitivity }} * {{ normalized_stddev }} + training_avg)
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}

@@ -86,3 +86,20 @@
 {% macro sum(column_name) -%}
     sum(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
+
+{#- edr_normalize_stddev – post-process a stddev column reference so that
+    floating-point artefacts (tiny non-zero values for constant inputs) are
+    cleaned up.  The default implementation is the identity function; Vertica
+    overrides it with round() because its STDDEV can return ~4e-08 for
+    perfectly identical values. -#}
+{% macro edr_normalize_stddev(column_expr) -%}
+    {{ adapter.dispatch("edr_normalize_stddev", "elementary")(column_expr) }}
+{%- endmacro %}
+
+{% macro default__edr_normalize_stddev(column_expr) -%}
+    {{ column_expr }}
+{%- endmacro %}
+
+{% macro vertica__edr_normalize_stddev(column_expr) -%}
+    round({{ column_expr }}, 6)
+{%- endmacro %}

@@ -54,3 +54,12 @@
     {% for row in results %} {% do schemas.append(row[0]) %} {% endfor %}
     {% do return(schemas) %}
 {% endmacro %}
+
+{% macro vertica__edr_list_schemas(database) %}
+    {#- Vertica's v_catalog.schemata is scoped to the current database and
+        does not have a database_name filter column. -#}
+    {% set results = run_query("SELECT schema_name FROM v_catalog.schemata") %}
+    {% set schemas = [] %}
+    {% for row in results %} {% do schemas.append(row[0]) %} {% endfor %}
+    {% do return(schemas) %}
+{% endmacro %}
