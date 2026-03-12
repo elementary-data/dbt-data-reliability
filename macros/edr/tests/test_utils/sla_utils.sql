@@ -59,34 +59,48 @@
     {% set datetime = modules.datetime %}
     {% set pytz = modules.pytz %}
 
-    {# In dbt-fusion, pytz.localize() produces incorrect results (dbt-labs/dbt-fusion#143).
-       Use datetime.timezone.utc and replace(tzinfo=) instead. #}
     {% if elementary.is_dbt_fusion() %}
-        {% set utc_tz = datetime.timezone.utc %}
+        {# dbt-fusion's pytz and timezone-aware datetime operations have known issues
+           (dbt-labs/dbt-fusion#143). Use naive UTC datetimes with manual offset
+           calculation to avoid broken localize() and datetime comparison. #}
+        {% set utc_tz = pytz.timezone("UTC") %}
         {% set target_tz = pytz.timezone(timezone) %}
 
-        {% set now_utc = datetime.datetime.now(utc_tz) %}
-        {% set now_local = now_utc.astimezone(target_tz) %}
-        {% set target_date_local = now_local.date() %}
+        {# Get current UTC time as naive datetime - reliable across environments #}
+        {% set now_utc = datetime.datetime.utcnow() %}
 
-        {# Use replace(tzinfo=) instead of localize() for fusion compatibility #}
-        {% set day_start_naive = datetime.datetime.combine(
-            target_date_local, datetime.time(0, 0, 0)
-        ) %}
-        {% set day_start_local = day_start_naive.replace(tzinfo=target_tz) %}
-        {% set day_start_utc = day_start_local.astimezone(utc_tz) %}
+        {# Determine today's date and UTC offset in target timezone.
+           Use localize+astimezone only to probe the offset, not for final values. #}
+        {% set probe = utc_tz.localize(now_utc).astimezone(target_tz) %}
+        {% set target_date_local = probe.date() %}
+        {% set tz_offset = probe.utcoffset() %}
+        {% set now_local = probe %}
 
-        {% set day_end_naive = datetime.datetime.combine(
-            target_date_local, datetime.time(23, 59, 59)
+        {# Build all datetimes as naive local, then convert to naive UTC
+           by subtracting the timezone offset. This avoids tz-aware comparison. #}
+        {% set day_start_utc = (
+            datetime.datetime.combine(
+                target_date_local, datetime.time(0, 0, 0)
+            )
+            - tz_offset
         ) %}
-        {% set day_end_local = day_end_naive.replace(tzinfo=target_tz) %}
-        {% set day_end_utc = day_end_local.astimezone(utc_tz) %}
 
-        {% set sla_deadline_naive = datetime.datetime.combine(
-            target_date_local, datetime.time(sla_hour, sla_minute, 0)
+        {% set day_end_utc = (
+            datetime.datetime.combine(
+                target_date_local, datetime.time(23, 59, 59)
+            )
+            - tz_offset
         ) %}
-        {% set sla_deadline_local = sla_deadline_naive.replace(tzinfo=target_tz) %}
-        {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
+
+        {% set sla_deadline_utc = (
+            datetime.datetime.combine(
+                target_date_local, datetime.time(sla_hour, sla_minute, 0)
+            )
+            - tz_offset
+        ) %}
+
+        {# Compare naive UTC datetimes #}
+        {% set deadline_passed = now_utc > sla_deadline_utc %}
     {% else %}
         {# Standard dbt-core path using pytz.localize() #}
         {% set utc_tz = pytz.timezone("UTC") %}
@@ -115,10 +129,9 @@
             sla_deadline_naive, is_dst=False
         ) %}
         {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
-    {% endif %}
 
-    {# Check if deadline has passed #}
-    {% set deadline_passed = now_utc > sla_deadline_utc %}
+        {% set deadline_passed = now_utc > sla_deadline_utc %}
+    {% endif %}
 
     {# Format for SQL #}
     {% set sla_deadline_utc_str = sla_deadline_utc.strftime("%Y-%m-%d %H:%M:%S") %}
