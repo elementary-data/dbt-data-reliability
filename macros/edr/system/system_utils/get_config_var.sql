@@ -143,6 +143,7 @@
         "anomaly_exclude_metrics": none,
         "disable_samples_on_pii_tags": false,
         "pii_tags": ["pii"],
+        "bigquery_disable_partitioning": false,
     } %}
     {{- return(default_config) -}}
 {%- endmacro -%}

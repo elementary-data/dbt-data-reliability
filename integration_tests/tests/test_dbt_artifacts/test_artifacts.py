@@ -163,3 +163,50 @@ def test_timings(dbt_project: DbtProject):
 
     assert len(results) == 1
     assert results[0]["execute_started_at"]
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_run_results_partitioned(dbt_project: DbtProject):
+    # BigQuery partitioning is enabled by default. Verify the model works and data is readable.
+    dbt_project.dbt_runner.vars["disable_run_results"] = False
+    # Full-refresh to ensure the table is created with partitioning
+    dbt_project.dbt_runner.run(select="dbt_run_results", full_refresh=True)
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    results = dbt_project.run_query(
+        """select * from {{ ref("dbt_run_results") }} where name='%s'""" % TEST_MODEL
+    )
+    assert len(results) >= 1
+
+    # Verify the partition column is created_at in BigQuery
+    partition_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('dbt_run_results').database }}.{{ ref('dbt_run_results').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('dbt_run_results').identifier }}' "
+        "AND is_partitioning_column = 'YES'"
+    )
+    assert [row["column_name"] for row in partition_cols] == [
+        "created_at"
+    ], "dbt_run_results should be partitioned by created_at in BigQuery"
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_dbt_invocations_partitioned(dbt_project: DbtProject):
+    # BigQuery partitioning is enabled by default. Verify dbt_invocations works.
+    dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
+    # Full-refresh to ensure the table is created with partitioning
+    dbt_project.dbt_runner.run(select="dbt_invocations", full_refresh=True)
+    dbt_project.dbt_runner.run(selector="one")
+    dbt_project.read_table(
+        "dbt_invocations", where="yaml_selector = 'one'", raise_if_empty=True
+    )
+
+    # Verify the partition column is created_at in BigQuery
+    partition_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('dbt_invocations').database }}.{{ ref('dbt_invocations').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('dbt_invocations').identifier }}' "
+        "AND is_partitioning_column = 'YES'"
+    )
+    assert [row["column_name"] for row in partition_cols] == [
+        "created_at"
+    ], "dbt_invocations should be partitioned by created_at in BigQuery"

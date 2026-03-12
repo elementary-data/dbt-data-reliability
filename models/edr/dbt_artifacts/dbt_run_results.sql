@@ -13,6 +13,7 @@
             if target.type == "postgres"
             else []
         ),
+        partition_by=elementary.get_default_partition_by(),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={
             "dedup_by_column": "model_execution_id",
