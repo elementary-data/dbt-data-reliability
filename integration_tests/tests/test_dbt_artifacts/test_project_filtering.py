@@ -63,7 +63,7 @@ def test_filtering_excludes_dependency_artifacts(dbt_project: DbtProject):
     )
 
 
-def test_filtering_applies_to_tests(dbt_project: DbtProject, tmp_path):
+def test_filtering_applies_to_tests(dbt_project: DbtProject):
     """
     When upload_only_current_project_artifacts=true, tests from the current
     project should still be uploaded.
