@@ -16,7 +16,7 @@ def test_fresh_data_passes(test_id: str, dbt_project: DbtProject):
     ]
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "23:59",
+        "sla_time": "11:59pm",
         "timezone": "UTC",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
@@ -34,7 +34,7 @@ def test_stale_data_fails(test_id: str, dbt_project: DbtProject):
     # Use a deadline early in the day so it has certainly passed
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "00:01",
+        "sla_time": "12:01am",
         "timezone": "UTC",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
@@ -50,7 +50,7 @@ def test_no_data_fails(test_id: str, dbt_project: DbtProject):
     ]
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "00:01",
+        "sla_time": "12:01am",
         "timezone": "UTC",
         "where_expression": "category = 'included'",
     }
@@ -65,11 +65,12 @@ def test_deadline_not_passed_does_not_fail(test_id: str, dbt_project: DbtProject
     data = [
         {TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT)},
     ]
-    # Set the deadline far in the future (23:59 UTC tomorrow effectively)
-    # so it hasn't passed yet
+    # Set the deadline far in the future so it hasn't passed yet.
+    # Etc/GMT-14 is UTC+14, the farthest-ahead timezone, so 11:59pm there
+    # is well into the future from UTC's perspective.
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "23:59",
+        "sla_time": "11:59pm",
         "timezone": "Etc/GMT-14",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
@@ -89,7 +90,7 @@ def test_with_where_expression(test_id: str, dbt_project: DbtProject):
     # Test with category A (fresh data) -> should pass
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "23:59",
+        "sla_time": "11:59pm",
         "timezone": "UTC",
         "where_expression": "category = 'a'",
     }
@@ -99,7 +100,7 @@ def test_with_where_expression(test_id: str, dbt_project: DbtProject):
     # Test with category B (stale data) and early deadline -> should fail
     test_args_stale = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "00:01",
+        "sla_time": "12:01am",
         "timezone": "UTC",
         "where_expression": "category = 'b'",
     }
@@ -115,7 +116,7 @@ def test_with_timezone(test_id: str, dbt_project: DbtProject):
     ]
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
-        "sla_time": "23:59",
+        "sla_time": "11:59pm",
         "timezone": "America/New_York",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
