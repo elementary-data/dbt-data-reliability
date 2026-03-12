@@ -24,6 +24,10 @@
     {%- endif %}
 {% endmacro %}
 
+{% macro fabricspark__edr_to_char(column, format) %}
+    {{ return(elementary.spark__edr_to_char(column, format)) }}
+{% endmacro %}
+
 {% macro fabric__edr_to_char(column, format) %}
     convert(varchar, {{ column }}
     {%- if format %}, {{ format }})

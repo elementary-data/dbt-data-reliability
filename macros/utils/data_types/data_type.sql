@@ -42,6 +42,10 @@
 
 {% macro spark__edr_type_string() %} {% do return("string") %} {% endmacro %}
 
+{% macro fabricspark__edr_type_string() %}
+    {{ return(elementary.spark__edr_type_string()) }}
+{% endmacro %}
+
 {% macro athena__edr_type_string() %} {% do return("varchar") %} {% endmacro %}
 
 {% macro trino__edr_type_string() %} {% do return("varchar") %} {% endmacro %}
@@ -154,3 +158,11 @@
 {% macro dremio__edr_type_timestamp() %} timestamp {% endmacro %}
 
 {% macro fabric__edr_type_timestamp() %} datetime2(6) {% endmacro %}
+
+{% macro fabricspark__edr_type_bool() %}
+    {{ return(elementary.default__edr_type_bool()) }}
+{% endmacro %}
+
+{% macro fabricspark__edr_type_timestamp() %}
+    {{ return(elementary.default__edr_type_timestamp()) }}
+{% endmacro %}

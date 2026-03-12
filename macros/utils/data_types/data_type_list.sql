@@ -146,6 +146,10 @@
 {% endmacro %}
 
 
+{% macro fabricspark__data_type_list(data_type) %}
+    {{ return(elementary.spark__data_type_list(data_type)) }}
+{% endmacro %}
+
 {% macro athena__data_type_list(data_type) %}
 
     {% set string_list = ["string", "varchar", "char"] | list %}

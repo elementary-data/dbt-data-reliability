@@ -64,6 +64,10 @@
     {% do return(tmp_relation) %}
 {% endmacro %}
 
+{% macro fabricspark__edr_make_temp_relation(base_relation, suffix) %}
+    {{ return(elementary.spark__edr_make_temp_relation(base_relation, suffix)) }}
+{% endmacro %}
+
 {% macro redshift__edr_make_temp_relation(base_relation, suffix) %}
     {% if elementary.is_dbt_fusion() %}
         {# Workaround for dbt-fusion temp table metadata bug - create regular relations

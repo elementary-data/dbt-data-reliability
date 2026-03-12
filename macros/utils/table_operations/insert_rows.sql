@@ -309,6 +309,10 @@
     {%- endif -%}
 {%- endmacro -%}
 
+{%- macro fabricspark__escape_special_chars(string_value) -%}
+    {{- return(elementary.spark__escape_special_chars(string_value)) -}}
+{%- endmacro -%}
+
 {# Note: Python booleans pass Jinja's "is number" test, so we check
    "is boolean" first. edr_boolean_literal renders the correct SQL literal
    per adapter (TRUE/FALSE for standard SQL, cast(1/0 as bit) for T-SQL). #}

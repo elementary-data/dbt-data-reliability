@@ -110,3 +110,13 @@
     as {{ sql_query }}
     {% endif %}
 {% endmacro %}
+
+{% macro fabricspark__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+    {{
+        return(
+            elementary.spark__edr_get_create_table_as_sql(
+                temporary, relation, sql_query
+            )
+        )
+    }}
+{% endmacro %}

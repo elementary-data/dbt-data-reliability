@@ -13,3 +13,7 @@
 {% macro spark__edr_safe_cast(field, type) %}
     try_cast({{ field }} as {{ type }})
 {% endmacro %}
+
+{% macro fabricspark__edr_safe_cast(field, type) %}
+    {{ return(elementary.spark__edr_safe_cast(field, type)) }}
+{% endmacro %}
