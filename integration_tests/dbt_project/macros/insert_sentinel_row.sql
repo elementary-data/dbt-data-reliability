@@ -8,5 +8,9 @@
         "INSERT INTO " ~ relation ~ " (unique_id, alias, name)"
         " VALUES ('test.sentinel', '" ~ sentinel_alias ~ "', 'sentinel')"
     ) %}
-    {% do adapter.commit() %}
+    {#- Use raw SQL COMMIT instead of adapter.commit() because some adapters
+        (e.g. Vertica) raise "no transaction in progress" from adapter.commit()
+        within a run_operation context. A raw COMMIT is harmless when there is
+        no open transaction (most databases treat it as a no-op). -#}
+    {% do run_query("COMMIT") %}
 {% endmacro %}
