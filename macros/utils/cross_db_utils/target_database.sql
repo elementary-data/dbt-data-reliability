@@ -26,3 +26,7 @@
 {% macro fabric__target_database() %} {% do return(target.database) %} {% endmacro %}
 
 {% macro sqlserver__target_database() %} {% do return(target.database) %} {% endmacro %}
+
+{% macro fabricspark__target_database() %}
+    {{ return(elementary.spark__target_database()) }}
+{% endmacro %}

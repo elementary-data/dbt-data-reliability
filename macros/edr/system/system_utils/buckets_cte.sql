@@ -84,6 +84,14 @@
     {{ return(complete_buckets_cte) }}
 {% endmacro %}
 
+{% macro fabricspark__complete_buckets_cte(
+    time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
+) %}
+    {{ return(elementary.spark__complete_buckets_cte(
+        time_bucket, bucket_end_expr, min_bucket_start_expr, max_bucket_end_expr
+    )) }}
+{% endmacro %}
+
 {% macro snowflake__complete_buckets_cte(
     time_bucket,
     bucket_end_expr,

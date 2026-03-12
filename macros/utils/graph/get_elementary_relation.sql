@@ -20,10 +20,20 @@
         {% if this and this.database == elementary_database and this.schema == elementary_schema and this.identifier == identifier_alias %}
             {% do return(this) %}
         {% endif %}
-        {% do return(
-            adapter.get_relation(
-                elementary_database, elementary_schema, identifier_alias
-            )
+        {% set rel = adapter.get_relation(
+            elementary_database, elementary_schema, identifier_alias
         ) %}
+        {# Defensive fallback: some adapters (e.g. dbt-fabricspark) have bugs in
+           list_relations_without_caching that cause adapter.get_relation() to
+           return None even when the relation exists.  Fall back to
+           api.Relation.create() so downstream code still gets a usable ref. #}
+        {% if rel is none %}
+            {% set rel = api.Relation.create(
+                database=elementary_database,
+                schema=elementary_schema,
+                identifier=identifier_alias,
+            ) %}
+        {% endif %}
+        {% do return(rel) %}
     {%- endif %}
 {% endmacro %}

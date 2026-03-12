@@ -311,6 +311,18 @@
     ) %}
 {% endmacro %}
 
+{% macro fabricspark__generate_elementary_profile_args(
+    method, elementary_database, elementary_schema
+) %}
+    {{
+        return(
+            elementary.spark__generate_elementary_profile_args(
+                method, elementary_database, elementary_schema
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro default__generate_elementary_profile_args(
     method, elementary_database, elementary_schema
 ) %}

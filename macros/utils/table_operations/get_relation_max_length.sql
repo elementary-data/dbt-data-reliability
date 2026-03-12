@@ -23,6 +23,16 @@
     {{ return(127) }}
 {% endmacro %}
 
+{% macro fabricspark__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {{
+        return(
+            elementary.spark__get_relation_max_name_length(
+                temporary, relation, sql_query
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro athena__get_relation_max_name_length(temporary, relation, sql_query) %}
     {{ return(255) }}
 {% endmacro %}

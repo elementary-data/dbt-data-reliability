@@ -124,6 +124,18 @@
     {{ elementary.get_empty_columns_from_information_schema_table() }}
 {% endmacro %}
 
+{% macro fabricspark__get_columns_from_information_schema(
+    database_name, schema_name, table_name=none
+) %}
+    {{
+        return(
+            elementary.spark__get_columns_from_information_schema(
+                database_name, schema_name, table_name
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro get_empty_columns_from_information_schema_table() %}
     {{
         elementary.empty_table(

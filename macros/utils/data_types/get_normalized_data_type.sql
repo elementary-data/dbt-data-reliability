@@ -69,6 +69,10 @@
 {% endmacro %}
 
 
+{% macro fabricspark__get_normalized_data_type(exact_data_type) %}
+    {{ return(elementary.spark__get_normalized_data_type(exact_data_type)) }}
+{% endmacro %}
+
 {% macro redshift__get_normalized_data_type(exact_data_type) %}
     {# understanding Redshift data type synonyms:
  https://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html #}
