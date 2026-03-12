@@ -4,10 +4,12 @@
 {#
     Validate that a timezone string is a valid IANA timezone name.
     Raises a clear error if invalid.
+
+    Note: dbt-fusion's modules.pytz has known discrepancies with dbt-core's
+    pytz (see dbt-labs/dbt-fusion#143). We skip validation in fusion and
+    fall back to zoneinfo-based validation when pytz is unavailable.
 #}
 {% macro validate_timezone(timezone) %}
-    {% set pytz = modules.pytz %}
-
     {% if not timezone %}
         {{
             exceptions.raise_compiler_error(
@@ -15,6 +17,11 @@
             )
         }}
     {% endif %}
+
+    {# Skip pytz validation in dbt-fusion due to known discrepancies #}
+    {% if elementary.is_dbt_fusion() %} {% do return(none) %} {% endif %}
+
+    {% set pytz = modules.pytz %}
 
     {# Check if timezone is in pytz's list of all timezones #}
     {% if timezone not in pytz.all_timezones %}

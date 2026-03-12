@@ -307,13 +307,41 @@
                         'No data found in "{{ model_relation.identifier }}"{{ where_suffix }}. Expected data to be updated before {{ formatted_sla_time }} {{ timezone }}.'
                     when freshness_status = 'DATA_STALE'
                     then
-                        'Data in "{{ model_relation.identifier }}" is stale. Last update was at '
-                        || cast(max_timestamp as {{ elementary.edr_type_string() }})
-                        || ', which is before today. Expected fresh data before {{ formatted_sla_time }} {{ timezone }}.'
+                        {{
+                            elementary.edr_concat(
+                                [
+                                    "'Data in \""
+                                    ~ model_relation.identifier
+                                    ~ "\" is stale. Last update was at '",
+                                    "cast(max_timestamp as "
+                                    ~ elementary.edr_type_string()
+                                    ~ ")",
+                                    "', which is before today. Expected fresh data before "
+                                    ~ formatted_sla_time
+                                    ~ " "
+                                    ~ timezone
+                                    ~ ".'",
+                                ]
+                            )
+                        }}
                     else
-                        'Data in "{{ model_relation.identifier }}" is fresh, last update at '
-                        || cast(max_timestamp as {{ elementary.edr_type_string() }})
-                        || ' (before SLA deadline {{ formatted_sla_time }} {{ timezone }}).'
+                        {{
+                            elementary.edr_concat(
+                                [
+                                    "'Data in \""
+                                    ~ model_relation.identifier
+                                    ~ "\" is fresh, last update at '",
+                                    "cast(max_timestamp as "
+                                    ~ elementary.edr_type_string()
+                                    ~ ")",
+                                    "' (before SLA deadline "
+                                    ~ formatted_sla_time
+                                    ~ " "
+                                    ~ timezone
+                                    ~ ").'",
+                                ]
+                            )
+                        }}
                 end as result_description
             from freshness_result
         )
