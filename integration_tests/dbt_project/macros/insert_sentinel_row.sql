@@ -8,4 +8,5 @@
         "INSERT INTO " ~ relation ~ " (unique_id, alias, name)"
         " VALUES ('test.sentinel', '" ~ sentinel_alias ~ "', 'sentinel')"
     ) %}
+    {% do adapter.commit() %}
 {% endmacro %}
