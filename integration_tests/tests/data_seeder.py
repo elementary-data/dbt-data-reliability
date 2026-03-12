@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Dict, Generator, List, Mapping
+from typing import TYPE_CHECKING, ClassVar, Dict, Generator, List, Mapping, Optional
 
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from logger import get_logger
@@ -121,7 +121,7 @@ class BaseSqlInsertSeeder(ABC):
 
     def __init__(
         self,
-        query_runner: "AdapterQueryRunner",
+        query_runner: Optional["AdapterQueryRunner"],
         schema: str,
         seeds_dir_path: Path,
     ) -> None:
