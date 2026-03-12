@@ -123,12 +123,32 @@
                 {% do elementary_test_results_row.setdefault(
                     "test_results_description", result.message
                 ) %}
+                {# Add note when test uses sampling #}
+                {% set test_params = elementary_test_results_row.get(
+                    "test_params", {}
+                ) %}
+                {% if test_params is mapping and test_params.get(
+                    "sample_percent"
+                ) is number and test_params.get(
+                    "sample_percent"
+                ) > 0 and test_params.get(
+                    "sample_percent"
+                ) < 100 %}
+                    {% set base_desc = elementary_test_results_row.get(
+                        "test_results_description"
+                    ) %}
+                    {% set note = "Note: this test uses sample_percent, so result samples may not exactly match the failure count." %}
+                    {% set new_desc = (base_desc ~ " " ~ note) if base_desc else note %}
+                    {% do elementary_test_results_row.update(
+                        {"test_results_description": new_desc}
+                    ) %}
+                {% endif %}
                 {% if render_result_rows %}
                     {% do elementary_test_results_row.update(
                         {
                             "result_rows": elementary.render_result_rows(
                                 elementary_test_results_row.result_rows
-                            )
+                            ),
                         }
                     ) %}
                 {% endif %}
