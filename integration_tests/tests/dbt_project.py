@@ -379,11 +379,9 @@ class DbtProject:
         if self.target == "vertica":
             # Vertica's COPY command (used by dbt seed) rejects empty CSV
             # fields for non-string columns.  Use direct INSERT instead.
-            # Read schema from profiles directly (like Spark) to avoid
-            # initialising an AdapterQueryRunner we don't need — Vertica
-            # uses a direct vertica_python connection, not the dbt adapter.
-            schema = self._read_profile_schema() + SCHEMA_NAME_SUFFIX
-            return VerticaDirectSeeder(None, schema, self.seeds_dir_path)
+            runner = self._get_query_runner()
+            schema = runner.schema_name + SCHEMA_NAME_SUFFIX
+            return VerticaDirectSeeder(runner, schema, self.seeds_dir_path)
         return DbtDataSeeder(
             self.dbt_runner, self.project_dir_path, self.seeds_dir_path
         )
