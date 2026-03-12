@@ -182,17 +182,31 @@
 
         current_bucket as (
             select bucket_start, bucket_end, row_count
-            from metrics
-            order by bucket_end desc
-            limit 1
+            from
+                (
+                    select
+                        bucket_start,
+                        bucket_end,
+                        row_count,
+                        row_number() over (order by bucket_end desc) as rn
+                    from metrics
+                ) as ranked_current
+            where rn = 1
         ),
 
         previous_bucket as (
             select bucket_start, bucket_end, row_count
-            from metrics
-            where bucket_end <= (select bucket_start from current_bucket)
-            order by bucket_end desc
-            limit 1
+            from
+                (
+                    select
+                        bucket_start,
+                        bucket_end,
+                        row_count,
+                        row_number() over (order by bucket_end desc) as rn
+                    from metrics
+                    where bucket_end <= (select bucket_start from current_bucket)
+                ) as ranked_previous
+            where rn = 1
         ),
 
         comparison as (
@@ -210,7 +224,7 @@
                             cast(
                                 (curr.row_count - prev.row_count)
                                 * 100.0
-                                / prev.row_count as numeric
+                                / prev.row_count as {{ elementary.edr_type_numeric() }}
                             ),
                             2
                         )
@@ -262,13 +276,21 @@
         case
             severity_level when 2 then 'error' when 1 then 'warn' else 'pass'
         end as severity_name,
-        'Row count changed by '
-        || cast(percent_change as {{ elementary.edr_type_string() }})
-        || '% (from '
-        || cast(previous_row_count as {{ elementary.edr_type_string() }})
-        || ' to '
-        || cast(current_row_count as {{ elementary.edr_type_string() }})
-        || ')' as result_description
+        {{
+            elementary.edr_concat(
+                [
+                    "'Row count changed by '",
+                    "cast(percent_change as " ~ elementary.edr_type_string() ~ ")",
+                    "'% (from '",
+                    "cast(previous_row_count as "
+                    ~ elementary.edr_type_string()
+                    ~ ")",
+                    "' to '",
+                    "cast(current_row_count as " ~ elementary.edr_type_string() ~ ")",
+                    "')'",
+                ]
+            )
+        }} as result_description
     from result
 
 {% endmacro %}
