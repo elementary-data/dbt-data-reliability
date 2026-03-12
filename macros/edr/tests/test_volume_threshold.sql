@@ -234,7 +234,7 @@
             left join previous_bucket prev_b on 1 = 1
         ),
 
-        result as (
+        volume_result as (
             select
                 *,
                 case
@@ -292,6 +292,6 @@
                 ]
             )
         }} as result_description
-    from result
+    from volume_result
 
 {% endmacro %}
