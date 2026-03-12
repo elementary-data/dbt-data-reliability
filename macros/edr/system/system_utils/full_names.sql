@@ -15,6 +15,14 @@
     upper({{ alias_dot }}schema_name || '.' || {{ alias_dot }}table_name)
 {%- endmacro %}
 
+{% macro vertica__full_table_name(alias) -%}
+    {# Vertica: upper() doubles varchar byte-length; cast to varchar(1000) first to stay under 65000 limit #}
+    {% if alias is defined %} {%- set alias_dot = alias ~ "." %} {% endif %}
+    upper(cast(
+        {{ alias_dot }}database_name || '.' || {{ alias_dot }}schema_name || '.' || {{ alias_dot }}table_name
+    as varchar(1000)))
+{%- endmacro %}
+
 
 {% macro full_schema_name() -%}
     {{ adapter.dispatch("full_schema_name", "elementary")() }}
@@ -27,6 +35,11 @@
 {% macro clickhouse__full_schema_name() -%}
     {# ClickHouse uses database=schema, so schema_name alone is the full schema name #}
     upper(schema_name)
+{%- endmacro %}
+
+{% macro vertica__full_schema_name() -%}
+    {# Vertica: upper() doubles varchar byte-length; cast first to stay under 65000 limit #}
+    upper(cast(database_name || '.' || schema_name as varchar(1000)))
 {%- endmacro %}
 
 
@@ -45,9 +58,26 @@
     upper(schema_name || '.' || table_name || '.' || column_name)
 {%- endmacro %}
 
+{% macro vertica__full_column_name() -%}
+    {# Vertica: upper() doubles varchar byte-length; cast first to stay under 65000 limit #}
+    upper(cast(
+        database_name || '.' || schema_name || '.' || table_name || '.' || column_name
+    as varchar(1000)))
+{%- endmacro %}
+
 
 {% macro full_name_split(part_name) %}
     {{ adapter.dispatch("full_name_split", "elementary")(part_name) }}
+{% endmacro %}
+
+{% macro vertica__full_name_split(part_name) %}
+    {# Vertica supports split_part (1-based index) but not array subscript syntax #}
+    {%- if part_name == "database_name" -%} {%- set part_index = 1 -%}
+    {%- elif part_name == "schema_name" -%} {%- set part_index = 2 -%}
+    {%- elif part_name == "table_name" -%} {%- set part_index = 3 -%}
+    {%- else -%} {{ return("") }}
+    {%- endif -%}
+    trim(both '"' from split_part(full_table_name, '.', {{ part_index }})) as {{ part_name }}
 {% endmacro %}
 
 

@@ -98,3 +98,9 @@
     {% set safe_schema = schema_name | replace("`", "``") %}
     {% do run_query("CREATE DATABASE IF NOT EXISTS `" ~ safe_schema ~ "`") %}
 {% endmacro %}
+
+{% macro vertica__edr_create_schema(database, schema_name) %}
+    {#- Vertica DDL is auto-committed; an explicit adapter.commit() would
+        fail with "no transaction in progress". -#}
+    {% do run_query("CREATE SCHEMA IF NOT EXISTS " ~ schema_name) %}
+{% endmacro %}

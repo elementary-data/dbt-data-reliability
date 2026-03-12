@@ -63,6 +63,10 @@
     to_char({{ date_expr }}, 'DAY')
 {% endmacro %}
 
+{% macro vertica__edr_day_of_week_expression(date_expr) %}
+    trim(' ' from to_char({{ date_expr }}, 'Day'))
+{% endmacro %}
+
 {% macro fabric__edr_day_of_week_expression(date_expr) %}
     cast(datename(weekday, {{ date_expr }}) as varchar(30))
 {% endmacro %}

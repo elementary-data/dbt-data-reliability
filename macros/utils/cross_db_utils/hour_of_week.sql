@@ -78,6 +78,17 @@
 {% endmacro %}
 -- fmt: on
 
+{% macro vertica__edr_hour_of_week_expression(date_expr) %}
+    concat(
+        cast(
+            trim(
+                ' ' from to_char({{ date_expr }}, 'Day')
+            ) as {{ elementary.edr_type_string() }}
+        ),
+        cast(extract(hour from {{ date_expr }}) as {{ elementary.edr_type_string() }})
+    )
+{% endmacro %}
+
 {% macro fabric__edr_hour_of_week_expression(date_expr) %}
     concat(
         cast(datename(weekday, {{ date_expr }}) as {{ elementary.edr_type_string() }}),

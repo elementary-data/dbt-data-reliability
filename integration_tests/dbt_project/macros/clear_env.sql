@@ -82,3 +82,9 @@
     {% do run_query("DROP SCHEMA IF EXISTS " ~ schema_name ~ " CASCADE") %}
     {% do adapter.commit() %}
 {% endmacro %}
+
+{% macro vertica__edr_drop_schema(database_name, schema_name) %}
+    {#- Vertica DDL is auto-committed; an explicit adapter.commit() would
+        fail with "no transaction in progress". -#}
+    {% do run_query("DROP SCHEMA IF EXISTS " ~ schema_name ~ " CASCADE") %}
+{% endmacro %}

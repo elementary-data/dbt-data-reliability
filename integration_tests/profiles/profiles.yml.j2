@@ -75,6 +75,18 @@ elementary_tests:
       trust_cert: true
       threads: 4
 
+    vertica: &vertica
+      type: vertica
+      host: localhost
+      port: 5433
+      username: dbadmin
+      password: vertica
+      database: elementary_tests
+      schema: {{ schema_name }}
+      connection_load_balance: false
+      retries: 2
+      threads: 4
+
     # ── Cloud targets (secrets substituted at CI time) ─────────────────
 
     snowflake: &snowflake
@@ -150,7 +162,7 @@ elementary_tests:
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena', 'fabric'] %}
+{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'vertica', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena', 'fabric'] %}
 {%- for t in targets %}
     {{ t }}:
       <<: *{{ t }}

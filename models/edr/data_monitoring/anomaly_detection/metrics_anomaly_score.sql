@@ -64,13 +64,15 @@ with
         select
             *,
             case
-                when training_stddev is null
+                when {{ elementary.edr_normalize_stddev("training_stddev") }} is null
                 then null
                 when training_set_size = 1
                 then null  -- Single value case - no historical context for anomaly detection
-                when training_stddev = 0
+                when {{ elementary.edr_normalize_stddev("training_stddev") }} = 0
                 then 0  -- Stationary data case - valid, all values are identical
-                else (metric_value - training_avg) / (training_stddev)
+                else
+                    (metric_value - training_avg)
+                    / ({{ elementary.edr_normalize_stddev("training_stddev") }})
             end as anomaly_score
         from time_window_aggregation
 

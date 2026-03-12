@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Dict, Generator, List, Mapping
+from typing import TYPE_CHECKING, ClassVar, Dict, Generator, List, Mapping, Optional
 
 from elementary.clients.dbt.base_dbt_runner import BaseDbtRunner
 from logger import get_logger
@@ -121,7 +121,7 @@ class BaseSqlInsertSeeder(ABC):
 
     def __init__(
         self,
-        query_runner: "AdapterQueryRunner",
+        query_runner: Optional["AdapterQueryRunner"],
         schema: str,
         seeds_dir_path: Path,
     ) -> None:
@@ -454,3 +454,119 @@ class ClickHouseDirectSeeder(BaseSqlInsertSeeder):
             f"CREATE TABLE {fq_table} ({col_defs}) "
             f"ENGINE = MergeTree() ORDER BY tuple()"
         )
+
+
+class VerticaDirectSeeder(BaseSqlInsertSeeder):
+    """Fast seeder for Vertica: executes CREATE TABLE + INSERT directly.
+
+    Bypasses ``dbt seed`` (which uses Vertica's COPY command) because COPY
+    rejects empty CSV fields for non-string columns instead of treating them
+    as NULL.  Direct INSERT statements handle NULL correctly.
+
+    Uses a *direct* ``vertica_python`` connection (rather than dbt's adapter
+    connection pool) so that all DDL + DML runs in a single session and can
+    be committed atomically.  dbt's ``connection_named`` context manager
+    releases (and effectively rolls back) the connection after each
+    ``execute_sql`` call, which caused INSERT data to be invisible to
+    subsequent ``dbt test`` sessions.
+
+    Vertica uses double-quote identifiers (not backticks), so this class
+    overrides the ``seed`` method to use ``"col"`` quoting.
+    """
+
+    def _type_string(self) -> str:
+        # Must match edr_type_string (varchar(16000)) so that schema-change
+        # detection sees a consistent type between seeded tables and
+        # elementary metadata columns.
+        return "VARCHAR(16000)"
+
+    def _type_boolean(self) -> str:
+        return "BOOLEAN"
+
+    def _type_integer(self) -> str:
+        return "INTEGER"
+
+    def _type_float(self) -> str:
+        return "FLOAT"
+
+    def _format_value(self, value: object, col_type: str) -> str:
+        if value is None or (isinstance(value, str) and value == ""):
+            return "NULL"
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (int, float)):
+            return str(value)
+        text = str(value)
+        text = text.replace("'", "''")
+        return f"'{text}'"
+
+    def _create_table_sql(self, fq_table: str, col_defs: str) -> str:
+        return f"CREATE TABLE {fq_table} ({col_defs})"
+
+    @staticmethod
+    def _vertica_connection():
+        """Open a direct vertica_python connection from env / defaults."""
+        import vertica_python  # available in the test venv
+
+        conn_info = {
+            "host": os.environ.get("VERTICA_HOST", "localhost"),
+            "port": int(os.environ.get("VERTICA_PORT", "5433")),
+            "user": os.environ.get("VERTICA_USER", "dbadmin"),
+            "password": os.environ.get("VERTICA_PASSWORD", "vertica"),
+            "database": os.environ.get("VERTICA_DATABASE", "elementary_tests"),
+        }
+        return vertica_python.connect(**conn_info)
+
+    @contextmanager
+    def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
+        """Override base seed to use double-quote identifiers for Vertica."""
+        if not data:
+            raise ValueError(f"Seed data for '{table_name}' must not be empty")
+        columns = list(data[0].keys())
+        col_types: Dict[str, str] = {
+            col: self._infer_column_type([row.get(col) for row in data])
+            for col in columns
+        }
+        # Vertica uses double-quote identifiers, not backticks.
+        col_defs = ", ".join(f'"{col}" {col_types[col]}' for col in columns)
+        fq_table = f'"{self._schema}"."{table_name}"'
+
+        seed_path = self._write_csv(data, table_name)
+
+        try:
+            # Use a direct connection so DDL + DML share the same session
+            # and the COMMIT is guaranteed to persist the data.
+            conn = self._vertica_connection()
+            try:
+                cur = conn.cursor()
+                cur.execute(f"DROP TABLE IF EXISTS {fq_table}")
+                cur.execute(self._create_table_sql(fq_table, col_defs))
+
+                for batch_start in range(0, len(data), _INSERT_BATCH_SIZE):
+                    batch = data[batch_start : batch_start + _INSERT_BATCH_SIZE]
+                    rows_sql = ", ".join(
+                        "("
+                        + ", ".join(
+                            self._format_value(row.get(c), col_types[c])
+                            for c in columns
+                        )
+                        + ")"
+                        for row in batch
+                    )
+                    cur.execute(f"INSERT INTO {fq_table} VALUES {rows_sql}")
+
+                conn.commit()
+            finally:
+                conn.close()
+
+            logger.info(
+                "%s: loaded %d rows into %s (%s)",
+                type(self).__name__,
+                len(data),
+                fq_table,
+                ", ".join(f"{c}: {t}" for c, t in col_types.items()),
+            )
+
+            yield
+        finally:
+            seed_path.unlink(missing_ok=True)

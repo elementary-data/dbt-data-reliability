@@ -64,3 +64,14 @@
     {% set result = run_query("SHOW DATABASES LIKE '" ~ safe_schema ~ "'") %}
     {% do return(result | length > 0) %}
 {% endmacro %}
+
+{% macro vertica__edr_schema_exists(database, schema_name) %}
+    {#- Vertica's v_catalog.schemata is scoped to the current database. -#}
+    {% set safe_schema = schema_name | replace("'", "''") %}
+    {% set result = run_query(
+        "SELECT schema_name FROM v_catalog.schemata WHERE lower(schema_name) = lower('"
+        ~ safe_schema
+        ~ "')"
+    ) %}
+    {% do return(result | length > 0) %}
+{% endmacro %}
