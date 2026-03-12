@@ -1,7 +1,7 @@
 {%- macro upload_dbt_sources(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_sources") %}
     {% if execute and relation %}
-        {% set sources = elementary.filter_to_current_project(
+        {% set sources = elementary.filter_to_current_project_if_needed(
             graph.sources.values()
             | selectattr("resource_type", "==", "source")
         ) %}

@@ -1,4 +1,4 @@
-{%- macro filter_to_current_project(entities) -%}
+{%- macro filter_to_current_project_if_needed(entities) -%}
     {%- if elementary.get_config_var("upload_only_current_project_artifacts") -%}
         {% set project_name = elementary.get_project_name() %}
         {% do return(

@@ -1,7 +1,7 @@
 {%- macro upload_dbt_snapshots(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_snapshots") %}
     {% if execute and relation %}
-        {% set snapshots = elementary.filter_to_current_project(
+        {% set snapshots = elementary.filter_to_current_project_if_needed(
             graph.nodes.values()
             | selectattr("resource_type", "==", "snapshot")
         ) %}
