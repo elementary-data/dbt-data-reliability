@@ -1,13 +1,9 @@
 {%- macro upload_dbt_columns(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_columns") %}
     {% if execute and relation %}
-        {% set tables = (
+        {% set tables = elementary.filter_to_current_project(
             graph.nodes.values()
-            | selectattr("package_name", "==", project_name)
-            | list + graph.sources.values()
-            | selectattr("package_name", "==", project_name)
-            | list
-        ) %}
+        ) + elementary.filter_to_current_project(graph.sources.values()) %}
         {% do elementary.upload_artifacts_to_table(
             relation,
             tables,
