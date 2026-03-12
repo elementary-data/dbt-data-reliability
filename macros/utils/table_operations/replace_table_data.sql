@@ -72,7 +72,9 @@
 
 {# Redshift - replace data without dropping the table (preserves late-binding views).
    Separate statements without explicit transaction for post_hook compatibility
-   (Redshift cannot run multiple statements in a single prepared statement). #}
+   (Redshift cannot run multiple statements in a single prepared statement).
+   NOTE: Non-atomic - if insert fails after delete, data is lost until the next run.
+   Acceptable here because these are internal artifact tables that are regenerated. #}
 {% macro redshift__replace_table_data(relation, rows) %}
     {% set intermediate_relation = elementary.create_intermediate_relation(
         relation, rows, temporary=True
@@ -121,9 +123,13 @@
     ) %}
 {% endmacro %}
 
-{# ClickHouse - truncate and insert (non-atomic) #}
+{# ClickHouse - cluster-aware truncate and insert (non-atomic).
+   Uses explicit TRUNCATE with on_cluster_clause for distributed/replicated tables,
+   matching the pattern in delete_and_insert.sql and clean_elementary_test_tables.sql. #}
 {% macro clickhouse__replace_table_data(relation, rows) %}
-    {% do dbt.truncate_relation(relation) %}
+    {% do elementary.run_query(
+        "truncate table " ~ relation ~ " " ~ on_cluster_clause(relation)
+    ) %}
     {% do elementary.insert_rows(
         relation,
         rows,
