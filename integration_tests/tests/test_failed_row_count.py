@@ -1,12 +1,8 @@
-import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "some_column"
 
 
-# Failed row count currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_count_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     data = [{COLUMN_NAME: None} for _ in range(null_count)]
@@ -24,7 +20,6 @@ def test_count_failed_row_count(test_id: str, dbt_project: DbtProject):
     )  # when the failed_row_count_calc is count(*), these should be equal
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_sum_failed_row_count(test_id: str, dbt_project: DbtProject):
     non_unique_count = 50
     data = [{COLUMN_NAME: 5} for _ in range(non_unique_count)]
@@ -42,9 +37,6 @@ def test_sum_failed_row_count(test_id: str, dbt_project: DbtProject):
     )  # when the failed_row_count_calc is sum(<column_name>), these should not be equal
 
 
-# Failed row count currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     null_count = 50
     overwrite_failed_row_count = 5
@@ -64,7 +56,6 @@ def test_custom_failed_row_count(test_id: str, dbt_project: DbtProject):
     assert test_result["failed_row_count"] == overwrite_failed_row_count
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_warn_if_0(test_id: str, dbt_project: DbtProject):
     # Edge case that we want to verify
 

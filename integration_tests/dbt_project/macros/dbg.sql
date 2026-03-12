@@ -1,3 +1,1 @@
-{% macro dbg() %}
-  {% do debug() %}
-{% endmacro %}
+{% macro dbg() %} {% do debug() %} {% endmacro %}

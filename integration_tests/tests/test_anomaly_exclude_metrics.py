@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 from parametrization import Parametrization
@@ -25,8 +24,6 @@ DBT_TEST_ARGS = {
     time_bucket={"period": "hour", "count": 6},
     dates_step=timedelta(hours=6),
 )
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_specific_dates(
     test_id: str, dbt_project: DbtProject, time_bucket: dict, dates_step: timedelta
 ):
@@ -71,8 +68,6 @@ def test_exclude_specific_dates(
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     # To avoid races, set the "custom_started_at" to the beginning of the hour
     test_started_at = datetime.utcnow().replace(minute=0, second=0)
@@ -106,9 +101,11 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     )
     assert test_result["status"] == "pass"
 
+    # T-SQL uses datetime2 instead of timestamp.
+    ts_type = "datetime2" if dbt_project.is_tsql else "timestamp"
     excluded_buckets_str = ", ".join(
         [
-            "cast('%s' as timestamp)" % cur_ts.strftime(DATE_FORMAT)
+            "cast('%s' as %s)" % (cur_ts.strftime(DATE_FORMAT), ts_type)
             for cur_ts in excluded_buckets
         ]
     )
@@ -128,8 +125,6 @@ def test_exclude_specific_timestamps(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -165,8 +160,6 @@ def test_exclude_date_range(test_id: str, dbt_project: DbtProject):
     assert test_result["status"] == "fail"
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_exclude_by_metric_value(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))

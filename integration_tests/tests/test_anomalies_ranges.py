@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
@@ -16,11 +15,11 @@ DBT_TEST_ARGS = {
 
 ANOMALY_TEST_POINTS_QUERY = """
     with latest_elementary_test_result as (
-        select id
+        select {top_clause}id
         from {{{{ ref("elementary_test_results") }}}}
         where lower(table_name) = lower('{test_id}')
         order by created_at desc
-        limit 1
+        {limit_clause}
     )
 
     select result_row
@@ -30,12 +29,16 @@ ANOMALY_TEST_POINTS_QUERY = """
 
 
 def get_latest_anomaly_test_points(dbt_project: DbtProject, test_id: str):
-    results = dbt_project.run_query(ANOMALY_TEST_POINTS_QUERY.format(test_id=test_id))
+    sl = dbt_project.select_limit(1)
+    query = ANOMALY_TEST_POINTS_QUERY.format(
+        test_id=test_id,
+        top_clause=sl.top,
+        limit_clause=sl.limit,
+    )
+    results = dbt_project.run_query(query)
     return [json.loads(result["result_row"]) for result in results]
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
@@ -69,8 +72,6 @@ def test_anomaly_ranges_are_valid(test_id: str, dbt_project: DbtProject):
     assert all([row["min_value"] == row["max_value"] for row in anomaly_test_points])
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_anomaly_ranges_are_valid_with_seasonality(
     test_id: str, dbt_project: DbtProject
 ):

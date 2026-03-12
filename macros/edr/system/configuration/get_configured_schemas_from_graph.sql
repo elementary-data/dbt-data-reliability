@@ -5,7 +5,12 @@
         {% set root_project = context["project_name"] %}
         {% set nodes = elementary.get_nodes_from_graph() %}
         {% for node in nodes %}
-            {% if node.resource_type in ['model', 'source', 'snapshot', 'seed'] and node.package_name == root_project %}
+            {% if node.resource_type in [
+                "model",
+                "source",
+                "snapshot",
+                "seed",
+            ] and node.package_name == root_project %}
                 {% set schema_tuple = (node.database, node.schema) %}
                 {% if schema_tuple not in configured_schemas %}
                     {% do configured_schemas.append(schema_tuple) %}

@@ -1,4 +1,13 @@
-{% macro get_anomaly_scores_query(test_metrics_table_relation, model_relation, test_configuration, metric_names, column_name = none, columns_only = false, metric_properties = none, data_monitoring_metrics_table=none) %}
+{% macro get_anomaly_scores_query(
+    test_metrics_table_relation,
+    model_relation,
+    test_configuration,
+    metric_names,
+    column_name=none,
+    columns_only=false,
+    metric_properties=none,
+    data_monitoring_metrics_table=none
+) %}
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
     {%- set full_table_name = elementary.model_node_to_full_name(model_graph_node) %}
     {%- set test_execution_id = elementary.get_test_execution_id() %}
@@ -6,32 +15,41 @@
     {%- if not data_monitoring_metrics_table %}
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
-        {%- set data_monitoring_metrics_table = elementary.get_elementary_relation('data_monitoring_metrics') %}
+        {%- set data_monitoring_metrics_table = elementary.get_elementary_relation(
+            "data_monitoring_metrics"
+        ) %}
     {%- endif %}
 
     {%- if elementary.is_incremental_model(model_graph_node) %}
-      {%- set latest_full_refresh = elementary.get_latest_full_refresh(model_graph_node) %}
-    {%- else %}
-      {%- set latest_full_refresh = none %}
+        {%- set latest_full_refresh = elementary.get_latest_full_refresh(
+            model_graph_node
+        ) %}
+    {%- else %} {%- set latest_full_refresh = none %}
     {%- endif %}
 
-    {%- if test_configuration.seasonality == 'day_of_week' %}
-        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression('bucket_end') %}
+    {%- if test_configuration.seasonality == "day_of_week" %}
+        {%- set bucket_seasonality_expr = elementary.edr_day_of_week_expression(
+            "bucket_end"
+        ) %}
         {%- set has_seasonality = true %}
 
-    {%- elif test_configuration.seasonality == 'hour_of_day' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression('bucket_end') %}
+    {%- elif test_configuration.seasonality == "hour_of_day" %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_day_expression(
+            "bucket_end"
+        ) %}
         {%- set has_seasonality = true %}
 
-    {%- elif test_configuration.seasonality == 'hour_of_week' %}
-        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression('bucket_end') %}
+    {%- elif test_configuration.seasonality == "hour_of_week" %}
+        {%- set bucket_seasonality_expr = elementary.edr_hour_of_week_expression(
+            "bucket_end"
+        ) %}
         {%- set has_seasonality = true %}
 
     {%- else %}
-        {%- set bucket_seasonality_expr = elementary.const_as_text('no_seasonality') %}
+        {%- set bucket_seasonality_expr = elementary.const_as_text("no_seasonality") %}
         {%- set has_seasonality = false %}
     {%- endif %}
-    
+
     {# Build PARTITION BY clause for window functions dynamically to work around Redshift limitation.
        
        Redshift doesn't allow constant expressions in PARTITION BY of window functions. When seasonality 
@@ -45,10 +63,16 @@
     {%- if has_seasonality %}
         {%- set partition_by_keys = partition_by_keys ~ ", bucket_seasonality" %}
     {%- endif %}
-    
-    {%- set detection_end = elementary.get_detection_end(test_configuration.detection_delay) %}
-    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_end)) %}
-    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(detection_end, metric_properties, test_configuration.days_back) %}
+
+    {%- set detection_end = elementary.get_detection_end(
+        test_configuration.detection_delay
+    ) %}
+    {%- set detection_end_expr = elementary.edr_cast_as_timestamp(
+        elementary.edr_datetime_to_sql(detection_end)
+    ) %}
+    {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
+        detection_end, metric_properties, test_configuration.days_back
+    ) %}
 
     {# Calculate detection period start for exclusion logic.
        backfill_days defines the window of recent data to test for anomalies on each run.
@@ -57,13 +81,22 @@
        When exclude_detection_period_from_training is enabled, metrics in this detection period
        are excluded from training statistics to prevent contamination from potentially anomalous data. #}
     {%- if test_configuration.exclude_detection_period_from_training %}
-        {%- set detection_period_start = (detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)) %}
-        {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(elementary.edr_datetime_to_sql(detection_period_start)) %}
+        {%- set detection_period_start = detection_end - modules.datetime.timedelta(
+            days=test_configuration.backfill_days
+        ) %}
+        {%- set detection_period_start_expr = elementary.edr_cast_as_timestamp(
+            elementary.edr_datetime_to_sql(detection_period_start)
+        ) %}
     {%- endif %}
 
     {# For timestamped tests, this will be the bucket start, and for non-timestamped tests it will be the
        bucket end (which is the actual time of the test) #}
-    {%- set metric_time_bucket_expr = 'case when bucket_start is not null then bucket_start else bucket_end end' %}
+    {%- set metric_time_bucket_expr = "case when bucket_start is not null then bucket_start else bucket_end end" %}
+
+    {%- set exclude_filter = (
+        "should_exclude_from_training = "
+        ~ elementary.edr_boolean_literal(false)
+    ) -%}
 
     {%- set anomaly_scores_query %}
         {% if test_configuration.timestamp_column %}
@@ -171,12 +204,12 @@
                 bucket_start,
                 bucket_end,
                 {{ bucket_seasonality_expr }} as bucket_seasonality,
-                {{ test_configuration.anomaly_exclude_metrics or 'FALSE' }} as is_excluded,
+                {{ elementary.edr_condition_as_boolean(test_configuration.anomaly_exclude_metrics) }} as is_excluded,
                 {# Flag detection period metrics for exclusion from training #}
                 {% if test_configuration.exclude_detection_period_from_training %}
-                    bucket_end > {{ detection_period_start_expr }}
+                    {{ elementary.edr_condition_as_boolean('bucket_end > ' ~ detection_period_start_expr) }}
                 {% else %}
-                    FALSE
+                    {{ elementary.edr_boolean_literal(false) }}
                 {% endif %} as should_exclude_from_training,
                 bucket_duration_hours,
                 updated_at
@@ -201,14 +234,17 @@
                 bucket_duration_hours,
                 updated_at,
                 should_exclude_from_training,
-                avg(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
-                {{ elementary.standard_deviation('case when not should_exclude_from_training then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
-                count(case when not should_exclude_from_training then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
-                last_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
-                first_value(case when not should_exclude_from_training then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
+                avg(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_avg,
+                {{ elementary.standard_deviation('case when ' ~ exclude_filter ~ ' then metric_value end') }} over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_stddev,
+                count(case when {{ exclude_filter }} then metric_value end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_set_size,
+                last_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) training_end,
+                first_value(case when {{ exclude_filter }} then bucket_end end) over (partition by {{ partition_by_keys }} order by bucket_end asc rows between unbounded preceding and current row) as training_start
             from grouped_metrics
-            where not is_excluded
-            {{ dbt_utils.group_by(14) }}
+                where {{ elementary.edr_is_false('is_excluded') }}
+                group by metric_id, full_table_name, column_name, dimension,
+                         dimension_value, metric_name, metric_value, source_value,
+                         bucket_start, bucket_end, bucket_seasonality,
+                         bucket_duration_hours, updated_at, should_exclude_from_training
         ),
 
         anomaly_scores as (
@@ -226,10 +262,10 @@
                 column_name,
                 metric_name,
                 case
-                    when training_stddev is null then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null then null
                     when training_set_size = 1 then null  -- Single value case - no historical context for anomaly detection
-                    when training_stddev = 0 then 0  -- Stationary data case - valid, all values are identical
-                    else (metric_value - training_avg) / (training_stddev)
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} = 0 then 0  -- Stationary data case - valid, all values are identical
+                    else (metric_value - training_avg) / ({{ elementary.edr_normalize_stddev('training_stddev') }})
                 end as anomaly_score,
                 {{ test_configuration.anomaly_sensitivity }} as anomaly_score_threshold,
                 source_value as anomalous_value,
@@ -240,16 +276,16 @@
                 
                 {% set limit_values =  elementary.get_limit_metric_values(test_configuration) %}
                 case
-                    when training_stddev is null or training_set_size = 1 then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null or training_set_size = 1 then null
                     when {{ limit_values.min_metric_value }} > 0 or metric_name in {{ elementary.to_sql_list(elementary.get_negative_value_supported_metrics()) }} then {{ limit_values.min_metric_value }}
                     else 0
                 end as min_metric_value,
                 case 
-                    when training_stddev is null or training_set_size = 1 then null
+                    when {{ elementary.edr_normalize_stddev('training_stddev') }} is null or training_set_size = 1 then null
                     else {{ limit_values.max_metric_value }}
                 end as max_metric_value,
                 training_avg,
-                training_stddev,
+                {{ elementary.edr_normalize_stddev('training_stddev') }} as training_stddev,
                 training_set_size,
                 {{ elementary.edr_cast_as_timestamp('training_start') }} as training_start,
                 {{ elementary.edr_cast_as_timestamp('training_end') }} as training_end,
@@ -271,30 +307,31 @@
 {% endmacro %}
 
 {% macro get_limit_metric_values(test_configuration) %}
+    {%- set normalized_stddev = elementary.edr_normalize_stddev("training_stddev") -%}
     {%- set min_val -%}
-      ((-1) * {{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+      ((-1) * {{ test_configuration.anomaly_sensitivity }} * {{ normalized_stddev }} + training_avg)
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.drop_failure_percent_threshold %}
-      {%- set drop_avg_threshold -%}
+        {%- set drop_avg_threshold -%}
         ((1 - {{ test_configuration.ignore_small_changes.drop_failure_percent_threshold }}/100.0) * training_avg)
-      {%- endset -%}
-      {%- set min_val -%}
+        {%- endset -%}
+        {%- set min_val -%}
         {{ elementary.arithmetic_min(drop_avg_threshold, min_val) }}
-      {%- endset -%}
+        {%- endset -%}
     {% endif %}
 
     {%- set max_val -%}
-      ({{ test_configuration.anomaly_sensitivity }} * training_stddev + training_avg)
+      ({{ test_configuration.anomaly_sensitivity }} * {{ normalized_stddev }} + training_avg)
     {%- endset -%}
 
     {% if test_configuration.ignore_small_changes.spike_failure_percent_threshold %}
-      {%- set spike_avg_threshold -%}
+        {%- set spike_avg_threshold -%}
         ((1 + {{ test_configuration.ignore_small_changes.spike_failure_percent_threshold }}/100.0) * training_avg)
-      {%- endset -%}
-      {%- set max_val -%}
+        {%- endset -%}
+        {%- set max_val -%}
         {{ elementary.arithmetic_max(spike_avg_threshold, max_val) }}
-      {%- endset -%}
+        {%- endset -%}
     {% endif %}
 
     {{ return({"min_metric_value": min_val, "max_metric_value": max_val}) }}

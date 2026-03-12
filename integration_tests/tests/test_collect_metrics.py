@@ -2,7 +2,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
-import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
@@ -35,8 +34,6 @@ DBT_TEST_ARGS = {
 }
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -65,8 +62,6 @@ def test_collect_metrics(test_id: str, dbt_project: DbtProject):
     assert col_to_metric_names == EXPECTED_COL_TO_METRIC_NAMES
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -96,8 +91,6 @@ def test_collect_no_timestamp_metrics(test_id: str, dbt_project: DbtProject):
     assert col_to_metric_names == EXPECTED_COL_TO_METRIC_NAMES
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
 def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
@@ -148,9 +141,6 @@ def test_collect_group_by_metrics(test_id: str, dbt_project: DbtProject):
     assert dim_to_col_to_metric_names == expected_dim_to_col_to_metric_names
 
 
-# Anomalies currently not supported on ClickHouse
-@pytest.mark.skip_targets(["clickhouse"])
-@pytest.mark.skip_for_dbt_fusion
 def test_collect_metrics_unique_metric_name(test_id: str, dbt_project: DbtProject):
     args = DBT_TEST_ARGS.copy()
     args["metrics"].append(args["metrics"][0])
