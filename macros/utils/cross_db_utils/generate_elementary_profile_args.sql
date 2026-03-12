@@ -324,7 +324,7 @@
         ),
         _parameter("workspaceid", "<WORKSPACE_GUID>"),
         _parameter("lakehouseid", "<LAKEHOUSE_GUID>"),
-        _parameter("lakehouse", elementary_schema),
+        _parameter("lakehouse", elementary_database),
         _parameter("schema", elementary_schema),
         _parameter("threads", target.threads),
     ] %}
