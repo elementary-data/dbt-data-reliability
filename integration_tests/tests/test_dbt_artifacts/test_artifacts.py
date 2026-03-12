@@ -57,6 +57,37 @@ def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
     assert len(existing_artifacts) == len(new_artifacts)
 
 
+def test_replace_table_data(dbt_project: DbtProject):
+    """Validate that replace_table_data works on the current adapter.
+
+    Sets cache_artifacts=False so the upload path uses replace_table_data
+    instead of the diff-based method.  Verifies that after a run the
+    artifact table is non-empty and contains the expected rows.
+    """
+    # Collect a baseline so dbt_models is populated.
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    baseline = dbt_project.read_table(
+        "dbt_models", where=f"alias = '{TEST_MODEL}'", raise_if_empty=True
+    )
+
+    # Now force the replace path and run again.
+    dbt_project.dbt_runner.vars["cache_artifacts"] = False
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+
+    replaced = dbt_project.read_table(
+        "dbt_models", where=f"alias = '{TEST_MODEL}'", raise_if_empty=True
+    )
+
+    # The table must still contain exactly one row for the test model.
+    assert len(replaced) == 1, (
+        f"Expected exactly 1 row for model '{TEST_MODEL}' after replace_table_data, "
+        f"got {len(replaced)}"
+    )
+    # The alias must match (data integrity survived the replace).
+    assert replaced[0]["alias"] == baseline[0]["alias"]
+
+
 def test_dbt_invocations(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
     dbt_project.dbt_runner.run(selector="one")
