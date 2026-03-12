@@ -173,8 +173,9 @@
 
 {%- macro vertica__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
-    {# Vertica varchar columns max out at 65000 bytes.  edr_type_long_string
-       is varchar(32000), so keep INSERT statements well within that limit. #}
+    {# Reduce batch INSERT query size from default 1,000,000 to avoid
+       overwhelming Vertica with very large single statements.  Individual
+       column values are bounded by edr_type_long_string (varchar(32000)). #}
     {% do default_config.update({"query_max_size": 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}

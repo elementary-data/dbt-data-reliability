@@ -520,6 +520,8 @@ class VerticaDirectSeeder(BaseSqlInsertSeeder):
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
         """Override base seed to use double-quote identifiers for Vertica."""
+        if not data:
+            raise ValueError(f"Seed data for '{table_name}' must not be empty")
         columns = list(data[0].keys())
         col_types: Dict[str, str] = {
             col: self._infer_column_type([row.get(col) for row in data])
