@@ -59,41 +59,63 @@
     {% set datetime = modules.datetime %}
     {% set pytz = modules.pytz %}
 
-    {# Get timezone objects #}
-    {% set utc_tz = pytz.timezone("UTC") %}
-    {% set target_tz = pytz.timezone(timezone) %}
+    {# In dbt-fusion, pytz.localize() produces incorrect results (dbt-labs/dbt-fusion#143).
+       Use datetime.timezone.utc and replace(tzinfo=) instead. #}
+    {% if elementary.is_dbt_fusion() %}
+        {% set utc_tz = datetime.timezone.utc %}
+        {% set target_tz = pytz.timezone(timezone) %}
 
-    {# Get current time in UTC and target timezone #}
-    {% set now_utc = datetime.datetime.now(utc_tz) %}
-    {% set now_local = now_utc.astimezone(target_tz) %}
+        {% set now_utc = datetime.datetime.now(utc_tz) %}
+        {% set now_local = now_utc.astimezone(target_tz) %}
+        {% set target_date_local = now_local.date() %}
 
-    {# Target date is today in the target timezone #}
-    {% set target_date_local = now_local.date() %}
+        {# Use replace(tzinfo=) instead of localize() for fusion compatibility #}
+        {% set day_start_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(0, 0, 0)
+        ) %}
+        {% set day_start_local = day_start_naive.replace(tzinfo=target_tz) %}
+        {% set day_start_utc = day_start_local.astimezone(utc_tz) %}
 
-    {# Create start of day (00:00:00) in target timezone #}
-    {% set day_start_naive = datetime.datetime.combine(
-        target_date_local, datetime.time(0, 0, 0)
-    ) %}
-    {% set day_start_local = target_tz.localize(day_start_naive, is_dst=False) %}
-    {% set day_start_utc = day_start_local.astimezone(utc_tz) %}
+        {% set day_end_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(23, 59, 59)
+        ) %}
+        {% set day_end_local = day_end_naive.replace(tzinfo=target_tz) %}
+        {% set day_end_utc = day_end_local.astimezone(utc_tz) %}
 
-    {# Create end of day (23:59:59.999) in target timezone #}
-    {% set day_end_naive = datetime.datetime.combine(
-        target_date_local, datetime.time(23, 59, 59)
-    ) %}
-    {% set day_end_local = target_tz.localize(day_end_naive, is_dst=False) %}
-    {% set day_end_utc = day_end_local.astimezone(utc_tz) %}
+        {% set sla_deadline_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(sla_hour, sla_minute, 0)
+        ) %}
+        {% set sla_deadline_local = sla_deadline_naive.replace(tzinfo=target_tz) %}
+        {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
+    {% else %}
+        {# Standard dbt-core path using pytz.localize() #}
+        {% set utc_tz = pytz.timezone("UTC") %}
+        {% set target_tz = pytz.timezone(timezone) %}
 
-    {# Create the SLA deadline in target timezone #}
-    {# Use is_dst=False to resolve ambiguous times during DST transitions to standard time #}
-    {% set sla_time_local = datetime.time(sla_hour, sla_minute, 0) %}
-    {% set sla_deadline_naive = datetime.datetime.combine(
-        target_date_local, sla_time_local
-    ) %}
-    {% set sla_deadline_local = target_tz.localize(sla_deadline_naive, is_dst=False) %}
+        {% set now_utc = datetime.datetime.now(utc_tz) %}
+        {% set now_local = now_utc.astimezone(target_tz) %}
+        {% set target_date_local = now_local.date() %}
 
-    {# Convert to UTC #}
-    {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
+        {% set day_start_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(0, 0, 0)
+        ) %}
+        {% set day_start_local = target_tz.localize(day_start_naive, is_dst=False) %}
+        {% set day_start_utc = day_start_local.astimezone(utc_tz) %}
+
+        {% set day_end_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(23, 59, 59)
+        ) %}
+        {% set day_end_local = target_tz.localize(day_end_naive, is_dst=False) %}
+        {% set day_end_utc = day_end_local.astimezone(utc_tz) %}
+
+        {% set sla_deadline_naive = datetime.datetime.combine(
+            target_date_local, datetime.time(sla_hour, sla_minute, 0)
+        ) %}
+        {% set sla_deadline_local = target_tz.localize(
+            sla_deadline_naive, is_dst=False
+        ) %}
+        {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
+    {% endif %}
 
     {# Check if deadline has passed #}
     {% set deadline_passed = now_utc > sla_deadline_utc %}
