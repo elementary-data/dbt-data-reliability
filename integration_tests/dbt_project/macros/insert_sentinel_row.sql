@@ -29,8 +29,11 @@
         | join(", ") ~ ")"
     ) %}
 
-    {#- Vertica needs an explicit COMMIT (run_query DML is not auto-committed
-        and adapter.commit() raises "no transaction in progress").
-        Most other adapters auto-commit or don't support bare COMMIT (Spark). -#}
-    {% if target.type == "vertica" %} {% do run_query("COMMIT") %} {% endif %}
+    {#- Most SQL adapters need an explicit COMMIT because run_query DML is
+        not auto-committed.  Spark-based and serverless engines do not
+        support bare COMMIT statements, so we skip them. -#}
+    {% set no_commit_adapters = ["spark", "databricks", "bigquery", "athena"] %}
+    {% if target.type not in no_commit_adapters %}
+        {% do run_query("COMMIT") %}
+    {% endif %}
 {% endmacro %}
