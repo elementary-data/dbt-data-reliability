@@ -265,7 +265,7 @@
 ) -%}
     {%- set complete_buckets_cte %}
         with integers as (
-            select (row_number() over (order by 1)) - 1 as num
+            select (row_number() over (order by t1.v, t2.v, t3.v, t4.v)) - 1 as num
             from (select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all select 6 union all select 7 union all select 8 union all select 9 union all select 10) t1(v)
             cross join (select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all select 6 union all select 7 union all select 8 union all select 9 union all select 10) t2(v)
             cross join (select 1 union all select 2 union all select 3 union all select 4 union all select 5 union all select 6 union all select 7 union all select 8 union all select 9 union all select 10) t3(v)
