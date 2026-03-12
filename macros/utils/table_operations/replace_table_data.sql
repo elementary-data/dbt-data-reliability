@@ -37,6 +37,11 @@
     ) %}
 {% endmacro %}
 
+{# FabricSpark - delegate to Spark (non-atomic) #}
+{% macro fabricspark__replace_table_data(relation, rows) %}
+    {{ return(elementary.spark__replace_table_data(relation, rows)) }}
+{% endmacro %}
+
 {# Dremio - truncate and insert (non-atomic) #}
 {% macro dremio__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}

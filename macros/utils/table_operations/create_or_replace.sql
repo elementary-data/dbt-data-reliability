@@ -33,6 +33,10 @@
     ) %}
 {% endmacro %}
 
+{% macro fabricspark__create_or_replace(temporary, relation, sql_query) %}
+    {{ return(elementary.spark__create_or_replace(temporary, relation, sql_query)) }}
+{% endmacro %}
+
 {% macro athena__create_or_replace(temporary, relation, sql_query) %}
     {% do elementary.edr_create_table_as(
         temporary, relation, sql_query, drop_first=true

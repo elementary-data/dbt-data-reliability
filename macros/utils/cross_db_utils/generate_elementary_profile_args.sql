@@ -311,6 +311,26 @@
     ) %}
 {% endmacro %}
 
+{% macro fabricspark__generate_elementary_profile_args(
+    method, elementary_database, elementary_schema
+) %}
+    {% set parameters = [
+        _parameter("type", "fabricspark"),
+        _parameter("method", "livy"),
+        _parameter("authentication", "CLI"),
+        _parameter(
+            "endpoint",
+            target.endpoint | default("https://api.fabric.microsoft.com/v1"),
+        ),
+        _parameter("workspaceid", "<WORKSPACE_GUID>"),
+        _parameter("lakehouseid", "<LAKEHOUSE_GUID>"),
+        _parameter("lakehouse", elementary_database),
+        _parameter("schema", elementary_schema),
+        _parameter("threads", target.threads),
+    ] %}
+    {% do return(parameters) %}
+{% endmacro %}
+
 {% macro default__generate_elementary_profile_args(
     method, elementary_database, elementary_schema
 ) %}

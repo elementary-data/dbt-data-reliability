@@ -92,6 +92,14 @@
     cast(sysutcdatetime() as datetime2(6))
 {%- endmacro -%}
 
+{% macro fabricspark__edr_current_timestamp() %}
+    {{ return(elementary.spark__edr_current_timestamp()) }}
+{% endmacro %}
+
+{% macro fabricspark__edr_current_timestamp_in_utc() %}
+    {{ return(elementary.spark__edr_current_timestamp_in_utc()) }}
+{% endmacro %}
+
 {% macro dremio__edr_current_timestamp() -%} current_timestamp() {%- endmacro -%}
 
 {% macro dremio__edr_current_timestamp_in_utc() -%}

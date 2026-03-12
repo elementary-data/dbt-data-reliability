@@ -240,6 +240,10 @@
 
 {% endmacro %}
 
+{% macro fabricspark__edr_datediff(first_date, second_date, datepart) %}
+    {{ return(elementary.spark__edr_datediff(first_date, second_date, datepart)) }}
+{% endmacro %}
+
 {% macro athena__edr_datediff(first_date, second_date, date_part) %}
     {% set macro = dbt.datediff or dbt_utils.datediff %}
     {% if not macro %}

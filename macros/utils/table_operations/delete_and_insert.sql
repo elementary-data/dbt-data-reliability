@@ -143,6 +143,18 @@
     {% do return(queries) %}
 {% endmacro %}
 
+{% macro fabricspark__get_delete_and_insert_queries(
+    relation, insert_relation, delete_relation, delete_column_key
+) %}
+    {{
+        return(
+            elementary.spark__get_delete_and_insert_queries(
+                relation, insert_relation, delete_relation, delete_column_key
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro redshift__get_delete_and_insert_queries(
     relation, insert_relation, delete_relation, delete_column_key
 ) %}

@@ -65,6 +65,16 @@
     ) %}
 {% endmacro %}
 
+{% macro fabricspark__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {{
+        return(
+            elementary.spark__get_clean_elementary_test_tables_queries(
+                test_table_relations
+            )
+        )
+    }}
+{% endmacro %}
+
 {% macro clickhouse__get_clean_elementary_test_tables_queries(test_table_relations) %}
     {# Self-hosted clustered ClickHouse installations require tables to be dropped on all cluster nodes explicitly #}
     {% set queries = [] %}
