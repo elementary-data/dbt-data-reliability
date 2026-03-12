@@ -58,34 +58,33 @@ def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
 
 
 def test_replace_table_data(dbt_project: DbtProject):
-    """Validate that replace_table_data works on the current adapter.
+    """Validate that replace_table_data actually replaces data on the current adapter.
 
     Sets cache_artifacts=False so the upload path uses replace_table_data
-    instead of the diff-based method.  Verifies that after a run the
-    artifact table is non-empty and contains the expected rows.
+    instead of the diff-based method.  Changes the model owner between two
+    replace runs and asserts the new owner is present (proving the table was
+    actually replaced, not just appended to or left unchanged).
     """
-    # Collect a baseline so dbt_models is populated.
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
-    dbt_project.dbt_runner.run(select=TEST_MODEL)
-    baseline = dbt_project.read_table(
-        "dbt_models", where=f"alias = '{TEST_MODEL}'", raise_if_empty=True
-    )
-
-    # Now force the replace path and run again.
     dbt_project.dbt_runner.vars["cache_artifacts"] = False
+
+    # First replace run — upload artifacts with default owner.
     dbt_project.dbt_runner.run(select=TEST_MODEL)
+    first_row = read_model_artifact_row(dbt_project)
 
-    replaced = dbt_project.read_table(
-        "dbt_models", where=f"alias = '{TEST_MODEL}'", raise_if_empty=True
+    # Second replace run — change the owner so we can detect the replace.
+    dbt_project.dbt_runner.run(
+        select=TEST_MODEL, vars={"one_owner": "replace_test_owner"}
     )
+    second_row = read_model_artifact_row(dbt_project)
 
-    # The table must still contain exactly one row for the test model.
-    assert len(replaced) == 1, (
-        f"Expected exactly 1 row for model '{TEST_MODEL}' after replace_table_data, "
-        f"got {len(replaced)}"
+    # The row must reflect the new owner, proving an actual replace happened.
+    assert second_row["owner"] != first_row["owner"], (
+        "replace_table_data did not replace the data — "
+        "owner is still '{}' after a run with a different owner".format(
+            second_row["owner"]
+        )
     )
-    # The alias must match (data integrity survived the replace).
-    assert replaced[0]["alias"] == baseline[0]["alias"]
 
 
 def test_dbt_invocations(dbt_project: DbtProject):
