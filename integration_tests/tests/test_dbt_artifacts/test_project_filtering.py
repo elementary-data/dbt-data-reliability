@@ -42,17 +42,17 @@ def test_filtering_excludes_dependency_artifacts(dbt_project: DbtProject):
     current project should be uploaded — dependency packages like 'elementary'
     should be excluded.
 
-    We run the dbt_models model directly (which does a full table replace via
-    post_hook) to ensure a clean slate, rather than relying on the on-run-end
-    diff upload which may not remove pre-existing rows.
+    We first clear the dbt_models table, then run with filtering enabled via
+    the on-run-end hook. The diff upload sees an empty table and inserts all
+    (filtered) artifacts, so only current-project rows end up in the table.
     """
-    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = True
-    dbt_project.dbt_runner.vars["cache_artifacts"] = False
+    # Clear existing rows so the diff upload will insert fresh filtered data.
+    dbt_project.run_query("DELETE FROM {{ ref('dbt_models') }} WHERE 1=1")
+
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
     dbt_project.dbt_runner.vars["upload_only_current_project_artifacts"] = True
 
-    # Running dbt_models directly triggers its post_hook (upload_dbt_models),
-    # which does a full table replace with the filtered artifacts.
-    dbt_project.dbt_runner.run(select="dbt_models")
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
 
     all_models = dbt_project.read_table("dbt_models", raise_if_empty=True)
     package_names = {row["package_name"] for row in all_models}
@@ -88,12 +88,13 @@ def test_filtering_applies_to_tests(dbt_project: DbtProject, tmp_path):
         dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
         dbt_model_path.write_text(model_sql)
         try:
-            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = True
-            dbt_project.dbt_runner.vars["cache_artifacts"] = False
+            # Clear existing rows so the diff upload inserts fresh filtered data.
+            dbt_project.run_query("DELETE FROM {{ ref('dbt_tests') }} WHERE 1=1")
+
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
             dbt_project.dbt_runner.vars["upload_only_current_project_artifacts"] = True
 
-            # Run dbt_tests model directly to trigger post_hook with full replace
-            dbt_project.dbt_runner.run(select=f"{model_name} dbt_tests")
+            dbt_project.dbt_runner.run(select=model_name)
 
             tests = dbt_project.read_table("dbt_tests", raise_if_empty=True)
             test_packages = {row["package_name"] for row in tests}
