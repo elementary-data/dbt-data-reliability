@@ -1,8 +1,9 @@
 {%- macro upload_dbt_exposures(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_exposures") %}
     {% if execute and relation %}
-        {% set exposures = graph.exposures.values() | selectattr(
-            "resource_type", "==", "exposure"
+        {% set exposures = elementary.filter_to_current_project_if_needed(
+            graph.exposures.values()
+            | selectattr("resource_type", "==", "exposure")
         ) %}
         {% do elementary.upload_artifacts_to_table(
             relation,

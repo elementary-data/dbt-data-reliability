@@ -1,7 +1,11 @@
 {%- macro upload_dbt_columns(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_columns") %}
     {% if execute and relation %}
-        {% set tables = graph.nodes.values() | list + graph.sources.values() | list %}
+        {% set tables = elementary.filter_to_current_project_if_needed(
+            graph.nodes.values()
+        ) + elementary.filter_to_current_project_if_needed(
+            graph.sources.values()
+        ) %}
         {% do elementary.upload_artifacts_to_table(
             relation,
             tables,

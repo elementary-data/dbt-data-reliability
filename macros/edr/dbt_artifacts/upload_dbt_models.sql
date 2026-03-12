@@ -1,8 +1,8 @@
 {%- macro upload_dbt_models(should_commit=false, metadata_hashes=none) -%}
     {% set relation = elementary.get_elementary_relation("dbt_models") %}
     {% if execute and relation %}
-        {% set models = graph.nodes.values() | selectattr(
-            "resource_type", "==", "model"
+        {% set models = elementary.filter_to_current_project_if_needed(
+            graph.nodes.values() | selectattr("resource_type", "==", "model")
         ) %}
         {% do elementary.upload_artifacts_to_table(
             relation,
