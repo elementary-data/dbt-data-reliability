@@ -143,6 +143,7 @@
         "anomaly_exclude_metrics": none,
         "disable_samples_on_pii_tags": false,
         "pii_tags": ["pii"],
+        "bigquery_disable_partitioning": false,
     } %}
     {{- return(default_config) -}}
 {%- endmacro -%}
@@ -167,6 +168,15 @@
 
 {%- macro trino__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
+    {% do default_config.update({"query_max_size": 250000}) %}
+    {{- return(default_config) -}}
+{%- endmacro -%}
+
+{%- macro vertica__get_default_config() -%}
+    {% set default_config = elementary.default__get_default_config() %}
+    {# Reduce batch INSERT query size from default 1,000,000 to avoid
+       overwhelming Vertica with very large single statements.  Individual
+       column values are bounded by edr_type_long_string (varchar(32000)). #}
     {% do default_config.update({"query_max_size": 250000}) %}
     {{- return(default_config) -}}
 {%- endmacro -%}

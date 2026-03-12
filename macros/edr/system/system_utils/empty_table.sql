@@ -150,7 +150,7 @@
     {%- set empty_table_query -%}
         select * from (
             select
-            {% for column in column_name_and_type_list %}
+            {%- for column in column_name_and_type_list -%}
                 {{ elementary.empty_column(column[0], column[1]) }} {%- if not loop.last -%},{%- endif %}
             {%- endfor %}
         ) as empty_table

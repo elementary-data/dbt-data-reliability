@@ -124,4 +124,12 @@
     {% do flattened_node.update(
         {"compiled_code": elementary.get_compiled_code_too_long_err_msg()}
     ) %}
+    {#- On adapters with limited string-literal / varchar sizes (e.g. Vertica
+        65 000 bytes) the error *message* can also embed the full compiled SQL,
+        making the INSERT statement exceed the adapter's limits.  Truncate the
+        message so the row can still be persisted. -#}
+    {% set msg = flattened_node.get("message", "") %}
+    {% if msg is string and msg | length > 4096 %}
+        {% do flattened_node.update({"message": msg[:4096] ~ "... (truncated)"}) %}
+    {% endif %}
 {% endmacro %}

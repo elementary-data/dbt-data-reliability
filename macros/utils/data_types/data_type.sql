@@ -52,6 +52,8 @@
 
 {% macro fabric__edr_type_string() %} {% do return("varchar(4096)") %} {% endmacro %}
 
+{% macro vertica__edr_type_string() %} {% do return("varchar(16000)") %} {% endmacro %}
+
 
 {%- macro edr_type_long_string() -%}
     {{ return(adapter.dispatch("edr_type_long_string", "elementary")()) }}
@@ -71,6 +73,14 @@
 
 {%- macro postgres__edr_type_long_string() -%}
     {% set long_string = "text" %} {{ return(long_string) }}
+{%- endmacro -%}
+
+{#- Vertica note: edr_type_string uses varchar(16000) because Vertica's
+    lower()/upper() double the byte-length.  16000 * 2 = 32000, safely
+    under the 65000 octet limit even when the function is applied twice
+    (e.g. lower(lower(col)) in nested subqueries). -#}
+{%- macro vertica__edr_type_long_string() -%}
+    {% do return("varchar(32000)") %}
 {%- endmacro -%}
 
 {#- T-SQL: varchar(4096) is too small for compiled query text.

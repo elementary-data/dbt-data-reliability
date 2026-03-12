@@ -20,6 +20,7 @@ on:
           - duckdb
           - sqlserver
           - fabric
+          - vertica
       elementary-ref:
         type: string
         required: false
@@ -151,8 +152,26 @@ jobs:
         if: startsWith(inputs.warehouse-type, 'databricks') && inputs.dbt-version < '1.7.0'
         run: pip install databricks-sql-connector==2.9.3
 
+      - name: Reject unsupported Vertica + Fusion combination
+        if: inputs.warehouse-type == 'vertica' && inputs.dbt-version == 'fusion'
+        run: |
+          echo "::error::dbt Fusion does not support third-party adapters such as dbt-vertica."
+          exit 1
+
+      - name: Install dbt-vertica
+        if: inputs.warehouse-type == 'vertica' && inputs.dbt-version != 'fusion'
+        run: |
+          # dbt-vertica pins dbt-core~=1.8 which lacks native support for the
+          # "arguments" test property used by the integration-test framework.
+          # Install dbt-vertica without deps, then install the requested
+          # dbt-core version separately (dbt-vertica works fine with newer
+          # dbt-core versions).
+          pip install dbt-vertica --no-deps
+          pip install vertica-python \
+            "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
+
       - name: Install dbt
-        if: ${{ inputs.dbt-version != 'fusion' }}
+        if: ${{ inputs.dbt-version != 'fusion' && inputs.warehouse-type != 'vertica' }}
         run:
           pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
           "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
@@ -197,6 +216,18 @@ jobs:
           ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
           ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
+
+      - name: Start Vertica
+        if: inputs.warehouse-type == 'vertica'
+        working-directory: ${{ env.TESTS_DIR }}
+        run: docker compose -f docker-compose-vertica.yml up -d
+
+      - name: Wait for Vertica to be ready
+        if: inputs.warehouse-type == 'vertica'
+        run: |
+          echo "Waiting for Vertica to be healthy..."
+          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" vertica)" == "healthy" ]; do echo "Waiting..."; sleep 5; done'
+          echo "Vertica is ready!"
 
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}

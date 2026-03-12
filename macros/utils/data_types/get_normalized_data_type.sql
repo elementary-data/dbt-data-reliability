@@ -214,6 +214,19 @@
     {%- endif %}
 {% endmacro %}
 
+{% macro vertica__get_normalized_data_type(exact_data_type) %}
+    {# Vertica reports types like VARCHAR(16000), INT, BOOLEAN.
+       Normalize to match the canonical names used in test baselines and
+       other adapters. #}
+    {%- if exact_data_type.startswith("VARCHAR") or exact_data_type.startswith(
+        "CHAR"
+    ) or exact_data_type == "LONG VARCHAR" %}
+        {{ return("TEXT") }}
+    {%- elif exact_data_type == "INT" %} {{ return("INTEGER") }}
+    {%- else %} {{ return(exact_data_type) }}
+    {%- endif %}
+{% endmacro %}
+
 {% macro postgres__get_normalized_data_type(exact_data_type) %}
     {# understanding Postgres data type synonyms:
  https://www.postgresql.org/docs/current/datatype.html #}

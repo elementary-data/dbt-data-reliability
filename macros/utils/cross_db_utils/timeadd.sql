@@ -43,6 +43,14 @@
     + {{ elementary.edr_cast_as_int(number) }} * interval '1 {{ date_part }}'
 {% endmacro %}
 
+{% macro vertica__edr_timeadd(date_part, number, timestamp_expression) %}
+    timestampadd(
+        {{ date_part | upper }},
+        {{ elementary.edr_cast_as_int(number) }},
+        {{ elementary.edr_cast_as_timestamp(timestamp_expression) }}
+    )
+{% endmacro %}
+
 {% macro redshift__edr_timeadd(date_part, number, timestamp_expression) %}
     dateadd(
         {{ date_part }},
