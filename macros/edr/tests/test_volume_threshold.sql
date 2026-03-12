@@ -212,25 +212,26 @@
         comparison as (
             select
                 curr.bucket_end as current_period,
-                prev.bucket_end as previous_period,
+                prev_b.bucket_end as previous_period,
                 {{ elementary.edr_cast_as_int("curr.row_count") }} as current_row_count,
-                {{ elementary.edr_cast_as_int("prev.row_count") }}
+                {{ elementary.edr_cast_as_int("prev_b.row_count") }}
                 as previous_row_count,
                 case
-                    when prev.row_count is null or prev.row_count = 0
+                    when prev_b.row_count is null or prev_b.row_count = 0
                     then null
                     else
                         round(
                             cast(
-                                (curr.row_count - prev.row_count)
+                                (curr.row_count - prev_b.row_count)
                                 * 100.0
-                                / prev.row_count as {{ elementary.edr_type_numeric() }}
+                                / prev_b.row_count
+                                as {{ elementary.edr_type_numeric() }}
                             ),
                             2
                         )
                 end as percent_change
             from current_bucket curr
-            left join previous_bucket prev on 1 = 1
+            left join previous_bucket prev_b on 1 = 1
         ),
 
         result as (
