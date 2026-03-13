@@ -195,7 +195,10 @@
         ),
 
         previous_bucket as (
-            select ranked_previous.bucket_start, ranked_previous.bucket_end, ranked_previous.row_count
+            select
+                ranked_previous.bucket_start,
+                ranked_previous.bucket_end,
+                ranked_previous.row_count
             from
                 (
                     select
