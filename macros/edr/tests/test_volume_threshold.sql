@@ -195,8 +195,16 @@
                 bucket_start,
                 bucket_end,
                 row_count,
-                lag(row_count) over (order by bucket_end) as prev_row_count,
-                lag(bucket_end) over (order by bucket_end) as prev_bucket_end,
+                cast(
+                    lag(row_count) over (
+                        order by bucket_end
+                    ) as {{ elementary.edr_type_numeric() }}
+                ) as prev_row_count,
+                cast(
+                    lag(bucket_end) over (
+                        order by bucket_end
+                    ) as {{ elementary.edr_type_timestamp() }}
+                ) as prev_bucket_end,
                 row_number() over (order by bucket_end desc) as rn
             from metrics
         ),

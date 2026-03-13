@@ -277,13 +277,12 @@
                 target_date,
                 '{{ formatted_sla_time }}' as sla_time,
                 '{{ timezone }}' as timezone,
-                cast(
-                    sla_deadline_utc as {{ elementary.edr_type_string() }}
-                ) as sla_deadline_utc,
                 freshness_status,
                 cast(
                     max_timestamp as {{ elementary.edr_type_string() }}
                 ) as max_timestamp,
+                {# Compute is_failure before casting sla_deadline_utc to string,
+                   so the comparison uses the original timestamp type. #}
                 {{
                     elementary.edr_condition_as_boolean(
                         "freshness_status != 'DATA_FRESH' and "
@@ -291,6 +290,9 @@
                         ~ " > sla_deadline_utc"
                     )
                 }} as is_failure,
+                cast(
+                    sla_deadline_utc as {{ elementary.edr_type_string() }}
+                ) as sla_deadline_utc,
                 {# BigQuery does not support '' to escape single quotes inside string literals.
                    Use \' for BigQuery and '' for all other adapters. #}
                 {%- if target.type == "bigquery" -%}
