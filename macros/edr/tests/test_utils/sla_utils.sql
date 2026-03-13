@@ -61,20 +61,21 @@
     {% set pytz = modules.pytz %}
 
     {% if elementary.is_dbt_fusion() %}
-        {# dbt-fusion's pytz.localize() is unreliable (dbt-labs/dbt-fusion#143).
-           Use stdlib datetime.timezone.utc to create a proper UTC-aware datetime,
-           then call astimezone(pytz_tz) which uses pytz's fromutc() internally —
-           more reliable than localize(). #}
+        {# dbt-fusion's pytz and timezone-aware datetime operations have known issues
+           (dbt-labs/dbt-fusion#143). Use naive UTC datetimes with manual offset
+           calculation to avoid broken localize() and datetime comparison. #}
+        {% set utc_tz = pytz.timezone("UTC") %}
         {% set target_tz = pytz.timezone(timezone) %}
 
-        {# Create a stdlib UTC-aware datetime — no pytz localize() involved #}
-        {% set now_utc_aware = datetime.datetime.now(datetime.timezone.utc) %}
-        {% set now_local = now_utc_aware.astimezone(target_tz) %}
-        {% set target_date_local = now_local.date() %}
-        {% set tz_offset = now_local.utcoffset() %}
-
-        {# Keep a naive UTC datetime for final deadline comparison #}
+        {# Get current UTC time as naive datetime - reliable across environments #}
         {% set now_utc = datetime.datetime.utcnow() %}
+
+        {# Determine today's date and UTC offset in target timezone.
+           Use localize+astimezone only to probe the offset, not for final values. #}
+        {% set probe = utc_tz.localize(now_utc).astimezone(target_tz) %}
+        {% set target_date_local = probe.date() %}
+        {% set tz_offset = probe.utcoffset() %}
+        {% set now_local = probe %}
 
         {# Build all datetimes as naive local, then convert to naive UTC
            by subtracting the timezone offset. This avoids tz-aware comparison. #}
