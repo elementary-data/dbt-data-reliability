@@ -281,8 +281,6 @@
                 cast(
                     max_timestamp as {{ elementary.edr_type_string() }}
                 ) as max_timestamp,
-                {# Compute is_failure before casting sla_deadline_utc to string,
-                   so the comparison uses the original timestamp type. #}
                 {{
                     elementary.edr_condition_as_boolean(
                         "freshness_status != 'DATA_FRESH' and "
@@ -290,9 +288,13 @@
                         ~ " > sla_deadline_utc"
                     )
                 }} as is_failure,
+                {# Use a different alias to avoid shadowing the input column.
+                   ClickHouse resolves column refs against output aliases, so
+                   keeping the same name would make is_failure compare against
+                   the string-cast version, causing a type mismatch. #}
                 cast(
                     sla_deadline_utc as {{ elementary.edr_type_string() }}
-                ) as sla_deadline_utc,
+                ) as sla_deadline_utc_str,
                 {# BigQuery does not support '' to escape single quotes inside string literals.
                    Use \' for BigQuery and '' for all other adapters. #}
                 {%- if target.type == "bigquery" -%}
@@ -363,7 +365,7 @@
         target_date,
         sla_time,
         timezone,
-        sla_deadline_utc,
+        sla_deadline_utc_str as sla_deadline_utc,
         freshness_status,
         max_timestamp,
         result_description
