@@ -57,6 +57,51 @@ def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
     assert len(existing_artifacts) == len(new_artifacts)
 
 
+def test_replace_table_data(dbt_project: DbtProject):
+    """Validate that replace_table_data actually replaces (not diffs) data.
+
+    Sets cache_artifacts=False so the upload path uses replace_table_data.
+    Inserts an unrelated sentinel row into dbt_models *before* the replace
+    run, then asserts it was removed — proving a full table replace happened
+    rather than a diff-based update (which would leave unrelated rows intact).
+    """
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+    dbt_project.dbt_runner.vars["cache_artifacts"] = False
+
+    SENTINEL_ALIAS = "__replace_test_sentinel__"
+
+    # Populate the table with real artifacts first.
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+
+    # Inject a sentinel row that no real dbt model would produce.
+    # Uses a dbt macro (run_operation) so the INSERT is committed properly
+    # across all adapters.
+    dbt_project.dbt_runner.run_operation(
+        "elementary_tests.insert_sentinel_row",
+        macro_args={"table_name": "dbt_models", "sentinel_alias": SENTINEL_ALIAS},
+    )
+    sentinel_rows = dbt_project.read_table(
+        "dbt_models", where=f"alias = '{SENTINEL_ALIAS}'", raise_if_empty=False
+    )
+    assert len(sentinel_rows) == 1, "Sentinel row was not inserted"
+
+    # Run again with cache_artifacts=False → triggers replace_table_data.
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+
+    # The sentinel must be gone — replace_table_data wipes the whole table.
+    sentinel_after = dbt_project.read_table(
+        "dbt_models", where=f"alias = '{SENTINEL_ALIAS}'", raise_if_empty=False
+    )
+    assert len(sentinel_after) == 0, (
+        "replace_table_data did not remove unrelated rows — "
+        "sentinel row still present (diff mode would keep it, replace should not)"
+    )
+
+    # The real model row must still exist.
+    real_row = read_model_artifact_row(dbt_project)
+    assert real_row["alias"] == TEST_MODEL
+
+
 def test_dbt_invocations(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_invocation_autoupload"] = False
     dbt_project.dbt_runner.run(selector="one")
