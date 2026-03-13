@@ -195,16 +195,16 @@
         ),
 
         previous_bucket as (
-            select bucket_start, bucket_end, row_count
+            select ranked_previous.bucket_start, ranked_previous.bucket_end, ranked_previous.row_count
             from
                 (
                     select
-                        bucket_start,
-                        bucket_end,
-                        row_count,
-                        row_number() over (order by bucket_end desc) as rn
-                    from metrics
-                    where bucket_end <= (select bucket_start from curr_bucket)
+                        m.bucket_start,
+                        m.bucket_end,
+                        m.row_count,
+                        row_number() over (order by m.bucket_end desc) as rn
+                    from metrics m
+                    inner join curr_bucket cb on m.bucket_end <= cb.bucket_start
                 ) as ranked_previous
             where rn = 1
         ),
