@@ -294,13 +294,14 @@
                     {% endif %}
                     else {{ elementary.edr_boolean_literal(true) }}
                 end as is_failure,
-                {%- set where_suffix = (
-                    " (with filter: "
-                    ~ (where_expression | replace("'", "''"))
-                    ~ ")"
-                    if where_expression
-                    else ""
-                ) -%}
+                {# BigQuery does not support '' to escape single quotes inside string literals.
+                   Use \' for BigQuery and '' for all other adapters. #}
+                {%- if target.type == 'bigquery' -%}
+                    {%- set escaped_where = where_expression | replace("'", "\\'") if where_expression else "" -%}
+                {%- else -%}
+                    {%- set escaped_where = where_expression | replace("'", "''") if where_expression else "" -%}
+                {%- endif -%}
+                {%- set where_suffix = (" (with filter: " ~ escaped_where ~ ")") if where_expression else "" -%}
                 case
                     when freshness_status = 'NO_DATA'
                     then

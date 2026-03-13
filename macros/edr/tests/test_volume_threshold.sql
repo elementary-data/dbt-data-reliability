@@ -180,7 +180,7 @@
             select bucket_start, bucket_end, row_count from ranked_metrics where rn = 1
         ),
 
-        current_bucket as (
+        curr_bucket as (
             select bucket_start, bucket_end, row_count
             from
                 (
@@ -204,7 +204,7 @@
                         row_count,
                         row_number() over (order by bucket_end desc) as rn
                     from metrics
-                    where bucket_end <= (select bucket_start from current_bucket)
+                    where bucket_end <= (select bucket_start from curr_bucket)
                 ) as ranked_previous
             where rn = 1
         ),
@@ -230,7 +230,7 @@
                             2
                         )
                 end as percent_change
-            from current_bucket curr
+            from curr_bucket curr
             left join previous_bucket prev_b on 1 = 1
         ),
 
