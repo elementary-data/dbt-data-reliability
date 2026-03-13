@@ -54,7 +54,7 @@ def test_large_spike_fails(test_id: str, dbt_project: DbtProject):
         data.append({TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT)})
 
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] != "pass"
+    assert test_result["status"] == "error"
 
 
 def test_large_drop_fails(test_id: str, dbt_project: DbtProject):
@@ -75,7 +75,7 @@ def test_large_drop_fails(test_id: str, dbt_project: DbtProject):
         data.append({TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT)})
 
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] != "pass"
+    assert test_result["status"] == "error"
 
 
 def test_direction_spike_ignores_drop(test_id: str, dbt_project: DbtProject):
@@ -206,9 +206,9 @@ def test_where_expression(test_id: str, dbt_project: DbtProject):
             {TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT), "category": "b"}
         )
 
-    # Without filter: total yesterday = 300 vs 100 two days ago -> big spike -> fail
+    # Without filter: total yesterday = 300 vs 100 two days ago -> big spike -> error
     test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
-    assert test_result["status"] != "pass"
+    assert test_result["status"] == "error"
 
     # With filter on category A: 100 yesterday vs 100 two days ago -> stable -> pass
     test_args_filtered = {

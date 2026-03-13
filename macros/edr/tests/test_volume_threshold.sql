@@ -46,6 +46,16 @@
 
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
 
+        {% if warn_threshold_percent < 0 or error_threshold_percent < 0 %}
+            {{
+                exceptions.raise_compiler_error(
+                    "warn_threshold_percent and error_threshold_percent must be non-negative"
+                )
+            }}
+        {% endif %}
+        {% if min_row_count < 0 %}
+            {{ exceptions.raise_compiler_error("min_row_count must be non-negative") }}
+        {% endif %}
         {% if warn_threshold_percent > error_threshold_percent %}
             {{
                 exceptions.raise_compiler_error(

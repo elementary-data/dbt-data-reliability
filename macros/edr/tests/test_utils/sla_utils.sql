@@ -63,7 +63,10 @@
     {% if elementary.is_dbt_fusion() %}
         {# dbt-fusion's pytz and timezone-aware datetime operations have known issues
            (dbt-labs/dbt-fusion#143). Use naive UTC datetimes with manual offset
-           calculation to avoid broken localize() and datetime comparison. #}
+           calculation to avoid broken localize() and datetime comparison.
+           Known limitation: on DST transition days, boundary times (midnight,
+           SLA deadline) may be off by ~1 hour since we reuse a single offset.
+           The dbt-core path below handles DST correctly. #}
         {% set utc_tz = pytz.timezone("UTC") %}
         {% set target_tz = pytz.timezone(timezone) %}
 
