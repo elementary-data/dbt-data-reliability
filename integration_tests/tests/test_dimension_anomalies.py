@@ -315,3 +315,76 @@ def test_anomaly_in_detection_period(
     )
 
     assert test_result["status"] == expected_status
+
+
+def test_dimension_anomalies_alert_description_few_failures(
+    test_id: str, dbt_project: DbtProject
+):
+    """When ≤5 dimension values fail, description shows each one's anomaly details."""
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    # 3 dimension values all spike on test_date (training: 1/day, test: 10/day)
+    anomalous_dimensions = ["Batman", "Superman", "Spiderman"]
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": hero}
+        for hero in anomalous_dimensions
+        for _ in range(10)
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": hero}
+        for cur_date in training_dates
+        for hero in anomalous_dimensions
+    ]
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        "sensitivity": 2,
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    description = test_result["test_results_description"]
+    # Each failing dimension value should appear in the description
+    for hero in anomalous_dimensions:
+        assert hero in description, f"Expected '{hero}' in description: {description}"
+    # Should NOT show the high-volume summary message
+    assert "dimension values are anomalous" not in description
+
+
+def test_dimension_anomalies_alert_description_many_failures(
+    test_id: str, dbt_project: DbtProject
+):
+    """When >5 dimension values fail, description shows a count summary."""
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    # 6 dimension values all spike on test_date (>5 threshold)
+    anomalous_dimensions = ["Batman", "Superman", "Spiderman", "IronMan", "Thor", "Hulk"]
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": hero}
+        for hero in anomalous_dimensions
+        for _ in range(10)
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": hero}
+        for cur_date in training_dates
+        for hero in anomalous_dimensions
+    ]
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["superhero"],
+        "sensitivity": 2,
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    description = test_result["test_results_description"]
+    # Should show the count summary for many failures
+    assert "dimension values are anomalous" in description, (
+        f"Expected summary message in description: {description}"
+    )

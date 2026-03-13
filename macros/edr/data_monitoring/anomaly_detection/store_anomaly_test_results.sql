@@ -74,23 +74,37 @@
           and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
         {%- endif %}
     {%- endset -%}
-    {% set test_results_description %}
-      {% if rows_with_score %}
-          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
-      {% else %}
-          Not enough data to calculate anomaly score.
-      {% endif %}
-    {% endset %}
     {% set failures = namespace(data=0) %}
     {% set filtered_anomaly_scores_rows = [] %}
+    {% set anomalous_rows = [] %}
     {% for row in anomaly_scores_rows %}
         {% if row.anomaly_score is not none %}
             {% do filtered_anomaly_scores_rows.append(row) %}
             {% if row.is_anomalous %}
                 {% set failures.data = failures.data + 1 %}
+                {% do anomalous_rows.append(row) %}
             {% endif %}
         {% endif %}
     {% endfor %}
+    {%- set max_dimension_alerts = 5 -%}
+    {% set test_results_description %}
+      {%- if rows_with_score -%}
+        {%- set sample_row = rows_with_score[-1] -%}
+        {%- set row_dimension = elementary.insensitive_get_dict_value(sample_row, "dimension") -%}
+        {%- if row_dimension is not none and anomalous_rows | length > 0 -%}
+          {%- if anomalous_rows | length > max_dimension_alerts -%}
+            {%- set remaining = (anomalous_rows | length) - max_dimension_alerts -%}
+            {{ anomalous_rows | length }} dimension values are anomalous. Showing first {{ max_dimension_alerts }}: {% for row in anomalous_rows[:max_dimension_alerts] %}{{ elementary.insensitive_get_dict_value(row, "dimension_value") }}{% if not loop.last %}, {% endif %}{% endfor %}, and {{ remaining }} more.
+          {%- else -%}
+            {% for row in anomalous_rows %}{{ elementary.insensitive_get_dict_value(row, "anomaly_description") }}{% if not loop.last %} | {% endif %}{% endfor %}
+          {%- endif -%}
+        {%- else -%}
+          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], "anomaly_description") }}
+        {%- endif -%}
+      {%- else -%}
+        Not enough data to calculate anomaly score.
+      {%- endif -%}
+    {% endset %}
     {% set test_result_dict = {
         "id": elementary.insensitive_get_dict_value(latest_row, "id"),
         "data_issue_id": elementary.insensitive_get_dict_value(
