@@ -52,7 +52,8 @@
         'target_date': string (YYYY-MM-DD),
         'target_date_start_utc': string (YYYY-MM-DD HH:MM:SS) - start of day in UTC,
         'target_date_end_utc': string (YYYY-MM-DD HH:MM:SS) - end of day in UTC,
-        'deadline_passed': boolean
+        'day_of_week': string (e.g. 'Monday'),
+        'day_of_month': integer (1-31)
     }
 #}
 {% macro calculate_sla_deadline_utc(sla_hour, sla_minute, timezone) %}
@@ -98,8 +99,6 @@
             - tz_offset
         ) %}
 
-        {# Compare naive UTC datetimes #}
-        {% set deadline_passed = now_utc > sla_deadline_utc %}
     {% else %}
         {# Standard dbt-core path using pytz.localize() #}
         {% set utc_tz = pytz.timezone("UTC") %}
@@ -129,7 +128,6 @@
         ) %}
         {% set sla_deadline_utc = sla_deadline_local.astimezone(utc_tz) %}
 
-        {% set deadline_passed = now_utc > sla_deadline_utc %}
     {% endif %}
 
     {# Format for SQL #}
@@ -145,7 +143,6 @@
                 "target_date": target_date_str,
                 "target_date_start_utc": day_start_utc_str,
                 "target_date_end_utc": day_end_utc_str,
-                "deadline_passed": deadline_passed,
                 "day_of_week": now_local.strftime("%A"),
                 "day_of_month": now_local.day,
             }

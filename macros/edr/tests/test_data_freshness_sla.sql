@@ -191,7 +191,6 @@
                     target_date=sla_info.target_date,
                     target_date_start_utc=sla_info.target_date_start_utc,
                     target_date_end_utc=sla_info.target_date_end_utc,
-                    deadline_passed=sla_info.deadline_passed,
                     formatted_sla_time=formatted_sla_time,
                     timezone=timezone,
                     where_expression=where_expression,
@@ -223,7 +222,6 @@
     target_date,
     target_date_start_utc,
     target_date_end_utc,
-    deadline_passed,
     formatted_sla_time,
     timezone,
     where_expression
@@ -286,14 +284,13 @@
                 cast(
                     max_timestamp as {{ elementary.edr_type_string() }}
                 ) as max_timestamp,
-                case
-                    when freshness_status = 'DATA_FRESH'
-                    then {{ elementary.edr_boolean_literal(false) }}
-                    {% if not deadline_passed %}
-                        when 1 = 1 then {{ elementary.edr_boolean_literal(false) }}
-                    {% endif %}
-                    else {{ elementary.edr_boolean_literal(true) }}
-                end as is_failure,
+                {{
+                    elementary.edr_condition_as_boolean(
+                        "freshness_status != 'DATA_FRESH' and "
+                        ~ elementary.edr_current_timestamp_in_utc()
+                        ~ " > sla_deadline_utc"
+                    )
+                }} as is_failure,
                 {# BigQuery does not support '' to escape single quotes inside string literals.
                    Use \' for BigQuery and '' for all other adapters. #}
                 {%- if target.type == "bigquery" -%}

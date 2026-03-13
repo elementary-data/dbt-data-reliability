@@ -180,61 +180,39 @@
             select bucket_start, bucket_end, row_count from ranked_metrics where rn = 1
         ),
 
-        curr_bucket as (
-            select bucket_start, bucket_end, row_count
-            from
-                (
-                    select
-                        bucket_start,
-                        bucket_end,
-                        row_count,
-                        row_number() over (order by bucket_end desc) as rn
-                    from metrics
-                ) as ranked_current
-            where rn = 1
-        ),
-
-        previous_bucket as (
+        bucket_with_prev as (
             select
-                ranked_previous.bucket_start,
-                ranked_previous.bucket_end,
-                ranked_previous.row_count
-            from
-                (
-                    select
-                        m.bucket_start,
-                        m.bucket_end,
-                        m.row_count,
-                        row_number() over (order by m.bucket_end desc) as rn
-                    from metrics m
-                    inner join curr_bucket cb on m.bucket_end <= cb.bucket_start
-                ) as ranked_previous
-            where rn = 1
+                bucket_start,
+                bucket_end,
+                row_count,
+                lag(row_count) over (order by bucket_end) as prev_row_count,
+                lag(bucket_end) over (order by bucket_end) as prev_bucket_end,
+                row_number() over (order by bucket_end desc) as rn
+            from metrics
         ),
 
         comparison as (
             select
-                curr.bucket_end as current_period,
-                prev_b.bucket_end as previous_period,
-                {{ elementary.edr_cast_as_int("curr.row_count") }} as current_row_count,
-                {{ elementary.edr_cast_as_int("prev_b.row_count") }}
+                bucket_end as current_period,
+                prev_bucket_end as previous_period,
+                {{ elementary.edr_cast_as_int("row_count") }} as current_row_count,
+                {{ elementary.edr_cast_as_int("prev_row_count") }}
                 as previous_row_count,
                 case
-                    when prev_b.row_count is null or prev_b.row_count = 0
+                    when prev_row_count is null or prev_row_count = 0
                     then null
                     else
                         round(
                             cast(
-                                (curr.row_count - prev_b.row_count)
+                                (row_count - prev_row_count)
                                 * 100.0
-                                / prev_b.row_count
-                                as {{ elementary.edr_type_numeric() }}
+                                / prev_row_count as {{ elementary.edr_type_numeric() }}
                             ),
                             2
                         )
                 end as percent_change
-            from curr_bucket curr
-            left join previous_bucket prev_b on 1 = 1
+            from bucket_with_prev
+            where rn = 1
         ),
 
         volume_result as (
