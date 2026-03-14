@@ -192,15 +192,26 @@
 
         {# Use ROW_NUMBER + self-join instead of LAG to avoid a DuckDB internal
            binder bug where LAG over UNION ALL sources confuses TIMESTAMP and
-           FLOAT column types (Failed to bind column reference "bucket_end"). #}
+           FLOAT column types (Failed to bind column reference "bucket_end").
+           Cast bucket_num to signed int to avoid ClickHouse UInt64/Int64 type
+           mismatch in the JOIN condition (bucket_num - 1 promotes to Int64).
+           Use a separate max_bucket CTE instead of a scalar subquery to avoid
+           SQL Server / Fabric "Invalid object name" errors when referencing a
+           CTE inside a nested subquery in another CTE's WHERE clause. #}
         bucket_numbered as (
             select
                 bucket_start,
                 bucket_end,
                 row_count,
-                row_number() over (order by bucket_end) as bucket_num
+                {{
+                    elementary.edr_cast_as_int(
+                        "row_number() over (order by bucket_end)"
+                    )
+                }} as bucket_num
             from metrics
         ),
+
+        max_bucket as (select max(bucket_num) as max_num from bucket_numbered),
 
         comparison as (
             select
@@ -223,8 +234,8 @@
                         )
                 end as percent_change
             from bucket_numbered curr
+            inner join max_bucket on curr.bucket_num = max_bucket.max_num
             left join bucket_numbered prev on prev.bucket_num = curr.bucket_num - 1
-            where curr.bucket_num = (select max(bucket_num) from bucket_numbered)
         ),
 
         volume_result as (

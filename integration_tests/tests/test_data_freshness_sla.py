@@ -31,13 +31,13 @@ def test_stale_data_fails(test_id: str, dbt_project: DbtProject):
         {TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT)},
         {TIMESTAMP_COLUMN: (yesterday - timedelta(hours=5)).strftime(DATE_FORMAT)},
     ]
-    # Use a deadline early in the day in a far-ahead timezone so it has certainly
-    # passed.  Etc/GMT-14 (UTC+14) means 12:01am there is ~14h behind in UTC,
-    # so by the time any CI runner reaches this code the deadline is long past.
+    # Use 12:01am UTC (= 00:01 UTC) so the deadline is always in the past when
+    # CI runs (typically 07:00+ UTC). Etc/GMT-14 was ambiguous in some pytz
+    # versions and caused Vertica to return wrong results.
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "sla_time": "12:01am",
-        "timezone": "Etc/GMT-14",
+        "timezone": "UTC",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
     assert test_result["status"] == "fail"
@@ -53,7 +53,7 @@ def test_no_data_fails(test_id: str, dbt_project: DbtProject):
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "sla_time": "12:01am",
-        "timezone": "Etc/GMT-14",
+        "timezone": "UTC",
         "where_expression": "category = 'included'",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
@@ -102,7 +102,7 @@ def test_with_where_expression(test_id: str, dbt_project: DbtProject):
     test_args_stale = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "sla_time": "12:01am",
-        "timezone": "Etc/GMT-14",
+        "timezone": "UTC",
         "where_expression": "category = 'b'",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args_stale)
