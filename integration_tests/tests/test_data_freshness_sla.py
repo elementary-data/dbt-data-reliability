@@ -67,13 +67,12 @@ def test_deadline_not_passed_does_not_fail(test_id: str, dbt_project: DbtProject
     data = [
         {TIMESTAMP_COLUMN: yesterday.strftime(DATE_FORMAT)},
     ]
-    # Set the deadline far in the future so it hasn't passed yet.
-    # Etc/GMT-14 is UTC+14, the farthest-ahead timezone, so 11:59pm there
-    # is well into the future from UTC's perspective.
+    # Set the deadline to 11:59pm UTC so it reliably hasn't passed yet.
+    # (Etc/GMT-14 = UTC+14 means 11:59pm there = 09:59 UTC — not reliably future)
     test_args = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "sla_time": "11:59pm",
-        "timezone": "Etc/GMT-14",
+        "timezone": "UTC",
     }
     test_result = dbt_project.test(test_id, TEST_NAME, test_args, data=data)
     assert test_result["status"] == "pass"
