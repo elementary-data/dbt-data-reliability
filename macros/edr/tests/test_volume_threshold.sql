@@ -190,47 +190,41 @@
             select bucket_start, bucket_end, row_count from ranked_metrics where rn = 1
         ),
 
-        bucket_with_prev as (
+        {# Use ROW_NUMBER + self-join instead of LAG to avoid a DuckDB internal
+           binder bug where LAG over UNION ALL sources confuses TIMESTAMP and
+           FLOAT column types (Failed to bind column reference "bucket_end"). #}
+        bucket_numbered as (
             select
                 bucket_start,
                 bucket_end,
                 row_count,
-                cast(
-                    lag(row_count) over (
-                        order by bucket_end
-                    ) as {{ elementary.edr_type_numeric() }}
-                ) as prev_row_count,
-                cast(
-                    lag(bucket_end) over (
-                        order by bucket_end
-                    ) as {{ elementary.edr_type_timestamp() }}
-                ) as prev_bucket_end,
-                row_number() over (order by bucket_end desc) as rn
+                row_number() over (order by bucket_end) as bucket_num
             from metrics
         ),
 
         comparison as (
             select
-                bucket_end as current_period,
-                prev_bucket_end as previous_period,
-                {{ elementary.edr_cast_as_int("row_count") }} as current_row_count,
-                {{ elementary.edr_cast_as_int("prev_row_count") }}
+                curr.bucket_end as current_period,
+                prev.bucket_end as previous_period,
+                {{ elementary.edr_cast_as_int("curr.row_count") }} as current_row_count,
+                {{ elementary.edr_cast_as_int("prev.row_count") }}
                 as previous_row_count,
                 case
-                    when prev_row_count is null or prev_row_count = 0
+                    when prev.row_count is null or prev.row_count = 0
                     then null
                     else
                         round(
                             cast(
-                                (row_count - prev_row_count)
+                                (curr.row_count - prev.row_count)
                                 * 100.0
-                                / prev_row_count as {{ elementary.edr_type_numeric() }}
+                                / prev.row_count as {{ elementary.edr_type_numeric() }}
                             ),
                             2
                         )
                 end as percent_change
-            from bucket_with_prev
-            where rn = 1
+            from bucket_numbered curr
+            left join bucket_numbered prev on prev.bucket_num = curr.bucket_num - 1
+            where curr.bucket_num = (select max(bucket_num) from bucket_numbered)
         ),
 
         volume_result as (
