@@ -392,6 +392,6 @@ def test_dimension_anomalies_alert_description_many_failures(
 
     description = test_result["test_results_description"]
     # Should show the count summary for many failures
-    assert "dimension values are anomalous" in description, (
-        f"Expected summary message in description: {description}"
-    )
+    assert (
+        "dimension values are anomalous" in description
+    ), f"Expected summary message in description: {description}"
