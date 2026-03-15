@@ -362,7 +362,14 @@ def test_dimension_anomalies_alert_description_many_failures(
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
 
     # 6 dimension values all spike on test_date (>5 threshold)
-    anomalous_dimensions = ["Batman", "Superman", "Spiderman", "IronMan", "Thor", "Hulk"]
+    anomalous_dimensions = [
+        "Batman",
+        "Superman",
+        "Spiderman",
+        "IronMan",
+        "Thor",
+        "Hulk",
+    ]
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT), "superhero": hero}
