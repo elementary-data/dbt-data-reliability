@@ -52,9 +52,14 @@ def _serialize_value(val: Any) -> Any:
     * Everything else is returned unchanged.
     """
     if isinstance(val, Decimal):
-        # Match the Jinja macro: normalize, then int or float
+        # Match the Jinja macro: normalize, then int or float.
+        # Note: for special values (Infinity, NaN), as_tuple().exponent is a
+        # string ('F' or 'n'), not an int — convert those directly to float.
         normalized = val.normalize()
-        if normalized.as_tuple().exponent >= 0:
+        exponent = normalized.as_tuple().exponent
+        if isinstance(exponent, str):
+            return float(normalized)
+        if exponent >= 0:
             return int(normalized)
         return float(normalized)
     if isinstance(val, (datetime, date, time)):
