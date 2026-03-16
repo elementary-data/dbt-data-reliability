@@ -144,6 +144,7 @@
         "disable_samples_on_pii_tags": false,
         "pii_tags": ["pii"],
         "bigquery_disable_partitioning": false,
+        "bigquery_disable_clustering": false,
         "upload_only_current_project_artifacts": false,
     } %}
     {{- return(default_config) -}}

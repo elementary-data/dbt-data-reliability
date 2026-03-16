@@ -222,7 +222,7 @@ def test_run_results_partitioned(dbt_project: DbtProject):
     )
     assert len(results) >= 1
 
-    # Verify the partition column is created_at in BigQuery
+    # Verify the partition column is created_at in BigQuery (uses get_partition_by default)
     partition_cols = dbt_project.run_query(
         "SELECT column_name "
         "FROM `{{ ref('dbt_run_results').database }}.{{ ref('dbt_run_results').schema }}.INFORMATION_SCHEMA.COLUMNS` "
@@ -255,3 +255,39 @@ def test_dbt_invocations_partitioned(dbt_project: DbtProject):
     assert [row["column_name"] for row in partition_cols] == [
         "created_at"
     ], "dbt_invocations should be partitioned by created_at in BigQuery"
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_data_monitoring_metrics_partitioned(dbt_project: DbtProject):
+    # data_monitoring_metrics is partitioned by bucket_end on BigQuery.
+    # Full-refresh to ensure the table is created with partitioning.
+    dbt_project.dbt_runner.run(select="data_monitoring_metrics", full_refresh=True)
+
+    partition_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('data_monitoring_metrics').database }}.{{ ref('data_monitoring_metrics').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('data_monitoring_metrics').identifier }}' "
+        "AND is_partitioning_column = 'YES'"
+    )
+    assert [row["column_name"] for row in partition_cols] == [
+        "bucket_end"
+    ], "data_monitoring_metrics should be partitioned by bucket_end in BigQuery"
+
+
+@pytest.mark.only_on_targets(["bigquery"])
+def test_data_monitoring_metrics_clustered(dbt_project: DbtProject):
+    # data_monitoring_metrics is clustered by full_table_name and metric_name on BigQuery.
+    # Full-refresh to ensure the table is created with clustering.
+    dbt_project.dbt_runner.run(select="data_monitoring_metrics", full_refresh=True)
+
+    clustering_cols = dbt_project.run_query(
+        "SELECT column_name "
+        "FROM `{{ ref('data_monitoring_metrics').database }}.{{ ref('data_monitoring_metrics').schema }}.INFORMATION_SCHEMA.COLUMNS` "
+        "WHERE table_name = '{{ ref('data_monitoring_metrics').identifier }}' "
+        "AND clustering_ordinal_position IS NOT NULL "
+        "ORDER BY clustering_ordinal_position"
+    )
+    assert [row["column_name"] for row in clustering_cols] == [
+        "full_table_name",
+        "metric_name",
+    ], "data_monitoring_metrics should be clustered by full_table_name, metric_name in BigQuery"
