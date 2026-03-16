@@ -13,6 +13,10 @@
             "timestamp_column": "created_at",
             "prev_timestamp_column": "updated_at",
         },
+        partition_by=elementary.get_partition_by(column="bucket_end"),
+        cluster_by=elementary.get_cluster_by(
+            columns=["full_table_name", "metric_name"]
+        ),
         table_type=elementary.get_default_table_type(),
         incremental_strategy=elementary.get_default_incremental_strategy(),
     )
