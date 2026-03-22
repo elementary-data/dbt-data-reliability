@@ -76,9 +76,11 @@
     {% endif %}
 
     {% if disable_test_samples %} {% set sample_limit = 0 %}
-    {% elif elementary.is_pii_table(flattened_test) %} {% set sample_limit = 0 %}
-    {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
-        {% set sample_limit = 0 %}
+    {% elif not elementary.is_show_sample_rows_table(flattened_test) %}
+        {% if elementary.is_pii_table(flattened_test) %} {% set sample_limit = 0 %}
+        {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
+            {% set sample_limit = 0 %}
+        {% endif %}
     {% endif %}
 
     {% set result_rows = elementary.query_test_result_rows(

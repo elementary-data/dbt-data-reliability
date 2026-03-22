@@ -38,8 +38,20 @@
     {% set column_nodes = parent_model.get("columns") %}
     {% if not column_nodes %} {% do return(pii_columns) %} {% endif %}
 
+    {% set enable_show_tags = elementary.get_config_var("enable_samples_on_show_sample_rows_tags") %}
+    {% set raw_show_tags = elementary.get_config_var("show_sample_rows_tags") %}
+    {% set show_tags = (
+        (raw_show_tags if raw_show_tags is iterable else [raw_show_tags])
+        | map("lower") | list
+    ) %}
+
     {% for column_node in column_nodes.values() %}
         {% set all_column_tags_lower = elementary.get_column_tags(column_node) %}
+
+        {# Skip columns explicitly tagged to show sample rows (if feature is enabled) #}
+        {% if enable_show_tags and elementary.lists_intersection(all_column_tags_lower, show_tags) | length > 0 %}
+            {% continue %}
+        {% endif %}
 
         {% for pii_tag in pii_tags %}
             {% if pii_tag in all_column_tags_lower %}
