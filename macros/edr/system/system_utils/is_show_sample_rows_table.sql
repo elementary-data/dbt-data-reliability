@@ -4,11 +4,9 @@
     {% endif %}
 
     {% set raw_show_tags = elementary.get_config_var("show_sample_rows_tags") %}
-    {% set show_tags = (
-        (raw_show_tags if raw_show_tags is iterable else [raw_show_tags])
-        | map("lower")
-        | list
-    ) %}
+    {% if raw_show_tags is string %} {% set show_tags = [raw_show_tags | lower] %}
+    {% else %} {% set show_tags = (raw_show_tags or []) | map("lower") | list %}
+    {% endif %}
 
     {% set raw_model_tags = elementary.insensitive_get_dict_value(
         flattened_test, "model_tags", []
