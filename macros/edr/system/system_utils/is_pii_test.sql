@@ -1,3 +1,8 @@
+{#
+  Complements is_pii_table (model-level) and should_disable_sampling_for_pii
+  (column-level) by adding test-level PII tag support. A test tagged with a PII
+  tag will have its samples disabled, consistent with the other two levels.
+#}
 {% macro is_pii_test(flattened_test) %}
     {% if not elementary.get_config_var("disable_samples_on_pii_tags") %}
         {% do return(false) %}
