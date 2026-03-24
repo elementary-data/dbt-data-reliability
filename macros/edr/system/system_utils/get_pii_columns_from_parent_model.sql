@@ -49,12 +49,21 @@
     {% for column_node in column_nodes.values() %}
         {% set all_column_tags_lower = elementary.get_column_tags(column_node) %}
 
-        {# Skip columns explicitly tagged to show sample rows (if feature is enabled) #}
-        {% if enable_show_tags and elementary.lists_intersection(
-            all_column_tags_lower, show_tags
-        ) | length > 0 %}
-            {% continue %}
-        {% endif %}
+        {# PII takes precedence: only skip if show_sample_rows is set and pii is not #}
+        {% set has_show_tag = (
+            enable_show_tags
+            and elementary.lists_intersection(
+                all_column_tags_lower, show_tags
+            )
+            | length
+            > 0
+        ) %}
+        {% set has_pii_tag = (
+            elementary.lists_intersection(all_column_tags_lower, pii_tags)
+            | length
+            > 0
+        ) %}
+        {% if has_show_tag and not has_pii_tag %} {% continue %} {% endif %}
 
         {% for pii_tag in pii_tags %}
             {% if pii_tag in all_column_tags_lower %}
