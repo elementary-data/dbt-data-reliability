@@ -5,9 +5,9 @@
   Checks three levels in order: model → test → column (test's target column only).
   Returns true if any level has a matching show_sample_rows tag.
 
-  PII precedence: if disable_samples_on_pii_tags is also enabled and the same
-  model/column has a PII tag, PII wins and this returns false. This handles the
-  edge case where both features are active simultaneously.
+  PII precedence: if disable_samples_on_pii_tags is also enabled and the model
+  or column has a PII tag, PII wins and this returns false. A model-level PII
+  tag blocks show_sample_rows at every level (model, test, and column).
 
   All tag matching is case-insensitive (tags are normalized to lowercase).
 #}
@@ -88,10 +88,11 @@
                     {% if elementary.lists_intersection(
                         col_tags, show_tags
                     ) | length > 0 %}
-                        {# PII on the column takes precedence over show_sample_rows on the same column #}
-                        {% if check_pii and elementary.lists_intersection(
-                            col_tags, pii_tags
-                        ) | length > 0 %}
+                        {# PII on the column or model takes precedence over show_sample_rows #}
+                        {% if check_pii and (
+                            elementary.lists_intersection(col_tags, pii_tags) | length > 0
+                            or elementary.lists_intersection(model_tags, pii_tags) | length > 0
+                        ) %}
                             {% do return(false) %}
                         {% endif %}
                         {% do return(true) %}

@@ -58,16 +58,10 @@
         {# Skip column from PII list only if show_sample_rows is set and pii is not #}
         {% set has_show_tag = (
             enable_show_tags
-            and elementary.lists_intersection(
-                all_column_tags_lower, show_tags
-            )
-            | length
-            > 0
+            and (elementary.lists_intersection(all_column_tags_lower, show_tags) | length > 0)
         ) %}
         {% set has_pii_tag = (
-            elementary.lists_intersection(all_column_tags_lower, pii_tags)
-            | length
-            > 0
+            elementary.lists_intersection(all_column_tags_lower, pii_tags) | length > 0
         ) %}
         {% if has_show_tag and not has_pii_tag %} {% continue %} {% endif %}
 
