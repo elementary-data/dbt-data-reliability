@@ -80,6 +80,7 @@
     {% elif elementary.get_config_var("enable_samples_on_show_sample_rows_tags") %}
         {% set sample_limit = 0 %}
     {% elif elementary.is_pii_table(flattened_test) %} {% set sample_limit = 0 %}
+    {% elif elementary.is_pii_test(flattened_test) %} {% set sample_limit = 0 %}
     {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
         {% set sample_limit = 0 %}
     {% endif %}
