@@ -90,8 +90,14 @@
                     ) | length > 0 %}
                         {# PII on the column or model takes precedence over show_sample_rows #}
                         {% if check_pii and (
-                            elementary.lists_intersection(col_tags, pii_tags) | length > 0
-                            or elementary.lists_intersection(model_tags, pii_tags) | length > 0
+                            elementary.lists_intersection(col_tags, pii_tags)
+                            | length
+                            > 0
+                            or elementary.lists_intersection(
+                                model_tags, pii_tags
+                            )
+                            | length
+                            > 0
                         ) %}
                             {% do return(false) %}
                         {% endif %}
