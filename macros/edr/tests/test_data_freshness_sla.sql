@@ -47,13 +47,21 @@
     
     Test passes if:
         - Today is not a scheduled check day (based on day_of_week/day_of_month)
-        - OR the max timestamp in the data is from today (before or after deadline)
-        - OR the SLA deadline for today hasn't passed yet
+        - OR today's data exists (max timestamp is from the target day or later)
+        - OR the SLA deadline for today hasn't passed yet (still within the grace period)
     
     Test fails if:
         - Today is a scheduled check day AND the deadline has passed AND:
             - No data exists in the table
             - The max timestamp is from a previous day (data not updated today)
+    
+    Note on DATA_FRESH semantics:
+        This test checks whether today's data EXISTS, not whether it arrived BEFORE the
+        SLA deadline. The SLA deadline acts as a grace period: the test won't fail until
+        the deadline has passed. Once today's data is present (max timestamp >= start of
+        target day in UTC), the test passes regardless of when the data appeared.
+        This is intentional because timestamp_column reflects the business timestamp of
+        the data, not the pipeline ingestion time.
     
     Important:
         - The timestamp_column values are assumed to be in UTC (or timezone-naive timestamps
@@ -211,8 +219,9 @@
     Logic:
     - Query the model table to get MAX(timestamp_column)
     - Compare against today's date boundaries (computed in UTC at compile time)
-    - If max timestamp is from today or later: data is fresh, SLA met
-    - If deadline hasn't passed yet: Don't fail (still time)
+    - If max timestamp is from today or later: data is fresh (today's data exists)
+    - The SLA deadline acts as a grace period — the test only fails if the
+      deadline has passed AND today's data is not present
     - Otherwise: Data is stale, SLA missed
 #}
 {% macro get_data_freshness_sla_query(
@@ -262,7 +271,9 @@
                 case
                     when mdt.max_timestamp is null
                     then 'NO_DATA'
-                    {# Data from today or future (e.g. pre-loaded records) counts as fresh #}
+                    {# Data from today or later counts as fresh — this checks whether
+                       today's data EXISTS, not whether it arrived before the SLA deadline.
+                       The SLA deadline is enforced separately via is_failure. #}
                     when mdt.max_timestamp >= sd.target_date_start_utc
                     then 'DATA_FRESH'
                     else 'DATA_STALE'

@@ -87,6 +87,24 @@
             }}
         {%- endif %}
 
+        {# Validate timestamp column exists and is a timestamp type #}
+        {% set timestamp_column_data_type = (
+            elementary.find_normalized_data_type_for_column(
+                model_relation, timestamp_column
+            )
+        ) %}
+        {% if not elementary.is_column_timestamp(
+            model_relation, timestamp_column, timestamp_column_data_type
+        ) %}
+            {{
+                exceptions.raise_compiler_error(
+                    "Column '"
+                    ~ timestamp_column
+                    ~ "' is not a timestamp type. The timestamp_column must be a timestamp or datetime column."
+                )
+            }}
+        {% endif %}
+
         {# Collect row_count metrics using Elementary's shared infrastructure.
            This handles: incremental bucket detection, metric computation, temp table creation, cache storage.
            Pass time_bucket as-is (none = use model/project default via get_time_bucket). #}
@@ -221,8 +239,10 @@
                 {{ elementary.edr_cast_as_int("prev_b.row_count") }}
                 as previous_row_count,
                 case
-                    when prev_b.row_count is null or prev_b.row_count = 0
+                    when prev_b.row_count is null
                     then null
+                    when prev_b.row_count = 0
+                    then case when curr.row_count > 0 then 999999.99 else 0 end
                     else
                         round(
                             cast(
