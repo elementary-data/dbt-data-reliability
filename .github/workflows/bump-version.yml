@@ -27,7 +27,7 @@ jobs:
           echo "dbt package version: ${{ steps.validate-dbt-package-input.outputs.dbt-package-validation }}"
       - name: fail on invalid input
         if: ${{ steps.validate-dbt-package-input.outputs.dbt-package-validation == '' }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             core.setFailed("Invalid version input - ${{ inputs.dbt-package-version }}")
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Create release branch
         run: git checkout -b release/${{ inputs.dbt-package-version }}
       - name: Initial config
@@ -59,7 +59,7 @@ jobs:
     needs: bump-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: create pull request
         uses: repo-sync/pull-request@v2
         with:
