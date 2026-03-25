@@ -1,5 +1,5 @@
 {% macro get_relevant_databases() %}
-    {% set database_names = [target.database] %}
+    {% set database_names = [target.database or target.schema] %}
     {% set models = (
         graph.nodes.values()
         | selectattr("resource_type", "==", "model")
