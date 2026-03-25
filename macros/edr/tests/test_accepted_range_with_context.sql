@@ -1,4 +1,8 @@
 {% test accepted_range_with_context(model, column_name, min_value=none, max_value=none, inclusive=true, context_columns=none) %}
+    {%- if min_value is none and max_value is none %}
+        {{ exceptions.raise_compiler_error("accepted_range_with_context: at least one of min_value or max_value must be provided.") }}
+    {%- endif %}
+
     {%- if context_columns is not none and context_columns is iterable and context_columns is not string %}
         {%- set existing_column_names = adapter.get_columns_in_relation(model) | map(attribute='name') | map('lower') | list %}
         {%- set select_cols = [column_name] %}
