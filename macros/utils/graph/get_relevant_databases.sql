@@ -12,7 +12,7 @@
     ) %}
     {% set nodes = models + sources %}
     {% for node in nodes %}
-        {% set database_name = node.get("database") %}
+        {% set database_name = elementary.get_node_database(node) %}
         {% if database_name %} {% do database_names.append(database_name) %} {% endif %}
     {% endfor %}
     {% set unique_database_names = database_names | unique | list %}
