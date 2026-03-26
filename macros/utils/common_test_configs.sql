@@ -450,6 +450,36 @@
             "collect_metrics": {
                 "description": "Collects metrics for the specified column or table. The test will always pass."
             },
+            "not_null_with_context": {
+                "quality_dimension": "completeness",
+                "failed_row_count_calc": "count(*)",
+                "description": "Validates that there are no null values in a column, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "accepted_range_with_context": {
+                "quality_dimension": "validity",
+                "failed_row_count_calc": "count(*)",
+                "description": "Validates that column values fall within an accepted range, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_column_values_to_not_be_null_with_context": {
+                "quality_dimension": "completeness",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects column values to not be null, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_column_values_to_be_unique_with_context": {
+                "quality_dimension": "uniqueness",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects column values to be unique, returning all duplicate rows with additional context columns. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_column_values_to_match_regex_with_context": {
+                "quality_dimension": "validity",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects column values to match a given regular expression, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "relationships_with_context": {
+                "quality_dimension": "consistency",
+                "failed_row_count_calc": "count(*)",
+                "description": "Validates referential integrity between a child and parent table, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
         },
     } %}
     {% do return(common_tests_configs_mapping) %}
