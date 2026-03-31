@@ -80,10 +80,18 @@
         "filter": criteria_dict.get("filter"),
         "generated_at": elementary.datetime_now_utc_as_string(),
         "invocation_id": source_freshness_invocation_id,
-        "compile_started_at": compile_timing.get("started_at"),
-        "compile_completed_at": compile_timing.get("completed_at"),
-        "execute_started_at": execute_timing.get("started_at"),
-        "execute_completed_at": execute_timing.get("completed_at"),
+        "compile_started_at": elementary.normalize_artifact_timestamp_precision(
+            compile_timing.get("started_at")
+        ),
+        "compile_completed_at": elementary.normalize_artifact_timestamp_precision(
+            compile_timing.get("completed_at")
+        ),
+        "execute_started_at": elementary.normalize_artifact_timestamp_precision(
+            execute_timing.get("started_at")
+        ),
+        "execute_completed_at": elementary.normalize_artifact_timestamp_precision(
+            execute_timing.get("completed_at")
+        ),
     } %}
     {{ return(flatten_source_freshness_dict) }}
 {% endmacro %}
