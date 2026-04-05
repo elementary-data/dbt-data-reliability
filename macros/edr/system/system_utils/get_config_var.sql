@@ -143,6 +143,8 @@
         "anomaly_exclude_metrics": none,
         "disable_samples_on_pii_tags": false,
         "pii_tags": ["pii"],
+        "enable_samples_on_show_sample_rows_tags": false,
+        "show_sample_rows_tags": ["show_sample_rows"],
         "bigquery_disable_partitioning": false,
         "bigquery_disable_clustering": false,
         "upload_only_current_project_artifacts": false,
