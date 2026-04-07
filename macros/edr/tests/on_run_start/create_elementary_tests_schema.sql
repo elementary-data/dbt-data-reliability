@@ -13,10 +13,13 @@
                 where upper(schema_name) = upper('{{ tests_schema_name }}')
             {% endset %}
             {% set schema_exists_result = elementary.run_query(schema_exists_sql) %}
+            {% set schema_count_rows = [] %}
+            {% if schema_exists_result is not none %}
+                {% set schema_count_rows = elementary.agate_to_dicts(schema_exists_result) %}
+            {% endif %}
             {% set schema_exists = (
-                schema_exists_result is not none
-                and schema_exists_result.rows | length > 0
-                and schema_exists_result.rows[0][0] | int > 0
+                schema_count_rows | length > 0
+                and schema_count_rows[0]["schema_count"] | int > 0
             ) %}
         {% else %}
             {% set schema_exists = adapter.check_schema_exists(database_name, tests_schema_name) %}

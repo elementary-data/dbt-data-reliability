@@ -22,10 +22,13 @@
                 where upper(schema_name) = upper('{{ legacy_tests_schema_name }}')
             {% endset %}
             {% set legacy_schema_exists_result = elementary.run_query(legacy_schema_exists_sql) %}
+            {% set legacy_schema_count_rows = [] %}
+            {% if legacy_schema_exists_result is not none %}
+                {% set legacy_schema_count_rows = elementary.agate_to_dicts(legacy_schema_exists_result) %}
+            {% endif %}
             {% set legacy_schema_exists = (
-                legacy_schema_exists_result is not none
-                and legacy_schema_exists_result.rows | length > 0
-                and legacy_schema_exists_result.rows[0][0] | int > 0
+                legacy_schema_count_rows | length > 0
+                and legacy_schema_count_rows[0]["schema_count"] | int > 0
             ) %}
         {% else %}
             {% set legacy_schema_exists = adapter.check_schema_exists(
