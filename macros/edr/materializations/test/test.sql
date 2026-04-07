@@ -28,8 +28,11 @@
     {% endif %}
 
     {% set test_namespace = model.get("test_metadata", {}).get("namespace") %}
-    {% if test_namespace == "elementary" %}
-        {# Custom test materialization is needed only for non-elementary tests #}
+    {% set test_name = model.get("test_metadata", {}).get("name", "") %}
+    {% if test_namespace == "elementary" and not test_name.endswith("_with_context") %}
+        {# Custom test materialization is needed only for non-elementary tests.
+           _with_context tests are elementary-namespaced but behave like regular dbt
+           tests (they return failing rows) so they go through the standard sampling path. #}
         {% do return(materialization_macro()) %}
     {% endif %}
 
