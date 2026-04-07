@@ -75,8 +75,25 @@
         {% set disable_test_samples = flattened_test["meta"]["disable_test_samples"] %}
     {% endif %}
 
+    {#
+      Sampling control precedence (highest to lowest):
+      1. disable_test_samples meta flag — explicit per-test kill switch, always wins.
+      2. show_sample_rows tag (model/test/column) — opt-in when
+         enable_samples_on_show_sample_rows_tags is true. If the tag is present,
+         skip all further checks and keep the sample_limit.
+      3. enable_samples_on_show_sample_rows_tags — hide-by-default mode: if the
+         feature is on but no show_sample_rows tag was found, disable samples.
+      4. PII tag detection (model/test/column) — hide when disable_samples_on_pii_tags
+         is true and a PII tag is detected at any level.
+    #}
     {% if disable_test_samples %} {% set sample_limit = 0 %}
+    {% elif elementary.should_show_sample_rows(flattened_test) %}
+    {# Tag explicitly opts in — keep sample_limit as-is #}
+    {% elif elementary.get_config_var("enable_samples_on_show_sample_rows_tags") %}
+        {# Feature is on but no show_sample_rows tag found — hide by default #}
+        {% set sample_limit = 0 %}
     {% elif elementary.is_pii_table(flattened_test) %} {% set sample_limit = 0 %}
+    {% elif elementary.is_pii_test(flattened_test) %} {% set sample_limit = 0 %}
     {% elif elementary.should_disable_sampling_for_pii(flattened_test) %}
         {% set sample_limit = 0 %}
     {% endif %}

@@ -38,8 +38,35 @@
     {% set column_nodes = parent_model.get("columns") %}
     {% if not column_nodes %} {% do return(pii_columns) %} {% endif %}
 
+    {#
+      A column tagged show_sample_rows (without pii) should still appear in samples
+      even when disable_samples_on_pii_tags is active — it is intentionally opted in.
+      We only skip it from the PII columns list if it does NOT also carry a PII tag,
+      since PII always takes precedence over show_sample_rows.
+    #}
+    {% set enable_show_tags = elementary.get_config_var(
+        "enable_samples_on_show_sample_rows_tags"
+    ) %}
+    {% set raw_show_tags = elementary.get_config_var("show_sample_rows_tags") %}
+    {% if raw_show_tags is string %} {% set show_tags = [raw_show_tags | lower] %}
+    {% else %} {% set show_tags = (raw_show_tags or []) | map("lower") | list %}
+    {% endif %}
+
     {% for column_node in column_nodes.values() %}
         {% set all_column_tags_lower = elementary.get_column_tags(column_node) %}
+
+        {# Skip column from PII list only if show_sample_rows is set and pii is not #}
+        {% set has_show_tag = enable_show_tags and (
+            elementary.lists_intersection(all_column_tags_lower, show_tags)
+            | length
+            > 0
+        ) %}
+        {% set has_pii_tag = (
+            elementary.lists_intersection(all_column_tags_lower, pii_tags)
+            | length
+            > 0
+        ) %}
+        {% if has_show_tag and not has_pii_tag %} {% continue %} {% endif %}
 
         {% for pii_tag in pii_tags %}
             {% if pii_tag in all_column_tags_lower %}
