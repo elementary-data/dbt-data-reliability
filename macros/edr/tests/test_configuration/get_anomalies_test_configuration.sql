@@ -95,9 +95,11 @@
         } %}
     {%- endif %}
 
-    {%- set min_value = elementary.get_test_argument(
-        "min_value", min_value, model_graph_node
-    ) %}
+    {%- if min_value is none %}
+        {%- set min_value = elementary.get_test_argument(
+            "min_value", none, model_graph_node
+        ) %}
+    {%- endif %}
 
     {% set anomaly_exclude_metrics = elementary.get_test_argument(
         "anomaly_exclude_metrics", anomaly_exclude_metrics, model_graph_node
