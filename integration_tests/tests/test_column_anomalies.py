@@ -215,6 +215,60 @@ def test_volume_anomaly_static_data_drop(
     assert test_result["status"] == expected_result
 
 
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="anomaly_detected_without_min_value",
+    expected_result="fail",
+    min_value=None,
+)
+@Parametrization.case(
+    name="anomaly_suppressed_with_min_value",
+    expected_result="pass",
+    min_value=5,
+)
+def test_column_anomalies_with_min_value(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    min_value,
+):
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": "Batman"}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 50
+    data += [
+        {
+            TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT),
+            "superhero": "Batman",
+        }
+    ] * 47
+    data += [
+        {
+            TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT),
+            "superhero": None,
+        }
+    ] * 3
+
+    # Training: 50 rows/day, 0 nulls -> null_count = 0
+    # Detection: 50 rows, 3 nulls -> null_count = 3
+    # Without min_value: null_count 3 vs training avg 0 -> anomaly detected (fail)
+    # With min_value=5: null_count 3 < 5 -> anomaly suppressed (pass)
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "column_anomalies": ["null_count"],
+    }
+    if min_value is not None:
+        test_args["min_value"] = min_value
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+    )
+    assert test_result["status"] == expected_result
+
+
 def test_anomalyless_column_anomalies_group(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data: List[Dict[str, Any]] = [
