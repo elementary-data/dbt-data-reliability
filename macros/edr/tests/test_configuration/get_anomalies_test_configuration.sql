@@ -24,6 +24,7 @@
     detection_period,
     training_period,
     exclude_final_results,
+    min_value,
     exclude_detection_period_from_training
 ) %}
 
@@ -94,6 +95,10 @@
         } %}
     {%- endif %}
 
+    {%- set min_value = elementary.get_test_argument(
+        "min_value", min_value, model_graph_node
+    ) %}
+
     {% set anomaly_exclude_metrics = elementary.get_test_argument(
         "anomaly_exclude_metrics", anomaly_exclude_metrics, model_graph_node
     ) %}
@@ -120,6 +125,7 @@
         "seasonality": seasonality,
         "ignore_small_changes": ignore_small_changes,
         "fail_on_zero": fail_on_zero,
+        "min_value": min_value,
         "detection_delay": detection_delay,
         "anomaly_exclude_metrics": anomaly_exclude_metrics,
         "exclude_final_results": exclude_final_results,

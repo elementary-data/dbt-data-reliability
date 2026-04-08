@@ -23,6 +23,7 @@
     anomaly_exclude_metrics=none,
     detection_period=none,
     training_period=none,
+    min_value,
     exclude_detection_period_from_training=false
 ) %}
     {{ config(tags=["elementary-tests"]) }}
@@ -82,6 +83,7 @@
                 anomaly_exclude_metrics=anomaly_exclude_metrics,
                 detection_period=detection_period,
                 training_period=training_period,
+                min_value=min_value,
                 exclude_detection_period_from_training=exclude_detection_period_from_training,
             )
         ) %}
