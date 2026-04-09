@@ -28,12 +28,15 @@
     {% endif %}
 
     {% set test_namespace = model.get("test_metadata", {}).get("namespace") %}
-    {% set test_name = model.get("test_metadata", {}).get("name", "") %}
-    {% if test_namespace == "elementary" and not test_name.endswith("_with_context") %}
-        {# Custom test materialization is needed only for non-elementary tests.
-           _with_context tests are elementary-namespaced but behave like regular dbt
-           tests (they return failing rows) so they go through the standard sampling path. #}
-        {% do return(materialization_macro()) %}
+    {% if test_namespace == "elementary" %}
+        {% set short_name = model.get("test_metadata", {}).get("name", "") | lower %}
+        {% set elementary_test_type = elementary.get_elementary_test_type(
+            {"short_name": short_name, "test_namespace": "elementary"}
+        ) %}
+        {% if elementary_test_type %}
+            {# Anomaly detection and schema change tests handle their own result row collection #}
+            {% do return(materialization_macro()) %}
+        {% endif %}
     {% endif %}
 
     {% set flattened_test = elementary.flatten_test(model) %}
