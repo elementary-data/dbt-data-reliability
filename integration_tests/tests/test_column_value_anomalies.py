@@ -136,16 +136,16 @@ def test_column_value_anomalies_with_where_expression(
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
 
-    # Training data for both categories
+    # Training data for both categories (use varied values so stddev > 0)
     data: List[Dict[str, Any]] = [
         {
             TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
             "category": category,
-            "amount": 100,
+            "amount": amount,
         }
         for cur_date in training_dates
         for category in ["normal", "outlier"]
-        for _ in range(3)
+        for amount in [95, 100, 105]
     ]
     # Detection data: normal category is fine, outlier category has extreme value
     data += [
