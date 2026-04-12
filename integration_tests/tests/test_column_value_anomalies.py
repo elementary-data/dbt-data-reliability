@@ -312,10 +312,11 @@ def test_column_value_anomalies_drop_ignores_spike(
 def test_column_value_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     """Test that seasonality=day_of_week uses per-day-of-week baselines.
 
-    Scenario: Weekdays have values ~100, weekends have values ~500.
-    Detection period falls on a weekend with value 500.
-    Without seasonality, 500 might look anomalous (overall mean ~200).
-    With day_of_week seasonality, 500 is normal for weekends → should pass.
+    Scenario: Weekdays have values ~10, weekends have values ~1000.
+    Detection period: a weekend day with value 1000.
+    Without seasonality, the blended baseline (mean ~300, stddev ~400) would
+    flag 1000 as anomalous. With day_of_week seasonality, weekend baseline
+    is ~1000 so the value is normal.
     """
     utc_today = datetime.utcnow().date()
     test_date, *training_dates = generate_dates(
@@ -323,13 +324,13 @@ def test_column_value_anomalies_with_seasonality(test_id: str, dbt_project: DbtP
     )
 
     data: List[Dict[str, Any]] = []
-    # Training data: weekdays ~100, weekends ~500
+    # Training data: weekdays ~10, weekends ~1000 (wide gap)
     for cur_date in training_dates:
         day_of_week = cur_date.weekday()  # 0=Monday, 6=Sunday
         if day_of_week >= 5:  # Weekend
-            values = [490, 500, 510]
+            values = [990, 1000, 1010]
         else:  # Weekday
-            values = [95, 100, 105]
+            values = [8, 10, 12]
         for amount in values:
             data.append(
                 {
@@ -338,12 +339,15 @@ def test_column_value_anomalies_with_seasonality(test_id: str, dbt_project: DbtP
                 }
             )
 
-    # Detection data: matches the pattern for test_date's day of week
+    # Detection data: always use a weekend-like value to ensure the test
+    # is meaningful regardless of what day test_date falls on.
+    # We pick value 1000 which matches weekend pattern but is far from
+    # the blended mean.
     test_day_of_week = test_date.weekday()
     if test_day_of_week >= 5:
-        detection_value = 500
+        detection_value = 1000
     else:
-        detection_value = 100
+        detection_value = 10
     data.append(
         {
             TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
