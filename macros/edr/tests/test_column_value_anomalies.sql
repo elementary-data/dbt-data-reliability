@@ -108,14 +108,10 @@
         {%- endif %}
 
         {#- Get column object to validate the column exists -#}
-        {%- set columns = adapter.get_columns_in_relation(model_relation) %}
-        {%- set column_obj = none %}
-        {%- for col in columns %}
-            {%- if col.name | lower == column_name | lower %}
-                {%- set column_obj = col %}
-            {%- endif %}
-        {%- endfor %}
-        {%- if not column_obj %}
+        {%- set column_obj_and_monitors = elementary.get_column_obj_and_monitors(
+            model_relation, column_name, ["column_value"]
+        ) -%}
+        {%- if not column_obj_and_monitors -%}
             {{
                 exceptions.raise_compiler_error(
                     "Unable to find column `{}` in `{}`".format(
@@ -123,7 +119,8 @@
                     )
                 )
             }}
-        {%- endif %}
+        {%- endif -%}
+        {%- set column_obj = column_obj_and_monitors["column"] %}
 
         {#- Calculate detection end and training start -#}
         {%- set detection_end = elementary.get_detection_end(
@@ -132,14 +129,14 @@
         {%- set detection_end_expr = elementary.edr_cast_as_timestamp(
             elementary.edr_datetime_to_sql(detection_end)
         ) %}
-        {%- set training_start = (
-            detection_end - modules.datetime.timedelta(days=test_configuration.days_back)
+        {%- set training_start = detection_end - modules.datetime.timedelta(
+            days=test_configuration.days_back
         ) %}
         {%- set training_start_expr = elementary.edr_cast_as_timestamp(
             elementary.edr_datetime_to_sql(training_start)
         ) %}
-        {%- set detection_start = (
-            detection_end - modules.datetime.timedelta(days=test_configuration.backfill_days)
+        {%- set detection_start = detection_end - modules.datetime.timedelta(
+            days=test_configuration.backfill_days
         ) %}
         {%- set detection_start_expr = elementary.edr_cast_as_timestamp(
             elementary.edr_datetime_to_sql(detection_start)
@@ -164,7 +161,7 @@
         {#- Build the column value anomalies query -#}
         {{ elementary.test_log("start", full_table_name, column_name) }}
 
-        {%- set quoted_column = adapter.quote(column_name) %}
+        {%- set quoted_column = column_obj.quoted %}
 
         {#- Step 1: Build a metrics-like table with individual row values as metrics.
             This allows us to feed into the existing anomaly_scores infrastructure. -#}
@@ -186,7 +183,8 @@
                     {{ elementary.edr_cast_as_float(quoted_column) }} as metric_value,
                     {{ elementary.edr_cast_as_string(quoted_column) }} as source_value,
                     {{ elementary.edr_cast_as_timestamp(ts_col) }} as row_timestamp,
-                    {{ seasonality_expr }} as bucket_seasonality
+                    {{ seasonality_expr }} as bucket_seasonality,
+                    row_number() over (order by {{ elementary.edr_cast_as_timestamp(ts_col) }}, {{ quoted_column }}) as row_idx
                 from monitored_table
                 where {{ elementary.edr_cast_as_timestamp(ts_col) }} >= {{ training_start_expr }}
                   and {{ elementary.edr_cast_as_timestamp(ts_col) }} < {{ detection_end_expr }}
@@ -230,14 +228,16 @@
                         "d.column_name",
                         "d.metric_name",
                         "d.source_value",
-                        elementary.edr_cast_as_string("d.row_timestamp")
+                        elementary.edr_cast_as_string("d.row_timestamp"),
+                        elementary.edr_cast_as_string("d.row_idx")
                     ]) }} as id,
                     {{ elementary.generate_surrogate_key([
                         "d.full_table_name",
                         "d.column_name",
                         "d.metric_name",
                         "d.source_value",
-                        elementary.edr_cast_as_string("d.row_timestamp")
+                        elementary.edr_cast_as_string("d.row_timestamp"),
+                        elementary.edr_cast_as_string("d.row_idx")
                     ]) }} as metric_id,
                     {{ elementary.const_as_string(elementary.get_test_execution_id()) }} as test_execution_id,
                     {{ elementary.const_as_string(elementary.get_test_unique_id()) }} as test_unique_id,

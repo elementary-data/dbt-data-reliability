@@ -65,9 +65,7 @@ def test_anomalous_column_value_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
-def test_column_value_anomalies_spike_direction(
-    test_id: str, dbt_project: DbtProject
-):
+def test_column_value_anomalies_spike_direction(test_id: str, dbt_project: DbtProject):
     """Test anomaly_direction='spike' only flags values above threshold.
 
     Training data: values around 100.
@@ -233,9 +231,7 @@ def test_column_value_anomalies_sensitivity(test_id: str, dbt_project: DbtProjec
     assert test_result["status"] == "pass"
 
 
-def test_column_value_anomalies_with_seasonality(
-    test_id: str, dbt_project: DbtProject
-):
+def test_column_value_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject):
     """Test that seasonality=day_of_week uses per-day-of-week baselines.
 
     Scenario: Weekdays have values ~100, weekends have values ~500.
