@@ -182,8 +182,8 @@ def test_column_value_anomalies_with_where_expression(
 def test_column_value_anomalies_sensitivity(test_id: str, dbt_project: DbtProject):
     """Test that anomaly_sensitivity threshold controls detection.
 
-    Training data: values around 100 with some variance (stddev ~5).
-    Detection data: value of 130 (~6 stddevs away).
+    Training data: values around 100 (sample stddev ~3.5).
+    Detection data: value of 130 (z-score ~8.6).
     With sensitivity=3, should fail. With sensitivity=10, should pass.
     """
     utc_today = datetime.utcnow().date()
@@ -206,7 +206,7 @@ def test_column_value_anomalies_sensitivity(test_id: str, dbt_project: DbtProjec
         },
     ]
 
-    # Low sensitivity: should fail (130 is ~6 stddevs from mean of ~100)
+    # Low sensitivity: should fail (130 is ~8.6 stddevs from mean ~100, stddev ~3.5)
     test_args_low = {
         **DBT_TEST_ARGS,
         "anomaly_sensitivity": 3,
@@ -227,6 +227,84 @@ def test_column_value_anomalies_sensitivity(test_id: str, dbt_project: DbtProjec
         test_args_high,
         test_column="amount",
         test_vars={"force_metrics_backfill": True},
+    )
+    assert test_result["status"] == "pass"
+
+
+def test_column_value_anomalies_spike_ignores_drop(
+    test_id: str, dbt_project: DbtProject
+):
+    """Test that anomaly_direction='spike' ignores drop outliers.
+
+    Training data: values around 100.
+    Detection data: only a very low value (-10000), no spike.
+    With spike direction, this drop should be ignored → test passes.
+    """
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "amount": amount,
+        }
+        for cur_date in training_dates
+        for amount in [95, 100, 105, 100, 100]
+    ]
+    # Detection data: only a drop outlier (no spike)
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "amount": -10000,
+        },
+    ]
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "anomaly_sensitivity": 3,
+        "anomaly_direction": "spike",
+    }
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="amount"
+    )
+    assert test_result["status"] == "pass"
+
+
+def test_column_value_anomalies_drop_ignores_spike(
+    test_id: str, dbt_project: DbtProject
+):
+    """Test that anomaly_direction='drop' ignores spike outliers.
+
+    Training data: values around 100.
+    Detection data: only a very high value (10000), no drop.
+    With drop direction, this spike should be ignored → test passes.
+    """
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(1))
+
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "amount": amount,
+        }
+        for cur_date in training_dates
+        for amount in [95, 100, 105, 100, 100]
+    ]
+    # Detection data: only a spike outlier (no drop)
+    data += [
+        {
+            TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
+            "amount": 10000,
+        },
+    ]
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "anomaly_sensitivity": 3,
+        "anomaly_direction": "drop",
+    }
+    test_result = dbt_project.test(
+        test_id, DBT_TEST_NAME, test_args, data=data, test_column="amount"
     )
     assert test_result["status"] == "pass"
 
