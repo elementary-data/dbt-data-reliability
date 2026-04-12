@@ -377,9 +377,13 @@ def test_column_value_anomalies_with_training_period(
 ):
     """Test that training_period controls the baseline window.
 
-    30 days of low values (100), then 7 days of high values (500),
-    then detection with value 500.
+    30 days of low values (~10), then 7 days of high values (~1000),
+    then detection with value 1000.
     With training_period=7 days (only recent high values): should pass.
+    With training_period=37 days (includes old low values): should fail
+    because 1000 is far from the blended mean (~163, stddev ~327, z≈2.6
+    but the 30-day low-value majority pulls the mean down enough to exceed
+    the threshold with sensitivity=2).
     """
     utc_today = datetime.utcnow().date()
     test_date = utc_today - timedelta(1)
@@ -389,7 +393,7 @@ def test_column_value_anomalies_with_training_period(
     # 30 days of low values (old data)
     for i in range(30):
         cur_date = utc_today - timedelta(days=37 - i)
-        for amount in [95, 100, 105]:
+        for amount in [8, 10, 12]:
             data.append(
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
@@ -402,7 +406,7 @@ def test_column_value_anomalies_with_training_period(
         cur_date = utc_today - timedelta(days=7 - i)
         if cur_date >= test_date:
             continue
-        for amount in [490, 500, 510]:
+        for amount in [990, 1000, 1010]:
             data.append(
                 {
                     TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
@@ -414,11 +418,11 @@ def test_column_value_anomalies_with_training_period(
     data.append(
         {
             TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT),
-            "amount": 500,
+            "amount": 1000,
         }
     )
 
-    # Short training period (7 days) - baseline is ~500, detection value 500 is normal
+    # Short training period (7 days) - baseline is ~1000, detection value is normal
     test_args = {
         **DBT_TEST_ARGS,
         "anomaly_sensitivity": 3,
@@ -428,3 +432,21 @@ def test_column_value_anomalies_with_training_period(
         test_id, DBT_TEST_NAME, test_args, data=data, test_column="amount"
     )
     assert test_result["status"] == "pass"
+
+    # Control: long training period (37 days) includes the 30 days of low values.
+    # Blended baseline is dominated by ~10 values, making 1000 a clear outlier.
+    # 90 values of ~10 + 18 values of ~1000 → mean ≈ 175, stddev ≈ 330.
+    # Z-score for 1000 ≈ (1000-175)/330 ≈ 2.5. With sensitivity=2, this fails.
+    control_args = {
+        **DBT_TEST_ARGS,
+        "anomaly_sensitivity": 2,
+        "training_period": {"period": "day", "count": 37},
+    }
+    control_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        control_args,
+        test_column="amount",
+        test_vars={"force_metrics_backfill": True},
+    )
+    assert control_result["status"] == "fail"
