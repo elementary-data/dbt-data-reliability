@@ -4,7 +4,7 @@ elementary_tests:
 
     # ── Local targets (plaintext, no secrets needed) ─────────────────
 
-    postgres: &postgres
+    postgres:
       type: postgres
       host: 127.0.0.1
       port: 5432
@@ -14,7 +14,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 32
 
-    clickhouse: &clickhouse
+    clickhouse:
       type: clickhouse
       host: localhost
       port: 8123
@@ -23,7 +23,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
-    trino: &trino
+    trino:
       type: trino
       method: none
       host: localhost
@@ -33,7 +33,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
-    dremio: &dremio
+    dremio:
       type: dremio
       software_host: localhost
       port: 9047
@@ -46,7 +46,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
-    spark: &spark
+    spark:
       type: spark
       method: thrift
       host: 127.0.0.1
@@ -56,13 +56,13 @@ elementary_tests:
       file_format: delta
       threads: 4
 
-    duckdb: &duckdb
+    duckdb:
       type: duckdb
       path: ":memory:"
       schema: {{ schema_name }}
       threads: 8
 
-    sqlserver: &sqlserver
+    sqlserver:
       type: sqlserver
       driver: "ODBC Driver 18 for SQL Server"
       server: 127.0.0.1
@@ -75,7 +75,7 @@ elementary_tests:
       trust_cert: true
       threads: 4
 
-    vertica: &vertica
+    vertica:
       type: vertica
       host: localhost
       port: 5433
@@ -89,7 +89,7 @@ elementary_tests:
 
     # ── Cloud targets (secrets substituted at CI time) ─────────────────
 
-    snowflake: &snowflake
+    snowflake:
       type: snowflake
       account: {{ snowflake_account | toyaml }}
       user: {{ snowflake_user | toyaml }}
@@ -100,7 +100,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
-    bigquery: &bigquery
+    bigquery:
       type: bigquery
       method: service-account-json
       project: {{ bigquery_project | toyaml }}
@@ -110,7 +110,7 @@ elementary_tests:
       priority: interactive
       threads: 4
 
-    redshift: &redshift
+    redshift:
       type: redshift
       host: {{ redshift_host | toyaml }}
       user: {{ redshift_user | toyaml }}
@@ -120,7 +120,7 @@ elementary_tests:
       schema: {{ schema_name }}
       threads: 4
 
-    databricks_catalog: &databricks_catalog
+    databricks_catalog:
       type: databricks
       host: {{ databricks_host | toyaml }}
       http_path: {{ databricks_http_path | toyaml }}
@@ -131,7 +131,7 @@ elementary_tests:
       client_secret: {{ databricks_client_secret | toyaml }}
       threads: 4
 
-    fabric: &fabric
+    fabric:
       type: fabric
       driver: "ODBC Driver 18 for SQL Server"
       server: {{ fabric_server | toyaml }}
@@ -146,7 +146,7 @@ elementary_tests:
       trust_cert: false
       threads: 4
 
-    athena: &athena
+    athena:
       type: athena
       s3_staging_dir: {{ athena_s3_staging_dir | toyaml }}
       s3_data_dir: {{ athena_s3_data_dir | toyaml }}
@@ -157,14 +157,162 @@ elementary_tests:
       aws_secret_access_key: {{ athena_aws_secret_access_key | toyaml }}
       threads: 4
 
-# The root dbt_project.yml uses profile "elementary", so we alias the
+# The root dbt_project.yml uses profile "elementary", so we define the
 # same targets but override the schema to <base>_elementary.
+# NOTE: we spell out each target in full instead of using YAML merge keys
+# (<<: *anchor) because dbt-fusion's parser does not resolve them,
+# which causes "dbt1005: missing 'type' field" errors.
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'vertica', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena', 'fabric'] %}
-{%- for t in targets %}
-    {{ t }}:
-      <<: *{{ t }}
-      {{ 'dataset' if t == 'bigquery' else 'schema' }}: {{ schema_name }}_elementary
-{%- endfor %}
+
+    postgres:
+      type: postgres
+      host: 127.0.0.1
+      port: 5432
+      user: admin
+      password: admin
+      dbname: postgres
+      schema: {{ schema_name }}_elementary
+      threads: 32
+
+    clickhouse:
+      type: clickhouse
+      host: localhost
+      port: 8123
+      user: default
+      password: default
+      schema: {{ schema_name }}_elementary
+      threads: 4
+
+    trino:
+      type: trino
+      method: none
+      host: localhost
+      port: 8086
+      user: admin
+      database: iceberg
+      schema: {{ schema_name }}_elementary
+      threads: 4
+
+    dremio:
+      type: dremio
+      software_host: localhost
+      port: 9047
+      user: dremio
+      password: dremio123
+      use_ssl: false
+      datalake: S3Source
+      root_path: datalake.elementary_ci.{{ schema_name }}
+      database: elementary_ci
+      schema: {{ schema_name }}_elementary
+      threads: 4
+
+    spark:
+      type: spark
+      method: thrift
+      host: 127.0.0.1
+      port: 10000
+      user: dbt
+      schema: {{ schema_name }}_elementary
+      file_format: delta
+      threads: 4
+
+    duckdb:
+      type: duckdb
+      path: ":memory:"
+      schema: {{ schema_name }}_elementary
+      threads: 8
+
+    sqlserver:
+      type: sqlserver
+      driver: "ODBC Driver 18 for SQL Server"
+      server: 127.0.0.1
+      port: 1433
+      database: master
+      schema: {{ schema_name }}_elementary
+      user: sa
+      password: "Elementary123!"
+      encrypt: false
+      trust_cert: true
+      threads: 4
+
+    vertica:
+      type: vertica
+      host: localhost
+      port: 5433
+      username: dbadmin
+      password: vertica
+      database: elementary_tests
+      schema: {{ schema_name }}_elementary
+      connection_load_balance: false
+      retries: 2
+      threads: 4
+
+    snowflake:
+      type: snowflake
+      account: {{ snowflake_account | toyaml }}
+      user: {{ snowflake_user | toyaml }}
+      password: {{ snowflake_password | toyaml }}
+      role: {{ snowflake_role | toyaml }}
+      database: {{ snowflake_database | toyaml }}
+      warehouse: {{ snowflake_warehouse | toyaml }}
+      schema: {{ schema_name }}_elementary
+      threads: 4
+
+    bigquery:
+      type: bigquery
+      method: service-account-json
+      project: {{ bigquery_project | toyaml }}
+      dataset: {{ schema_name }}_elementary
+      keyfile_json: {{ bigquery_keyfile | toyaml }}
+      location: US
+      priority: interactive
+      threads: 4
+
+    redshift:
+      type: redshift
+      host: {{ redshift_host | toyaml }}
+      user: {{ redshift_user | toyaml }}
+      password: {{ redshift_password | toyaml }}
+      port: {{ redshift_port | toyaml }}
+      dbname: {{ redshift_dbname | toyaml }}
+      schema: {{ schema_name }}_elementary
+      threads: 4
+
+    databricks_catalog:
+      type: databricks
+      host: {{ databricks_host | toyaml }}
+      http_path: {{ databricks_http_path | toyaml }}
+      catalog: {{ databricks_catalog | toyaml }}
+      schema: {{ schema_name }}_elementary
+      auth_type: oauth
+      client_id: {{ databricks_client_id | toyaml }}
+      client_secret: {{ databricks_client_secret | toyaml }}
+      threads: 4
+
+    fabric:
+      type: fabric
+      driver: "ODBC Driver 18 for SQL Server"
+      server: {{ fabric_server | toyaml }}
+      port: 1433
+      database: {{ fabric_database | toyaml }}
+      schema: {{ schema_name }}_elementary
+      authentication: ServicePrincipal
+      tenant_id: {{ fabric_tenant_id | toyaml }}
+      client_id: {{ fabric_client_id | toyaml }}
+      client_secret: {{ fabric_client_secret | toyaml }}
+      encrypt: true
+      trust_cert: false
+      threads: 4
+
+    athena:
+      type: athena
+      s3_staging_dir: {{ athena_s3_staging_dir | toyaml }}
+      s3_data_dir: {{ athena_s3_data_dir | toyaml }}
+      region_name: {{ athena_region | toyaml }}
+      database: awsdatacatalog
+      schema: {{ schema_name }}_elementary
+      aws_access_key_id: {{ athena_aws_access_key_id | toyaml }}
+      aws_secret_access_key: {{ athena_aws_secret_access_key | toyaml }}
+      threads: 4
