@@ -1,39 +1,45 @@
-elementary_tests:
-  target: postgres
-  outputs:
-
-    # ── Local targets (plaintext, no secrets needed) ─────────────────
-
-    postgres: &postgres
+{#- ── Target macros ──────────────────────────────────────────────────
+     Each target is defined once as a macro so both profiles stay in sync.
+     We avoid YAML merge keys (<<: *anchor) because dbt-fusion's parser
+     does not resolve them, causing "dbt1005: missing 'type' field" errors.
+-#}
+{%- macro postgres_target(schema) %}
+    postgres:
       type: postgres
       host: 127.0.0.1
       port: 5432
       user: admin
       password: admin
       dbname: postgres
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 32
+{%- endmacro %}
 
-    clickhouse: &clickhouse
+{%- macro clickhouse_target(schema) %}
+    clickhouse:
       type: clickhouse
       host: localhost
       port: 8123
       user: default
       password: default
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 4
+{%- endmacro %}
 
-    trino: &trino
+{%- macro trino_target(schema) %}
+    trino:
       type: trino
       method: none
       host: localhost
       port: 8086
       user: admin
       database: iceberg
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 4
+{%- endmacro %}
 
-    dremio: &dremio
+{%- macro dremio_target(schema) %}
+    dremio:
       type: dremio
       software_host: localhost
       port: 9047
@@ -43,53 +49,61 @@ elementary_tests:
       datalake: S3Source
       root_path: datalake.elementary_ci.{{ schema_name }}
       database: elementary_ci
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 4
+{%- endmacro %}
 
-    spark: &spark
+{%- macro spark_target(schema) %}
+    spark:
       type: spark
       method: thrift
       host: 127.0.0.1
       port: 10000
       user: dbt
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       file_format: delta
       threads: 4
+{%- endmacro %}
 
-    duckdb: &duckdb
+{%- macro duckdb_target(schema) %}
+    duckdb:
       type: duckdb
       path: ":memory:"
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 8
+{%- endmacro %}
 
-    sqlserver: &sqlserver
+{%- macro sqlserver_target(schema) %}
+    sqlserver:
       type: sqlserver
       driver: "ODBC Driver 18 for SQL Server"
       server: 127.0.0.1
       port: 1433
       database: master
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       user: sa
       password: "Elementary123!"
       encrypt: false
       trust_cert: true
       threads: 4
+{%- endmacro %}
 
-    vertica: &vertica
+{%- macro vertica_target(schema) %}
+    vertica:
       type: vertica
       host: localhost
       port: 5433
       username: dbadmin
       password: vertica
       database: elementary_tests
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       connection_load_balance: false
       retries: 2
       threads: 4
+{%- endmacro %}
 
-    # ── Cloud targets (secrets substituted at CI time) ─────────────────
-
-    snowflake: &snowflake
+{%- macro snowflake_target(schema) %}
+    snowflake:
       type: snowflake
       account: {{ snowflake_account | toyaml }}
       user: {{ snowflake_user | toyaml }}
@@ -97,47 +111,55 @@ elementary_tests:
       role: {{ snowflake_role | toyaml }}
       database: {{ snowflake_database | toyaml }}
       warehouse: {{ snowflake_warehouse | toyaml }}
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 4
+{%- endmacro %}
 
-    bigquery: &bigquery
+{%- macro bigquery_target(dataset) %}
+    bigquery:
       type: bigquery
       method: service-account-json
       project: {{ bigquery_project | toyaml }}
-      dataset: {{ schema_name }}
+      dataset: {{ dataset }}
       keyfile_json: {{ bigquery_keyfile | toyaml }}
       location: US
       priority: interactive
       threads: 4
+{%- endmacro %}
 
-    redshift: &redshift
+{%- macro redshift_target(schema) %}
+    redshift:
       type: redshift
       host: {{ redshift_host | toyaml }}
       user: {{ redshift_user | toyaml }}
       password: {{ redshift_password | toyaml }}
       port: {{ redshift_port | toyaml }}
       dbname: {{ redshift_dbname | toyaml }}
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       threads: 4
+{%- endmacro %}
 
-    databricks_catalog: &databricks_catalog
+{%- macro databricks_catalog_target(schema) %}
+    databricks_catalog:
       type: databricks
       host: {{ databricks_host | toyaml }}
       http_path: {{ databricks_http_path | toyaml }}
       catalog: {{ databricks_catalog | toyaml }}
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       auth_type: oauth
       client_id: {{ databricks_client_id | toyaml }}
       client_secret: {{ databricks_client_secret | toyaml }}
       threads: 4
+{%- endmacro %}
 
-    fabric: &fabric
+{%- macro fabric_target(schema) %}
+    fabric:
       type: fabric
       driver: "ODBC Driver 18 for SQL Server"
       server: {{ fabric_server | toyaml }}
       port: 1433
       database: {{ fabric_database | toyaml }}
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       authentication: ServicePrincipal
       tenant_id: {{ fabric_tenant_id | toyaml }}
       client_id: {{ fabric_client_id | toyaml }}
@@ -145,26 +167,47 @@ elementary_tests:
       encrypt: true
       trust_cert: false
       threads: 4
+{%- endmacro %}
 
-    athena: &athena
+{%- macro athena_target(schema) %}
+    athena:
       type: athena
       s3_staging_dir: {{ athena_s3_staging_dir | toyaml }}
       s3_data_dir: {{ athena_s3_data_dir | toyaml }}
       region_name: {{ athena_region | toyaml }}
       database: awsdatacatalog
-      schema: {{ schema_name }}
+      schema: {{ schema }}
       aws_access_key_id: {{ athena_aws_access_key_id | toyaml }}
       aws_secret_access_key: {{ athena_aws_secret_access_key | toyaml }}
       threads: 4
+{%- endmacro %}
 
-# The root dbt_project.yml uses profile "elementary", so we alias the
+{#- ── Macro that emits all targets for a given schema suffix ─────── -#}
+{%- macro all_targets(schema) %}
+{{ postgres_target(schema) }}
+{{ clickhouse_target(schema) }}
+{{ trino_target(schema) }}
+{{ dremio_target(schema) }}
+{{ spark_target(schema) }}
+{{ duckdb_target(schema) }}
+{{ sqlserver_target(schema) }}
+{{ vertica_target(schema) }}
+{{ snowflake_target(schema) }}
+{{ bigquery_target(schema) }}
+{{ redshift_target(schema) }}
+{{ databricks_catalog_target(schema) }}
+{{ fabric_target(schema) }}
+{{ athena_target(schema) }}
+{%- endmacro %}
+
+elementary_tests:
+  target: postgres
+  outputs:
+{{ all_targets(schema_name) }}
+
+# The root dbt_project.yml uses profile "elementary", so we define the
 # same targets but override the schema to <base>_elementary.
 elementary:
   target: postgres
   outputs:
-{%- set targets = ['postgres', 'clickhouse', 'trino', 'dremio', 'spark', 'duckdb', 'sqlserver', 'vertica', 'snowflake', 'bigquery', 'redshift', 'databricks_catalog', 'athena', 'fabric'] %}
-{%- for t in targets %}
-    {{ t }}:
-      <<: *{{ t }}
-      {{ 'dataset' if t == 'bigquery' else 'schema' }}: {{ schema_name }}_elementary
-{%- endfor %}
+{{ all_targets(schema_name ~ '_elementary') }}
