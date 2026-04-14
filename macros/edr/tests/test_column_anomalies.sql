@@ -20,7 +20,7 @@
     training_period,
     dimensions,
     min_value=none,
-    exclude_detection_period_from_training=false
+    exclude_detection_period_from_training=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
