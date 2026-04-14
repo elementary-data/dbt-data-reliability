@@ -40,7 +40,7 @@
         ) %}
     {% else %}
 
-        {% set upload_artifact_method = get_upload_artifact_method(
+        {% set upload_artifact_method = elementary.get_upload_artifact_method(
             table_relation, metadata_hashes
         ) %}
         {% if upload_artifact_method.type == "diff" %}
