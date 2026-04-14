@@ -217,16 +217,16 @@ def test_volume_anomaly_static_data_drop(
 
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
-    name="anomaly_detected_without_min_value",
+    name="detected",
     expected_result="fail",
     min_value=None,
 )
 @Parametrization.case(
-    name="anomaly_suppressed_with_min_value",
+    name="suppressed",
     expected_result="pass",
     min_value=5,
 )
-def test_column_anomalies_with_min_value(
+def test_col_anom_min_value(
     test_id: str,
     dbt_project: DbtProject,
     expected_result: str,
