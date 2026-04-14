@@ -230,10 +230,8 @@
 {% endmacro %}
 
 {% macro min_value_condition(min_value) %}
-    {% if min_value is not none %}
-        (metric_value >= {{ min_value }})
-    {% else %}
-        (1 = 1)
+    {% if min_value is not none %}(metric_value >= {{ min_value }})
+    {% else %}(1 = 1)
     {% endif %}
 {% endmacro %}
 
@@ -257,8 +255,7 @@
                         test_configuration.anomaly_direction,
                     )
                 }}
-                and
-                {{ elementary.min_value_condition(test_configuration.min_value) }}
+                and {{ elementary.min_value_condition(test_configuration.min_value) }}
             )
         )
     )
