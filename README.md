@@ -58,7 +58,7 @@ The dbt package works standalone, and integrates with both:
 
 ## Community & Support
 
-- [Slack community](https://join.slack.com/t/elementary-community/shared_invite/zt-3s3uv8znb-7eBuG~ApwOa637dpVFo9Yg) — questions, support, and conversation
+- [Slack community](https://join.slack.com/t/elementary-community/shared_invite/zt-3s3uv8znb-7eBuG~ApwOa637dpVFo9Yg) — questions, team and AI support, and conversation
 - [GitHub Issues](https://github.com/elementary-data/elementary/issues) — bug reports and feature requests
 - [elementary-data.com](https://www.elementary-data.com/) — product, use cases, and more
 
