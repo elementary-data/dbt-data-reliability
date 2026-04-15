@@ -7,8 +7,6 @@ models:
       Each row contains information about a single model.
       Data is loaded every time this model is executed.
       It is recommended to execute the model every time a change is merged to the project.
-      On BigQuery, or when the elementary variable include_other_warehouse_specific_columns is true,
-      the table also includes bigquery_partition_by and bigquery_cluster_by (not listed below).
     columns:
       - name: unique_id
         data_type: string
