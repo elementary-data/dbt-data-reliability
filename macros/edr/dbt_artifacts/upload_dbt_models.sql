@@ -115,8 +115,7 @@
         "bigquery_cluster_by": config_dict.get("cluster_by"),
         "group_name": config_dict.get("group") or node_dict.get("group"),
         "access": config_dict.get("access") or node_dict.get("access"),
-        "deprecation_date": config_dict.get("deprecation_date")
-        or node_dict.get("deprecation_date"),
+        "deprecation_date": node_dict.get("deprecation_date"),
     } %}
     {% do flatten_model_metadata_dict.update(
         {
