@@ -40,6 +40,7 @@
         ("incremental_strategy", "string"),
         ("group_name", "string"),
         ("access", "string"),
+        ("deprecation_date", "string"),
     ] %}
     {% if target.type == "bigquery" or elementary.get_config_var(
         "include_other_warehouse_specific_columns"
@@ -114,6 +115,8 @@
         "bigquery_cluster_by": config_dict.get("cluster_by"),
         "group_name": config_dict.get("group") or node_dict.get("group"),
         "access": config_dict.get("access") or node_dict.get("access"),
+        "deprecation_date": config_dict.get("deprecation_date")
+        or node_dict.get("deprecation_date"),
     } %}
     {% do flatten_model_metadata_dict.update(
         {
