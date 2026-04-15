@@ -1,17 +1,17 @@
 <p align="center">
 <img alt="Logo" src="https://res.cloudinary.com/do5hrgokq/image/upload/v1764493013/github_banner_zp5l2o.png" width="1000">
 </p>
-
 <p align="center">
-<a href="https://join.slack.com/t/elementary-community/shared_invite/zt-3s3uv8znb-7eBuG~ApwOa637dpVFo9Yg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
+<a href="https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg"><img src="https://img.shields.io/badge/join-Slack-ff69b4"/></a>
 <a href="https://docs.elementary-data.com/data-tests/dbt/quickstart-package"><img src="https://img.shields.io/badge/docs-quickstart-orange"/></a>
 <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-ff69b4"/>
 <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/elementary-data?period=month&units=international_system&left_color=grey&right_color=orange&left_text=downloads/month" />
 </p>
 
-# dbt-native data observability
+# [dbt-native data observability](https://www.elementary-data.com/)
 
-The Elementary dbt package adds data observability natively to your dbt project. Ranked among the top 5 dbt packages, trusted by thousands of data teams worldwide.
+From the [Elementary](https://www.elementary-data.com/) team, helping you deliver trusted data in the AI era.
+Ranked among the top 5 dbt packages and supported by a growing community of thousands.
 
 > **Need data reliability at scale?** The Elementary dbt package is also the foundation for **[Elementary Cloud](https://docs.elementary-data.com/cloud/introduction)** — a full Data & AI Control Plane with automated ML monitoring, column-level lineage from ingestion to BI and AI assets, a built-in catalog, and AI agents that scale reliability workflows for engineers and business users. [Book a demo →](https://meetings-eu1.hubspot.com/joost-boonzajer-flaes/intro-call-sl-)
 
@@ -58,7 +58,7 @@ The dbt package works standalone, and integrates with both:
 
 ## Community & Support
 
-- [Slack community](https://join.slack.com/t/elementary-community/shared_invite/zt-3s3uv8znb-7eBuG~ApwOa637dpVFo9Yg) — questions, support, and conversation
+- [Slack community](https://join.slack.com/t/elementary-community/shared_invite/zt-uehfrq2f-zXeVTtXrjYRbdE_V6xq4Rg) — questions, support, and conversation
 - [GitHub Issues](https://github.com/elementary-data/elementary/issues) — bug reports and feature requests
 - [elementary-data.com](https://www.elementary-data.com/) — product, use cases, and more
 
