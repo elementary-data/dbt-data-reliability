@@ -29,8 +29,14 @@
 
     {% set test_namespace = model.get("test_metadata", {}).get("namespace") %}
     {% if test_namespace == "elementary" %}
-        {# Custom test materialization is needed only for non-elementary tests #}
-        {% do return(materialization_macro()) %}
+        {% set short_name = model.get("test_metadata", {}).get("name", "") | lower %}
+        {% set elementary_test_type = elementary.get_elementary_test_type(
+            {"short_name": short_name, "test_namespace": "elementary"}
+        ) %}
+        {% if elementary_test_type %}
+            {# Anomaly detection and schema change tests handle their own result row collection #}
+            {% do return(materialization_macro()) %}
+        {% endif %}
     {% endif %}
 
     {% set flattened_test = elementary.flatten_test(model) %}
