@@ -71,8 +71,8 @@ config = Neo4jConfig.from_env()
 
 Find all models impacted by a source change:
 ```cypher
-MATCH (source:DbtNode {name: "raw_customers"})-[:FEEDS_INTO*]->(impacted)
-RETURN impacted.name, impacted.resource_type
+MATCH (source:DbtNode {unique_id: "source.my_project.raw_customers"})-[:FEEDS_INTO*]->(impacted)
+RETURN impacted.unique_id, impacted.name, impacted.resource_type
 ```
 
 ## Running Tests

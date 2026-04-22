@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from neo4j import GraphDatabase
 
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class Neo4jLineageExporter:
     """
     Exports dbt lineage from Elementary's dbt manifest into Neo4j.
-    Creates nodes for models, sources, and columns, and
+    Creates nodes for models, sources, seeds, and snapshots, and
     relationships for dependencies between them.
     """
 
@@ -62,10 +62,21 @@ class Neo4jLineageExporter:
         return nodes
 
     def extract_dependencies(self, manifest: Dict[str, Any]) -> List[Dict]:
-        """Extract upstream dependencies between nodes."""
+        """Extract upstream dependencies between exported nodes only."""
+        exported_ids = {
+            unique_id
+            for unique_id, node in manifest.get("nodes", {}).items()
+            if node.get("resource_type") in ("model", "seed", "snapshot")
+        }
+        exported_ids.update(manifest.get("sources", {}).keys())
+
         dependencies = []
         for unique_id, node in manifest.get("nodes", {}).items():
+            if unique_id not in exported_ids:
+                continue
             for upstream_id in node.get("depends_on", {}).get("nodes", []):
+                if upstream_id not in exported_ids:
+                    continue
                 dependencies.append({
                     "from_id": upstream_id,
                     "to_id": unique_id,
