@@ -18,12 +18,13 @@
         "spike_failure_percent_threshold": none,
         "drop_failure_percent_threshold": none,
     },
-    fail_on_zero=false,
+    fail_on_zero=none,
     detection_delay=none,
     anomaly_exclude_metrics=none,
     detection_period=none,
     training_period=none,
-    exclude_detection_period_from_training=false
+    min_value=none,
+    exclude_detection_period_from_training=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
@@ -82,6 +83,7 @@
                 anomaly_exclude_metrics=anomaly_exclude_metrics,
                 detection_period=detection_period,
                 training_period=training_period,
+                min_value=min_value,
                 exclude_detection_period_from_training=exclude_detection_period_from_training,
             )
         ) %}

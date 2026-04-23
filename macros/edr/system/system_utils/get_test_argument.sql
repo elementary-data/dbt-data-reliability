@@ -1,5 +1,5 @@
 {% macro get_test_argument(argument_name, value, model_graph_node) %}
-    {% if value %} {% do return(value) %} {%- endif %}
+    {% if value is defined and value is not none %} {% do return(value) %} {%- endif %}
     {%- if model_graph_node %}
         {% set elementary_config = elementary.get_elementary_config_from_node(
             model_graph_node

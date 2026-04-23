@@ -18,7 +18,8 @@
     detection_period,
     training_period,
     exclude_final_results,
-    exclude_detection_period_from_training=false
+    min_value=none,
+    exclude_detection_period_from_training=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
@@ -81,6 +82,7 @@
                 detection_period=detection_period,
                 training_period=training_period,
                 exclude_final_results=exclude_final_results,
+                min_value=min_value,
                 exclude_detection_period_from_training=exclude_detection_period_from_training,
             )
         ) %}

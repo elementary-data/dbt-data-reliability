@@ -16,7 +16,7 @@
     anomaly_exclude_metrics,
     detection_period,
     training_period,
-    exclude_detection_period_from_training=false
+    exclude_detection_period_from_training=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
 
