@@ -194,17 +194,21 @@ jobs:
           curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s --
 
       - name: Install Elementary
-        env:
-          ELEMENTARY_EXTRA: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}
         run: |
           # For Vertica, dbt-vertica is already installed with --no-deps above;
           # using ".[vertica]" would re-resolve dbt-vertica's deps and downgrade
           # dbt-core to ~=1.8.  Install elementary without the adapter extra.
-          if [ "$WAREHOUSE" = "vertica" ]; then
-            pip install "./elementary"
-          else
-            pip install "./elementary[${ELEMENTARY_EXTRA}]"
-          fi
+          case "$WAREHOUSE" in
+            vertica)
+              pip install "./elementary"
+              ;;
+            databricks_catalog)
+              pip install "./elementary[databricks]"
+              ;;
+            *)
+              pip install "./elementary[$WAREHOUSE]"
+              ;;
+          esac
 
       - name: Write dbt profiles
         env:
@@ -226,8 +230,8 @@ jobs:
 
           echo "Schema name: $SCHEMA_NAME (branch='${BRANCH_NAME}', timestamp=${DATE_STAMP}, hash of concurrency group)"
 
-          python "$GITHUB_WORKSPACE/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
-            --template "$GITHUB_WORKSPACE/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
+          python "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/generate_profiles.py" \
+            --template "${{ github.workspace }}/dbt-data-reliability/integration_tests/profiles/profiles.yml.j2" \
             --output ~/.dbt/profiles.yml \
             --schema-name "$SCHEMA_NAME"
 
@@ -236,7 +240,7 @@ jobs:
         run: |
           if [ "$DBT_VERSION" = "fusion" ]; then DBT_BIN="$HOME/.local/bin/dbt"; else DBT_BIN="dbt"; fi
           "$DBT_BIN" deps --project-dir dbt_project
-          ln -sfn "$GITHUB_WORKSPACE/dbt-data-reliability" dbt_project/dbt_packages/elementary
+          ln -sfn "${{ github.workspace }}/dbt-data-reliability" dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
 
       - name: Start Vertica
