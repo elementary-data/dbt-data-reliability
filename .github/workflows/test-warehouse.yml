@@ -274,7 +274,8 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: pmeier/pytest-results-action@0841ca7226ab155943837380769373a5dd14d7ed # v0.8.0
+        # pmeier/pytest-results-action v0.8.0, checked 2026-04-26.
+        uses: pmeier/pytest-results-action@0841ca7226ab155943837380769373a5dd14d7ed
         with:
           path: ${{ env.TESTS_DIR }}/tests/test-results.xml
           summary: true
