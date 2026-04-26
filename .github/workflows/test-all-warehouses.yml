@@ -34,6 +34,8 @@ on:
         type: string
         required: false
 
+permissions: {}
+
 jobs:
   # ── Local targets ─────────────────────────────────────────────────────
   # No secrets needed — run on pull_request (works for forks without approval).
@@ -42,6 +44,8 @@ jobs:
   # fully in-process adapters (duckdb).
   test-local:
     if: github.event_name != 'pull_request_target'
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -88,35 +92,41 @@ jobs:
   # Determine if this is a fork PR and skip if wrong trigger is used
   check-fork-status:
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       is_fork: ${{ steps.check.outputs.is_fork }}
       should_skip: ${{ steps.check.outputs.should_skip }}
     steps:
       - name: Check if PR is from fork
         id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
         run: |
           IS_FORK="false"
           SHOULD_SKIP="false"
 
-          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "pull_request_target" ]]; then
-            if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+          if [[ "$EVENT_NAME" == "pull_request" || "$EVENT_NAME" == "pull_request_target" ]]; then
+            if [[ "$PR_REPO" != "$BASE_REPO" ]]; then
               IS_FORK="true"
             fi
 
             # Skip if: pull_request from fork (should use pull_request_target) OR pull_request_target from non-fork (should use pull_request)
-            if [[ "${{ github.event_name }}" == "pull_request" && "$IS_FORK" == "true" ]]; then
+            if [[ "$EVENT_NAME" == "pull_request" && "$IS_FORK" == "true" ]]; then
               SHOULD_SKIP="true"
-            elif [[ "${{ github.event_name }}" == "pull_request_target" && "$IS_FORK" == "false" ]]; then
+            elif [[ "$EVENT_NAME" == "pull_request_target" && "$IS_FORK" == "false" ]]; then
               SHOULD_SKIP="true"
             fi
           fi
 
-          echo "is_fork=$IS_FORK" >> $GITHUB_OUTPUT
-          echo "should_skip=$SHOULD_SKIP" >> $GITHUB_OUTPUT
+          echo "is_fork=$IS_FORK" >> "$GITHUB_OUTPUT"
+          echo "should_skip=$SHOULD_SKIP" >> "$GITHUB_OUTPUT"
 
   # Approval gate for fork PRs (only runs once for all platforms)
   approve-fork:
     runs-on: ubuntu-latest
+    permissions: {}
     needs: [check-fork-status]
     if: needs.check-fork-status.outputs.should_skip != 'true' && needs.check-fork-status.outputs.is_fork == 'true'
     environment: elementary_test_env
@@ -126,6 +136,8 @@ jobs:
 
   test-cloud:
     needs: [check-fork-status, approve-fork]
+    permissions:
+      contents: read
     if: |
       ! cancelled() &&
       needs.check-fork-status.result == 'success' &&

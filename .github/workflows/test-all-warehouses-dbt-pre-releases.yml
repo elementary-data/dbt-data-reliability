@@ -2,8 +2,12 @@ name: Test all warehouse platforms on dbt pre-releases
 on:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   test:
+    permissions:
+      contents: read
     uses: ./.github/workflows/test-all-warehouses.yml
     secrets: inherit
     with:
