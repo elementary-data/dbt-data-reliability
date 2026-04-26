@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
-      version: ${{ steps.validate.outputs.version }}
+      validated-dbt-package-version: ${{ steps.validate.outputs.validated-dbt-package-version }}
     steps:
       - name: Validate dbt package version
         id: validate
@@ -31,7 +31,7 @@ jobs:
             echo "::error::Invalid version: $VERSION"
             exit 1
           fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "validated-dbt-package-version=$VERSION" >> "$GITHUB_OUTPUT"
 
   bump-version:
     needs: validate-version
@@ -39,7 +39,7 @@ jobs:
     permissions:
       contents: write
     env:
-      VERSION: ${{ needs.validate-version.outputs.version }}
+      VERSION: ${{ needs.validate-version.outputs.validated-dbt-package-version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -71,8 +71,8 @@ jobs:
       - name: create pull request
         uses: repo-sync/pull-request@7e79a9f5dc3ad0ce53138f01df2fad14a04831c5 # v2
         with:
-          source_branch: "release/${{ needs.validate-version.outputs.version }}"
+          source_branch: "release/${{ needs.validate-version.outputs.validated-dbt-package-version }}"
           destination_branch: "master"
-          pr_title: "release/${{ needs.validate-version.outputs.version }}"
+          pr_title: "release/${{ needs.validate-version.outputs.validated-dbt-package-version }}"
           pr_body: "Open automatically using bump version workflow"
           github_token: ${{ secrets.GITHUB_TOKEN }}
