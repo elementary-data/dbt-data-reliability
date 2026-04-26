@@ -22,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Mint an OIDC token to assume the shared elementary-oss AWS role
+      # (used by the athena matrix entry below).
+      id-token: write
     env:
       WAREHOUSE: ${{ matrix.warehouse-type }}
       MAX_AGE_HOURS: ${{ inputs.max-age-hours || '24' }}
@@ -42,6 +45,13 @@ jobs:
             echo "::error::Invalid max-age-hours: '$MAX_AGE_HOURS' (must be a non-negative integer)"
             exit 1
           fi
+
+      - name: Configure AWS credentials
+        if: matrix.warehouse-type == 'athena'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: eu-west-1
 
       - name: Checkout dbt package
         uses: actions/checkout@v6
