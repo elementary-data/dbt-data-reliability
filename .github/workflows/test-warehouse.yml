@@ -51,6 +51,8 @@ on:
         default: "latest_official"
         required: false
 
+permissions: {}
+
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   TESTS_DIR: ${{ github.workspace }}/dbt-data-reliability/integration_tests
@@ -59,6 +61,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      WAREHOUSE: ${{ inputs.warehouse-type }}
+      DBT_VERSION: ${{ inputs.dbt-version }}
     concurrency:
       # Serialises runs for the same warehouse × dbt-version × branch.
       # The schema name is derived from a hash of this group (see "Write dbt profiles").
@@ -160,6 +167,8 @@ jobs:
 
       - name: Install dbt-vertica
         if: inputs.warehouse-type == 'vertica' && inputs.dbt-version != 'fusion'
+        env:
+          DBT_CORE_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}
         run: |
           # dbt-vertica pins dbt-core~=1.8 which lacks native support for the
           # "arguments" test property used by the integration-test framework.
@@ -167,15 +176,17 @@ jobs:
           # dbt-core version separately (dbt-vertica works fine with newer
           # dbt-core versions).
           pip install dbt-vertica --no-deps
-          pip install vertica-python \
-            "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
+          pip install vertica-python "dbt-core${DBT_CORE_PIN}"
 
       - name: Install dbt
         if: ${{ inputs.dbt-version != 'fusion' && inputs.warehouse-type != 'vertica' }}
-        run:
-          pip install${{ (inputs.dbt-version == 'latest_pre' && ' --pre') || '' }}
-          "dbt-core${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}"
-          "dbt-${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}"
+        env:
+          PIP_PRE_FLAG: ${{ (inputs.dbt-version == 'latest_pre' && '--pre') || '' }}
+          DBT_CORE_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}
+          DBT_ADAPTER_PKG: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}
+          DBT_ADAPTER_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}
+        run: |
+          pip install $PIP_PRE_FLAG "dbt-core${DBT_CORE_PIN}" "dbt-${DBT_ADAPTER_PKG}${DBT_ADAPTER_PIN}"
 
       - name: Install dbt-fusion
         if: inputs.dbt-version == 'fusion'
@@ -187,11 +198,17 @@ jobs:
           # For Vertica, dbt-vertica is already installed with --no-deps above;
           # using ".[vertica]" would re-resolve dbt-vertica's deps and downgrade
           # dbt-core to ~=1.8.  Install elementary without the adapter extra.
-          if [ "${{ inputs.warehouse-type }}" = "vertica" ]; then
-            pip install "./elementary"
-          else
-            pip install "./elementary[${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || inputs.warehouse-type }}]"
-          fi
+          case "$WAREHOUSE" in
+            vertica)
+              pip install "./elementary"
+              ;;
+            databricks_catalog)
+              pip install "./elementary[databricks]"
+              ;;
+            *)
+              pip install "./elementary[$WAREHOUSE]"
+              ;;
+          esac
 
       - name: Write dbt profiles
         env:
@@ -205,7 +222,7 @@ jobs:
           # Budget (PostgreSQL 63-char limit):
           #   dbt_(4) + timestamp(13) + _(1) + branch(≤18) + _(1) + hash(8) = 45
           #   + _elementary(11) + _gw7(4) = 60
-          CONCURRENCY_GROUP="tests_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}_${BRANCH_NAME}"
+          CONCURRENCY_GROUP="tests_${WAREHOUSE}_dbt_${DBT_VERSION}_${BRANCH_NAME}"
           SHORT_HASH=$(echo -n "$CONCURRENCY_GROUP" | sha256sum | head -c 8)
           SAFE_BRANCH=$(echo "${BRANCH_NAME}" | awk '{print tolower($0)}' | sed "s/[^a-z0-9]/_/g; s/__*/_/g" | head -c 18)
           DATE_STAMP=$(date -u +%y%m%d_%H%M%S)
@@ -221,8 +238,9 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} deps --project-dir dbt_project
-          ln -sfn ${{ github.workspace }}/dbt-data-reliability dbt_project/dbt_packages/elementary
+          if [ "$DBT_VERSION" = "fusion" ]; then DBT_BIN="$HOME/.local/bin/dbt"; else DBT_BIN="dbt"; fi
+          "$DBT_BIN" deps --project-dir dbt_project
+          ln -sfn "${{ github.workspace }}/dbt-data-reliability" dbt_project/dbt_packages/elementary
           pip install -r requirements.txt
 
       - name: Start Vertica
@@ -240,15 +258,24 @@ jobs:
       - name: Check DWH connection
         working-directory: ${{ env.TESTS_DIR }}
         run: |
-          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} debug -t "${{ inputs.warehouse-type }}"
+          if [ "$DBT_VERSION" = "fusion" ]; then DBT_BIN="$HOME/.local/bin/dbt"; else DBT_BIN="dbt"; fi
+          "$DBT_BIN" debug -t "$WAREHOUSE"
 
       - name: Test
         working-directory: "${{ env.TESTS_DIR }}/tests"
-        run: py.test -n${{ (inputs.warehouse-type == 'spark' && '4') || '8' }} -vvv --target "${{ inputs.warehouse-type }}" --junit-xml=test-results.xml --html=detailed_report_${{ inputs.warehouse-type }}_dbt_${{ inputs.dbt-version }}.html --self-contained-html --clear-on-end ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
+        env:
+          PYTEST_PARALLEL: ${{ (inputs.warehouse-type == 'spark' && '4') || '8' }}
+          FUSION_RUNNER_FLAG: ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
+        run: |
+          py.test -n"$PYTEST_PARALLEL" -vvv --target "$WAREHOUSE" \
+            --junit-xml=test-results.xml \
+            --html="detailed_report_${WAREHOUSE}_dbt_${DBT_VERSION}.html" \
+            --self-contained-html --clear-on-end $FUSION_RUNNER_FLAG
 
       - name: Upload test results
         if: always()
-        uses: pmeier/pytest-results-action@v0.8.0
+        # pmeier/pytest-results-action v0.8.0, checked 2026-04-26.
+        uses: pmeier/pytest-results-action@0841ca7226ab155943837380769373a5dd14d7ed
         with:
           path: ${{ env.TESTS_DIR }}/tests/test-results.xml
           summary: true
@@ -269,6 +296,7 @@ jobs:
         working-directory: ${{ env.TESTS_DIR }}
         continue-on-error: true
         run: |
-          ${{ (inputs.dbt-version == 'fusion' && '~/.local/bin/dbt') || 'dbt' }} run-operation elementary_tests.drop_test_schemas \
+          if [ "$DBT_VERSION" = "fusion" ]; then DBT_BIN="$HOME/.local/bin/dbt"; else DBT_BIN="dbt"; fi
+          "$DBT_BIN" run-operation elementary_tests.drop_test_schemas \
             --project-dir dbt_project \
-            -t "${{ inputs.warehouse-type }}"
+            -t "$WAREHOUSE"
