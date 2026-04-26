@@ -69,7 +69,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: create pull request
-        uses: repo-sync/pull-request@7e79a9f5dc3ad0ce53138f01df2fad14a04831c5 # v2
+        # repo-sync/pull-request v2.12.1, checked 2026-04-26.
+        uses: repo-sync/pull-request@7e79a9f5dc3ad0ce53138f01df2fad14a04831c5
         with:
           source_branch: "release/${{ needs.validate-version.outputs.validated-dbt-package-version }}"
           destination_branch: "master"
