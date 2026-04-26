@@ -10,7 +10,8 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: wow-actions/auto-comment@2fc064c21cfb2505de3c5c10e1473b8eb7beca1a # v1
+      # wow-actions/auto-comment v1.1.2, checked 2026-04-26.
+      - uses: wow-actions/auto-comment@2fc064c21cfb2505de3c5c10e1473b8eb7beca1a
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           pullRequestOpened: |
