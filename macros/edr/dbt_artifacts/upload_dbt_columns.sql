@@ -89,7 +89,7 @@
         "tags": elementary.filter_none_and_sort(tags),
         "meta": meta_dict,
         "description": column_node.get("description") or none,
-        "database_name": table_node.get("database"),
+        "database_name": elementary.get_node_database(table_node),
         "schema_name": table_node.get("schema"),
         "table_name": table_node.get("alias"),
         "resource_type": table_node.get("resource_type"),

@@ -93,7 +93,7 @@
         "tags": elementary.filter_none_and_sort(tags),
         "meta": meta_dict,
         "owner": elementary.filter_none_and_sort(formatted_owner),
-        "database_name": node_dict.get("database"),
+        "database_name": elementary.get_node_database(node_dict),
         "schema_name": node_dict.get("schema"),
         "depends_on_macros": elementary.filter_none_and_sort(
             depends_on_dict.get("macros", [])

@@ -150,7 +150,9 @@
     {%- if primary_test_model_id.data is not none -%}
         {% set tested_model_node = elementary.get_node(primary_test_model_id.data) %}
         {%- if tested_model_node -%}
-            {% set primary_test_model_database = tested_model_node.get("database") %}
+            {% set primary_test_model_database = elementary.get_node_database(
+                tested_model_node
+            ) %}
             {% set primary_test_model_schema = tested_model_node.get("schema") %}
             {% set group_name = group_name or tested_model_node.get("group") %}
             {% set flatten_primary_model_node = elementary.flatten_node(
