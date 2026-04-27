@@ -63,6 +63,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      # Mint an OIDC token to assume the shared elementary-oss AWS role.
+      id-token: write
     env:
       WAREHOUSE: ${{ inputs.warehouse-type }}
       DBT_VERSION: ${{ inputs.dbt-version }}
@@ -84,6 +86,13 @@ jobs:
         with:
           path: dbt-data-reliability
           ref: ${{ inputs.dbt-data-reliability-ref }}
+
+      - name: Configure AWS credentials
+        if: inputs.warehouse-type == 'athena'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: eu-west-1
 
       - name: Start Postgres
         if: inputs.warehouse-type == 'postgres'
