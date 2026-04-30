@@ -10,6 +10,22 @@
     cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
+{#
+  BigQuery TIMESTAMP only supports microsecond precision (6 fractional digits).
+  Starting with dbt-bigquery >= 1.11, nanosecond-precision timestamps (9 fractional
+  digits) may appear in string columns like execute_completed_at. Truncate to
+  6 fractional digits before casting to avoid "Invalid timestamp" errors.
+#}
+{%- macro bigquery__edr_cast_as_timestamp(timestamp_field) -%}
+    cast(
+        regexp_replace(
+            cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
+            r'(\.\d{6})\d+',
+            '\\1'
+        ) as {{ elementary.edr_type_timestamp() }}
+    )
+{%- endmacro -%}
+
 {# Athena and Trino needs explicit conversion for ISO8601 timestamps used in buckets_cte #}
 {%- macro athena__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(
