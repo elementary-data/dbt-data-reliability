@@ -46,6 +46,7 @@ jobs:
     if: github.event_name != 'pull_request_target'
     permissions:
       contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
