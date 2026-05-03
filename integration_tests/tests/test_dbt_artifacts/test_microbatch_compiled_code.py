@@ -9,17 +9,17 @@ def test_microbatch_run_results_has_compiled_code(test_id: str, dbt_project: Dbt
     materialized='incremental',
     incremental_strategy='microbatch',
     event_time='order_date',
-    batch_size='day',
+    batch_size='year',
     begin='2025-03-01',
     unique_key='order_id'
 ) }}
 
 select
-    order_id,
-    customer_id,
-    amount,
-    cast('2025-03-01 00:00:00+00:00' as timestamp) as order_date
-from {{ ref('stg_orders') }}
+    cast(one as int) as order_id,
+    1 as customer_id,
+    42 as amount,
+    {{ dbt.current_timestamp() }} as order_date
+from {{ ref('one') }}
 """
 
     with dbt_project.create_temp_model_for_existing_table(
