@@ -53,13 +53,13 @@ def _run_microbatch_model_and_get_latest_success_result(
 
 
 @contextmanager
-def _with_microbatch_override_macro(dbt_project: DbtProject):
+def _with_microbatch_macro_file(dbt_project: DbtProject, macro_name: str):
     macro_path = (
         dbt_project.project_dir_path / "macros" / "microbatch.sql"
     )
-    macro_sql = """{% macro get_incremental_microbatch_sql(arg_dict) %}
+    macro_sql = f"""{{% macro {macro_name}(arg_dict) %}}
   {{ return(elementary.get_incremental_microbatch_sql(arg_dict)) }}
-{% endmacro %}
+{{% endmacro %}}
 """
     if macro_path.exists():
         raise FileExistsError(f"Expected no macro file at {macro_path}")
@@ -77,7 +77,7 @@ def _with_microbatch_override_macro(dbt_project: DbtProject):
 def test_microbatch_run_results_has_compiled_code(test_id: str, dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
 
-    with _with_microbatch_override_macro(dbt_project):
+    with _with_microbatch_macro_file(dbt_project, "get_incremental_microbatch_sql"):
         run_results = _run_microbatch_model_and_get_latest_success_result(
             dbt_project, test_id
         )
@@ -94,7 +94,12 @@ def test_microbatch_run_results_without_override_has_empty_compiled_code(
 ):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
 
-    run_results = _run_microbatch_model_and_get_latest_success_result(dbt_project, test_id)
+    with _with_microbatch_macro_file(
+        dbt_project, "get_incremental_microbatch_sql_not_used"
+    ):
+        run_results = _run_microbatch_model_and_get_latest_success_result(
+            dbt_project, test_id
+        )
     assert run_results, "Expected a successful run result row for microbatch model"
     assert not run_results[0]["compiled_code"], (
         "Expected compiled_code to stay empty when microbatch override macro is absent"
