@@ -33,13 +33,8 @@ def _microbatch_model_sql(source_model_name: str) -> str:
     "batch_size": "year",
     "begin": "2024-01-01"
 } %}
-{% if target.type in ["bigquery", "spark"] %}
-    {% do model_config.update(
-        {"partition_by": {"field": "order_date", "data_type": "timestamp", "granularity": "year"}}
-    ) %}
-{% endif %}
-{% if target.type == "athena" %}
-    {% do model_config.update({"partitioned_by": ["order_date"]}) %}
+{% if target.type == "spark" %}
+    {% do model_config.update({"partition_by": ["order_date"]}) %}
 {% endif %}
 {% if target.type != "duckdb" %}
     {% do model_config.update({"unique_key": "order_id"}) %}
