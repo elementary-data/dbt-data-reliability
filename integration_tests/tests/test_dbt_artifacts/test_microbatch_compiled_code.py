@@ -5,14 +5,32 @@ import pytest
 from dbt_project import DbtProject
 
 
-def _microbatch_model_sql() -> str:
+def _microbatch_source_model_sql() -> str:
+    return """
+{{ config(event_time='order_date') }}
+
+select
+    1 as order_id,
+    1 as customer_id,
+    42 as amount,
+    cast('2024-01-01 00:00:00' as timestamp) as order_date
+union all
+select
+    2 as order_id,
+    2 as customer_id,
+    84 as amount,
+    cast('2025-01-01 00:00:00' as timestamp) as order_date
+"""
+
+
+def _microbatch_model_sql(source_model_name: str) -> str:
     return """
 {% set model_config = {
     "materialized": "incremental",
     "incremental_strategy": "microbatch",
     "event_time": "order_date",
     "batch_size": "year",
-    "begin": "2025-03-01",
+    "begin": "2024-01-01",
     "unique_key": "order_id"
 } %}
 {% if target.type == "bigquery" %}
@@ -26,20 +44,36 @@ def _microbatch_model_sql() -> str:
 {{ config(**model_config) }}
 
 select
-    1 as order_id,
-    1 as customer_id,
-    42 as amount,
-    {{ dbt.current_timestamp() }} as order_date
-from {{ ref('one') }}
-"""
+    order_id,
+    customer_id,
+    amount,
+    order_date
+from {{ ref('__MICROBATCH_SOURCE_MODEL__') }}
+""".replace("__MICROBATCH_SOURCE_MODEL__", source_model_name)
+
+
+@contextmanager
+def _with_microbatch_test_models(dbt_project: DbtProject, test_id: str):
+    source_model_name = f"{test_id}_source"
+    source_model_path = dbt_project.tmp_models_dir_path.joinpath(f"{source_model_name}.sql")
+    target_model_path = dbt_project.tmp_models_dir_path.joinpath(f"{test_id}.sql")
+
+    source_model_path.write_text(_microbatch_source_model_sql())
+    target_model_path.write_text(_microbatch_model_sql(source_model_name))
+    relative_target_model_path = target_model_path.relative_to(dbt_project.project_dir_path)
+    try:
+        yield relative_target_model_path
+    finally:
+        if source_model_path.exists():
+            source_model_path.unlink()
+        if target_model_path.exists():
+            target_model_path.unlink()
 
 
 def _run_microbatch_model_and_get_latest_success_result(
     dbt_project: DbtProject, test_id: str
 ):
-    with dbt_project.create_temp_model_for_existing_table(
-        test_id, raw_code=_microbatch_model_sql()
-    ) as model_path:
+    with _with_microbatch_test_models(dbt_project, test_id) as model_path:
         dbt_project.dbt_runner.run(select=str(model_path))
 
     unique_id = f"model.elementary_tests.{test_id}"
