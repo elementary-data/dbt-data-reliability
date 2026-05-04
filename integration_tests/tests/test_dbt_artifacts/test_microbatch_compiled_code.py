@@ -97,10 +97,11 @@ def _with_microbatch_macro_file(dbt_project: DbtProject, macro_name: str):
     macro_path = (
         dbt_project.project_dir_path / "macros" / "microbatch.sql"
     )
-    macro_sql = f"""{{% macro {macro_name}(arg_dict) %}}
+    macro_sql = """
+{% macro __MACRO_NAME__(arg_dict) %}
   {{ return(elementary.get_incremental_microbatch_sql(arg_dict)) }}
-{{% endmacro %}}
-"""
+{% endmacro %}
+""".replace("__MACRO_NAME__", macro_name)
     if macro_path.exists():
         raise FileExistsError(f"Expected no macro file at {macro_path}")
 
