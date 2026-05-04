@@ -60,9 +60,10 @@ def _with_microbatch_test_models(dbt_project: DbtProject, test_id: str):
 
     source_model_path.write_text(_microbatch_source_model_sql())
     target_model_path.write_text(_microbatch_model_sql(source_model_name))
+    relative_source_model_path = source_model_path.relative_to(dbt_project.project_dir_path)
     relative_target_model_path = target_model_path.relative_to(dbt_project.project_dir_path)
     try:
-        yield relative_target_model_path
+        yield relative_source_model_path, relative_target_model_path
     finally:
         if source_model_path.exists():
             source_model_path.unlink()
@@ -73,8 +74,13 @@ def _with_microbatch_test_models(dbt_project: DbtProject, test_id: str):
 def _run_microbatch_model_and_get_latest_success_result(
     dbt_project: DbtProject, test_id: str
 ):
-    with _with_microbatch_test_models(dbt_project, test_id) as model_path:
-        dbt_project.dbt_runner.run(select=str(model_path))
+    with _with_microbatch_test_models(dbt_project, test_id) as (
+        source_model_path,
+        model_path,
+    ):
+        dbt_project.dbt_runner.run(
+            select=f"{source_model_path} {model_path}"
+        )
 
     unique_id = f"model.elementary_tests.{test_id}"
     run_results = dbt_project.read_table(
