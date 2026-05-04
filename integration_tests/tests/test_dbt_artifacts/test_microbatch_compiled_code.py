@@ -33,7 +33,7 @@ def _microbatch_model_sql(source_model_name: str) -> str:
     "batch_size": "year",
     "begin": "2024-01-01"
 } %}
-{% if target.type == "bigquery" %}
+{% if target.type in ["bigquery", "spark"] %}
     {% do model_config.update(
         {"partition_by": {"field": "order_date", "data_type": "timestamp", "granularity": "year"}}
     ) %}
@@ -118,7 +118,7 @@ def _with_microbatch_macro_file(dbt_project: DbtProject, macro_name: str):
             macro_path.unlink()
 
 
-@pytest.mark.skip_targets(["vertica", "bigquery", "athena", "clickhouse"])
+@pytest.mark.skip_targets(["vertica", "bigquery", "athena", "clickhouse", "dremio"])
 @pytest.mark.skip_for_dbt_fusion
 @pytest.mark.parametrize(
     "macro_name,expected_compiled_code,model_suffix",

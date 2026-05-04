@@ -2,8 +2,19 @@
     NOTE FOR PACKAGE CONSUMERS:
     This package macro is not guaranteed to be picked up automatically by dbt's
     incremental strategy resolution in all projects.
-    To apply this behavior, users should override `get_incremental_microbatch_sql`
-    in their own project and delegate to `elementary.get_incremental_microbatch_sql(arg_dict)`
+    To apply this behavior, users should:
+      1) Override `get_incremental_microbatch_sql` in their own project and delegate to
+         `elementary.get_incremental_microbatch_sql(arg_dict)`.
+      2) Enable dbt behavior flag `require_batched_execution_for_custom_microbatch_strategy`.
+
+    This flow is currently not supported for adapters:
+      - bigquery
+      - athena
+      - clickhouse
+      - dremio
+      - vertica
+
+    This flow is currently not supported for dbt Fusion.
 -#}
 {% macro get_incremental_microbatch_sql(arg_dict) %}
     {% if execute and model is defined %}
