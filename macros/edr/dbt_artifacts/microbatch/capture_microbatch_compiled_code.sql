@@ -15,8 +15,12 @@
 
 
 {% macro capture_microbatch_compiled_code_for_model() %}
-    {% set model_unique_id = model.get("unique_id") %}
-    {% set model_compiled_code = model.get("compiled_code") %}
+    {% set model_unique_id = (
+        model.get("unique_id") if model is mapping else model.unique_id
+    ) | default(none, true) %}
+    {% set model_compiled_code = (
+        model.get("compiled_code") if model is mapping else model.compiled_code
+    ) | default(none, true) %}
     {% if model_unique_id is none %}
         {{ return(none) }}
     {% endif %}
