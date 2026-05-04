@@ -1,21 +1,34 @@
+import pytest
+
 from dbt_project import DbtProject
 
 
+@pytest.mark.skip_targets(["vertica"])
+@pytest.mark.skip_for_dbt_fusion
 def test_microbatch_run_results_has_compiled_code(test_id: str, dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
 
     model_sql = """
-{{ config(
-    materialized='incremental',
-    incremental_strategy='microbatch',
-    event_time='order_date',
-    batch_size='year',
-    begin='2025-03-01',
-    unique_key='order_id'
-) }}
+{% set model_config = {
+    "materialized": "incremental",
+    "incremental_strategy": "microbatch",
+    "event_time": "order_date",
+    "batch_size": "year",
+    "begin": "2025-03-01",
+    "unique_key": "order_id"
+} %}
+{% if target.type == "bigquery" %}
+    {% do model_config.update(
+        {"partition_by": {"field": "order_date", "data_type": "timestamp", "granularity": "year"}}
+    ) %}
+{% endif %}
+{% if target.type == "athena" %}
+    {% do model_config.update({"partitioned_by": ["order_date"]}) %}
+{% endif %}
+{{ config(**model_config) }}
 
 select
-    cast(one as int) as order_id,
+    cast({{ elementary.escape_reserved_keywords("one") }} as int) as order_id,
     1 as customer_id,
     42 as amount,
     {{ dbt.current_timestamp() }} as order_date
