@@ -14,6 +14,13 @@
             {% endif %}
         {% endif %}
     {% endif %}
+    {% set node_source_meta = node.get("source_meta") %}
+    {% if node_source_meta and node_source_meta is mapping %}
+        {% set elementary_config = node_source_meta.get("elementary") %}
+        {% if elementary_config and elementary_config is mapping %}
+            {% do res.update(elementary_config) %}
+        {% endif %}
+    {% endif %}
     {% set node_meta = node.get("meta") %}
     {% if node_meta and node_meta is mapping %}
         {% set elementary_config = node_meta.get("elementary") %}
