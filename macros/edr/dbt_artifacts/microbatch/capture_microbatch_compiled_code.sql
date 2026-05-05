@@ -41,14 +41,10 @@
     {% endif %}
 
     {% set compiled_code_by_unique_id = elementary.get_cache(
-        "microbatch_compiled_code_by_unique_id", {}
+        "microbatch_compiled_code_by_unique_id"
     ) %}
     {% if model_unique_id in compiled_code_by_unique_id %}
         {{ return(none) }}
     {% endif %}
-
     {% do compiled_code_by_unique_id.update({model_unique_id: model_compiled_code}) %}
-    {% do elementary.set_cache(
-        "microbatch_compiled_code_by_unique_id", compiled_code_by_unique_id
-    ) %}
 {% endmacro %}
