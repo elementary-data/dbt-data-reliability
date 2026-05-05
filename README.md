@@ -23,6 +23,7 @@ The package has two core components:
 
 **1. Elementary Tables**
 Using dbt's on-run-end hook, the package automatically parses your dbt artifacts and run results and loads them as structured tables into your warehouse. This includes:
+
 - **Metadata tables** — models, tests, sources, exposures, columns, seeds, snapshots, and more
 - **Run results tables** — invocations, model run results, test results, source freshness, and job-level outcomes
 
