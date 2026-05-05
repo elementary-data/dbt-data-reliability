@@ -8,6 +8,7 @@
       2) Enable dbt behavior flag `require_batched_execution_for_custom_microbatch_strategy`.
 
     This flow is currently not supported for adapters:
+      - spark
       - bigquery
       - athena
       - clickhouse
