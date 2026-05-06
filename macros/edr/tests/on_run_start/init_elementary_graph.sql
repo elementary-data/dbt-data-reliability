@@ -11,6 +11,7 @@
             },
             "temp_test_table_relations_map": {},
             "duration_context_stack": {},
+            "microbatch_compiled_code_by_unique_id": {},
         },
     ) %}
 {% endmacro %}
