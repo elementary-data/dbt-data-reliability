@@ -14,7 +14,7 @@
         "config": {"elementary": model_config},
     } %}
     {% if source_meta_config is not none %}
-        {% do mock_model.update({"source_meta": source_meta_config}) %}
+        {% do mock_model.update({"source_meta": {"elementary": source_meta_config}}) %}
     {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
@@ -36,7 +36,7 @@
         "config": {"elementary": model_config},
     } %}
     {% if source_meta_config is not none %}
-        {% do mock_model.update({"source_meta": source_meta_config}) %}
+        {% do mock_model.update({"source_meta": {"elementary": source_meta_config}}) %}
     {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
@@ -60,7 +60,7 @@
         "config": {"elementary": model_config},
     } %}
     {% if source_meta_config is not none %}
-        {% do mock_model.update({"source_meta": source_meta_config}) %}
+        {% do mock_model.update({"source_meta": {"elementary": source_meta_config}}) %}
     {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
