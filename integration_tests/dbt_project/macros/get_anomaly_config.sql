@@ -1,16 +1,19 @@
-{% macro get_anomaly_config(model_config, config) %}
+{% macro get_anomaly_config(model_config, config, source_meta_config=none) %}
     {{
         return(
-            adapter.dispatch("get_anomaly_config", "elementary")(model_config, config)
+            adapter.dispatch("get_anomaly_config", "elementary")(model_config, config, source_meta_config)
         )
     }}
 {% endmacro %}
 
-{% macro default__get_anomaly_config(model_config, config) %}
+{% macro default__get_anomaly_config(model_config, config, source_meta_config=none) %}
     {% set mock_model = {
         "alias": "mock_model",
         "config": {"elementary": model_config},
     } %}
+    {% if source_meta_config is not none %}
+        {% do mock_model.update({"source_meta": source_meta_config}) %}
+    {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
         {
@@ -25,11 +28,14 @@
     ) %}
 {% endmacro %}
 
-{% macro spark__get_anomaly_config(model_config, config) %}
+{% macro spark__get_anomaly_config(model_config, config, source_meta_config=none) %}
     {% set mock_model = {
         "alias": "mock_model",
         "config": {"elementary": model_config},
     } %}
+    {% if source_meta_config is not none %}
+        {% do mock_model.update({"source_meta": source_meta_config}) %}
+    {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
         {
@@ -44,11 +50,14 @@
     ) %}
 {% endmacro %}
 
-{% macro clickhouse__get_anomaly_config(model_config, config) %}
+{% macro clickhouse__get_anomaly_config(model_config, config, source_meta_config=none) %}
     {% set mock_model = {
         "alias": "mock_model",
         "config": {"elementary": model_config},
     } %}
+    {% if source_meta_config is not none %}
+        {% do mock_model.update({"source_meta": source_meta_config}) %}
+    {% endif %}
     {# trick elementary into thinking this is the running model #}
     {% do context.update(
         {

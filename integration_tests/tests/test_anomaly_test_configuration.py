@@ -131,3 +131,37 @@ def test_anomaly_test_configuration(
     )
     adapted_config = json.loads(result[0])
     assert adapted_config == expected_config
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_source_meta_config_is_picked_up(dbt_project: DbtProject):
+    """source-level meta.elementary is inherited when no model/test-level config overrides it."""
+    result = dbt_project.dbt_runner.run_operation(
+        "elementary_tests.get_anomaly_config",
+        macro_args={
+            "model_config": {},
+            "config": {},
+            "source_meta_config": {
+                "timestamp_column": "source_ts",
+                "where_expression": "is_deleted = false",
+            },
+        },
+    )
+    config = json.loads(result[0])
+    assert config["timestamp_column"] == "source_ts"
+    assert config["where_expression"] == "is_deleted = false"
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_model_meta_overrides_source_meta_config(dbt_project: DbtProject):
+    """Table-level meta.elementary takes precedence over source-level meta.elementary."""
+    result = dbt_project.dbt_runner.run_operation(
+        "elementary_tests.get_anomaly_config",
+        macro_args={
+            "model_config": {"timestamp_column": "model_ts"},
+            "config": {},
+            "source_meta_config": {"timestamp_column": "source_ts"},
+        },
+    )
+    config = json.loads(result[0])
+    assert config["timestamp_column"] == "model_ts"
