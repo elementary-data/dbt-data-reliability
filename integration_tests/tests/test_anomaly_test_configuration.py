@@ -158,9 +158,10 @@ def test_model_meta_overrides_source_meta_config(dbt_project: DbtProject):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.get_anomaly_config",
         macro_args={
-            "model_config": {"timestamp_column": "model_ts"},
+            "model_config": {},
             "config": {},
             "source_meta_config": {"timestamp_column": "source_ts"},
+            "meta_config": {"timestamp_column": "model_ts"},
         },
     )
     config = json.loads(result[0])
