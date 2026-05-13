@@ -24,13 +24,21 @@
             elementary_database, elementary_schema, identifier_alias
         ) %}
         {% if relation is not none %} {% do return(relation) %} {% endif %}
-        {# Relation not found in the target schema. This can happen when
-           dbt deferral (--favor-state / --defer) is active and the
-           Elementary models exist in the deferred (e.g. prod) schema
-           but were not built in the current target. Construct a relation
-           from the graph node coordinates so the generated SQL references
-           the correct schema instead of rendering "from None". #}
-        {% if identifier_node %}
+        {# Relation not found in the target schema. Under dbt deferral
+           (--favor-state / --defer) the Elementary models may exist only
+           in the deferred (e.g. prod) schema and not in the current
+           target. Construct a relation from the graph node coordinates
+           so the generated SQL references the correct schema instead of
+           rendering "from None". #}
+        {% set is_defer = (
+            (
+                invocation_args_dict.get("defer", false)
+                or invocation_args_dict.get("favor_state", false)
+            )
+            if invocation_args_dict
+            else false
+        ) %}
+        {% if identifier_node and is_defer %}
             {% do return(
                 api.Relation.create(
                     database=elementary_database,
