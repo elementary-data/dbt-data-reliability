@@ -585,39 +585,36 @@ def test_exclude_detection_from_training(test_id: str, dbt_project: DbtProject):
     ), "Test should fail when anomaly is excluded from training"
 
 
-def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
+def test_excl_detect_train_seven_day_bucket(test_id: str, dbt_project: DbtProject):
     """
-    Test exclude_detection_period_from_training with monthly time buckets.
+    Test exclude_detection_period_from_training with 7-day buckets.
 
     This tests the fix where the detection period is set to the bucket size
-    when the bucket period exceeds backfill_days. With monthly buckets (30 days)
+    when the bucket period exceeds backfill_days. With 7-day buckets
     and default backfill_days (2), without the fix the 2-day exclusion window
-    cannot contain any monthly bucket_end, making exclusion ineffective.
+    cannot contain any 7-day bucket_end, making exclusion ineffective.
 
     detection_period is intentionally NOT set so that backfill_days stays at
-    its default (2), which is smaller than the monthly bucket (30 days).
+    its default (2), which is smaller than the 7-day bucket.
     Setting detection_period would override backfill_days and mask the bug.
 
     Scenario:
-    - 12 months of normal data (~20 rows/day, ~600/month)
-    - 1 month of anomalous data (~100 rows/day, ~3000/month)
-    - time_bucket: month (30 days >> default backfill_days of 2)
+    - 12 normal 7-day buckets
+    - 1 anomalous 7-day bucket
+    - time_bucket: 7 days (7 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
     - With exclusion + fix: anomaly excluded from training → test fails
     """
     utc_now = datetime.utcnow()
-    current_month_1st = utc_now.replace(
-        day=1, hour=0, minute=0, second=0, microsecond=0
-    )
-
-    anomaly_month_start = (current_month_1st - timedelta(days=1)).replace(day=1)
-    normal_month_start = anomaly_month_start.replace(year=anomaly_month_start.year - 1)
+    utc_today = utc_now.date()
+    anomaly_bucket_start = utc_today - timedelta(days=7)
+    normal_bucket_start = anomaly_bucket_start - timedelta(days=12 * 7)
 
     normal_data = []
-    day = normal_month_start
+    day = normal_bucket_start
     day_idx = 0
-    while day < anomaly_month_start:
-        rows_per_day = 17 + (day_idx % 7)
+    while day < anomaly_bucket_start:
+        rows_per_day = 8 + (day_idx % 3)
         normal_data.extend(
             [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(rows_per_day)]
         )
@@ -625,10 +622,10 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         day_idx += 1
 
     anomalous_data = []
-    day = anomaly_month_start
-    while day < utc_now:
+    day = anomaly_bucket_start
+    while day < utc_today:
         anomalous_data.extend(
-            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(100)]
+            [{TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT)} for _ in range(50)]
         )
         day += timedelta(days=1)
 
@@ -636,8 +633,8 @@ def test_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
 
     test_args_without_exclusion = {
         **DBT_TEST_ARGS,
-        "training_period": {"period": "day", "count": 365},
-        "time_bucket": {"period": "month", "count": 1},
+        "training_period": {"period": "day", "count": 91},
+        "time_bucket": {"period": "day", "count": 7},
         "sensitivity": 10,
     }
 

@@ -607,41 +607,39 @@ def test_col_anom_excl_detect_train(test_id: str, dbt_project: DbtProject):
     )
 
 
-def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
+def test_col_excl_detect_train_seven_day_bucket(test_id: str, dbt_project: DbtProject):
     """
-    Test exclude_detection_period_from_training with monthly time buckets for column anomalies.
+    Test exclude_detection_period_from_training with 7-day buckets for column anomalies.
 
     This tests the fix where the detection period is set to the bucket size
-    when the bucket period exceeds backfill_days. With monthly buckets (30 days)
+    when the bucket period exceeds backfill_days. With 7-day buckets
     and default backfill_days (2), without the fix the 2-day exclusion window
-    cannot contain any monthly bucket_end, making exclusion ineffective.
+    cannot contain any 7-day bucket_end, making exclusion ineffective.
 
     detection_period is intentionally NOT set so that backfill_days stays at
-    its default (2), which is smaller than the monthly bucket (30 days).
+    its default (2), which is smaller than the 7-day bucket.
     Setting detection_period would override backfill_days and mask the bug.
 
     Scenario:
-    - 12 months of normal data with low null count (~10 nulls/day, ~300/month)
-    - 1 month of anomalous data with high null count (~50 nulls/day, ~1500/month)
-    - time_bucket: month (30 days >> default backfill_days of 2)
+    - 12 normal 7-day buckets with low null count
+    - 1 anomalous 7-day bucket with high null count
+    - time_bucket: 7 days (7 days >> default backfill_days of 2)
     - Without exclusion: anomaly absorbed into training → test passes
     - With exclusion + fix: anomaly excluded from training → test fails
     """
     utc_now = datetime.utcnow().date()
-    current_month_1st = utc_now.replace(day=1)
-
-    anomaly_month_start = (current_month_1st - timedelta(days=1)).replace(day=1)
-    normal_month_start = anomaly_month_start.replace(year=anomaly_month_start.year - 1)
+    anomaly_bucket_start = utc_now - timedelta(days=7)
+    normal_bucket_start = anomaly_bucket_start - timedelta(days=12 * 7)
 
     normal_data: List[Dict[str, Any]] = []
-    day = normal_month_start
+    day = normal_bucket_start
     day_idx = 0
-    while day < anomaly_month_start:
-        null_count = 7 + (day_idx % 7)
+    while day < anomaly_bucket_start:
+        null_count = 1 + (day_idx % 3)
         normal_data.extend(
             [
                 {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": superhero}
-                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"]
             ]
         )
         normal_data.extend(
@@ -654,18 +652,18 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
         day_idx += 1
 
     anomalous_data: List[Dict[str, Any]] = []
-    day = anomaly_month_start
+    day = anomaly_bucket_start
     while day < utc_now:
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": superhero}
-                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"] * 10
+                for superhero in ["Superman", "Batman", "Wonder Woman", "Flash"]
             ]
         )
         anomalous_data.extend(
             [
                 {TIMESTAMP_COLUMN: day.strftime(DATE_FORMAT), "superhero": None}
-                for _ in range(50)
+                for _ in range(10)
             ]
         )
         day += timedelta(days=1)
@@ -675,8 +673,8 @@ def test_col_excl_detect_train_monthly(test_id: str, dbt_project: DbtProject):
     test_args_without_exclusion = {
         "timestamp_column": TIMESTAMP_COLUMN,
         "column_anomalies": ["null_count"],
-        "time_bucket": {"period": "month", "count": 1},
-        "training_period": {"period": "day", "count": 365},
+        "time_bucket": {"period": "day", "count": 7},
+        "training_period": {"period": "day", "count": 91},
         "min_training_set_size": 5,
         "anomaly_sensitivity": 10,
         "anomaly_direction": "spike",
