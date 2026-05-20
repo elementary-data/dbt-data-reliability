@@ -187,6 +187,17 @@
     {% set database, schema = elementary.get_package_database_and_schema() %}
     {% set test_id = model["alias"] %}
     {% set relation = elementary.create_temp_table(database, schema, test_id, sql) %}
+
+    {# Register the relation in the temp-table cache so on_run_end cleanup
+       (clean_elementary_test_tables) drops it. Without this, T-SQL adapters
+       (Fabric, SQL Server) accumulate one residue table per test in the
+       elementary schema because fabric__create_temp_table builds a real
+       table (not a #temp) — see comment in create_temp_table.sql. #}
+    {% set test_entry = elementary.get_cache(
+        "temp_test_table_relations_map"
+    ).setdefault(test_id, {}) %}
+    {% do test_entry.update({"test_result": relation}) %}
+
     {% set new_sql %}
     select * from {{ relation }}
     {% endset %}
