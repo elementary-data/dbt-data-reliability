@@ -7,8 +7,14 @@
         {% for col in column_objects %}
             {% do expanded.append(col) %}
             {% if col.fields | length > 0 %}
+                {# `BigQueryColumn.flatten()` discards ancestor modes, so a
+                   NULLABLE leaf under a REPEATED ancestor still satisfies
+                   `leaf.mode != 'REPEATED'`. Build the set of safe leaf names
+                   via an ancestor-aware walker and filter `flatten()` against
+                   it. #}
+                {% set safe_names = elementary.bq_safe_leaf_names(col) %}
                 {% for leaf in col.flatten() %}
-                    {% if leaf.mode != 'REPEATED' %}
+                    {% if leaf.name in safe_names %}
                         {% do expanded.append(leaf) %}
                     {% endif %}
                 {% endfor %}

@@ -412,6 +412,10 @@
         {%- set quoted = column_obj.quoted -%}
         {%- set safe_alias = column_obj.column -%}
     {%- endif -%}
+    {# `fields` only exists on BigQueryColumn; guard so non-BigQuery
+       adapters (Snowflake, Postgres, Redshift, ...) don't trip on the
+       attribute access. #}
+    {%- set fields = column_obj.fields if column_obj.fields is defined else [] -%}
     {{ return({
         'name': name,
         'column': column_obj.column,
@@ -419,6 +423,44 @@
         'safe_alias': safe_alias,
         'dtype': column_obj.dtype,
         'data_type': column_obj.data_type,
-        'fields': column_obj.fields,
+        'fields': fields,
     }) }}
+{% endmacro %}
+
+{# Walk a BigQuery STRUCT tree and collect dotted leaf names that are safe to
+   monitor without UNNEST — i.e. no REPEATED ancestor anywhere in the path,
+   and the leaf itself is not REPEATED. `BigQueryColumn.flatten()` returns leaf
+   columns with the leaf's own mode but discards ancestor modes, so this walker
+   is the source of truth for "which leaves can we project directly?". #}
+{% macro bq_safe_leaf_names(column_obj) %}
+    {%- set safe_names = [] -%}
+    {%- if column_obj.mode != 'REPEATED'
+            and column_obj.fields is defined
+            and column_obj.fields | length > 0 -%}
+        {%- for child in column_obj.fields -%}
+            {%- do elementary._bq_walk_collect(
+                child, [column_obj.column], false, safe_names
+            ) -%}
+        {%- endfor -%}
+    {%- endif -%}
+    {{ return(safe_names) }}
+{% endmacro %}
+
+{# Recursive helper: walks a google.cloud.bigquery.SchemaField subtree,
+   propagating whether any ancestor was REPEATED. Append safe leaf names to
+   `safe_names`. #}
+{% macro _bq_walk_collect(field, prefix, has_repeated_ancestor, safe_names) %}
+    {%- set new_prefix = prefix + [field.name] -%}
+    {%- if field.fields | length == 0 -%}
+        {%- if not has_repeated_ancestor and field.mode != 'REPEATED' -%}
+            {%- do safe_names.append(new_prefix | join('.')) -%}
+        {%- endif -%}
+    {%- else -%}
+        {%- set new_has_repeated = has_repeated_ancestor or (field.mode == 'REPEATED') -%}
+        {%- for child in field.fields -%}
+            {%- do elementary._bq_walk_collect(
+                child, new_prefix, new_has_repeated, safe_names
+            ) -%}
+        {%- endfor -%}
+    {%- endif -%}
 {% endmacro %}
