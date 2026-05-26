@@ -150,8 +150,9 @@
 {% endmacro %}
 
 {# Fabric / SQL Server - truncate and insert (non-atomic).
-   sqlserver dispatches through fabric via the chain: sqlserver__ -> fabric__ -> default__,
-   so this covers both adapters. #}
+   T-SQL implementations live in fabric__ macros; sqlserver__ delegates
+   explicitly (see sqlserver_tsql_dispatch.sql) because dbt-sqlserver no
+   longer includes fabric in its adapter dispatch chain. #}
 {% macro fabric__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_rows(

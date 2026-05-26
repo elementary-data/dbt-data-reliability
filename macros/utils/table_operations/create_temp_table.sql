@@ -38,9 +38,9 @@
         We use a regular table (not #temp) because the EXEC scope isolation
         of SQL Server makes #temp tables invisible to the caller.
 
-        sqlserver__ is not needed here because dbt-sqlserver declares
-        dependencies=["fabric"], so this macro is found automatically
-        via the dispatch chain: sqlserver__ → fabric__ → default__.
+        T-SQL implementations live in fabric__ macros; sqlserver__ delegates
+        explicitly (see sqlserver_tsql_dispatch.sql) because dbt-sqlserver no
+        longer includes fabric in its adapter dispatch chain.
     #}
     {% set table_exists, table_relation = dbt.get_or_create_relation(
         database=database_name,

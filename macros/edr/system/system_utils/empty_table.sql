@@ -240,7 +240,8 @@
 {% endmacro %}
 
 {# T-SQL does not have boolean literals True/False.
-   Use 1 which can be cast to bit. #}
+   Use 1 which can be cast to bit. sqlserver__ delegates here via
+   sqlserver_tsql_dispatch.sql. #}
 {% macro fabric__dummy_values() %}
     {%- set dummy_values = {
         "string": "dummy_string",
