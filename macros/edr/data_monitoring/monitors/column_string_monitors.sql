@@ -24,6 +24,18 @@
     avg(len({{ column_name }}))
 {%- endmacro %}
 
+{% macro sqlserver__max_length(column_name) -%}
+    {{ elementary.fabric__max_length(column_name) }}
+{%- endmacro %}
+
+{% macro sqlserver__min_length(column_name) -%}
+    {{ elementary.fabric__min_length(column_name) }}
+{%- endmacro %}
+
+{% macro sqlserver__average_length(column_name) -%}
+    {{ elementary.fabric__average_length(column_name) }}
+{%- endmacro %}
+
 {% macro missing_count(column_name) %}
     coalesce(
         sum(

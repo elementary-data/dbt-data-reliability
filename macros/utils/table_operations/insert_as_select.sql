@@ -43,3 +43,7 @@
     {%- endset %}
     {{ return(insert_query) }}
 {% endmacro %}
+
+{% macro sqlserver__insert_as_select(table_relation, select_query) %}
+    {{ return(elementary.fabric__insert_as_select(table_relation, select_query)) }}
+{% endmacro %}

@@ -406,6 +406,10 @@
     }}
 {% endmacro %}
 
+{% macro sqlserver___bucket_end_freshness_expr() %}
+    {{ elementary.fabric___bucket_end_freshness_expr() }}
+{% endmacro %}
+
 {#-- Helper: final SELECT columns for freshness metric --#}
 {% macro _freshness_final_select(metric) %}
     select
@@ -543,6 +547,10 @@
         ) as bucket_all_freshness_metrics
     ) as bucket_freshness_ranked
     where row_num = 1
+{% endmacro %}
+
+{% macro sqlserver__freshness_metric_query(metric, metric_properties) %}
+    {{ elementary.fabric__freshness_metric_query(metric, metric_properties) }}
 {% endmacro %}
 
 {% macro event_freshness_metric_query(metric, metric_properties) %}

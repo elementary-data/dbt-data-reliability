@@ -34,3 +34,7 @@
     {%- else %}, 120)
     {%- endif %}
 {% endmacro %}
+
+{% macro sqlserver__edr_to_char(column, format) %}
+    {{ elementary.fabric__edr_to_char(column, format) }}
+{% endmacro %}

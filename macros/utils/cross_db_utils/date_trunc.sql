@@ -24,3 +24,7 @@
 {% macro fabric__edr_date_trunc(datepart, date_expression) %}
     datetrunc({{ datepart }}, {{ date_expression }})
 {% endmacro %}
+
+{% macro sqlserver__edr_date_trunc(datepart, date_expression) %}
+    {{ elementary.fabric__edr_date_trunc(datepart, date_expression) }}
+{% endmacro %}
