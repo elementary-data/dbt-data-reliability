@@ -317,7 +317,9 @@
 {% macro sqlserver__get_column_changes_from_baseline_cur(
     model_relation, full_table_name, model_baseline_relation
 ) %}
-    {% do elementary.fabric__get_column_changes_from_baseline_cur(
-        model_relation, full_table_name, model_baseline_relation
-    ) %}
+    {{
+        elementary.fabric__get_column_changes_from_baseline_cur(
+            model_relation, full_table_name, model_baseline_relation
+        )
+    }}
 {% endmacro %}
