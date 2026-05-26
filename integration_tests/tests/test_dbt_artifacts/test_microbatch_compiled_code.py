@@ -4,22 +4,21 @@ import pytest
 from dbt_project import DbtProject
 
 
-def _microbatch_source_model_sql(dbt_project: DbtProject) -> str:
-    event_time_data_type = "datetime2" if dbt_project.is_tsql else "timestamp"
-    return f"""
-{{{{ config(event_time='order_date') }}}}
+def _microbatch_source_model_sql() -> str:
+    return """
+{{ config(event_time='order_date') }}
 
 select
     1 as order_id,
     1 as customer_id,
     42 as amount,
-    cast('2024-01-01 00:00:00' as {event_time_data_type}) as order_date
+    cast('2024-01-01 00:00:00' as {{ elementary.edr_type_timestamp() }}) as order_date
 union all
 select
     2 as order_id,
     2 as customer_id,
     84 as amount,
-    cast('2025-01-01 00:00:00' as {event_time_data_type}) as order_date
+    cast('2025-01-01 00:00:00' as {{ elementary.edr_type_timestamp() }}) as order_date
 """
 
 
@@ -59,7 +58,7 @@ def _with_microbatch_test_models(dbt_project: DbtProject, model_suffix: str):
         f"{target_model_name}.sql"
     )
 
-    source_model_path.write_text(_microbatch_source_model_sql(dbt_project))
+    source_model_path.write_text(_microbatch_source_model_sql())
     target_model_path.write_text(_microbatch_model_sql(source_model_name))
     relative_source_model_path = source_model_path.relative_to(
         dbt_project.project_dir_path
