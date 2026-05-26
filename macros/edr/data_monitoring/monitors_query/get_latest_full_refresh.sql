@@ -32,5 +32,5 @@
 {% endmacro %}
 
 {% macro sqlserver__get_latest_full_refresh(model_node) %}
-    {{ elementary.fabric__get_latest_full_refresh(model_node) }}
+    {% do return(elementary.fabric__get_latest_full_refresh(model_node)) %}
 {% endmacro %}

@@ -24,7 +24,7 @@
 {%- endmacro -%}
 
 {%- macro sqlserver__get_anomaly_query(flattened_test=none) -%}
-    {{- elementary.fabric__get_anomaly_query(flattened_test) -}}
+    {%- do return(elementary.fabric__get_anomaly_query(flattened_test)) -%}
 {%- endmacro -%}
 
 {%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
@@ -69,7 +69,11 @@
 {%- endmacro -%}
 
 {%- macro sqlserver__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
-    {{- elementary.fabric__get_anomaly_query_for_dimension_anomalies(flattened_test) -}}
+    {%- do return(
+        elementary.fabric__get_anomaly_query_for_dimension_anomalies(
+            flattened_test
+        )
+    ) -%}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(

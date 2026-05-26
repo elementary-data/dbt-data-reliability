@@ -255,7 +255,7 @@
 {%- endmacro -%}
 
 {%- macro sqlserver__escape_special_chars(string_value) -%}
-    {{- elementary.fabric__escape_special_chars(string_value) -}}
+    {%- do return(elementary.fabric__escape_special_chars(string_value)) -%}
 {%- endmacro -%}
 
 {%- macro dremio__escape_special_chars(string_value) -%}
