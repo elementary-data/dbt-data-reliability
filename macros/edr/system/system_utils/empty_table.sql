@@ -240,8 +240,7 @@
 {% endmacro %}
 
 {# T-SQL does not have boolean literals True/False.
-   Use 1 which can be cast to bit. sqlserver__ delegates here via
-   sqlserver_tsql_dispatch.sql. #}
+   Use 1 which can be cast to bit. #}
 {% macro fabric__dummy_values() %}
     {%- set dummy_values = {
         "string": "dummy_string",
@@ -253,4 +252,8 @@
         "timestamp": "2091-02-17",
     } %}
     {{ return(dummy_values) }}
+{% endmacro %}
+
+{% macro sqlserver__dummy_values() %}
+    {% do return(elementary.fabric__dummy_values()) %}
 {% endmacro %}

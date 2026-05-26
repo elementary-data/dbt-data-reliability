@@ -150,9 +150,8 @@
 {% endmacro %}
 
 {# Fabric / SQL Server - truncate and insert (non-atomic).
-   T-SQL implementations live in fabric__ macros; sqlserver__ delegates
-   explicitly (see sqlserver_tsql_dispatch.sql) because dbt-sqlserver no
-   longer includes fabric in its adapter dispatch chain. #}
+   sqlserver__ delegates to fabric__ because dbt-sqlserver no longer includes
+   fabric in its adapter dispatch chain. #}
 {% macro fabric__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_rows(
@@ -161,4 +160,8 @@
         should_commit=false,
         chunk_size=elementary.get_config_var("dbt_artifacts_chunk_size"),
     ) %}
+{% endmacro %}
+
+{% macro sqlserver__replace_table_data(relation, rows) %}
+    {% do elementary.fabric__replace_table_data(relation, rows) %}
 {% endmacro %}

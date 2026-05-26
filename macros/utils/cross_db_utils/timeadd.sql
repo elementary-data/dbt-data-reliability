@@ -88,6 +88,10 @@
     )
 {% endmacro %}
 
+{% macro sqlserver__edr_timeadd(date_part, number, timestamp_expression) %}
+    {{ elementary.fabric__edr_timeadd(date_part, number, timestamp_expression) }}
+{% endmacro %}
+
 {% macro dremio__edr_timeadd(date_part, number, timestamp_expression) %}
     timestampadd(
         {{ date_part }},

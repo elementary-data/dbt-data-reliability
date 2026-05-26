@@ -30,3 +30,7 @@
     {% endset %}
     {% do return(elementary.result_value(query)) %}
 {% endmacro %}
+
+{% macro sqlserver__get_latest_full_refresh(model_node) %}
+    {{ elementary.fabric__get_latest_full_refresh(model_node) }}
+{% endmacro %}

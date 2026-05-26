@@ -53,6 +53,10 @@
     {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
 {% endmacro %}
 
+{% macro sqlserver__edr_make_temp_relation(base_relation, suffix) %}
+    {% do return(elementary.fabric__edr_make_temp_relation(base_relation, suffix)) %}
+{% endmacro %}
+
 {% macro spark__edr_make_temp_relation(base_relation, suffix) %}
     {% set tmp_identifier = elementary.table_name_with_suffix(
         base_relation.identifier, suffix

@@ -313,3 +313,11 @@
         on (lower(cs.column_name) = lower(bl.column_name))
     where lower(cs.full_table_name) = lower('{{ full_table_name }}')
 {% endmacro %}
+
+{% macro sqlserver__get_column_changes_from_baseline_cur(
+    model_relation, full_table_name, model_baseline_relation
+) %}
+    {% do elementary.fabric__get_column_changes_from_baseline_cur(
+        model_relation, full_table_name, model_baseline_relation
+    ) %}
+{% endmacro %}

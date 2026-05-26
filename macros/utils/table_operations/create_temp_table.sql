@@ -38,9 +38,8 @@
         We use a regular table (not #temp) because the EXEC scope isolation
         of SQL Server makes #temp tables invisible to the caller.
 
-        T-SQL implementations live in fabric__ macros; sqlserver__ delegates
-        explicitly (see sqlserver_tsql_dispatch.sql) because dbt-sqlserver no
-        longer includes fabric in its adapter dispatch chain.
+        T-SQL implementations are shared with sqlserver__ delegating to fabric__
+        because dbt-sqlserver no longer includes fabric in its adapter dispatch chain.
     #}
     {% set table_exists, table_relation = dbt.get_or_create_relation(
         database=database_name,
@@ -95,4 +94,16 @@
     {% do elementary.run_query(create_query) %}
 
     {{ return(temp_table_relation) }}
+{% endmacro %}
+
+{% macro sqlserver__create_temp_table(
+    database_name, schema_name, table_name, sql_query
+) %}
+    {{
+        return(
+            elementary.fabric__create_temp_table(
+                database_name, schema_name, table_name, sql_query
+            )
+        )
+    }}
 {% endmacro %}

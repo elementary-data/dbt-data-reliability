@@ -72,3 +72,7 @@
         as {{ elementary.escape_reserved_keywords("count") }}
     from {{ tmp_relation }}
 {% endmacro %}
+
+{% macro sqlserver__get_failed_row_count_calc_query(failed_row_count_calc) %}
+    {{ elementary.fabric__get_failed_row_count_calc_query(failed_row_count_calc) }}
+{% endmacro %}
