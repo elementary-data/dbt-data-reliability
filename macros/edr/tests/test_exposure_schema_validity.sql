@@ -10,7 +10,6 @@
     {# Parameters used only for dependency injection in integration tests #}
     {%- set node = node or base_node -%}
     {%- set exposures = (exposures or graph.exposures).values() -%}
-    {%- set columns = columns or adapter.get_columns_in_relation(model) -%}
 
     {%- set model_relation = elementary.get_model_relation_for_test(
         model, elementary.get_test_model()
@@ -28,6 +27,7 @@
 
     {%- set invalid_exposures = [] -%}
     {%- if matching_exposures | length > 0 -%}
+        {%- set columns = columns or adapter.get_columns_in_relation(model) -%}
         {%- set columns_dict = {} -%}
         {%- for column in columns -%}
             {%- do columns_dict.update(
