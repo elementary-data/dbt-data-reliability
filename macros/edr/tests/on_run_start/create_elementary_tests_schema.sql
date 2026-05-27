@@ -6,9 +6,25 @@
         {% set tests_schema_name = elementary.get_elementary_tests_schema(
             database_name, schema_name
         ) %}
-        {%- if tests_schema_name != schema_name and not adapter.check_schema_exists(
-            database_name, tests_schema_name
-        ) %}
+        {% if target.type == "bigquery" %}
+            {% set schema_exists_sql %}
+                select count(*) as schema_count
+                from `{{ database_name }}`.INFORMATION_SCHEMA.SCHEMATA
+                where upper(schema_name) = upper('{{ tests_schema_name }}')
+            {% endset %}
+            {% set schema_exists_result = elementary.run_query(schema_exists_sql) %}
+            {% set schema_count_rows = [] %}
+            {% if schema_exists_result is not none %}
+                {% set schema_count_rows = elementary.agate_to_dicts(schema_exists_result) %}
+            {% endif %}
+            {% set schema_exists = (
+                schema_count_rows | length > 0
+                and schema_count_rows[0]["schema_count"] | int > 0
+            ) %}
+        {% else %}
+            {% set schema_exists = adapter.check_schema_exists(database_name, tests_schema_name) %}
+        {% endif %}
+        {%- if tests_schema_name != schema_name and not schema_exists %}
             {{ elementary.edr_log("Creating Elementary's tests schema.") }}
             {% set schema_relation = api.Relation.create(
                 database=database_name, schema=tests_schema_name

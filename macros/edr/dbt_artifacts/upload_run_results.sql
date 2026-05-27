@@ -16,6 +16,25 @@
 {% endmacro %}
 
 
+{% macro normalize_artifact_timestamp_precision(timestamp_value) %}
+    {% if target.type != "bigquery" %}
+        {{ return(timestamp_value) }}
+    {% endif %}
+
+    {% if timestamp_value is string and timestamp_value.endswith("Z") and "." in timestamp_value %}
+        {% set ts_no_z = timestamp_value[:-1] %}
+        {% set ts_parts = ts_no_z.split(".") %}
+        {% if ts_parts | length == 2 %}
+            {% set fractional_part = ts_parts[1] %}
+            {% if fractional_part | length > 6 %}
+                {{ return(ts_parts[0] ~ "." ~ fractional_part[:6] ~ "Z") }}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+    {{ return(timestamp_value) }}
+{% endmacro %}
+
+
 {% macro get_dbt_run_results_empty_table_query() %}
     {% set dbt_run_results_empty_table_query = elementary.empty_table(
         [
@@ -102,15 +121,23 @@
                 {% if timing.get("name") == "execute" %}
                     {% do flatten_run_result_dict.update(
                         {
-                            "execute_started_at": timing.get("started_at"),
-                            "execute_completed_at": timing.get("completed_at"),
+                            "execute_started_at": elementary.normalize_artifact_timestamp_precision(
+                                timing.get("started_at")
+                            ),
+                            "execute_completed_at": elementary.normalize_artifact_timestamp_precision(
+                                timing.get("completed_at")
+                            ),
                         }
                     ) %}
                 {% elif timing.get("name") == "compile" %}
                     {% do flatten_run_result_dict.update(
                         {
-                            "compile_started_at": timing.get("started_at"),
-                            "compile_completed_at": timing.get("completed_at"),
+                            "compile_started_at": elementary.normalize_artifact_timestamp_precision(
+                                timing.get("started_at")
+                            ),
+                            "compile_completed_at": elementary.normalize_artifact_timestamp_precision(
+                                timing.get("completed_at")
+                            ),
                         }
                     ) %}
                 {% endif %}
