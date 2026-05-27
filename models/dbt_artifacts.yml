@@ -72,9 +72,37 @@ models:
         data_type: string
         description: Short path of the model file.
 
+      - name: patch_path
+        data_type: string
+        description: Path to the YAML file that patches this model, if any.
+
       - name: generated_at
         data_type: string
         description: Update time of the table.
+
+      - name: metadata_hash
+        data_type: string
+        description: Hash of the captured model metadata for change detection.
+
+      - name: unique_key
+        data_type: string
+        description: Incremental unique_key from model config, if set.
+
+      - name: incremental_strategy
+        data_type: string
+        description: Incremental strategy from model config, if set.
+
+      - name: group_name
+        data_type: string
+        description: dbt group for the model, if assigned.
+
+      - name: access
+        data_type: string
+        description: Model access level (for example private, protected, or public).
+
+      - name: deprecation_date
+        data_type: string
+        description: Model deprecation_date property from the dbt graph, if set.
 
   - name: dbt_tests
     description: >
