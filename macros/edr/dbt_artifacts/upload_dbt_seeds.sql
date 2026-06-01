@@ -75,7 +75,7 @@
         "tags": elementary.filter_none_and_sort(tags),
         "meta": meta_dict,
         "owner": elementary.filter_none_and_sort(formatted_owner),
-        "database_name": node_dict.get("database"),
+        "database_name": elementary.get_node_database(node_dict),
         "schema_name": node_dict.get("schema"),
         "description": node_dict.get("description"),
         "name": node_dict.get("name"),

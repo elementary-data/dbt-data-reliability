@@ -77,7 +77,7 @@
     {% set tags = elementary.union_lists(tags, meta_tags) %}
     {% set flatten_source_metadata_dict = {
         "unique_id": node_dict.get("unique_id"),
-        "database_name": node_dict.get("database"),
+        "database_name": elementary.get_node_database(node_dict),
         "schema_name": node_dict.get("schema"),
         "source_name": node_dict.get("source_name"),
         "name": node_dict.get("name"),
