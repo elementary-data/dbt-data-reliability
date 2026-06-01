@@ -20,51 +20,33 @@
 
 {% macro process_freshness_result(result) %}
     {% set result_dict = result.to_dict() %}
-
     {#
-        dbt-core nests the source identifiers under `node` (a full source node),
-        while dbt-fusion returns a flat result that mirrors `sources.json`: `node`
-        is none and `unique_id` / `criteria` live at the top level. Resolve from
-        whichever is populated so both engines upload complete results.
+        dbt-fusion returns a none `node` for some freshness results (e.g. errored
+        sources), unlike dbt-core. Skip them so the on_run_end hook does not crash
+        on `result_dict.node.unique_id`.
     #}
-    {% set node = result_dict.get("node") %}
-    {% set has_node = node is not none and node is not undefined %}
-    {% set unique_id = (
-        node.get("unique_id") if has_node else result_dict.get("unique_id")
-    ) %}
-
-    {% if unique_id is none %}
-        {# Nothing identifiable to record (e.g. fusion error result with no node). #}
-        {% do return(none) %}
-    {% endif %}
-
-    {% if result_dict.get("status") == "runtime error" %}
+    {% if result_dict.get("node") is none %} {% do return(none) %} {% endif %}
+    {% if result_dict.status == "runtime error" %}
         {% do return(
             {
-                "unique_id": unique_id,
-                "status": result_dict.get("status"),
-                "error": result_dict.get("message") or result_dict.get("error"),
+                "unique_id": result_dict.node.unique_id,
+                "status": result_dict.status,
+                "error": result_dict.message,
             }
         ) %}
     {% endif %}
-
-    {% set criteria = (
-        node.get("freshness", {}) if has_node else result_dict.get("criteria", {})
-    ) %}
     {% do return(
         {
-            "unique_id": unique_id,
-            "status": result_dict.get("status"),
-            "max_loaded_at": result_dict.get("max_loaded_at"),
-            "snapshotted_at": result_dict.get("snapshotted_at"),
-            "max_loaded_at_time_ago_in_s": result_dict.get("age")
-            if result_dict.get("age") is not none
-            else result_dict.get("max_loaded_at_time_ago_in_s"),
-            "criteria": criteria or {},
-            "adapter_response": result_dict.get("adapter_response"),
-            "timing": result_dict.get("timing"),
-            "thread_id": result_dict.get("thread_id"),
-            "execution_time": result_dict.get("execution_time"),
+            "unique_id": result_dict.node.unique_id,
+            "status": result_dict.status,
+            "max_loaded_at": result_dict.max_loaded_at,
+            "snapshotted_at": result_dict.snapshotted_at,
+            "max_loaded_at_time_ago_in_s": result_dict.age,
+            "criteria": result_dict.node.get("freshness", {}),
+            "adapter_response": result_dict.adapter_response,
+            "timing": result_dict.timing,
+            "thread_id": result_dict.thread_id,
+            "execution_time": result_dict.execution_time,
         }
     ) %}
 {% endmacro %}

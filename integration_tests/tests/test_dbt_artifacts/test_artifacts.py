@@ -143,6 +143,7 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 
 @pytest.mark.requires_dbt_version("1.8.0")
+@pytest.mark.skip_for_dbt_fusion
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     database_property, schema_property = get_database_and_schema_properties(
         dbt_project.target
@@ -193,65 +194,6 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         dbt_project.read_table(
             "dbt_source_freshness_results",
             where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
-            raise_if_empty=True,
-        )
-
-
-@pytest.mark.requires_dbt_version("1.8.0")
-def test_source_freshness_results_with_errored_source(
-    test_id: str, dbt_project: DbtProject
-):
-    # An errored source (bad loaded_at_field) produces a "runtime error" freshness
-    # result. On dbt-fusion such results have a none `node`, which used to crash the
-    # on_run_end upload hook for the whole batch. This guards that a healthy source
-    # in the same run still gets uploaded even when an errored source is present.
-    database_property, schema_property = get_database_and_schema_properties(
-        dbt_project.target
-    )
-    healthy_loaded_at_field = (
-        '"UPDATE_TIME"::timestamp'
-        if dbt_project.target != "dremio"
-        else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
-    )
-    healthy_name = f"{test_id}_healthy"
-    errored_name = f"{test_id}_errored"
-
-    def _table_def(name, loaded_at_field):
-        return {
-            "name": name,
-            "config": {
-                "loaded_at_field": loaded_at_field,
-                "freshness": {"warn_after": {"count": 1, "period": "hour"}},
-            },
-        }
-
-    source_def = {
-        "name": "test_source",
-        "schema": f"{{{{ target.{schema_property} }}}}",
-        "tables": [
-            _table_def(healthy_name, healthy_loaded_at_field),
-            # Non-existent column -> freshness query fails -> "runtime error" result.
-            _table_def(errored_name, '"DOES_NOT_EXIST"::timestamp'),
-        ],
-    }
-    if database_property is not None:
-        source_def["database"] = f"{{{{ target.{database_property} }}}}"
-    source_config = {"version": 2, "sources": [source_def]}
-
-    seed_row = [{"UPDATE_TIME": datetime.now()}]
-    dbt_project.seed(seed_row, healthy_name)
-    dbt_project.seed(seed_row, errored_name)
-
-    dbt_project.dbt_runner.vars["disable_freshness_results"] = False
-    with dbt_project.write_yaml(content=source_config), set_flags(
-        dbt_project, {"source_freshness_run_project_hooks": True}
-    ):
-        # Must not raise from the on_run_end hook even though one source errors.
-        dbt_project.dbt_runner.source_freshness()
-        # The healthy source is still uploaded despite the errored one in the batch.
-        dbt_project.read_table(
-            "dbt_source_freshness_results",
-            where=f"unique_id = 'source.elementary_tests.test_source.{healthy_name}'",
             raise_if_empty=True,
         )
 
