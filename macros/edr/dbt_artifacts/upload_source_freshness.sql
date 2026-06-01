@@ -4,9 +4,10 @@
     ) %}
     {% set source_freshness_results_dicts = [] %}
     {% for result in results %}
-        {% do source_freshness_results_dicts.append(
-            elementary.process_freshness_result(result)
-        ) %}
+        {% set processed_result = elementary.process_freshness_result(result) %}
+        {% if processed_result is not none %}
+            {% do source_freshness_results_dicts.append(processed_result) %}
+        {% endif %}
     {% endfor %}
     {% do elementary.upload_artifacts_to_table(
         source_freshness_results_relation,
@@ -19,27 +20,51 @@
 
 {% macro process_freshness_result(result) %}
     {% set result_dict = result.to_dict() %}
-    {% if result_dict.status == "runtime error" %}
+
+    {#
+        dbt-core nests the source identifiers under `node` (a full source node),
+        while dbt-fusion returns a flat result that mirrors `sources.json`: `node`
+        is none and `unique_id` / `criteria` live at the top level. Resolve from
+        whichever is populated so both engines upload complete results.
+    #}
+    {% set node = result_dict.get("node") %}
+    {% set has_node = node is not none and node is not undefined %}
+    {% set unique_id = (
+        node.get("unique_id") if has_node else result_dict.get("unique_id")
+    ) %}
+
+    {% if unique_id is none %}
+        {# Nothing identifiable to record (e.g. fusion error result with no node). #}
+        {% do return(none) %}
+    {% endif %}
+
+    {% if result_dict.get("status") == "runtime error" %}
         {% do return(
             {
-                "unique_id": result_dict.node.unique_id,
-                "status": result_dict.status,
-                "error": result_dict.message,
+                "unique_id": unique_id,
+                "status": result_dict.get("status"),
+                "error": result_dict.get("message") or result_dict.get("error"),
             }
         ) %}
     {% endif %}
+
+    {% set criteria = (
+        node.get("freshness", {}) if has_node else result_dict.get("criteria", {})
+    ) %}
     {% do return(
         {
-            "unique_id": result_dict.node.unique_id,
-            "status": result_dict.status,
-            "max_loaded_at": result_dict.max_loaded_at,
-            "snapshotted_at": result_dict.snapshotted_at,
-            "max_loaded_at_time_ago_in_s": result_dict.age,
-            "criteria": result_dict.node.get("freshness", {}),
-            "adapter_response": result_dict.adapter_response,
-            "timing": result_dict.timing,
-            "thread_id": result_dict.thread_id,
-            "execution_time": result_dict.execution_time,
+            "unique_id": unique_id,
+            "status": result_dict.get("status"),
+            "max_loaded_at": result_dict.get("max_loaded_at"),
+            "snapshotted_at": result_dict.get("snapshotted_at"),
+            "max_loaded_at_time_ago_in_s": result_dict.get("age")
+            if result_dict.get("age") is not none
+            else result_dict.get("max_loaded_at_time_ago_in_s"),
+            "criteria": criteria or {},
+            "adapter_response": result_dict.get("adapter_response"),
+            "timing": result_dict.get("timing"),
+            "thread_id": result_dict.get("thread_id"),
+            "execution_time": result_dict.get("execution_time"),
         }
     ) %}
 {% endmacro %}
@@ -47,7 +72,7 @@
 {% macro flatten_source_freshness(node_dict) %}
     {% set compile_timing = {} %}
     {% set execute_timing = {} %}
-    {% for timing in node_dict["timing"] %}
+    {% for timing in node_dict.get("timing") or [] %}
         {% if timing["name"] == "compile" %} {% do compile_timing.update(timing) %}
         {% elif timing["name"] == "execute" %} {% do execute_timing.update(timing) %}
         {% endif %}
