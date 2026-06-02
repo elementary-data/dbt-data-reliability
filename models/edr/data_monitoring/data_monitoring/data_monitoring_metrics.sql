@@ -3,10 +3,11 @@
         materialized="incremental",
         unique_key="id",
         on_schema_change="append_new_columns",
-        indexes=(
-            [{"columns": ["full_table_name", "column_name", "metric_name"]}]
-            if target.type == "postgres"
-            else []
+        indexes=elementary.get_indexes_for_model(
+            "data_monitoring_metrics",
+            [
+                {"columns": ["full_table_name", "column_name", "metric_name"]},
+            ],
         ),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={
