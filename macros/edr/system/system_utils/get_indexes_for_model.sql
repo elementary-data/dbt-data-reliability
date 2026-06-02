@@ -1,7 +1,9 @@
 {% macro get_indexes_for_model(model_name, base_indexes) %}
     {%- if target.type != "postgres" -%} {{ return([]) }} {%- endif -%}
 
-    {% set extra_indexes_config = var("elementary_extra_indexes", {}) %}
+    {% set extra_indexes_config = elementary.get_config_var(
+        "elementary_extra_indexes"
+    ) %}
     {% set extra_indexes = extra_indexes_config.get(model_name, []) %}
 
     {% set seen_column_sets = [] %}

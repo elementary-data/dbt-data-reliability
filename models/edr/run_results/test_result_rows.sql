@@ -1,4 +1,3 @@
--- indexes are not supported in all warehouses, relevant to postgres only
 {{
     config(
         materialized="incremental",
