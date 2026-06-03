@@ -164,6 +164,7 @@
         "bigquery_disable_partitioning": false,
         "bigquery_disable_clustering": false,
         "upload_only_current_project_artifacts": false,
+        "elementary_extra_indexes": {},
     } %}
     {{- return(default_config) -}}
 {%- endmacro -%}
