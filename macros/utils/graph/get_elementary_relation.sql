@@ -47,5 +47,6 @@
                 )
             ) %}
         {% endif %}
+        {% do return(none) %}
     {%- endif %}
 {% endmacro %}
