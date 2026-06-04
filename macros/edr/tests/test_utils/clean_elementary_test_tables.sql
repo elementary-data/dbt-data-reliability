@@ -41,6 +41,23 @@
     ) %}
 {% endmacro %}
 
+{% macro snowflake__get_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% set drop_queries = elementary.get_transactionless_clean_elementary_test_tables_queries(test_table_relations) %}
+    {% if not drop_queries %}
+        {% do return([]) %}
+    {% endif %}
+    {% set query %}
+        EXECUTE IMMEDIATE $$
+        BEGIN
+            {% for drop in drop_queries %}
+                {{ drop }};
+            {% endfor %}
+        END;
+        $$
+    {% endset %}
+    {% do return([query]) %}
+{% endmacro %}
+
 {% macro bigquery__get_clean_elementary_test_tables_queries(test_table_relations) %}
     {% do return(
         elementary.get_transactionless_clean_elementary_test_tables_queries(
