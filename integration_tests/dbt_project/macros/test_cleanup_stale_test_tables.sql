@@ -32,14 +32,10 @@
         elementary_database, elementary_schema, 0, table_name_pattern
     ) %}
 
-    {{
-        return(
-            tojson(
-                {
-                    "tables_before_count": tables_before | length,
-                    "tables_after_count": tables_after | length,
-                }
-            )
-        )
-    }}
+    {% do return(
+        {
+            "tables_before_count": tables_before | length,
+            "tables_after_count": tables_after | length,
+        }
+    ) %}
 {% endmacro %}
