@@ -7,7 +7,9 @@ from dbt_project import DbtProject
 
 
 # Spark: no information_schema in Hive metastore, no LIKE-pattern catalog API.
-@pytest.mark.skip_targets(["spark"])
+# Dremio: INFORMATION_SCHEMA.table_schema stores the full dot-separated space path
+# (e.g. "space.folder.schema"), so matching on schema name alone returns no rows.
+@pytest.mark.skip_targets(["spark", "dremio"])
 def test_cleanup_stale_test_tables(dbt_project: DbtProject):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_cleanup_stale_test_tables",
