@@ -9,7 +9,7 @@
         "test_cleanup_alerts__tmp_0000002",
     ] %}
     {% for table_name in fake_tables %}
-        {% set _, relation = dbt.get_or_create_relation(
+        {% set relation = api.Relation.create(
             database=elementary_database,
             schema=elementary_schema,
             identifier=table_name,
