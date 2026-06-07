@@ -2,9 +2,11 @@
 
 import json
 
+import pytest
 from dbt_project import DbtProject
 
 
+@pytest.mark.skip_targets(["spark"])
 def test_cleanup_stale_test_tables(dbt_project: DbtProject):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_cleanup_stale_test_tables",

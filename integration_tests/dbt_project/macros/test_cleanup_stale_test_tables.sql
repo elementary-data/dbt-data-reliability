@@ -5,8 +5,8 @@
 
     {# Create fake temp tables matching the elementary temp table naming pattern #}
     {% set fake_tables = [
-        "test_aaa000_elementary_source_schema_changes_cleanup_test_source___schema_changes__tmp_20200101120000000000001",
-        "test_aaa000_elementary_source_schema_changes_cleanup_test_source___schema_changes_alerts__tmp_20200101120000000000002",
+        "test_cleanup__tmp_0000001",
+        "test_cleanup_alerts__tmp_0000002",
     ] %}
     {% for table_name in fake_tables %}
         {% set _, relation = dbt.get_or_create_relation(
