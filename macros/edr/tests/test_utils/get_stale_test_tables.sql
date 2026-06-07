@@ -1,9 +1,5 @@
 {% macro get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do return(
         adapter.dispatch("get_stale_test_tables", "elementary")(
@@ -18,11 +14,7 @@
 
 
 {% macro default__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do exceptions.raise_compiler_error(
         "elementary.get_stale_test_tables is not implemented for adapter: "
@@ -48,11 +40,7 @@
 
 
 {% macro snowflake__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set schema_relation = api.Relation.create(
         database=elementary_database, schema=elementary_schema
@@ -64,7 +52,7 @@
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
             and created < dateadd(hour, -{{ hours | int }}, current_timestamp())
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -75,11 +63,7 @@
 
 
 {% macro bigquery__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set schema_relation = api.Relation.create(
         database=elementary_database, schema=elementary_schema
@@ -94,7 +78,7 @@
             < timestamp_sub(
                 current_timestamp(), interval {{ hours | int }} hour
             )
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -105,11 +89,7 @@
 
 
 {% macro redshift__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Redshift. "
@@ -122,7 +102,7 @@
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
             and table_type = 'BASE TABLE'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -133,11 +113,7 @@
 
 
 {% macro postgres__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Postgres. "
@@ -152,7 +128,7 @@
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -163,11 +139,7 @@
 
 
 {% macro databricks__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {# Requires Unity Catalog - creation time available in information_schema.TABLES #}
     {% set schema_relation = api.Relation.create(
@@ -181,7 +153,7 @@
             and lower(table_name) like '{{ table_name_pattern }}'
             and created
             < timestampadd(hour, -{{ hours | int }}, current_timestamp())
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -192,14 +164,10 @@
 
 
 {% macro fabric__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set query %}
-        select top {{ limit | int }} db_name(), schema_name(schema_id), name
+        select top {{ limit }} db_name(), schema_name(schema_id), name
         from sys.tables
         where
             upper(schema_name(schema_id)) = upper('{{ elementary_schema }}')
@@ -215,11 +183,7 @@
 
 
 {% macro fabricspark__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {{
         return(
@@ -236,14 +200,10 @@
 
 
 {% macro sqlserver__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set query %}
-        select top {{ limit | int }} db_name(), schema_name(schema_id), name
+        select top {{ limit }} db_name(), schema_name(schema_id), name
         from sys.tables
         where
             upper(schema_name(schema_id)) = upper('{{ elementary_schema }}')
@@ -259,11 +219,7 @@
 
 
 {% macro vertica__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set query %}
         select null, table_schema, table_name
@@ -273,7 +229,7 @@
             and lower(table_name) like '{{ table_name_pattern }}'
             and create_time
             < (current_timestamp - interval '{{ hours | int }} hours')
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -284,11 +240,7 @@
 
 
 {% macro clickhouse__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% set query %}
         select null, database, name
@@ -298,7 +250,7 @@
             and lower(name) like '{{ table_name_pattern }}'
             and metadata_modification_time
             <= now() - toIntervalMinute({{ (hours | float * 60) | int }})
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -309,11 +261,7 @@
 
 
 {% macro athena__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Athena. "
@@ -328,7 +276,7 @@
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -339,11 +287,7 @@
 
 
 {% macro trino__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Trino. "
@@ -358,7 +302,7 @@
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -369,11 +313,7 @@
 
 
 {% macro duckdb__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on DuckDB. "
@@ -385,7 +325,7 @@
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}
@@ -396,11 +336,7 @@
 
 
 {% macro dremio__get_stale_test_tables(
-    elementary_database,
-    elementary_schema,
-    hours,
-    table_name_pattern,
-    limit=2000
+    elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Dremio. "
@@ -412,7 +348,7 @@
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit | int }}
+        limit {{ limit }}
     {% endset %}
     {% if execute %}
         {% set results = elementary.run_query(query) %}

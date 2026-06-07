@@ -3,7 +3,6 @@
         elementary.get_package_database_and_schema()
     ) %}
 
-    {# Create 3 fake temp tables. Names kept short (≤60 chars) for Fabric/SQL Server. #}
     {% set fake_tables = [
         "test_cleanup__tmp_0000001",
         "test_cleanup_alerts__tmp_0000002",
