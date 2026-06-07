@@ -276,9 +276,7 @@ jobs:
           PYTEST_PARALLEL: ${{ (inputs.warehouse-type == 'spark' && '4') || '8' }}
           FUSION_RUNNER_FLAG: ${{ (inputs.dbt-version == 'fusion' && '--runner-method fusion') || '' }}
         run: |
-          # TODO: remove -k filter before merging — temporarily scoped to speed up iteration on test_cleanup_stale_test_tables
           py.test -n"$PYTEST_PARALLEL" -vvv --target "$WAREHOUSE" \
-            -k "test_cleanup_stale_test_tables" \
             --junit-xml=test-results.xml \
             --html="detailed_report_${WAREHOUSE}_dbt_${DBT_VERSION}.html" \
             --self-contained-html --clear-on-end $FUSION_RUNNER_FLAG
