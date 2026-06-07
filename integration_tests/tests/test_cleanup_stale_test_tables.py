@@ -16,8 +16,8 @@ def test_cleanup_stale_test_tables(dbt_project: DbtProject):
     data = json.loads(result[0])
 
     assert (
-        data["tables_before_count"] >= 2
-    ), f"Expected at least 2 temp tables before cleanup, got {data['tables_before_count']}"
+        data["tables_before_count"] >= 3
+    ), f"Expected at least 3 temp tables before cleanup, got {data['tables_before_count']}"
     assert (
-        data["tables_after_count"] == 0
-    ), f"Expected 0 temp tables after cleanup, got {data['tables_after_count']}"
+        data["tables_after_count"] == 1
+    ), f"Expected 1 temp table after cleanup (limit=2), got {data['tables_after_count']}"

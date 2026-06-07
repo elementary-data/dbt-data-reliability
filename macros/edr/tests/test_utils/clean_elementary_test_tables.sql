@@ -31,13 +31,17 @@
 {% endmacro %}
 
 
-{% macro cleanup_stale_test_tables(hours=24) %}
+{% macro cleanup_stale_test_tables(hours=24, limit=2000) %}
     {% set elementary_database, elementary_schema = (
         elementary.get_package_database_and_schema()
     ) %}
     {% set table_name_pattern = "test%__tmp_%" %}
     {% set tables = elementary.get_stale_test_tables(
-        elementary_database, elementary_schema, hours, table_name_pattern
+        elementary_database,
+        elementary_schema,
+        hours,
+        table_name_pattern,
+        limit,
     ) %}
     {% if tables | length == 0 %}
         {% do elementary.edr_log(
