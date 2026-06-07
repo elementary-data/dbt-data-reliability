@@ -323,20 +323,17 @@
     {% do return([]) %}
 {% endmacro %}
 
-
 {% macro dremio__get_stale_test_tables(
     elementary_database, elementary_schema, hours, table_name_pattern
 ) %}
-    {# Dremio does not expose table creation time - returning all matching tables.
-       Uses INFORMATION_SCHEMA.TABLES directly as schema_relation.information_schema()
-       generates an invalid path in Dremio's SQL parser. #}
+    {# Dremio does not expose table creation time - returning all matching tables #}
     {% do elementary.edr_log_warning(
         "get_stale_test_tables: time-based filtering is not supported on Dremio. "
         ~ "All matching temp tables will be returned regardless of age."
     ) %}
     {% set query %}
         select table_catalog, table_schema, table_name
-        from INFORMATION_SCHEMA.TABLES
+        from INFORMATION_SCHEMA."TABLES"
         where
             upper(table_schema) = upper('{{ elementary_schema }}')
             and lower(table_name) like '{{ table_name_pattern }}'
