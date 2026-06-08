@@ -333,26 +333,3 @@
     {% endif %}
     {% do return([]) %}
 {% endmacro %}
-
-
-{% macro dremio__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on Dremio. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set query %}
-        select table_catalog, table_schema, table_name
-        from INFORMATION_SCHEMA."TABLES"
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
