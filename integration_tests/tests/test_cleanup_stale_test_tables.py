@@ -6,10 +6,12 @@ import pytest
 from dbt_project import DbtProject
 
 
-# Spark: no information_schema in Hive metastore, no LIKE-pattern catalog API.
-# Dremio: INFORMATION_SCHEMA.table_schema stores the full dot-separated space path
-# (e.g. "space.folder.schema"), so matching on schema name alone returns no rows.
-@pytest.mark.skip_targets(["spark", "dremio"])
+# Skipped targets do not expose table creation time in SQL, so get_stale_test_tables
+# is not implemented for them. Without time filtering the macro could delete tables
+# that are actively in use by a concurrent dbt run.
+@pytest.mark.skip_targets(
+    ["spark", "dremio", "postgres", "redshift", "athena", "trino", "duckdb"]
+)
 def test_cleanup_stale_test_tables(dbt_project: DbtProject):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_cleanup_stale_test_tables",

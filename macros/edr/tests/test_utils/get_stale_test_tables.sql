@@ -88,56 +88,6 @@
 {% endmacro %}
 
 
-{% macro redshift__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on Redshift. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set query %}
-        select current_database(), table_schema, table_name
-        from pg_catalog.svv_tables
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
-            and table_type = 'BASE TABLE'
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
-
-
-{% macro postgres__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on Postgres. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set schema_relation = api.Relation.create(
-        database=elementary_database, schema=elementary_schema
-    ).without_identifier() %}
-    {% set query %}
-        select table_catalog, table_schema, table_name
-        from {{ schema_relation.information_schema("TABLES") }}
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
-
-
 {% macro databricks__get_stale_test_tables(
     elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
@@ -250,81 +200,6 @@
             and lower(name) like '{{ table_name_pattern }}'
             and metadata_modification_time
             <= now() - toIntervalMinute({{ (hours | float * 60) | int }})
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
-
-
-{% macro athena__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on Athena. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set schema_relation = api.Relation.create(
-        database=elementary_database, schema=elementary_schema
-    ).without_identifier() %}
-    {% set query %}
-        select table_catalog, table_schema, table_name
-        from {{ schema_relation.information_schema("TABLES") }}
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
-
-
-{% macro trino__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on Trino. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set schema_relation = api.Relation.create(
-        database=elementary_database, schema=elementary_schema
-    ).without_identifier() %}
-    {% set query %}
-        select table_catalog, table_schema, table_name
-        from {{ schema_relation.information_schema("TABLES") }}
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
-        limit {{ limit }}
-    {% endset %}
-    {% if execute %}
-        {% set results = elementary.run_query(query) %}
-        {% do return(elementary._stale_test_table_rows_to_relations(results)) %}
-    {% endif %}
-    {% do return([]) %}
-{% endmacro %}
-
-
-{% macro duckdb__get_stale_test_tables(
-    elementary_database, elementary_schema, hours, table_name_pattern, limit
-) %}
-    {% do elementary.edr_log_warning(
-        "get_stale_test_tables: time-based filtering is not supported on DuckDB. "
-        ~ "All matching temp tables will be returned regardless of age."
-    ) %}
-    {% set query %}
-        select table_catalog, table_schema, table_name
-        from information_schema.tables
-        where
-            upper(table_schema) = upper('{{ elementary_schema }}')
-            and lower(table_name) like '{{ table_name_pattern }}'
         limit {{ limit }}
     {% endset %}
     {% if execute %}
