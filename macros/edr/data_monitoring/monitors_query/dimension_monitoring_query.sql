@@ -13,16 +13,16 @@
     ) %}
     {% set dimensions_string = elementary.join_list(dimensions, "; ") %}
 
-    {# Segment-quote dimension expressions for BigQuery so nested struct paths
-       (e.g. user.address.city) compile correctly. Non-BQ / non-nested: no-op. #}
-    {% set _sql_dimensions = [] %}
-    {% for d in dimensions %}
-        {% do _sql_dimensions.append(elementary.bq_segment_quote(d)) %}
+    {# Segment-quote nested struct paths (e.g. user.address.city) for BigQuery so
+       they compile correctly. Plain identifiers, expressions and non-BigQuery
+       adapters pass through unchanged. #}
+    {% set sql_dimensions = [] %}
+    {% for dimension in dimensions %}
+        {% do sql_dimensions.append(elementary.bq_segment_quote(dimension)) %}
     {% endfor %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(
-        _sql_dimensions, "; "
+        sql_dimensions, "; "
     ) %}
-
     {% set timestamp_column = metric_properties.timestamp_column %}
     {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation(
         "data_monitoring_metrics"
@@ -91,9 +91,11 @@
                     sum(metric_value) as total_metric_value
                 from all_dimension_metrics
                 group by dimension_value
+                {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
                 having sum(metric_value) > 0
             ),
 
+            {# Create buckets for each previous dimension value #}
             dimensions_buckets as (
                 select edr_bucket_start, edr_bucket_end, dimension_value
                 from training_set_dimensions
@@ -101,11 +103,13 @@
                     buckets
                     on (
                         buckets.joiner = training_set_dimensions.joiner
+                        {# This makes sure we dont create empty buckets for dimensions before their first appearance #}
                         and edr_bucket_end >= dimension_min_bucket_end
                     )
                 where dimension_value is not null
             ),
 
+            {# Calculating the row count for the value of each dimension #}
             row_count_values as (
                 select
                     edr_bucket_start,
@@ -128,6 +132,8 @@
                     dimension_value
             ),
 
+            {# Merging between the row count and the dimensions buckets #}
+            {# This way we make sure that if a dimension has no rows, it will get a metric with value 0 #}
             fill_empty_buckets_row_count_values as (
                 select
                     dimensions_buckets.edr_bucket_start,
@@ -147,6 +153,7 @@
                     )
             ),
 
+            {# We union so new buckets added in this run will be included (were filtered by the join we did on 'fill_empty_buckets_row_count_values') #}
             union_row_count_values as (
                 select distinct *
                 from
@@ -205,6 +212,7 @@
 
         {% else %}
 
+            {# Get all of the dimension anomaly metrics that were created for the test until this run #}
             all_dimension_metrics as (
                 select bucket_end, dimension_value, metric_value
                 from {{ data_monitoring_metrics_relation }}
@@ -219,9 +227,11 @@
                 select distinct dimension_value, sum(metric_value) as total_metric_value
                 from all_dimension_metrics
                 group by dimension_value
+                {# Remove outdated dimension values (dimensions with all metrics of 0 in the range of the test time) #}
                 having sum(metric_value) > 0
             ),
 
+            {# Calculating the row count for the value of each dimension #}
             row_count_values as (
                 select
                     {{
@@ -238,6 +248,7 @@
                 group by dimension_value
             ),
 
+            {# This way we make sure that if a dimension has no rows, it will get a metric with value 0 #}
             fill_empty_dimensions_row_count_values as (
                 select
                     {{
@@ -253,6 +264,7 @@
                     not in (select distinct dimension_value from row_count_values)
             ),
 
+            {# Union between current row count for each dimension, and the "hydrated" metrics of the test until this run #}
             row_count as (
                 select *
                 from row_count_values

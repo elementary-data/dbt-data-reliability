@@ -15,9 +15,13 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
-        {% do prefixed_dimensions.append(
-            "dimension_" ~ elementary.bq_safe_alias(dimension_column)
-        ) %}
+        {% if elementary.bq_is_nested_identifier(dimension_column) %}
+            {% do prefixed_dimensions.append(
+                "dimension_" ~ elementary.bq_safe_alias(dimension_column)
+            ) %}
+        {% else %}
+            {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
+        {% endif %}
     {% endfor %}
 
     {% set metric_types = [] %}
@@ -55,7 +59,7 @@
             ),
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }} as {{ column_obj.safe_alias }},
+                    {{ column_obj.quoted }}{% if column_obj.is_nested %} as {{ adapter.quote(column_obj.safe_alias) }}{% endif %},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -80,7 +84,7 @@
         {%- else %}
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }} as {{ column_obj.safe_alias }},
+                    {{ column_obj.quoted }}{% if column_obj.is_nested %} as {{ adapter.quote(column_obj.safe_alias) }}{% endif %},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -96,7 +100,7 @@
         column_metrics as (
 
             {%- if column_metrics %}
-                {%- set column = column_obj.safe_alias -%}
+                {%- set column = adapter.quote(column_obj.safe_alias) if column_obj.is_nested else column_obj.quoted -%}
                 select
                     {%- if timestamp_column %}
                         edr_bucket_start as bucket_start, edr_bucket_end as bucket_end,
@@ -343,13 +347,13 @@
     {% endif %}
 {% endmacro %}
 
-{# Updated to segment-quote nested dimensions on BigQuery and sanitise the
-   alias suffix. Backward compatible for non-nested columns and non-BQ adapters. #}
+{# Segment-quotes nested dimensions on BigQuery and sanitises the alias suffix.
+   Backward compatible for non-nested columns and non-BQ adapters. #}
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
     {% set select_statements %}
     {%- for column in dimension_columns -%}
       {%- if as_prefix -%}
-        {%- set _is_nested_bq = (target.type == 'bigquery' and '.' in column) -%}
+        {%- set _is_nested_bq = elementary.bq_is_nested_identifier(column) -%}
         {%- set _source = elementary.bq_segment_quote(column) if _is_nested_bq else column -%}
         {%- set _alias_suffix = elementary.bq_safe_alias(column) if _is_nested_bq else column -%}
         {{ _source }}{{ " as " ~ as_prefix ~ "_" ~ _alias_suffix }}
@@ -367,21 +371,30 @@
 {# BigQuery STRUCT nested-field helpers.                                  #}
 {# ---------------------------------------------------------------------- #}
 
-{# Segment-quote a (possibly dotted) identifier for BigQuery.
-   Returns `<seg1>`.`<seg2>`.`<seg3>` for dotted paths, `<name>` otherwise.
-   For non-BigQuery adapters, returns the name unchanged (preserves existing
-   behaviour at all callsites). #}
+{# True only on BigQuery and only when `name` is a plain dotted identifier path
+   (e.g. user.address.city) — i.e. an actual nested STRUCT reference. Returns
+   false for plain identifiers, SQL expressions (dimensions are documented as
+   accepting arbitrary expressions, which must pass through untouched) and
+   non-BigQuery adapters. #}
+{% macro bq_is_nested_identifier(name) %}
+    {%- if target.type != 'bigquery' or name is not string -%}
+        {{ return(false) }}
+    {%- endif -%}
+    {{ return(modules.re.match('^\\w+(\\.\\w+)+$', name) is not none) }}
+{% endmacro %}
+
+{# Segment-quote a nested identifier path for BigQuery:
+   user.address.city -> `user`.`address`.`city`.
+   Anything that is not a nested identifier path (plain identifiers, SQL
+   expressions, non-BigQuery adapters) is returned unchanged, preserving
+   existing behaviour at all callsites. #}
 {% macro bq_segment_quote(name) %}
-    {%- if target.type == 'bigquery' -%}
-        {%- if '.' in name -%}
-            {%- set parts = [] -%}
-            {%- for seg in name.split('.') -%}
-                {%- do parts.append('`' ~ seg ~ '`') -%}
-            {%- endfor -%}
-            {{ parts | join('.') }}
-        {%- else -%}
-            `{{ name }}`
-        {%- endif -%}
+    {%- if elementary.bq_is_nested_identifier(name) -%}
+        {%- set parts = [] -%}
+        {%- for seg in name.split('.') -%}
+            {%- do parts.append('`' ~ seg ~ '`') -%}
+        {%- endfor -%}
+        {{ parts | join('.') }}
     {%- else -%}
         {{ name }}
     {%- endif -%}
@@ -393,15 +406,16 @@
     {{- name | replace('.', '__') -}}
 {% endmacro %}
 
-{# Wrap a Column / BigQueryColumn with a dict carrying both the SQL identifier
-   representation (.quoted, segment-quoted for nested) and a CTE-projection-safe
-   alias (.safe_alias, dot-free). For non-nested columns and non-BigQuery
-   adapters the wrapper mirrors the original Column's values, so downstream
-   consumers (which use only attribute / subscript access on column_obj) see
-   no behavioural difference. #}
+{# Wrap a Column / BigQueryColumn with a dict carrying the SQL identifier
+   representation (.quoted, segment-quoted for nested), a CTE-projection-safe
+   alias (.safe_alias, dot-free) and an .is_nested flag. For non-nested columns
+   and non-BigQuery adapters the wrapper mirrors the original Column's values
+   (safe_alias falls back to .quoted so identifier quoting is never lost), so
+   downstream consumers see no behavioural difference. #}
 {% macro wrap_column_for_struct_support(column_obj) %}
     {%- set name = column_obj.name -%}
-    {%- if target.type == 'bigquery' and '.' in name -%}
+    {%- set is_nested = elementary.bq_is_nested_identifier(name) -%}
+    {%- if is_nested -%}
         {%- set quoted_segments = [] -%}
         {%- for seg in name.split('.') -%}
             {%- do quoted_segments.append('`' ~ seg ~ '`') -%}
@@ -410,7 +424,7 @@
         {%- set safe_alias = name | replace('.', '__') -%}
     {%- else -%}
         {%- set quoted = column_obj.quoted -%}
-        {%- set safe_alias = column_obj.column -%}
+        {%- set safe_alias = column_obj.quoted -%}
     {%- endif -%}
     {# `fields` only exists on BigQueryColumn; guard so non-BigQuery
        adapters (Snowflake, Postgres, Redshift, ...) don't trip on the
@@ -421,6 +435,7 @@
         'column': column_obj.column,
         'quoted': quoted,
         'safe_alias': safe_alias,
+        'is_nested': is_nested,
         'dtype': column_obj.dtype,
         'data_type': column_obj.data_type,
         'fields': fields,
