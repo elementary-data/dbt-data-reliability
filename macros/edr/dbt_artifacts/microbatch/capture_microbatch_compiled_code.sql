@@ -31,14 +31,12 @@
         model.get("unique_id") if model is mapping else model.unique_id
     ) | default(none, true) %}
     {% set model_compiled_code = (
-        model.get("compiled_code") if model is mapping else model.compiled_code
+        model.get("compiled_code")
+        if model is mapping
+        else model.compiled_code
     ) | default(none, true) %}
-    {% if model_unique_id is none %}
-        {{ return(none) }}
-    {% endif %}
-    {% if not model_compiled_code %}
-        {{ return(none) }}
-    {% endif %}
+    {% if model_unique_id is none %} {{ return(none) }} {% endif %}
+    {% if not model_compiled_code %} {{ return(none) }} {% endif %}
 
     {% set compiled_code_by_unique_id = elementary.get_cache(
         "microbatch_compiled_code_by_unique_id"

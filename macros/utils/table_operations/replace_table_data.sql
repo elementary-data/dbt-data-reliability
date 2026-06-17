@@ -149,9 +149,7 @@
     ) %}
 {% endmacro %}
 
-{# Fabric / SQL Server - truncate and insert (non-atomic).
-   sqlserver dispatches through fabric via the chain: sqlserver__ -> fabric__ -> default__,
-   so this covers both adapters. #}
+{# Fabric - truncate and insert (non-atomic). #}
 {% macro fabric__replace_table_data(relation, rows) %}
     {% do dbt.truncate_relation(relation) %}
     {% do elementary.insert_rows(
@@ -160,4 +158,9 @@
         should_commit=false,
         chunk_size=elementary.get_config_var("dbt_artifacts_chunk_size"),
     ) %}
+{% endmacro %}
+
+{# SQL Server - delegate to Fabric (non-atomic). #}
+{% macro sqlserver__replace_table_data(relation, rows) %}
+    {% do elementary.fabric__replace_table_data(relation, rows) %}
 {% endmacro %}

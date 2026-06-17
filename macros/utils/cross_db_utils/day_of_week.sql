@@ -71,6 +71,10 @@
     cast(datename(weekday, {{ date_expr }}) as varchar(30))
 {% endmacro %}
 
+{% macro sqlserver__edr_day_of_week_expression(date_expr) %}
+    {{ elementary.fabric__edr_day_of_week_expression(date_expr) }}
+{% endmacro %}
+
 -- fmt: off
 {% macro clickhouse__edr_day_of_week_expression(date_expr) %}
     formatDateTime({{ date_expr }}, '%W')

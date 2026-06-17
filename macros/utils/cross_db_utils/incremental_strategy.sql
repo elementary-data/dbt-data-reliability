@@ -24,6 +24,10 @@
     {% do return("merge") %}
 {% endmacro %}
 
+{%- macro sqlserver__get_default_incremental_strategy() %}
+    {% do return(elementary.fabric__get_default_incremental_strategy()) %}
+{% endmacro %}
+
 {%- macro fabricspark__get_default_incremental_strategy() %}
     {{ return(elementary.spark__get_default_incremental_strategy()) }}
 {% endmacro %}

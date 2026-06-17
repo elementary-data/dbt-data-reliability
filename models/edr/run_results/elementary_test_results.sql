@@ -10,10 +10,12 @@
         },
         table_type=elementary.get_default_table_type(),
         incremental_strategy=elementary.get_default_incremental_strategy(),
-        indexes=(
-            [{"columns": ["id"]}, {"columns": ["test_unique_id", "detected_at"]}]
-            if target.type == "postgres"
-            else []
+        indexes=elementary.get_indexes_for_model(
+            "elementary_test_results",
+            [
+                {"columns": ["id"]},
+                {"columns": ["test_unique_id", "detected_at"]},
+            ],
         ),
     )
 }}

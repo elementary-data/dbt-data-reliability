@@ -73,7 +73,7 @@
     {% set meta = elementary.get_node_meta(node_dict) %}
 
     {% set description = none %}
-    {% if dbt_version >= "1.9.0" and node_dict.get("description") %}
+    {% if node_dict.get("description") %}
         {% set description = node_dict.get("description") %}
     {% elif meta.get("description") %} {% set description = meta.pop("description") %}
     {% elif default_description %} {% set description = default_description %}

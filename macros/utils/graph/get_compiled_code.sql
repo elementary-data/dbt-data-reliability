@@ -5,7 +5,9 @@
             "microbatch_compiled_code_by_unique_id", {}
         ).get(node.get("unique_id")) %}
     {% endif %}
-    {% set compiled_code = adapter.dispatch("format_compiled_code", "elementary")(compiled_code) %}
+    {% set compiled_code = adapter.dispatch("format_compiled_code", "elementary")(
+        compiled_code
+    ) %}
 
     {% set max_column_size = elementary.get_column_size() %}
     {% if as_column_value and max_column_size and compiled_code and compiled_code | length > max_column_size %}

@@ -61,3 +61,11 @@
        leave headroom for longer schemas and __dbt_tmp_vw suffixes. #}
     {{ return(60) }}
 {% endmacro %}
+
+{% macro sqlserver__get_relation_max_name_length(temporary, relation, sql_query) %}
+    {% do return(
+        elementary.fabric__get_relation_max_name_length(
+            temporary, relation, sql_query
+        )
+    ) %}
+{% endmacro %}
