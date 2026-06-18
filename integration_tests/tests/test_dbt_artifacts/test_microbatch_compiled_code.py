@@ -100,7 +100,7 @@ def _with_microbatch_macro_file(dbt_project: DbtProject, macro_name: str):
     macro_path = dbt_project.project_dir_path / "macros" / "microbatch.sql"
     macro_sql = """
 {% macro __MACRO_NAME__(arg_dict) %}
-  {{ return(elementary.capture_microbatch_compiled_code_sql(arg_dict)) }}
+  {{ return(elementary.capture_and_execute_microbatch_compiled_code_sql(arg_dict)) }}
 {% endmacro %}
 """.replace(
         "__MACRO_NAME__", macro_name
