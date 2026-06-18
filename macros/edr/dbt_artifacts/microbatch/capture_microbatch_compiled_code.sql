@@ -4,7 +4,7 @@
     incremental strategy resolution in all projects.
     To apply this behavior, users should:
       1) Override `get_incremental_microbatch_sql` in their own project and delegate to
-         `elementary.capture_microbatch_compiled_code_sql(arg_dict)`.
+         `elementary.capture_and_execute_microbatch_compiled_code_sql(arg_dict)`.
       2) Enable dbt behavior flag `require_batched_execution_for_custom_microbatch_strategy`.
 
     This flow is currently not supported for adapters:
@@ -17,7 +17,7 @@
 
     This flow is currently not supported for dbt Fusion.
 -#}
-{% macro capture_microbatch_compiled_code_sql(arg_dict) %}
+{% macro capture_and_execute_microbatch_compiled_code_sql(arg_dict) %}
     {% if execute and model is defined %}
         {% do elementary.capture_microbatch_compiled_code_for_model() %}
     {% endif %}
@@ -46,4 +46,3 @@
     {% endif %}
     {% do compiled_code_by_unique_id.update({model_unique_id: model_compiled_code}) %}
 {% endmacro %}
-
