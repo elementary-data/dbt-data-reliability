@@ -111,6 +111,34 @@
     {% endif %}
 {% endmacro %}
 
+{% macro fabric__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+    {#
+        dbt-fabric's fabric__create_table_as implements CTAS via a helper view
+        `<table>__dbt_tmp_vw`: it creates the view, then issues
+        `CREATE TABLE <table> AS SELECT * FROM <table>__dbt_tmp_vw`. The macro
+        does NOT drop the helper view at the end — it relies on the caller
+        (e.g. dbt-fabric's own incremental materialization) to drop it via
+        `adapter.drop_relation` after the CTAS.
+
+        Elementary's edr_create_table_as does not perform that post-drop, so
+        the helper view leaks in the elementary schema every time
+        edr_create_table_as is invoked on Fabric. Affects every artifact
+        table built this way (dbt_columns, dbt_exposures, dbt_seeds,
+        dbt_sources, dbt_tests, plus their `__tmp_<ts>` intermediates).
+
+        Fix: append `EXEC('DROP VIEW IF EXISTS ...')` to the SQL emitted by
+        dbt.get_create_table_as_sql so the helper view is dropped in the
+        same batch that consumed it. Idempotent — uses IF EXISTS.
+    #}
+    {{ dbt.get_create_table_as_sql(temporary, relation, sql_query) }}
+
+    {% set tmp_vw_relation = relation.incorporate(
+        path={"identifier": relation.identifier ~ '__dbt_tmp_vw'},
+        type='view',
+    ) %}
+    EXEC('DROP VIEW IF EXISTS {{ tmp_vw_relation.include(database=false) }}');
+{% endmacro %}
+
 {% macro fabricspark__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
     {{
         return(
