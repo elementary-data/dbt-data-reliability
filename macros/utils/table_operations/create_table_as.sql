@@ -33,13 +33,17 @@
     }}
 {% endmacro %}
 
-{% macro default__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro default__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {{ dbt.get_create_table_as_sql(temporary, relation, sql_query) }}
 {% endmacro %}
 
 {# Simplified versions for dbt-fusion supported adapters as the original dbt macro 
    no longer works outside of the scope of a model's materialization #}
-{% macro snowflake__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro snowflake__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
   create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
@@ -56,12 +60,16 @@
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro postgres__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro postgres__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
   create {% if temporary %} temporary {% endif %} table {{ relation.include(database=(not temporary), schema=(not temporary)) }}
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro redshift__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro redshift__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {% if temporary and elementary.is_dbt_fusion() %}
         {# dbt-fusion uses connection pooling - temp tables created in one session
        aren't visible in other sessions. Create regular tables instead.
@@ -74,7 +82,9 @@
     {% endif %}
 {% endmacro %}
 
-{% macro databricks__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro databricks__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {% if temporary %}
         {% if elementary.is_dbt_fusion() %}
             {# 
@@ -94,24 +104,32 @@
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro clickhouse__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro clickhouse__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {# ClickHouse does not support database-scoped temporary tables, so we force temporary to be false. #}
     {{ dbt.get_create_table_as_sql(false, relation, sql_query) }}
 {% endmacro %}
 
-{% macro duckdb__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro duckdb__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
   create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro trino__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro trino__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {# dbt-trino's create_table_as accesses model.config which fails when called
      outside a model context (e.g. from edr_create_table_as). Use simplified SQL. #}
   create table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro spark__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro spark__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {# Spark: use a temporary view for temp tables, regular table otherwise #}
     {% if temporary %}
     create or replace temporary view {{ relation }}
@@ -122,7 +140,9 @@
     {% endif %}
 {% endmacro %}
 
-{% macro fabricspark__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro fabricspark__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {{
         return(
             elementary.spark__edr_get_create_table_as_sql(
