@@ -1,16 +1,20 @@
-{% macro create_or_replace(temporary, relation, sql_query) %}
+{% macro create_or_replace(temporary, relation, sql_query, expiration_hours=none) %}
     {{
         return(
             adapter.dispatch("create_or_replace", "elementary")(
-                temporary, relation, sql_query
+                temporary, relation, sql_query, expiration_hours=expiration_hours
             )
         )
     }}
 {% endmacro %}
 
 {# Snowflake and Bigquery #}
-{% macro default__create_or_replace(temporary, relation, sql_query) %}
-    {% do elementary.edr_create_table_as(temporary, relation, sql_query) %}
+{% macro default__create_or_replace(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
+    {% do elementary.edr_create_table_as(
+        temporary, relation, sql_query, expiration_hours=expiration_hours
+    ) %}
 {% endmacro %}
 
 {% macro redshift__create_or_replace(temporary, relation, sql_query) %}

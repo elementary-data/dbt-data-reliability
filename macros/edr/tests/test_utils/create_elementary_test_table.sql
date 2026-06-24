@@ -32,8 +32,9 @@
         ) -%}
 
         {# Create the table if it doesnt exist #}
-        {%- do elementary.create_or_replace(false, temp_table_relation, sql_query) %}
-        {%- do elementary.set_test_table_expiration(temp_table_relation) %}
+        {%- do elementary.create_or_replace(
+            false, temp_table_relation, sql_query, expiration_hours=1
+        ) %}
 
         {# Cache the test table for easy access later #}
         {% set test_entry = elementary.get_cache(

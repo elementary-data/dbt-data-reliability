@@ -1,5 +1,10 @@
 {% macro edr_create_table_as(
-    temporary, relation, sql_query, drop_first=false, should_commit=false
+    temporary,
+    relation,
+    sql_query,
+    drop_first=false,
+    should_commit=false,
+    expiration_hours=none
 ) %}
     {# This macro contains a simplified implementation that replaces our usage of 
      dbt.create_table_as and serves our needs.
@@ -8,7 +13,7 @@
     {% if drop_first %} {% do dbt.drop_relation_if_exists(relation) %} {% endif %}
 
     {% set create_query = elementary.edr_get_create_table_as_sql(
-        temporary, relation, sql_query
+        temporary, relation, sql_query, expiration_hours=expiration_hours
     ) %}
     {% do elementary.run_query(create_query) %}
 
@@ -16,11 +21,13 @@
 {% endmacro %}
 
 
-{% macro edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
     {{
         return(
             adapter.dispatch("edr_get_create_table_as_sql", "elementary")(
-                temporary, relation, sql_query
+                temporary, relation, sql_query, expiration_hours=expiration_hours
             )
         )
     }}
@@ -37,10 +44,14 @@
   as {{ sql_query }}
 {% endmacro %}
 
-{% macro bigquery__edr_get_create_table_as_sql(temporary, relation, sql_query) %}
+{% macro bigquery__edr_get_create_table_as_sql(
+    temporary, relation, sql_query, expiration_hours=none
+) %}
   create or replace table {{ relation }}
     {% if temporary %}
   options (expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 hour))
+    {% elif expiration_hours is not none %}
+  options (expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL {{ expiration_hours }} hour))
     {% endif %}
   as {{ sql_query }}
 {% endmacro %}
