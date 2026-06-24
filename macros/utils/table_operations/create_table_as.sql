@@ -146,7 +146,7 @@
     {{
         return(
             elementary.spark__edr_get_create_table_as_sql(
-                temporary, relation, sql_query
+                temporary, relation, sql_query, expiration_hours=expiration_hours
             )
         )
     }}
