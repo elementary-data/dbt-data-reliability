@@ -31,7 +31,8 @@
             type="table",
         ) -%}
 
-        {# Create the table if it doesnt exist #}
+        {# Table must be non-temporary so it's visible across dbt sessions (e.g. on_run_end cleanup).
+           expiration_hours is a safety net for adapters that support it (currently BigQuery). #}
         {%- do elementary.create_or_replace(
             false, temp_table_relation, sql_query, expiration_hours=1
         ) %}
