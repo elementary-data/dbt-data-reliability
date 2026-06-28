@@ -317,6 +317,10 @@ def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
 
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 1
+    description = test_result["test_results_description"].lower()
+    assert "1 anomalous" in description
+    assert "for dimension dimension" in description
+    assert "dim1" in description
 
     data += [
         {
@@ -336,6 +340,11 @@ def test_column_anomalies_group_by(test_id: str, dbt_project: DbtProject):
 
     assert test_result["status"] == "fail"
     assert test_result["failures"] == 2
+    description = test_result["test_results_description"].lower()
+    assert "2 anomalous" in description
+    assert "for dimension dimension" in description
+    assert "dim1" in description
+    assert "dim2" in description
 
 
 def test_anomalyless_column_anomalies_group_by_none_dimension(
