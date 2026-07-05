@@ -617,6 +617,7 @@ def test_model_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
                 dbt_model_path.unlink()
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_test_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
     """
     A test on a grouped model WITHOUT a direct owner should inherit the group's
