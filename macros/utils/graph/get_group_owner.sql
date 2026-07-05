@@ -6,9 +6,7 @@
     #}
     {% if not group_name %} {% do return(none) %} {% endif %}
     {% for group_node in graph.groups.values() %}
-        {% if group_node.get("resource_type") == "group" and group_node.get(
-            "name"
-        ) == group_name %}
+        {% if group_node.get("name") == group_name %}
             {% set owner_dict = elementary.safe_get_with_default(
                 group_node, "owner", {}
             ) %}
