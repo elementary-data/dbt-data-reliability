@@ -88,19 +88,13 @@
     {% endfor %}
     {% set test_results_description %}
       {% if rows_with_score %}
-        {% set first_scored_row = rows_with_score[0] %}
-        {% set dimension = elementary.insensitive_get_dict_value(first_scored_row, 'dimension') %}
-        {% if dimension and anomalous_rows %}
-          {% set seen_dim_vals = [] %}
-          {% set unique_anomalous_rows = [] %}
-          {% for row in anomalous_rows | reverse %}
-            {% set dim_val = elementary.insensitive_get_dict_value(row, 'dimension_value') %}
-            {% set dim_key = dim_val if dim_val is not none else '__NULL__' %}
-            {% if dim_key not in seen_dim_vals %}
-              {% do seen_dim_vals.append(dim_key) %}
-              {% do unique_anomalous_rows.append(row) %}
-            {% endif %}
-          {% endfor %}
+        {% set dimension = elementary.insensitive_get_dict_value(anomalous_rows[0], 'dimension') if anomalous_rows else none %}
+        {% if dimension %}
+          {# The anomaly scores query has no "order by", so sort explicitly to keep the latest bucket per dimension value #}
+          {% set unique_anomalous_rows = anomalous_rows
+              | sort(attribute='bucket_end', reverse=true)
+              | unique(case_sensitive=true, attribute='dimension_value')
+              | list %}
           {% set max_shown = 5 %}
           {% set shown_rows = unique_anomalous_rows[:max_shown] %}
           {% set dim_parts = [] %}
@@ -109,6 +103,7 @@
             {% set dim_val_str = dim_val if dim_val is not none else 'NULL' %}
             {% set m_val = elementary.insensitive_get_dict_value(row, 'metric_value') %}
             {% set t_val = elementary.insensitive_get_dict_value(row, 'training_avg') %}
+            {# Rounding must stay consistent with anomaly_detection_description(), which formats the per-row descriptions in SQL #}
             {% set m_str = (m_val | float | round(3)) if m_val is not none else 'N/A' %}
             {% set t_str = (t_val | float | round(3)) if t_val is not none else 'N/A' %}
             {% do dim_parts.append(dim_val_str ~ " (" ~ m_str ~ ", avg " ~ t_str ~ ")") %}
