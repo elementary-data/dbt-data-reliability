@@ -91,8 +91,18 @@
         {% set first_scored_row = rows_with_score[0] %}
         {% set dimension = elementary.insensitive_get_dict_value(first_scored_row, 'dimension') %}
         {% if dimension and anomalous_rows %}
+          {% set seen_dim_vals = [] %}
+          {% set unique_anomalous_rows = [] %}
+          {% for row in anomalous_rows | reverse %}
+            {% set dim_val = elementary.insensitive_get_dict_value(row, 'dimension_value') %}
+            {% set dim_key = dim_val if dim_val is not none else '__NULL__' %}
+            {% if dim_key not in seen_dim_vals %}
+              {% do seen_dim_vals.append(dim_key) %}
+              {% do unique_anomalous_rows.append(row) %}
+            {% endif %}
+          {% endfor %}
           {% set max_shown = 5 %}
-          {% set shown_rows = anomalous_rows[:max_shown] %}
+          {% set shown_rows = unique_anomalous_rows[:max_shown] %}
           {% set dim_parts = [] %}
           {% for row in shown_rows %}
             {% set dim_val = elementary.insensitive_get_dict_value(row, 'dimension_value') %}
@@ -103,7 +113,7 @@
             {% set t_str = (t_val | float | round(3)) if t_val is not none else 'N/A' %}
             {% do dim_parts.append(dim_val_str ~ " (" ~ m_str ~ ", avg " ~ t_str ~ ")") %}
           {% endfor %}
-          {% set total = anomalous_rows | length %}
+          {% set total = unique_anomalous_rows | length %}
           {% if column_name %}In column {{ column_name | upper }}, {% endif %}{{ total }} anomalous {{ metric_name }} value{% if total > 1 %}s{% endif %} for dimension {{ dimension }}: {{ dim_parts | join(", ") }}{% if total > max_shown %}, and {{ total - max_shown }} more{% endif %}.
         {% else %}
           {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
