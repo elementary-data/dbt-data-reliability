@@ -74,23 +74,49 @@
           and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
         {%- endif %}
     {%- endset -%}
-    {% set test_results_description %}
-      {% if rows_with_score %}
-          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
-      {% else %}
-          Not enough data to calculate anomaly score.
-      {% endif %}
-    {% endset %}
     {% set failures = namespace(data=0) %}
     {% set filtered_anomaly_scores_rows = [] %}
+    {% set anomalous_rows = [] %}
     {% for row in anomaly_scores_rows %}
         {% if row.anomaly_score is not none %}
             {% do filtered_anomaly_scores_rows.append(row) %}
             {% if row.is_anomalous %}
                 {% set failures.data = failures.data + 1 %}
+                {% do anomalous_rows.append(row) %}
             {% endif %}
         {% endif %}
     {% endfor %}
+    {% set test_results_description %}
+      {% if rows_with_score %}
+        {% set dimension = elementary.insensitive_get_dict_value(anomalous_rows[0], 'dimension') if anomalous_rows else none %}
+        {% if dimension %}
+          {# The anomaly scores query has no "order by", so sort explicitly to keep the latest bucket per dimension value #}
+          {% set unique_anomalous_rows = anomalous_rows
+              | sort(attribute='bucket_end', reverse=true)
+              | unique(case_sensitive=true, attribute='dimension_value')
+              | list %}
+          {% set max_shown = 5 %}
+          {% set shown_rows = unique_anomalous_rows[:max_shown] %}
+          {% set dim_parts = [] %}
+          {% for row in shown_rows %}
+            {% set dim_val = elementary.insensitive_get_dict_value(row, 'dimension_value') %}
+            {% set dim_val_str = dim_val if dim_val is not none else 'NULL' %}
+            {% set m_val = elementary.insensitive_get_dict_value(row, 'metric_value') %}
+            {% set t_val = elementary.insensitive_get_dict_value(row, 'training_avg') %}
+            {# Rounding must stay consistent with anomaly_detection_description(), which formats the per-row descriptions in SQL #}
+            {% set m_str = (m_val | float | round(3)) if m_val is not none else 'N/A' %}
+            {% set t_str = (t_val | float | round(3)) if t_val is not none else 'N/A' %}
+            {% do dim_parts.append(dim_val_str ~ " (" ~ m_str ~ ", avg " ~ t_str ~ ")") %}
+          {% endfor %}
+          {% set total = unique_anomalous_rows | length %}
+          {% if column_name %}In column {{ column_name | upper }}, {% endif %}{{ total }} anomalous {{ metric_name }} value{% if total > 1 %}s{% endif %} for dimension {{ dimension }}: {{ dim_parts | join(", ") }}{% if total > max_shown %}, and {{ total - max_shown }} more{% endif %}.
+        {% else %}
+          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
+        {% endif %}
+      {% else %}
+          Not enough data to calculate anomaly score.
+      {% endif %}
+    {% endset %}
     {% set test_result_dict = {
         "id": elementary.insensitive_get_dict_value(latest_row, "id"),
         "data_issue_id": elementary.insensitive_get_dict_value(
