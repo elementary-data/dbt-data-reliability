@@ -261,21 +261,33 @@
        model.schema (per-worker test audit schema) or target.schema (base schema),
        which may not have been created yet in parallel CI runs. #}
     {% set _edr_db, _edr_schema = elementary.get_package_database_and_schema() %}
+    {% set view_db = _edr_db if _edr_db else target.database %}
     {% set view_schema = _edr_schema if _edr_schema else target.schema %}
-    {% set full_view_name = view_schema ~ "." ~ view_name %}
+    {% set short_view_name = "[" ~ view_schema ~ "].[" ~ view_name ~ "]" %}
+    {% set qualified_view_name = "[" ~ view_db ~ "].[" ~ view_schema ~ "].[" ~ view_name ~ "]" %}
 
-    {# Create view from the compiled test SQL #}
-    {% do run_query("create view " ~ full_view_name ~ " as " ~ sql) %}
+    {# Fabric/T-SQL constraints prevent both a 3-part qualified CREATE VIEW
+       (error 166) and `USE [db]; CREATE VIEW ...` in a single batch
+       (error 111). Wrapping the DDL in `EXEC [db]..sp_executesql N'...'`
+       executes it in the elementary database's context with a 2-part name,
+       without leaking session DB state across run_query calls. Required
+       when the elementary schema lives in a different database than
+       target.database. #}
+    {% set create_inner = "create view " ~ short_view_name ~ " as " ~ sql %}
+    {% set create_stmt = "EXEC [" ~ view_db ~ "]..sp_executesql N'" ~ create_inner | replace("'", "''") ~ "'" %}
+    {% do run_query(create_stmt) %}
 
     {% set query %}
         select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} *
-        from {{ full_view_name }}
+        from {{ qualified_view_name }}
     {% endset %}
 
     {% set result = elementary.agate_to_dicts(elementary.run_query(query)) %}
 
-    {# Clean up the temp view #}
-    {% do run_query("drop view if exists " ~ full_view_name) %}
+    {# Clean up the temp view via sp_executesql in the elementary DB. #}
+    {% set drop_inner = "drop view if exists " ~ short_view_name %}
+    {% set drop_stmt = "EXEC [" ~ view_db ~ "]..sp_executesql N'" ~ drop_inner | replace("'", "''") ~ "'" %}
+    {% do run_query(drop_stmt) %}
 
     {% do return(result) %}
 {% endmacro %}
