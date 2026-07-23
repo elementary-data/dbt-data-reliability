@@ -253,3 +253,7 @@
     } %}
     {{ return(dummy_values) }}
 {% endmacro %}
+
+{% macro sqlserver__dummy_values() %}
+    {% do return(elementary.fabric__dummy_values()) %}
+{% endmacro %}

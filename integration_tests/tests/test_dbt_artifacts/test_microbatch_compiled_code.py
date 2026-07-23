@@ -7,19 +7,18 @@ from dbt_project import DbtProject
 def _microbatch_source_model_sql() -> str:
     return """
 {{ config(event_time='order_date') }}
-{% set event_time_data_type = 'datetime2' if target.type == 'sqlserver' else 'timestamp' %}
 
 select
     1 as order_id,
     1 as customer_id,
     42 as amount,
-    cast('2024-01-01 00:00:00' as {{ event_time_data_type }}) as order_date
+    cast('2024-01-01 00:00:00' as {{ elementary.edr_type_timestamp() }}) as order_date
 union all
 select
     2 as order_id,
     2 as customer_id,
     84 as amount,
-    cast('2025-01-01 00:00:00' as {{ event_time_data_type }}) as order_date
+    cast('2025-01-01 00:00:00' as {{ elementary.edr_type_timestamp() }}) as order_date
 """
 
 
@@ -101,7 +100,7 @@ def _with_microbatch_macro_file(dbt_project: DbtProject, macro_name: str):
     macro_path = dbt_project.project_dir_path / "macros" / "microbatch.sql"
     macro_sql = """
 {% macro __MACRO_NAME__(arg_dict) %}
-  {{ return(elementary.get_incremental_microbatch_sql(arg_dict)) }}
+  {{ return(elementary.capture_and_execute_microbatch_compiled_code_sql(arg_dict)) }}
 {% endmacro %}
 """.replace(
         "__MACRO_NAME__", macro_name

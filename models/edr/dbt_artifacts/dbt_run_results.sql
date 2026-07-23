@@ -4,14 +4,13 @@
         transient=False,
         unique_key="model_execution_id",
         on_schema_change="append_new_columns",
-        indexes=(
+        indexes=elementary.get_indexes_for_model(
+            "dbt_run_results",
             [
                 {"columns": ["unique_id"]},
                 {"columns": ["unique_id", "created_at"]},
                 {"columns": ["model_execution_id"]},
-            ]
-            if target.type == "postgres"
-            else []
+            ],
         ),
         partition_by=elementary.get_partition_by(),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),

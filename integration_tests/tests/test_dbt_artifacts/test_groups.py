@@ -3,7 +3,9 @@ Integration tests for dbt group and owner artifact handling.
 Covers models, tests, seeds, and snapshots group assignment and artifact table correctness.
 """
 import contextlib
+import json
 import uuid
+from typing import List, Optional, Union
 
 import pytest
 from dbt_project import DbtProject
@@ -24,6 +26,23 @@ GROUP_CONFIG = {
         }
     ]
 }
+
+
+def _parse_owners(owners_value: Optional[Union[str, List[str]]]) -> List[str]:
+    """Parse an owner column value which may be a JSON string or a list."""
+    if owners_value is None:
+        return []
+    if isinstance(owners_value, list):
+        return owners_value
+    if isinstance(owners_value, str):
+        if not owners_value or owners_value == "[]":
+            return []
+        try:
+            parsed = json.loads(owners_value)
+            return parsed if isinstance(parsed, list) else [parsed]
+        except json.JSONDecodeError:
+            return [owners_value]
+    return []
 
 
 @contextlib.contextmanager
@@ -540,3 +559,172 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             assert_group_name_in_run_results_view(
                 dbt_project, "snapshot_run_results", snapshot_name, group_name
             )
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_model_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
+    """
+    A model assigned to a group but WITHOUT a direct owner should inherit the
+    group's owner (email preferred) in the dbt_models artifact table.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_group_owner_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A model assigned to a group without a direct owner",
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": OWNER_EMAIL},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_model_owner_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_model_group_owner_{unique_id}.yml"
+    ):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.vars["disable_run_results"] = False
+            dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            owners = _parse_owners(models[0].get("owner"))
+            assert owners == [
+                OWNER_EMAIL
+            ], f"Expected owner ['{OWNER_EMAIL}'] derived from group, got {owners}"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_test_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
+    """
+    A test on a grouped model WITHOUT a direct owner should inherit the group's
+    owner as model_owners in the dbt_tests artifact table (this feeds
+    elementary_test_results.owners and alert routing).
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_group_test_owner_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A grouped model without a direct owner",
+                "columns": [{"name": "col", "tests": ["unique"]}],
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": OWNER_EMAIL},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_test_owner_{unique_id}.yml"
+    ), dbt_project.write_yaml(
+        schema_yaml, name=f"schema_test_group_owner_{unique_id}.yml"
+    ):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(select=model_name)
+            tests = dbt_project.read_table(
+                "dbt_tests",
+                where=f"parent_model_unique_id LIKE '%{model_name}'",
+                raise_if_empty=True,
+            )
+            assert len(tests) == 1, f"Expected 1 test, got {len(tests)}"
+            model_owners = _parse_owners(tests[0].get("model_owners"))
+            assert model_owners == [
+                OWNER_EMAIL
+            ], f"Expected model_owners ['{OWNER_EMAIL}'] derived from group, got {model_owners}"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_direct_owner_takes_precedence_over_group(dbt_project: DbtProject, tmp_path):
+    """
+    When a model has BOTH a direct owner and a group, the direct owner wins and
+    the group owner is not added (mirrors dbt's own config precedence).
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_direct_owner_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    direct_owner = "Alice"
+    model_sql = f"""
+    {{{{ config(meta={{'owner': '{direct_owner}'}}) }}}}
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A grouped model with a direct owner",
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": OWNER_EMAIL},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_direct_owner_{unique_id}.yml"
+    ), dbt_project.write_yaml(schema_yaml, name=f"schema_direct_owner_{unique_id}.yml"):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            owners = _parse_owners(models[0].get("owner"))
+            assert owners == [
+                direct_owner
+            ], f"Expected direct owner ['{direct_owner}'] to win over group, got {owners}"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
