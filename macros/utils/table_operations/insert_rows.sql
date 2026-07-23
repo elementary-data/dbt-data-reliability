@@ -124,20 +124,13 @@
     {% endset %}
     {% do elementary.end_duration_measure_context("base_query_calc") %}
 
-    {# Precompute per-column rendering metadata and adapter implementations once,
-       hoisted out of the per-row loop (dtypes / created_at handling / dispatch
-       results are identical for every row). #}
-    {% set column_meta = elementary.get_row_render_metadata(
+    {% set column_meta = elementary.get_columns_metadata(
         columns, rows[0] if rows else none
     ) %}
     {% set created_at_sql = elementary.edr_current_timestamp() %}
     {% set render_value_impl = adapter.dispatch("render_value", "elementary") %}
     {% set escaper = adapter.dispatch("escape_special_chars", "elementary") %}
 
-    {# Accumulate each chunk's rendered rows in a list and join once when the
-       chunk is finalized, instead of repeatedly concatenating a growing query
-       string (which is O(n^2)). A namespace is required so reassignments made
-       inside the loop persist across iterations. #}
     {% set base_len = base_insert_query | length %}
     {% set chunk = namespace(rows=[], len=base_len, count=0) %}
     {% for row in rows %}
@@ -208,11 +201,7 @@
     {{ return(insert_queries) }}
 {%- endmacro %}
 
-{# Precompute per-column rendering metadata once per insert so the hot per-row
-   loop only does a dict lookup + value render. `sample_row` (the first row) is
-   used to resolve the actual dict key for each column, replacing the per-cell
-   case-insensitive lookup - flatten macros emit consistent keys across rows. #}
-{% macro get_row_render_metadata(columns, sample_row) %}
+{% macro get_columns_metadata(columns, sample_row) %}
     {% set column_meta = [] %}
     {% for column in columns %}
         {% set is_created_at = column.name | lower == "created_at" %}
@@ -347,7 +336,7 @@
 
 {# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
    so the hot insert path avoids an adapter.dispatch per rendered cell. When it's
-   not provided (other callers) it is resolved once here, matching prior behavior. #}
+   not provided it is resolved once here. #}
 {%- macro render_value(value, data_type, escaper=none) -%}
     {{- adapter.dispatch("render_value", "elementary")(value, data_type, escaper) -}}
 {%- endmacro -%}
