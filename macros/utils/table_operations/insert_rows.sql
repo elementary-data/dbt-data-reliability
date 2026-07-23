@@ -124,19 +124,28 @@
     {% endset %}
     {% do elementary.end_duration_measure_context("base_query_calc") %}
 
-    {% set current_query = namespace(data=base_insert_query) %}
-    {% set current_chunk_size = namespace(data=0) %}
-    {% for row in rows %}
-        {% set row_sql = elementary.render_row_to_sql(row, columns) %}
-        {% set query_with_row = (
-            current_query.data + ("," if not loop.first else "") + row_sql
-        ) %}
+    {% set column_meta = elementary.get_columns_metadata(
+        columns, rows[0] if rows else none
+    ) %}
+    {% set created_at_sql = elementary.edr_current_timestamp() %}
+    {% set render_value_impl = adapter.dispatch("render_value", "elementary") %}
+    {% set escaper = adapter.dispatch("escape_special_chars", "elementary") %}
 
-        {% if query_with_row | length > query_max_size or current_chunk_size.data >= chunk_size %}
-            {% set new_insert_query = base_insert_query + row_sql %}
+    {% set base_len = base_insert_query | length %}
+    {% set chunk = namespace(rows=[], len=base_len, count=0) %}
+    {% for row in rows %}
+        {% set row_sql = elementary.render_row_to_sql(
+            row, column_meta, created_at_sql, render_value_impl, escaper
+        ) %}
+        {% set row_len = row_sql | length %}
+        {% set separator_len = 0 if chunk.count == 0 else 1 %}
+        {% set projected_len = chunk.len + separator_len + row_len %}
+
+        {% if projected_len > query_max_size or chunk.count >= chunk_size %}
+            {% set new_query_len = base_len + row_len %}
 
             {# Check if row is too large to fit into an insert query. #}
-            {% if new_insert_query | length > query_max_size %}
+            {% if new_query_len > query_max_size %}
                 {% if on_query_exceed %}
                     {% do elementary.begin_duration_measure_context(
                         "on_query_exceed"
@@ -144,14 +153,21 @@
                     {% do on_query_exceed(row) %}
                     {% do elementary.end_duration_measure_context("on_query_exceed") %}
 
-                    {% set row_sql = elementary.render_row_to_sql(row, columns) %}
-                    {% set new_insert_query = base_insert_query + row_sql %}
+                    {% set row_sql = elementary.render_row_to_sql(
+                        row,
+                        column_meta,
+                        created_at_sql,
+                        render_value_impl,
+                        escaper,
+                    ) %}
+                    {% set row_len = row_sql | length %}
+                    {% set new_query_len = base_len + row_len %}
                 {% endif %}
 
-                {% if new_insert_query | length > query_max_size %}
+                {% if new_query_len > query_max_size %}
                     {% do elementary.file_log(
                         "Oversized row for insert_rows: {}".format(
-                            query_with_row
+                            base_insert_query + row_sql
                         )
                     ) %}
                     {% do exceptions.warn(
@@ -160,18 +176,24 @@
                 {% endif %}
             {% endif %}
 
-            {% if current_query.data != base_insert_query %}
-                {% do insert_queries.append(current_query.data) %}
+            {% if chunk.count > 0 %}
+                {% do insert_queries.append(
+                    base_insert_query + (chunk.rows | join(","))
+                ) %}
             {% endif %}
-            {% set current_query.data = new_insert_query %}
-            {% set current_chunk_size.data = 1 %}
+            {% set chunk.rows = [row_sql] %}
+            {% set chunk.len = new_query_len %}
+            {% set chunk.count = 1 %}
 
         {% else %}
-            {% set current_query.data = query_with_row %}
-            {% set current_chunk_size.data = current_chunk_size.data + 1 %}
+            {% do chunk.rows.append(row_sql) %}
+            {% set chunk.len = projected_len %}
+            {% set chunk.count = chunk.count + 1 %}
         {% endif %}
         {% if loop.last %}
-            {% do insert_queries.append(current_query.data) %}
+            {% do insert_queries.append(
+                base_insert_query + (chunk.rows | join(","))
+            ) %}
         {% endif %}
     {% endfor %}
 
@@ -179,31 +201,53 @@
     {{ return(insert_queries) }}
 {%- endmacro %}
 
-{% macro render_row_to_sql(row, columns) %}
-    {% do elementary.begin_duration_measure_context("render_row_to_sql") %}
-
-    {% set rendered_column_values = [] %}
+{% macro get_columns_metadata(columns, sample_row) %}
+    {% set column_meta = [] %}
     {% for column in columns %}
-        {% if column.name.lower() == "created_at" %}
-            {% set column_value = elementary.edr_current_timestamp() %}
-            {% do rendered_column_values.append(column_value) %}
+        {% set is_created_at = column.name | lower == "created_at" %}
+        {% set row_key = none %}
+        {% if not is_created_at and sample_row is not none %}
+            {% if column.name in sample_row %} {% set row_key = column.name %}
+            {% elif column.name | lower in sample_row %}
+                {% set row_key = column.name | lower %}
+            {% elif column.name | upper in sample_row %}
+                {% set row_key = column.name | upper %}
+            {% endif %}
+        {% endif %}
+        {% do column_meta.append(
+            {
+                "is_created_at": is_created_at,
+                "row_key": row_key,
+                "normalized_type": elementary.normalize_data_type(
+                    column.dtype
+                ),
+            }
+        ) %}
+    {% endfor %}
+    {% do return(column_meta) %}
+{% endmacro %}
+
+{% macro render_row_to_sql(
+    row, column_meta, created_at_sql, render_value_impl, escaper
+) %}
+    {% set rendered_column_values = [] %}
+    {% for column in column_meta %}
+        {% if column.is_created_at %}
+            {% do rendered_column_values.append(created_at_sql) %}
         {% else %}
-            {% set column_value = elementary.insensitive_get_dict_value(
-                row, column.name
-            ) %}
-            {% set normalized_data_type = elementary.normalize_data_type(
-                column.dtype
+            {% set column_value = (
+                row.get(column.row_key)
+                if column.row_key is not none
+                else none
             ) %}
             {% do rendered_column_values.append(
-                elementary.render_value(column_value, normalized_data_type)
+                render_value_impl(
+                    column_value, column.normalized_type, escaper
+                )
             ) %}
-
         {% endif %}
     {% endfor %}
-    {% set row_sql = "({})".format(rendered_column_values | join(",")) %}
-
-    {% do elementary.end_duration_measure_context("render_row_to_sql") %}
-    {% do return(row_sql) %}
+    {% do return("({})".format(rendered_column_values | join(","))) %}
 {% endmacro %}
 
 {% macro escape_special_chars(string_value) %}
@@ -290,11 +334,17 @@
     -}}
 {%- endmacro -%}
 
-{%- macro render_value(value, data_type) -%}
-    {{- adapter.dispatch("render_value", "elementary")(value, data_type) -}}
+{# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
+   so the hot insert path avoids an adapter.dispatch per rendered cell. When it's
+   not provided it is resolved once here. #}
+{%- macro render_value(value, data_type, escaper=none) -%}
+    {{- adapter.dispatch("render_value", "elementary")(value, data_type, escaper) -}}
 {%- endmacro -%}
 
-{%- macro default__render_value(value, data_type) -%}
+{%- macro default__render_value(value, data_type, escaper=none) -%}
+    {%- if escaper is none -%}
+        {%- set escaper = adapter.dispatch("escape_special_chars", "elementary") -%}
+    {%- endif -%}
     {%- if value is defined and value is not none -%}
         {%- if value is boolean -%} {{- elementary.edr_boolean_literal(value) -}}
         {%- elif value is number -%} {{- value -}}
@@ -304,9 +354,9 @@
                     elementary.edr_datetime_to_sql(value)
                 )
             -}}
-        {%- elif value is string -%} '{{- elementary.escape_special_chars(value) -}}'
+        {%- elif value is string -%} '{{- escaper(value) -}}'
         {%- elif value is mapping or value is sequence -%}
-            '{{- elementary.escape_special_chars(tojson(value)) -}}'
+            '{{- escaper(tojson(value)) -}}'
         {%- else -%} null
         {%- endif -%}
     {%- else -%} null
