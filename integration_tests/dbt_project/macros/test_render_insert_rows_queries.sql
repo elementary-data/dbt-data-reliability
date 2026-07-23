@@ -33,5 +33,12 @@
         query_max_size=query_max_size,
         chunk_size=chunk_size,
     ) %}
-    {% do return(queries) %}
+    {# Return the adapter-escaped literal alongside the queries so assertions can
+       stay adapter-aware (escaping differs per warehouse, e.g. '' vs \'). #}
+    {% do return(
+        {
+            "queries": queries,
+            "escaped_quote_name": elementary.escape_special_chars("O'Brien"),
+        }
+    ) %}
 {% endmacro %}
