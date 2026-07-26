@@ -336,7 +336,7 @@
 
 {# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
    so the hot insert path avoids an adapter.dispatch per rendered cell. When it's
-   not provided it is resolved once here. #}
+   not provided, the adapter's render_value resolves it (see default__render_value). #}
 {%- macro render_value(value, data_type, escaper=none) -%}
     {{- adapter.dispatch("render_value", "elementary")(value, data_type, escaper) -}}
 {%- endmacro -%}

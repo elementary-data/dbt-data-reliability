@@ -2,11 +2,48 @@ import json
 
 from dbt_project import DbtProject
 
+NAME_WITH_QUOTE = "O'Brien"
+
+# Mock schema mixing every type the renderer must handle distinctly.
+COLUMNS = [
+    {"name": "name", "dtype": "varchar"},
+    {"name": "int_col", "dtype": "integer"},
+    {"name": "float_col", "dtype": "float"},
+    {"name": "bool_col", "dtype": "boolean"},
+    {"name": "json_col", "dtype": "varchar"},
+    {"name": "null_col", "dtype": "varchar"},
+    {"name": "created_at", "dtype": "timestamp"},
+]
+
+ROWS = [
+    {
+        "name": NAME_WITH_QUOTE,
+        "int_col": 42,
+        "float_col": 3.14,
+        "bool_col": True,
+        "json_col": {"a": 1, "b": [1, 2]},
+        "null_col": None,
+    },
+    {
+        "name": "second",
+        "int_col": 0,
+        "float_col": -1.5,
+        "bool_col": False,
+        "json_col": [1, "x"],
+        "null_col": "here",
+    },
+]
+
 
 def _render(dbt_project: DbtProject, **macro_args):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_render_insert_rows_queries",
-        macro_args=macro_args,
+        macro_args={
+            "columns": COLUMNS,
+            "rows": ROWS,
+            "escape_sample": NAME_WITH_QUOTE,
+            **macro_args,
+        },
     )
     output = json.loads(result[0])
     # Escaping differs per adapter ('' vs \'), so derive the expected quoted
