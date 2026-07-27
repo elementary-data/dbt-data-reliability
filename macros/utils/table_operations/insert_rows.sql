@@ -124,6 +124,9 @@
     {% endset %}
     {% do elementary.end_duration_measure_context("base_query_calc") %}
 
+    {# Column keys are resolved once from the first row, so every row in the
+       batch is expected to use the same key casing (all callers feed rows from
+       the flatten_* artifact macros, which emit consistent literal keys). #}
     {% set column_meta = elementary.get_columns_metadata(
         columns, rows[0] if rows else none
     ) %}
