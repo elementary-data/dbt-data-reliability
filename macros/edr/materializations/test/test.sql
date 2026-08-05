@@ -33,8 +33,10 @@
         {% set elementary_test_type = elementary.get_elementary_test_type(
             {"short_name": short_name, "test_namespace": "elementary"}
         ) %}
-        {% if elementary_test_type %}
-            {# Anomaly detection and schema change tests handle their own result row collection #}
+        {% if elementary_test_type and elementary_test_type != "with_context" %}
+            {# Anomaly detection and schema change tests handle their own result row collection.
+               with_context tests do not -- they return the failing rows and need this
+               materialization to sample them -- so they are exempted explicitly. #}
             {% do return(materialization_macro()) %}
         {% endif %}
     {% endif %}

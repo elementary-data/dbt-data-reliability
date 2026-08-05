@@ -37,6 +37,10 @@ def test_with_context_test_is_sampled(test_id: str, dbt_project: DbtProject):
     # calculate_failed_count also sits after the early return, so it was skipped too and left
     # failed_row_count null. Asserting it here covers that second path.
     assert test_result["failed_row_count"] == null_count
+    # get_elementary_test_type returns a distinct "with_context" type so the materialization can
+    # exempt these tests explicitly, but the reported test_type must stay "dbt_test": the alerts
+    # models partition on it exactly, so any other value would leave these tests raising no alerts.
+    assert test_result["test_type"] == "dbt_test"
 
     samples = [
         json.loads(row["result_row"])
