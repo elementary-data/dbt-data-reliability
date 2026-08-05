@@ -49,6 +49,10 @@
     {% do return(result | length > 0) %}
 {% endmacro %}
 
+{% macro sqlserver__edr_schema_exists(database, schema_name) %}
+    {% do return(fabric__edr_schema_exists(database, schema_name)) %}
+{% endmacro %}
+
 {% macro clickhouse__edr_schema_exists(database, schema_name) %}
     {% set safe_schema = schema_name | replace("'", "''") %}
     {% set result = run_query(

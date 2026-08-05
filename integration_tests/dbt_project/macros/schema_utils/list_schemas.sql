@@ -41,6 +41,10 @@
     {% do return(schemas) %}
 {% endmacro %}
 
+{% macro sqlserver__edr_list_schemas(database) %}
+    {% do return(fabric__edr_list_schemas(database)) %}
+{% endmacro %}
+
 {% macro clickhouse__edr_list_schemas(database) %}
     {% set results = run_query("SHOW DATABASES") %}
     {% set schemas = [] %}

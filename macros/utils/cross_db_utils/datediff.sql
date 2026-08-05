@@ -280,6 +280,10 @@
     datediff({{ date_part }}, {{ first_date }}, {{ second_date }})
 {% endmacro %}
 
+{% macro sqlserver__edr_datediff(first_date, second_date, date_part) %}
+    {{ elementary.fabric__edr_datediff(first_date, second_date, date_part) }}
+{% endmacro %}
+
 {% macro dremio__edr_datediff(first_date, second_date, date_part) %}
     {%- set seconds_diff_expr -%}
         cast(unix_timestamp(substr(cast(({{ second_date }}) as varchar), 1, 19)) - 

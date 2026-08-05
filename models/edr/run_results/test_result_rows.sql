@@ -1,16 +1,14 @@
--- indexes are not supported in all warehouses, relevant to postgres only
 {{
     config(
         materialized="incremental",
         on_schema_change="append_new_columns",
-        indexes=(
+        indexes=elementary.get_indexes_for_model(
+            "test_result_rows",
             [
                 {"columns": ["created_at"]},
                 {"columns": ["elementary_test_results_id"]},
                 {"columns": ["detected_at"]},
-            ]
-            if target.type == "postgres"
-            else []
+            ],
         ),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={

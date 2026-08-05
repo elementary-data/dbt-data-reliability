@@ -61,6 +61,7 @@ PARAM_VALUES = {
         {"count": 90, "period": "day"},
     ),
     "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
+    "min_value": ParamValues(0.5, 1.0, 2.0),
 }
 
 
@@ -88,6 +89,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "freshness_column": None,  # Deprecated
         "dimensions": None,  # should only be set at the test level,
         "exclude_final_results": get_value("exclude_final_results"),
+        "min_value": get_value("min_value"),
         "exclude_detection_period_from_training": None,
     }
 

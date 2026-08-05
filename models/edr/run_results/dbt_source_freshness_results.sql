@@ -10,13 +10,12 @@
         },
         table_type=elementary.get_default_table_type(),
         incremental_strategy=elementary.get_default_incremental_strategy(),
-        indexes=(
+        indexes=elementary.get_indexes_for_model(
+            "dbt_source_freshness_results",
             [
                 {"columns": ["unique_id", "created_at"]},
                 {"columns": ["source_freshness_execution_id"]},
-            ]
-            if target.type == "postgres"
-            else []
+            ],
         ),
     )
 }}

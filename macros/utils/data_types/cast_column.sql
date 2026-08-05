@@ -10,6 +10,22 @@
     cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
+{#
+  BigQuery's TIMESTAMP type only supports microsecond precision (6 fractional digits).
+  Some runtimes (e.g. dbt-fusion) write nanosecond-precision strings like
+  '2026-04-03T10:50:50.961498756Z' into Elementary's metadata tables, which fail
+  to cast. This truncates any sub-microsecond fractional digits before casting.
+#}
+{%- macro bigquery__edr_cast_as_timestamp(timestamp_field) -%}
+    cast(
+        regexp_replace(
+            cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
+            r'(\.\d{6})\d+',
+            r'\1'
+        ) as {{ elementary.edr_type_timestamp() }}
+    )
+{%- endmacro -%}
+
 {# Athena and Trino needs explicit conversion for ISO8601 timestamps used in buckets_cte #}
 {%- macro athena__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(

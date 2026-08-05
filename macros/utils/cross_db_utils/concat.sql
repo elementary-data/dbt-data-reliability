@@ -13,3 +13,7 @@
 {% macro fabric__edr_concat(fields) %}
     cast({{ dbt.concat(fields) }} as varchar(4000))
 {% endmacro %}
+
+{% macro sqlserver__edr_concat(fields) %}
+    {{ elementary.fabric__edr_concat(fields) }}
+{% endmacro %}

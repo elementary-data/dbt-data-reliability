@@ -331,6 +331,10 @@
 
 {% endmacro %}
 
+{% macro sqlserver__data_type_list(data_type) %}
+    {% do return(elementary.fabric__data_type_list(data_type)) %}
+{% endmacro %}
+
 {% macro dremio__data_type_list(data_type) %}
     {% set string_list = ["varchar", "character varying"] | list %}
     {% set numeric_list = [

@@ -116,6 +116,10 @@
     cast(replace(parsename(full_table_name, {{ part_index }}), '"', '') as varchar(256)) as {{ part_name }}
 {% endmacro %}
 
+{% macro sqlserver__full_name_split(part_name) %}
+    {{ elementary.fabric__full_name_split(part_name) }}
+{% endmacro %}
+
 {% macro bigquery__full_name_split(part_name) %}
     {%- if part_name == "database_name" -%} {%- set part_index = 0 %}
     {%- elif part_name == "schema_name" -%} {%- set part_index = 1 %}

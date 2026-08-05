@@ -79,6 +79,11 @@
         {% endfor %}
     {% elif raw_owner is iterable %} {% do formatted_owner.extend(raw_owner) %}
     {% endif %}
+    {% set group_name = config_dict.get("group") or node_dict.get("group") %}
+    {% if not formatted_owner and group_name %}
+        {% set group_owner = elementary.get_group_owner(group_name) %}
+        {% if group_owner %} {% do formatted_owner.append(group_owner) %} {% endif %}
+    {% endif %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, "tags", []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, "tags", []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, "tags", []) %}
@@ -112,7 +117,7 @@
         "incremental_strategy": config_dict.get("incremental_strategy"),
         "bigquery_partition_by": config_dict.get("partition_by"),
         "bigquery_cluster_by": config_dict.get("cluster_by"),
-        "group_name": config_dict.get("group") or node_dict.get("group"),
+        "group_name": group_name,
         "access": config_dict.get("access") or node_dict.get("access"),
     } %}
     {% do flatten_model_metadata_dict.update(

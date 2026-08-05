@@ -23,6 +23,10 @@
     -}}
 {%- endmacro -%}
 
+{%- macro sqlserver__get_anomaly_query(flattened_test=none) -%}
+    {%- do return(elementary.fabric__get_anomaly_query(flattened_test)) -%}
+{%- endmacro -%}
+
 {%- macro get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
     {{-
         return(
@@ -62,6 +66,14 @@
             )
         )
     -}}
+{%- endmacro -%}
+
+{%- macro sqlserver__get_anomaly_query_for_dimension_anomalies(flattened_test=none) -%}
+    {%- do return(
+        elementary.fabric__get_anomaly_query_for_dimension_anomalies(
+            flattened_test
+        )
+    ) -%}
 {%- endmacro -%}
 
 {% macro get_read_anomaly_scores_query(
@@ -229,6 +241,12 @@
     (metric_value = 0 and {% if fail_on_zero %} 1 = 1 {% else %} 1 = 2 {% endif %})
 {% endmacro %}
 
+{% macro min_value_condition(min_value) %}
+    {% if min_value is not none %}(metric_value >= {{ min_value }})
+    {% else %}(1 = 1)
+    {% endif %}
+{% endmacro %}
+
 {% macro anomaly_score_condition(test_configuration) %}
     (
         anomaly_score is not null
@@ -249,6 +267,7 @@
                         test_configuration.anomaly_direction,
                     )
                 }}
+                and {{ elementary.min_value_condition(test_configuration.min_value) }}
             )
         )
     )

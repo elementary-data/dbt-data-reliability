@@ -53,6 +53,14 @@
     )
 {%- endmacro -%}
 
+{%- macro sqlserver__edr_multi_value_in(source_cols, target_cols, target_table) -%}
+    {{-
+        elementary.fabric__edr_multi_value_in(
+            source_cols, target_cols, target_table
+        )
+    -}}
+{%- endmacro -%}
+
 {%- macro redshift__edr_multi_value_in(source_cols, target_cols, target_table) -%}
     {# Redshift doesn't support multi-column IN subqueries (tuple IN) like:
        (col1, col2) IN (SELECT col1, col2 FROM table)

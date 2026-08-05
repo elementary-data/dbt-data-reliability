@@ -4,9 +4,10 @@
     ) %}
     {% set source_freshness_results_dicts = [] %}
     {% for result in results %}
-        {% do source_freshness_results_dicts.append(
-            elementary.process_freshness_result(result)
-        ) %}
+        {% set processed_result = elementary.process_freshness_result(result) %}
+        {% if processed_result is not none %}
+            {% do source_freshness_results_dicts.append(processed_result) %}
+        {% endif %}
     {% endfor %}
     {% do elementary.upload_artifacts_to_table(
         source_freshness_results_relation,
@@ -19,6 +20,12 @@
 
 {% macro process_freshness_result(result) %}
     {% set result_dict = result.to_dict() %}
+    {#
+        dbt-fusion returns a none `node` for some freshness results (e.g. errored
+        sources), unlike dbt-core. Skip them so the on_run_end hook does not crash
+        on `result_dict.node.unique_id`.
+    #}
+    {% if result_dict.get("node") is none %} {% do return(none) %} {% endif %}
     {% if result_dict.status == "runtime error" %}
         {% do return(
             {
@@ -47,7 +54,7 @@
 {% macro flatten_source_freshness(node_dict) %}
     {% set compile_timing = {} %}
     {% set execute_timing = {} %}
-    {% for timing in node_dict["timing"] %}
+    {% for timing in node_dict.get("timing") or [] %}
         {% if timing["name"] == "compile" %} {% do compile_timing.update(timing) %}
         {% elif timing["name"] == "execute" %} {% do execute_timing.update(timing) %}
         {% endif %}

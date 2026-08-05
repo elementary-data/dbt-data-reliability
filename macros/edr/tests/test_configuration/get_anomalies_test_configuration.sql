@@ -24,6 +24,7 @@
     detection_period,
     training_period,
     exclude_final_results,
+    min_value,
     exclude_detection_period_from_training
 ) %}
 
@@ -59,6 +60,21 @@
     {%- set backfill_days = elementary.detection_period_to_backfill_days(
         detection_period, backfill_days, model_graph_node
     ) -%}
+    {%- if metric_props.time_bucket %}
+        {%- set bucket_in_days = elementary.convert_period(
+            metric_props.time_bucket, "day"
+        ).count %}
+        {%- if bucket_in_days > backfill_days %}
+            {%- do elementary.edr_log(
+                "backfill_days increased from "
+                ~ backfill_days
+                ~ " to "
+                ~ bucket_in_days
+                ~ " to match time bucket size."
+            ) %}
+            {%- set backfill_days = bucket_in_days %}
+        {%- endif %}
+    {%- endif %}
     {%- set fail_on_zero = elementary.get_test_argument(
         "fail_on_zero", fail_on_zero, model_graph_node
     ) %}
@@ -94,6 +110,10 @@
         } %}
     {%- endif %}
 
+    {%- set min_value = elementary.get_test_argument(
+        "min_value", min_value, model_graph_node
+    ) %}
+
     {% set anomaly_exclude_metrics = elementary.get_test_argument(
         "anomaly_exclude_metrics", anomaly_exclude_metrics, model_graph_node
     ) %}
@@ -120,6 +140,7 @@
         "seasonality": seasonality,
         "ignore_small_changes": ignore_small_changes,
         "fail_on_zero": fail_on_zero,
+        "min_value": min_value,
         "detection_delay": detection_delay,
         "anomaly_exclude_metrics": anomaly_exclude_metrics,
         "exclude_final_results": exclude_final_results,

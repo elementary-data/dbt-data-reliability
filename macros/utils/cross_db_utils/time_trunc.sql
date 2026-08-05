@@ -26,3 +26,7 @@
         cast({{ date_expression }} as {{ elementary.edr_type_timestamp() }})
     )
 {% endmacro %}
+
+{% macro sqlserver__edr_time_trunc(date_part, date_expression) %}
+    {{ elementary.fabric__edr_time_trunc(date_part, date_expression) }}
+{% endmacro %}

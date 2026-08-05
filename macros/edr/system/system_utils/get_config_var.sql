@@ -49,6 +49,10 @@
     {% if value %} cast(1 as bit) {% else %} cast(0 as bit){% endif %}
 {% endmacro %}
 
+{% macro sqlserver__edr_boolean_literal(value) %}
+    {{ elementary.fabric__edr_boolean_literal(value) }}
+{% endmacro %}
+
 {# Render a SQL condition as a boolean column value.
    Produces: case when <condition> then TRUE else FALSE end
    On T-SQL, TRUE/FALSE become cast(1/0 as bit).
@@ -70,6 +74,10 @@
 
 {% macro fabric__edr_is_true(expr) %} {{ expr }} = cast(1 as bit) {% endmacro %}
 
+{% macro sqlserver__edr_is_true(expr) %}
+    {{ elementary.fabric__edr_is_true(expr) }}
+{% endmacro %}
+
 {# Compare a SQL expression to FALSE.  Works across all dialects including T-SQL (bit). #}
 {% macro edr_is_false(expr) %}
     {{ return(adapter.dispatch("edr_is_false", "elementary")(expr)) }}
@@ -79,6 +87,10 @@
 
 {% macro fabric__edr_is_false(expr) %} {{ expr }} = cast(0 as bit) {% endmacro %}
 
+{% macro sqlserver__edr_is_false(expr) %}
+    {{ elementary.fabric__edr_is_false(expr) }}
+{% endmacro %}
+
 {# Returns true if the current adapter uses T-SQL dialect (Fabric or SQL Server). #}
 {% macro is_tsql() %}
     {{ return(adapter.dispatch("is_tsql", "elementary")()) }}
@@ -87,6 +99,10 @@
 {% macro default__is_tsql() %} {{ return(false) }} {% endmacro %}
 
 {% macro fabric__is_tsql() %} {{ return(true) }} {% endmacro %}
+
+{% macro sqlserver__is_tsql() %}
+    {% do return(elementary.fabric__is_tsql()) %}
+{% endmacro %}
 
 {% macro get_default_config(var_name) %}
     {{ return(adapter.dispatch("get_default_config", "elementary")()) }}
@@ -148,6 +164,7 @@
         "bigquery_disable_partitioning": false,
         "bigquery_disable_clustering": false,
         "upload_only_current_project_artifacts": false,
+        "elementary_extra_indexes": {},
     } %}
     {{- return(default_config) -}}
 {%- endmacro -%}

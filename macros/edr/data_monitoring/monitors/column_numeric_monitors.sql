@@ -83,6 +83,14 @@
     var(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}
 
+{% macro sqlserver__standard_deviation(column_name) -%}
+    {{ elementary.fabric__standard_deviation(column_name) }}
+{%- endmacro %}
+
+{% macro sqlserver__variance(column_name) -%}
+    {{ elementary.fabric__variance(column_name) }}
+{%- endmacro %}
+
 {% macro sum(column_name) -%}
     sum(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
 {%- endmacro %}

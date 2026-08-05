@@ -96,6 +96,10 @@
     )
 {% endmacro %}
 
+{% macro sqlserver__edr_hour_of_week_expression(date_expr) %}
+    {{ elementary.fabric__edr_hour_of_week_expression(date_expr) }}
+{% endmacro %}
+
 {% macro duckdb__edr_hour_of_week_expression(date_expr) %}
     concat(
         cast(dayname({{ date_expr }}) as {{ elementary.edr_type_string() }}),

@@ -12,6 +12,10 @@
 
 {% macro fabric__edr_type_bool() %} {% do return("bit") %} {% endmacro %}
 
+{% macro sqlserver__edr_type_bool() %}
+    {% do return(elementary.fabric__edr_type_bool()) %}
+{% endmacro %}
+
 
 {%- macro edr_type_string() -%}
     {{ return(adapter.dispatch("edr_type_string", "elementary")()) }}
@@ -52,6 +56,10 @@
 
 {% macro fabric__edr_type_string() %} {% do return("varchar(4096)") %} {% endmacro %}
 
+{% macro sqlserver__edr_type_string() %}
+    {% do return(elementary.fabric__edr_type_string()) %}
+{% endmacro %}
+
 {% macro vertica__edr_type_string() %} {% do return("varchar(16000)") %} {% endmacro %}
 
 
@@ -88,6 +96,10 @@
 {%- macro fabric__edr_type_long_string() -%}
     {% do return("varchar(max)") %}
 {%- endmacro -%}
+
+{% macro sqlserver__edr_type_long_string() %}
+    {% do return(elementary.fabric__edr_type_long_string()) %}
+{% endmacro %}
 
 
 {% macro edr_type_bigint() %}
@@ -158,6 +170,10 @@
 {% macro dremio__edr_type_timestamp() %} timestamp {% endmacro %}
 
 {% macro fabric__edr_type_timestamp() %} datetime2(6) {% endmacro %}
+
+{% macro sqlserver__edr_type_timestamp() %}
+    {{ elementary.fabric__edr_type_timestamp() }}
+{% endmacro %}
 
 {% macro fabricspark__edr_type_bool() %}
     {{ return(elementary.default__edr_type_bool()) }}
