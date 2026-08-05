@@ -4,7 +4,9 @@
             flattened_test
         ) %}
     {% endif %}
-    {% if elementary_test_type == "with_context" %} {% do return("dbt_test") %} {% endif %}
+    {% if elementary_test_type == "with_context" %}
+        {% do return("dbt_test") %}
+    {% endif %}
     {% do return(elementary_test_type or "dbt_test") %}
 {% endmacro %}
 
