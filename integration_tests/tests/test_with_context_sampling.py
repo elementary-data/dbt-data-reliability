@@ -34,13 +34,19 @@ def test_with_context_test_is_sampled(test_id: str, dbt_project: DbtProject):
         },
     )
     assert test_result["status"] == "fail"
+    # calculate_failed_count also sits after the early return, so it was skipped too and left
+    # failed_row_count null. Asserting it here covers that second path.
+    assert test_result["failed_row_count"] == null_count
 
     samples = [
         json.loads(row["result_row"])
         for row in dbt_project.run_query(dbt_project.samples_query(test_id))
     ]
     assert len(samples) == TEST_SAMPLE_ROW_COUNT
-    # The requested context column travels with the failing row; that is the whole point.
+    # The requested context column travels with the failing row, carrying its real value; that is
+    # the whole point of the family. Membership rather than equality because sampling returns an
+    # arbitrary TEST_SAMPLE_ROW_COUNT of the null_count failing rows.
+    expected_context_values = {f"context-{index}" for index in range(null_count)}
     for sample in samples:
         assert sample[COLUMN_NAME] is None
-        assert sample[CONTEXT_COLUMN].startswith("context-")
+        assert sample[CONTEXT_COLUMN] in expected_context_values
