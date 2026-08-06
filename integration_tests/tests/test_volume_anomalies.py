@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
@@ -66,9 +67,10 @@ def test_volume_anomalies_description_reports_anomalous_bucket(
     assert test_result["status"] == "fail"
 
     # The description must describe the anomalous bucket, not whichever scored
-    # bucket the anomaly scores query happened to return last.
+    # bucket the anomaly scores query happened to return last. Warehouses render
+    # the rounded value differently ("6" vs "6.000"), so match either.
     description = test_result["test_results_description"].lower()
-    assert "6.000" in description
+    assert re.search(r"row_count value is 6(\.0+)?\b", description), description
 
 
 @Parametrization.autodetect_parameters()
