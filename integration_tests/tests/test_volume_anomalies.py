@@ -47,6 +47,30 @@ def test_full_drop_table_volume_anomalies(test_id: str, dbt_project: DbtProject)
     assert test_result["status"] == "fail"
 
 
+def test_volume_anomalies_description_reports_anomalous_bucket(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    test_date, *training_dates = generate_dates(base_date=utc_today - timedelta(days=1))
+
+    # Training buckets hold a single row each, the detected bucket spikes to six.
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: test_date.strftime(DATE_FORMAT)} for _ in range(6)
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in training_dates
+    ]
+
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
+    assert test_result["status"] == "fail"
+
+    # The description must describe the anomalous bucket, not whichever scored
+    # bucket the anomaly scores query happened to return last.
+    description = test_result["test_results_description"].lower()
+    assert "6.000" in description
+
+
 @Parametrization.autodetect_parameters()
 @Parametrization.case(name="source", as_model=False)
 @Parametrization.case(name="model", as_model=True)
