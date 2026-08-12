@@ -84,7 +84,7 @@
 
     {% if delete_relation %}
         {% set delete_query %}
-            alter table {{ relation }} {{ on_cluster_clause(relation) }} delete where
+            delete from {{ relation }} {{ on_cluster_clause(relation) }} where
             {{ delete_column_key }} is null
             or {{ delete_column_key }} in (select {{ delete_column_key }} from {{ delete_relation }})
             {{ adapter.get_model_query_settings(model) }};
