@@ -86,6 +86,13 @@ jobs:
         with:
           path: dbt-data-reliability
           ref: ${{ inputs.dbt-data-reliability-ref }}
+          # Fork PRs are tested via pull_request_target intentionally: the
+          # integration tests need the CI secrets of our test warehouses, which
+          # a pull_request run of a fork cannot access. The caller
+          # (test-all-warehouses.yml) gates fork PRs behind the
+          # elementary_test_env environment, so a maintainer must approve the
+          # run before this fork code is checked out and executed.
+          allow-unsafe-pr-checkout: true
 
       - name: Configure AWS credentials
         if: inputs.warehouse-type == 'athena'
