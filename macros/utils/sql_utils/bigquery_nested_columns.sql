@@ -10,11 +10,17 @@
         path (e.g. user.address.city) — i.e. an actual nested STRUCT reference.
         Returns false for plain identifiers, SQL expressions (dimensions are
         documented as accepting arbitrary expressions, which must pass through
-        untouched) and non-BigQuery adapters. -#}
+        untouched) and non-BigQuery adapters.
+        Every segment must start with a letter or underscore, so numeric
+        literals used as dimensions (0.99) are not mistaken for paths. -#}
     {%- if target.type != "bigquery" or name is not string -%}
         {{ return(false) }}
     {%- endif -%}
-    {{ return(modules.re.match("^\\w+(\\.\\w+)+$", name) is not none) }}
+    {{
+        return(
+            modules.re.match("^[A-Za-z_]\\w*(\\.[A-Za-z_]\\w*)+$", name) is not none
+        )
+    }}
 {% endmacro %}
 
 {% macro bq_segment_quote(name) %}
