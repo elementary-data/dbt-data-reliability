@@ -2,34 +2,18 @@
 
     {% set column_objects = adapter.get_columns_in_relation(model_relation) %}
 
-    {% if target.type == 'bigquery' %}
-        {% set expanded = [] %}
-        {% for col in column_objects %}
-            {% do expanded.append(col) %}
-            {% if col.fields | length > 0 %}
-                {# `BigQueryColumn.flatten()` discards ancestor modes, so a
-                   NULLABLE leaf under a REPEATED ancestor still satisfies
-                   `leaf.mode != 'REPEATED'`. Build the set of safe leaf names
-                   via an ancestor-aware walker and filter `flatten()` against
-                   it. #}
-                {% set safe_names = elementary.bq_safe_leaf_names(col) %}
-                {% for leaf in col.flatten() %}
-                    {% if leaf.name in safe_names %}
-                        {% do expanded.append(leaf) %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
-        {% endfor %}
-        {% set column_objects = expanded %}
+    {#- Only a dotted name can refer to a nested STRUCT leaf, so skip the
+        (potentially wide) flattening pass entirely for ordinary columns. -#}
+    {% if "." in column_name %}
+        {% set column_objects = elementary.bq_flatten_nested_columns(column_objects) %}
     {% endif %}
 
     {% for column_obj in column_objects %}
         {% if column_obj.name.strip('"') | lower == column_name.strip('"') | lower %}
-            {% set wrapped = elementary.wrap_column_for_struct_support(column_obj) %}
             {% set column_monitors = elementary.column_monitors_by_type(
-                elementary.get_column_data_type(wrapped), monitors
+                elementary.get_column_data_type(column_obj), monitors
             ) %}
-            {% set column_item = {"column": wrapped, "monitors": column_monitors} %}
+            {% set column_item = {"column": column_obj, "monitors": column_monitors} %}
             {{ return(column_item) }}
         {% endif %}
     {% endfor %}
@@ -43,12 +27,14 @@
     {% set column_obj_and_monitors = [] %}
     {% set column_objects = adapter.get_columns_in_relation(model_relation) %}
 
+    {#- Nested STRUCT leaves are intentionally not expanded here: auto-monitoring
+        every leaf would balloon the test surface on wide STRUCT schemas. Users
+        opt in per column via `column_anomalies` with a dotted `column_name`. -#}
     {% for column_obj in column_objects %}
-        {% set wrapped = elementary.wrap_column_for_struct_support(column_obj) %}
         {% set column_monitors = elementary.column_monitors_by_type(
-            elementary.get_column_data_type(wrapped), monitors
+            elementary.get_column_data_type(column_obj), monitors
         ) %}
-        {% set column_item = {"column": wrapped, "monitors": column_monitors} %}
+        {% set column_item = {"column": column_obj, "monitors": column_monitors} %}
         {% do column_obj_and_monitors.append(column_item) %}
     {% endfor %}
 

@@ -15,14 +15,32 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
-        {% if elementary.bq_is_nested_identifier(dimension_column) %}
-            {% do prefixed_dimensions.append(
-                "dimension_" ~ elementary.bq_safe_alias(dimension_column)
-            ) %}
-        {% else %}
-            {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
-        {% endif %}
+        {% do prefixed_dimensions.append(
+            "dimension_" ~ elementary.bq_alias_safe_dimension(dimension_column)
+        ) %}
     {% endfor %}
+
+    {#- A nested BigQuery struct leaf (user.address.city) cannot be referenced via
+        `column_obj.quoted` — that wraps the whole dotted name in one pair of
+        backticks — and projecting it into a CTE unaliased would collapse the path
+        to its last segment. Project it segment-quoted under a dot-free alias and
+        have the metric aggregates reference that alias instead. Non-nested
+        columns keep using `column_obj.quoted`, so identifier quoting (reserved
+        words, case-sensitive names) is never lost. -#}
+    {%- if elementary.bq_is_nested_identifier(column_obj.name) %}
+        {%- set nested_alias = adapter.quote(
+            elementary.bq_safe_alias(column_obj.name)
+        ) %}
+        {%- set monitored_column_projection = (
+            elementary.bq_segment_quote(column_obj.name)
+            ~ " as "
+            ~ nested_alias
+        ) %}
+        {%- set monitored_column_expr = nested_alias %}
+    {%- else %}
+        {%- set monitored_column_projection = column_obj.quoted %}
+        {%- set monitored_column_expr = column_obj.quoted %}
+    {%- endif %}
 
     {% set metric_types = [] %}
     {% set metric_name_to_type = {} %}
@@ -59,7 +77,7 @@
             ),
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }}{% if column_obj.is_nested %} as {{ adapter.quote(column_obj.safe_alias) }}{% endif %},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -84,7 +102,7 @@
         {%- else %}
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }}{% if column_obj.is_nested %} as {{ adapter.quote(column_obj.safe_alias) }}{% endif %},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -100,7 +118,7 @@
         column_metrics as (
 
             {%- if column_metrics %}
-                {%- set column = adapter.quote(column_obj.safe_alias) if column_obj.is_nested else column_obj.quoted -%}
+                {%- set column = monitored_column_expr -%}
                 select
                     {%- if timestamp_column %}
                         edr_bucket_start as bucket_start, edr_bucket_end as bucket_end,
@@ -347,16 +365,16 @@
     {% endif %}
 {% endmacro %}
 
-{# Segment-quotes nested dimensions on BigQuery and sanitises the alias suffix.
-   Backward compatible for non-nested columns and non-BQ adapters. #}
+{# Segment-quotes nested BigQuery struct dimensions and sanitises the alias
+   suffix. Both helpers are no-ops for plain identifiers, SQL expressions and
+   non-BigQuery adapters, so this stays byte-identical to previous behaviour
+   outside of nested struct references. #}
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
     {% set select_statements %}
     {%- for column in dimension_columns -%}
       {%- if as_prefix -%}
-        {%- set _is_nested_bq = elementary.bq_is_nested_identifier(column) -%}
-        {%- set _source = elementary.bq_segment_quote(column) if _is_nested_bq else column -%}
-        {%- set _alias_suffix = elementary.bq_safe_alias(column) if _is_nested_bq else column -%}
-        {{ _source }}{{ " as " ~ as_prefix ~ "_" ~ _alias_suffix }}
+        {{ elementary.bq_segment_quote(column) }}
+        {{- " as " ~ as_prefix ~ "_" ~ elementary.bq_alias_safe_dimension(column) -}}
       {%- else -%}
         {{ column }}
       {%- endif -%}
@@ -364,118 +382,4 @@
     {%- endfor -%}
     {% endset %}
     {{ return(select_statements) }}
-{% endmacro %}
-
-
-{# ---------------------------------------------------------------------- #}
-{# BigQuery STRUCT nested-field helpers.                                  #}
-{# ---------------------------------------------------------------------- #}
-
-{# True only on BigQuery and only when `name` is a plain dotted identifier path
-   (e.g. user.address.city) — i.e. an actual nested STRUCT reference. Returns
-   false for plain identifiers, SQL expressions (dimensions are documented as
-   accepting arbitrary expressions, which must pass through untouched) and
-   non-BigQuery adapters. #}
-{% macro bq_is_nested_identifier(name) %}
-    {%- if target.type != 'bigquery' or name is not string -%}
-        {{ return(false) }}
-    {%- endif -%}
-    {{ return(modules.re.match('^\\w+(\\.\\w+)+$', name) is not none) }}
-{% endmacro %}
-
-{# Segment-quote a nested identifier path for BigQuery:
-   user.address.city -> `user`.`address`.`city`.
-   Anything that is not a nested identifier path (plain identifiers, SQL
-   expressions, non-BigQuery adapters) is returned unchanged, preserving
-   existing behaviour at all callsites. #}
-{% macro bq_segment_quote(name) %}
-    {%- if elementary.bq_is_nested_identifier(name) -%}
-        {%- set parts = [] -%}
-        {%- for seg in name.split('.') -%}
-            {%- do parts.append('`' ~ seg ~ '`') -%}
-        {%- endfor -%}
-        {{ parts | join('.') }}
-    {%- else -%}
-        {{ name }}
-    {%- endif -%}
-{% endmacro %}
-
-{# Convert a (possibly dotted) identifier into a dot-free alias safe to use
-   as a SQL identifier. No-op for names without dots. #}
-{% macro bq_safe_alias(name) %}
-    {{- name | replace('.', '__') -}}
-{% endmacro %}
-
-{# Wrap a Column / BigQueryColumn with a dict carrying the SQL identifier
-   representation (.quoted, segment-quoted for nested), a CTE-projection-safe
-   alias (.safe_alias, dot-free) and an .is_nested flag. For non-nested columns
-   and non-BigQuery adapters the wrapper mirrors the original Column's values
-   (safe_alias falls back to .quoted so identifier quoting is never lost), so
-   downstream consumers see no behavioural difference. #}
-{% macro wrap_column_for_struct_support(column_obj) %}
-    {%- set name = column_obj.name -%}
-    {%- set is_nested = elementary.bq_is_nested_identifier(name) -%}
-    {%- if is_nested -%}
-        {%- set quoted_segments = [] -%}
-        {%- for seg in name.split('.') -%}
-            {%- do quoted_segments.append('`' ~ seg ~ '`') -%}
-        {%- endfor -%}
-        {%- set quoted = quoted_segments | join('.') -%}
-        {%- set safe_alias = name | replace('.', '__') -%}
-    {%- else -%}
-        {%- set quoted = column_obj.quoted -%}
-        {%- set safe_alias = column_obj.quoted -%}
-    {%- endif -%}
-    {# `fields` only exists on BigQueryColumn; guard so non-BigQuery
-       adapters (Snowflake, Postgres, Redshift, ...) don't trip on the
-       attribute access. #}
-    {%- set fields = column_obj.fields if column_obj.fields is defined else [] -%}
-    {{ return({
-        'name': name,
-        'column': column_obj.column,
-        'quoted': quoted,
-        'safe_alias': safe_alias,
-        'is_nested': is_nested,
-        'dtype': column_obj.dtype,
-        'data_type': column_obj.data_type,
-        'fields': fields,
-    }) }}
-{% endmacro %}
-
-{# Walk a BigQuery STRUCT tree and collect dotted leaf names that are safe to
-   monitor without UNNEST — i.e. no REPEATED ancestor anywhere in the path,
-   and the leaf itself is not REPEATED. `BigQueryColumn.flatten()` returns leaf
-   columns with the leaf's own mode but discards ancestor modes, so this walker
-   is the source of truth for "which leaves can we project directly?". #}
-{% macro bq_safe_leaf_names(column_obj) %}
-    {%- set safe_names = [] -%}
-    {%- if column_obj.mode != 'REPEATED'
-            and column_obj.fields is defined
-            and column_obj.fields | length > 0 -%}
-        {%- for child in column_obj.fields -%}
-            {%- do elementary._bq_walk_collect(
-                child, [column_obj.column], false, safe_names
-            ) -%}
-        {%- endfor -%}
-    {%- endif -%}
-    {{ return(safe_names) }}
-{% endmacro %}
-
-{# Recursive helper: walks a google.cloud.bigquery.SchemaField subtree,
-   propagating whether any ancestor was REPEATED. Append safe leaf names to
-   `safe_names`. #}
-{% macro _bq_walk_collect(field, prefix, has_repeated_ancestor, safe_names) %}
-    {%- set new_prefix = prefix + [field.name] -%}
-    {%- if field.fields | length == 0 -%}
-        {%- if not has_repeated_ancestor and field.mode != 'REPEATED' -%}
-            {%- do safe_names.append(new_prefix | join('.')) -%}
-        {%- endif -%}
-    {%- else -%}
-        {%- set new_has_repeated = has_repeated_ancestor or (field.mode == 'REPEATED') -%}
-        {%- for child in field.fields -%}
-            {%- do elementary._bq_walk_collect(
-                child, new_prefix, new_has_repeated, safe_names
-            ) -%}
-        {%- endfor -%}
-    {%- endif -%}
 {% endmacro %}
