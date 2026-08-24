@@ -11,8 +11,8 @@
     {% do return(query_result) %}
 {% endmacro %}
 
-{# DML/DDL must not use dbt.run_query: Fusion's BigQuery path Storage-Reads the
-   destination table when fetch=true, which OOMs on large elementary tables. #}
+{# Execute without fetching a result set. Use this for DML/DDL whose callers
+   discard the result; dbt.run_query always fetches. #}
 {% macro execute_no_fetch(query) %}
     {% do adapter.execute(
         elementary.format_query_with_metadata(query), fetch=false
