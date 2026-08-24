@@ -11,6 +11,14 @@
     {% do return(query_result) %}
 {% endmacro %}
 
+{# DML/DDL must not use dbt.run_query: Fusion's BigQuery path Storage-Reads the
+   destination table when fetch=true, which OOMs on large elementary tables. #}
+{% macro execute_no_fetch(query) %}
+    {% do adapter.execute(
+        elementary.format_query_with_metadata(query), fetch=false
+    ) %}
+{% endmacro %}
+
 {% macro format_query_with_metadata(query) %}
     {% do return(
         adapter.dispatch("format_query_with_metadata", "elementary")(query)

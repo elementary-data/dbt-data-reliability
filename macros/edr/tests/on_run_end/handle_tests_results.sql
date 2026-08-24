@@ -220,7 +220,7 @@
     {%- do elementary.edr_create_table_as(
         true, temp_relation, test_tables_union_query
     ) %}
-    {% do elementary.run_query(insert_query) %}
+    {% do elementary.execute_no_fetch(insert_query) %}
 
     {# DuckDB: commit so insert survives dbt's post-on-run-end ROLLBACK #}
     {% if target.type == "duckdb" %} {% do adapter.commit() %} {% endif %}
@@ -280,7 +280,7 @@
     {%- do elementary.edr_create_table_as(
         true, temp_relation, test_tables_union_query
     ) %}
-    {% do elementary.run_query(insert_query) %}
+    {% do elementary.execute_no_fetch(insert_query) %}
 
     {# DuckDB: commit so insert survives dbt's post-on-run-end ROLLBACK #}
     {% if target.type == "duckdb" %} {% do adapter.commit() %} {% endif %}
