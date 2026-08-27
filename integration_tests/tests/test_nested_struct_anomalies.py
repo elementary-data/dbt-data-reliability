@@ -110,6 +110,27 @@ def test_anomalous_column_anomalies_on_struct_field(
 
 
 @pytest.mark.only_on_targets(SUPPORTED_TARGETS)
+def test_column_anomalies_on_repeated_descendant_rejected(
+    test_id: str, dbt_project: DbtProject
+):
+    """Leaves under a REPEATED ancestor need UNNEST, so discovery must exclude
+    them and the test must error at the column lookup rather than generate
+    invalid SQL."""
+    utc_today = datetime.utcnow().date()
+    _create_struct_model(dbt_project, test_id, _stable_rows(utc_today - timedelta(1)))
+
+    test_result = dbt_project.test(
+        test_id,
+        COLUMN_TEST_NAME,
+        {"timestamp_column": TIMESTAMP_COLUMN, "column_anomalies": ["null_count"]},
+        test_column="orders.amount",
+        as_model=True,
+    )
+    assert test_result["status"] == "error"
+    assert "unable to find column" in test_result["test_results_description"].lower()
+
+
+@pytest.mark.only_on_targets(SUPPORTED_TARGETS)
 def test_column_anomalies_with_struct_dimension(test_id: str, dbt_project: DbtProject):
     """Plain monitored column, nested STRUCT leaf as the dimension."""
     utc_today = datetime.utcnow().date()
