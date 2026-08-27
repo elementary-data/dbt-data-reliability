@@ -46,7 +46,10 @@
         names the resulting column `city`, losing the path, so nested columns
         must be aliased on the way in. Only call this for names that satisfy
         `bq_is_nested_identifier` — on arbitrary SQL expressions it produces
-        nonsense. -#}
+        nonsense.
+        Known limitation: the mapping is not injective (`a.b__c` and `a__b.c`
+        both become `a__b__c`). Colliding paths used as dimensions on the same
+        test fail loudly with a duplicate-column error from BigQuery. -#}
     {{- name | replace(".", "__") -}}
 {% endmacro %}
 
