@@ -15,8 +15,32 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
-        {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
+        {% do prefixed_dimensions.append(
+            "dimension_" ~ elementary.bq_alias_safe_dimension(dimension_column)
+        ) %}
     {% endfor %}
+
+    {#- A nested BigQuery struct leaf (user.address.city) cannot be referenced via
+        `column_obj.quoted` — that wraps the whole dotted name in one pair of
+        backticks — and projecting it into a CTE unaliased would collapse the path
+        to its last segment. Project it segment-quoted under a dot-free alias and
+        have the metric aggregates reference that alias instead. Non-nested
+        columns keep using `column_obj.quoted`, so identifier quoting (reserved
+        words, case-sensitive names) is never lost. -#}
+    {%- if elementary.bq_is_nested_identifier(column_obj.name) %}
+        {%- set nested_alias = adapter.quote(
+            elementary.bq_safe_alias(column_obj.name)
+        ) %}
+        {%- set monitored_column_projection = (
+            elementary.bq_segment_quote(column_obj.name)
+            ~ " as "
+            ~ nested_alias
+        ) %}
+        {%- set monitored_column_expr = nested_alias %}
+    {%- else %}
+        {%- set monitored_column_projection = column_obj.quoted %}
+        {%- set monitored_column_expr = column_obj.quoted %}
+    {%- endif %}
 
     {% set metric_types = [] %}
     {% set metric_name_to_type = {} %}
@@ -53,7 +77,7 @@
             ),
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -78,7 +102,7 @@
         {%- else %}
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -94,7 +118,7 @@
         column_metrics as (
 
             {%- if column_metrics %}
-                {%- set column = column_obj.quoted -%}
+                {%- set column = monitored_column_expr -%}
                 select
                     {%- if timestamp_column %}
                         edr_bucket_start as bucket_start, edr_bucket_end as bucket_end,
@@ -341,16 +365,20 @@
     {% endif %}
 {% endmacro %}
 
+{# Segment-quotes nested BigQuery struct dimensions and sanitises the alias
+   suffix. Both helpers are no-ops for plain identifiers, SQL expressions and
+   non-BigQuery adapters, so this stays byte-identical to previous behaviour
+   outside of nested struct references. #}
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
     {% set select_statements %}
     {%- for column in dimension_columns -%}
-      {{ column }}
       {%- if as_prefix -%}
-        {{ " as " ~ as_prefix ~ "_" ~ column }}
+        {{ elementary.bq_segment_quote(column) }}
+        {{- " as " ~ as_prefix ~ "_" ~ elementary.bq_alias_safe_dimension(column) -}}
+      {%- else -%}
+        {{ column }}
       {%- endif -%}
-      {%- if not loop.last -%}
-        {{ ", " }}
-      {%- endif -%}
+      {%- if not loop.last -%}{{ ", " }}{%- endif -%}
     {%- endfor -%}
     {% endset %}
     {{ return(select_statements) }}
