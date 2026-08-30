@@ -17,5 +17,5 @@
     from {{ model }}
     where
         not ({{ column_A }} {{ ">=" if or_equal else ">" }} {{ column_B }})
-        {%- if row_condition %} and {{ row_condition }} {%- endif %}
+        {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
 {% endtest %}

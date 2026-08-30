@@ -13,8 +13,10 @@
         string: the column or expression to test.
         regex: the pattern, as a plain string.
         is_raw: emit the pattern as a raw string literal. Only Snowflake
-            (`$$...$$`) and BigQuery (`r'...'`) have such a syntax; ignored
-            elsewhere, where the literal is identical either way.
+            (`$$...$$`) and BigQuery (`r'...'`) have such a syntax, so on the
+            other twelve adapters it is a silent no-op. That matters where the
+            engine processes backslash escapes inside string literals
+            (ClickHouse, Spark): escape the pattern yourself there.
         flags: regex flags. `i` (case-insensitive) is honored on every adapter
             that supports flags at all. Anything the adapter does not accept is
             dropped with a warning, by `regexp_sanitize_flags` below.
@@ -60,8 +62,9 @@
 {% endmacro %}
 
 {#
-    Prepends an inline flag group, which every RE2/PCRE engine understands.
-    Used by the adapters that take no separate flags argument.
+    Prepends an inline flag group. Every regex flavour we target understands
+    this syntax: RE2, PCRE, Postgres ARE and Java. Used by the adapters that
+    take no separate flags argument.
 #}
 {% macro regexp_inline_flags(regex, flags) %}
     {%- if flags %} {%- do return("(?" ~ flags ~ ")" ~ regex) %}
@@ -93,7 +96,7 @@
 {% macro trino__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
 {% macro athena__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
 {% macro clickhouse__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
-{% macro vertica__regexp_supported_flags() %} {%- do return("bcgimnx") %} {% endmacro %}
+{% macro vertica__regexp_supported_flags() %} {%- do return("bcimnx") %} {% endmacro %}
 {% macro dremio__regexp_supported_flags() %} {%- do return("imsx") %} {% endmacro %}
 
 {# Fallback for adapters we have no override for. `regexp_instr` is the most

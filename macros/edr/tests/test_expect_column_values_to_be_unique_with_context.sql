@@ -16,7 +16,7 @@
         (
             select *, count(*) over (partition by {{ column_name }}) as n_records
             from {{ model }}
-            {%- if row_condition %} where {{ row_condition }} {%- endif %}
+            {%- if row_condition %} where ({{ row_condition }}) {%- endif %}
         ) validation
     where n_records > 1
 {% endtest %}

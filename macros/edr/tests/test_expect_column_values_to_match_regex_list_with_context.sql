@@ -23,8 +23,20 @@
         "expect_column_values_to_match_regex_list_with_context",
     ) %}
 
-    {#- match_on="all" requires every pattern to match, anything else requires one. -#}
-    {%- set combinator = " and " if match_on == "all" else " or " %}
+    {#- Validate rather than fall back: treating an unrecognised value as "any"
+        would silently invert what the test asserts. -#}
+    {%- if match_on | lower not in ["any", "all"] %}
+        {{
+            exceptions.raise_compiler_error(
+                "expect_column_values_to_match_regex_list_with_context: `match_on` must be 'any' or 'all', got '"
+                ~ match_on
+                ~ "'."
+            )
+        }}
+    {%- endif %}
+
+    {#- match_on="all" requires every pattern to match, "any" requires one. -#}
+    {%- set combinator = " and " if match_on | lower == "all" else " or " %}
 
     {#- Sanitize once rather than once per pattern, so an unsupported flag warns
         a single time instead of once for every regex in the list. -#}
@@ -42,5 +54,5 @@
     from {{ model }}
     where
         not ({{ match_conditions | join(combinator) }})
-        {%- if row_condition %} and {{ row_condition }} {%- endif %}
+        {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
 {% endtest %}

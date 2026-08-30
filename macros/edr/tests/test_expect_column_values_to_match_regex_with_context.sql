@@ -18,5 +18,5 @@
     from {{ model }}
     where
         not ({{ elementary.regexp_match(column_name, regex, is_raw, flags) }})
-        {%- if row_condition %} and {{ row_condition }} {%- endif %}
+        {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
 {% endtest %}

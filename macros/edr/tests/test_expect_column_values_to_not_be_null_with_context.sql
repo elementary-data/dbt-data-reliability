@@ -12,5 +12,5 @@
     from {{ model }}
     where
         {{ column_name }} is null
-        {%- if row_condition %} and {{ row_condition }} {%- endif %}
+        {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
 {% endtest %}

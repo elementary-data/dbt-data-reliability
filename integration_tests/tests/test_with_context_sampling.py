@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from dbt_project import DbtProject
 
 COLUMN_NAME = "some_column"
@@ -127,6 +128,12 @@ def test_expression_is_true_with_context(test_id: str, dbt_project: DbtProject):
         assert set(sample.keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
 
 
+# The default seeder writes a CSV and runs `dbt seed`, and dbt types seed
+# columns with agate Text(null_values=("null", "")), whose cast() checks
+# `d.strip().lower() in null_values`. Any all-whitespace or empty cell is
+# therefore read as NULL, so a genuine empty string cannot be seeded. These
+# three targets bypass `dbt seed` and preserve the value verbatim.
+@pytest.mark.only_on_targets(["clickhouse", "vertica", "spark"])
 def test_not_empty_string_with_context(test_id: str, dbt_project: DbtProject):
     empty_count = 10
     data = [
@@ -213,6 +220,9 @@ def test_expect_compound_columns_to_be_unique_with_context(
         assert sample[OTHER_COLUMN] == "x"
 
 
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_with_context_searches_substrings(
     test_id: str, dbt_project: DbtProject
 ):
@@ -243,6 +253,9 @@ def test_match_regex_with_context_searches_substrings(
     assert set(samples[0].keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
 
 
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_with_context_honors_case_insensitive_flag(
     test_id: str, dbt_project: DbtProject
 ):
@@ -271,6 +284,9 @@ def test_match_regex_with_context_honors_case_insensitive_flag(
     assert samples[0][COLUMN_NAME] == "xyz"
 
 
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_list_with_context_match_on_any(
     test_id: str, dbt_project: DbtProject
 ):
@@ -301,6 +317,9 @@ def test_match_regex_list_with_context_match_on_any(
     assert set(samples[0].keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
 
 
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_list_with_context_match_on_all(
     test_id: str, dbt_project: DbtProject
 ):
