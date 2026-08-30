@@ -1,22 +1,21 @@
-{% test expect_column_values_to_match_regex_with_context(
+{% test expect_column_pair_values_A_to_be_greater_than_B_with_context(
     model,
-    column_name,
-    regex,
+    column_A,
+    column_B,
+    or_equal=false,
     row_condition=none,
-    is_raw=false,
-    flags="",
     context_columns=none
 ) %}
     {%- set select_clause = elementary.get_context_select_clause(
         model,
-        [column_name],
+        [column_A, column_B],
         context_columns,
-        "expect_column_values_to_match_regex_with_context",
+        "expect_column_pair_values_A_to_be_greater_than_B_with_context",
     ) %}
 
     select {{ select_clause }}
     from {{ model }}
     where
-        not ({{ elementary.regexp_match(column_name, regex, is_raw, flags) }})
+        not ({{ column_A }} {{ ">=" if or_equal else ">" }} {{ column_B }})
         {%- if row_condition %} and {{ row_condition }} {%- endif %}
 {% endtest %}
