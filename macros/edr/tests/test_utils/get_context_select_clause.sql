@@ -51,9 +51,16 @@
     ) %}
     {%- set existing_columns_lower = existing_columns | map("lower") | list %}
 
+    {#- Quote only these names, not the user-supplied ones below. These come from
+        the warehouse's own metadata, so they are already in the relation's real
+        case and quoting resolves to the same column; unquoted, a mixed-case or
+        reserved name (`myCol` on Snowflake, `order` on Postgres) emits invalid
+        SQL. A user-supplied name cannot be quoted the same way, because callers
+        write them in whatever case they like and quoting would stop them
+        matching. -#}
     {%- set all_columns_clause = [] %}
     {%- for col in existing_columns %}
-        {%- do all_columns_clause.append(prefix ~ col) %}
+        {%- do all_columns_clause.append(prefix ~ adapter.quote(col)) %}
     {%- endfor %}
     {%- set all_columns_clause = all_columns_clause | join(", ") %}
 
