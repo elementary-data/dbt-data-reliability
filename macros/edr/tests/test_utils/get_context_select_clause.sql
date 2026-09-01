@@ -16,7 +16,7 @@
         test_name: used in the skipped-column warning.
         default_clause: what to select when no context is requested. Pass
             `none` to list every column explicitly, which callers need when a
-            bare `*` would leak a helper column such as `n_records`.
+            bare `*` would leak a helper column such as `elementary_n_records`.
         prefix: prepended to every column, for tests that alias the relation.
 #}
 {% macro get_context_select_clause(
@@ -27,9 +27,11 @@
     default_clause="*",
     prefix=""
 ) %}
-    {#- At parse time `model` is not the tested relation yet, so resolving columns
-        would query a relation named after the test and warn that every context
-        column is missing. The parsed SQL is only used to collect refs, so skip it. -#}
+    {#- At parse time dbt stubs out column introspection: get_columns_in_relation
+        is decorated `@available.parse_list`, which substitutes a function
+        returning []. Every context column would therefore look missing and warn,
+        once per context column per test on every full parse. The parsed SQL is
+        only used to collect refs, so skip the resolution entirely. -#}
     {%- if not execute %}
         {%- do return(default_clause if default_clause is not none else "*") %}
     {%- endif %}
@@ -54,6 +56,21 @@
         {%- do all_columns_clause.append(prefix ~ col) %}
     {%- endfor %}
     {%- set all_columns_clause = all_columns_clause | join(", ") %}
+
+    {#- Only the `default_clause is none` callers can reach a return of this value,
+        and an empty one would emit `select from (...)`. A relation dbt cannot
+        introspect (an ephemeral model, whose `__dbt__cte__` name does not exist in
+        the warehouse) is the way to get here, so name that. -#}
+    {%- if not all_columns_clause and default_clause is none %}
+        {{
+            exceptions.raise_compiler_error(
+                test_name
+                ~ ": could not resolve any columns for '"
+                ~ model
+                ~ "'. This test cannot run against a relation dbt is unable to introspect, such as an ephemeral model."
+            )
+        }}
+    {%- endif %}
 
     {%- if not has_context %} {%- do return(all_columns_clause) %} {%- endif %}
 

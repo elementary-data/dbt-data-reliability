@@ -35,9 +35,28 @@
     compiles. Sanitizing is idempotent, so a caller that loops over many
     patterns can sanitize once up front and get a single warning instead of one
     per pattern.
+
+    A `-` is the one character that is rejected rather than dropped, see below.
 #}
 {% macro regexp_sanitize_flags(flags) %}
     {%- if not flags %} {%- do return("") %} {%- endif %}
+
+    {#- A `-` is not a flag, it negates the flags after it, so dropping it the way
+        an unsupported letter is dropped would ENABLE exactly what the caller asked
+        to disable: "-i" would keep "i" and emit a case-insensitive match. There is
+        no dialect-independent way to honor a negation either. Postgres ARE has no
+        `(?-i)` form at all, and where an alphabet carries a letter and its opposite
+        (snowflake/redshift/duckdb `c` vs `i`) "absent" does not mean "off". So fail
+        loudly instead of guessing. -#}
+    {%- if "-" in flags %}
+        {{
+            exceptions.raise_compiler_error(
+                "regexp_match: negated flags are not supported, got '"
+                ~ flags
+                ~ "'. Pass only the flags you want enabled."
+            )
+        }}
+    {%- endif %}
     {%- set supported = elementary.regexp_supported_flags() %}
     {%- set kept = [] %}
     {%- set dropped = [] %}
@@ -79,13 +98,13 @@
 {% endmacro %}
 
 {% macro default__regexp_supported_flags() %} {%- do return("") %} {% endmacro %}
-{% macro snowflake__regexp_supported_flags() %} {%- do return("cimes") %} {% endmacro %}
+{% macro snowflake__regexp_supported_flags() %} {%- do return("cims") %} {% endmacro %}
 {% macro bigquery__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
 {% macro postgres__regexp_supported_flags() %}
     {%- do return("bceimnpqstwx") %}
 {% endmacro %}
-{% macro redshift__regexp_supported_flags() %} {%- do return("ciep") %} {% endmacro %}
-{% macro duckdb__regexp_supported_flags() %} {%- do return("cilmnpsg") %} {% endmacro %}
+{% macro redshift__regexp_supported_flags() %} {%- do return("cip") %} {% endmacro %}
+{% macro duckdb__regexp_supported_flags() %} {%- do return("cilmnps") %} {% endmacro %}
 {% macro spark__regexp_supported_flags() %} {%- do return("idmsuxU") %} {% endmacro %}
 {% macro databricks__regexp_supported_flags() %}
     {%- do return("idmsuxU") %}
@@ -178,11 +197,14 @@
 
 {# Dremio: regexp_like is identical to regexp_matches and matches the WHOLE
    input, so a bare pattern would silently only match full-string values. Pad it
-   to turn the full match back into a search. (?s) lets . cross newlines.
+   to turn the full match back into a search. The padding needs (?s) so it can
+   span newlines, but that flag is scoped to the padding groups: as a bare
+   top-level `(?s)` it would run to the end of the whole pattern and silently
+   make `.` cross newlines inside the USER's pattern too, on this adapter only.
    Caveat: a user pattern containing ^ or $ still anchors within the padding. #}
 {% macro dremio__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    regexp_like({{ string }}, '(?s).*?(?:{{ regex }}).*?')
+    regexp_like({{ string }}, '(?s:.*?)(?:{{ regex }})(?s:.*?)')
 {% endmacro %}
 
 {# T-SQL has no regular expression support before SQL Server 2025, so fail with

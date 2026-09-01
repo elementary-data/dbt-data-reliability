@@ -476,7 +476,7 @@
                 "description": "Validates referential integrity between a child and parent table, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
             "expression_is_true_with_context": {
-                "quality_dimension": "validity",
+                "quality_dimension": "accuracy",
                 "failed_row_count_calc": "count(*)",
                 "description": "Validates that a SQL expression holds for every row, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
@@ -486,7 +486,7 @@
                 "description": "Validates that a column contains no empty strings, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
             "expect_column_pair_values_A_to_be_greater_than_B_with_context": {
-                "quality_dimension": "validity",
+                "quality_dimension": "accuracy",
                 "failed_row_count_calc": "count(*)",
                 "description": "Expects the values of one column to be greater than another, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },

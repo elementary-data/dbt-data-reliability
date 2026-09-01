@@ -157,7 +157,7 @@ def test_not_empty_string_with_context(test_id: str, dbt_project: DbtProject):
         assert set(sample.keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
 
 
-def test_expect_column_pair_values_a_to_be_greater_than_b_with_context(
+def test_column_pair_a_greater_than_b_with_context(
     test_id: str, dbt_project: DbtProject
 ):
     failing_count = 10

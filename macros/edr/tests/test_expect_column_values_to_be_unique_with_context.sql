@@ -1,8 +1,8 @@
 {% test expect_column_values_to_be_unique_with_context(
     model, column_name, row_condition=none, context_columns=none
 ) %}
-    {#- `n_records` below is a helper column, so the default select list has to
-        name every real column instead of using `*`. -#}
+    {#- `elementary_n_records` below is a helper column, so the default select
+        list has to name every real column instead of using `*`. -#}
     {%- set select_clause = elementary.get_context_select_clause(
         model,
         [column_name],
@@ -14,9 +14,11 @@
     select {{ select_clause }}
     from
         (
-            select *, count(*) over (partition by {{ column_name }}) as n_records
+            select
+                *,
+                count(*) over (partition by {{ column_name }}) as elementary_n_records
             from {{ model }}
             {%- if row_condition %} where ({{ row_condition }}) {%- endif %}
         ) validation
-    where n_records > 1
+    where elementary_n_records > 1
 {% endtest %}

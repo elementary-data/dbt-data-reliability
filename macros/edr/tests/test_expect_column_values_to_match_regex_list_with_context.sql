@@ -16,6 +16,13 @@
         }}
     {%- endif %}
 
+    {#- Accept a single pattern given as a bare string. A string is iterable, so
+        without this it would be looped over one character at a time and each
+        character used as its own pattern, which silently passes the test. The
+        emptiness guard above runs first, so "" still raises rather than
+        becoming [""], which would match every value. -#}
+    {%- set regex_list = [regex_list] if regex_list is string else regex_list %}
+
     {%- set select_clause = elementary.get_context_select_clause(
         model,
         [column_name],
