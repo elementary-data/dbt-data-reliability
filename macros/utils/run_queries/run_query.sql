@@ -11,6 +11,14 @@
     {% do return(query_result) %}
 {% endmacro %}
 
+{# Execute without fetching a result set. Use this for DML/DDL whose callers
+   discard the result; dbt.run_query always fetches. #}
+{% macro execute_no_fetch(query) %}
+    {% do adapter.execute(
+        elementary.format_query_with_metadata(query), fetch=false
+    ) %}
+{% endmacro %}
+
 {% macro format_query_with_metadata(query) %}
     {% do return(
         adapter.dispatch("format_query_with_metadata", "elementary")(query)

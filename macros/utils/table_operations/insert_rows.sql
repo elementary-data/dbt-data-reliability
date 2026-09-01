@@ -69,7 +69,7 @@
             "[{}/{}] Running insert query.".format(loop.index, queries_len)
         ) %}
         {% do elementary.begin_duration_measure_context("run_insert_rows_query") %}
-        {% do elementary.run_query(insert_query) %}
+        {% do elementary.execute_no_fetch(insert_query) %}
         {% do elementary.end_duration_measure_context("run_insert_rows_query") %}
     {% endfor %}
 
