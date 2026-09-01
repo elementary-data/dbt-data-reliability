@@ -455,6 +455,11 @@
                 "failed_row_count_calc": "count(*)",
                 "description": "Validates that there are no null values in a column, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
+            "accepted_range_with_context": {
+                "quality_dimension": "validity",
+                "failed_row_count_calc": "count(*)",
+                "description": "Deprecated, and scheduled for removal in the next release; use dbt_utils.accepted_range instead. Validates that column values fall within an accepted range, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
             "expect_column_values_to_not_be_null_with_context": {
                 "quality_dimension": "completeness",
                 "failed_row_count_calc": "count(*)",

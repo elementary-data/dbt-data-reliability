@@ -26,6 +26,7 @@
         "json_schema",
     ] %}
     {%- set with_context_tests = [
+        "accepted_range_with_context",
         "expect_column_pair_values_a_to_be_greater_than_b_with_context",
         "expect_column_values_to_be_unique_with_context",
         "expect_column_values_to_match_regex_list_with_context",
