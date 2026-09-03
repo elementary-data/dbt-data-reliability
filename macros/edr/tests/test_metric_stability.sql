@@ -49,6 +49,23 @@
 
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
 
+        {#- yaml lets a single value be written as a scalar, and iterating a
+            string in jinja walks it character by character. -#}
+        {%- if columns is string %} {% set columns = [columns] %} {%- endif %}
+        {%- if metrics is string %} {% set metrics = [metrics] %} {%- endif %}
+        {%- if change_since is string %}
+            {% set change_since = [change_since] %}
+        {%- endif %}
+        {%- set columns = columns | unique | list if columns else columns %}
+
+        {%- if not change_since %}
+            {{
+                exceptions.raise_compiler_error(
+                    "metric_stability requires at least one baseline in `change_since`: 'last_check', 'first_check', or both."
+                )
+            }}
+        {%- endif %}
+
         {%- if max_change_percent < 0 %}
             {{
                 exceptions.raise_compiler_error(
@@ -120,6 +137,20 @@
             }}
         {%- endif %}
 
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+        {#- timestamp_column is commonly set once in the model's elementary
+            config rather than repeated on every test. -#}
+        {% set timestamp_column = elementary.get_test_argument(
+            "timestamp_column", timestamp_column, model_graph_node
+        ) %}
+        {%- if not timestamp_column %}
+            {{
+                exceptions.raise_compiler_error(
+                    "metric_stability requires a `timestamp_column`, either on the test or in the model's elementary config."
+                )
+            }}
+        {%- endif %}
+
         {% set timestamp_column_data_type = (
             elementary.find_normalized_data_type_for_column(
                 model_relation, timestamp_column
@@ -139,7 +170,6 @@
 
         {%- if not dimensions %} {% set dimensions = [] %} {%- endif %}
 
-        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {#- The measurement window has to extend past min_bucket_age, so it is
             derived from it when not set explicitly rather than falling back to
             defaults that would leave nothing to compare. -#}
@@ -232,6 +262,12 @@
                 column_name=column_name,
                 metric_properties=metric_properties,
             ) %}
+            {#- Only the monitors that apply to this column's data type.
+                Passing the full list would generate e.g. sum(<string column>). -#}
+            {%- set this_column_metrics = [] %}
+            {%- for monitor in column_monitors %}
+                {%- do this_column_metrics.append({"name": monitor, "type": monitor}) %}
+            {%- endfor %}
             {%- set column_monitoring_query = elementary.column_monitoring_query(
                 model,
                 model_relation,
@@ -239,7 +275,7 @@
                 max_bucket_end,
                 days_back,
                 column_obj_and_monitors["column"],
-                column_metrics,
+                this_column_metrics,
                 metric_properties,
                 dimensions,
             ) %}
@@ -265,6 +301,7 @@
             min_bucket_age=min_bucket_age,
             max_change_percent=max_change_percent,
             change_since=change_since,
+            column_names=columns,
         ) %}
         {{
             elementary.debug_log(
@@ -345,14 +382,25 @@
     backfill_days
 ) %}
     {%- set age_kwargs = {min_bucket_age.period ~ "s": min_bucket_age.count} %}
-    {%- set min_age_days = (
-        (modules.datetime.timedelta(**age_kwargs).total_seconds() / 86400)
-        | round(0, "ceil")
-        | int
+    {#- Kept as a fraction of a day. Ceiling it first would turn a sub-day age
+        into a whole day and reject a days_back that in fact covers many
+        settled buckets. -#}
+    {%- set age_days = (
+        modules.datetime.timedelta(**age_kwargs).total_seconds() / 86400.0
     ) %}
     {#- Twice the age, so a bucket is observed over a stretch rather than for a
         single run, which is what lets 'first_check' see drift accumulate. -#}
-    {%- set derived = [min_age_days * 2, min_age_days + 1] | max %}
+    {%- set derived = [
+        (age_days * 2) | round(0, "ceil") | int,
+        (age_days + 1) | round(0, "ceil") | int,
+        1,
+    ] | max %}
+    {%- set age_description = (
+        min_bucket_age.count
+        ~ " "
+        ~ min_bucket_age.period
+        ~ ("s" if min_bucket_age.count > 1 else "")
+    ) %}
 
     {%- set uses_backfill_window = elementary.is_incremental_model(
         model_graph_node, source_included=true
@@ -361,13 +409,13 @@
     {%- if days_back is none %} {%- set resolved_days_back = derived %}
     {%- else %}
         {%- set resolved_days_back = days_back %}
-        {%- if resolved_days_back <= min_age_days %}
+        {%- if resolved_days_back <= age_days %}
             {% do exceptions.raise_compiler_error(
                 "days_back is "
                 ~ resolved_days_back
                 ~ ", which does not extend past a min_bucket_age of "
-                ~ min_age_days
-                ~ " days, so no bucket is ever both settled and still measured and the test can never report a change. Use at least "
+                ~ age_description
+                ~ ", so no bucket is ever both settled and still measured and the test can never report a change. Use at least "
                 ~ derived
                 ~ ", or omit days_back to have it derived."
             ) %}
@@ -378,13 +426,13 @@
         {%- set resolved_backfill_days = resolved_days_back %}
     {%- else %}
         {%- set resolved_backfill_days = backfill_days %}
-        {%- if uses_backfill_window and resolved_backfill_days <= min_age_days %}
+        {%- if uses_backfill_window and resolved_backfill_days <= age_days %}
             {% do exceptions.raise_compiler_error(
                 "backfill_days is "
                 ~ resolved_backfill_days
                 ~ ", which does not extend past a min_bucket_age of "
-                ~ min_age_days
-                ~ " days. On incremental models and sources backfill_days sets how far back buckets are re-measured, so those buckets freeze before they become eligible to check. Use at least "
+                ~ age_description
+                ~ ". On incremental models and sources backfill_days sets how far back buckets are re-measured, so those buckets freeze before they become eligible to check. Use at least "
                 ~ derived
                 ~ ", or omit backfill_days to have it derived."
             ) %}
