@@ -9,39 +9,40 @@
   moves the training baseline along with the data, and normal period-to-period
   variation is usually far wider than the change being looked for.
 
-  This is a threshold test rather than an anomaly test by design. For settled
-  data the expected change is zero, so the metric series has no variance to
-  learn from. A relative threshold also transfers across metrics, where an
-  absolute one has to be retuned for every metric.
-
   Arguments:
     columns            - columns to monitor.
     metrics            - metric types to monitor per column (e.g. [sum]).
     timestamp_column   - column that buckets the data into periods.
+    min_bucket_age     - required. Only check buckets at least this old, e.g.
+                         {count: 4, period: week}. Recent data is expected to
+                         keep changing as late records arrive, so comparing it
+                         reports noise rather than restatements.
     change_since       - baselines to compare against: 'last_check' (the previous
                          measurement), 'first_check' (the earliest measurement),
                          or both. 'last_check' catches a sudden correction;
-                         'first_check' catches slow drift where no single step is
-                         large enough to trip the threshold.
-    min_bucket_age     - only check buckets at least this old, e.g.
-                         {count: 4, period: week}. Recent data is expected to
-                         keep changing, so comparing it produces noise.
-    max_change_percent - permitted relative change before failing. Defaults to 0,
-                         meaning any change to settled data fails.
+                         'first_check' catches slow drift, where each step is too
+                         small to trip the threshold but the total movement is
+                         not.
+    max_change_percent - permitted change in percentage points before failing
+                         (25 means 25%). Defaults to 0, so any change to settled
+                         data fails.
+    days_back          - how far back buckets are measured and compared. This is
+                         the observation window, and it must extend past
+                         min_bucket_age or no bucket is ever both settled and
+                         still being measured.
 #}
 {% test metric_stability(
     model,
     columns,
     metrics,
     timestamp_column,
+    min_bucket_age,
     change_since=["last_check"],
-    min_bucket_age=none,
     max_change_percent=0,
     time_bucket=none,
     where_expression=none,
     days_back=none,
     backfill_days=none,
-    detection_delay=none,
     dimensions=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
@@ -72,6 +73,23 @@
             }}
         {%- endif %}
 
+        {%- set available_column_monitors = (
+            elementary.get_available_column_monitors()
+        ) %}
+        {%- for metric_type in metrics %}
+            {%- if metric_type not in available_column_monitors %}
+                {{
+                    exceptions.raise_compiler_error(
+                        "Unsupported column metric: '"
+                        ~ metric_type
+                        ~ "'. Supported metrics are: "
+                        ~ available_column_monitors
+                        | join(", ") ~ "."
+                    )
+                }}
+            {%- endif %}
+        {%- endfor %}
+
         {%- for baseline in change_since %}
             {%- if baseline not in ["last_check", "first_check"] %}
                 {{
@@ -83,6 +101,8 @@
                 }}
             {%- endif %}
         {%- endfor %}
+
+        {% do elementary.validate_min_bucket_age(min_bucket_age) %}
 
         {% set model_relation = elementary.get_model_relation_for_test(
             model, elementary.get_test_model()
@@ -119,16 +139,19 @@
 
         {%- if not dimensions %} {% set dimensions = [] %} {%- endif %}
 
-        {#- The comparison needs each bucket measured more than once, so buckets
-            must keep being re-measured for as long as they are being checked.
-            backfill_days controls that window, and its default of 2 would leave
-            nothing to compare for any older bucket. Derive it from min_bucket_age
-            so the test cannot silently find nothing. -#}
-        {%- set required_backfill_days = (
-            elementary.get_metric_stability_backfill_days(
-                min_bucket_age, backfill_days
-            )
+        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
+        {#- The measurement window has to extend past min_bucket_age, so it is
+            derived from it when not set explicitly rather than falling back to
+            defaults that would leave nothing to compare. -#}
+        {% set resolved_window = elementary.resolve_metric_stability_window(
+            model_relation,
+            model_graph_node,
+            min_bucket_age,
+            days_back,
+            backfill_days,
         ) %}
+        {% set days_back = resolved_window["days_back"] %}
+        {% set backfill_days = resolved_window["backfill_days"] %}
 
         {% set column_metrics = [] %}
         {% set metric_names = [] %}
@@ -137,27 +160,6 @@
             {% do metric_names.append(metric_type) %}
         {%- endfor %}
 
-        {#- Collect this run's metrics. Shared infrastructure handles bucket
-            selection, computation, temp table creation and cache storage, and the
-            on-run-end hook persists them, which is what builds the history this
-            test reads on later runs. -#}
-        {%- for column_name in columns %}
-            {% do elementary.collect_column_metrics(
-                column_metrics=column_metrics,
-                model_expr=model,
-                model_relation=model_relation,
-                column_name=column_name,
-                timestamp_column=timestamp_column,
-                time_bucket=time_bucket,
-                days_back=days_back,
-                backfill_days=required_backfill_days,
-                where_expression=where_expression,
-                dimensions=dimensions,
-                collected_by="metric_stability",
-            ) %}
-        {%- endfor %}
-
-        {% set model_graph_node = elementary.get_model_graph_node(model_relation) %}
         {% set metric_properties = elementary.get_metric_properties(
             model_graph_node,
             timestamp_column,
@@ -167,18 +169,99 @@
             collected_by="metric_stability",
         ) %}
 
-        {% set test_metrics_table = elementary.get_elementary_test_table(
-            elementary.get_elementary_test_table_name(), "metrics"
+        {% set test_table_name = elementary.get_elementary_test_table_name() %}
+        {% set (
+            database_name,
+            schema_name,
+        ) = elementary.get_package_database_and_schema("elementary") %}
+        {% set tests_schema_name = elementary.get_elementary_tests_schema(
+            database_name, schema_name
         ) %}
         {% set full_table_name = elementary.relation_to_full_name(model_relation) %}
-        {% set detection_end = elementary.get_detection_end(detection_delay) %}
 
+        {#- One shared metrics table for every column. collect_column_metrics
+            would create a table per column and leave the cache pointing at the
+            last one, so all but the final column would be compared against
+            stale measurements. -#}
+        {% set temp_table_relation = elementary.create_elementary_test_table(
+            database_name,
+            tests_schema_name,
+            test_table_name,
+            "metrics",
+            elementary.empty_data_monitoring_metrics(with_created_at=false),
+        ) %}
+
+        {%- for column_name in columns %}
+            {%- set column_obj_and_monitors = (
+                elementary.get_column_obj_and_monitors(
+                    model_relation, column_name, metrics
+                )
+            ) -%}
+            {%- if not column_obj_and_monitors %}
+                {{
+                    exceptions.raise_compiler_error(
+                        "Unable to find column `"
+                        ~ column_name
+                        ~ "` in `"
+                        ~ full_table_name
+                        ~ "`."
+                    )
+                }}
+            {%- endif %}
+            {%- set column_monitors = column_obj_and_monitors["monitors"] %}
+            {%- if not column_monitors %}
+                {{
+                    exceptions.raise_compiler_error(
+                        "None of the metrics " ~ metrics
+                        | join(", ")
+                        ~ " apply to column `"
+                        ~ column_name
+                        ~ "` given its data type."
+                    )
+                }}
+            {%- endif %}
+
+            {%- set (
+                min_bucket_start,
+                max_bucket_end,
+            ) = elementary.get_metric_buckets_min_and_max(
+                model_relation=model_relation,
+                backfill_days=backfill_days,
+                days_back=days_back,
+                metric_names=column_monitors,
+                column_name=column_name,
+                metric_properties=metric_properties,
+            ) %}
+            {%- set column_monitoring_query = elementary.column_monitoring_query(
+                model,
+                model_relation,
+                min_bucket_start,
+                max_bucket_end,
+                days_back,
+                column_obj_and_monitors["column"],
+                column_metrics,
+                metric_properties,
+                dimensions,
+            ) %}
+            {%- do elementary.run_query(
+                elementary.insert_as_select(
+                    temp_table_relation, column_monitoring_query
+                )
+            ) -%}
+        {%- endfor %}
+
+        {#- Persist this run's measurements, which is what builds the history
+            the next run compares against. -#}
+        {% do elementary.store_metrics_table_in_cache() %}
+
+        {% set detection_end = elementary.get_detection_end(none) %}
         {% set metric_stability_query = elementary.metric_stability_query(
-            test_metrics_table_relation=test_metrics_table,
+            test_metrics_table_relation=temp_table_relation,
             full_table_name=full_table_name,
             metric_names=metric_names,
             metric_properties=metric_properties,
             detection_end=detection_end,
+            days_back=days_back,
             min_bucket_age=min_bucket_age,
             max_change_percent=max_change_percent,
             change_since=change_since,
@@ -200,48 +283,118 @@
 {% endtest %}
 
 
+{% macro validate_min_bucket_age(min_bucket_age) %}
+    {%- set valid_periods = ["day", "week", "hour", "minute", "second"] %}
+    {%- if not min_bucket_age or min_bucket_age is not mapping %}
+        {# fmt: off #}
+        {% do exceptions.raise_compiler_error(
+            "min_bucket_age is required and must be a mapping. Expected format:   min_bucket_age:     count: int     period: string"
+        ) %}
+    {# fmt: on #}
+    {%- endif %}
+    {%- for key in min_bucket_age %}
+        {%- if key not in ["count", "period"] %}
+            {% do exceptions.raise_compiler_error(
+                "Found invalid key in min_bucket_age: '"
+                ~ key
+                ~ "'. Supported keys: count, period."
+            ) %}
+        {%- endif %}
+    {%- endfor %}
+    {%- if min_bucket_age.period not in valid_periods %}
+        {% do exceptions.raise_compiler_error(
+            "Unsupported min_bucket_age period '"
+            ~ min_bucket_age.period
+            ~ "'. Supported periods: "
+            ~ valid_periods
+            | join(", ") ~ "."
+        ) %}
+    {%- endif %}
+    {%- if min_bucket_age.count is not integer or min_bucket_age.count < 1 %}
+        {% do exceptions.raise_compiler_error(
+            "min_bucket_age count must be a positive integer, got '"
+            ~ min_bucket_age.count
+            ~ "'."
+        ) %}
+    {%- endif %}
+{% endmacro %}
+
+
 {#
-  backfill_days sets how far back buckets are re-measured on each run, and a
-  bucket can only be checked while it is still being re-measured. Eligibility
-  starts at min_bucket_age, so the window has to reach meaningfully past that
-  age or a bucket freezes before it can ever be compared.
+  A bucket can only be compared while it is still being re-measured, so the
+  measurement window has to extend past min_bucket_age or nothing is ever both
+  settled and still under observation.
 
-  The default keeps watching a bucket for as long again as it took to settle,
-  which gives real coverage rather than a single-day overlap, and matters more
-  for 'first_check': catching slow drift needs a bucket observed over a stretch,
-  not once. Cost scales with this window, since that many days of the model are
-  re-scanned each run.
+  Which parameter governs that window depends on the materialization.
+  get_metric_buckets_min_and_max takes its incremental branch for sources and
+  incremental models, where backfill_days sets the window; every other model
+  takes the regular branch, which re-measures the whole days_back window and
+  ignores backfill_days entirely. days_back additionally bounds the comparison
+  itself, so it always matters.
 
-  An explicit backfill_days that cannot produce a comparison is a configuration
-  error rather than a silent pass.
+  Unset parameters are derived from min_bucket_age, because the package defaults
+  (days_back 14, backfill_days 2) are unrelated to how long a bucket needs
+  watching and would silently leave nothing to compare. An explicit value too
+  small to ever produce a comparison raises instead.
 #}
-{% macro get_metric_stability_backfill_days(min_bucket_age, backfill_days) %}
-    {%- if not min_bucket_age %} {%- do return(backfill_days) %} {%- endif %}
-
+{% macro resolve_metric_stability_window(
+    model_relation,
+    model_graph_node,
+    min_bucket_age,
+    days_back,
+    backfill_days
+) %}
     {%- set age_kwargs = {min_bucket_age.period ~ "s": min_bucket_age.count} %}
     {%- set min_age_days = (
         (modules.datetime.timedelta(**age_kwargs).total_seconds() / 86400)
         | round(0, "ceil")
         | int
     ) %}
-    {%- set derived = min_age_days * 2 %}
-    {#- Absolute floor: at least one day of overlap past the age cutoff. -#}
-    {%- set minimum_viable = min_age_days + 1 %}
+    {#- Twice the age, so a bucket is observed over a stretch rather than for a
+        single run, which is what lets 'first_check' see drift accumulate. -#}
+    {%- set derived = [min_age_days * 2, min_age_days + 1] | max %}
 
-    {%- if backfill_days is none %} {%- do return(derived) %} {%- endif %}
+    {%- set uses_backfill_window = elementary.is_incremental_model(
+        model_graph_node, source_included=true
+    ) %}
 
-    {%- if backfill_days < minimum_viable %}
-        {%- do exceptions.raise_compiler_error(
-            "backfill_days is "
-            ~ backfill_days
-            ~ ", which is too small to detect changes in buckets at least "
-            ~ min_age_days
-            ~ " days old: those buckets stop being re-measured before they become eligible to check, so the test would never find a change. Use at least "
-            ~ minimum_viable
-            ~ " (ideally "
-            ~ derived
-            ~ "), or remove backfill_days to have it derived automatically."
-        ) %}
+    {%- if days_back is none %} {%- set resolved_days_back = derived %}
+    {%- else %}
+        {%- set resolved_days_back = days_back %}
+        {%- if resolved_days_back <= min_age_days %}
+            {% do exceptions.raise_compiler_error(
+                "days_back is "
+                ~ resolved_days_back
+                ~ ", which does not extend past a min_bucket_age of "
+                ~ min_age_days
+                ~ " days, so no bucket is ever both settled and still measured and the test can never report a change. Use at least "
+                ~ derived
+                ~ ", or omit days_back to have it derived."
+            ) %}
+        {%- endif %}
     {%- endif %}
-    {%- do return(backfill_days) %}
+
+    {%- if backfill_days is none %}
+        {%- set resolved_backfill_days = resolved_days_back %}
+    {%- else %}
+        {%- set resolved_backfill_days = backfill_days %}
+        {%- if uses_backfill_window and resolved_backfill_days <= min_age_days %}
+            {% do exceptions.raise_compiler_error(
+                "backfill_days is "
+                ~ resolved_backfill_days
+                ~ ", which does not extend past a min_bucket_age of "
+                ~ min_age_days
+                ~ " days. On incremental models and sources backfill_days sets how far back buckets are re-measured, so those buckets freeze before they become eligible to check. Use at least "
+                ~ derived
+                ~ ", or omit backfill_days to have it derived."
+            ) %}
+        {%- endif %}
+    {%- endif %}
+
+    {%- do return(
+        {
+            "days_back": resolved_days_back,
+            "backfill_days": resolved_backfill_days,
+        }
+    ) %}
 {% endmacro %}
