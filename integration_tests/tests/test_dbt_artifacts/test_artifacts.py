@@ -216,7 +216,7 @@ def test_compiled_code_preserves_newlines(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
     dbt_project.dbt_runner.run(select=TEST_MODEL)
     results = dbt_project.run_query(
-        """select compiled_code from {{ ref("dbt_run_results") }} where name='%s'"""
+        """select compiled_code from {{ ref("dbt_run_results") }} where name='%s' and compiled_code is not null"""
         % TEST_MODEL
     )
     assert len(results) >= 1
