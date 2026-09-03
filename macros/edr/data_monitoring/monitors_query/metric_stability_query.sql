@@ -31,6 +31,7 @@
     min_bucket_age,
     max_change_percent=0,
     change_since=["last_check"],
+    column_names=none,
     data_monitoring_metrics_table=none
 ) %}
     {%- if not data_monitoring_metrics_table %}
@@ -105,6 +106,12 @@
             from {{ data_monitoring_metrics_table }}
             where
                 upper(full_table_name) = upper('{{ full_table_name }}')
+                {%- if column_names %}
+                    {#- metric_properties does not carry the column, so without
+                        this a test picks up history for every other column
+                        monitored on the same table with the same properties. -#}
+                    and upper(column_name) in {{ elementary.strings_list_to_tuple(column_names | map("upper") | list) }}
+                {%- endif %}
                 and metric_name in {{ elementary.strings_list_to_tuple(metric_names) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 and {{ bucket_window }}
@@ -163,7 +170,15 @@
             previous_value,
             initial_value,
             metric_value - previous_value as change_since_last_check,
-            metric_value - initial_value as change_since_first_check
+            metric_value - initial_value as change_since_first_check,
+            case
+                when previous_value is not null and previous_value != 0
+                then abs(metric_value - previous_value) / abs(previous_value) * 100.0
+            end as change_percent_since_last_check,
+            case
+                when initial_value is not null and initial_value != 0
+                then abs(metric_value - initial_value) / abs(initial_value) * 100.0
+            end as change_percent_since_first_check
         from latest_measurement
         where {{ exceeds_conditions | join(" or ") }}
     {%- endset %}

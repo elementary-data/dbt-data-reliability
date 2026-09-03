@@ -1,4 +1,5 @@
 from datetime import datetime, time, timedelta
+from itertools import pairwise
 from typing import Any, Dict, List, Optional
 
 from data_generator import DATE_FORMAT
@@ -141,9 +142,7 @@ def test_metric_stability_first_check_catches_gradual_drift(
     assert measurements[0] == BASE_AMOUNT
     assert measurements[-1] == 120
     steps = [
-        later - earlier
-        for earlier, later in zip(measurements, measurements[1:])
-        if later != earlier
+        later - earlier for earlier, later in pairwise(measurements) if later != earlier
     ]
     assert all(step / BASE_AMOUNT * 100 < 15 for step in steps), steps
 
