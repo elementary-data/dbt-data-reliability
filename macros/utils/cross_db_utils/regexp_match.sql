@@ -21,9 +21,10 @@
             whenever `is_raw` is false, which is the default.
         flags: regex flags. `i` (case-insensitive) is honored on every adapter
             that supports flags at all. Anything the adapter does not accept is
-            dropped with a warning, by `regexp_sanitize_flags` below. A leading
-            `-` negates, and is only accepted where the engine takes inline
-            flags.
+            dropped with a warning, by `regexp_sanitize_flags` below. `-` clears
+            the flags after it, and is accepted only on adapters whose alphabet
+            lists it, which is not the same as taking inline flags: Postgres
+            takes them inline and still cannot express a negation.
 #}
 {% macro regexp_match(string, regex, is_raw=false, flags="") %}
     {%- set flags = elementary.regexp_sanitize_flags(flags) %}
@@ -35,29 +36,28 @@
     about what was removed. The flags must actually be stripped, not just warned
     about: engines reject an unknown option outright rather than skipping it.
 
-    Warn rather than raise, so a disabled test carrying a stray flag still
-    compiles. Sanitizing is idempotent, so a caller that loops over many
-    patterns can sanitize once up front and get a single warning instead of one
-    per pattern.
+    Warn rather than raise for an unsupported letter, so a disabled test carrying
+    a stray flag still compiles. Sanitizing is idempotent, so a caller that loops
+    over many patterns can sanitize once up front and get a single warning
+    instead of one per pattern.
 
-    A `-` is the one character that is rejected rather than dropped, see below.
+    `-` is the exception. It is not a flag but an operator that clears the flags
+    after it, so it is refused rather than dropped where it cannot be honored,
+    and refused when malformed. See the two branches below.
 #}
 {% macro regexp_sanitize_flags(flags) %}
     {%- if not flags %} {%- do return("") %} {%- endif %}
-
-    {#- A `-` is not a flag, it negates the flags after it, so dropping it the way
-        an unsupported letter is dropped would ENABLE exactly what the caller asked
-        to disable: "-i" would keep "i" and emit a case-insensitive match. There is
-        no dialect-independent way to honor a negation either. Postgres ARE has no
-        `(?-i)` form at all, and where an alphabet carries a letter and its opposite
-        (snowflake/redshift/duckdb `c` vs `i`) "absent" does not mean "off". So fail
-        loudly instead of guessing. -#}
     {%- set supported = elementary.regexp_supported_flags() %}
-    {#- Adapters whose alphabet carries `-` take flags inline and can express a
-        negation, so `-i` passes straight through as `(?-i)`. Where it cannot be
-        expressed, refuse rather than drop it: dropping `-` would ENABLE exactly
-        what the caller asked to disable. Gated on `execute` for the same reason
-        as the SQL Server branch below. -#}
+
+    {#- Adapters carrying `-` in their alphabet take flags inline and can express
+        a negation, so `-i` passes through as `(?-i)`. Everywhere else, refuse
+        rather than drop: dropping `-` would ENABLE exactly what the caller asked
+        to disable, turning "-i" into a case-insensitive match. Refusing is not
+        over-cautious, because there is no way to honor it there either. Postgres
+        takes flags inline yet ARE has no `(?-i)` form, and where an alphabet
+        carries a letter and its opposite (snowflake/redshift/duckdb `c` vs `i`)
+        "absent" does not mean "off". Gated on `execute` for the same reason as
+        the SQL Server branch below. -#}
     {%- if "-" in flags and "-" not in supported %}
         {%- if execute %}
             {{
@@ -72,6 +72,24 @@
         {%- endif %}
         {%- do return("") %}
     {%- endif %}
+
+    {#- Where `-` is allowed it still has to be well formed. RE2, Java and joni
+        all require at least one letter after it and reject a doubled one, so
+        `(?i-)`, `(?-)` and `(?--)` are parse errors rather than no-ops. A
+        leading `-` is fine: that is the clear-everything-after form. -#}
+    {%- if "--" in flags or flags.endswith("-") %}
+        {%- if execute %}
+            {{
+                exceptions.raise_compiler_error(
+                    "regexp_match: malformed flags '"
+                    ~ flags
+                    ~ "'. A '-' must be followed by at least one flag letter, and cannot be doubled."
+                )
+            }}
+        {%- endif %}
+        {%- do return("") %}
+    {%- endif %}
+
     {%- set kept = [] %}
     {%- set dropped = [] %}
     {%- for flag in flags %}
@@ -79,6 +97,13 @@
         {%- else %} {%- do dropped.append(flag) %}
         {%- endif %}
     {%- endfor %}
+
+    {#- Dropping unsupported letters can leave a dangling `-`, which the input
+        check above could not have caught: "i-Z" is well formed, but once `Z`
+        goes it becomes "i-" and would emit `(?i-)`. Clearing a flag the engine
+        does not have is a no-op, so drop the operator with it. -#}
+    {%- if kept and kept[-1] == "-" %} {%- do kept.pop() %} {%- endif %}
+
     {%- if dropped %}
         {%- set dropped_list = dropped | join("', '") %}
         {%- do elementary.edr_log_warning(
