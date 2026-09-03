@@ -19,11 +19,13 @@
     inclusive=true,
     context_columns=none
 ) %}
-    {#- log() rather than exceptions.warn(), so that upgrading cannot fail a run
-        that is using --warn-error. -#}
-    {%- do log(
-        "WARNING [accepted_range_with_context]: this test is deprecated and will be removed in the next release. Use dbt_utils.accepted_range instead.",
-        info=true,
+    {#- edr_log_warning rather than exceptions.warn(), so that upgrading cannot
+        fail a run using --warn-error, and rather than a bare log(), because it
+        gates on `execute`. dbt renders generic test bodies while parsing, so an
+        ungated log prints once per node on every command that parses, and twice
+        per node on dbt test. -#}
+    {%- do elementary.edr_log_warning(
+        "accepted_range_with_context is deprecated and will be removed in the next release. Use dbt_utils.accepted_range instead."
     ) %}
 
     {%- if min_value is none and max_value is none %}

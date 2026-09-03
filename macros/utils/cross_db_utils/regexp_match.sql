@@ -14,12 +14,16 @@
         regex: the pattern, as a plain string.
         is_raw: emit the pattern as a raw string literal. Only Snowflake
             (`$$...$$`) and BigQuery (`r'...'`) have such a syntax, so on the
-            other twelve adapters it is a silent no-op. That matters where the
-            engine processes backslash escapes inside string literals
-            (ClickHouse, Spark): escape the pattern yourself there.
+            other twelve adapters it is a silent no-op. Escape the pattern
+            yourself on any engine that consumes backslashes inside string
+            literals: ClickHouse, Redshift, and Spark along with the Databricks
+            and Fabric Spark adapters that inherit it. Snowflake is exposed too
+            whenever `is_raw` is false, which is the default.
         flags: regex flags. `i` (case-insensitive) is honored on every adapter
             that supports flags at all. Anything the adapter does not accept is
-            dropped with a warning, by `regexp_sanitize_flags` below.
+            dropped with a warning, by `regexp_sanitize_flags` below. A leading
+            `-` negates, and is only accepted where the engine takes inline
+            flags.
 #}
 {% macro regexp_match(string, regex, is_raw=false, flags="") %}
     {%- set flags = elementary.regexp_sanitize_flags(flags) %}
@@ -48,16 +52,26 @@
         `(?-i)` form at all, and where an alphabet carries a letter and its opposite
         (snowflake/redshift/duckdb `c` vs `i`) "absent" does not mean "off". So fail
         loudly instead of guessing. -#}
-    {%- if "-" in flags %}
-        {{
-            exceptions.raise_compiler_error(
-                "regexp_match: negated flags are not supported, got '"
-                ~ flags
-                ~ "'. Pass only the flags you want enabled."
-            )
-        }}
-    {%- endif %}
     {%- set supported = elementary.regexp_supported_flags() %}
+    {#- Adapters whose alphabet carries `-` take flags inline and can express a
+        negation, so `-i` passes straight through as `(?-i)`. Where it cannot be
+        expressed, refuse rather than drop it: dropping `-` would ENABLE exactly
+        what the caller asked to disable. Gated on `execute` for the same reason
+        as the SQL Server branch below. -#}
+    {%- if "-" in flags and "-" not in supported %}
+        {%- if execute %}
+            {{
+                exceptions.raise_compiler_error(
+                    "regexp_match: negated flags are not supported on "
+                    ~ adapter.type()
+                    ~ ", got '"
+                    ~ flags
+                    ~ "'. Pass only the flags you want enabled."
+                )
+            }}
+        {%- endif %}
+        {%- do return("") %}
+    {%- endif %}
     {%- set kept = [] %}
     {%- set dropped = [] %}
     {%- for flag in flags %}
@@ -67,7 +81,7 @@
     {%- endfor %}
     {%- if dropped %}
         {%- set dropped_list = dropped | join("', '") %}
-        {%- do exceptions.warn(
+        {%- do elementary.edr_log_warning(
             "regexp_match: flag(s) '"
             ~ dropped_list
             ~ "' are not supported on "
@@ -99,24 +113,26 @@
 
 {% macro default__regexp_supported_flags() %} {%- do return("") %} {% endmacro %}
 {% macro snowflake__regexp_supported_flags() %} {%- do return("cims") %} {% endmacro %}
-{% macro bigquery__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
+{% macro bigquery__regexp_supported_flags() %} {%- do return("imsU-") %} {% endmacro %}
 {% macro postgres__regexp_supported_flags() %}
     {%- do return("bceimnpqstwx") %}
 {% endmacro %}
 {% macro redshift__regexp_supported_flags() %} {%- do return("cip") %} {% endmacro %}
 {% macro duckdb__regexp_supported_flags() %} {%- do return("cilmnps") %} {% endmacro %}
-{% macro spark__regexp_supported_flags() %} {%- do return("idmsuxU") %} {% endmacro %}
+{% macro spark__regexp_supported_flags() %} {%- do return("idmsuxU-") %} {% endmacro %}
 {% macro databricks__regexp_supported_flags() %}
-    {%- do return("idmsuxU") %}
+    {%- do return("idmsuxU-") %}
 {% endmacro %}
 {% macro fabricspark__regexp_supported_flags() %}
-    {%- do return("idmsuxU") %}
+    {%- do return("idmsuxU-") %}
 {% endmacro %}
-{% macro trino__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
-{% macro athena__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
-{% macro clickhouse__regexp_supported_flags() %} {%- do return("imsU") %} {% endmacro %}
+{% macro trino__regexp_supported_flags() %} {%- do return("ims-") %} {% endmacro %}
+{% macro athena__regexp_supported_flags() %} {%- do return("ims-") %} {% endmacro %}
+{% macro clickhouse__regexp_supported_flags() %}
+    {%- do return("imsU-") %}
+{% endmacro %}
 {% macro vertica__regexp_supported_flags() %} {%- do return("bcimnx") %} {% endmacro %}
-{% macro dremio__regexp_supported_flags() %} {%- do return("imsx") %} {% endmacro %}
+{% macro dremio__regexp_supported_flags() %} {%- do return("imsx-") %} {% endmacro %}
 
 {# Fallback for adapters we have no override for. `regexp_instr` is the most
    widely implemented position function, and > 0 makes it a search. #}
@@ -140,7 +156,10 @@
 {% endmacro %}
 
 {# Postgres: ~ is a search. Flags go inline rather than via ~*, so the whole
-   ARE embedded-option set keeps working and not just case-insensitivity. #}
+   ARE embedded-option set keeps working and not just case-insensitivity.
+   Caveat: ARE accepts embedded options only at the very start of the pattern and
+   has no flagged-group form, so combining `flags` with a pattern that already
+   begins with `(?...)` is a syntax error. Pass one or the other. #}
 {% macro postgres__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     {{ string }} ~ '{{ regex }}'
@@ -171,7 +190,10 @@
 {% endmacro %}
 
 {# Trino/Athena: unlike Snowflake, regexp_like here is documented as "contained
-   within", so it is already a search. RE2 takes inline flags. #}
+   within", so it is already a search. Flags go inline. Note the engine is joni
+   (Java syntax), not RE2, so `U` is not available here even though BigQuery and
+   ClickHouse accept it: joni throws UNDEFINED_GROUP_OPTION, and Java's `U` means
+   UNICODE_CHARACTER_CLASS rather than RE2's ungreedy swap. #}
 {% macro trino__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     regexp_like({{ string }}, '{{ regex }}')
@@ -210,11 +232,20 @@
 {# T-SQL has no regular expression support before SQL Server 2025, so fail with
    an explanation instead of emitting SQL that cannot run. #}
 {% macro sqlserver__regexp_match(string, regex, is_raw, flags) %}
-    {{
-        exceptions.raise_compiler_error(
-            "regexp_match: regular expression tests are not supported on SQL Server / Fabric, because T-SQL has no regex functions. Use a LIKE-based test instead."
-        )
-    }}
+    {#- Raise only once the test actually runs. dbt renders generic test bodies
+        while parsing, where `execute` is false, and a compiler error raised there
+        aborts every dbt command for the whole project rather than failing this one
+        test. Even `config: enabled: false` does not save it, because the body is
+        rendered before the node's config is consulted. Emitting a valid predicate
+        keeps parsing working; the node still fails with this message when run. -#}
+    {%- if execute %}
+        {{
+            exceptions.raise_compiler_error(
+                "regexp_match: regular expression tests are not supported on SQL Server / Fabric, because T-SQL has no regex functions. Use a LIKE-based test instead."
+            )
+        }}
+    {%- endif %}
+    1 = 1
 {% endmacro %}
 
 {% macro fabric__regexp_match(string, regex, is_raw, flags) %}

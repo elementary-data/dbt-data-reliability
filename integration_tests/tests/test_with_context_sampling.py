@@ -223,6 +223,38 @@ def test_expect_compound_columns_to_be_unique_with_context(
 # T-SQL has no regex functions, so elementary.regexp_match raises a compiler
 # error there by design. See sqlserver__regexp_match in regexp_match.sql.
 @pytest.mark.skip_targets(["sqlserver", "fabric"])
+def test_match_regex_with_context_ignores_nulls(test_id: str, dbt_project: DbtProject):
+    """A NULL value must not be reported as a regex failure.
+
+    The predicate is `not (<match>)`, which is NULL for a NULL input and so
+    selects nothing. Pinning this down because the behaviour is implicit in the
+    SQL rather than written anywhere, and because Postgres used to differ: the
+    old dbt_expectations path wrapped the match in coalesce(..., 0) and therefore
+    counted a NULL row as failing. Every other adapter already ignored it.
+    """
+    data = [
+        {COLUMN_NAME: None, CONTEXT_COLUMN: "ctx-null"},
+        {COLUMN_NAME: "nothing-here", CONTEXT_COLUMN: "ctx-nomatch"},
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.expect_column_values_to_match_regex_with_context",
+        dict(column_name=COLUMN_NAME, regex="abc", context_columns=[CONTEXT_COLUMN]),
+        data=data,
+        test_vars=TEST_VARS,
+    )
+    assert test_result["status"] == "fail"
+    # Only the non-matching non-NULL row fails. The NULL row is not reported.
+    assert test_result["failed_row_count"] == 1
+
+    samples = get_samples(dbt_project, test_id)
+    assert len(samples) == 1
+    assert samples[0][COLUMN_NAME] == "nothing-here"
+
+
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_with_context_searches_substrings(
     test_id: str, dbt_project: DbtProject
 ):
