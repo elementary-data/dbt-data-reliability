@@ -27,9 +27,14 @@
     ] %}
     {%- set with_context_tests = [
         "accepted_range_with_context",
+        "expect_column_pair_values_a_to_be_greater_than_b_with_context",
         "expect_column_values_to_be_unique_with_context",
+        "expect_column_values_to_match_regex_list_with_context",
         "expect_column_values_to_match_regex_with_context",
         "expect_column_values_to_not_be_null_with_context",
+        "expect_compound_columns_to_be_unique_with_context",
+        "expression_is_true_with_context",
+        "not_empty_string_with_context",
         "not_null_with_context",
         "relationships_with_context",
     ] %}
