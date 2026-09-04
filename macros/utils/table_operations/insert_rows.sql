@@ -321,22 +321,6 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{# spark__escape_special_chars: Newlines and carriage returns are replaced with
-   spaces (not escape sequences) because Spark SQL does not support multi-line
-   string literals inside INSERT VALUES. Backslashes and single quotes use
-   C-style escaping (\\, \') which is the Spark SQL convention. #}
-{%- macro spark__escape_special_chars(string_value) -%}
-    {{-
-        return(
-            string_value
-            | replace("\\", "\\\\")
-            | replace("'", "\\'")
-            | replace("\n", " ")
-            | replace("\r", " ")
-        )
-    -}}
-{%- endmacro -%}
-
 {# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
    so the hot insert path avoids an adapter.dispatch per rendered cell. When it's
    not provided, the adapter's render_value resolves it (see default__render_value). #}
@@ -364,10 +348,6 @@
         {%- endif -%}
     {%- else -%} null
     {%- endif -%}
-{%- endmacro -%}
-
-{%- macro fabricspark__escape_special_chars(string_value) -%}
-    {{- return(elementary.spark__escape_special_chars(string_value)) -}}
 {%- endmacro -%}
 
 {# Note: Python booleans pass Jinja's "is number" test, so we check
