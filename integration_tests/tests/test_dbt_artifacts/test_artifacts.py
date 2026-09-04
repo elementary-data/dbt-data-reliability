@@ -210,7 +210,6 @@ def test_timings(dbt_project: DbtProject):
     assert results[0]["execute_started_at"]
 
 
-@pytest.mark.skip_targets(["spark", "fabricspark"])
 @pytest.mark.skip_for_dbt_fusion
 def test_compiled_code_preserves_newlines(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False

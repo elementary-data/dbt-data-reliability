@@ -169,6 +169,16 @@
     {{- return(default_config) -}}
 {%- endmacro -%}
 
+{%- macro spark__get_default_config() -%}
+    {% set default_config = elementary.default__get_default_config() %}
+    {% do default_config.update({"spark_file_format": "parquet"}) %}
+    {{- return(default_config) -}}
+{%- endmacro -%}
+
+{%- macro fabricspark__get_default_config() -%}
+    {{ return(elementary.spark__get_default_config()) }}
+{%- endmacro -%}
+
 {%- macro bigquery__get_default_config() -%}
     {% set default_config = elementary.default__get_default_config() %}
     {% do default_config.update({"query_max_size": 250000}) %}
