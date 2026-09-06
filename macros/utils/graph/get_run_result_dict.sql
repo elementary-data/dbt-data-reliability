@@ -9,7 +9,11 @@
         {% set timing_dicts = [] %}
         {% if run_result.timing %}
             {% for item in run_result.timing %}
-                {% do timing_dicts.append(elementary.dbt_object_to_dict(item)) %}
+                {% do timing_dicts.append(
+                    elementary.normalize_timing_dict(
+                        elementary.dbt_object_to_dict(item)
+                    )
+                ) %}
             {% endfor %}
         {% endif %}
 
@@ -30,4 +34,21 @@
             }
         ) %}
     {% endif %}
+{% endmacro %}
+
+{# dbt Fusion exposes timing timestamps as datetime objects rather than ISO
+   strings; render_value would otherwise insert them as null. #}
+{% macro normalize_timing_dict(timing) %}
+    {% if timing is not mapping %} {% do return(timing) %} {% endif %}
+    {% set normalized = {} %}
+    {% for key, value in timing.items() %}
+        {% if key in [
+            "started_at",
+            "completed_at",
+        ] and value is not none and value is not string %}
+            {% do normalized.update({key: value.isoformat()}) %}
+        {% else %} {% do normalized.update({key: value}) %}
+        {% endif %}
+    {% endfor %}
+    {% do return(normalized) %}
 {% endmacro %}
