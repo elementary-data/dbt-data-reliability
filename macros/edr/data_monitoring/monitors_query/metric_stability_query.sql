@@ -78,8 +78,13 @@
         find is buried under it. Measurements are therefore bounded by the same
         age as the buckets. The current run's own measurement always qualifies:
         a bucket is only eligible once bucket_end + min_bucket_age has passed. -#}
-    {%- set settled_measurement_window = "updated_at >= " ~ elementary.edr_timeadd(
-        min_bucket_age.period, min_bucket_age.count, "bucket_end"
+    {%- set settled_measurement_window = (
+        "updated_at >= "
+        ~ elementary.edr_cast_as_timestamp(
+            elementary.edr_timeadd(
+                min_bucket_age.period, min_bucket_age.count, "bucket_end"
+            )
+        )
     ) %}
     {%- set history_window = bucket_window ~ " and " ~ settled_measurement_window %}
 
