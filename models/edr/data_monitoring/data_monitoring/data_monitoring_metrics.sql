@@ -1,7 +1,6 @@
 {{
     config(
         materialized="incremental",
-        unique_key="id",
         on_schema_change="append_new_columns",
         indexes=elementary.get_indexes_for_model(
             "data_monitoring_metrics",
@@ -11,6 +10,7 @@
         ),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={
+            "dedup_by_column": "id",
             "timestamp_column": "created_at",
             "prev_timestamp_column": "updated_at",
         },
@@ -19,7 +19,7 @@
             columns=["full_table_name", "metric_name"]
         ),
         table_type=elementary.get_default_table_type(),
-        incremental_strategy=elementary.get_default_incremental_strategy(),
+        incremental_strategy=elementary.get_append_only_incremental_strategy(),
     )
 }}
 
