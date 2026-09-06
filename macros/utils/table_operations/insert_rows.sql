@@ -321,20 +321,22 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
-{# spark__escape_special_chars: Newlines and carriage returns are replaced with
-   spaces (not escape sequences) because Spark SQL does not support multi-line
-   string literals inside INSERT VALUES. Backslashes and single quotes use
-   C-style escaping (\\, \') which is the Spark SQL convention. #}
+{# Hive text-serde tables cannot hold newlines inside a value (rows split on
+   read), so only when the user opts into `spark_file_format: hive` do we
+   flatten them to spaces; every other format keeps the default escaping. #}
 {%- macro spark__escape_special_chars(string_value) -%}
-    {{-
-        return(
-            string_value
-            | replace("\\", "\\\\")
-            | replace("'", "\\'")
-            | replace("\n", " ")
-            | replace("\r", " ")
-        )
-    -}}
+    {%- if elementary.get_config_var("spark_file_format") == "hive" -%}
+        {{-
+            return(
+                string_value
+                | replace("\\", "\\\\")
+                | replace("'", "\\'")
+                | replace("\n", " ")
+                | replace("\r", " ")
+            )
+        -}}
+    {%- endif -%}
+    {{- return(elementary.default__escape_special_chars(string_value)) -}}
 {%- endmacro -%}
 
 {# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
