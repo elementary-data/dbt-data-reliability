@@ -157,6 +157,91 @@ def test_metric_stability_last_check_ignores_gradual_drift(
     assert _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 120}), **args) == "pass"
 
 
+def test_metric_stability_records_history_across_runs(
+    test_id: str, dbt_project: DbtProject
+):
+    """Every run must add a measurement, not replace the previous one.
+
+    The comparison has nothing to compare unless earlier measurements survive in
+    data_monitoring_metrics. On adapters that roll back the test transaction an
+    INSERT-populated metrics table is discarded before the on-run-end flush, and
+    the test then passes forever without ever recording anything. Asserting on
+    the accumulating row counts catches that directly, where a pass/fail
+    assertion cannot tell "nothing changed" from "nothing was measured".
+    """
+    baseline = _rows()
+    counts = []
+    for _ in range(3):
+        assert _run(dbt_project, test_id, baseline) == "pass"
+        values = _bucket_values(dbt_project, test_id)
+        assert values, "no metrics were recorded at all"
+        counts.append(sum(len(m) for m in values.values()))
+
+    assert counts[0] > 0, counts
+    assert counts[1] > counts[0], counts
+    assert counts[2] > counts[1], counts
+
+    settled = [m for m in values.values() if len(m) == 3]
+    assert settled, f"no bucket was measured on all three runs: {values}"
+
+
+def test_metric_stability_detects_restatement_with_weekly_buckets(
+    test_id: str, dbt_project: DbtProject
+):
+    """A bucket longer than a day must still get a stable identity across runs.
+
+    The bucket grid is anchored on a value that moves by a day between runs, so
+    without snapping the anchor to the bucket period every measurement lands on
+    a fresh surrogate id, no bucket is ever measured twice and the test silently
+    never fires.
+    """
+    args = {
+        "time_bucket": {"period": "week", "count": 1},
+        "min_bucket_age": {"count": 1, "period": "week"},
+    }
+    restate_days_ago = 16
+
+    def weekly_rows(restated=None):
+        utc_today = datetime.utcnow().date()
+        rows = []
+        for days_ago in range(1, 36):
+            timestamp = datetime.combine(
+                utc_today - timedelta(days=days_ago), time(12, 0)
+            )
+            rows.append(
+                {
+                    TIMESTAMP_COLUMN: timestamp.strftime(DATE_FORMAT),
+                    VALUE_COLUMN: (
+                        restated
+                        if restated and days_ago == restate_days_ago
+                        else BASE_AMOUNT
+                    ),
+                    OTHER_VALUE_COLUMN: OTHER_BASE_AMOUNT,
+                }
+            )
+        return rows
+
+    assert _run(dbt_project, test_id, weekly_rows(), **args) == "pass"
+    assert _run(dbt_project, test_id, weekly_rows(), **args) == "pass"
+    assert (
+        _run(dbt_project, test_id, weekly_rows(restated=BASE_AMOUNT * 2), **args)
+        == "fail"
+    )
+
+
+def test_metric_stability_rejects_multi_step_buckets(
+    test_id: str, dbt_project: DbtProject
+):
+    """A count > 1 bucket cannot be given a stable identity, so it must raise."""
+    result = _run(
+        dbt_project,
+        test_id,
+        _rows(),
+        time_bucket={"period": "day", "count": 3},
+    )
+    assert result == "error"
+
+
 def test_metric_stability_ignores_unsettled_buckets(
     test_id: str, dbt_project: DbtProject
 ):
