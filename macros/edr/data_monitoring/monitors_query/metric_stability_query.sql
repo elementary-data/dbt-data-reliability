@@ -22,7 +22,7 @@
   new row, and the earlier measurements remain.
 #}
 {% macro metric_stability_query(
-    test_metrics_table_relation,
+    test_metrics_table_relations,
     full_table_name,
     metric_names,
     metric_properties,
@@ -76,25 +76,27 @@
         exactly zero is handled separately, since the relative form is undefined
         there. -#}
     {%- set exceeds_conditions = [] %}
+    {%- set baseline_columns = [] %}
     {%- for baseline in change_since %}
         {%- set baseline_column = (
             "previous_value" if baseline == "last_check" else "initial_value"
         ) %}
-        {%- do exceeds_conditions.append(
-            "("
-            ~ baseline_column
-            ~ " is not null and (("
-            ~ baseline_column
-            ~ " = 0 and metric_value != 0) or ("
-            ~ baseline_column
-            ~ " != 0 and abs(metric_value - "
-            ~ baseline_column
-            ~ ") / abs("
-            ~ baseline_column
-            ~ ") * 100.0 > "
-            ~ max_change_percent
-            ~ ")))"
-        ) %}
+        {%- if baseline_column not in baseline_columns %}
+            {%- do baseline_columns.append(baseline_column) %}
+            {%- do exceeds_conditions.append(
+                "("
+                ~ baseline_column
+                ~ " is not null and (("
+                ~ baseline_column
+                ~ " = 0 and metric_value != 0) or ("
+                ~ baseline_column
+                ~ " != 0 and "
+                ~ elementary.metric_stability_change_percent(baseline_column)
+                ~ " > "
+                ~ max_change_percent
+                ~ ")))"
+            ) %}
+        {%- endif %}
     {%- endfor %}
 
     {%- set metric_stability_query %}
@@ -116,6 +118,8 @@
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 and {{ bucket_window }}
 
+            {%- for test_metrics_table_relation in test_metrics_table_relations %}
+
             union all
 
             select id, full_table_name, column_name, metric_name, metric_type,
@@ -123,6 +127,7 @@
                    metric_value, updated_at, dimension, dimension_value
             from {{ test_metrics_table_relation }}
             where {{ bucket_window }}
+            {%- endfor %}
 
         ),
 
@@ -173,14 +178,29 @@
             metric_value - initial_value as change_since_first_check,
             case
                 when previous_value is not null and previous_value != 0
-                then abs(metric_value - previous_value) / abs(previous_value) * 100.0
+                then {{ elementary.metric_stability_change_percent("previous_value") }}
             end as change_percent_since_last_check,
             case
                 when initial_value is not null and initial_value != 0
-                then abs(metric_value - initial_value) / abs(initial_value) * 100.0
+                then {{ elementary.metric_stability_change_percent("initial_value") }}
             end as change_percent_since_first_check
         from latest_measurement
         where {{ exceeds_conditions | join(" or ") }}
     {%- endset %}
     {%- do return(metric_stability_query) %}
+{% endmacro %}
+
+
+{#
+  Relative change from a baseline column, in percentage points. Shared by the
+  WHERE predicate and the reported columns so the two cannot drift apart.
+#}
+{% macro metric_stability_change_percent(baseline_column) %}
+    {%- do return(
+        "abs(metric_value - "
+        ~ baseline_column
+        ~ ") / abs("
+        ~ baseline_column
+        ~ ") * 100.0"
+    ) %}
 {% endmacro %}
