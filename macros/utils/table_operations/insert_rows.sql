@@ -321,6 +321,24 @@
     {{- return(string_value | replace("'", "''")) -}}
 {%- endmacro -%}
 
+{# Hive text-serde tables cannot hold newlines inside a value (rows split on
+   read), so only when the user opts into `spark_file_format: hive` do we
+   flatten them to spaces; every other format keeps the default escaping. #}
+{%- macro spark__escape_special_chars(string_value) -%}
+    {%- if elementary.get_config_var("spark_file_format") == "hive" -%}
+        {{-
+            return(
+                string_value
+                | replace("\\", "\\\\")
+                | replace("'", "\\'")
+                | replace("\n", " ")
+                | replace("\r", " ")
+            )
+        -}}
+    {%- endif -%}
+    {{- return(elementary.default__escape_special_chars(string_value)) -}}
+{%- endmacro -%}
+
 {# `escaper` lets callers pass a pre-resolved escape_special_chars implementation
    so the hot insert path avoids an adapter.dispatch per rendered cell. When it's
    not provided, the adapter's render_value resolves it (see default__render_value). #}
@@ -348,6 +366,10 @@
         {%- endif -%}
     {%- else -%} null
     {%- endif -%}
+{%- endmacro -%}
+
+{%- macro fabricspark__escape_special_chars(string_value) -%}
+    {{- return(elementary.spark__escape_special_chars(string_value)) -}}
 {%- endmacro -%}
 
 {# Note: Python booleans pass Jinja's "is number" test, so we check
