@@ -258,12 +258,19 @@ def test_metric_stability_ignores_measurements_taken_while_settling(
     # Backdate this run's measurements into the settling window and move their
     # values far away. Were they still eligible as a baseline, the next run
     # would compare 100 against 10 and report a 900% change.
+    if dbt_project.target == "clickhouse":
+        # ClickHouse only supports updates as (asynchronous) mutations.
+        update_clause = "ALTER TABLE {{ ref('data_monitoring_metrics') }} UPDATE"
+        update_suffix = "SETTINGS mutations_sync = 1"
+    else:
+        update_clause = "UPDATE {{ ref('data_monitoring_metrics') }} SET"
+        update_suffix = ""
     dbt_project.run_query(
         f"""
-        UPDATE {{{{ ref('data_monitoring_metrics') }}}}
-        SET metric_value = 10, updated_at = bucket_end
+        {update_clause} metric_value = 10, updated_at = bucket_end
         WHERE full_table_name LIKE '%{test_id.upper()}'
         AND metric_name = 'sum'
+        {update_suffix}
         """
     )
 
