@@ -73,17 +73,19 @@
         {%- do return("") %}
     {%- endif %}
 
-    {#- Where `-` is allowed it still has to be well formed. RE2, Java and joni
-        all require at least one letter after it and reject a doubled one, so
-        `(?i-)`, `(?-)` and `(?--)` are parse errors rather than no-ops. A
-        leading `-` is fine: that is the clear-everything-after form. -#}
-    {%- if "--" in flags or flags.endswith("-") %}
+    {#- Where `-` is allowed it still has to be well formed. The grammar is
+        `(?set-clear)`: at most one `-`, with at least one letter after it. RE2,
+        Java and joni all reject anything else, so `(?i-)`, `(?-)`, `(?--i)` and
+        `(?i-s-m)` are parse errors rather than no-ops. Counting the operator
+        rather than looking for an adjacent pair is what catches that last shape.
+        A leading `-` is fine: that is the clear-only form. -#}
+    {%- if flags.count("-") > 1 or flags.endswith("-") %}
         {%- if execute %}
             {{
                 exceptions.raise_compiler_error(
                     "regexp_match: malformed flags '"
                     ~ flags
-                    ~ "'. A '-' must be followed by at least one flag letter, and cannot be doubled."
+                    ~ "'. A '-' may appear at most once, and must be followed by at least one flag letter."
                 )
             }}
         {%- endif %}
@@ -101,7 +103,9 @@
     {#- Dropping unsupported letters can leave a dangling `-`, which the input
         check above could not have caught: "i-Z" is well formed, but once `Z`
         goes it becomes "i-" and would emit `(?i-)`. Clearing a flag the engine
-        does not have is a no-op, so drop the operator with it. -#}
+        does not have is a no-op, so drop the operator with it. A trailing `-` is
+        the only malformed shape dropping can produce, because at most one
+        survived the check above. -#}
     {%- if kept and kept[-1] == "-" %} {%- do kept.pop() %} {%- endif %}
 
     {%- if dropped %}
