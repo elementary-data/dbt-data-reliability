@@ -242,6 +242,34 @@ def test_metric_stability_rejects_multi_step_buckets(
     assert result == "error"
 
 
+def test_metric_stability_ignores_measurements_taken_while_settling(
+    test_id: str, dbt_project: DbtProject
+):
+    """A bucket's own settling must not become the 'first_check' baseline.
+
+    The first measurements of a bucket are taken while late records are still
+    arriving, which is the period min_bucket_age exists to exclude. If they are
+    used as the baseline, every later comparison carries that settling as a
+    permanent offset and real drift is buried under it.
+    """
+    args = {"change_since": ["first_check"], "max_change_percent": 15}
+    assert _run(dbt_project, test_id, _rows(), **args) == "pass"
+
+    # Backdate this run's measurements into the settling window and move their
+    # values far away. Were they still eligible as a baseline, the next run
+    # would compare 100 against 10 and report a 900% change.
+    dbt_project.run_query(
+        f"""
+        UPDATE {{{{ ref('data_monitoring_metrics') }}}}
+        SET metric_value = 10, updated_at = bucket_end
+        WHERE full_table_name LIKE '%{test_id.upper()}'
+        AND metric_name = 'sum'
+        """
+    )
+
+    assert _run(dbt_project, test_id, _rows(), **args) == "pass"
+
+
 def test_metric_stability_ignores_unsettled_buckets(
     test_id: str, dbt_project: DbtProject
 ):
