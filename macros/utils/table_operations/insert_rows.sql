@@ -349,7 +349,7 @@
         {%- set escaper = adapter.dispatch("escape_special_chars", "elementary") -%}
     {%- endif -%}
     {%- if value is defined and value is not none -%}
-        {%- if value is not string and value.year is defined -%}
+        {%- if value is not string and value is not mapping and value.year is defined -%}
             {%- set value = value.isoformat() -%}
         {%- endif -%}
         {%- if value is boolean -%} {{- elementary.edr_boolean_literal(value) -}}
