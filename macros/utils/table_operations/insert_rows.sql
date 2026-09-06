@@ -350,9 +350,8 @@
     {%- endif -%}
     {%- if value is defined and value is not none -%}
         {%- if elementary.edr_is_datetime(value) -%}
-            {%- set value = value.isoformat() -%}
-        {%- endif -%}
-        {%- if value is boolean -%} {{- elementary.edr_boolean_literal(value) -}}
+            {{- elementary.render_value(value.isoformat(), data_type, escaper) -}}
+        {%- elif value is boolean -%} {{- elementary.edr_boolean_literal(value) -}}
         {%- elif value is number -%} {{- value -}}
         {%- elif value is string and data_type == "timestamp" -%}
             {{-
