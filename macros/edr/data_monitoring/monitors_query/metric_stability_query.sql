@@ -71,10 +71,33 @@
         ~ max_bucket_end_expr
     ) %}
 
+    {#- A bucket's first measurements are taken while it is still settling, and
+        min_bucket_age exists precisely to keep that period out of scope. Left
+        in, they become the 'first_check' baseline, so every comparison carries
+        the settling as a permanent offset and the drift 'first_check' exists to
+        find is buried under it. Measurements are therefore bounded by the same
+        age as the buckets. The current run's own measurement always qualifies:
+        a bucket is only eligible once bucket_end + min_bucket_age has passed. -#}
+    {%- set settled_measurement_window = "updated_at >= " ~ elementary.edr_timeadd(
+        min_bucket_age.period, min_bucket_age.count, "bucket_end"
+    ) %}
+    {%- set history_window = bucket_window ~ " and " ~ settled_measurement_window %}
+
     {#- Conditions keep booleans in boolean position rather than returning one
         from a CASE, which T-SQL has no first-class value for. A move away from
         exactly zero is handled separately, since the relative form is undefined
         there. -#}
+    {#- Repeating a float aggregate can differ in the last bits when the scan is
+        partitioned differently between runs, since floating point addition is
+        not associative. That is a relative change around 1e-14, which a strict
+        comparison against the default of 0 reports as a failure on data nobody
+        touched. The floor sits far above that and far below any real movement,
+        and leaves the zero-crossing rule below untouched. -#}
+    {%- set change_percent_noise_floor = 0.000000001 %}
+    {%- set change_threshold = "%.10f" | format(
+        [max_change_percent, change_percent_noise_floor] | max
+    ) %}
+
     {%- set exceeds_conditions = [] %}
     {%- set baseline_columns = [] %}
     {%- for baseline in change_since %}
@@ -93,7 +116,7 @@
                 ~ " != 0 and "
                 ~ elementary.metric_stability_change_percent(baseline_column)
                 ~ " > "
-                ~ max_change_percent
+                ~ change_threshold
                 ~ ")))"
             ) %}
         {%- endif %}
@@ -116,7 +139,7 @@
                 {%- endif %}
                 and metric_name in {{ elementary.strings_list_to_tuple(metric_names) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
-                and {{ bucket_window }}
+                and {{ history_window }}
 
             {%- for test_metrics_table_relation in test_metrics_table_relations %}
 
@@ -126,7 +149,7 @@
                    bucket_start, bucket_end, bucket_duration_hours,
                    metric_value, updated_at, dimension, dimension_value
             from {{ test_metrics_table_relation }}
-            where {{ bucket_window }}
+            where {{ history_window }}
             {%- endfor %}
 
         ),

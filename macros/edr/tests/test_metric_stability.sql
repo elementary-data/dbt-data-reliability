@@ -30,6 +30,24 @@
                          the observation window, and it must extend past
                          min_bucket_age or no bucket is ever both settled and
                          still being measured.
+
+  Choosing min_bucket_age:
+
+    A bucket is compared against its own earlier measurements, so it needs
+    several of them before 'first_check' says anything 'last_check' does not.
+    The count is roughly (days_back - min_bucket_age) / run interval, and
+    days_back is derived from min_bucket_age, so an age close to the run
+    interval leaves only two measurements and the two baselines collapse into
+    the same comparison. Set min_bucket_age to a multiple of how often the
+    project runs, not to the smallest age that looks settled.
+
+  Limitations:
+
+    A bucket that loses all of its rows produces no new measurement at all,
+    rather than a measurement of zero, so the newest value stays whatever it
+    was and the change is not reported. Partial deletion is caught normally,
+    since the metric moves. Pair this with a volume test if whole periods can
+    disappear.
 #}
 {% test metric_stability(
     model,
