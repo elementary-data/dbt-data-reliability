@@ -135,7 +135,9 @@
     create or replace temporary view {{ relation }}
     as {{ sql_query }}
     {% else %}
-    create table {{ relation }}
+        {# Without USING, Spark defaults to a Hive text table, which splits rows
+       on newline values when they are read. dbt-spark defaults file_format to parquet. #}
+    create table {{ relation }} using {{ elementary.get_config_var("spark_file_format") }}
     as {{ sql_query }}
     {% endif %}
 {% endmacro %}

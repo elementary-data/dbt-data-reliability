@@ -22,7 +22,7 @@
         {% set no_columns_error -%}
             Failed to detect columns for {{ model_relation }}. Ensure it exists and authorized.
         {%- endset %}
-        exceptions.raise_compiler_error(no_columns_error)
+        {{ exceptions.raise_compiler_error(no_columns_error) }}
     {% endif %}
 
     with

@@ -20,7 +20,9 @@
 {% endmacro %}
 
 {% macro agate_val_serialize(val) %}
-    {% if val.year is defined %} {% do return(val.isoformat()) %} {% endif %}
+    {% if elementary.edr_is_datetime(val) %}
+        {% do return(val.isoformat()) %}
+    {% endif %}
     {% if elementary.edr_is_decimal(val) %}
         {% do return(elementary.edr_serialize_decimal(val)) %}
     {% endif %}

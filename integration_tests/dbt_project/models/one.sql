@@ -1,3 +1,4 @@
+-- Leading comment used by test_compiled_code_preserves_newlines
 {{
     config(
         materialized="table",
