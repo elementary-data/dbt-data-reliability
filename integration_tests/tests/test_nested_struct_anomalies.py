@@ -8,6 +8,9 @@ from dbt_project import DbtProject
 
 TIMESTAMP_COLUMN = "updated_at"
 NESTED_COLUMN = "user_info.address.city"
+# A nested leaf whose final segment is a BigQuery reserved word. Referencing it
+# only compiles when each path segment is backtick-quoted (`user_info`.`order`).
+RESERVED_WORD_COLUMN = "user_info.order"
 PLAIN_COLUMN = "superhero"
 COLUMN_TEST_NAME = "elementary.column_anomalies"
 DIMENSION_TEST_NAME = "elementary.dimension_anomalies"
@@ -27,6 +30,9 @@ def _row_sql(updated_at: Union[date, datetime], superhero: str, city: Optional[s
         ", struct("
         f"struct({city_sql} as city, cast('US' as string) as country) as address"
         ", cast('hero' as string) as name"
+        # A leaf whose segment is a BigQuery reserved word, so the monitoring
+        # query only compiles when every path segment is backtick-quoted.
+        ", cast('paid' as string) as `order`"
         ") as user_info"
         # A REPEATED leaf and a REPEATED ancestor, so that nested-column
         # discovery has to skip fields that would require UNNEST rather than
@@ -177,6 +183,39 @@ def test_column_anomalies_on_struct_field_with_struct_dimension(
     )
     assert test_result["status"] == "pass"
     assert test_result["column_name"].lower() == NESTED_COLUMN
+
+
+@pytest.mark.only_on_targets(SUPPORTED_TARGETS)
+def test_column_anomalies_on_reserved_word_struct_field(
+    test_id: str, dbt_project: DbtProject
+):
+    """A nested leaf whose segment is a reserved word (user_info.order) only
+    compiles when each path segment is backtick-quoted. Used as both the
+    monitored column and a dimension, it pins the segment-quoting on the column
+    projection and the dimension select list — drop either and BigQuery rejects
+    the query as a syntax error rather than these tests staying green."""
+    utc_today = datetime.utcnow().date()
+    _create_struct_model(dbt_project, test_id, _stable_rows(utc_today - timedelta(1)))
+
+    test_result = dbt_project.test(
+        test_id,
+        COLUMN_TEST_NAME,
+        {
+            "timestamp_column": TIMESTAMP_COLUMN,
+            "column_anomalies": ["null_count"],
+            "dimensions": [RESERVED_WORD_COLUMN],
+        },
+        test_column=RESERVED_WORD_COLUMN,
+        as_model=True,
+    )
+    assert test_result["status"] == "pass"
+    assert test_result["column_name"].lower() == RESERVED_WORD_COLUMN
+
+    points = _anomaly_test_points(dbt_project, test_id)
+    assert points, "No metric data points were collected"
+    # The dimension must resolve to the reserved-word leaf's value, not to nulls.
+    assert {point["dimension"] for point in points} == {RESERVED_WORD_COLUMN}
+    assert {point["dimension_value"] for point in points} == {"paid"}
 
 
 @pytest.mark.only_on_targets(SUPPORTED_TARGETS)
