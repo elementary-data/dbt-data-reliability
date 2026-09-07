@@ -248,6 +248,25 @@ def test_metric_stability_rejects_multi_step_buckets(
     assert result == "error"
 
 
+@pytest.mark.parametrize("days_back", [1, 0.5])
+def test_metric_stability_rejects_too_short_window(
+    test_id: str, dbt_project: DbtProject, days_back
+):
+    """A window too short to outlast settling must raise, not pass vacuously.
+
+    The query truncates days_back to whole days, so a fractional value has to be
+    rejected on its effective size rather than on the number as written.
+    """
+    result = _run(
+        dbt_project,
+        test_id,
+        _rows(),
+        min_bucket_age={"count": 1, "period": "hour"},
+        days_back=days_back,
+    )
+    assert result == "error"
+
+
 def test_metric_stability_ignores_measurements_taken_while_settling(
     test_id: str, dbt_project: DbtProject
 ):
@@ -271,12 +290,14 @@ def test_metric_stability_ignores_measurements_taken_while_settling(
     else:
         update_clause = "UPDATE {{ ref('data_monitoring_metrics') }} SET"
         update_suffix = ""
-    dbt_project.run_query(f"""
+    dbt_project.run_query(
+        f"""
         {update_clause} metric_value = 10, updated_at = bucket_end
         WHERE full_table_name LIKE '%{test_id.upper()}'
         AND metric_name = 'sum'
         {update_suffix}
-        """)
+        """
+    )
 
     assert _run(dbt_project, test_id, _rows(), **args) == "pass"
 
@@ -347,7 +368,7 @@ def _samples(dbt_project: DbtProject, test_id: str):
 
 
 @pytest.mark.parametrize("baseline", ["last_check", "first_check"])
-def test_metric_stability_quoted_columns_and_failure_details(
+def test_metric_stability_quoted_column_details(
     test_id: str, dbt_project: DbtProject, baseline: str
 ):
     args = {"columns": ['"amount"'], "change_since": [baseline]}
@@ -388,7 +409,7 @@ def test_metric_stability_reports_disappearing_bucket(
     assert _run(dbt_project, test_id, _rows(), dimensions=dimensions) == "pass"
 
 
-def test_metric_stability_ignores_disappearance_outside_observation_window(
+def test_metric_stability_ignores_disappearance_off_window(
     test_id: str, dbt_project: DbtProject
 ):
     assert _run(dbt_project, test_id, _rows(), days_back=10) == "pass"
@@ -411,7 +432,7 @@ def test_metric_stability_reports_disappearing_dimension(
     assert "999" in str(samples[0]["dimension_value"])
 
 
-def test_metric_stability_does_not_report_unscanned_buckets_as_missing(
+def test_metric_stability_skips_unscanned_buckets(
     test_id: str, dbt_project: DbtProject
 ):
     assert _run(dbt_project, test_id, _rows(), days_back=6) == "pass"

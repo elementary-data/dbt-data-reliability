@@ -14,8 +14,8 @@ models:
           columns: [cost_amount, revenue_amount]
           metrics: [sum]
           timestamp_column: order_ts
-          time_bucket: {count: 1, period: day}
-          min_bucket_age: {count: 4, period: week}
+          time_bucket: { count: 1, period: day }
+          min_bucket_age: { count: 4, period: week }
           days_back: 90
           change_since: [first_check]
           max_change_percent: 1
@@ -24,6 +24,12 @@ models:
 Choose a business/event timestamp whose historical periods you want to protect.
 A row's ingestion or last-modified timestamp can move it between buckets when it
 is updated, which answers a different question.
+
+`dimensions` and `where_expression` behave as they do in the other metric-based
+tests. Each bucket/dimension combination is a separate metric with its own
+history and baseline, so a restatement confined to one dimension value is still
+reported, and a dimension value that stops appearing is reported as a missing
+bucket. Every extra combination is another measurement to store and compare.
 
 ## Coverage and cost
 
@@ -58,7 +64,7 @@ There is no explicit accept/reset-baseline operation in this version. Choose
 `last_check` when changes should be reported once and then automatically accepted.
 Choose `first_check` when continued deviation should remain a failure. Switching
 to `last_check` changes the policy; it does not reset `first_check`. Account for
-history retention and cleanup: the baseline is the earliest *retained*
+history retention and cleanup: the baseline is the earliest _retained_
 measurement, not an immutable approved snapshot. Do not use this test as a
 substitute for an auditable financial close or an immutable snapshot.
 
