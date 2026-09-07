@@ -46,11 +46,17 @@
         {%- do return(default_clause) %}
     {%- endif %}
 
+    {#- `model` is a subquery string, not a relation, when the test carries a
+        `where` config, and that cannot be introspected. -#}
+    {%- set relation = elementary.get_model_relation_for_test(
+        model, elementary.get_test_model()
+    ) %}
+
     {#- Lowercased name -> the warehouse's own casing, quoted. Unquoted, a
         mixed-case or reserved name (`myCol` on Snowflake, `order` on Postgres)
         emits invalid SQL, so user-supplied names go through this too. -#}
     {%- set resolved = {} %}
-    {%- for col in adapter.get_columns_in_relation(model) %}
+    {%- for col in (adapter.get_columns_in_relation(relation) if relation else []) %}
         {%- do resolved.update({col.name | lower: prefix ~ adapter.quote(col.name)}) %}
     {%- endfor %}
     {%- set all_columns_clause = resolved.values() | join(", ") %}
@@ -89,7 +95,7 @@
                 ~ ": column '"
                 ~ col
                 ~ "' does not exist in model '"
-                ~ model.name
+                ~ (relation.name if relation else model)
                 ~ "' and will be skipped."
             ) %}
         {%- elif resolved[col | lower] not in select_cols %}

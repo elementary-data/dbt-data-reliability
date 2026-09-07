@@ -1,5 +1,5 @@
 {% test expect_compound_columns_to_be_unique_with_context(
-    model, column_list, row_condition=none, context_columns=none
+    model, column_list, context_columns=none
 ) %}
     {%- if not column_list and execute %}
         {{
@@ -35,9 +35,7 @@
             from {{ model }}
             {#- NULLs partition together, so an all-NULL key would report as a
                 duplicate. Matches dbt_expectations' `all_values_are_missing`. -#}
-            where
-                not ({{ columns | join(" is null and ") }} is null)
-                {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
+            where not ({{ columns | join(" is null and ") }} is null)
         ) validation
     where elementary_n_records > 1
 {% endtest %}

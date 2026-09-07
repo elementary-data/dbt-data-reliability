@@ -3,7 +3,6 @@
     column_name,
     regex_list,
     match_on="any",
-    row_condition=none,
     is_raw=false,
     flags="",
     context_columns=none
@@ -59,7 +58,5 @@
 
     select {{ select_clause }}
     from {{ model }}
-    where
-        not ({{ match_conditions | join(combinator) }})
-        {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
+    where not ({{ match_conditions | join(combinator) }})
 {% endtest %}

@@ -106,6 +106,37 @@ def test_with_context_skips_nonexistent_context_column(
         assert set(sample.keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
 
 
+def test_with_context_honors_dbt_where_config(test_id: str, dbt_project: DbtProject):
+    """dbt's `where` turns `model` into a subquery string, which cannot be
+    introspected, so the helper resolves it back to the relation. This is the
+    supported way to filter rows now that `row_condition` is gone.
+    """
+    data = [
+        {
+            COLUMN_NAME: None,
+            CONTEXT_COLUMN: f"ctx-{index}",
+            OTHER_COLUMN: "keep" if index < 3 else "drop",
+        }
+        for index in range(10)
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.not_null_with_context",
+        dict(column_name=COLUMN_NAME, context_columns=[CONTEXT_COLUMN]),
+        data=data,
+        test_vars=TEST_VARS,
+        test_config={"where": f"{OTHER_COLUMN} = 'keep'"},
+    )
+    assert test_result["status"] == "fail"
+    # `where` cuts the 10 failing rows down to 3.
+    assert test_result["failed_row_count"] == 3
+
+    samples = get_samples(dbt_project, test_id)
+    assert len(samples) == 3
+    for sample in samples:
+        assert set(sample.keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
+
+
 def test_expression_is_true_with_context(test_id: str, dbt_project: DbtProject):
     """expression_is_true is table-level, so context_columns is its only way to sample data."""
     # The last row satisfies the expression, so a predicate that matched

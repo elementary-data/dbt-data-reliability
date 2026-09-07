@@ -1,5 +1,5 @@
 {% test expect_column_values_to_be_unique_with_context(
-    model, column_name, row_condition=none, context_columns=none
+    model, column_name, context_columns=none
 ) %}
     {#- `elementary_n_records` below is a helper column, so the default select
         list has to name every real column instead of using `*`. -#}
@@ -20,9 +20,7 @@
             from {{ model }}
             {#- NULLs partition together, so they would report as duplicates of
                 each other. dbt's own `unique` filters them out too. -#}
-            where
-                {{ column_name }} is not null
-                {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
+            where {{ column_name }} is not null
         ) validation
     where elementary_n_records > 1
 {% endtest %}
