@@ -13,12 +13,12 @@
     ) %}
     {% set dimensions_string = elementary.join_list(dimensions, "; ") %}
 
-    {# Segment-quote nested struct paths (e.g. user.address.city) for BigQuery so
-       they compile correctly. Plain identifiers, expressions and non-BigQuery
-       adapters pass through unchanged. #}
+    {# Resolve each dimension to its SQL form. Adapters with nested-field support
+       segment-quote struct paths (e.g. user.address.city); plain identifiers,
+       expressions and other adapters pass through unchanged. #}
     {% set sql_dimensions = [] %}
     {% for dimension in dimensions %}
-        {% do sql_dimensions.append(elementary.bq_segment_quote(dimension)) %}
+        {% do sql_dimensions.append(elementary.dimension_monitoring_sql(dimension)) %}
     {% endfor %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(
         sql_dimensions, "; "

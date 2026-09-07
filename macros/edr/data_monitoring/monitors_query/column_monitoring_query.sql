@@ -16,31 +16,17 @@
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
         {% do prefixed_dimensions.append(
-            "dimension_" ~ elementary.bq_alias_safe_dimension(dimension_column)
+            "dimension_" ~ elementary.dimension_monitoring_alias(dimension_column)
         ) %}
     {% endfor %}
 
-    {#- A nested BigQuery struct leaf (user.address.city) cannot be referenced via
-        `column_obj.quoted` — that wraps the whole dotted name in one pair of
-        backticks — and projecting it into a CTE unaliased would collapse the path
-        to its last segment. Project it segment-quoted under a dot-free alias and
-        have the metric aggregates reference that alias instead. Non-nested
-        columns keep using `column_obj.quoted`, so identifier quoting (reserved
-        words, case-sensitive names) is never lost. -#}
-    {%- if elementary.bq_is_nested_identifier(column_obj.name) %}
-        {%- set nested_alias = adapter.quote(
-            elementary.bq_safe_alias(column_obj.name)
-        ) %}
-        {%- set monitored_column_projection = (
-            elementary.bq_segment_quote(column_obj.name)
-            ~ " as "
-            ~ nested_alias
-        ) %}
-        {%- set monitored_column_expr = nested_alias %}
-    {%- else %}
-        {%- set monitored_column_projection = column_obj.quoted %}
-        {%- set monitored_column_expr = column_obj.quoted %}
-    {%- endif %}
+    {#- Ask the adapter how to project and reference the monitored column. For an
+        ordinary column both are just `column_obj.quoted`; adapters with nested
+        STRUCT support project a computed expression under a safe alias and
+        reference that alias in the metric aggregates. -#}
+    {%- set monitored_column = elementary.monitored_column_projection(column_obj) %}
+    {%- set monitored_column_projection = monitored_column.projection %}
+    {%- set monitored_column_expr = monitored_column.expression %}
 
     {% set metric_types = [] %}
     {% set metric_name_to_type = {} %}
@@ -365,16 +351,17 @@
     {% endif %}
 {% endmacro %}
 
-{# Segment-quotes nested BigQuery struct dimensions and sanitises the alias
-   suffix. Both helpers are no-ops for plain identifiers, SQL expressions and
-   non-BigQuery adapters, so this stays byte-identical to previous behaviour
-   outside of nested struct references. #}
+{# Renders a dimension select list. When aliasing (`as_prefix`), the dimension
+   SQL and the alias suffix are resolved per-adapter, so nested struct paths are
+   handled where supported and everything else stays byte-identical to previous
+   behaviour. Without a prefix the values are already-built column references and
+   pass through unchanged. #}
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
     {% set select_statements %}
     {%- for column in dimension_columns -%}
       {%- if as_prefix -%}
-        {{ elementary.bq_segment_quote(column) }}
-        {{- " as " ~ as_prefix ~ "_" ~ elementary.bq_alias_safe_dimension(column) -}}
+        {{ elementary.dimension_monitoring_sql(column) }}
+        {{- " as " ~ as_prefix ~ "_" ~ elementary.dimension_monitoring_alias(column) -}}
       {%- else -%}
         {{ column }}
       {%- endif -%}

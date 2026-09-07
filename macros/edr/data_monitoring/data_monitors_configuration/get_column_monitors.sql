@@ -2,11 +2,11 @@
 
     {% set column_objects = adapter.get_columns_in_relation(model_relation) %}
 
-    {#- Only a dotted name can refer to a nested STRUCT leaf, so skip the
-        (potentially wide) flattening pass entirely for ordinary columns. -#}
-    {% if "." in column_name %}
-        {% set column_objects = elementary.bq_flatten_nested_columns(column_objects) %}
-    {% endif %}
+    {#- Let the adapter expand nested STRUCT leaves (e.g. user.address.city) into
+        monitorable columns. No-op on adapters without nested-field support. -#}
+    {% set column_objects = elementary.flatten_columns_for_monitoring(
+        column_objects, column_name
+    ) %}
 
     {% for column_obj in column_objects %}
         {% if column_obj.name.strip('"') | lower == column_name.strip('"') | lower %}
