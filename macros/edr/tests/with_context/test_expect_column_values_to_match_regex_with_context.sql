@@ -2,10 +2,10 @@
     model, column_name, regex, is_raw=false, flags="", context_columns=none
 ) %}
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        [column_name],
-        context_columns,
-        "expect_column_values_to_match_regex_with_context",
+        model=model,
+        tested_columns=[column_name],
+        context_columns=context_columns,
+        test_name="expect_column_values_to_match_regex_with_context",
     ) %}
 
     select {{ select_clause }}

@@ -15,22 +15,17 @@
         }}
     {%- endif %}
 
-    {#- Accept a single pattern given as a bare string. A string is iterable, so
-        without this it would be looped over one character at a time and each
-        character used as its own pattern, which silently passes the test. The
-        emptiness guard above runs first, so "" still raises rather than
-        becoming [""], which would match every value. -#}
+    {#- A bare string is iterable, so without this each character becomes its
+        own pattern and the test silently passes. -#}
     {%- set regex_list = [regex_list] if regex_list is string else regex_list %}
 
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        [column_name],
-        context_columns,
-        "expect_column_values_to_match_regex_list_with_context",
+        model=model,
+        tested_columns=[column_name],
+        context_columns=context_columns,
+        test_name="expect_column_values_to_match_regex_list_with_context",
     ) %}
 
-    {#- Validate rather than fall back: treating an unrecognised value as "any"
-        would silently invert what the test asserts. -#}
     {%- if match_on | lower not in ["any", "all"] and execute %}
         {{
             exceptions.raise_compiler_error(
@@ -44,8 +39,7 @@
     {#- match_on="all" requires every pattern to match, "any" requires one. -#}
     {%- set combinator = " and " if match_on | lower == "all" else " or " %}
 
-    {#- Sanitize once rather than once per pattern, so an unsupported flag warns
-        a single time instead of once for every regex in the list. -#}
+    {#- Once, not once per pattern, so an unsupported flag warns once. -#}
     {%- set flags = elementary.regexp_sanitize_flags(flags) %}
     {%- set match_conditions = [] %}
     {%- for regex in regex_list %}

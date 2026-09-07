@@ -25,8 +25,8 @@
     default_clause="*",
     prefix=""
 ) %}
-    {#- `get_columns_in_relation` is stubbed to [] at parse time, so resolving
-        here would warn that every context column is missing on every parse. -#}
+    {#- get_columns_in_relation is stubbed to [] at parse time, which would
+        warn that every context column is missing on every parse. -#}
     {%- if not execute %}
         {%- do return(default_clause if default_clause is not none else "*") %}
     {%- endif %}
@@ -53,8 +53,7 @@
     ) %}
 
     {#- Lowercased name -> the warehouse's own casing, quoted. Unquoted, a
-        mixed-case or reserved name (`myCol` on Snowflake, `order` on Postgres)
-        emits invalid SQL, so user-supplied names go through this too. -#}
+        reserved or mixed-case name (`order`, `myCol`) emits invalid SQL. -#}
     {%- set resolved = {} %}
     {%- for col in (adapter.get_columns_in_relation(relation) if relation else []) %}
         {%- do resolved.update({col.name | lower: prefix ~ adapter.quote(col.name)}) %}
@@ -62,8 +61,6 @@
     {%- set all_columns_clause = resolved.values() | join(", ") %}
 
     {%- if not has_context %}
-        {#- Reachable only for the `default_clause is none` callers, where an
-            empty clause would emit `select from (...)`. -#}
         {%- if not all_columns_clause %}
             {{
                 exceptions.raise_compiler_error(
@@ -103,7 +100,6 @@
         {%- endif %}
     {%- endfor %}
 
-    {#- Every requested column was skipped, so fall back rather than emit an empty select list. -#}
     {%- if not select_cols %}
         {%- do return(
             default_clause

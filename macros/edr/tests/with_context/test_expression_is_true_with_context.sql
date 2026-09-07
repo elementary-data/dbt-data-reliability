@@ -3,10 +3,10 @@
 ) %}
     {#- `column_name` is optional so the same test covers table-level expressions. -#}
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        [column_name],
-        context_columns,
-        "expression_is_true_with_context",
+        model=model,
+        tested_columns=[column_name],
+        context_columns=context_columns,
+        test_name="expression_is_true_with_context",
     ) %}
 
     select {{ select_clause }}

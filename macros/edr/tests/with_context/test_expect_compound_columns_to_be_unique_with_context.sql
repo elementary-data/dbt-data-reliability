@@ -9,18 +9,14 @@
         }}
     {%- endif %}
 
-    {#- Accept a single column given as a bare string. The emptiness guard above
-        runs first, so "" still raises rather than becoming [""], which would
-        emit `partition by `. -#}
     {%- set columns = [column_list] if column_list is string else column_list %}
 
-    {#- `elementary_n_records` below is a helper column, so the default select
-        list has to name every real column instead of using `*`. -#}
+    {#- default_clause=none: `*` would leak elementary_n_records into the sample. -#}
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        columns,
-        context_columns,
-        "expect_compound_columns_to_be_unique_with_context",
+        model=model,
+        tested_columns=columns,
+        context_columns=context_columns,
+        test_name="expect_compound_columns_to_be_unique_with_context",
         default_clause=none,
     ) %}
 

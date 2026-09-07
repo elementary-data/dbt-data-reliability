@@ -1,33 +1,20 @@
 {#
     Returns a boolean expression that is true when `regex` matches anywhere in
-    `string`.
+    `string`. Search semantics, not full-match.
 
-    Search semantics, not full-match: this mirrors Python's `re.search`, which
-    is what `expect_column_values_to_match_regex` has always meant. Several
-    engines get this wrong in opposite directions, so read the per-adapter
-    notes before changing one. In particular Snowflake's `regexp_like` and
-    Dremio's `regexp_like` both implicitly anchor the pattern at both ends and
-    are NOT drop-in replacements for a search.
+    Snowflake's and Dremio's `regexp_like` implicitly anchor at both ends and
+    are NOT drop-in replacements for a search. See their overrides below.
 
     Args:
         string: the column or expression to test.
-        regex: the pattern, as a plain string. Pass it exactly as the regex
-            engine should see it, quotes included: rendering it into a SQL
-            literal is `regexp_pattern_literal`'s job, per dialect.
-        is_raw: emit the pattern as a raw string literal. Honored on Snowflake
-            (`$$...$$`), and on BigQuery and the Spark family (`r'...'`); on the
-            other ten adapters it is a silent no-op, so escape the pattern
-            yourself on the engines that consume backslashes inside string
-            literals: ClickHouse and Redshift. Snowflake is exposed too whenever
-            `is_raw` is false, which is the default. A raw literal escapes
-            nothing, so a pattern that contains its delimiter cannot be
-            expressed as one and is refused rather than silently requoted.
-        flags: regex flags. `i` (case-insensitive) is honored on every adapter
-            that supports flags at all. Anything the adapter does not accept is
-            dropped with a warning, by `regexp_sanitize_flags` below. `-` clears
-            the flags after it, and is accepted only on adapters whose alphabet
-            lists it, which is not the same as taking inline flags: Postgres
-            takes them inline and still cannot express a negation.
+        regex: the pattern as the regex engine should see it. Rendering it into
+            a SQL literal is `regexp_pattern_literal`'s job.
+        is_raw: emit the pattern as a raw literal. Honored on Snowflake
+            (`$$...$$`), BigQuery and the Spark family (`r'...'`); a silent
+            no-op elsewhere, so on ClickHouse and Redshift, whose lexers consume
+            backslashes, escape the pattern yourself.
+        flags: regex flags. `i` works on every adapter that takes flags at all;
+            anything else is per-engine, see `regexp_supported_flags`.
 #}
 {% macro regexp_match(string, regex, is_raw=false, flags="") %}
     {%- set flags = elementary.regexp_sanitize_flags(flags) %}
@@ -35,37 +22,24 @@
 {% endmacro %}
 
 {#
-    Drops flags the current adapter cannot honor and returns the rest, warning
-    about what was removed. The flags must actually be stripped, not just warned
-    about: engines reject an unknown option outright rather than skipping it.
+    Drops flags the current adapter cannot honor, warning about what was
+    removed. Engines reject an unknown option outright, so they have to be
+    stripped rather than only warned about.
 
-    Warn rather than raise for an unsupported letter, so a disabled test carrying
-    a stray flag still compiles. Sanitizing is idempotent, so a caller that loops
-    over many patterns can sanitize once up front and get a single warning
-    instead of one per pattern.
-
-    `-` is the exception. It is not a flag but an operator that clears the flags
-    after it, so it is refused rather than dropped where it cannot be honored,
-    and refused when malformed. See the two branches below.
+    `-` clears the flags after it, so it is refused rather than dropped where
+    it cannot be honored: dropping it would enable what the caller disabled.
 #}
 {% macro regexp_sanitize_flags(flags) %}
     {%- if not flags %} {%- do return("") %} {%- endif %}
-
-    {#- A list is the plausible mistake, since the sibling test arguments are
-        lists; the string methods below would raise a bare Jinja error. -#}
     {%- set flags = flags if flags is string else flags | join("") %}
 
-    {#- No flag is honorable on T-SQL at all, so let sqlserver__regexp_match
-        give the real reason instead of complaining about flags first. -#}
+    {#- Let sqlserver__regexp_match give the real reason instead. -#}
     {%- if elementary.is_tsql() %} {%- do return("") %} {%- endif %}
 
     {%- set supported = elementary.regexp_supported_flags() %}
 
-    {#- The grammar is `(?set-clear)`: at most one `-`, with at least one letter
-        after it, so `(?i-)`, `(?-)`, `(?--i)` and `(?i-s-m)` are parse errors on
-        every engine that accepts a negation. Counting the operator rather than
-        looking for an adjacent pair is what catches that last shape. Runs before
-        the support check so a malformed string reports as malformed everywhere. -#}
+    {#- The grammar is `(?set-clear)`: at most one `-`, at least one letter
+        after it. Checked before support, so malformed reports as malformed. -#}
     {%- if flags.count("-") > 1 or flags.endswith("-") %}
         {%- if execute %}
             {{
@@ -79,12 +53,6 @@
         {%- do return("") %}
     {%- endif %}
 
-    {#- Dropping `-` would ENABLE exactly what the caller asked to disable, so
-        refuse where the adapter's alphabet cannot express it. Postgres takes
-        flags inline yet ARE has no `(?-i)` form, and where an alphabet carries a
-        letter and its opposite (snowflake/redshift/duckdb `c` vs `i`) "absent"
-        does not mean "off". Gated on `execute` for the same reason as the SQL
-        Server branch below. -#}
     {%- if "-" in flags and "-" not in supported %}
         {%- if execute %}
             {{
@@ -108,12 +76,7 @@
         {%- endif %}
     {%- endfor %}
 
-    {#- Dropping unsupported letters can leave a dangling `-`, which the input
-        check above could not have caught: "i-Z" is well formed, but once `Z`
-        goes it becomes "i-" and would emit `(?i-)`. Clearing a flag the engine
-        does not have is a no-op, so drop the operator with it. A trailing `-` is
-        the only malformed shape dropping can produce, because at most one
-        survived the check above. -#}
+    {#- Dropping letters can leave a dangling `-` ("i-Z" becomes "i-"). -#}
     {%- if kept and kept[-1] == "-" %} {%- do kept.pop() %} {%- endif %}
 
     {%- if dropped %}
@@ -131,19 +94,15 @@
     {%- do return(kept | join("")) %}
 {% endmacro %}
 
-{#
-    Prepends an inline flag group. Every regex flavour we target understands
-    this syntax: RE2, PCRE, Postgres ARE and Java. Used by the adapters that
-    take no separate flags argument.
-#}
+{# For the adapters that take no separate flags argument. RE2, PCRE, Postgres
+   ARE and Java all understand this syntax. #}
 {% macro regexp_inline_flags(regex, flags) %}
     {%- if flags %} {%- do return("(?" ~ flags ~ ")" ~ regex) %}
     {%- else %} {%- do return(regex) %}
     {%- endif %}
 {% endmacro %}
 
-{# Each adapter declares the flag alphabet its regex engine accepts, so the
-   sanitizing above lives in one place instead of in every implementation. #}
+{# The flag alphabet each engine accepts. #}
 {% macro regexp_supported_flags() %}
     {%- do return(adapter.dispatch("regexp_supported_flags", "elementary")()) %}
 {% endmacro %}
@@ -172,18 +131,13 @@
 {% macro dremio__regexp_supported_flags() %} {%- do return("imsx-") %} {% endmacro %}
 
 {#
-    Renders `regex` as a string literal for the current dialect.
+    Renders `regex` as a string literal, escaping the delimiter and nothing
+    else. Do not reach for a general-purpose escaper here: `escape_special_chars`
+    maps `\` to `\\`, which would turn the pattern `\d+` into a literal
+    backslash followed by `d+`.
 
-    Escapes the delimiter and nothing else. A pattern is mostly backslashes, so
-    a general-purpose escaper is actively harmful here: `escape_special_chars`,
-    for one, maps `\` to `\\` and would turn the pattern `\d+` into a literal
-    backslash followed by `d+`. Each override therefore touches only the quote,
-    in the form its own lexer accepts, and leaves every other character as the
-    caller wrote it.
-
-    Raw literals get the opposite treatment. They escape nothing by definition,
-    so the delimiter is chosen to avoid the pattern, and a pattern that leaves
-    no usable delimiter is refused.
+    Raw literals escape nothing, so the delimiter is chosen to avoid the
+    pattern and a pattern leaving no usable delimiter is refused.
 #}
 {% macro regexp_pattern_literal(regex, is_raw=false) %}
     {%- do return(
@@ -193,22 +147,15 @@
     ) %}
 {% endmacro %}
 
-{# Doubling the quote is the ANSI escape and, unlike a backslash escape, cannot
-   disturb the pattern's own backslashes. Every adapter here takes it except
-   BigQuery, ClickHouse and the Spark family, which override below. `is_raw` is
-   a no-op wherever the dialect has no raw-literal syntax, which is everywhere
-   but Snowflake and BigQuery. #}
+{# Doubling the quote is the ANSI escape and cannot disturb the pattern's own
+   backslashes. #}
 {% macro default__regexp_pattern_literal(regex, is_raw) %}
     {%- do return("'" ~ regex | replace("'", "''") ~ "'") %}
 {% endmacro %}
 
-{# Snowflake takes both `''` and `\'` in a quoted literal, so use the form that
-   leaves backslashes alone. `$$...$$` is the harder case: it has no escape
-   mechanism, and Snowflake has no alternative dollar tag to move to, so a raw
-   pattern containing `$$` is inexpressible. Refuse it rather than fall back to
-   a quoted literal, which would start consuming the very backslashes `is_raw`
-   was passed to preserve. Gated on `execute` for the same reason as the SQL
-   Server branch at the end of this file. #}
+{# `$$...$$` has no escape mechanism and Snowflake has no alternative tag, so a
+   raw pattern containing `$$` is inexpressible. Refuse rather than fall back to
+   a quoted literal, which would consume the backslashes `is_raw` preserves. #}
 {% macro snowflake__regexp_pattern_literal(regex, is_raw) %}
     {%- if not is_raw %}
         {%- do return("'" ~ regex | replace("'", "''") ~ "'") %}
@@ -228,11 +175,8 @@
     {%- do return("$$" ~ regex ~ "$$") %}
 {% endmacro %}
 
-{# Shared by the dialects with no doubled-quote escape but with `r'...'` raw
-   literals: BigQuery and the Spark family. Only the quote takes a backslash;
-   the pattern's other backslashes are left alone. A raw literal escapes
-   nothing, so the delimiter moves to whichever quote the pattern does not use,
-   and a pattern using both cannot be raw at all. #}
+{# BigQuery and the Spark family: no doubled-quote escape, but they do have
+   `r'...'`. Only the quote takes a backslash. #}
 {% macro regexp_backslash_pattern_literal(regex, is_raw) %}
     {%- if not is_raw %}
         {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
@@ -269,52 +213,44 @@
     {%- do return(elementary.spark__regexp_pattern_literal(regex, is_raw)) %}
 {% endmacro %}
 
-{# ClickHouse documents `\'` and consumes backslashes in string literals either
-   way, so escape the quote the same way ClickHouseDirectSeeder in the
-   integration tests does rather than relying on the doubled form. #}
+{# ClickHouse consumes backslashes in string literals either way. #}
 {% macro clickhouse__regexp_pattern_literal(regex, is_raw) %}
     {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
 {% endmacro %}
 
-{# Fallback for adapters we have no override for. `regexp_instr` is the most
-   widely implemented position function, and > 0 makes it a search. #}
+{# `regexp_instr` is the most widely implemented position function. #}
 {% macro default__regexp_match(string, regex, is_raw, flags) %}
     regexp_instr({{ string }}, {{ elementary.regexp_pattern_literal(regex, is_raw) }})
     > 0
 {% endmacro %}
 
-{# Snowflake: regexp_like is implicitly anchored at both ends, so it cannot be
-   used here. regexp_instr(subject, pattern, position, occurrence, option,
-   parameters) is a genuine search. Raw strings use $$...$$. #}
+{# regexp_like is anchored at both ends here, so it cannot be used. #}
 {% macro snowflake__regexp_match(string, regex, is_raw, flags) %}
     {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     regexp_instr({{ string }}, {{ pattern }}, 1, 1, 0, '{{ flags }}') > 0
 {% endmacro %}
 
-{# BigQuery: regexp_contains is an unanchored search. RE2 takes inline flags. #}
 {% macro bigquery__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     regexp_contains({{ string }}, {{ pattern }})
 {% endmacro %}
 
-{# Postgres: ~ is a search. Flags go inline rather than via ~*, so the whole
-   ARE embedded-option set keeps working and not just case-insensitivity.
-   Caveat: ARE accepts embedded options only at the very start of the pattern and
-   has no flagged-group form, so combining `flags` with a pattern that already
-   begins with `(?...)` is a syntax error. Pass one or the other. #}
+{# Flags go inline rather than via `~*`, so the whole ARE option set works.
+   Caveat: ARE takes embedded options only at the very start and has no
+   flagged-group form, so `flags` plus a pattern already beginning `(?...)` is a
+   syntax error. Pass one or the other. #}
 {% macro postgres__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     {{ string }} ~ {{ elementary.regexp_pattern_literal(regex, is_raw) }}
 {% endmacro %}
 
-{# Redshift: regexp_instr takes a parameters argument, unlike its ~ operator. #}
+{# regexp_instr takes a parameters argument, unlike the `~` operator. #}
 {% macro redshift__regexp_match(string, regex, is_raw, flags) %}
     {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     regexp_instr({{ string }}, {{ pattern }}, 1, 1, 0, '{{ flags }}') > 0
 {% endmacro %}
 
-{# DuckDB: regexp_matches is already a boolean search and takes flags directly. #}
 {% macro duckdb__regexp_match(string, regex, is_raw, flags) %}
     regexp_matches(
         {{ string }},
@@ -323,7 +259,6 @@
     )
 {% endmacro %}
 
-{# Spark/Databricks: rlike is an unanchored search over a Java regex. #}
 {% macro spark__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     {{ string }} rlike {{ elementary.regexp_pattern_literal(regex, is_raw) }}
@@ -337,10 +272,9 @@
     {{ elementary.spark__regexp_match(string, regex, is_raw, flags) }}
 {% endmacro %}
 
-{# Trino/Athena: unlike Snowflake, regexp_like here is documented as "contained
-   within", so it is already a search. Flags go inline. Note the engine is joni
-   (Java syntax), not RE2, so `U` is not available here even though BigQuery and
-   ClickHouse accept it: joni throws UNDEFINED_GROUP_OPTION, and Java's `U` means
+{# Unlike Snowflake, regexp_like here is "contained within", so already a
+   search. The engine is joni (Java syntax), not RE2, hence no `U` in the
+   alphabet: joni throws UNDEFINED_GROUP_OPTION, and Java's `U` means
    UNICODE_CHARACTER_CLASS rather than RE2's ungreedy swap. #}
 {% macro trino__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
@@ -351,14 +285,12 @@
     {{ elementary.trino__regexp_match(string, regex, is_raw, flags) }}
 {% endmacro %}
 
-{# ClickHouse: match() is an RE2 search returning UInt8. Compare explicitly so
-   the result is a real boolean under `not (...)`. #}
+{# match() returns UInt8, so compare explicitly to get a real boolean. #}
 {% macro clickhouse__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     match({{ string }}, {{ elementary.regexp_pattern_literal(regex, is_raw) }}) = 1
 {% endmacro %}
 
-{# Vertica: regexp_like is a search and takes modifiers as a third argument. #}
 {% macro vertica__regexp_match(string, regex, is_raw, flags) %}
     {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     {%- if flags %} regexp_like({{ string }}, {{ pattern }}, '{{ flags }}')
@@ -366,28 +298,20 @@
     {%- endif %}
 {% endmacro %}
 
-{# Dremio: regexp_like is identical to regexp_matches and matches the WHOLE
-   input, so a bare pattern would silently only match full-string values. Pad it
-   to turn the full match back into a search. The padding needs (?s) so it can
-   span newlines, but that flag is scoped to the padding groups: as a bare
-   top-level `(?s)` it would run to the end of the whole pattern and silently
-   make `.` cross newlines inside the USER's pattern too, on this adapter only.
-   Caveat: a user pattern containing ^ or $ still anchors within the padding. #}
+{# regexp_like matches the WHOLE input here, so pad the pattern to turn the full
+   match back into a search. `(?s:...)` is scoped to the padding on purpose: a
+   bare top-level `(?s)` would run to the end and make `.` cross newlines inside
+   the user's pattern too. Caveat: a user `^` or `$` still anchors. #}
 {% macro dremio__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
     {%- set padded = "(?s:.*?)(?:" ~ regex ~ ")(?s:.*?)" %}
     regexp_like({{ string }}, {{ elementary.regexp_pattern_literal(padded, is_raw) }})
 {% endmacro %}
 
-{# T-SQL has no regular expression support before SQL Server 2025, so fail with
-   an explanation instead of emitting SQL that cannot run. #}
+{# T-SQL has no regex before SQL Server 2025. Raise only at run time: dbt
+   renders test bodies while parsing, and a compiler error there aborts every
+   dbt command for the project rather than failing this one test. #}
 {% macro sqlserver__regexp_match(string, regex, is_raw, flags) %}
-    {#- Raise only once the test actually runs. dbt renders generic test bodies
-        while parsing, where `execute` is false, and a compiler error raised there
-        aborts every dbt command for the whole project rather than failing this one
-        test. Even `config: enabled: false` does not save it, because the body is
-        rendered before the node's config is consulted. Emitting a valid predicate
-        keeps parsing working; the node still fails with this message when run. -#}
     {%- if execute %}
         {{
             exceptions.raise_compiler_error(

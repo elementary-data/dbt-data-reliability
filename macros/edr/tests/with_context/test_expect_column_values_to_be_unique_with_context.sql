@@ -1,13 +1,12 @@
 {% test expect_column_values_to_be_unique_with_context(
     model, column_name, context_columns=none
 ) %}
-    {#- `elementary_n_records` below is a helper column, so the default select
-        list has to name every real column instead of using `*`. -#}
+    {#- default_clause=none: `*` would leak elementary_n_records into the sample. -#}
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        [column_name],
-        context_columns,
-        "expect_column_values_to_be_unique_with_context",
+        model=model,
+        tested_columns=[column_name],
+        context_columns=context_columns,
+        test_name="expect_column_values_to_be_unique_with_context",
         default_clause=none,
     ) %}
 

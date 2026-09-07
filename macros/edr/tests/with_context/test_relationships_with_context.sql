@@ -2,10 +2,10 @@
     model, column_name, to, field, context_columns=none
 ) %}
     {%- set select_clause = elementary.get_context_select_clause(
-        model,
-        [column_name],
-        context_columns,
-        "relationships_with_context",
+        model=model,
+        tested_columns=[column_name],
+        context_columns=context_columns,
+        test_name="relationships_with_context",
         default_clause="child.*",
         prefix="child.",
     ) %}
