@@ -10,7 +10,6 @@
 {# A new warehouse only needs its own `<adapter>__` overrides; the generic  #}
 {# macros never change.                                                     #}
 {# ---------------------------------------------------------------------- #}
-
 {# Expand the columns of a monitored relation before a column is looked up by
    name. Lets an adapter surface nested STRUCT leaves (e.g. user.address.city)
    as monitorable columns. `column_name` is the requested column so an adapter
@@ -45,9 +44,7 @@
 {% macro monitored_column_projection(column_obj) %}
     {{
         return(
-            adapter.dispatch("monitored_column_projection", "elementary")(
-                column_obj
-            )
+            adapter.dispatch("monitored_column_projection", "elementary")(column_obj)
         )
     }}
 {% endmacro %}
@@ -67,12 +64,14 @@
     {%- if elementary.bq_is_nested_identifier(column_obj.name) -%}
         {%- set alias = adapter.quote(elementary.bq_safe_alias(column_obj.name)) -%}
         {{
-            return({
-                "projection": (
-                    elementary.bq_segment_quote(column_obj.name) ~ " as " ~ alias
-                ),
-                "expression": alias,
-            })
+            return(
+                {
+                    "projection": (
+                        elementary.bq_segment_quote(column_obj.name) ~ " as " ~ alias
+                    ),
+                    "expression": alias,
+                }
+            )
         }}
     {%- else -%}
         {{
@@ -87,11 +86,7 @@
 {# SQL form of a dimension for the select list / concat expression. Plain
    identifiers and arbitrary SQL expressions pass through unchanged. #}
 {% macro dimension_monitoring_sql(dimension) %}
-    {{
-        return(
-            adapter.dispatch("dimension_monitoring_sql", "elementary")(dimension)
-        )
-    }}
+    {{ return(adapter.dispatch("dimension_monitoring_sql", "elementary")(dimension)) }}
 {% endmacro %}
 
 {% macro default__dimension_monitoring_sql(dimension) %}

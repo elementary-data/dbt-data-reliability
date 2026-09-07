@@ -16,7 +16,8 @@
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
         {% do prefixed_dimensions.append(
-            "dimension_" ~ elementary.dimension_monitoring_alias(dimension_column)
+            "dimension_"
+            ~ elementary.dimension_monitoring_alias(dimension_column)
         ) %}
     {% endfor %}
 
