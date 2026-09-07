@@ -30,7 +30,7 @@
                 ) as elementary_n_records
             from {{ model }}
             {#- NULLs partition together, so an all-NULL key would report as a
-                duplicate. Matches dbt_expectations' `all_values_are_missing`. -#}
+                duplicate. Matches dbt_expectations' `all_values_are_missing`. #}
             where not ({{ columns | join(" is null and ") }} is null)
         ) validation
     where elementary_n_records > 1

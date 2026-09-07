@@ -18,7 +18,7 @@
                 count(*) over (partition by {{ column_name }}) as elementary_n_records
             from {{ model }}
             {#- NULLs partition together, so they would report as duplicates of
-                each other. dbt's own `unique` filters them out too. -#}
+                each other. dbt's own `unique` filters them out too. #}
             where {{ column_name }} is not null
         ) validation
     where elementary_n_records > 1
