@@ -53,7 +53,11 @@ def test_with_context_test_is_sampled(test_id: str, dbt_project: DbtProject):
 def test_with_context_selects_only_requested_columns(
     test_id: str, dbt_project: DbtProject
 ):
-    """context_columns narrows the sample, so an unrequested column must not appear."""
+    """context_columns narrows the sample, so an unrequested column must not appear.
+
+    Passed as a bare string, the natural YAML spelling for one column: uncoerced,
+    the whole row is sampled and other_column shows up below.
+    """
     data = [
         {
             COLUMN_NAME: None,
@@ -65,7 +69,7 @@ def test_with_context_selects_only_requested_columns(
     test_result = dbt_project.test(
         test_id,
         "elementary.not_null_with_context",
-        dict(column_name=COLUMN_NAME, context_columns=[CONTEXT_COLUMN]),
+        dict(column_name=COLUMN_NAME, context_columns=CONTEXT_COLUMN),
         data=data,
         test_vars=TEST_VARS,
     )
@@ -104,10 +108,12 @@ def test_with_context_skips_nonexistent_context_column(
 
 def test_expression_is_true_with_context(test_id: str, dbt_project: DbtProject):
     """expression_is_true is table-level, so context_columns is its only way to sample data."""
+    # The last row satisfies the expression, so a predicate that matched
+    # everything would not pass this test.
     data = [
         {COLUMN_NAME: index, OTHER_COLUMN: index + 1, CONTEXT_COLUMN: f"ctx-{index}"}
         for index in range(10)
-    ]
+    ] + [{COLUMN_NAME: 100, OTHER_COLUMN: 1, CONTEXT_COLUMN: "ctx-ok"}]
     test_result = dbt_project.test(
         test_id,
         "elementary.expression_is_true_with_context",
@@ -220,51 +226,52 @@ def test_expect_compound_columns_to_be_unique_with_context(
         assert sample[OTHER_COLUMN] == "x"
 
 
-# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
-# error there by design. See sqlserver__regexp_match in regexp_match.sql.
-@pytest.mark.skip_targets(["sqlserver", "fabric"])
-def test_match_regex_with_context_ignores_nulls(test_id: str, dbt_project: DbtProject):
-    """A NULL value must not be reported as a regex failure.
+def test_unique_with_context_without_context_columns(
+    test_id: str, dbt_project: DbtProject
+):
+    """Without context_columns the select list has to name every real column.
 
-    The predicate is `not (<match>)`, which is NULL for a NULL input and so
-    selects nothing. Pinning this down because the behaviour is implicit in the
-    SQL rather than written anywhere, and because Postgres used to differ: the
-    old dbt_expectations path wrapped the match in coalesce(..., 0) and therefore
-    counted a NULL row as failing. Every other adapter already ignored it.
+    A bare `*` would leak the elementary_n_records helper into the sample, so
+    this pins `default_clause=none`. The two NULLs pin the NULL handling.
     """
     data = [
-        {COLUMN_NAME: None, CONTEXT_COLUMN: "ctx-null"},
-        {COLUMN_NAME: "nothing-here", CONTEXT_COLUMN: "ctx-nomatch"},
+        {COLUMN_NAME: "a", CONTEXT_COLUMN: "ctx-1"},
+        {COLUMN_NAME: "a", CONTEXT_COLUMN: "ctx-2"},
+        {COLUMN_NAME: None, CONTEXT_COLUMN: "ctx-3"},
+        {COLUMN_NAME: None, CONTEXT_COLUMN: "ctx-4"},
     ]
     test_result = dbt_project.test(
         test_id,
-        "elementary.expect_column_values_to_match_regex_with_context",
-        dict(column_name=COLUMN_NAME, regex="abc", context_columns=[CONTEXT_COLUMN]),
+        "elementary.expect_column_values_to_be_unique_with_context",
+        dict(column_name=COLUMN_NAME),
         data=data,
         test_vars=TEST_VARS,
     )
     assert test_result["status"] == "fail"
-    # Only the non-matching non-NULL row fails. The NULL row is not reported.
-    assert test_result["failed_row_count"] == 1
+    assert test_result["failed_row_count"] == 2
 
     samples = get_samples(dbt_project, test_id)
-    assert len(samples) == 1
-    assert samples[0][COLUMN_NAME] == "nothing-here"
+    assert len(samples) == 2
+    for sample in samples:
+        assert set(sample.keys()) == {COLUMN_NAME, CONTEXT_COLUMN}
+        assert sample[COLUMN_NAME] == "a"
 
 
 # T-SQL has no regex functions, so elementary.regexp_match raises a compiler
 # error there by design. See sqlserver__regexp_match in regexp_match.sql.
 @pytest.mark.skip_targets(["sqlserver", "fabric"])
-def test_match_regex_with_context_searches_substrings(
+def test_match_regex_with_context_searches_substrings_and_ignores_nulls(
     test_id: str, dbt_project: DbtProject
 ):
-    """An unanchored pattern must match anywhere in the value, not the whole value.
+    """An unanchored pattern matches anywhere in the value, and NULL never fails.
 
-    This is the regression test for adapters whose regexp_like implicitly anchors
-    at both ends (Snowflake, Dremio). If one of those regressed to an anchored
-    match, both rows would fail here instead of one.
+    Anchoring regresses on the adapters whose regexp_like anchors at both ends
+    (Snowflake, Dremio); NULL regressed on Postgres, whose old dbt_expectations
+    path wrapped the match in coalesce(..., 0). Both move failed_row_count, so
+    one dataset pins both.
     """
     data = [
+        {COLUMN_NAME: None, CONTEXT_COLUMN: "ctx-null"},
         {COLUMN_NAME: "prefix-abc-suffix", CONTEXT_COLUMN: "ctx-match"},
         {COLUMN_NAME: "nothing-here", CONTEXT_COLUMN: "ctx-nomatch"},
     ]

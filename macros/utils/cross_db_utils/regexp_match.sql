@@ -14,14 +14,13 @@
         regex: the pattern, as a plain string. Pass it exactly as the regex
             engine should see it, quotes included: rendering it into a SQL
             literal is `regexp_pattern_literal`'s job, per dialect.
-        is_raw: emit the pattern as a raw string literal. Only Snowflake
-            (`$$...$$`) and BigQuery (`r'...'`) have such a syntax, so on the
-            other twelve adapters it is a silent no-op. Escape the pattern
-            yourself on any engine that consumes backslashes inside string
-            literals: ClickHouse, Redshift, and Spark along with the Databricks
-            and Fabric Spark adapters that inherit it. Snowflake is exposed too
-            whenever `is_raw` is false, which is the default. A raw literal
-            escapes nothing, so a pattern that contains its delimiter cannot be
+        is_raw: emit the pattern as a raw string literal. Honored on Snowflake
+            (`$$...$$`), and on BigQuery and the Spark family (`r'...'`); on the
+            other ten adapters it is a silent no-op, so escape the pattern
+            yourself on the engines that consume backslashes inside string
+            literals: ClickHouse and Redshift. Snowflake is exposed too whenever
+            `is_raw` is false, which is the default. A raw literal escapes
+            nothing, so a pattern that contains its delimiter cannot be
             expressed as one and is refused rather than silently requoted.
         flags: regex flags. `i` (case-insensitive) is honored on every adapter
             that supports flags at all. Anything the adapter does not accept is
@@ -51,17 +50,41 @@
 #}
 {% macro regexp_sanitize_flags(flags) %}
     {%- if not flags %} {%- do return("") %} {%- endif %}
+
+    {#- A list is the plausible mistake, since the sibling test arguments are
+        lists; the string methods below would raise a bare Jinja error. -#}
+    {%- set flags = flags if flags is string else flags | join("") %}
+
+    {#- No flag is honorable on T-SQL at all, so let sqlserver__regexp_match
+        give the real reason instead of complaining about flags first. -#}
+    {%- if elementary.is_tsql() %} {%- do return("") %} {%- endif %}
+
     {%- set supported = elementary.regexp_supported_flags() %}
 
-    {#- Adapters carrying `-` in their alphabet take flags inline and can express
-        a negation, so `-i` passes through as `(?-i)`. Everywhere else, refuse
-        rather than drop: dropping `-` would ENABLE exactly what the caller asked
-        to disable, turning "-i" into a case-insensitive match. Refusing is not
-        over-cautious, because there is no way to honor it there either. Postgres
-        takes flags inline yet ARE has no `(?-i)` form, and where an alphabet
-        carries a letter and its opposite (snowflake/redshift/duckdb `c` vs `i`)
-        "absent" does not mean "off". Gated on `execute` for the same reason as
-        the SQL Server branch below. -#}
+    {#- The grammar is `(?set-clear)`: at most one `-`, with at least one letter
+        after it, so `(?i-)`, `(?-)`, `(?--i)` and `(?i-s-m)` are parse errors on
+        every engine that accepts a negation. Counting the operator rather than
+        looking for an adjacent pair is what catches that last shape. Runs before
+        the support check so a malformed string reports as malformed everywhere. -#}
+    {%- if flags.count("-") > 1 or flags.endswith("-") %}
+        {%- if execute %}
+            {{
+                exceptions.raise_compiler_error(
+                    "regexp_match: malformed flags '"
+                    ~ flags
+                    ~ "'. A '-' may appear at most once, and must be followed by at least one flag letter."
+                )
+            }}
+        {%- endif %}
+        {%- do return("") %}
+    {%- endif %}
+
+    {#- Dropping `-` would ENABLE exactly what the caller asked to disable, so
+        refuse where the adapter's alphabet cannot express it. Postgres takes
+        flags inline yet ARE has no `(?-i)` form, and where an alphabet carries a
+        letter and its opposite (snowflake/redshift/duckdb `c` vs `i`) "absent"
+        does not mean "off". Gated on `execute` for the same reason as the SQL
+        Server branch below. -#}
     {%- if "-" in flags and "-" not in supported %}
         {%- if execute %}
             {{
@@ -71,25 +94,6 @@
                     ~ ", got '"
                     ~ flags
                     ~ "'. Pass only the flags you want enabled."
-                )
-            }}
-        {%- endif %}
-        {%- do return("") %}
-    {%- endif %}
-
-    {#- Where `-` is allowed it still has to be well formed. The grammar is
-        `(?set-clear)`: at most one `-`, with at least one letter after it. RE2,
-        Java and joni all reject anything else, so `(?i-)`, `(?-)`, `(?--i)` and
-        `(?i-s-m)` are parse errors rather than no-ops. Counting the operator
-        rather than looking for an adjacent pair is what catches that last shape.
-        A leading `-` is fine: that is the clear-only form. -#}
-    {%- if flags.count("-") > 1 or flags.endswith("-") %}
-        {%- if execute %}
-            {{
-                exceptions.raise_compiler_error(
-                    "regexp_match: malformed flags '"
-                    ~ flags
-                    ~ "'. A '-' may appear at most once, and must be followed by at least one flag letter."
                 )
             }}
         {%- endif %}
@@ -224,12 +228,12 @@
     {%- do return("$$" ~ regex ~ "$$") %}
 {% endmacro %}
 
-{# BigQuery has no doubled-quote escape, so the quote takes a backslash here.
-   Only the quote: the pattern's other backslashes are left as they are. In a
-   raw literal nothing can be escaped, so the delimiter moves to whichever
-   quote character the pattern does not use; a pattern using both cannot be a
-   raw literal at all. #}
-{% macro bigquery__regexp_pattern_literal(regex, is_raw) %}
+{# Shared by the dialects with no doubled-quote escape but with `r'...'` raw
+   literals: BigQuery and the Spark family. Only the quote takes a backslash;
+   the pattern's other backslashes are left alone. A raw literal escapes
+   nothing, so the delimiter moves to whichever quote the pattern does not use,
+   and a pattern using both cannot be raw at all. #}
+{% macro regexp_backslash_pattern_literal(regex, is_raw) %}
     {%- if not is_raw %}
         {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
     {%- endif %}
@@ -238,7 +242,9 @@
     {%- if execute %}
         {{
             exceptions.raise_compiler_error(
-                "regexp_match: a raw pattern cannot contain both quote characters on BigQuery, because r'...' has no escape sequences. Got '"
+                "regexp_match: a raw pattern cannot contain both quote characters on "
+                ~ adapter.type()
+                ~ ", because r'...' has no escape sequences. Got '"
                 ~ regex
                 ~ "'. Pass is_raw=false and escape the pattern's backslashes instead."
             )
@@ -247,12 +253,12 @@
     {%- do return("''") %}
 {% endmacro %}
 
-{# Spark's lexer takes `\'` inside a quoted literal but not the doubled `''`
-   form, so this is the one family where the quote needs a backslash. That the
-   backslash is an escape character here at all is why the macro docstring tells
-   callers to double the pattern's own backslashes on these adapters. #}
+{% macro bigquery__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return(elementary.regexp_backslash_pattern_literal(regex, is_raw)) %}
+{% endmacro %}
+
 {% macro spark__regexp_pattern_literal(regex, is_raw) %}
-    {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
+    {%- do return(elementary.regexp_backslash_pattern_literal(regex, is_raw)) %}
 {% endmacro %}
 
 {% macro databricks__regexp_pattern_literal(regex, is_raw) %}

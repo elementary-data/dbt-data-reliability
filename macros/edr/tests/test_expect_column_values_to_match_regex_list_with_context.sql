@@ -8,7 +8,7 @@
     flags="",
     context_columns=none
 ) %}
-    {%- if not regex_list %}
+    {%- if not regex_list and execute %}
         {{
             exceptions.raise_compiler_error(
                 "expect_column_values_to_match_regex_list_with_context: `regex_list` must be a non-empty list of patterns."
@@ -32,7 +32,7 @@
 
     {#- Validate rather than fall back: treating an unrecognised value as "any"
         would silently invert what the test asserts. -#}
-    {%- if match_on | lower not in ["any", "all"] %}
+    {%- if match_on | lower not in ["any", "all"] and execute %}
         {{
             exceptions.raise_compiler_error(
                 "expect_column_values_to_match_regex_list_with_context: `match_on` must be 'any' or 'all', got '"

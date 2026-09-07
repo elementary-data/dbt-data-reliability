@@ -1,7 +1,7 @@
 {% test expect_compound_columns_to_be_unique_with_context(
     model, column_list, row_condition=none, context_columns=none
 ) %}
-    {%- if not column_list %}
+    {%- if not column_list and execute %}
         {{
             exceptions.raise_compiler_error(
                 "expect_compound_columns_to_be_unique_with_context: `column_list` must be a non-empty list of columns."
@@ -33,7 +33,11 @@
                     partition by {{ columns | join(", ") }}
                 ) as elementary_n_records
             from {{ model }}
-            {%- if row_condition %} where ({{ row_condition }}) {%- endif %}
+            {#- NULLs partition together, so an all-NULL key would report as a
+                duplicate. Matches dbt_expectations' `all_values_are_missing`. -#}
+            where
+                not ({{ columns | join(" is null and ") }} is null)
+                {%- if row_condition %} and ({{ row_condition }}) {%- endif %}
         ) validation
     where elementary_n_records > 1
 {% endtest %}

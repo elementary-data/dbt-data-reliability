@@ -28,7 +28,7 @@
         "accepted_range_with_context is deprecated and will be removed in the next release. Use dbt_utils.accepted_range instead."
     ) %}
 
-    {%- if min_value is none and max_value is none %}
+    {%- if min_value is none and max_value is none and execute %}
         {{
             exceptions.raise_compiler_error(
                 "accepted_range_with_context: at least one of min_value or max_value must be provided."

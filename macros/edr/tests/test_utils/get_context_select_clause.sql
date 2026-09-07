@@ -3,16 +3,14 @@
 
     The test materialization samples failing rows by wrapping the test query
     (see `query_test_result_rows`), so whatever a test selects is exactly what
-    Elementary stores as its sample. This macro resolves `context_columns`
-    against the tested relation so every `_with_context` test shares one
-    validation and warning behavior.
+    Elementary stores as its sample.
 
     Args:
         model: the relation under test.
         tested_columns: columns the test itself needs, always selected first.
             `none` entries are ignored, so table-level tests can pass [].
-        context_columns: user-requested extra columns. Anything that is not a
-            list (including `none`) means "no context requested".
+        context_columns: user-requested extra columns. A bare string is taken as
+            a single column; empty or `none` means "no context requested".
         test_name: used in the skipped-column warning.
         default_clause: what to select when no context is requested. Pass
             `none` to list every column explicitly, which callers need when a
@@ -27,17 +25,19 @@
     default_clause="*",
     prefix=""
 ) %}
-    {#- At parse time dbt stubs out column introspection: get_columns_in_relation
-        is decorated `@available.parse_list`, which substitutes a function
-        returning []. Every context column would therefore look missing and warn,
-        once per context column per test on every full parse. The parsed SQL is
-        only used to collect refs, so skip the resolution entirely. -#}
+    {#- `get_columns_in_relation` is stubbed to [] at parse time, so resolving
+        here would warn that every context column is missing on every parse. -#}
     {%- if not execute %}
         {%- do return(default_clause if default_clause is not none else "*") %}
     {%- endif %}
 
+    {%- set context_columns = (
+        [context_columns]
+        if context_columns is string and context_columns
+        else context_columns
+    ) %}
     {%- set has_context = (
-        context_columns is not none
+        context_columns
         and context_columns is iterable
         and context_columns is not string
     ) %}
@@ -46,68 +46,54 @@
         {%- do return(default_clause) %}
     {%- endif %}
 
-    {%- set existing_columns = (
-        adapter.get_columns_in_relation(model) | map(attribute="name") | list
-    ) %}
-    {%- set existing_columns_lower = existing_columns | map("lower") | list %}
-
-    {#- Quote only these names, not the user-supplied ones below. These come from
-        the warehouse's own metadata, so they are already in the relation's real
-        case and quoting resolves to the same column; unquoted, a mixed-case or
-        reserved name (`myCol` on Snowflake, `order` on Postgres) emits invalid
-        SQL. A user-supplied name cannot be quoted the same way, because callers
-        write them in whatever case they like and quoting would stop them
-        matching. -#}
-    {%- set all_columns_clause = [] %}
-    {%- for col in existing_columns %}
-        {%- do all_columns_clause.append(prefix ~ adapter.quote(col)) %}
+    {#- Lowercased name -> the warehouse's own casing, quoted. Unquoted, a
+        mixed-case or reserved name (`myCol` on Snowflake, `order` on Postgres)
+        emits invalid SQL, so user-supplied names go through this too. -#}
+    {%- set resolved = {} %}
+    {%- for col in adapter.get_columns_in_relation(model) %}
+        {%- do resolved.update({col.name | lower: prefix ~ adapter.quote(col.name)}) %}
     {%- endfor %}
-    {%- set all_columns_clause = all_columns_clause | join(", ") %}
+    {%- set all_columns_clause = resolved.values() | join(", ") %}
 
-    {#- Only the `default_clause is none` callers can reach a return of this value,
-        and an empty one would emit `select from (...)`. A relation dbt cannot
-        introspect (an ephemeral model, whose `__dbt__cte__` name does not exist in
-        the warehouse) is the way to get here, so name that. -#}
-    {%- if not all_columns_clause and default_clause is none %}
-        {{
-            exceptions.raise_compiler_error(
-                test_name
-                ~ ": could not resolve any columns for '"
-                ~ model
-                ~ "'. This test cannot run against a relation dbt is unable to introspect, such as an ephemeral model."
-            )
-        }}
+    {%- if not has_context %}
+        {#- Reachable only for the `default_clause is none` callers, where an
+            empty clause would emit `select from (...)`. -#}
+        {%- if not all_columns_clause %}
+            {{
+                exceptions.raise_compiler_error(
+                    test_name
+                    ~ ": could not resolve any columns for '"
+                    ~ model
+                    ~ "'. This test cannot run against a relation dbt is unable to introspect, such as an ephemeral model."
+                )
+            }}
+        {%- endif %}
+        {%- do return(all_columns_clause) %}
     {%- endif %}
 
-    {%- if not has_context %} {%- do return(all_columns_clause) %} {%- endif %}
-
     {%- set select_cols = [] %}
-    {%- set selected_lower = [] %}
 
     {%- for col in tested_columns %}
-        {%- if col is not none and col | lower not in selected_lower %}
-            {%- do selected_lower.append(col | lower) %}
-            {%- do select_cols.append(prefix ~ col) %}
+        {%- if col is not none %}
+            {%- set rendered = resolved.get(col | lower, prefix ~ col) %}
+            {%- if rendered not in select_cols %}
+                {%- do select_cols.append(rendered) %}
+            {%- endif %}
         {%- endif %}
     {%- endfor %}
 
     {%- for col in context_columns %}
-        {%- if col | lower in selected_lower %}
-        {# already selected, skip #}
-        {%- elif col | lower not in existing_columns_lower %}
-            {%- do log(
-                "WARNING ["
-                ~ test_name
-                ~ "]: column '"
+        {%- if col | lower not in resolved %}
+            {%- do elementary.edr_log_warning(
+                test_name
+                ~ ": column '"
                 ~ col
                 ~ "' does not exist in model '"
                 ~ model.name
-                ~ "' and will be skipped.",
-                info=true,
+                ~ "' and will be skipped."
             ) %}
-        {%- else %}
-            {%- do selected_lower.append(col | lower) %}
-            {%- do select_cols.append(prefix ~ col) %}
+        {%- elif resolved[col | lower] not in select_cols %}
+            {%- do select_cols.append(resolved[col | lower]) %}
         {%- endif %}
     {%- endfor %}
 
