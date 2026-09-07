@@ -41,13 +41,21 @@
     the same comparison. Set min_bucket_age to a multiple of how often the
     project runs, not to the smallest age that looks settled.
 
-  Limitations:
+  Coverage:
 
-    A bucket that loses all of its rows produces no new measurement at all,
-    rather than a measurement of zero, so the newest value stays whatever it
-    was and the change is not reported. Partial deletion is caught normally,
-    since the metric moves. Pair this with a volume test if whole periods can
-    disappear.
+    Only buckets within the current measurement window are protected. A
+    previously measured bucket or dimension that disappears fails with
+    change_type = 'missing_bucket'; its current value is NULL, not an invented
+    zero. Missing buckets keep failing while under observation.
+
+    last_check accepts each new measurement automatically: 100 -> 120 fails,
+    then another 120 passes. first_check uses the earliest retained measurement
+    taken after settling, and keeps failing until the values return within
+    tolerance or the bucket leaves coverage. There is no explicit baseline
+    reset in this test. See docs/metric_stability.md for operational guidance.
+
+    Stable aggregates do not guarantee unchanged rows: offsetting changes can
+    cancel. Initial runs without eligible history establish a baseline.
 #}
 {% test metric_stability(
     model,
@@ -276,6 +284,8 @@
             at all and makes this test a silent permanent pass. The tables are
             unioned at read time instead. -#}
         {% set temp_table_relations = [] %}
+        {% set measurement_windows = [] %}
+        {% set resolved_columns = [] %}
 
         {%- for column_name in columns %}
             {%- set column_obj_and_monitors = (
@@ -294,6 +304,8 @@
                     )
                 }}
             {%- endif %}
+            {%- set resolved_column = column_obj_and_monitors["column"].name %}
+            {%- do resolved_columns.append(resolved_column) %}
             {%- set column_monitors = column_obj_and_monitors["monitors"] %}
             {%- if not column_monitors %}
                 {{
@@ -315,7 +327,7 @@
                 backfill_days=backfill_days,
                 days_back=days_back,
                 metric_names=column_monitors,
-                column_name=column_name,
+                column_name=resolved_column,
                 metric_properties=metric_properties,
             ) %}
             {#- get_metric_buckets_min_and_max can return a plain midnight
@@ -327,6 +339,15 @@
             {%- set min_bucket_start = elementary.edr_date_trunc(
                 metric_properties.time_bucket.period,
                 elementary.edr_cast_as_timestamp(raw_min_bucket_start),
+            ) %}
+            {%- do measurement_windows.append(
+                {
+                    "column_name": resolved_column,
+                    "min_bucket_start": min_bucket_start,
+                    "max_bucket_end": elementary.edr_cast_as_timestamp(
+                        max_bucket_end
+                    ),
+                }
             ) %}
             {#- Only the monitors that apply to this column's data type.
                 Passing the full list would generate e.g. sum(<string column>). -#}
@@ -378,7 +399,8 @@
             min_bucket_age=min_bucket_age,
             max_change_percent=max_change_percent,
             change_since=change_since,
-            column_names=columns,
+            column_names=resolved_columns,
+            measurement_windows=measurement_windows,
         ) %}
         {{
             elementary.debug_log(
@@ -386,7 +408,18 @@
             )
         }}
 
-        {{ metric_stability_query }}
+        {# Freeze failures before dbt executes the test and samples its results.
+           Use the normal sampling path so sample limits and privacy settings
+           still apply. This relation is cleaned up with the metrics tables. #}
+        {% set result_relation = elementary.create_elementary_test_table(
+            database_name,
+            tests_schema_name,
+            test_table_name,
+            "stability_results",
+            metric_stability_query,
+        ) %}
+        select *
+        from {{ result_relation }}
 
     {%- else %}
 

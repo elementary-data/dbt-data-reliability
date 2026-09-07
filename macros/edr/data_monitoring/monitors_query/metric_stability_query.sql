@@ -32,7 +32,8 @@
     max_change_percent=0,
     change_since=["last_check"],
     column_names=none,
-    data_monitoring_metrics_table=none
+    data_monitoring_metrics_table=none,
+    measurement_windows=none
 ) %}
     {%- if not data_monitoring_metrics_table %}
         {%- set data_monitoring_metrics_table = elementary.get_elementary_relation(
@@ -132,7 +133,8 @@
 
             select id, full_table_name, column_name, metric_name, metric_type,
                    bucket_start, bucket_end, bucket_duration_hours,
-                   metric_value, updated_at, dimension, dimension_value
+                   metric_value, updated_at, dimension, dimension_value,
+                   0 as is_current
             from {{ data_monitoring_metrics_table }}
             where
                 upper(full_table_name) = upper('{{ full_table_name }}')
@@ -145,6 +147,18 @@
                 and metric_name in {{ elementary.strings_list_to_tuple(metric_names) }}
                 and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
                 and {{ history_window }}
+                {# History outside a column's actual rescan cannot establish
+                   absence. Restrict it before selecting the newest version. #}
+                {%- if measurement_windows %}
+                    and (
+                    {%- for window in measurement_windows %}
+                        (upper(column_name) = upper({{ elementary.edr_quote(window.column_name) }})
+                         and bucket_start >= {{ window.min_bucket_start }}
+                         and bucket_end <= {{ window.max_bucket_end }})
+                        {% if not loop.last %} or {% endif %}
+                    {%- endfor %}
+                    )
+                {%- endif %}
 
             {%- for test_metrics_table_relation in test_metrics_table_relations %}
 
@@ -152,7 +166,8 @@
 
             select id, full_table_name, column_name, metric_name, metric_type,
                    bucket_start, bucket_end, bucket_duration_hours,
-                   metric_value, updated_at, dimension, dimension_value
+                   metric_value, updated_at, dimension, dimension_value,
+                   1 as is_current
             from {{ test_metrics_table_relation }}
             where {{ history_window }}
             {%- endfor %}
@@ -164,10 +179,17 @@
             select
                 id, full_table_name, column_name, metric_name, metric_type,
                 bucket_start, bucket_end, bucket_duration_hours,
-                metric_value, updated_at, dimension, dimension_value,
+                metric_value, updated_at, dimension, dimension_value, is_current,
                 {{ elementary.lag("metric_value") }} over (
                     partition by id order by updated_at
                 ) as previous_value,
+                {{ elementary.lag("updated_at") }} over (
+                    partition by id order by updated_at
+                ) as previous_measured_at,
+                first_value(updated_at) over (
+                    partition by id order by updated_at
+                    rows between unbounded preceding and current row
+                ) as initial_measured_at,
                 first_value(metric_value) over (
                     partition by id order by updated_at
                     rows between unbounded preceding and current row
@@ -198,22 +220,27 @@
             bucket_duration_hours,
             dimension,
             dimension_value,
-            updated_at as measured_at,
-            metric_value,
-            previous_value,
+            case when is_current = 0
+                 then {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }}
+                 else updated_at end as measured_at,
+            case when is_current = 0 then 'missing_bucket' else 'value_changed' end as change_type,
+            case when is_current = 1 then metric_value end as metric_value,
+            case when is_current = 0 then metric_value else previous_value end as previous_value,
+            case when is_current = 0 then updated_at else previous_measured_at end as previous_measured_at,
+            initial_measured_at,
             initial_value,
-            metric_value - previous_value as change_since_last_check,
-            metric_value - initial_value as change_since_first_check,
+            case when is_current = 1 then metric_value - previous_value end as change_since_last_check,
+            case when is_current = 1 then metric_value - initial_value end as change_since_first_check,
             case
-                when previous_value is not null and previous_value != 0
+                when is_current = 1 and previous_value is not null and previous_value != 0
                 then {{ elementary.metric_stability_change_percent("previous_value") }}
             end as change_percent_since_last_check,
             case
-                when initial_value is not null and initial_value != 0
+                when is_current = 1 and initial_value is not null and initial_value != 0
                 then {{ elementary.metric_stability_change_percent("initial_value") }}
             end as change_percent_since_first_check
         from latest_measurement
-        where {{ exceeds_conditions | join(" or ") }}
+        where is_current = 0 or {{ exceeds_conditions | join(" or ") }}
     {%- endset %}
     {%- do return(metric_stability_query) %}
 {% endmacro %}

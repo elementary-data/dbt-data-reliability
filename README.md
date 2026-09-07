@@ -32,6 +32,8 @@ These tables are the backbone of any observability setup — enabling alerts, re
 **2. Elementary Tests**
 A suite of anomaly detection and data quality tests that run like native dbt tests — no separate tooling. Covers volume, freshness, column distributions, schema changes, and AI-powered validation for structured and unstructured data. → [See all tests](https://docs.elementary-data.com/data-tests/introduction)
 
+[Metric stability](docs/metric_stability.md) detects restatements of settled historical aggregates within a configured observation window.
+
 ---
 
 ## Quickstart

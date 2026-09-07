@@ -1,7 +1,9 @@
+import json
 from datetime import datetime, time, timedelta
 from itertools import pairwise
 from typing import Any, Dict, List, Optional
 
+import pytest
 from data_generator import DATE_FORMAT
 from dbt_project import DbtProject
 
@@ -52,7 +54,11 @@ def _rows(
 
 def _run(dbt_project: DbtProject, test_id: str, data, **overrides) -> str:
     result = dbt_project.test(
-        test_id, DBT_TEST_NAME, {**BASE_ARGS, **overrides}, data=data
+        test_id,
+        DBT_TEST_NAME,
+        {**BASE_ARGS, **overrides},
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
     )
     return result["status"]
 
@@ -265,14 +271,12 @@ def test_metric_stability_ignores_measurements_taken_while_settling(
     else:
         update_clause = "UPDATE {{ ref('data_monitoring_metrics') }} SET"
         update_suffix = ""
-    dbt_project.run_query(
-        f"""
+    dbt_project.run_query(f"""
         {update_clause} metric_value = 10, updated_at = bucket_end
         WHERE full_table_name LIKE '%{test_id.upper()}'
         AND metric_name = 'sum'
         {update_suffix}
-        """
-    )
+        """)
 
     assert _run(dbt_project, test_id, _rows(), **args) == "pass"
 
@@ -332,3 +336,87 @@ def test_metric_stability_detects_restatement_in_any_column(
     assert measurements[-1] == BASE_AMOUNT * 2
     other = _bucket_values(dbt_project, test_id, OTHER_VALUE_COLUMN)
     assert all(len(set(m)) == 1 for m in other.values()), other
+
+
+def _samples(dbt_project: DbtProject, test_id: str):
+    test_id = test_id.replace("[", "_").replace("]", "_")
+    return [
+        {key.lower(): value for key, value in json.loads(row["result_row"]).items()}
+        for row in dbt_project.run_query(dbt_project.samples_query(test_id))
+    ]
+
+
+@pytest.mark.parametrize("baseline", ["last_check", "first_check"])
+def test_metric_stability_quoted_columns_and_failure_details(
+    test_id: str, dbt_project: DbtProject, baseline: str
+):
+    args = {"columns": ['"amount"'], "change_since": [baseline]}
+    assert _run(dbt_project, test_id, _rows(), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 200}), **args) == "fail"
+    samples = _samples(dbt_project, test_id)
+    assert len(samples) == 1
+    sample = samples[0]
+    assert sample["change_type"] == "value_changed"
+    assert float(sample["metric_value"]) == 200
+    assert float(sample["previous_value"]) == 100
+    assert float(sample["initial_value"]) == 100
+    assert sample["bucket_end"]
+    assert sample["previous_measured_at"]
+    assert sample["initial_measured_at"]
+    # A repeated corrected value is accepted only by the moving baseline.
+    expected = "pass" if baseline == "last_check" else "fail"
+    assert (
+        _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 200}), **args) == expected
+    )
+
+
+@pytest.mark.parametrize("dimensions", [[], ["other_amount"]])
+def test_metric_stability_reports_disappearing_bucket(
+    test_id: str, dbt_project: DbtProject, dimensions
+):
+    assert _run(dbt_project, test_id, _rows(), dimensions=dimensions) == "pass"
+    rows = _rows()
+    del rows[SETTLED_DAYS_AGO - 1]
+    assert _run(dbt_project, test_id, rows, dimensions=dimensions) == "fail"
+    samples = _samples(dbt_project, test_id)
+    assert len(samples) == 1
+    assert samples[0]["change_type"] == "missing_bucket"
+    assert samples[0]["metric_value"] is None
+    assert float(samples[0]["previous_value"]) == BASE_AMOUNT
+    # Absence is not accepted as a new numeric baseline on the next run.
+    assert _run(dbt_project, test_id, rows, dimensions=dimensions) == "fail"
+    assert _run(dbt_project, test_id, _rows(), dimensions=dimensions) == "pass"
+
+
+def test_metric_stability_ignores_disappearance_outside_observation_window(
+    test_id: str, dbt_project: DbtProject
+):
+    assert _run(dbt_project, test_id, _rows(), days_back=10) == "pass"
+    # Keep only the recent rows; historical measurements still exist but the
+    # default window no longer covers the deleted older buckets.
+    assert _run(dbt_project, test_id, _rows()[:3]) == "pass"
+
+
+def test_metric_stability_reports_disappearing_dimension(
+    test_id: str, dbt_project: DbtProject
+):
+    rows = _rows()
+    rows.append({**rows[SETTLED_DAYS_AGO - 1], OTHER_VALUE_COLUMN: 999})
+    args = {"dimensions": [OTHER_VALUE_COLUMN]}
+    assert _run(dbt_project, test_id, rows, **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(), **args) == "fail"
+    samples = _samples(dbt_project, test_id)
+    assert len(samples) == 1
+    assert samples[0]["change_type"] == "missing_bucket"
+    assert "999" in str(samples[0]["dimension_value"])
+
+
+def test_metric_stability_does_not_report_unscanned_buckets_as_missing(
+    test_id: str, dbt_project: DbtProject
+):
+    assert _run(dbt_project, test_id, _rows(), days_back=6) == "pass"
+    # Sources use the incremental backfill window. Older buckets have history
+    # and remain in days_back, but are not rescanned with backfill_days=3.
+    assert (
+        _run(dbt_project, test_id, _rows()[:3], days_back=6, backfill_days=3) == "pass"
+    )
