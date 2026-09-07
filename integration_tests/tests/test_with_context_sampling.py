@@ -319,6 +319,45 @@ def test_match_regex_with_context_honors_case_insensitive_flag(
 # T-SQL has no regex functions, so elementary.regexp_match raises a compiler
 # error there by design. See sqlserver__regexp_match in regexp_match.sql.
 @pytest.mark.skip_targets(["sqlserver", "fabric"])
+def test_match_regex_with_context_escapes_quote_in_pattern(
+    test_id: str, dbt_project: DbtProject
+):
+    """A quote in the pattern has to be escaped, not spliced into the SQL.
+
+    Rendering the pattern straight into '...' turned a pattern like O'Reilly
+    into `col ~ 'O'Reilly'`, which is a syntax error rather than a test result.
+    This runs on every adapter on purpose: the escape is per-dialect (doubling
+    for most, a backslash on BigQuery, ClickHouse and the Spark family), so
+    only the full matrix proves regexp_pattern_literal picked the right form
+    for each one.
+    """
+    data = [
+        {COLUMN_NAME: "O'Reilly", CONTEXT_COLUMN: "ctx-match"},
+        {COLUMN_NAME: "OReilly", CONTEXT_COLUMN: "ctx-nomatch"},
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.expect_column_values_to_match_regex_with_context",
+        dict(
+            column_name=COLUMN_NAME,
+            regex="O'Reilly",
+            context_columns=[CONTEXT_COLUMN],
+        ),
+        data=data,
+        test_vars=TEST_VARS,
+    )
+    assert test_result["status"] == "fail"
+    # The quote is part of the pattern, so only the value without one fails.
+    assert test_result["failed_row_count"] == 1
+
+    samples = get_samples(dbt_project, test_id)
+    assert len(samples) == 1
+    assert samples[0][COLUMN_NAME] == "OReilly"
+
+
+# T-SQL has no regex functions, so elementary.regexp_match raises a compiler
+# error there by design. See sqlserver__regexp_match in regexp_match.sql.
+@pytest.mark.skip_targets(["sqlserver", "fabric"])
 def test_match_regex_list_with_context_match_on_any(
     test_id: str, dbt_project: DbtProject
 ):

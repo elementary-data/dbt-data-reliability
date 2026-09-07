@@ -11,14 +11,18 @@
 
     Args:
         string: the column or expression to test.
-        regex: the pattern, as a plain string.
+        regex: the pattern, as a plain string. Pass it exactly as the regex
+            engine should see it, quotes included: rendering it into a SQL
+            literal is `regexp_pattern_literal`'s job, per dialect.
         is_raw: emit the pattern as a raw string literal. Only Snowflake
             (`$$...$$`) and BigQuery (`r'...'`) have such a syntax, so on the
             other twelve adapters it is a silent no-op. Escape the pattern
             yourself on any engine that consumes backslashes inside string
             literals: ClickHouse, Redshift, and Spark along with the Databricks
             and Fabric Spark adapters that inherit it. Snowflake is exposed too
-            whenever `is_raw` is false, which is the default.
+            whenever `is_raw` is false, which is the default. A raw literal
+            escapes nothing, so a pattern that contains its delimiter cannot be
+            expressed as one and is refused rather than silently requoted.
         flags: regex flags. `i` (case-insensitive) is honored on every adapter
             that supports flags at all. Anything the adapter does not accept is
             dropped with a warning, by `regexp_sanitize_flags` below. `-` clears
@@ -163,24 +167,128 @@
 {% macro vertica__regexp_supported_flags() %} {%- do return("bcimnx") %} {% endmacro %}
 {% macro dremio__regexp_supported_flags() %} {%- do return("imsx-") %} {% endmacro %}
 
+{#
+    Renders `regex` as a string literal for the current dialect.
+
+    Escapes the delimiter and nothing else. A pattern is mostly backslashes, so
+    a general-purpose escaper is actively harmful here: `escape_special_chars`,
+    for one, maps `\` to `\\` and would turn the pattern `\d+` into a literal
+    backslash followed by `d+`. Each override therefore touches only the quote,
+    in the form its own lexer accepts, and leaves every other character as the
+    caller wrote it.
+
+    Raw literals get the opposite treatment. They escape nothing by definition,
+    so the delimiter is chosen to avoid the pattern, and a pattern that leaves
+    no usable delimiter is refused.
+#}
+{% macro regexp_pattern_literal(regex, is_raw=false) %}
+    {%- do return(
+        adapter.dispatch("regexp_pattern_literal", "elementary")(
+            regex, is_raw
+        )
+    ) %}
+{% endmacro %}
+
+{# Doubling the quote is the ANSI escape and, unlike a backslash escape, cannot
+   disturb the pattern's own backslashes. Every adapter here takes it except
+   BigQuery, ClickHouse and the Spark family, which override below. `is_raw` is
+   a no-op wherever the dialect has no raw-literal syntax, which is everywhere
+   but Snowflake and BigQuery. #}
+{% macro default__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return("'" ~ regex | replace("'", "''") ~ "'") %}
+{% endmacro %}
+
+{# Snowflake takes both `''` and `\'` in a quoted literal, so use the form that
+   leaves backslashes alone. `$$...$$` is the harder case: it has no escape
+   mechanism, and Snowflake has no alternative dollar tag to move to, so a raw
+   pattern containing `$$` is inexpressible. Refuse it rather than fall back to
+   a quoted literal, which would start consuming the very backslashes `is_raw`
+   was passed to preserve. Gated on `execute` for the same reason as the SQL
+   Server branch at the end of this file. #}
+{% macro snowflake__regexp_pattern_literal(regex, is_raw) %}
+    {%- if not is_raw %}
+        {%- do return("'" ~ regex | replace("'", "''") ~ "'") %}
+    {%- endif %}
+    {%- if "$$" in regex %}
+        {%- if execute %}
+            {{
+                exceptions.raise_compiler_error(
+                    "regexp_match: a raw pattern cannot contain '$$' on Snowflake, because that ends the $$...$$ literal. Got '"
+                    ~ regex
+                    ~ "'. Pass is_raw=false and double the pattern's backslashes instead."
+                )
+            }}
+        {%- endif %}
+        {%- do return("''") %}
+    {%- endif %}
+    {%- do return("$$" ~ regex ~ "$$") %}
+{% endmacro %}
+
+{# BigQuery has no doubled-quote escape, so the quote takes a backslash here.
+   Only the quote: the pattern's other backslashes are left as they are. In a
+   raw literal nothing can be escaped, so the delimiter moves to whichever
+   quote character the pattern does not use; a pattern using both cannot be a
+   raw literal at all. #}
+{% macro bigquery__regexp_pattern_literal(regex, is_raw) %}
+    {%- if not is_raw %}
+        {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
+    {%- endif %}
+    {%- if "'" not in regex %} {%- do return("r'" ~ regex ~ "'") %} {%- endif %}
+    {%- if '"' not in regex %} {%- do return('r"' ~ regex ~ '"') %} {%- endif %}
+    {%- if execute %}
+        {{
+            exceptions.raise_compiler_error(
+                "regexp_match: a raw pattern cannot contain both quote characters on BigQuery, because r'...' has no escape sequences. Got '"
+                ~ regex
+                ~ "'. Pass is_raw=false and escape the pattern's backslashes instead."
+            )
+        }}
+    {%- endif %}
+    {%- do return("''") %}
+{% endmacro %}
+
+{# Spark's lexer takes `\'` inside a quoted literal but not the doubled `''`
+   form, so this is the one family where the quote needs a backslash. That the
+   backslash is an escape character here at all is why the macro docstring tells
+   callers to double the pattern's own backslashes on these adapters. #}
+{% macro spark__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
+{% endmacro %}
+
+{% macro databricks__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return(elementary.spark__regexp_pattern_literal(regex, is_raw)) %}
+{% endmacro %}
+
+{% macro fabricspark__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return(elementary.spark__regexp_pattern_literal(regex, is_raw)) %}
+{% endmacro %}
+
+{# ClickHouse documents `\'` and consumes backslashes in string literals either
+   way, so escape the quote the same way ClickHouseDirectSeeder in the
+   integration tests does rather than relying on the doubled form. #}
+{% macro clickhouse__regexp_pattern_literal(regex, is_raw) %}
+    {%- do return("'" ~ regex | replace("'", "\\'") ~ "'") %}
+{% endmacro %}
+
 {# Fallback for adapters we have no override for. `regexp_instr` is the most
    widely implemented position function, and > 0 makes it a search. #}
 {% macro default__regexp_match(string, regex, is_raw, flags) %}
-    regexp_instr({{ string }}, '{{ regex }}') > 0
+    regexp_instr({{ string }}, {{ elementary.regexp_pattern_literal(regex, is_raw) }})
+    > 0
 {% endmacro %}
 
 {# Snowflake: regexp_like is implicitly anchored at both ends, so it cannot be
    used here. regexp_instr(subject, pattern, position, occurrence, option,
    parameters) is a genuine search. Raw strings use $$...$$. #}
 {% macro snowflake__regexp_match(string, regex, is_raw, flags) %}
-    {%- set pattern = "$$" ~ regex ~ "$$" if is_raw else "'" ~ regex ~ "'" %}
+    {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     regexp_instr({{ string }}, {{ pattern }}, 1, 1, 0, '{{ flags }}') > 0
 {% endmacro %}
 
 {# BigQuery: regexp_contains is an unanchored search. RE2 takes inline flags. #}
 {% macro bigquery__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    {%- set pattern = "r'" ~ regex ~ "'" if is_raw else "'" ~ regex ~ "'" %}
+    {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
     regexp_contains({{ string }}, {{ pattern }})
 {% endmacro %}
 
@@ -191,23 +299,28 @@
    begins with `(?...)` is a syntax error. Pass one or the other. #}
 {% macro postgres__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    {{ string }} ~ '{{ regex }}'
+    {{ string }} ~ {{ elementary.regexp_pattern_literal(regex, is_raw) }}
 {% endmacro %}
 
 {# Redshift: regexp_instr takes a parameters argument, unlike its ~ operator. #}
 {% macro redshift__regexp_match(string, regex, is_raw, flags) %}
-    regexp_instr({{ string }}, '{{ regex }}', 1, 1, 0, '{{ flags }}') > 0
+    {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
+    regexp_instr({{ string }}, {{ pattern }}, 1, 1, 0, '{{ flags }}') > 0
 {% endmacro %}
 
 {# DuckDB: regexp_matches is already a boolean search and takes flags directly. #}
 {% macro duckdb__regexp_match(string, regex, is_raw, flags) %}
-    regexp_matches({{ string }}, '{{ regex }}', '{{ flags }}')
+    regexp_matches(
+        {{ string }},
+        {{ elementary.regexp_pattern_literal(regex, is_raw) }},
+        '{{ flags }}'
+    )
 {% endmacro %}
 
 {# Spark/Databricks: rlike is an unanchored search over a Java regex. #}
 {% macro spark__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    {{ string }} rlike '{{ regex }}'
+    {{ string }} rlike {{ elementary.regexp_pattern_literal(regex, is_raw) }}
 {% endmacro %}
 
 {% macro databricks__regexp_match(string, regex, is_raw, flags) %}
@@ -225,7 +338,7 @@
    UNICODE_CHARACTER_CLASS rather than RE2's ungreedy swap. #}
 {% macro trino__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    regexp_like({{ string }}, '{{ regex }}')
+    regexp_like({{ string }}, {{ elementary.regexp_pattern_literal(regex, is_raw) }})
 {% endmacro %}
 
 {% macro athena__regexp_match(string, regex, is_raw, flags) %}
@@ -236,13 +349,14 @@
    the result is a real boolean under `not (...)`. #}
 {% macro clickhouse__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    match({{ string }}, '{{ regex }}') = 1
+    match({{ string }}, {{ elementary.regexp_pattern_literal(regex, is_raw) }}) = 1
 {% endmacro %}
 
 {# Vertica: regexp_like is a search and takes modifiers as a third argument. #}
 {% macro vertica__regexp_match(string, regex, is_raw, flags) %}
-    {%- if flags %} regexp_like({{ string }}, '{{ regex }}', '{{ flags }}')
-    {%- else %} regexp_like({{ string }}, '{{ regex }}')
+    {%- set pattern = elementary.regexp_pattern_literal(regex, is_raw) %}
+    {%- if flags %} regexp_like({{ string }}, {{ pattern }}, '{{ flags }}')
+    {%- else %} regexp_like({{ string }}, {{ pattern }})
     {%- endif %}
 {% endmacro %}
 
@@ -255,7 +369,8 @@
    Caveat: a user pattern containing ^ or $ still anchors within the padding. #}
 {% macro dremio__regexp_match(string, regex, is_raw, flags) %}
     {%- set regex = elementary.regexp_inline_flags(regex, flags) %}
-    regexp_like({{ string }}, '(?s:.*?)(?:{{ regex }})(?s:.*?)')
+    {%- set padded = "(?s:.*?)(?:" ~ regex ~ ")(?s:.*?)" %}
+    regexp_like({{ string }}, {{ elementary.regexp_pattern_literal(padded, is_raw) }})
 {% endmacro %}
 
 {# T-SQL has no regular expression support before SQL Server 2025, so fail with
