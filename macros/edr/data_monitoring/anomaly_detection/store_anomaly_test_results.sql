@@ -111,7 +111,14 @@
           {% set total = unique_anomalous_rows | length %}
           {% if column_name %}In column {{ column_name | upper }}, {% endif %}{{ total }} anomalous {{ metric_name }} value{% if total > 1 %}s{% endif %} for dimension {{ dimension }}: {{ dim_parts | join(", ") }}{% if total > max_shown %}, and {{ total - max_shown }} more{% endif %}.
         {% else %}
-          {{ elementary.insensitive_get_dict_value(rows_with_score[-1], 'anomaly_description') }}
+          {# Describe an anomalous bucket when there is one, otherwise fall back to
+             the scored buckets. The anomaly scores query has no "order by", so sort
+             explicitly to keep the latest bucket rather than an arbitrary row. #}
+          {% set description_candidates = anomalous_rows if anomalous_rows else rows_with_score %}
+          {% set latest_description_row = (
+              description_candidates | sort(attribute='bucket_end')
+          ) | last %}
+          {{ elementary.insensitive_get_dict_value(latest_description_row, 'anomaly_description') }}
         {% endif %}
       {% else %}
           Not enough data to calculate anomaly score.

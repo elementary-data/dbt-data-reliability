@@ -210,6 +210,23 @@ def test_timings(dbt_project: DbtProject):
     assert results[0]["execute_started_at"]
 
 
+@pytest.mark.skip_for_dbt_fusion
+def test_compiled_code_preserves_newlines(dbt_project: DbtProject):
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+    dbt_project.dbt_runner.vars["disable_run_results"] = False
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    results = dbt_project.run_query(
+        """select compiled_code from {{ ref("dbt_run_results") }} where name='%s'"""
+        % TEST_MODEL
+    )
+    assert len(results) >= 1
+    for row in results:
+        compiled_code = row["compiled_code"]
+        comment_line, _, rest = compiled_code.lstrip().partition("\n")
+        assert comment_line.startswith("-- Leading comment"), compiled_code
+        assert "select 1" in rest.lower(), compiled_code
+
+
 @pytest.mark.only_on_targets(["bigquery"])
 def test_run_results_partitioned(dbt_project: DbtProject):
     # BigQuery partitioning is enabled by default. Verify the model works and data is readable.

@@ -4,6 +4,9 @@
             flattened_test
         ) %}
     {% endif %}
+    {% if elementary_test_type == "with_context" %}
+        {% do return("dbt_test") %}
+    {% endif %}
     {% do return(elementary_test_type or "dbt_test") %}
 {% endmacro %}
 
@@ -22,11 +25,21 @@
         "schema_changes_from_baseline",
         "json_schema",
     ] %}
+    {%- set with_context_tests = [
+        "accepted_range_with_context",
+        "expect_column_values_to_be_unique_with_context",
+        "expect_column_values_to_match_regex_with_context",
+        "expect_column_values_to_not_be_null_with_context",
+        "not_null_with_context",
+        "relationships_with_context",
+    ] %}
 
     {% if flattened_test.short_name | lower in anomaly_detection_tests %}
         {% do return("anomaly_detection") %}
     {% elif flattened_test.short_name | lower in schema_changes_tests %}
         {% do return("schema_change") %}
+    {% elif flattened_test.short_name | lower in with_context_tests %}
+        {% do return("with_context") %}
     {% endif %}
     {% do return(none) %}
 {% endmacro %}
