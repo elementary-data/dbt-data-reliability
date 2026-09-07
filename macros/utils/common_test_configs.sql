@@ -458,7 +458,7 @@
             "accepted_range_with_context": {
                 "quality_dimension": "validity",
                 "failed_row_count_calc": "count(*)",
-                "description": "Validates that column values fall within an accepted range, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+                "description": "Deprecated, and scheduled for removal in the next release; use dbt_utils.accepted_range instead. Validates that column values fall within an accepted range, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
             "expect_column_values_to_not_be_null_with_context": {
                 "quality_dimension": "completeness",
@@ -479,6 +479,31 @@
                 "quality_dimension": "consistency",
                 "failed_row_count_calc": "count(*)",
                 "description": "Validates referential integrity between a child and parent table, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "expression_is_true_with_context": {
+                "quality_dimension": "accuracy",
+                "failed_row_count_calc": "count(*)",
+                "description": "Validates that a SQL expression holds for every row, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "not_empty_string_with_context": {
+                "quality_dimension": "completeness",
+                "failed_row_count_calc": "count(*)",
+                "description": "Validates that a column contains no empty strings, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_column_pair_values_A_to_be_greater_than_B_with_context": {
+                "quality_dimension": "accuracy",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects the values of one column to be greater than another, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_compound_columns_to_be_unique_with_context": {
+                "quality_dimension": "uniqueness",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects a combination of columns to be unique, returning all duplicate rows with additional context columns. If no context_columns are specified, all columns are returned.",
+            },
+            "expect_column_values_to_match_regex_list_with_context": {
+                "quality_dimension": "validity",
+                "failed_row_count_calc": "count(*)",
+                "description": "Expects column values to match any or all of a list of regular expressions, returning additional context columns alongside failing rows. If no context_columns are specified, all columns are returned.",
             },
         },
     } %}
