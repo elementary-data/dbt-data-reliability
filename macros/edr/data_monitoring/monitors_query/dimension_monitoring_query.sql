@@ -12,8 +12,16 @@
         elementary.relation_to_full_name(monitored_table_relation)
     ) %}
     {% set dimensions_string = elementary.join_list(dimensions, "; ") %}
+
+    {# Resolve each dimension to its SQL form. Adapters with nested-field support
+       segment-quote struct paths (e.g. user.address.city); plain identifiers,
+       expressions and other adapters pass through unchanged. #}
+    {% set sql_dimensions = [] %}
+    {% for dimension in dimensions %}
+        {% do sql_dimensions.append(elementary.dimension_monitoring_sql(dimension)) %}
+    {% endfor %}
     {% set concat_dimensions_sql_expression = elementary.list_concat_with_separator(
-        dimensions, "; "
+        sql_dimensions, "; "
     ) %}
     {% set timestamp_column = metric_properties.timestamp_column %}
     {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation(

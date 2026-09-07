@@ -15,8 +15,19 @@
     {%- set timestamp_column = metric_properties.timestamp_column %}
     {% set prefixed_dimensions = [] %}
     {% for dimension_column in dimensions %}
-        {% do prefixed_dimensions.append("dimension_" ~ dimension_column) %}
+        {% do prefixed_dimensions.append(
+            "dimension_"
+            ~ elementary.dimension_monitoring_alias(dimension_column)
+        ) %}
     {% endfor %}
+
+    {#- Ask the adapter how to project and reference the monitored column. For an
+        ordinary column both are just `column_obj.quoted`; adapters with nested
+        STRUCT support project a computed expression under a safe alias and
+        reference that alias in the metric aggregates. -#}
+    {%- set monitored_column = elementary.monitored_column_projection(column_obj) %}
+    {%- set monitored_column_projection = monitored_column.projection %}
+    {%- set monitored_column_expr = monitored_column.expression %}
 
     {% set metric_types = [] %}
     {% set metric_name_to_type = {} %}
@@ -53,7 +64,7 @@
             ),
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -78,7 +89,7 @@
         {%- else %}
             filtered_monitored_table as (
                 select
-                    {{ column_obj.quoted }},
+                    {{ monitored_column_projection }},
                     {%- if dimensions -%}
                         {{
                             elementary.select_dimensions_columns(
@@ -94,7 +105,7 @@
         column_metrics as (
 
             {%- if column_metrics %}
-                {%- set column = column_obj.quoted -%}
+                {%- set column = monitored_column_expr -%}
                 select
                     {%- if timestamp_column %}
                         edr_bucket_start as bucket_start, edr_bucket_end as bucket_end,
@@ -341,16 +352,21 @@
     {% endif %}
 {% endmacro %}
 
+{# Renders a dimension select list. When aliasing (`as_prefix`), the dimension
+   SQL and the alias suffix are resolved per-adapter, so nested struct paths are
+   handled where supported and everything else stays byte-identical to previous
+   behaviour. Without a prefix the values are already-built column references and
+   pass through unchanged. #}
 {% macro select_dimensions_columns(dimension_columns, as_prefix="") %}
     {% set select_statements %}
     {%- for column in dimension_columns -%}
-      {{ column }}
       {%- if as_prefix -%}
-        {{ " as " ~ as_prefix ~ "_" ~ column }}
+        {{ elementary.dimension_monitoring_sql(column) }}
+        {{- " as " ~ as_prefix ~ "_" ~ elementary.dimension_monitoring_alias(column) -}}
+      {%- else -%}
+        {{ column }}
       {%- endif -%}
-      {%- if not loop.last -%}
-        {{ ", " }}
-      {%- endif -%}
+      {%- if not loop.last -%}{{ ", " }}{%- endif -%}
     {%- endfor -%}
     {% endset %}
     {{ return(select_statements) }}
