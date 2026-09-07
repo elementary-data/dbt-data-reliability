@@ -291,7 +291,7 @@ def test_unique_with_context_without_context_columns(
 # T-SQL has no regex functions, so elementary.regexp_match raises a compiler
 # error there by design. See sqlserver__regexp_match in regexp_match.sql.
 @pytest.mark.skip_targets(["sqlserver", "fabric"])
-def test_match_regex_with_context_searches_substrings_and_ignores_nulls(
+def test_match_regex_with_context_searches_and_ignores_nulls(
     test_id: str, dbt_project: DbtProject
 ):
     """An unanchored pattern matches anywhere in the value, and NULL never fails.
