@@ -248,7 +248,11 @@ def test_metric_stability_rejects_multi_step_buckets(
     assert result == "error"
 
 
-@pytest.mark.parametrize("days_back", [1, 0.5])
+# Explicit ids: the value ends up in the seed relation name, and a "." in one
+# is rejected by the Hive metastore behind Trino.
+@pytest.mark.parametrize(
+    "days_back", [pytest.param(1, id="whole"), pytest.param(0.5, id="fractional")]
+)
 def test_metric_stability_rejects_too_short_window(
     test_id: str, dbt_project: DbtProject, days_back
 ):
