@@ -1,5 +1,6 @@
 {# Detect restatements of settled bucket metrics within the observation window.
-   Configuration, baseline behavior, and limits: docs/metric_stability.md. #}
+   Configuration, baseline behavior, and limits:
+   https://docs.elementary-data.com/data-tests/metric-stability #}
 {% test metric_stability(
     model,
     columns,
@@ -24,7 +25,7 @@
         {% do return(elementary.no_results_query()) %}
     {% endif %}
 
-    {% set arguments = elementary._validate_metric_stability_arguments(
+    {% set arguments = elementary._parse_and_validate_metric_stability_arguments(
         model,
         columns,
         metrics,
@@ -353,7 +354,7 @@
 
 
 {# Validate and normalize arguments; return resolved model, timestamp, and columns. #}
-{% macro _validate_metric_stability_arguments(
+{% macro _parse_and_validate_metric_stability_arguments(
     model,
     columns,
     metrics,
