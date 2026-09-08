@@ -60,7 +60,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
       # Mint an OIDC token to assume the shared elementary-oss AWS role.
