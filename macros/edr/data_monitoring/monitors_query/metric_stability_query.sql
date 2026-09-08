@@ -163,25 +163,34 @@
 
         )
 
+        {#- This select is frozen into a table, so every timestamp it carries out
+            of the metric history is cast to the precision that table accepts.
+            Athena reads timestamp(6) from the history and writes millisecond
+            columns, and rejects the CTAS otherwise. -#}
         select
             id as metric_id,
             full_table_name,
             column_name,
             metric_name,
             metric_type,
-            bucket_start,
-            bucket_end,
+            {{ elementary.edr_cast_as_timestamp("bucket_start") }} as bucket_start,
+            {{ elementary.edr_cast_as_timestamp("bucket_end") }} as bucket_end,
             bucket_duration_hours,
             dimension,
             dimension_value,
-            case when is_current = 0
-                 then {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string())) }}
-                 else updated_at end as measured_at,
+            {{ elementary.edr_cast_as_timestamp(
+                "case when is_current = 0"
+                ~ " then " ~ elementary.edr_cast_as_timestamp(elementary.edr_quote(elementary.run_started_at_as_string()))
+                ~ " else updated_at end"
+            ) }} as measured_at,
             case when is_current = 0 then 'missing_bucket' else 'value_changed' end as change_type,
             case when is_current = 1 then measured_value end as metric_value,
             case when is_current = 0 then measured_value else last_check_value end as previous_value,
-            case when is_current = 0 then updated_at else last_check_at end as previous_measured_at,
-            first_check_at as initial_measured_at,
+            {{ elementary.edr_cast_as_timestamp(
+                "case when is_current = 0 then updated_at else last_check_at end"
+            ) }} as previous_measured_at,
+            {{ elementary.edr_cast_as_timestamp("first_check_at") }}
+            as initial_measured_at,
             first_check_value as initial_value,
             case when is_current = 1 then measured_value - last_check_value end as change_since_last_check,
             case when is_current = 1 then measured_value - first_check_value end as change_since_first_check,
