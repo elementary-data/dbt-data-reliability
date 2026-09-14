@@ -51,9 +51,12 @@
 {% macro bigquery__edr_get_create_table_as_sql(
     temporary, relation, sql_query, expiration_hours=none
 ) %}
+    {# BigQuery has no session-scoped temp tables, so a "temporary" relation is a real
+       table that only an expiration cleans up. The expiration must outlive the longest
+       dbt invocation, hence the configurable default. #}
     {% if expiration_hours is none and temporary %}
         {% set expiration_hours = elementary.get_config_var(
-            "test_table_expiration_hours"
+            "temp_table_expiration_hours"
         ) %}
     {% endif %}
   create or replace table {{ relation }}
