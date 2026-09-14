@@ -51,10 +51,13 @@
 {% macro bigquery__edr_get_create_table_as_sql(
     temporary, relation, sql_query, expiration_hours=none
 ) %}
+    {% if expiration_hours is none and temporary %}
+        {% set expiration_hours = elementary.get_config_var(
+            "test_table_expiration_hours"
+        ) %}
+    {% endif %}
   create or replace table {{ relation }}
-    {% if temporary %}
-  options (expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 1 hour))
-    {% elif expiration_hours is not none %}
+    {% if expiration_hours is not none %}
   options (expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL {{ expiration_hours }} hour))
     {% endif %}
   as {{ sql_query }}
