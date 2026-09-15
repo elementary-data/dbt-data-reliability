@@ -1,6 +1,5 @@
-{% macro init_elementary_graph() %}
-    {% do graph.setdefault(
-        "elementary",
+{% macro elementary_graph_defaults() %}
+    {% do return(
         {
             "elementary_test_results": {},
             "elementary_test_failed_row_counts": {},
@@ -12,6 +11,10 @@
             "temp_test_table_relations_map": {},
             "duration_context_stack": {},
             "microbatch_compiled_code_by_unique_id": {},
-        },
+        }
     ) %}
+{% endmacro %}
+
+{% macro init_elementary_graph() %}
+    {% do graph.setdefault("elementary", elementary.elementary_graph_defaults()) %}
 {% endmacro %}
