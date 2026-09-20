@@ -248,6 +248,31 @@ class AdapterQueryRunner:
         """Execute a SQL statement that does not return results (DDL/DML)."""
         with self._adapter.connection_named("execute_sql"):
             self._adapter.execute(sql, fetch=False)
+        self._release_connections()
+
+    def _release_connections(self) -> None:
+        """Release the adapter connection after every query.
+
+        DuckDB is embedded and takes an exclusive lock on the database file, so an
+        idle connection held here blocks any dbt run that happens in a separate
+        process (`--runner-method fusion` / `subprocess`).  ``cleanup_all`` alone is
+        not enough: ``DuckDBConnectionManager._ENV`` caches the underlying
+        ``duckdb`` connection at class level and only closes it once its handle
+        count drops to zero, so the file stays locked.  Drop the cached environment
+        explicitly; the next query recreates it.
+
+        No-op for client/server warehouses, which allow concurrent connections.
+        """
+        self._adapter.connections.cleanup_all()
+        if self._adapter.type() != "duckdb":
+            return
+
+        from dbt.adapters.duckdb.connections import DuckDBConnectionManager
+
+        with DuckDBConnectionManager._LOCK:
+            if DuckDBConnectionManager._ENV is not None:
+                DuckDBConnectionManager._ENV.close()
+                DuckDBConnectionManager._ENV = None
 
     @property
     def schema_name(self) -> str:
@@ -269,6 +294,7 @@ class AdapterQueryRunner:
         sql = self.resolve_refs(prerendered_query)
         with self._adapter.connection_named("run_query"):
             _response, table = self._adapter.execute(sql, fetch=True)
+        self._release_connections()
 
         # Convert agate Table → list[dict] matching agate_to_dicts behaviour
         columns = [c.lower() for c in table.column_names]

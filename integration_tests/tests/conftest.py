@@ -18,6 +18,7 @@ DBT_FUSION_SUPPORTED_TARGETS = [
     "bigquery",
     "redshift",
     "databricks_catalog",
+    "duckdb",
 ]
 
 logger = get_logger(__name__)
