@@ -246,32 +246,42 @@ class AdapterQueryRunner:
 
     def execute_sql(self, sql: str) -> None:
         """Execute a SQL statement that does not return results (DDL/DML)."""
-        with self._adapter.connection_named("execute_sql"):
-            self._adapter.execute(sql, fetch=False)
-        self._release_connections()
+        try:
+            with self._adapter.connection_named("execute_sql"):
+                self._adapter.execute(sql, fetch=False)
+        finally:
+            self._release_duckdb_file_lock()
 
-    def _release_connections(self) -> None:
-        """Release the adapter connection after every query.
+    def _release_duckdb_file_lock(self) -> None:
+        """Release the DuckDB connection so an out-of-process dbt run can take the file lock.
 
-        DuckDB is embedded and takes an exclusive lock on the database file, so an
-        idle connection held here blocks any dbt run that happens in a separate
-        process (`--runner-method fusion` / `subprocess`).  ``cleanup_all`` alone is
-        not enough: ``DuckDBConnectionManager._ENV`` caches the underlying
-        ``duckdb`` connection at class level and only closes it once its handle
-        count drops to zero, so the file stays locked.  Drop the cached environment
-        explicitly; the next query recreates it.
+        A file-backed DuckDB database allows a single read-write process at a time,
+        so the connection cached in ``DuckDBConnectionManager._ENV`` must be closed
+        before dbt runs in another process (`--runner-method fusion` / `subprocess`).
+        The next query recreates it.
 
-        No-op for client/server warehouses, which allow concurrent connections.
+        No-op for non-DuckDB adapters, ``path: ":memory:"`` (closing it would discard
+        the database) and MotherDuck (hosted, not a local file).
         """
-        self._adapter.connections.cleanup_all()
         if self._adapter.type() != "duckdb":
+            return
+
+        credentials = self._adapter.config.credentials
+        if credentials.path == ":memory:" or credentials.is_motherduck:
             return
 
         from dbt.adapters.duckdb.connections import DuckDBConnectionManager
 
+        self._adapter.connections.cleanup_all()
         with DuckDBConnectionManager._LOCK:
             if DuckDBConnectionManager._ENV is not None:
-                DuckDBConnectionManager._ENV.close()
+                try:
+                    DuckDBConnectionManager._ENV.close()
+                except Exception as exc:
+                    # Called from a `finally`, so never mask the original error.
+                    logger.warning(
+                        f"Ignoring error while closing the DuckDB environment: {exc}"
+                    )
                 DuckDBConnectionManager._ENV = None
 
     @property
@@ -292,9 +302,11 @@ class AdapterQueryRunner:
         if self.has_non_ref_jinja(prerendered_query):
             raise UnsupportedJinjaError(prerendered_query)
         sql = self.resolve_refs(prerendered_query)
-        with self._adapter.connection_named("run_query"):
-            _response, table = self._adapter.execute(sql, fetch=True)
-        self._release_connections()
+        try:
+            with self._adapter.connection_named("run_query"):
+                _response, table = self._adapter.execute(sql, fetch=True)
+        finally:
+            self._release_duckdb_file_lock()
 
         # Convert agate Table → list[dict] matching agate_to_dicts behaviour
         columns = [c.lower() for c in table.column_names]
