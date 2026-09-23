@@ -32,9 +32,17 @@
         ) -%}
 
         {# Table must be non-temporary so it's visible across dbt sessions (e.g. on_run_end cleanup).
-           expiration_hours is a safety net for adapters that support it (currently BigQuery). #}
+           expiration_hours is a safety net for adapters that support it (currently BigQuery).
+           It must outlive the longest dbt invocation, so it is configurable via the
+           temp_table_expiration_hours var. #}
+        {% set expiration_hours = elementary.get_config_var(
+            "temp_table_expiration_hours"
+        ) %}
         {%- do elementary.create_or_replace(
-            false, temp_table_relation, sql_query, expiration_hours=1
+            false,
+            temp_table_relation,
+            sql_query,
+            expiration_hours=expiration_hours,
         ) %}
 
         {# Cache the test table for easy access later #}
