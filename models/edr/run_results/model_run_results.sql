@@ -25,6 +25,7 @@ select
     run_results.query_id,
     run_results.name,
     run_results.generated_at,
+    run_results.created_at,
     run_results.status,
     run_results.full_refresh,
     run_results.message,
