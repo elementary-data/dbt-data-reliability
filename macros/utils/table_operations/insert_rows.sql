@@ -224,6 +224,7 @@
                 "normalized_type": elementary.normalize_data_type(
                     column.dtype
                 ),
+                "dtype": column.dtype,
             }
         ) %}
     {% endfor %}
@@ -243,11 +244,21 @@
                 if column.row_key is not none
                 else none
             ) %}
-            {% do rendered_column_values.append(
-                render_value_impl(
-                    column_value, column.normalized_type, escaper
-                )
+            {% set rendered_value = render_value_impl(
+                column_value, column.normalized_type, escaper
             ) %}
+            {# A bare numeric literal is typed by the engine (e.g. DOUBLE), which can be
+               wider than the destination column (e.g. FLOAT). Warehouses that refuse
+               implicit narrowing reject the whole insert, so cast to the column's own type. #}
+            {% if (
+                column.normalized_type == "numeric"
+                and column.dtype
+                and column_value is number
+                and column_value is not boolean
+            ) %}
+                {% set rendered_value = "cast(" ~ rendered_value ~ " as " ~ column.dtype ~ ")" %}
+            {% endif %}
+            {% do rendered_column_values.append(rendered_value) %}
         {% endif %}
     {% endfor %}
     {% do return("({})".format(rendered_column_values | join(","))) %}
