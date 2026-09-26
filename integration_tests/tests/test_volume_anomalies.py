@@ -506,6 +506,75 @@ def test_ignore_small_changes_both(
     assert test_result["status"] == expected_result
 
 
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="only_spike_threshold_drop_detected",
+    expected_result="fail",
+    spike_failure_percent_threshold=50,
+    drop_failure_percent_threshold=None,
+    metric_value=5,
+)
+@Parametrization.case(
+    name="only_spike_threshold_small_spike_ignored",
+    expected_result="pass",
+    spike_failure_percent_threshold=50,
+    drop_failure_percent_threshold=None,
+    metric_value=40,
+)
+@Parametrization.case(
+    name="only_drop_threshold_spike_detected",
+    expected_result="fail",
+    spike_failure_percent_threshold=None,
+    drop_failure_percent_threshold=50,
+    metric_value=100,
+)
+@Parametrization.case(
+    name="only_drop_threshold_small_drop_ignored",
+    expected_result="pass",
+    spike_failure_percent_threshold=None,
+    drop_failure_percent_threshold=50,
+    metric_value=20,
+)
+def test_ignore_small_changes_one_side(
+    test_id: str,
+    dbt_project: DbtProject,
+    expected_result: str,
+    spike_failure_percent_threshold: int,
+    drop_failure_percent_threshold: int,
+    metric_value: int,
+):
+    # Setting a threshold for one direction should only ignore small changes in
+    # that direction. Anomalies in the other direction must still be detected.
+    now = datetime.utcnow()
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in generate_dates(base_date=now, step=timedelta(days=1))
+        if cur_date < now - timedelta(days=1)
+    ] * 30
+    data += [
+        {TIMESTAMP_COLUMN: (now - timedelta(days=1)).strftime(DATE_FORMAT)}
+    ] * metric_value
+
+    ignore_small_changes = {}
+    if spike_failure_percent_threshold is not None:
+        ignore_small_changes[
+            "spike_failure_percent_threshold"
+        ] = spike_failure_percent_threshold
+    if drop_failure_percent_threshold is not None:
+        ignore_small_changes[
+            "drop_failure_percent_threshold"
+        ] = drop_failure_percent_threshold
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "day", "count": 1},
+        "anomaly_direction": "both",
+        "ignore_small_changes": ignore_small_changes,
+    }
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == expected_result
+
+
 def test_anomalyless_vol_anomalies_with_test_materialization(
     test_id: str, dbt_project: DbtProject
 ):
