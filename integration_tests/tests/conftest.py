@@ -177,17 +177,38 @@ def clear_on_end(request) -> bool:
 
 
 def _profile_path(target: str) -> Optional[str]:
-    """Return the ``path`` configured for *target* in profiles.yml, if readable.
+    """Return the ``path`` dbt resolves for *target*, if it can be resolved.
 
-    A profile that omits ``path`` gets dbt-duckdb's own default, so an implicit
-    in-memory database is reported as such.  Returns ``None`` when the profile
-    cannot be resolved, so callers only act on a value they positively read.
+    Goes through dbt's own profile handling instead of reading ``profiles.yml``
+    directly, so ``env_var`` and any other Jinja in ``path`` render the way dbt
+    will render it, and an omitted ``path`` picks up dbt-duckdb's ``:memory:``
+    default.  ``env_var`` needs the invocation context, hence the
+    ``set_invocation_context`` call.
+
+    Returns ``None`` when the profile cannot be resolved, so callers only act on
+    a value they positively read.
     """
+    from argparse import Namespace
+
+    from dbt.config.runtime import RuntimeConfig
+    from dbt.flags import set_from_args
+    from dbt_common.context import set_invocation_context
+
     profiles_dir = os.environ.get("DBT_PROFILES_DIR", os.path.expanduser("~/.dbt"))
+    args = Namespace(
+        project_dir=str(DBT_PROJECT_PATH),
+        profiles_dir=profiles_dir,
+        target=target,
+        threads=1,
+        vars={},
+        profile=None,
+        PROFILES_DIR=profiles_dir,
+        PROJECT_DIR=str(DBT_PROJECT_PATH),
+    )
     try:
-        project = yaml.safe_load((DBT_PROJECT_PATH / "dbt_project.yml").read_text())
-        profiles = yaml.safe_load((Path(profiles_dir) / "profiles.yml").read_text())
-        return profiles[project["profile"]]["outputs"][target].get("path", ":memory:")
+        set_invocation_context(os.environ)
+        set_from_args(args, None)
+        return getattr(RuntimeConfig.from_args(args).credentials, "path", None)
     except Exception:
         return None
 
