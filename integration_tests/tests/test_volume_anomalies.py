@@ -557,13 +557,13 @@ def test_ignore_small_changes_one_side(
 
     ignore_small_changes = {}
     if spike_failure_percent_threshold is not None:
-        ignore_small_changes["spike_failure_percent_threshold"] = (
-            spike_failure_percent_threshold
-        )
+        ignore_small_changes[
+            "spike_failure_percent_threshold"
+        ] = spike_failure_percent_threshold
     if drop_failure_percent_threshold is not None:
-        ignore_small_changes["drop_failure_percent_threshold"] = (
-            drop_failure_percent_threshold
-        )
+        ignore_small_changes[
+            "drop_failure_percent_threshold"
+        ] = drop_failure_percent_threshold
 
     test_args = {
         **DBT_TEST_ARGS,
