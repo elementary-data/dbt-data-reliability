@@ -227,6 +227,8 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}
+        {# DuckDB: commit the drop too, so it survives the same ROLLBACK #}
+        {% if target.type == "duckdb" %} {% do adapter.commit() %} {% endif %}
     {% endif %}
 {% endmacro %}
 
@@ -287,6 +289,8 @@
 
     {% if not elementary.has_temp_table_support() %}
         {% do elementary.fully_drop_relation(temp_relation) %}
+        {# DuckDB: commit the drop too, so it survives the same ROLLBACK #}
+        {% if target.type == "duckdb" %} {% do adapter.commit() %} {% endif %}
     {% endif %}
 {% endmacro %}
 
