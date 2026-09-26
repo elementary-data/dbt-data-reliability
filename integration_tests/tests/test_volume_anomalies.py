@@ -200,6 +200,27 @@ def test_volume_anomalies_with_seasonality(test_id: str, dbt_project: DbtProject
     assert test_result["status"] == "fail"
 
 
+def test_volume_anomalies_with_seasonality_is_case_insensitive(
+    test_id: str, dbt_project: DbtProject
+):
+    # Seasonality values are validated case-insensitively, so they must also be
+    # applied case-insensitively instead of being silently ignored.
+    utc_today = datetime.utcnow().date()
+    dates = generate_dates(
+        base_date=utc_today - timedelta(days=1),
+        step=timedelta(weeks=1),
+        days_back=7 * 14,
+    )
+    data = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
+        for cur_date in dates
+        if cur_date < utc_today - timedelta(weeks=1)
+    ]
+    test_args = {**DBT_TEST_ARGS, "seasonality": "Day_Of_Week"}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+
 def test_volume_anomalies_with_sensitivity(test_id: str, dbt_project: DbtProject):
     utc_today = datetime.utcnow().date()
     data = [
