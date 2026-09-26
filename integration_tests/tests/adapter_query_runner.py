@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from dbt.adapters.base import BaseAdapter
+from elementary.clients.dbt.factory import RunnerMethod, get_dbt_runner_method
 from logger import get_logger
 
 logger = get_logger(__name__)
@@ -76,11 +77,23 @@ class AdapterQueryRunner:
         Path to the dbt project directory.
     target : str
         Name of the dbt target / profile output to use.
+    runner_method : RunnerMethod, optional
+        How the tests run dbt.  Only out-of-process runners need the DuckDB file
+        lock released between queries (see ``_release_duckdb_file_lock``).
     """
 
-    def __init__(self, project_dir: str, target: str) -> None:
+    def __init__(
+        self,
+        project_dir: str,
+        target: str,
+        runner_method: Optional[RunnerMethod] = None,
+    ) -> None:
         self._project_dir = project_dir
         self._target = target
+        # Every runner except API shells out, so it needs the file lock released.
+        self._dbt_runs_out_of_process = (
+            runner_method or get_dbt_runner_method()
+        ) != RunnerMethod.API
         self._adapter: BaseAdapter = self._create_adapter(project_dir, target)
         self._ref_map: Optional[Dict[str, str]] = None
         self._source_map: Optional[Dict[tuple, str]] = None
@@ -255,14 +268,19 @@ class AdapterQueryRunner:
     def _release_duckdb_file_lock(self) -> None:
         """Release the DuckDB connection so an out-of-process dbt run can take the file lock.
 
-        A file-backed DuckDB database allows a single read-write process at a time,
-        so the connection cached in ``DuckDBConnectionManager._ENV`` must be closed
-        before dbt runs in another process (`--runner-method fusion` / `subprocess`).
-        The next query recreates it.
+        A file-backed DuckDB database allows a single read-write process at a time, so
+        the environment cached on ``DuckDBConnectionManager`` has to be dropped before
+        dbt runs in another process (any ``--runner-method`` other than ``api``).  Dropping
+        the last reference closes the DuckDB connection via ``LocalEnvironment.__del__``;
+        the next query builds a new environment.
 
-        No-op for non-DuckDB adapters, ``path: ":memory:"`` (closing it would discard
-        the database) and MotherDuck (hosted, not a local file).
+        No-op unless dbt actually runs out of process, and for non-DuckDB adapters,
+        ``path: ":memory:"`` (closing it would discard the database) and MotherDuck
+        (hosted, not a local file).
         """
+        if not self._dbt_runs_out_of_process:
+            return
+
         if self._adapter.type() != "duckdb":
             return
 
@@ -272,17 +290,14 @@ class AdapterQueryRunner:
 
         from dbt.adapters.duckdb.connections import DuckDBConnectionManager
 
-        self._adapter.connections.cleanup_all()
-        with DuckDBConnectionManager._LOCK:
-            if DuckDBConnectionManager._ENV is not None:
-                try:
-                    DuckDBConnectionManager._ENV.close()
-                except Exception as exc:
-                    # Called from a `finally`, so never mask the original error.
-                    logger.warning(
-                        f"Ignoring error while closing the DuckDB environment: {exc}"
-                    )
-                DuckDBConnectionManager._ENV = None
+        # Called from a `finally`, so neither step may mask the original error.
+        try:
+            self._adapter.connections.cleanup_all()
+            DuckDBConnectionManager.close_all_connections()
+        except Exception as exc:
+            logger.warning(
+                f"Ignoring error while releasing the DuckDB connection: {exc}"
+            )
 
     @property
     def schema_name(self) -> str:
