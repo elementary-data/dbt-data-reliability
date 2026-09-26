@@ -25,21 +25,13 @@
 {% endmacro %}
 
 
+{# Session-scoped temp tables are invisible to the next statement under dbt-fusion,
+   which runs each statement on a pooled connection ("relation does not exist").
+   These adapters fall back to regular tables with cleanup instead. #}
 {% macro redshift__has_temp_table_support() %}
-    {# dbt-fusion uses connection pooling, so temp tables created in one session
-       are not visible in other sessions, causing "relation does not exist" errors.
-       Use regular tables with cleanup instead. #}
-    {% if elementary.is_dbt_fusion() %} {% do return(false) %}
-    {% else %} {% do return(true) %}
-    {% endif %}
+    {% do return(not elementary.is_dbt_fusion()) %}
 {% endmacro %}
 
-
 {% macro duckdb__has_temp_table_support() %}
-    {# DuckDB temp tables are session-scoped and dbt-fusion runs each statement on a
-       pooled connection, so they are not visible to the next statement.
-       Use regular tables with cleanup instead. #}
-    {% if elementary.is_dbt_fusion() %} {% do return(false) %}
-    {% else %} {% do return(true) %}
-    {% endif %}
+    {% do return(not elementary.is_dbt_fusion()) %}
 {% endmacro %}
