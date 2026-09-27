@@ -508,34 +508,34 @@ def test_ignore_small_changes_both(
 
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
-    name="only_spike_threshold_drop_detected",
+    name="spike_drop_detected",
     expected_result="fail",
     spike_failure_percent_threshold=50,
     drop_failure_percent_threshold=None,
     metric_value=5,
 )
 @Parametrization.case(
-    name="only_spike_threshold_small_spike_ignored",
+    name="spike_small_ignored",
     expected_result="pass",
     spike_failure_percent_threshold=50,
     drop_failure_percent_threshold=None,
     metric_value=40,
 )
 @Parametrization.case(
-    name="only_drop_threshold_spike_detected",
+    name="drop_spike_detected",
     expected_result="fail",
     spike_failure_percent_threshold=None,
     drop_failure_percent_threshold=50,
     metric_value=100,
 )
 @Parametrization.case(
-    name="only_drop_threshold_small_drop_ignored",
+    name="drop_small_ignored",
     expected_result="pass",
     spike_failure_percent_threshold=None,
     drop_failure_percent_threshold=50,
     metric_value=20,
 )
-def test_ignore_small_changes_one_side(
+def test_one_side_threshold(
     test_id: str,
     dbt_project: DbtProject,
     expected_result: str,
