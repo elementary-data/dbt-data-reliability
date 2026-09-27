@@ -40,7 +40,7 @@ services:
       - POSTGRES_DB=metastore
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: spark-minio
     ports:
       - "9000:9000"
@@ -59,7 +59,7 @@ services:
       - minio-data:/data
 
   minio-setup:
-    image: minio/mc
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     container_name: spark-minio-setup
     depends_on:
       minio:
