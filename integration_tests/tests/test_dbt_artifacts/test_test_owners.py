@@ -409,6 +409,7 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.requires_dbt_version("1.10.0")
 def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
     """
     Test that a nested list owner in source meta is flattened into a flat list
@@ -427,11 +428,13 @@ def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
                 "tables": [
                     {
                         "name": "tbl",
-                        "meta": {
-                            "owner": [
-                                ["alice@example.com", " bob@example.com"],
-                                "",
-                            ]
+                        "config": {
+                            "meta": {
+                                "owner": [
+                                    ["alice@example.com", " bob@example.com"],
+                                    "",
+                                ]
+                            }
                         },
                     }
                 ],
@@ -477,7 +480,7 @@ def test_seed_comma_string_owner_is_split(dbt_project: DbtProject) -> None:
         "seeds": [
             {
                 "name": seed_name,
-                "meta": {"owner": "alice@example.com,, bob@example.com "},
+                "config": {"meta": {"owner": "alice@example.com,, bob@example.com "}},
             }
         ],
     }
