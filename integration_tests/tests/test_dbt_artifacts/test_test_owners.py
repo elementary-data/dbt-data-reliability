@@ -348,3 +348,61 @@ def test_owner_deduplication(dbt_project: DbtProject) -> None:
             assert (
                 "Bob" in model_owners
             ), f"Expected 'Bob' in model_owners, got {model_owners}"
+
+
+@pytest.mark.skip_targets(["dremio"])
+def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
+    """
+    Test that a nested list owner in model meta is flattened into a flat list
+    of strings in both dbt_models.owner and dbt_tests.model_owners.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_nested_owner_{unique_id}"
+    expected_owners = ["alice@example.com", "bob@example.com"]
+
+    model_sql = """
+    {{ config(meta={'owner': [['alice@example.com', ' bob@example.com'], '']}) }}
+    select 1 as id
+    """
+
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "description": "A model with a nested list owner for testing",
+                "columns": [{"name": "id", "tests": ["unique"]}],
+            }
+        ],
+    }
+
+    dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+    with cleanup_file(dbt_model_path):
+        with dbt_project.write_yaml(
+            schema_yaml, name=f"schema_nested_owner_{unique_id}.yml"
+        ):
+            dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+            dbt_model_path.write_text(model_sql)
+
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            model_owner = _parse_model_owners(models[0].get("owner"))
+            assert (
+                model_owner == expected_owners
+            ), f"Expected owner to be {expected_owners}, got {model_owner}"
+
+            tests = dbt_project.read_table(
+                "dbt_tests",
+                where=f"parent_model_unique_id LIKE '%{model_name}'",
+                raise_if_empty=True,
+            )
+            assert len(tests) == 1, f"Expected 1 test, got {len(tests)}"
+            model_owners = _parse_model_owners(tests[0].get("model_owners"))
+            assert sorted(model_owners) == sorted(
+                expected_owners
+            ), f"Expected model_owners to be {expected_owners}, got {model_owners}"

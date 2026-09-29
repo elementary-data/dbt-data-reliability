@@ -11,21 +11,7 @@
             {% set owner_dict = elementary.safe_get_with_default(
                 group_node, "owner", {}
             ) %}
-            {% set owners = [] %}
-            {% set email = owner_dict.get("email") %}
-            {% if email is string %}
-                {% for owner in email.split(",") %}
-                    {% if owner | trim %}
-                        {% do owners.append(owner | trim) %}
-                    {% endif %}
-                {% endfor %}
-            {% elif email is iterable and email is not mapping %}
-                {% for owner in email %}
-                    {% if owner is string and owner | trim %}
-                        {% do owners.append(owner | trim) %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+            {% set owners = elementary.normalize_owners(owner_dict.get("email")) %}
             {% if not owners and owner_dict.get("name") %}
                 {% do owners.append(owner_dict.get("name")) %}
             {% endif %}
