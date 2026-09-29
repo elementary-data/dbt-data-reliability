@@ -17,7 +17,7 @@
     ) %}
     {% do elementary.run_query(create_query) %}
 
-    {% if should_commit %} {% do adapter.commit() %} {% endif %}
+    {% if should_commit %} {% do elementary.edr_commit() %} {% endif %}
 {% endmacro %}
 
 

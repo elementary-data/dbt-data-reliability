@@ -160,7 +160,9 @@
     ) %}
 {% endmacro %}
 
-{# SQL Server - delegate to Fabric (non-atomic). #}
+{# SQL Server - truncate and insert (non-atomic), then commit: on dbt-sqlserver 1.12
+   truncate_relation opens a real transaction, which is rolled back if nothing commits it. #}
 {% macro sqlserver__replace_table_data(relation, rows) %}
     {% do elementary.fabric__replace_table_data(relation, rows) %}
+    {% do elementary.edr_commit() %}
 {% endmacro %}
