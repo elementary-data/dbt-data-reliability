@@ -728,3 +728,238 @@ def test_direct_owner_takes_precedence_over_group(dbt_project: DbtProject, tmp_p
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()
+
+
+LIST_OWNER_EMAILS = ["alice@example.com", "bob@example.com"]
+
+
+@pytest.mark.skip_for_dbt_fusion
+@pytest.mark.requires_dbt_version("1.10.0")
+def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
+    """
+    A group whose owner.email is a list (allowed since dbt-core 1.10) must not
+    break the artifacts upload. A grouped model without a direct owner and a
+    test on it should get a flat list of the group's emails, and dbt_groups
+    should store the emails ";"-joined.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_list_email_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A grouped model without a direct owner",
+                "columns": [{"name": "col", "tests": ["unique"]}],
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": LIST_OWNER_EMAILS},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_list_email_{unique_id}.yml"
+    ), dbt_project.write_yaml(schema_yaml, name=f"schema_list_email_{unique_id}.yml"):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            assert dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            owners = _parse_owners(models[0].get("owner"))
+            assert (
+                owners == LIST_OWNER_EMAILS
+            ), f"Expected flat owner {LIST_OWNER_EMAILS}, got {owners}"
+
+            tests = dbt_project.read_table(
+                "dbt_tests",
+                where=f"parent_model_unique_id LIKE '%{model_name}'",
+                raise_if_empty=True,
+            )
+            assert len(tests) == 1, f"Expected 1 test, got {len(tests)}"
+            model_owners = _parse_owners(tests[0].get("model_owners"))
+            assert (
+                model_owners == LIST_OWNER_EMAILS
+            ), f"Expected flat model_owners {LIST_OWNER_EMAILS}, got {model_owners}"
+
+            assert_group_row_in_db_groups(
+                dbt_project, group_name, OWNER_NAME, ";".join(LIST_OWNER_EMAILS)
+            )
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
+
+
+@pytest.mark.skip_for_dbt_fusion
+def test_comma_separated_email_group_owner_is_split(dbt_project: DbtProject, tmp_path):
+    """
+    A group whose owner.email is a comma-separated string should be split into
+    separate owners, the same way a direct meta.owner string is.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_comma_email_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    comma_email = ", ".join(LIST_OWNER_EMAILS)
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A grouped model without a direct owner",
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": comma_email},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_comma_email_{unique_id}.yml"
+    ), dbt_project.write_yaml(schema_yaml, name=f"schema_comma_email_{unique_id}.yml"):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            assert dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            owners = _parse_owners(models[0].get("owner"))
+            assert (
+                owners == LIST_OWNER_EMAILS
+            ), f"Expected owner {LIST_OWNER_EMAILS} split from '{comma_email}', got {owners}"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
+
+
+@pytest.mark.skip_for_dbt_fusion
+@pytest.mark.requires_dbt_version("1.10.0")
+def test_direct_owner_takes_precedence_over_list_email_group(
+    dbt_project: DbtProject, tmp_path
+):
+    """
+    A direct owner still wins over a group whose owner.email is a list.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_direct_list_group_{unique_id}"
+    group_name = f"test_group_{unique_id}"
+    direct_owner = "Alice"
+    model_sql = f"""
+    {{{{ config(meta={{'owner': '{direct_owner}'}}) }}}}
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": model_name,
+                "config": {"group": group_name},
+                "description": "A grouped model with a direct owner",
+            }
+        ],
+    }
+    group_config = {
+        "groups": [
+            {
+                "name": group_name,
+                "owner": {"name": OWNER_NAME, "email": LIST_OWNER_EMAILS},
+            }
+        ]
+    }
+    with _write_group_config(
+        dbt_project, group_config, name=f"groups_direct_list_{unique_id}.yml"
+    ), dbt_project.write_yaml(schema_yaml, name=f"schema_direct_list_{unique_id}.yml"):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            assert dbt_project.dbt_runner.run(select=model_name)
+
+            models = dbt_project.read_table(
+                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
+            )
+            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
+            owners = _parse_owners(models[0].get("owner"))
+            assert owners == [
+                direct_owner
+            ], f"Expected direct owner ['{direct_owner}'] to win over group, got {owners}"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()
+
+
+@pytest.mark.skip_for_dbt_fusion
+@pytest.mark.requires_dbt_version("1.10.0")
+def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
+    """
+    An exposure whose owner.email is a list should store the emails ";"-joined
+    in dbt_exposures.owner_email.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_list_email_exposure_{unique_id}"
+    exposure_name = f"exposure_list_email_{unique_id}"
+    model_sql = """
+    select 1 as col
+    """
+    schema_yaml = {
+        "version": 2,
+        "exposures": [
+            {
+                "name": exposure_name,
+                "type": "dashboard",
+                "owner": {"name": OWNER_NAME, "email": LIST_OWNER_EMAILS},
+                "depends_on": [f"ref('{model_name}')"],
+            }
+        ],
+    }
+    with dbt_project.write_yaml(
+        schema_yaml, name=f"schema_list_email_exposure_{unique_id}.yml"
+    ):
+        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+        dbt_model_path.write_text(model_sql)
+        try:
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            assert dbt_project.dbt_runner.run(select=model_name)
+
+            exposures = dbt_project.read_table(
+                "dbt_exposures",
+                where=f"name = '{exposure_name}'",
+                raise_if_empty=True,
+            )
+            assert len(exposures) == 1, f"Expected 1 exposure, got {len(exposures)}"
+            owner_email = exposures[0].get("owner_email")
+            assert owner_email == ";".join(
+                LIST_OWNER_EMAILS
+            ), f"Expected owner_email '{';'.join(LIST_OWNER_EMAILS)}', got '{owner_email}'"
+        finally:
+            if dbt_model_path.exists():
+                dbt_model_path.unlink()

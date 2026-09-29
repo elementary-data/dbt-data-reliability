@@ -164,7 +164,15 @@
                         {% do test_models_owners.append(owner | trim) %}
                     {% endfor %}
                 {% elif primary_model_owner is iterable %}
-                    {% do test_models_owners.extend(primary_model_owner) %}
+                    {% for owner in primary_model_owner %}
+                        {% if owner is string %}
+                            {% do test_models_owners.append(owner) %}
+                        {% elif owner is iterable and owner is not mapping %}
+                            {% do test_models_owners.extend(
+                                owner | select("string") | list
+                            ) %}
+                        {% endif %}
+                    {% endfor %}
                 {% endif %}
             {% endif %}
         {%- endif -%}
