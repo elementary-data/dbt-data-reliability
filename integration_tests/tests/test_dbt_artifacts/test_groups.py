@@ -740,7 +740,7 @@ def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
     A group whose owner.email is a list (allowed since dbt-core 1.10) must not
     break the artifacts upload. A grouped model without a direct owner and a
     test on it should get a flat list of the group's emails, and dbt_groups
-    should store the emails ";"-joined.
+    should store the emails ", "-joined.
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_list_email_group_{unique_id}"
@@ -798,7 +798,7 @@ def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
             ), f"Expected flat model_owners {LIST_OWNER_EMAILS}, got {model_owners}"
 
             assert_group_row_in_db_groups(
-                dbt_project, group_name, OWNER_NAME, ";".join(LIST_OWNER_EMAILS)
+                dbt_project, group_name, OWNER_NAME, ", ".join(LIST_OWNER_EMAILS)
             )
         finally:
             if dbt_model_path.exists():
@@ -920,7 +920,7 @@ def test_direct_owner_takes_precedence_over_list_email_group(
 @pytest.mark.requires_dbt_version("1.10.0")
 def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
     """
-    An exposure whose owner.email is a list should store the emails ";"-joined
+    An exposure whose owner.email is a list should store the emails ", "-joined
     in dbt_exposures.owner_email.
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
@@ -957,9 +957,9 @@ def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
             )
             assert len(exposures) == 1, f"Expected 1 exposure, got {len(exposures)}"
             owner_email = exposures[0].get("owner_email")
-            assert owner_email == ";".join(
+            assert owner_email == ", ".join(
                 LIST_OWNER_EMAILS
-            ), f"Expected owner_email '{';'.join(LIST_OWNER_EMAILS)}', got '{owner_email}'"
+            ), f"Expected owner_email '{', '.join(LIST_OWNER_EMAILS)}', got '{owner_email}'"
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()

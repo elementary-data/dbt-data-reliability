@@ -406,3 +406,98 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
             assert sorted(model_owners) == sorted(
                 expected_owners
             ), f"Expected model_owners to be {expected_owners}, got {model_owners}"
+
+
+@pytest.mark.skip_targets(["dremio"])
+def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
+    """
+    Test that a nested list owner in source meta is flattened into a flat list
+    of strings in dbt_sources.owner.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    model_name = f"model_src_owner_{unique_id}"
+    source_name = f"src_nested_owner_{unique_id}"
+    expected_owners = ["alice@example.com", "bob@example.com"]
+
+    schema_yaml = {
+        "version": 2,
+        "sources": [
+            {
+                "name": source_name,
+                "tables": [
+                    {
+                        "name": "tbl",
+                        "meta": {
+                            "owner": [
+                                ["alice@example.com", " bob@example.com"],
+                                "",
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+    dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
+    with cleanup_file(dbt_model_path):
+        with dbt_project.write_yaml(
+            schema_yaml, name=f"schema_src_nested_owner_{unique_id}.yml"
+        ):
+            dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
+            dbt_model_path.write_text(_create_model_sql())
+
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(select=model_name)
+
+            sources = dbt_project.read_table(
+                "dbt_sources",
+                where=f"source_name = '{source_name}'",
+                raise_if_empty=True,
+            )
+            assert len(sources) == 1, f"Expected 1 source, got {len(sources)}"
+            source_owner = _parse_model_owners(sources[0].get("owner"))
+            assert (
+                source_owner == expected_owners
+            ), f"Expected owner to be {expected_owners}, got {source_owner}"
+
+
+@pytest.mark.skip_targets(["dremio"])
+def test_seed_comma_string_owner_is_split(dbt_project: DbtProject) -> None:
+    """
+    Test that a comma-separated owner string in seed meta is split, trimmed and
+    stripped of empty items in dbt_seeds.owner.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    seed_name = f"seed_comma_owner_{unique_id}"
+    expected_owners = ["alice@example.com", "bob@example.com"]
+
+    schema_yaml = {
+        "version": 2,
+        "seeds": [
+            {
+                "name": seed_name,
+                "meta": {"owner": "alice@example.com,, bob@example.com "},
+            }
+        ],
+    }
+
+    dbt_seed_path = dbt_project.seeds_dir_path / f"{seed_name}.csv"
+    with cleanup_file(dbt_seed_path):
+        with dbt_project.write_yaml(
+            schema_yaml, name=f"schema_seed_comma_owner_{unique_id}.yml"
+        ):
+            dbt_seed_path.parent.mkdir(parents=True, exist_ok=True)
+            dbt_seed_path.write_text("id\n1\n")
+
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.seed(select=seed_name)
+
+            seeds = dbt_project.read_table(
+                "dbt_seeds", where=f"name = '{seed_name}'", raise_if_empty=True
+            )
+            assert len(seeds) == 1, f"Expected 1 seed, got {len(seeds)}"
+            seed_owner = _parse_model_owners(seeds[0].get("owner"))
+            assert sorted(seed_owner) == sorted(
+                expected_owners
+            ), f"Expected owner to be {expected_owners}, got {seed_owner}"
