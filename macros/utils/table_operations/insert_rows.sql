@@ -256,7 +256,9 @@
                 and column_value is number
                 and column_value is not boolean
             ) %}
-                {% set rendered_value = "cast(" ~ rendered_value ~ " as " ~ column.dtype ~ ")" %}
+                {% set rendered_value = (
+                    "cast(" ~ rendered_value ~ " as " ~ column.dtype ~ ")"
+                ) %}
             {% endif %}
             {% do rendered_column_values.append(rendered_value) %}
         {% endif %}
