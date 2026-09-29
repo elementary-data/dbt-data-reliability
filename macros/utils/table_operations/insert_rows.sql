@@ -224,7 +224,7 @@
                 "normalized_type": elementary.normalize_data_type(
                     column.dtype
                 ),
-                "dtype": column.dtype,
+                "dtype": column.data_type | default(column.dtype, true),
             }
         ) %}
     {% endfor %}
