@@ -917,11 +917,24 @@ def test_direct_owner_takes_precedence_over_list_email_group(
 
 
 @pytest.mark.skip_for_dbt_fusion
-@pytest.mark.requires_dbt_version("1.10.0")
-def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
+@pytest.mark.parametrize(
+    "owner_email,expected_owner_email",
+    [
+        pytest.param(OWNER_EMAIL, OWNER_EMAIL, id="single_email"),
+        pytest.param(
+            LIST_OWNER_EMAILS,
+            ", ".join(LIST_OWNER_EMAILS),
+            id="list_email",
+            marks=pytest.mark.requires_dbt_version("1.10.0"),
+        ),
+    ],
+)
+def test_exposure_owner_email(
+    dbt_project: DbtProject, tmp_path, owner_email, expected_owner_email
+):
     """
-    An exposure whose owner.email is a list should store the emails ", "-joined
-    in dbt_exposures.owner_email.
+    An exposure's owner.email should be stored as a plain string in
+    dbt_exposures.owner_email: a single email as-is, a list ", "-joined.
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_list_email_exposure_{unique_id}"
@@ -935,7 +948,7 @@ def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
             {
                 "name": exposure_name,
                 "type": "dashboard",
-                "owner": {"name": OWNER_NAME, "email": LIST_OWNER_EMAILS},
+                "owner": {"name": OWNER_NAME, "email": owner_email},
                 "depends_on": [f"ref('{model_name}')"],
             }
         ],
@@ -956,10 +969,10 @@ def test_list_email_exposure_owner_is_joined(dbt_project: DbtProject, tmp_path):
                 raise_if_empty=True,
             )
             assert len(exposures) == 1, f"Expected 1 exposure, got {len(exposures)}"
-            owner_email = exposures[0].get("owner_email")
-            assert owner_email == ", ".join(
-                LIST_OWNER_EMAILS
-            ), f"Expected owner_email '{', '.join(LIST_OWNER_EMAILS)}', got '{owner_email}'"
+            stored_owner_email = exposures[0].get("owner_email")
+            assert (
+                stored_owner_email == expected_owner_email
+            ), f"Expected owner_email '{expected_owner_email}', got '{stored_owner_email}'"
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()

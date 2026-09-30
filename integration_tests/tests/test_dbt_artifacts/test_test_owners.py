@@ -12,6 +12,13 @@ from typing import Generator, List, Optional, Union
 import pytest
 from dbt_project import DbtProject
 
+# meta.owner on a model, source or seed is a free-form value: a string (possibly
+# comma-separated) or a list of strings. This differs from a dbt group or
+# exposure owner, which is a mapping with name and email keys.
+EXPECTED_OWNERS = ["alice@example.com", "bob@example.com"]
+# A list nested inside a list, e.g. ["alice", ["bob"]], must be flattened.
+NESTED_LIST_OWNER = ["alice@example.com", ["bob@example.com"]]
+
 
 @contextlib.contextmanager
 def cleanup_file(path: Path) -> Generator[None, None, None]:
@@ -350,7 +357,6 @@ def test_owner_deduplication(dbt_project: DbtProject) -> None:
             ), f"Expected 'Bob' in model_owners, got {model_owners}"
 
 
-@pytest.mark.skip_targets(["dremio"])
 def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
     """
     Test that a nested list owner in model meta is flattened into a flat list
@@ -358,12 +364,7 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_nested_owner_{unique_id}"
-    expected_owners = ["alice@example.com", "bob@example.com"]
-
-    model_sql = """
-    {{ config(meta={'owner': [['alice@example.com', ' bob@example.com'], '']}) }}
-    select 1 as id
-    """
+    model_sql = _create_model_sql()
 
     schema_yaml = {
         "version": 2,
@@ -371,6 +372,7 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
             {
                 "name": model_name,
                 "description": "A model with a nested list owner for testing",
+                "config": {"meta": {"owner": NESTED_LIST_OWNER}},
                 "columns": [{"name": "id", "tests": ["unique"]}],
             }
         ],
@@ -393,8 +395,8 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
             assert len(models) == 1, f"Expected 1 model, got {len(models)}"
             model_owner = _parse_model_owners(models[0].get("owner"))
             assert (
-                model_owner == expected_owners
-            ), f"Expected owner to be {expected_owners}, got {model_owner}"
+                model_owner == EXPECTED_OWNERS
+            ), f"Expected owner to be {EXPECTED_OWNERS}, got {model_owner}"
 
             tests = dbt_project.read_table(
                 "dbt_tests",
@@ -404,11 +406,10 @@ def test_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
             assert len(tests) == 1, f"Expected 1 test, got {len(tests)}"
             model_owners = _parse_model_owners(tests[0].get("model_owners"))
             assert sorted(model_owners) == sorted(
-                expected_owners
-            ), f"Expected model_owners to be {expected_owners}, got {model_owners}"
+                EXPECTED_OWNERS
+            ), f"Expected model_owners to be {EXPECTED_OWNERS}, got {model_owners}"
 
 
-@pytest.mark.skip_targets(["dremio"])
 @pytest.mark.requires_dbt_version("1.10.0")
 def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
     """
@@ -418,7 +419,6 @@ def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_src_owner_{unique_id}"
     source_name = f"src_nested_owner_{unique_id}"
-    expected_owners = ["alice@example.com", "bob@example.com"]
 
     schema_yaml = {
         "version": 2,
@@ -428,14 +428,7 @@ def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
                 "tables": [
                     {
                         "name": "tbl",
-                        "config": {
-                            "meta": {
-                                "owner": [
-                                    ["alice@example.com", " bob@example.com"],
-                                    "",
-                                ]
-                            }
-                        },
+                        "config": {"meta": {"owner": NESTED_LIST_OWNER}},
                     }
                 ],
             }
@@ -461,26 +454,26 @@ def test_source_nested_list_owner_is_flattened(dbt_project: DbtProject) -> None:
             assert len(sources) == 1, f"Expected 1 source, got {len(sources)}"
             source_owner = _parse_model_owners(sources[0].get("owner"))
             assert (
-                source_owner == expected_owners
-            ), f"Expected owner to be {expected_owners}, got {source_owner}"
+                source_owner == EXPECTED_OWNERS
+            ), f"Expected owner to be {EXPECTED_OWNERS}, got {source_owner}"
 
 
-@pytest.mark.skip_targets(["dremio"])
 def test_seed_comma_string_owner_is_split(dbt_project: DbtProject) -> None:
     """
-    Test that a comma-separated owner string in seed meta is split, trimmed and
-    stripped of empty items in dbt_seeds.owner.
+    Test that a comma-separated owner string in seed meta is split into a list
+    of trimmed strings in dbt_seeds.owner, dropping empty items.
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
     seed_name = f"seed_comma_owner_{unique_id}"
-    expected_owners = ["alice@example.com", "bob@example.com"]
+    # The trailing comma yields an empty item, which is dropped.
+    comma_owner = "alice@example.com, bob@example.com,"
 
     schema_yaml = {
         "version": 2,
         "seeds": [
             {
                 "name": seed_name,
-                "config": {"meta": {"owner": "alice@example.com,, bob@example.com "}},
+                "config": {"meta": {"owner": comma_owner}},
             }
         ],
     }
@@ -502,5 +495,5 @@ def test_seed_comma_string_owner_is_split(dbt_project: DbtProject) -> None:
             assert len(seeds) == 1, f"Expected 1 seed, got {len(seeds)}"
             seed_owner = _parse_model_owners(seeds[0].get("owner"))
             assert sorted(seed_owner) == sorted(
-                expected_owners
-            ), f"Expected owner to be {expected_owners}, got {seed_owner}"
+                EXPECTED_OWNERS
+            ), f"Expected owner to be {EXPECTED_OWNERS}, got {seed_owner}"
