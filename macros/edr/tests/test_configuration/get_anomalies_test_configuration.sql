@@ -25,7 +25,8 @@
     training_period,
     exclude_final_results,
     min_value,
-    exclude_detection_period_from_training
+    exclude_detection_period_from_training,
+    include_current_bucket=none
 ) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
@@ -126,6 +127,15 @@
         model_graph_node,
     ) %}
 
+    {% set include_current_bucket = elementary.get_test_argument(
+        "include_current_bucket", include_current_bucket, model_graph_node
+    ) %}
+    {% if include_current_bucket and not metric_props.timestamp_column %}
+        {% do exceptions.raise_compiler_error(
+            "include_current_bucket requires a timestamp_column"
+        ) %}
+    {% endif %}
+
     {% set test_configuration = {
         "timestamp_column": metric_props.timestamp_column,
         "where_expression": metric_props.where_expression,
@@ -145,6 +155,7 @@
         "anomaly_exclude_metrics": anomaly_exclude_metrics,
         "exclude_final_results": exclude_final_results,
         "exclude_detection_period_from_training": exclude_detection_period_from_training,
+        "include_current_bucket": include_current_bucket,
     } %}
     {%- set test_configuration = elementary.undefined_dict_keys_to_none(
         test_configuration

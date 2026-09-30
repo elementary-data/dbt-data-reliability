@@ -91,6 +91,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "exclude_final_results": get_value("exclude_final_results"),
         "min_value": get_value("min_value"),
         "exclude_detection_period_from_training": None,
+        "include_current_bucket": None,
     }
 
 

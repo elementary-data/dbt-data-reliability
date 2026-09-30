@@ -73,6 +73,15 @@
     {%- set min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
         detection_end, metric_properties, test_configuration.days_back
     ) %}
+    {# With include_current_bucket, the bucket that is still in progress is scored as well #}
+    {%- if test_configuration.include_current_bucket and test_configuration.timestamp_column %}
+        {%- set buckets_end_expr = elementary.get_current_bucket_end_expr(
+            detection_end_expr,
+            min_bucket_start_expr,
+            metric_properties.time_bucket,
+        ) %}
+    {%- else %} {%- set buckets_end_expr = detection_end_expr %}
+    {%- endif %}
 
     {# Calculate detection period start for exclusion logic.
        backfill_days defines the window of recent data to test for anomalies on each run.
@@ -103,9 +112,9 @@
             with buckets as (
                 select edr_bucket_start, edr_bucket_end
                 from ({{ elementary.complete_buckets_cte(metric_properties, min_bucket_start_expr,
-                                                         detection_end_expr) }}) results
+                                                         buckets_end_expr) }}) results
                 where edr_bucket_start >= {{ min_bucket_start_expr }}
-                  and edr_bucket_end <= {{ detection_end_expr }}
+                  and edr_bucket_end <= {{ buckets_end_expr }}
             ),
         {% else %}
             with
