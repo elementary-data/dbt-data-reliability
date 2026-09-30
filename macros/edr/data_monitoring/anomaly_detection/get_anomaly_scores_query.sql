@@ -74,7 +74,7 @@
         detection_end, metric_properties, test_configuration.days_back
     ) %}
     {# With include_current_bucket, the bucket that is still in progress is scored as well #}
-    {%- if test_configuration.include_current_bucket and test_configuration.timestamp_column %}
+    {%- if test_configuration.include_current_bucket %}
         {%- set buckets_end_expr = elementary.get_current_bucket_end_expr(
             detection_end_expr,
             min_bucket_start_expr,

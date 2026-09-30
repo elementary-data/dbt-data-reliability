@@ -31,12 +31,15 @@
     {%- set periods_until_current_bucket_end -%}
         (floor({{ elementary.edr_datediff(min_bucket_start_expr, detection_end_expr, time_bucket.period) }} / {{ time_bucket.count }}) + 1) * {{ time_bucket.count }}
     {%- endset -%}
+    {# edr_timeadd returns a date for week/month on some adapters (e.g. BigQuery), so cast back #}
     {{
         return(
-            elementary.edr_timeadd(
-                time_bucket.period,
-                elementary.edr_cast_as_int(periods_until_current_bucket_end),
-                min_bucket_start_expr,
+            elementary.edr_cast_as_timestamp(
+                elementary.edr_timeadd(
+                    time_bucket.period,
+                    elementary.edr_cast_as_int(periods_until_current_bucket_end),
+                    min_bucket_start_expr,
+                )
             )
         )
     }}
@@ -138,6 +141,9 @@
             where bucket_start >= {{ trunc_min_bucket_start_expr }}
             {# The current bucket is never treated as cached, so it is recalculated on every run #}
             and bucket_end <= {{ detection_end_expr }}
+            {# Only metrics calculated after their bucket ended are complete. A metric of the bucket
+               that was still in progress (include_current_bucket) is recalculated once it ends. #}
+            and {{ elementary.edr_cast_as_timestamp('updated_at') }} >= {{ elementary.edr_cast_as_timestamp('bucket_end') }}
             and upper(full_table_name) = upper('{{ full_table_name }}')
             and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
             {%- if metric_names %}

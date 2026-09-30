@@ -62,6 +62,8 @@ PARAM_VALUES = {
     ),
     "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
     "min_value": ParamValues(0.5, 1.0, 2.0),
+    # Only dimension_anomalies supports it, so it is ignored here (and must not raise).
+    "include_current_bucket": ParamValues(True, True, True),
 }
 
 

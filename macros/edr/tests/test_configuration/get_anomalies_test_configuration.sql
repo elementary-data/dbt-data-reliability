@@ -26,7 +26,8 @@
     exclude_final_results,
     min_value,
     exclude_detection_period_from_training,
-    include_current_bucket=none
+    include_current_bucket=none,
+    supports_current_bucket=false
 ) %}
 
     {%- set model_graph_node = elementary.get_model_graph_node(model_relation) %}
@@ -127,13 +128,18 @@
         model_graph_node,
     ) %}
 
-    {% set include_current_bucket = elementary.get_test_argument(
-        "include_current_bucket", include_current_bucket, model_graph_node
-    ) %}
-    {% if include_current_bucket and not metric_props.timestamp_column %}
-        {% do exceptions.raise_compiler_error(
-            "include_current_bucket requires a timestamp_column"
+    {# Only resolved for tests that support it, so setting it in vars or on a model
+       does not affect (or break) the other anomaly tests #}
+    {% if supports_current_bucket %}
+        {% set include_current_bucket = elementary.get_test_argument(
+            "include_current_bucket", include_current_bucket, model_graph_node
         ) %}
+        {% if include_current_bucket and not metric_props.timestamp_column %}
+            {% do exceptions.raise_compiler_error(
+                "include_current_bucket requires a timestamp_column"
+            ) %}
+        {% endif %}
+    {% else %} {% set include_current_bucket = none %}
     {% endif %}
 
     {% set test_configuration = {

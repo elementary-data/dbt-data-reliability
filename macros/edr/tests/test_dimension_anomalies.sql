@@ -86,6 +86,7 @@
                 min_value=min_value,
                 exclude_detection_period_from_training=exclude_detection_period_from_training,
                 include_current_bucket=include_current_bucket,
+                supports_current_bucket=true,
             )
         ) %}
 
