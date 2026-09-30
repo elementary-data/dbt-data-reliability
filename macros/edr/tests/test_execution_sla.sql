@@ -222,7 +222,7 @@
             select
                 rr.unique_id,
                 rr.name as model_name,
-                {{ elementary.edr_cast_as_timestamp("rr.execute_completed_at") }}
+                {{ elementary.edr_cast_metadata_timestamp("rr.execute_completed_at") }}
                 as completed_at_utc,
                 rr.status
             from {{ run_results_relation }} rr
@@ -230,9 +230,11 @@
             where
                 rr.unique_id = '{{ model_unique_id }}'
                 and rr.resource_type = 'model'
-                and {{ elementary.edr_cast_as_timestamp("rr.execute_completed_at") }}
+                and
+                {{ elementary.edr_cast_metadata_timestamp("rr.execute_completed_at") }}
                 >= sd.target_date_start_utc
-                and {{ elementary.edr_cast_as_timestamp("rr.execute_completed_at") }}
+                and
+                {{ elementary.edr_cast_metadata_timestamp("rr.execute_completed_at") }}
                 <= sd.target_date_end_utc
         ),
 
