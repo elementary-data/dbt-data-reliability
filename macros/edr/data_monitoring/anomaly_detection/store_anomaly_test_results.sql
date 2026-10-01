@@ -144,5 +144,13 @@
     } %}
     {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
     {% do elementary_test_row.update(test_result_dict) %}
+    {% if failures.data > 0 %}
+        {% set result_owners = elementary.get_anomaly_test_result_owners(
+            flattened_test, full_table_name, metric_name, column_name
+        ) %}
+        {% if result_owners %}
+            {% do elementary_test_row.update({"owners": result_owners}) %}
+        {% endif %}
+    {% endif %}
     {% do return(elementary_test_row) %}
 {% endmacro %}
