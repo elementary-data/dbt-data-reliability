@@ -1,6 +1,6 @@
 import json
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
 from data_generator import DATE_FORMAT, generate_dates
@@ -423,13 +423,15 @@ def test_include_current_bucket_monthly_snapshot_upload(
     assert set(x["dimension_value"] for x in anomalous_points) == {"MY"}
 
 
-def _get_previous_bucket_starts(period: str, count: int) -> List[date]:
-    """The start of the current week or month, followed by the starts of the `count` before it."""
-    utc_today = datetime.utcnow().date()
+def _get_previous_bucket_starts(
+    period: str, count: int, base_date: Optional[date] = None
+) -> List[date]:
+    """The start of the week or month of base_date (default today), followed by the starts of the `count` before it."""
+    base_date = base_date or datetime.utcnow().date()
     if period == "week":
-        current_week_start = utc_today - timedelta(days=utc_today.weekday())
+        current_week_start = base_date - timedelta(days=base_date.weekday())
         return [current_week_start - timedelta(weeks=i) for i in range(count + 1)]
-    bucket_starts = [utc_today.replace(day=1)]
+    bucket_starts = [base_date.replace(day=1)]
     for _ in range(count):
         previous = bucket_starts[-1] - timedelta(days=1)
         bucket_starts.append(previous.replace(day=1))
@@ -464,3 +466,69 @@ def test_buckets_stay_aligned_on_rerun(
     assert first_result["status"] == "pass"
     second_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
     assert second_result["status"] == "pass"
+
+
+@pytest.mark.parametrize(
+    "period,first_run_at,run_at",
+    [
+        ("week", "2026-10-07T12:00:00", "2026-10-14T12:00:00"),
+        # October has more days than the 30 backfill_days of monthly buckets.
+        ("month", "2026-09-10T12:00:00", "2026-10-15T12:00:00"),
+    ],
+    ids=["week", "month"],
+)
+def test_include_current_bucket_tests_previous_bucket(
+    test_id: str,
+    dbt_project: DbtProject,
+    target: str,
+    period: str,
+    first_run_at: str,
+    run_at: str,
+):
+    """MY skipped the previous bucket. Testing the current bucket must not stop testing the previous one."""
+    if target == "redshift" and period == "month":
+        pytest.skip("Redshift does not support monthly time buckets.")
+    test_id = test_id.replace("[", "_").replace("]", "_")
+    current_bucket, previous_bucket, *older_buckets = _get_previous_bucket_starts(
+        period, 12, base_date=datetime.fromisoformat(run_at).date()
+    )
+    rows_per_bucket = {bucket: {"PL": 100, "MY": 20} for bucket in older_buckets}
+    rows_per_bucket[previous_bucket] = {"PL": 100}
+    rows_per_bucket[current_bucket] = {"PL": 100, "MY": 20}
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
+        for bucket_start, rows_per_country in rows_per_bucket.items()
+        for country, rows in rows_per_country.items()
+        for _ in range(rows)
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": period, "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "include_current_bucket": True,
+    }
+
+    # A run during the previous bucket stores MY in the metrics history, so the next run
+    # fills in a zero for MY once the previous bucket is complete.
+    first_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_vars={"custom_run_started_at": first_run_at},
+    )
+    assert first_result["status"] == "pass"
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        test_vars={"custom_run_started_at": run_at},
+    )
+    assert test_result["status"] == "fail"
+
+    # Only checks that the bucket is complete, since some adapters start weeks on Sunday.
+    anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
+    anomalous_points = [x for x in anomaly_test_points if x["is_anomalous"]]
+    assert set(x["dimension_value"] for x in anomalous_points) == {"MY"}
+    assert all(x["bucket_end"][:10] <= run_at[:10] for x in anomalous_points)
