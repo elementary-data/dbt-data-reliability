@@ -23,6 +23,28 @@
     {{ return(trunc_min_bucket_start_expr) }}
 {% endmacro %}
 
+{# The end of the bucket that contains detection_end, i.e. the bucket that is still in progress.
+   min_bucket_start_expr must be aligned to the time bucket (see get_trunc_min_bucket_start_expr). #}
+{% macro get_current_bucket_end_expr(
+    detection_end_expr, min_bucket_start_expr, time_bucket
+) %}
+    {%- set periods_until_current_bucket_end -%}
+        (floor({{ elementary.edr_datediff(min_bucket_start_expr, detection_end_expr, time_bucket.period) }} / {{ time_bucket.count }}) + 1) * {{ time_bucket.count }}
+    {%- endset -%}
+    {# edr_timeadd returns a date for week/month on some adapters (e.g. BigQuery), so cast back #}
+    {{
+        return(
+            elementary.edr_cast_as_timestamp(
+                elementary.edr_timeadd(
+                    time_bucket.period,
+                    elementary.edr_cast_as_int(periods_until_current_bucket_end),
+                    min_bucket_start_expr,
+                )
+            )
+        )
+    }}
+{% endmacro %}
+
 {# This macro cant be used without truncating to full buckets #}
 {% macro get_backfill_bucket_start(detection_end, backfill_days) %}
     {% do return(
@@ -42,7 +64,8 @@
     column_name=none,
     metric_properties=none,
     unit_test=false,
-    unit_test_relation=none
+    unit_test_relation=none,
+    include_current_bucket=false
 ) %}
 
     {%- set detection_end = elementary.get_detection_end(detection_delay) %}
@@ -52,6 +75,16 @@
     {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
         detection_end, metric_properties, days_back
     ) %}
+    {# By default only complete buckets are monitored. With include_current_bucket,
+       the bucket that is still in progress is monitored as well. #}
+    {%- if include_current_bucket %}
+        {%- set buckets_end_expr = elementary.get_current_bucket_end_expr(
+            detection_end_expr,
+            trunc_min_bucket_start_expr,
+            metric_properties.time_bucket,
+        ) %}
+    {%- else %} {%- set buckets_end_expr = detection_end_expr %}
+    {%- endif %}
     {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(
         elementary.edr_datetime_to_sql(
             elementary.get_backfill_bucket_start(
@@ -85,7 +118,7 @@
         ),
         full_buckets_calc as (
             select *,
-                floor({{ elementary.edr_datediff('days_back_start', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }} as periods_until_max
+                (floor({{ elementary.edr_datediff('days_back_start', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}){% if include_current_bucket %} + 1{% endif %}) * {{ metric_properties.time_bucket.count }} as periods_until_max
             from bucket_times
         )
         select
@@ -98,15 +131,19 @@
     {%- set incremental_bucket_times_query %}
         with all_buckets as (
             select edr_bucket_start as bucket_start, edr_bucket_end as bucket_end
-            from ({{ elementary.complete_buckets_cte(metric_properties, trunc_min_bucket_start_expr, detection_end_expr) }}) results
+            from ({{ elementary.complete_buckets_cte(metric_properties, trunc_min_bucket_start_expr, buckets_end_expr) }}) results
             where edr_bucket_start >= {{ trunc_min_bucket_start_expr }}
-            and edr_bucket_end <= {{ detection_end_expr }}
+            and edr_bucket_end <= {{ buckets_end_expr }}
         ),
         buckets_with_existing_metrics as (
             select distinct bucket_start, bucket_end
             from {{ data_monitoring_metrics_relation }}
             where bucket_start >= {{ trunc_min_bucket_start_expr }}
+            {# The current bucket is never treated as cached, so it is recalculated on every run #}
             and bucket_end <= {{ detection_end_expr }}
+            {# Only metrics calculated after their bucket ended are complete. A metric of the bucket
+               that was still in progress (include_current_bucket) is recalculated once it ends. #}
+            and {{ elementary.edr_cast_as_timestamp('updated_at') }} >= {{ elementary.edr_cast_as_timestamp('bucket_end') }}
             and upper(full_table_name) = upper('{{ full_table_name }}')
             and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
             {%- if metric_names %}
@@ -128,11 +165,13 @@
         min_bucket_start_candidates as (
             select bucket_start from missing_bucket_starts
             union all
-            select {{ backfill_bucket_start }} as bucket_start
+            {# Align the backfill start to the start of its bucket. Otherwise buckets that are
+               not a whole number of days (e.g. months) are generated from a mid-bucket start. #}
+            select {{ elementary.get_start_bucket_in_data(backfill_bucket_start, trunc_min_bucket_start_expr, metric_properties.time_bucket) }} as bucket_start
         )
         select
             min(bucket_start) as min_bucket_start,
-            {{ detection_end_expr }} as max_bucket_end
+            {{ buckets_end_expr }} as max_bucket_end
         from min_bucket_start_candidates
     {% endset %}
 

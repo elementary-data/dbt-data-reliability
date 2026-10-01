@@ -19,7 +19,8 @@
     training_period,
     exclude_final_results,
     min_value=none,
-    exclude_detection_period_from_training=none
+    exclude_detection_period_from_training=none,
+    include_current_bucket=none
 ) %}
     {{ config(tags=["elementary-tests"]) }}
     {%- if execute and elementary.is_test_command() and elementary.is_elementary_enabled() %}
@@ -84,6 +85,8 @@
                 exclude_final_results=exclude_final_results,
                 min_value=min_value,
                 exclude_detection_period_from_training=exclude_detection_period_from_training,
+                include_current_bucket=include_current_bucket,
+                supports_current_bucket=true,
             )
         ) %}
 
@@ -105,6 +108,7 @@
                 days_back=test_configuration.days_back,
                 detection_delay=test_configuration.detection_delay,
                 metric_properties=metric_properties,
+                include_current_bucket=test_configuration.include_current_bucket,
             )
         ) %}
 
@@ -119,6 +123,10 @@
             min_bucket_start,
             max_bucket_end,
             metric_properties,
+            include_current_bucket=test_configuration.include_current_bucket,
+            detection_end=elementary.get_detection_end(
+                test_configuration.detection_delay
+            ),
         ) %}
         {{
             elementary.debug_log(

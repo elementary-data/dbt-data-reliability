@@ -62,6 +62,8 @@ PARAM_VALUES = {
     ),
     "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
     "min_value": ParamValues(0.5, 1.0, 2.0),
+    # Only dimension_anomalies supports it, so it is ignored here (and must not raise).
+    "include_current_bucket": ParamValues(True, True, True),
 }
 
 
@@ -91,6 +93,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "exclude_final_results": get_value("exclude_final_results"),
         "min_value": get_value("min_value"),
         "exclude_detection_period_from_training": None,
+        "include_current_bucket": None,
     }
 
 
