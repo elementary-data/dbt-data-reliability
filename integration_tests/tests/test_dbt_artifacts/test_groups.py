@@ -107,6 +107,7 @@ def assert_group_row_in_db_groups(dbt_project, group_name, owner_name, owner_ema
     ), f"Expected owner email '{owner_email}', got '{group_row.get('owner_email')}'"
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_model_and_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that a model assigned to a group inherits the group attribute in the dbt_models artifact table.
@@ -181,6 +182,7 @@ def test_model_and_groups(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_two_groups(dbt_project: DbtProject, tmp_path):
     """
     Test that two models assigned to two different groups inherit the correct group attribute in the dbt_models artifact table.
@@ -476,6 +478,7 @@ def test_seed_group_attribute(dbt_project: DbtProject, tmp_path):
 
 
 @pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
     """
     Test that a snapshot assigned to a group inherits the group attribute in the dbt_snapshots artifact table.
@@ -558,6 +561,7 @@ def test_snapshot_group_attribute(dbt_project: DbtProject, tmp_path):
             )
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_model_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
     """
     A model assigned to a group but WITHOUT a direct owner should inherit the
@@ -613,6 +617,7 @@ def test_model_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
                 dbt_model_path.unlink()
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_test_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
     """
     A test on a grouped model WITHOUT a direct owner should inherit the group's
@@ -670,6 +675,7 @@ def test_test_owner_derived_from_group(dbt_project: DbtProject, tmp_path):
                 dbt_model_path.unlink()
 
 
+@pytest.mark.skip_for_dbt_fusion
 def test_direct_owner_takes_precedence_over_group(dbt_project: DbtProject, tmp_path):
     """
     When a model has BOTH a direct owner and a group, the direct owner wins and
@@ -727,6 +733,7 @@ def test_direct_owner_takes_precedence_over_group(dbt_project: DbtProject, tmp_p
 LIST_OWNER_EMAILS = ["alice@example.com", "bob@example.com"]
 
 
+@pytest.mark.skip_for_dbt_fusion
 @pytest.mark.requires_dbt_version("1.10.0")
 def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
     """
@@ -801,6 +808,7 @@ def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
                 dbt_model_path.unlink()
 
 
+@pytest.mark.skip_for_dbt_fusion
 @pytest.mark.requires_dbt_version("1.10.0")
 def test_direct_owner_takes_precedence_over_list_email_group(
     dbt_project: DbtProject, tmp_path
