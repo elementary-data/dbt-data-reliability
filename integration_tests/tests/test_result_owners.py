@@ -7,7 +7,7 @@ from dbt_project import DbtProject
 
 COLUMN_NAME = "country"
 DEFAULT_OWNER = "central-team"
-MODEL_CONFIG = {"meta": {"owner": DEFAULT_OWNER}}
+MODEL_CONFIG = {"config": {"meta": {"owner": DEFAULT_OWNER}}}
 ACCEPTED_VALUES_ARGS = {"values": ["NL"]}
 TIMESTAMP_COLUMN = "updated_at"
 
