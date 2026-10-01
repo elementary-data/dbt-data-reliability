@@ -10,22 +10,6 @@
     cast({{ timestamp_field }} as {{ elementary.edr_type_timestamp() }})
 {%- endmacro -%}
 
-{#
-  BigQuery's TIMESTAMP type only supports microsecond precision (6 fractional digits).
-  Some runtimes (e.g. dbt-fusion) write nanosecond-precision strings like
-  '2026-04-03T10:50:50.961498756Z' into Elementary's metadata tables, which fail
-  to cast. This truncates any sub-microsecond fractional digits before casting.
-#}
-{%- macro bigquery__edr_cast_as_timestamp(timestamp_field) -%}
-    cast(
-        regexp_replace(
-            cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
-            r'(\.\d{6})\d+',
-            r'\1'
-        ) as {{ elementary.edr_type_timestamp() }}
-    )
-{%- endmacro -%}
-
 {# Athena and Trino needs explicit conversion for ISO8601 timestamps used in buckets_cte #}
 {%- macro athena__edr_cast_as_timestamp(timestamp_field) -%}
     coalesce(
@@ -81,6 +65,39 @@
             ),
             'Z$',
             ''
+        ) as {{ elementary.edr_type_timestamp() }}
+    )
+{%- endmacro -%}
+
+{#
+  Casts Elementary's string timing columns (execute_started_at, execute_completed_at,
+  compile_started_at, compile_completed_at) to timestamp.
+  Some runtimes (e.g. dbt-fusion, dbt-core 1.11) produce nanosecond-precision strings like
+  '2026-04-03T10:50:50.961498756Z', while BigQuery's TIMESTAMP only supports microseconds.
+  New rows are truncated on upload, but rows written by older versions still exist.
+  Use this only for Elementary metadata columns: the string round trip prevents BigQuery
+  partition pruning, so it must never wrap a monitored table's timestamp column.
+#}
+{%- macro edr_cast_metadata_timestamp(timestamp_field) -%}
+    {{
+        return(
+            adapter.dispatch("edr_cast_metadata_timestamp", "elementary")(
+                timestamp_field
+            )
+        )
+    }}
+{%- endmacro -%}
+
+{%- macro default__edr_cast_metadata_timestamp(timestamp_field) -%}
+    {{ return(elementary.edr_cast_as_timestamp(timestamp_field)) }}
+{%- endmacro -%}
+
+{%- macro bigquery__edr_cast_metadata_timestamp(timestamp_field) -%}
+    cast(
+        regexp_replace(
+            cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
+            r'(\.\d{6})\d+',
+            r'\1'
         ) as {{ elementary.edr_type_timestamp() }}
     )
 {%- endmacro -%}

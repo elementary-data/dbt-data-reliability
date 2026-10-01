@@ -18,12 +18,8 @@
     {% set relation = api.Relation.create(
         database=node.database, schema=node.schema, identifier=node.alias
     ) %}
-    {% set column_names = (
-        adapter.get_columns_in_relation(relation)
-        | map(attribute="name")
-        | map("lower")
-        | list
-    ) %}
+    {% set columns = adapter.get_columns_in_relation(relation) %}
+    {% set column_names = columns | map(attribute="name") | map("lower") | list %}
     {% if not column_names %}
         {% do print("Relation '{}' does not exist.".format(node.relation_name)) %}
         {% do return([]) %}
@@ -41,6 +37,27 @@
         ) %}
     {% endif %}
 
+    {% if timestamp_column %}
+        {# Only string columns (e.g. run results timing) need the nanosecond-tolerant cast.
+           Native timestamp columns get a plain cast so BigQuery can still prune partitions. #}
+        {% set timestamp_column_is_string = namespace(value=false) %}
+        {% for column in columns %}
+            {% if column.name | lower == timestamp_column | lower %}
+                {% set timestamp_column_is_string.value = (
+                    elementary.normalize_data_type(
+                        elementary.get_column_data_type(column)
+                    )
+                    == "string"
+                ) %}
+            {% endif %}
+        {% endfor %}
+        {% set timestamp_column_expr = (
+            elementary.edr_cast_metadata_timestamp(timestamp_column)
+            if timestamp_column_is_string.value
+            else elementary.edr_cast_as_timestamp(timestamp_column)
+        ) %}
+    {% endif %}
+
     {% set dedup_by_column = node.meta.dedup_by_column or "unique_id" %}
     {% set order_by_dedup_column = "generated_at" %}
     {% set query %}
@@ -52,12 +69,12 @@
         {% endif %}
         {% if timestamp_column %}
             {% if since %}
-                where {{ elementary.edr_cast_as_timestamp(timestamp_column) }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
+                where {{ timestamp_column_expr }} > {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(since)) }}
                 {% if until %}
-                  and {{ elementary.edr_cast_as_timestamp(timestamp_column) }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(until)) }}
+                  and {{ timestamp_column_expr }} <= {{ elementary.edr_cast_as_timestamp(elementary.edr_quote(until)) }}
                 {% endif %}
             {% else %}
-                where {{ elementary.edr_datediff(elementary.edr_cast_as_timestamp(timestamp_column), elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
+                where {{ elementary.edr_datediff(timestamp_column_expr, elementary.edr_current_timestamp(), 'day') }} < {{ days_back }}
             {% endif %}
         {% endif %}
         {% if table_filter %}
