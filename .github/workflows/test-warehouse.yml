@@ -203,7 +203,7 @@ jobs:
         env:
           PIP_PRE_FLAG: ${{ (inputs.dbt-version == 'latest_pre' && '--pre') || '' }}
           DBT_CORE_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}
-          DBT_ADAPTER_PKG: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}
+          DBT_ADAPTER_PKG: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || (inputs.warehouse-type == 'sqlserver' && 'sqlserver[pyodbc]') || inputs.warehouse-type }}
           DBT_ADAPTER_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}
         run: |
           pip install $PIP_PRE_FLAG "dbt-core${DBT_CORE_PIN}" "dbt-${DBT_ADAPTER_PKG}${DBT_ADAPTER_PIN}"
