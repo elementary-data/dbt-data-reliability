@@ -22,6 +22,9 @@ from ruamel.yaml import YAML
 PYTEST_XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", None)
 SCHEMA_NAME_SUFFIX = f"_{PYTEST_XDIST_WORKER}" if PYTEST_XDIST_WORKER else ""
 
+# Both spellings of the dbt 2.0 runner: FUSION is a legacy alias for DBT2.
+DBT2_RUNNERS = (RunnerMethod.DBT2, RunnerMethod.FUSION)
+
 _DEFAULT_VARS = {
     "disable_dbt_invocation_autoupload": True,
     "disable_dbt_artifacts_autoupload": True,
@@ -88,7 +91,7 @@ class DbtProject:
         """Lazily initialize the direct adapter query runner."""
         if self._query_runner is None:
             self._query_runner = AdapterQueryRunner(
-                str(self.project_dir_path), self.target
+                str(self.project_dir_path), self.target, self.runner_method
             )
         return self._query_runner
 
@@ -395,7 +398,7 @@ class DbtProject:
     def _fix_seed_if_needed(self, table_name: str) -> None:
         # Hack for BigQuery - seems like we get empty strings instead of nulls in seeds, so we
         # fix them here.
-        if self.runner_method == RunnerMethod.FUSION and self.target == "bigquery":
+        if self.runner_method in DBT2_RUNNERS and self.target == "bigquery":
             self.dbt_runner.run_operation(
                 "elementary_tests.replace_empty_strings_with_nulls",
                 macro_args={"table_name": table_name},

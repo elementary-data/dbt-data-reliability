@@ -193,6 +193,15 @@
     {% set database, schema = elementary.get_package_database_and_schema() %}
     {% set test_id = model["alias"] %}
     {% set relation = elementary.create_temp_table(database, schema, test_id, sql) %}
+    {# On DuckDB under dbt-fusion this is a regular table rather than a temp one, so
+       register it for the on_run_end cleanup - otherwise it survives until the stale
+       cleanup runs. #}
+    {% if target.type == "duckdb" and elementary.is_dbt_fusion() %}
+        {% set test_entry = elementary.get_cache(
+            "temp_test_table_relations_map"
+        ).setdefault(test_id, {}) %}
+        {% do test_entry.update({"test_result": relation}) %}
+    {% endif %}
     {% set new_sql %}
     select * from {{ relation }}
     {% endset %}
