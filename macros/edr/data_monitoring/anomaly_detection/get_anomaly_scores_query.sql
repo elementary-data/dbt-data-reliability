@@ -140,6 +140,11 @@
             -- We use bucket_end because non-timestamp tests have only bucket_end field.
             where
                 bucket_end > {{ min_bucket_start_expr }}
+                {% if test_configuration.include_current_bucket %}
+                    -- The bucket that is still in progress is recalculated on every run, so its metrics only
+                    -- come from this run. The ones stored by earlier runs can be stale.
+                    and bucket_end <= {{ detection_end_expr }}
+                {% endif %}
                 {% if test_configuration.timestamp_column %}
                     -- For timestamped tests, verify that the bucket we got from the history is actually
                     -- a valid one (this check is important for buckets that are not aligned with a day).

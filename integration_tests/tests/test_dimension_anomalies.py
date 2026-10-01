@@ -380,6 +380,25 @@ def test_include_current_bucket_ignores_dimension_not_arrived_yet(
     assert test_result["status"] == "pass"
 
 
+def test_include_current_bucket_ignores_deleted_rows(
+    test_id: str, dbt_project: DbtProject
+):
+    """Rows deleted from the current bucket are not scored from the metrics of an earlier run."""
+    utc_today = datetime.utcnow().date()
+    test_args = {**DBT_TEST_ARGS, "include_current_bucket": True}
+
+    data = _generate_current_bucket_data(
+        utc_today, ["Superman", "Superman", "Superman", "Spiderman"]
+    )
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    # Today's Superman rows were a bad upload and got deleted, so Superman has not arrived yet.
+    data = _generate_current_bucket_data(utc_today, ["Spiderman"])
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
 # Redshift does not support monthly time buckets.
 @pytest.mark.skip_targets(["redshift"])
 def test_include_current_bucket_monthly_snapshot_upload(
