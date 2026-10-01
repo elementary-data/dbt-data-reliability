@@ -58,7 +58,7 @@
         "label": node_dict.get("label"),
         "maturity": node_dict.get("maturity"),
         "type": node_dict.get("type"),
-        "owner_email": elementary.format_owner_email(owner_dict.get("email")),
+        "owner_email": owner_dict.get("email"),
         "owner_name": owner_dict.get("name"),
         "url": node_dict.get("url"),
         "depends_on_macros": elementary.filter_none_and_sort(

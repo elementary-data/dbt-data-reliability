@@ -35,7 +35,7 @@
     {% set flatten_group_metadata_dict = {
         "unique_id": node_dict.get("unique_id"),
         "name": node_dict.get("name"),
-        "owner_email": elementary.format_owner_email(owner_dict.get("email")),
+        "owner_email": owner_dict.get("email"),
         "owner_name": owner_dict.get("name"),
         "generated_at": elementary.datetime_now_utc_as_string(),
     } %}

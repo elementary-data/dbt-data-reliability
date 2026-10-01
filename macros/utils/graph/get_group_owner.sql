@@ -1,9 +1,8 @@
 {% macro get_group_owner(group_name) %}
     {#
-        Resolve a dbt group's owner to a flat list of owner strings, preferring
-        the owner email and falling back to the owner name. The email may be a
-        comma-separated string or a list. Returns [] when the group or owner is
-        missing.
+        Resolve a dbt group's owner to a list of owner strings, preferring the
+        owner email and falling back to the owner name. The email may be a list
+        (dbt-core 1.10+). Returns [] when the group or owner is missing.
     #}
     {% if not group_name %} {% do return([]) %} {% endif %}
     {% for group_node in graph.groups.values() %}
@@ -11,11 +10,11 @@
             {% set owner_dict = elementary.safe_get_with_default(
                 group_node, "owner", {}
             ) %}
-            {% set owners = elementary.normalize_owners(owner_dict.get("email")) %}
-            {% if not owners and owner_dict.get("name") %}
-                {% do owners.append(owner_dict.get("name")) %}
+            {% set owner = owner_dict.get("email") or owner_dict.get("name") %}
+            {% if not owner %} {% do return([]) %}
+            {% elif owner is string %} {% do return([owner]) %}
+            {% else %} {% do return(owner | list) %}
             {% endif %}
-            {% do return(owners) %}
         {% endif %}
     {% endfor %}
     {% do return([]) %}

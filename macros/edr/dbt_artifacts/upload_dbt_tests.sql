@@ -156,11 +156,17 @@
             {% set flatten_primary_model_node = elementary.flatten_node(
                 tested_model_node
             ) %}
-            {% do test_models_owners.extend(
-                elementary.normalize_owners(
-                    flatten_primary_model_node.get("owner")
-                )
-            ) %}
+            {% set primary_model_owner = flatten_primary_model_node.get("owner") %}
+            {% if primary_model_owner %}
+                {% if primary_model_owner is string %}
+                    {% set owners = primary_model_owner.split(",") %}
+                    {% for owner in owners %}
+                        {% do test_models_owners.append(owner | trim) %}
+                    {% endfor %}
+                {% elif primary_model_owner is iterable %}
+                    {% do test_models_owners.extend(primary_model_owner) %}
+                {% endif %}
+            {% endif %}
         {%- endif -%}
     {%- endif -%}
     {% set test_models_owners = test_models_owners | unique | list %}

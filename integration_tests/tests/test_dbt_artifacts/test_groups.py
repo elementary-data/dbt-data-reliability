@@ -740,7 +740,7 @@ def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
     A group whose owner.email is a list (allowed since dbt-core 1.10) must not
     break the artifacts upload. A grouped model without a direct owner and a
     test on it should get a flat list of the group's emails, and dbt_groups
-    should store the emails ", "-joined.
+    should store the email list as-is (JSON), like other list columns.
     """
     unique_id = str(uuid.uuid4()).replace("-", "_")
     model_name = f"model_list_email_group_{unique_id}"
@@ -797,63 +797,12 @@ def test_list_email_group_owner_is_flattened(dbt_project: DbtProject, tmp_path):
                 model_owners == LIST_OWNER_EMAILS
             ), f"Expected flat model_owners {LIST_OWNER_EMAILS}, got {model_owners}"
 
-            assert_group_row_in_db_groups(
-                dbt_project, group_name, OWNER_NAME, ", ".join(LIST_OWNER_EMAILS)
-            )
-        finally:
-            if dbt_model_path.exists():
-                dbt_model_path.unlink()
-
-
-@pytest.mark.skip_for_dbt_fusion
-def test_comma_separated_email_group_owner_is_split(dbt_project: DbtProject, tmp_path):
-    """
-    A group whose owner.email is a comma-separated string should be split into
-    separate owners, the same way a direct meta.owner string is.
-    """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
-    model_name = f"model_comma_email_group_{unique_id}"
-    group_name = f"test_group_{unique_id}"
-    comma_email = ", ".join(LIST_OWNER_EMAILS)
-    model_sql = """
-    select 1 as col
-    """
-    schema_yaml = {
-        "version": 2,
-        "models": [
-            {
-                "name": model_name,
-                "config": {"group": group_name},
-                "description": "A grouped model without a direct owner",
-            }
-        ],
-    }
-    group_config = {
-        "groups": [
-            {
-                "name": group_name,
-                "owner": {"name": OWNER_NAME, "email": comma_email},
-            }
-        ]
-    }
-    with _write_group_config(
-        dbt_project, group_config, name=f"groups_comma_email_{unique_id}.yml"
-    ), dbt_project.write_yaml(schema_yaml, name=f"schema_comma_email_{unique_id}.yml"):
-        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
-        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
-        dbt_model_path.write_text(model_sql)
-        try:
-            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
-            assert dbt_project.dbt_runner.run(select=model_name)
-
-            models = dbt_project.read_table(
-                "dbt_models", where=f"name = '{model_name}'", raise_if_empty=True
-            )
-            assert len(models) == 1, f"Expected 1 model, got {len(models)}"
-            owners = _parse_owners(models[0].get("owner"))
+            group_row = _get_group_from_table(dbt_project, group_name)
+            assert group_row is not None, f"Group {group_name} not in dbt_groups"
+            owner_email = _parse_owners(group_row.get("owner_email"))
             assert (
-                owners == LIST_OWNER_EMAILS
-            ), f"Expected owner {LIST_OWNER_EMAILS} split from '{comma_email}', got {owners}"
+                owner_email == LIST_OWNER_EMAILS
+            ), f"Expected owner_email {LIST_OWNER_EMAILS}, got {owner_email}"
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()
@@ -911,68 +860,6 @@ def test_direct_owner_takes_precedence_over_list_email_group(
             assert owners == [
                 direct_owner
             ], f"Expected direct owner ['{direct_owner}'] to win over group, got {owners}"
-        finally:
-            if dbt_model_path.exists():
-                dbt_model_path.unlink()
-
-
-@pytest.mark.skip_for_dbt_fusion
-@pytest.mark.parametrize(
-    "owner_email,expected_owner_email",
-    [
-        pytest.param(OWNER_EMAIL, OWNER_EMAIL, id="single_email"),
-        pytest.param(
-            LIST_OWNER_EMAILS,
-            ", ".join(LIST_OWNER_EMAILS),
-            id="list_email",
-            marks=pytest.mark.requires_dbt_version("1.10.0"),
-        ),
-    ],
-)
-def test_exposure_owner_email(
-    dbt_project: DbtProject, tmp_path, owner_email, expected_owner_email
-):
-    """
-    An exposure's owner.email should be stored as a plain string in
-    dbt_exposures.owner_email: a single email as-is, a list ", "-joined.
-    """
-    unique_id = str(uuid.uuid4()).replace("-", "_")
-    model_name = f"model_list_email_exposure_{unique_id}"
-    exposure_name = f"exposure_list_email_{unique_id}"
-    model_sql = """
-    select 1 as col
-    """
-    schema_yaml = {
-        "version": 2,
-        "exposures": [
-            {
-                "name": exposure_name,
-                "type": "dashboard",
-                "owner": {"name": OWNER_NAME, "email": owner_email},
-                "depends_on": [f"ref('{model_name}')"],
-            }
-        ],
-    }
-    with dbt_project.write_yaml(
-        schema_yaml, name=f"schema_list_email_exposure_{unique_id}.yml"
-    ):
-        dbt_model_path = dbt_project.models_dir_path / "tmp" / f"{model_name}.sql"
-        dbt_model_path.parent.mkdir(parents=True, exist_ok=True)
-        dbt_model_path.write_text(model_sql)
-        try:
-            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
-            assert dbt_project.dbt_runner.run(select=model_name)
-
-            exposures = dbt_project.read_table(
-                "dbt_exposures",
-                where=f"name = '{exposure_name}'",
-                raise_if_empty=True,
-            )
-            assert len(exposures) == 1, f"Expected 1 exposure, got {len(exposures)}"
-            stored_owner_email = exposures[0].get("owner_email")
-            assert (
-                stored_owner_email == expected_owner_email
-            ), f"Expected owner_email '{expected_owner_email}', got '{stored_owner_email}'"
         finally:
             if dbt_model_path.exists():
                 dbt_model_path.unlink()

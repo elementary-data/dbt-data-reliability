@@ -53,8 +53,15 @@
     ) %}
     {% set meta_dict = elementary.safe_get_with_default(node_dict, "meta", {}) %}
     {% do meta_dict.update(config_meta_dict) %}
+    {% set formatted_owner = [] %}
     {% set raw_owner = meta_dict.get("owner") or config_dict.get("owner") %}
-    {% set formatted_owner = elementary.normalize_owners(raw_owner) %}
+    {% if raw_owner is string %}
+        {% set owners = raw_owner.split(",") %}
+        {% for owner in owners %}
+            {% do formatted_owner.append(owner | trim) %}
+        {% endfor %}
+    {% elif raw_owner is iterable %} {% do formatted_owner.extend(raw_owner) %}
+    {% endif %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, "tags", []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, "tags", []) %}
     {% set meta_tags = elementary.safe_get_with_default(meta_dict, "tags", []) %}
