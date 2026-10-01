@@ -7,7 +7,7 @@
     {%- do elementary.validate_seasonality(
         seasonality, time_bucket, timestamp_column
     ) -%}
-    {%- if seasonality %} {{ return(seasonality) }} {%- endif %}
+    {%- if seasonality %} {{ return(seasonality | lower) }} {%- endif %}
     {{ return(none) }}
 {% endmacro %}
 
