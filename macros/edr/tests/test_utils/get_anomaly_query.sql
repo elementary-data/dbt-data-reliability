@@ -213,10 +213,16 @@
     (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
         {% endset %}
 
-        {% if spike_failure_percent_threshold and drop_failure_percent_threshold and (
-            anomaly_direction | lower
-        ) == "both" %}
-            {{ spike_filter }} or {{ drop_filter }}
+        {% if (
+            spike_failure_percent_threshold or drop_failure_percent_threshold
+        ) and (anomaly_direction | lower) == "both" %}
+            {# A threshold only ignores small changes in its own direction.
+               When one side has no threshold, changes in that direction are kept. #}
+            {% if spike_failure_percent_threshold %} {{ spike_filter }}
+            {% else %} (metric_value >= training_avg)
+            {% endif %} or {% if drop_failure_percent_threshold %} {{ drop_filter }}
+            {% else %} (metric_value < training_avg)
+            {% endif %}
         {% else %}
             {% if spike_failure_percent_threshold and anomaly_direction | lower in [
                 "spike",
