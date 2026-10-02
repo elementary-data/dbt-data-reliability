@@ -274,7 +274,8 @@
     {% do run_query("create view " ~ full_view_name ~ " as " ~ sql) %}
 
     {% set query %}
-        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} *
+        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %}
+        {{ elementary.fabric__get_test_sample_select_list(full_view_name) }}
         from {{ full_view_name }}
     {% endset %}
 
@@ -284,6 +285,47 @@
     {% do run_query("drop view if exists " ~ full_view_name) %}
 
     {% do return(result) %}
+{% endmacro %}
+
+{#
+    T-SQL drivers return binary columns as Python bytes, which agate stores as
+    their repr (e.g. "b'\x1a_,:'"), a string that cannot be turned back into
+    the original value. Such columns are selected as hex strings ('0x1A5F2C3A')
+    instead. `timestamp` is how the catalog reports `rowversion` columns, which
+    are 8-byte binary counters, not dates.
+
+    Style 1 produces the hex string, but it has no effect on `timestamp`, and
+    `image` cannot be converted to varchar at all, so every column is cast to
+    varbinary(max) first.
+#}
+{% macro fabric__get_test_sample_select_list(full_view_name) %}
+    {% set columns_query %}
+        select name as column_name, type_name(system_type_id) as data_type
+        from sys.columns
+        where object_id = object_id('{{ full_view_name }}')
+        order by column_id
+    {% endset %}
+    {% set columns = elementary.agate_to_dicts(elementary.run_query(columns_query)) %}
+
+    {% set binary_types = ["binary", "varbinary", "image", "timestamp"] %}
+    {% set select_items = [] %}
+    {% set ns = namespace(has_binary=false) %}
+    {% for column in columns %}
+        {% set quoted_column = adapter.quote(column.column_name) %}
+        {% if column.data_type | lower in binary_types %}
+            {% set ns.has_binary = true %}
+            {% do select_items.append(
+                "convert(varchar(max), convert(varbinary(max), "
+                ~ quoted_column
+                ~ "), 1) as "
+                ~ quoted_column
+            ) %}
+        {% else %} {% do select_items.append(quoted_column) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if not ns.has_binary %} {% do return("*") %} {% endif %}
+    {% do return(select_items | join(", ")) %}
 {% endmacro %}
 
 {% macro sqlserver__query_test_result_rows(
