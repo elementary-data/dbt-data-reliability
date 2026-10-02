@@ -75,7 +75,7 @@
 
     {% if should_commit %}
         {% do elementary.begin_duration_measure_context("commit") %}
-        {% do adapter.commit() %}
+        {% do elementary.edr_commit() %}
         {% do elementary.end_duration_measure_context("commit") %}
     {% endif %}
 
