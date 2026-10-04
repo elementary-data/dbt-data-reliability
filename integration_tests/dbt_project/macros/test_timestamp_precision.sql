@@ -14,25 +14,36 @@
     {{ return(ts.isoformat()) }}
 {% endmacro %}
 
-{% macro test_fix_nanosecond_timing_values(model_execution_id, value) %}
-    {% set relation = elementary.get_elementary_relation("dbt_run_results") %}
+{# Inserts a row with nanosecond timing values, then returns the timing values
+   before and after running fix_nanosecond_timing_values. #}
+{% macro test_fix_nanosecond_timing_values(table_name, id_column, row_id, value) %}
+    {% set relation = elementary.get_elementary_relation(table_name) %}
+    {% set timing_columns = [
+        "execute_started_at",
+        "execute_completed_at",
+        "compile_started_at",
+        "compile_completed_at",
+    ] %}
     {% set insert_query %}
-        insert into {{ relation }} (model_execution_id, execute_started_at, execute_completed_at)
-        values ({{ elementary.edr_quote(model_execution_id) }}, {{ elementary.edr_quote(value) }}, {{ elementary.edr_quote(value) }})
+        insert into {{ relation }} ({{ id_column }}, {{ timing_columns | join(", ") }})
+        values (
+            {{ elementary.edr_quote(row_id) }}
+            {% for column in timing_columns %}, {{ elementary.edr_quote(value) }}{% endfor %}
+        )
     {% endset %}
-    {% do elementary.run_query(insert_query) %}
-
-    {% do elementary.fix_nanosecond_timing_values() %}
-
     {% set select_query %}
-        select execute_started_at, execute_completed_at from {{ relation }}
-        where model_execution_id = {{ elementary.edr_quote(model_execution_id) }}
+        select {{ timing_columns | join(", ") }} from {{ relation }}
+        where {{ id_column }} = {{ elementary.edr_quote(row_id) }}
     {% endset %}
-    {% set row = elementary.run_query(select_query).rows[0] %}
     {% set delete_query %}
         delete from {{ relation }}
-        where model_execution_id = {{ elementary.edr_quote(model_execution_id) }}
+        where {{ id_column }} = {{ elementary.edr_quote(row_id) }}
     {% endset %}
+
+    {% do elementary.run_query(insert_query) %}
+    {% set before = elementary.run_query(select_query).rows[0] | list %}
+    {% do elementary.fix_nanosecond_timing_values() %}
+    {% set after = elementary.run_query(select_query).rows[0] | list %}
     {% do elementary.run_query(delete_query) %}
-    {{ return([row[0], row[1]]) }}
+    {{ return({"before": before, "after": after}) }}
 {% endmacro %}

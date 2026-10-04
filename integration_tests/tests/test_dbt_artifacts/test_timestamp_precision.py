@@ -60,12 +60,26 @@ def test_bigquery_cast_is_plain_when_truncation_disabled(dbt_project: DbtProject
 
 
 @pytest.mark.only_on_targets(["bigquery"])
-def test_fix_nanosecond_timing_values(dbt_project: DbtProject):
+@pytest.mark.parametrize(
+    "table_name,id_column",
+    [
+        ("dbt_run_results", "model_execution_id"),
+        ("dbt_source_freshness_results", "source_freshness_execution_id"),
+    ],
+)
+def test_fix_nanosecond_timing_values(
+    dbt_project: DbtProject, table_name: str, id_column: str
+):
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_fix_nanosecond_timing_values",
         macro_args={
-            "model_execution_id": f"test_fix_nanoseconds_{uuid.uuid4().hex}",
+            "table_name": table_name,
+            "id_column": id_column,
+            "row_id": f"test_fix_nanoseconds_{uuid.uuid4().hex}",
             "value": NANOSECOND_TIMESTAMP,
         },
     )
-    assert json.loads(result[-1]) == [MICROSECOND_TIMESTAMP, MICROSECOND_TIMESTAMP]
+    timing_values = json.loads(result[-1])
+    # Before the fix the table still holds the 9-digit values, after it they're truncated.
+    assert timing_values["before"] == [NANOSECOND_TIMESTAMP] * 4
+    assert timing_values["after"] == [MICROSECOND_TIMESTAMP] * 4
