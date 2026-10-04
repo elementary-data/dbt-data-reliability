@@ -143,6 +143,10 @@
 
 {% macro clickhouse__edr_type_double() %} {% do return("Float64") %} {% endmacro %}
 
+{# MaxCompute's FLOAT is 4 bytes, and it rejects inserting a DOUBLE literal into
+   it rather than rounding. #}
+{% macro maxcompute__edr_type_double() %} {% do return("double") %} {% endmacro %}
+
 
 {% macro edr_type_int() %}
     {% set macro = dbt.type_int or dbt_utils.type_int %}
