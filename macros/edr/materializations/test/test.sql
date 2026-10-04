@@ -297,22 +297,25 @@
     Style 1 produces the hex string, but it has no effect on `timestamp`, and
     `image` cannot be converted to varchar at all, so every column is cast to
     varbinary(max) first.
+
+    Column types come from sp_describe_first_result_set rather than a
+    sys.columns query: with the view name inlined, every sys.columns lookup was
+    a new ad-hoc query compiled from scratch, which was several times slower.
+    The procedure (unlike sys.dm_exec_describe_first_result_set) is documented
+    for Fabric Warehouse and Synapse. Its output can't be selected from, so the
+    fields are mapped here; system_type_name includes the length (e.g.
+    'varbinary(16)'), so only the part before '(' is compared.
 #}
 {% macro fabric__get_test_sample_select_list(full_view_name) %}
-    {% set columns_query %}
-        select name as column_name, type_name(system_type_id) as data_type
-        from sys.columns
-        where object_id = object_id('{{ full_view_name }}')
-        order by column_id
-    {% endset %}
-    {% set columns = elementary.agate_to_dicts(elementary.run_query(columns_query)) %}
+    {% set columns = elementary.agate_to_dicts(elementary.run_query("exec sp_describe_first_result_set N'select * from " ~ full_view_name ~ "'")) %}
 
     {% set binary_types = ["binary", "varbinary", "image", "timestamp"] %}
     {% set select_items = [] %}
     {% set ns = namespace(has_binary=false) %}
     {% for column in columns %}
-        {% set quoted_column = adapter.quote(column.column_name) %}
-        {% if column.data_type | lower in binary_types %}
+        {% set quoted_column = adapter.quote(column.name) %}
+        {% set data_type = column.system_type_name.split("(")[0] | lower %}
+        {% if data_type in binary_types %}
             {% set ns.has_binary = true %}
             {% do select_items.append(
                 "convert(varchar(max), convert(varbinary(max), "
