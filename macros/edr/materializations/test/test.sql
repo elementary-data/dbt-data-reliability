@@ -319,7 +319,8 @@
     {% set ns = namespace(has_binary=false) %}
     {% for column in columns %}
         {% set quoted_column = adapter.quote(column.name) %}
-        {% set data_type = column.system_type_name.split("(")[0] | lower %}
+        {# system_type_name is null for user-defined CLR types #}
+        {% set data_type = (column.system_type_name or "").split("(")[0] | lower %}
         {% if data_type in binary_types %}
             {% set ns.has_binary = true %}
             {% do select_items.append(
