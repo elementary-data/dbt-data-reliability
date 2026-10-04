@@ -506,6 +506,14 @@ def test_ignore_small_changes_both(
     assert test_result["status"] == expected_result
 
 
+# Baseline: 30 rows/day, then a last day with `metric_value` rows. With the
+# default sensitivity every last-day value below is a z-score anomaly, so the
+# result depends only on ignore_small_changes. A threshold ignores small changes
+# in its own direction only; the other direction must still be detected.
+# - spike threshold 50%: 5 rows (-83%) is a drop -> fail; 40 rows (+33%) is a
+#   spike under 50% -> pass.
+# - drop threshold 50%: 100 rows (+233%) is a spike -> fail; 20 rows (-33%) is a
+#   drop under 50% -> pass.
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
     name="spike_drop_detected",
@@ -543,8 +551,6 @@ def test_one_side_threshold(
     drop_failure_percent_threshold: int,
     metric_value: int,
 ):
-    # Setting a threshold for one direction should only ignore small changes in
-    # that direction. Anomalies in the other direction must still be detected.
     now = datetime.utcnow()
     data = [
         {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT)}
