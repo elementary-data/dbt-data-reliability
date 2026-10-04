@@ -15,6 +15,10 @@
         ) %}
     {% endfor %}
 
+    {% set result_owners_by_group = elementary.get_anomaly_result_owners_by_group(
+        flattened_test, anomaly_scores_rows
+    ) %}
+
     {% set elementary_test_results_rows = [] %}
     {% for anomaly_scores_group, anomaly_scores_rows in anomaly_scores_groups_rows.items() %}
         {% do elementary.debug_log(
@@ -24,14 +28,24 @@
         ) %}
         {% do elementary_test_results_rows.append(
             elementary.get_anomaly_test_result_row(
-                flattened_test, anomaly_scores_rows
+                flattened_test,
+                anomaly_scores_rows,
+                result_owners_by_group.get(
+                    elementary.get_anomaly_result_owners_group_key(
+                        anomaly_scores_group[0],
+                        anomaly_scores_group[1],
+                        anomaly_scores_group[2],
+                    )
+                ),
             )
         ) %}
     {% endfor %}
     {% do elementary.cache_elementary_test_results_rows(elementary_test_results_rows) %}
 {% endmacro %}
 
-{% macro get_anomaly_test_result_row(flattened_test, anomaly_scores_rows) %}
+{% macro get_anomaly_test_result_row(
+    flattened_test, anomaly_scores_rows, result_owners=none
+) %}
     {%- set latest_row = anomaly_scores_rows[-1] %}
     {%- set rows_with_score = (
         anomaly_scores_rows | rejectattr("anomaly_score", "none") | list
@@ -144,13 +158,8 @@
     } %}
     {% set elementary_test_row = elementary.get_dbt_test_result_row(flattened_test) %}
     {% do elementary_test_row.update(test_result_dict) %}
-    {% if failures.data > 0 %}
-        {% set result_owners = elementary.get_anomaly_test_result_owners(
-            flattened_test, full_table_name, metric_name, column_name
-        ) %}
-        {% if result_owners %}
-            {% do elementary_test_row.update({"owners": result_owners}) %}
-        {% endif %}
+    {% if failures.data > 0 and result_owners %}
+        {% do elementary_test_row.update({"owners": result_owners}) %}
     {% endif %}
     {% do return(elementary_test_row) %}
 {% endmacro %}

@@ -80,7 +80,8 @@
     flattened_test=none,
     additional_where=none,
     select_override=none,
-    extra_cte=none
+    extra_cte=none,
+    group_by=none
 ) %}
     {% if not flattened_test %}
         {% set flattened_test = elementary.flatten_test(model) %}
@@ -169,6 +170,7 @@
       {{ select_override if select_override else 'select * ' }} from final_results
       where {{ test_configuration.exclude_final_results }}
       {% if additional_where %} and {{ additional_where }} {% endif %}
+      {% if group_by %} group by {{ group_by }} {% endif %}
     {%- endset -%}
     {{- return(anomaly_query) -}}
 {% endmacro %}

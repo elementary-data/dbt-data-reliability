@@ -71,16 +71,12 @@
     {%- do return("select " ~ rule_columns | join(", ")) -%}
 {% endmacro %}
 
-{# Runs a query built from get_result_owners_select_clause and returns the matched owners, or none. #}
-{% macro get_matched_result_owners(rules, result_owners_query) %}
-    {% set rows = elementary.agate_to_dicts(
-        elementary.run_query(result_owners_query)
-    ) %}
-    {% if not rows %} {% do return(none) %} {% endif %}
+{# Returns the sorted owners of the rules matched in a row of get_result_owners_select_clause, or none. #}
+{% macro get_matched_result_owners(rules, result_row) %}
     {% set matched_owners = [] %}
     {% for rule in rules %}
         {% set is_match = elementary.insensitive_get_dict_value(
-            rows[0], "result_owners_rule_" ~ loop.index0
+            result_row, "result_owners_rule_" ~ loop.index0
         ) %}
         {% if is_match is not none and is_match | int > 0 %}
             {% for owner in elementary.normalize_result_owners(rule.owners) %}
@@ -90,7 +86,7 @@
             {% endfor %}
         {% endif %}
     {% endfor %}
-    {% do return(matched_owners or none) %}
+    {% do return((matched_owners | sort | list) or none) %}
 {% endmacro %}
 
 {#
@@ -106,30 +102,65 @@
         from ({{ sql }}
         ) results
     {% endset %}
-    {% do return(elementary.get_matched_result_owners(rules, result_owners_query)) %}
+    {% set rows = elementary.agate_to_dicts(
+        elementary.run_query(result_owners_query)
+    ) %}
+    {% if not rows %} {% do return(none) %} {% endif %}
+    {% do return(elementary.get_matched_result_owners(rules, rows[0])) %}
+{% endmacro %}
+
+{% macro get_anomaly_result_owners_group_key(
+    full_table_name, column_name, metric_name
+) %}
+    {% do return(
+        (full_table_name or "")
+        | upper ~ "|" ~ (column_name or "")
+        | upper ~ "|" ~ (metric_name or "")
+    ) %}
 {% endmacro %}
 
 {#
-  For anomaly tests, the failing rows are the anomalous rows of one result group.
-  select_override keeps this a single CTE chain, which T-SQL requires.
+  For anomaly tests, the failing rows are the anomalous rows of each result group
+  (full_table_name, column_name, metric_name). All groups are evaluated in one
+  grouped query; select_override keeps it a single CTE chain, which T-SQL requires.
+  Returns a dict of group key (see get_anomaly_result_owners_group_key) to owners.
+  The rules are validated on every run, even when nothing is anomalous.
 #}
-{% macro get_anomaly_test_result_owners(
-    flattened_test, full_table_name, metric_name, column_name
-) %}
+{% macro get_anomaly_result_owners_by_group(flattened_test, anomaly_scores_rows) %}
     {% set rules = elementary.get_result_owners_rules(flattened_test) %}
-    {% if not rules %} {% do return(none) %} {% endif %}
-    {% set group_filter %}
-        {{ elementary.edr_is_true("is_anomalous") }}
-        and upper(full_table_name) = upper({{ elementary.const_as_string(full_table_name) }})
-        and metric_name = {{ elementary.const_as_string(metric_name) }}
-        {%- if column_name %}
-        and upper(column_name) = upper({{ elementary.const_as_string(column_name) }})
-        {%- endif %}
-    {% endset %}
+    {% if not rules %} {% do return({}) %} {% endif %}
+    {% if not (anomaly_scores_rows | selectattr("is_anomalous") | list) %}
+        {% do return({}) %}
+    {% endif %}
     {% set result_owners_query = elementary.get_read_anomaly_scores_query(
         flattened_test,
-        additional_where=group_filter,
-        select_override=elementary.get_result_owners_select_clause(rules),
+        additional_where=elementary.edr_is_true("is_anomalous"),
+        select_override=elementary.get_result_owners_select_clause(rules)
+        ~ ", full_table_name, column_name, metric_name",
+        group_by="full_table_name, column_name, metric_name",
     ) %}
-    {% do return(elementary.get_matched_result_owners(rules, result_owners_query)) %}
+    {% set owners_by_group = {} %}
+    {% for row in elementary.agate_to_dicts(
+        elementary.run_query(result_owners_query)
+    ) %}
+        {% set owners = elementary.get_matched_result_owners(rules, row) %}
+        {% if owners %}
+            {% do owners_by_group.update(
+                {
+                    elementary.get_anomaly_result_owners_group_key(
+                        elementary.insensitive_get_dict_value(
+                            row, "full_table_name"
+                        ),
+                        elementary.insensitive_get_dict_value(
+                            row, "column_name"
+                        ),
+                        elementary.insensitive_get_dict_value(
+                            row, "metric_name"
+                        ),
+                    ): owners
+                }
+            ) %}
+        {% endif %}
+    {% endfor %}
+    {% do return(owners_by_group) %}
 {% endmacro %}

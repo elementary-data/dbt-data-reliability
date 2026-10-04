@@ -35,6 +35,18 @@
         ) %}
         {% if elementary_test_type and elementary_test_type != "with_context" %}
             {# Anomaly detection and schema change tests handle their own result row collection #}
+            {% if elementary_test_type != "anomaly_detection" and elementary.get_node_meta(
+                model
+            ).get(
+                "result_owners"
+            ) %}
+                {% do elementary.edr_log_warning(
+                    test_unique_id
+                    ~ ": result_owners is not supported for "
+                    ~ short_name
+                    ~ " tests and will be ignored."
+                ) %}
+            {% endif %}
             {% do return(materialization_macro()) %}
         {% endif %}
     {% endif %}
