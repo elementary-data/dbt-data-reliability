@@ -81,8 +81,7 @@
     {% endif %}
     {% set group_name = config_dict.get("group") or node_dict.get("group") %}
     {% if not formatted_owner and group_name %}
-        {% set group_owner = elementary.get_group_owner(group_name) %}
-        {% if group_owner %} {% do formatted_owner.append(group_owner) %} {% endif %}
+        {% do formatted_owner.extend(elementary.get_group_owner(group_name)) %}
     {% endif %}
     {% set config_tags = elementary.safe_get_with_default(config_dict, "tags", []) %}
     {% set global_tags = elementary.safe_get_with_default(node_dict, "tags", []) %}
