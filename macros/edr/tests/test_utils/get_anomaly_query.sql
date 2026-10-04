@@ -205,40 +205,37 @@
     drop_failure_percent_threshold,
     anomaly_direction
 ) -%}
-    (
-        {% set spike_filter %}
+    {% set direction = anomaly_direction | lower %}
+    {% set spike_filter %}
     (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
-        {% set drop_filter %}
+    {% endset %}
+    {% set drop_filter %}
     (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
-
-        {% if (
+    {% endset %}
+    (
+        {% if direction == "both" and (
             spike_failure_percent_threshold or drop_failure_percent_threshold
-        ) and (anomaly_direction | lower) == "both" %}
-            {# A threshold only ignores small changes in its own direction.
-               When one side has no threshold, changes in that direction are kept. #}
-            {% if spike_failure_percent_threshold %} {{ spike_filter }}
-            {% else %} (metric_value >= training_avg)
-            {% endif %} or {% if drop_failure_percent_threshold %} {{ drop_filter }}
-            {% else %} (metric_value < training_avg)
-            {% endif %}
-        {% else %}
-            {% if spike_failure_percent_threshold and anomaly_direction | lower in [
-                "spike",
-                "both",
-            ] %}
-                {{ spike_filter }}
-            {% else %} (1 = 1)
-            {% endif %} and
-
-            {% if drop_failure_percent_threshold and anomaly_direction | lower in [
-                "drop",
-                "both",
-            ] %}
-                {{ drop_filter }}
-            {% else %} (1 = 1)
-            {% endif %}
+        ) %}
+            {# A threshold only ignores small changes in its own direction. #}
+            {{
+                (
+                    spike_filter
+                    if spike_failure_percent_threshold
+                    else "(metric_value >= training_avg)"
+                )
+            }}
+            or {{
+                (
+                    drop_filter
+                    if drop_failure_percent_threshold
+                    else "(metric_value < training_avg)"
+                )
+            }}
+        {% elif direction == "spike" and spike_failure_percent_threshold %}
+            {{ spike_filter }}
+        {% elif direction == "drop" and drop_failure_percent_threshold %}
+            {{ drop_filter }}
+        {% else %}(1 = 1)
         {% endif %}
     )
 {%- endmacro -%}
