@@ -112,11 +112,9 @@
 {% macro get_anomaly_result_owners_group_key(
     full_table_name, column_name, metric_name
 ) %}
-    {% do return(
-        (full_table_name or "")
-        | upper ~ "|" ~ (column_name or "")
-        | upper ~ "|" ~ (metric_name or "")
-    ) %}
+    {# Both sides of the lookup read the same anomaly scores rows, so values are
+       compared as-is; quoted identifiers that differ only in case stay distinct. #}
+    {% do return((full_table_name, column_name, metric_name)) %}
 {% endmacro %}
 
 {#
