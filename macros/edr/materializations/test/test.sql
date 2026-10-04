@@ -307,7 +307,12 @@
     'varbinary(16)'), so only the part before '(' is compared.
 #}
 {% macro fabric__get_test_sample_select_list(full_view_name) %}
-    {% set columns = elementary.agate_to_dicts(elementary.run_query("exec sp_describe_first_result_set N'select * from " ~ full_view_name ~ "'")) %}
+    {% set columns_query = (
+        "exec sp_describe_first_result_set N'select * from "
+        ~ full_view_name
+        ~ "'"
+    ) %}
+    {% set columns = elementary.agate_to_dicts(elementary.run_query(columns_query)) %}
 
     {% set binary_types = ["binary", "varbinary", "image", "timestamp"] %}
     {% set select_items = [] %}
