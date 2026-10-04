@@ -188,6 +188,10 @@
         cast(
             {{ dummy_values["float"] }} as {{ elementary.edr_type_float() }}
         ) as {{ column_name }}
+    {%- elif data_type == "double" %}
+        cast(
+            {{ dummy_values["float"] }} as {{ elementary.edr_type_double() }}
+        ) as {{ column_name }}
     {%- elif data_type == "long_string" %}
         cast(
             '{{ dummy_values['long_string'] }}'
