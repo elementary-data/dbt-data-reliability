@@ -221,14 +221,14 @@
                 (
                     spike_filter
                     if spike_failure_percent_threshold
-                    else "(metric_value >= training_avg)"
+                    else "(anomaly_score >= 0)"
                 )
             }}
             or {{
                 (
                     drop_filter
                     if drop_failure_percent_threshold
-                    else "(metric_value < training_avg)"
+                    else "(anomaly_score < 0)"
                 )
             }}
         {% elif direction == "spike" and spike_failure_percent_threshold %}
