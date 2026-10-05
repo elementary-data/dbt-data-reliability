@@ -141,9 +141,11 @@
             where bucket_start >= {{ trunc_min_bucket_start_expr }}
             {# The current bucket is never treated as cached, so it is recalculated on every run #}
             and bucket_end <= {{ detection_end_expr }}
-            {# Only metrics calculated after their bucket ended are complete. A metric of the bucket
-               that was still in progress (include_current_bucket) is recalculated once it ends. #}
+            {# With include_current_bucket, only metrics calculated after their bucket ended are complete.
+               A metric of the bucket that was still in progress is recalculated once it ends. #}
+            {%- if include_current_bucket %}
             and {{ elementary.edr_cast_as_timestamp('updated_at') }} >= {{ elementary.edr_cast_as_timestamp('bucket_end') }}
+            {%- endif %}
             and upper(full_table_name) = upper('{{ full_table_name }}')
             and metric_properties = {{ elementary.dict_to_quoted_json(metric_properties) }}
             {%- if metric_names %}
