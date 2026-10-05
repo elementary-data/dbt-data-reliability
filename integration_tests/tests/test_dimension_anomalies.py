@@ -1,7 +1,8 @@
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
+import dateutil.parser
 import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -315,3 +316,65 @@ def test_anomaly_in_detection_period(
     )
 
     assert test_result["status"] == expected_status
+
+
+def _get_previous_bucket_starts(period: str, count: int) -> List[date]:
+    """The start of the current week or month, followed by the starts of the `count` before it."""
+    utc_today = datetime.utcnow().date()
+    if period == "week":
+        current_week_start = utc_today - timedelta(days=utc_today.weekday())
+        return [current_week_start - timedelta(weeks=i) for i in range(count + 1)]
+    bucket_starts = [utc_today.replace(day=1)]
+    for _ in range(count):
+        previous = bucket_starts[-1] - timedelta(days=1)
+        bucket_starts.append(previous.replace(day=1))
+    return bucket_starts
+
+
+@pytest.mark.parametrize("period", ["week", "month"])
+def test_buckets_stay_aligned_on_rerun(
+    test_id: str, dbt_project: DbtProject, target: str, period: str
+):
+    """On a rerun the backfill window starts mid-bucket; buckets must still be calendar weeks/months."""
+    if target == "redshift" and period == "month":
+        pytest.skip("Redshift does not support monthly time buckets.")
+    test_id = test_id.replace("[", "_").replace("]", "_")
+    # Uploads on the first day of each bucket, for the buckets before the current one.
+    bucket_starts = _get_previous_bucket_starts(period, 12)[1:]
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
+        for bucket_start in bucket_starts
+        for country, rows in {"PL": 100, "MY": 20}.items()
+        for _ in range(rows)
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": period, "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "detection_period": {"period": "day", "count": 31},
+    }
+
+    first_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert first_result["status"] == "pass"
+    second_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert second_result["status"] == "pass"
+
+    # Misaligned weekly buckets still hold one upload each, so check the stored bucket starts too.
+    stored_bucket_starts = {
+        dateutil.parser.parse(result["bucket_start"]).date()
+        for result in dbt_project.run_query(
+            f"""
+            select distinct bucket_start
+            from {{{{ ref("data_monitoring_metrics") }}}}
+            where lower(full_table_name) like '%{test_id.lower()}'
+            """
+        )
+    }
+    if period == "week":
+        assert (
+            len({bucket_start.weekday() for bucket_start in stored_bucket_starts}) == 1
+        )
+    else:
+        assert {bucket_start.day for bucket_start in stored_bucket_starts} == {1}

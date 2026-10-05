@@ -128,7 +128,9 @@
         min_bucket_start_candidates as (
             select bucket_start from missing_bucket_starts
             union all
-            select {{ backfill_bucket_start }} as bucket_start
+            {# Align the backfill start to the start of its bucket. Otherwise buckets that are
+               not a whole number of days (e.g. months) are generated from a mid-bucket start. #}
+            select {{ elementary.get_start_bucket_in_data(backfill_bucket_start, trunc_min_bucket_start_expr, metric_properties.time_bucket) }} as bucket_start
         )
         select
             min(bucket_start) as min_bucket_start,
