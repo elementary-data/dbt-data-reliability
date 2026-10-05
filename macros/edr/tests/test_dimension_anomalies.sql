@@ -123,9 +123,12 @@
             min_bucket_start,
             max_bucket_end,
             metric_properties,
-            include_current_bucket=test_configuration.include_current_bucket,
-            detection_end=elementary.get_detection_end(
-                test_configuration.detection_delay
+            zero_fill_max_bucket_end=(
+                elementary.get_detection_end(
+                    test_configuration.detection_delay
+                )
+                if test_configuration.include_current_bucket
+                else none
             ),
         ) %}
         {{
