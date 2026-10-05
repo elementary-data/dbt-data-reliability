@@ -52,12 +52,16 @@
     {%- set trunc_min_bucket_start_expr = elementary.get_trunc_min_bucket_start_expr(
         detection_end, metric_properties, days_back
     ) %}
-    {%- set backfill_bucket_start = elementary.edr_cast_as_timestamp(
-        elementary.edr_datetime_to_sql(
-            elementary.get_backfill_bucket_start(
-                detection_end, backfill_days
+    {%- set backfill_bucket_start = elementary.get_start_bucket_in_data(
+        elementary.edr_cast_as_timestamp(
+            elementary.edr_datetime_to_sql(
+                elementary.get_backfill_bucket_start(
+                    detection_end, backfill_days
+                )
             )
-        )
+        ),
+        trunc_min_bucket_start_expr,
+        metric_properties.time_bucket,
     ) %}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
     {%- set force_metrics_backfill = elementary.get_config_var(
@@ -128,9 +132,7 @@
         min_bucket_start_candidates as (
             select bucket_start from missing_bucket_starts
             union all
-            {# Align the backfill start to the start of its bucket. Otherwise buckets that are
-               not a whole number of days (e.g. months) are generated from a mid-bucket start. #}
-            select {{ elementary.get_start_bucket_in_data(backfill_bucket_start, trunc_min_bucket_start_expr, metric_properties.time_bucket) }} as bucket_start
+            select {{ backfill_bucket_start }} as bucket_start
         )
         select
             min(bucket_start) as min_bucket_start,
