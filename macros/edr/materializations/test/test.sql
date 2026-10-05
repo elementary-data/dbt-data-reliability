@@ -288,30 +288,15 @@
 {% endmacro %}
 
 {#
-    T-SQL drivers return binary columns as Python bytes, which agate stores as
-    their repr (e.g. "b'\x1a_,:'"), a string that cannot be turned back into
-    the original value. Such columns are selected as hex strings ('0x1A5F2C3A')
-    instead. `timestamp` is how the catalog reports `rowversion` columns, which
-    are 8-byte binary counters, not dates.
-
-    Style 1 produces the hex string, but it has no effect on `timestamp`, and
-    `image` cannot be converted to varchar at all, so every column is cast to
-    varbinary(max) first.
-
-    Column types come from sp_describe_first_result_set rather than a
-    sys.columns query: with the view name inlined, every sys.columns lookup was
-    a new ad-hoc query compiled from scratch, which was several times slower.
-    The procedure (unlike sys.dm_exec_describe_first_result_set) is documented
-    for Fabric Warehouse and Synapse. Its output can't be selected from, so the
-    fields are mapped here; system_type_name includes the length (e.g.
-    'varbinary(16)'), so only the part before '(' is compared.
+    Builds the sample query's select list. T-SQL drivers return binary columns
+    as Python bytes, which agate stores as an unusable repr ("b'\x1a_,:'"), so
+    binary columns are selected as hex strings ('0x1A5F2C3A') instead.
+    `timestamp` is how T-SQL reports `rowversion`, a binary column, not a date.
 #}
 {% macro fabric__get_test_sample_select_list(full_view_name) %}
-    {% set columns_query = (
-        "exec sp_describe_first_result_set N'select * from "
-        ~ full_view_name
-        ~ "'"
-    ) %}
+    {% set columns_query %}
+        exec sp_describe_first_result_set N'select * from {{ full_view_name }}'
+    {% endset %}
     {% set columns = elementary.agate_to_dicts(elementary.run_query(columns_query)) %}
 
     {% set binary_types = ["binary", "varbinary", "image", "timestamp"] %}
