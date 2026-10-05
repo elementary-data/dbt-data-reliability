@@ -20,11 +20,11 @@ MICROSECOND_TIMESTAMP = "2026-04-03T10:50:50.961498Z"
         (None, None),
     ],
 )
-def test_truncate_timestamp_precision(
+def test_truncate_to_microseconds(
     dbt_project: DbtProject, input_value, expected_output
 ):
     result = dbt_project.dbt_runner.run_operation(
-        "elementary_tests.test_truncate_timestamp_precision",
+        "elementary_tests.test_truncate_to_microseconds",
         macro_args={"value": input_value},
     )
     # When the macro returns None, log_macro_results doesn't log anything

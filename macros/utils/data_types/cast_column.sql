@@ -18,7 +18,7 @@
   fractional digits are truncated before casting.
   The string round trip prevents partition pruning on the casted column, so disable the var
   once old rows are out of range or fixed with fix_nanosecond_timing_values.
-  New rows are truncated on upload (truncate_timestamp_precision).
+  New rows are truncated on upload (truncate_to_microseconds).
 #}
 {%- macro bigquery__edr_cast_as_timestamp(timestamp_field) -%}
     {%- if elementary.get_config_var("bigquery_truncate_nanosecond_timestamps") -%}

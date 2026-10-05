@@ -1,5 +1,5 @@
-{% macro test_truncate_timestamp_precision(value) %}
-    {{ return(elementary.truncate_timestamp_precision(value)) }}
+{% macro test_truncate_to_microseconds(value) %}
+    {{ return(elementary.truncate_to_microseconds(value)) }}
 {% endmacro %}
 
 {% macro test_render_cast_as_timestamp(column_name) %}
