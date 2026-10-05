@@ -1,44 +1,53 @@
 {#
-  Result owners let a single test route its failures to different owners,
-  depending on which rows failed. Configured on the test's meta:
+  Conditional result owners let a single test send its failures to different
+  owners, depending on which rows failed. Configured on the test's meta:
 
     meta:
-      result_owners:
-        - expression: "dimension_value = 'JAPAN'"
+      conditional_result_owners:
+        - condition: "dimension_value = 'JAPAN'"
           owners: ["japan-dataops@example.com"]
 
-  Each expression is evaluated against the test's failing rows. The owners of
-  every matching rule are unioned and replace the result's owners. When no rule
-  matches, the result keeps its default owners.
+  Each condition is SQL evaluated against the test's failing rows. If any
+  condition matches, the result's owners are the union of the owners of every
+  matching condition, replacing the default owners. When none matches, the
+  result keeps its default owners.
 #}
-{% macro get_result_owners_rules(flattened_test) %}
+{% macro get_conditional_result_owners(flattened_test) %}
+    {% set max_conditions = 100 %}
     {% set meta = elementary.insensitive_get_dict_value(flattened_test, "meta") or {} %}
-    {% set rules = meta.get("result_owners") %}
-    {% if not rules %} {% do return([]) %} {% endif %}
-    {% if rules is mapping %} {% set rules = [rules] %} {% endif %}
+    {% set conditions = meta.get("conditional_result_owners") %}
+    {% if not conditions %} {% do return([]) %} {% endif %}
+    {% if conditions is mapping %} {% set conditions = [conditions] %} {% endif %}
 
     {% set test_unique_id = elementary.insensitive_get_dict_value(
         flattened_test, "unique_id"
     ) %}
-    {% if rules is string or rules is not iterable %}
+    {% if conditions is string or conditions is not iterable %}
         {% do exceptions.raise_compiler_error(
-            "result_owners of test `{}` must be a list of rules, each with an `expression` and `owners`.".format(
+            "conditional_result_owners of test `{}` must be a list, each item with a `condition` and `owners`.".format(
                 test_unique_id
             )
         ) %}
     {% endif %}
-    {% for rule in rules %}
-        {% if rule is not mapping or rule.get(
-            "expression"
-        ) is not string or not rule.get("expression") or not rule.get("owners") %}
+    {% if conditions | length > max_conditions %}
+        {% do exceptions.raise_compiler_error(
+            "conditional_result_owners of test `{}` has {} conditions; the maximum is {}.".format(
+                test_unique_id, conditions | length, max_conditions
+            )
+        ) %}
+    {% endif %}
+    {% for item in conditions %}
+        {% if item is not mapping or item.get(
+            "condition"
+        ) is not string or not item.get("condition") or not item.get("owners") %}
             {% do exceptions.raise_compiler_error(
-                "Invalid result_owners rule in test `{}`: {}. Each rule needs a string `expression` and `owners`.".format(
-                    test_unique_id, rule
+                "Invalid conditional_result_owners item in test `{}`: {}. Each item needs a string `condition` and `owners`.".format(
+                    test_unique_id, item
                 )
             ) %}
         {% endif %}
     {% endfor %}
-    {% do return(rules) %}
+    {% do return(conditions) %}
 {% endmacro %}
 
 {# Accepts the same formats as model owners: a string, a comma-separated string, or a list. #}
@@ -58,28 +67,35 @@
     {% do return(normalized) %}
 {% endmacro %}
 
-{% macro get_result_owners_select_clause(rules) %}
-    {%- set rule_columns = [] -%}
-    {%- for rule in rules -%}
-        {%- do rule_columns.append(
+{# The leading comment names the test, so a failing condition is easy to trace in query history. #}
+{% macro get_conditional_result_owners_select_clause(conditions, test_unique_id) %}
+    {%- set condition_columns = [] -%}
+    {%- for item in conditions -%}
+        {%- do condition_columns.append(
             "max(case when ("
-            ~ rule.expression
-            ~ ") then 1 else 0 end) as result_owners_rule_"
+            ~ item.condition
+            ~ ") then 1 else 0 end) as owners_condition_"
             ~ loop.index0
         ) -%}
     {%- endfor -%}
-    {%- do return("select " ~ rule_columns | join(", ")) -%}
+    {%- do return(
+        "/* conditional_result_owners of "
+        ~ test_unique_id
+        ~ " */ select "
+        ~ condition_columns
+        | join(", ")
+    ) -%}
 {% endmacro %}
 
-{# Returns the sorted owners of the rules matched in a row of get_result_owners_select_clause, or none. #}
-{% macro get_matched_result_owners(rules, result_row) %}
+{# Returns the sorted owners of the conditions matched in a row of get_conditional_result_owners_select_clause, or none. #}
+{% macro get_matched_result_owners(conditions, result_row) %}
     {% set matched_owners = [] %}
-    {% for rule in rules %}
+    {% for item in conditions %}
         {% set is_match = elementary.insensitive_get_dict_value(
-            result_row, "result_owners_rule_" ~ loop.index0
+            result_row, "owners_condition_" ~ loop.index0
         ) %}
         {% if is_match is not none and is_match | int > 0 %}
-            {% for owner in elementary.normalize_result_owners(rule.owners) %}
+            {% for owner in elementary.normalize_result_owners(item.owners) %}
                 {% if owner not in matched_owners %}
                     {% do matched_owners.append(owner) %}
                 {% endif %}
@@ -95,10 +111,12 @@
   table, so wrapping it in a derived table is safe there too.
 #}
 {% macro get_dbt_test_result_owners(flattened_test) %}
-    {% set rules = elementary.get_result_owners_rules(flattened_test) %}
-    {% if not rules or elementary.did_test_pass() %} {% do return(none) %} {% endif %}
+    {% set conditions = elementary.get_conditional_result_owners(flattened_test) %}
+    {% if not conditions or elementary.did_test_pass() %}
+        {% do return(none) %}
+    {% endif %}
     {% set result_owners_query %}
-        {{ elementary.get_result_owners_select_clause(rules) }}
+        {{ elementary.get_conditional_result_owners_select_clause(conditions, flattened_test.unique_id) }}
         from ({{ sql }}
         ) results
     {% endset %}
@@ -106,7 +124,7 @@
         elementary.run_query(result_owners_query)
     ) %}
     {% if not rows %} {% do return(none) %} {% endif %}
-    {% do return(elementary.get_matched_result_owners(rules, rows[0])) %}
+    {% do return(elementary.get_matched_result_owners(conditions, rows[0])) %}
 {% endmacro %}
 
 {% macro get_anomaly_result_owners_group_key(
@@ -122,18 +140,20 @@
   (full_table_name, column_name, metric_name). All groups are evaluated in one
   grouped query; select_override keeps it a single CTE chain, which T-SQL requires.
   Returns a dict of group key (see get_anomaly_result_owners_group_key) to owners.
-  The rules are validated on every run, even when nothing is anomalous.
+  The conditions are validated on every run, even when nothing is anomalous.
 #}
 {% macro get_anomaly_result_owners_by_group(flattened_test, anomaly_scores_rows) %}
-    {% set rules = elementary.get_result_owners_rules(flattened_test) %}
-    {% if not rules %} {% do return({}) %} {% endif %}
+    {% set conditions = elementary.get_conditional_result_owners(flattened_test) %}
+    {% if not conditions %} {% do return({}) %} {% endif %}
     {% if not (anomaly_scores_rows | selectattr("is_anomalous") | list) %}
         {% do return({}) %}
     {% endif %}
     {% set result_owners_query = elementary.get_read_anomaly_scores_query(
         flattened_test,
         additional_where=elementary.edr_is_true("is_anomalous"),
-        select_override=elementary.get_result_owners_select_clause(rules)
+        select_override=elementary.get_conditional_result_owners_select_clause(
+            conditions, flattened_test.unique_id
+        )
         ~ ", full_table_name, column_name, metric_name",
         group_by="full_table_name, column_name, metric_name",
     ) %}
@@ -141,7 +161,7 @@
     {% for row in elementary.agate_to_dicts(
         elementary.run_query(result_owners_query)
     ) %}
-        {% set owners = elementary.get_matched_result_owners(rules, row) %}
+        {% set owners = elementary.get_matched_result_owners(conditions, row) %}
         {% if owners %}
             {% do owners_by_group.update(
                 {

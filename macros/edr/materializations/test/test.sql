@@ -38,11 +38,11 @@
             {% if elementary_test_type != "anomaly_detection" and elementary.get_node_meta(
                 model
             ).get(
-                "result_owners"
+                "conditional_result_owners"
             ) %}
                 {% do elementary.edr_log_warning(
                     test_unique_id
-                    ~ ": result_owners is not supported for "
+                    ~ ": conditional_result_owners is not supported for "
                     ~ short_name
                     ~ " tests and will be ignored."
                 ) %}

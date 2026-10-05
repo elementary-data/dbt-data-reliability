@@ -21,7 +21,7 @@ def _accepted_values_test(
     test_id: str,
     dbt_project: DbtProject,
     data: List[dict],
-    result_owners: list,
+    conditions: list,
     test_config: Optional[Dict[str, Any]] = None,
 ):
     return dbt_project.test(
@@ -31,40 +31,43 @@ def _accepted_values_test(
         test_column=COLUMN_NAME,
         data=data,
         model_config=MODEL_CONFIG,
-        test_config={**(test_config or {}), "meta": {"result_owners": result_owners}},
+        test_config={
+            **(test_config or {}),
+            "meta": {"conditional_result_owners": conditions},
+        },
         test_vars={"enable_elementary_test_materialization": True},
     )
 
 
-def test_matching_rules_union_owners(test_id: str, dbt_project: DbtProject):
+def test_matching_conditions_union_owners(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: value} for value in ["NL", "JP", "JP", "KR"]]
-    result_owners = [
-        {"expression": "value_field = 'JP'", "owners": ["japan@example.com"]},
+    conditions = [
+        {"condition": "value_field = 'JP'", "owners": ["japan@example.com"]},
         {
-            "expression": "value_field in ('JP', 'KR')",
+            "condition": "value_field in ('JP', 'KR')",
             "owners": "japan@example.com, korea@example.com",
         },
-        {"expression": "value_field = 'TW'", "owners": ["taiwan@example.com"]},
+        {"condition": "value_field = 'TW'", "owners": ["taiwan@example.com"]},
     ]
-    test_result = _accepted_values_test(test_id, dbt_project, data, result_owners)
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["japan@example.com", "korea@example.com"]
 
 
-def test_no_matching_rule_keeps_default_owners(test_id: str, dbt_project: DbtProject):
+def test_no_matching_condition_keeps_default_owners(
+    test_id: str, dbt_project: DbtProject
+):
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
-    result_owners = [
-        {"expression": "value_field = 'TW'", "owners": ["taiwan@example.com"]}
-    ]
-    test_result = _accepted_values_test(test_id, dbt_project, data, result_owners)
+    conditions = [{"condition": "value_field = 'TW'", "owners": ["taiwan@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert test_result["status"] == "fail"
     assert _owners(test_result) == [DEFAULT_OWNER]
 
 
 def test_passing_test_keeps_default_owners(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: "NL"}]
-    result_owners = [{"expression": "1 = 1", "owners": ["everyone@example.com"]}]
-    test_result = _accepted_values_test(test_id, dbt_project, data, result_owners)
+    conditions = [{"condition": "1 = 1", "owners": ["everyone@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert test_result["status"] == "pass"
     assert _owners(test_result) == [DEFAULT_OWNER]
 
@@ -80,10 +83,10 @@ def test_dimension_anomalies_result_owners(test_id: str, dbt_project: DbtProject
         for cur_date in training_dates
         for superhero in ["Superman", "Spiderman"]
     ]
-    result_owners = [
-        {"expression": "dimension_value = 'Superman'", "owners": ["dc@example.com"]},
+    conditions = [
+        {"condition": "dimension_value = 'Superman'", "owners": ["dc@example.com"]},
         {
-            "expression": "dimension_value = 'Spiderman'",
+            "condition": "dimension_value = 'Spiderman'",
             "owners": ["marvel@example.com"],
         },
     ]
@@ -93,7 +96,7 @@ def test_dimension_anomalies_result_owners(test_id: str, dbt_project: DbtProject
         {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]},
         data=data,
         model_config=MODEL_CONFIG,
-        test_config={"meta": {"result_owners": result_owners}},
+        test_config={"meta": {"conditional_result_owners": conditions}},
     )
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["dc@example.com"]
@@ -101,20 +104,16 @@ def test_dimension_anomalies_result_owners(test_id: str, dbt_project: DbtProject
 
 def test_matched_owners_are_sorted(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: "JP"}]
-    result_owners = [
-        {"expression": "1 = 1", "owners": ["b@example.com", "a@example.com"]}
-    ]
-    test_result = _accepted_values_test(test_id, dbt_project, data, result_owners)
+    conditions = [{"condition": "1 = 1", "owners": ["b@example.com", "a@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert _owners(test_result) == ["a@example.com", "b@example.com"]
 
 
-def test_warn_status_gets_result_owners(test_id: str, dbt_project: DbtProject):
+def test_warn_status_gets_conditional_owners(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
-    result_owners = [
-        {"expression": "value_field = 'JP'", "owners": ["japan@example.com"]}
-    ]
+    conditions = [{"condition": "value_field = 'JP'", "owners": ["japan@example.com"]}]
     test_result = _accepted_values_test(
-        test_id, dbt_project, data, result_owners, test_config={"severity": "warn"}
+        test_id, dbt_project, data, conditions, test_config={"severity": "warn"}
     )
     assert test_result["status"] == "warn"
     assert _owners(test_result) == ["japan@example.com"]
@@ -136,13 +135,13 @@ def _dimension_data(
 
 
 def test_dimension_anomalies_partial_match(test_id: str, dbt_project: DbtProject):
-    # Both dimension values are anomalous, but only one has a rule.
+    # Both dimension values are anomalous, but only one has a condition.
     data = _dimension_data(
         [{"superhero": "Superman"}] * 3 + [{"superhero": "Spiderman"}] * 3,
         [{"superhero": "Superman"}, {"superhero": "Spiderman"}],
     )
-    result_owners = [
-        {"expression": "dimension_value = 'Superman'", "owners": ["dc@example.com"]}
+    conditions = [
+        {"condition": "dimension_value = 'Superman'", "owners": ["dc@example.com"]}
     ]
     test_result = dbt_project.test(
         test_id,
@@ -150,7 +149,7 @@ def test_dimension_anomalies_partial_match(test_id: str, dbt_project: DbtProject
         {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]},
         data=data,
         model_config=MODEL_CONFIG,
-        test_config={"meta": {"result_owners": result_owners}},
+        test_config={"meta": {"conditional_result_owners": conditions}},
     )
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["dc@example.com"]
@@ -166,13 +165,13 @@ def test_multi_column_dimension_result_owners(test_id: str, dbt_project: DbtProj
             {"universe": "Marvel", "superhero": "Spiderman"},
         ],
     )
-    result_owners = [
+    conditions = [
         {
-            "expression": "dimension_value = 'DC; Superman'",
+            "condition": "dimension_value = 'DC; Superman'",
             "owners": ["dc@example.com"],
         },
         {
-            "expression": "dimension_value = 'Marvel; Spiderman'",
+            "condition": "dimension_value = 'Marvel; Spiderman'",
             "owners": ["marvel@example.com"],
         },
     ]
@@ -185,7 +184,7 @@ def test_multi_column_dimension_result_owners(test_id: str, dbt_project: DbtProj
         },
         data=data,
         model_config=MODEL_CONFIG,
-        test_config={"meta": {"result_owners": result_owners}},
+        test_config={"meta": {"conditional_result_owners": conditions}},
     )
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["dc@example.com"]
@@ -199,8 +198,8 @@ def test_column_anomalies_result_owners_per_metric(
         [{"superhero": None}] * 3,
         [{"superhero": "Superman"}, {"superhero": "Batman"}],
     )
-    result_owners = [
-        {"expression": "metric_name = 'null_count'", "owners": ["nulls@example.com"]}
+    conditions = [
+        {"condition": "metric_name = 'null_count'", "owners": ["nulls@example.com"]}
     ]
     test_results = dbt_project.test(
         test_id,
@@ -212,7 +211,7 @@ def test_column_anomalies_result_owners_per_metric(
         data=data,
         test_column="superhero",
         model_config=MODEL_CONFIG,
-        test_config={"meta": {"result_owners": result_owners}},
+        test_config={"meta": {"conditional_result_owners": conditions}},
         multiple_results=True,
     )
     owners_by_metric = {
@@ -227,8 +226,8 @@ def test_column_anomalies_result_owners_per_metric(
 
 def test_volume_anomalies_result_owners(test_id: str, dbt_project: DbtProject):
     data = _dimension_data([{}] * 6, [{}])
-    result_owners = [
-        {"expression": "metric_name = 'row_count'", "owners": ["volume@example.com"]}
+    conditions = [
+        {"condition": "metric_name = 'row_count'", "owners": ["volume@example.com"]}
     ]
     test_result = dbt_project.test(
         test_id,
@@ -236,7 +235,17 @@ def test_volume_anomalies_result_owners(test_id: str, dbt_project: DbtProject):
         {"timestamp_column": TIMESTAMP_COLUMN},
         data=data,
         model_config=MODEL_CONFIG,
-        test_config={"meta": {"result_owners": result_owners}},
+        test_config={"meta": {"conditional_result_owners": conditions}},
     )
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["volume@example.com"]
+
+
+def test_too_many_conditions_errors(test_id: str, dbt_project: DbtProject):
+    data = [{COLUMN_NAME: "JP"}]
+    conditions = [
+        {"condition": "1 = 1", "owners": [f"owner{i}@example.com"]} for i in range(101)
+    ]
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
+    assert test_result["status"] == "error"
+    assert "Compilation Error" in test_result["test_results_description"]
