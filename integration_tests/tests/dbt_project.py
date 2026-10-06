@@ -1,6 +1,7 @@
 import json
 import os
 from contextlib import contextmanager, nullcontext
+from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Generator, List, Literal, Optional, Union, overload
@@ -257,8 +258,12 @@ class DbtProject:
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         if columns and test_column:
             raise ValueError("You can't specify both 'columns' and 'test_column'.")
-        test_vars = test_vars or {}
+        test_vars = dict(test_vars or {})
         test_vars["elementary_enabled"] = elementary_enabled
+        # Pin run_started_at to before seeding, close to when the test generated its
+        # data, so data dates and Elementary's buckets agree even if UTC midnight
+        # passes while the data is being seeded.
+        test_vars.setdefault("custom_run_started_at", datetime.utcnow().isoformat())
 
         test_id = test_id.replace("[", "_").replace("]", "_")
         if not table_name:
