@@ -126,7 +126,7 @@ jobs:
         run: |
           docker compose -f docker-compose-dremio.yml up -d
           # Wait for Dremio to be healthy (one-shot containers like
-          # minio-setup exit immediately, so --wait would fail).
+          # rustfs-setup exit immediately, so --wait would fail).
           echo "Waiting for Dremio to become healthy..."
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} dremio 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Dremio is healthy."
@@ -154,13 +154,13 @@ jobs:
         run: |
           docker compose -f docker-compose-spark.yml build
           docker compose -f docker-compose-spark.yml up -d
-          echo "Waiting for MinIO setup to complete..."
+          echo "Waiting for RustFS setup to complete..."
           timeout 60 bash -c '
-            until [ "$(docker inspect -f "{{.State.Status}}" spark-minio-setup 2>/dev/null)" = "exited" ]; do sleep 2; done
-            EXIT_CODE=$(docker inspect -f "{{.State.ExitCode}}" spark-minio-setup 2>/dev/null)
-            if [ "$EXIT_CODE" != "0" ]; then echo "MinIO setup failed with exit code $EXIT_CODE"; exit 1; fi
+            until [ "$(docker inspect -f "{{.State.Status}}" spark-rustfs-setup 2>/dev/null)" = "exited" ]; do sleep 2; done
+            EXIT_CODE=$(docker inspect -f "{{.State.ExitCode}}" spark-rustfs-setup 2>/dev/null)
+            if [ "$EXIT_CODE" != "0" ]; then echo "RustFS setup failed with exit code $EXIT_CODE"; exit 1; fi
           '
-          echo "MinIO is ready."
+          echo "RustFS is ready."
           echo "Waiting for Spark Thrift Server to become healthy..."
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} spark-thrift 2>/dev/null)" = "healthy" ]; do sleep 5; done'
           echo "Spark Thrift Server is healthy."
@@ -203,7 +203,8 @@ jobs:
         env:
           PIP_PRE_FLAG: ${{ (inputs.dbt-version == 'latest_pre' && '--pre') || '' }}
           DBT_CORE_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('=={0}', inputs.dbt-version)) || '' }}
-          DBT_ADAPTER_PKG: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}
+          # dbt-sqlserver 1.12 moved pyodbc (still its default backend) to the [pyodbc] extra.
+          DBT_ADAPTER_PKG: ${{ (inputs.warehouse-type == 'databricks_catalog' && 'databricks') || (inputs.warehouse-type == 'spark' && 'spark[PyHive]') || (inputs.warehouse-type == 'sqlserver' && 'sqlserver[pyodbc]') || (inputs.warehouse-type == 'athena' && 'athena-community') || inputs.warehouse-type }}
           DBT_ADAPTER_PIN: ${{ (!startsWith(inputs.dbt-version, 'latest') && format('~={0}', inputs.dbt-version)) || '' }}
         run: |
           pip install $PIP_PRE_FLAG "dbt-core${DBT_CORE_PIN}" "dbt-${DBT_ADAPTER_PKG}${DBT_ADAPTER_PIN}"

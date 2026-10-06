@@ -12,7 +12,7 @@ services:
     depends_on:
       spark-hive-metastore:
         condition: service_started
-      minio-setup:
+      rustfs-setup:
         condition: service_completed_successfully
     command: >
       --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
@@ -39,40 +39,40 @@ services:
       - POSTGRES_PASSWORD=dbt
       - POSTGRES_DB=metastore
 
-  minio:
-    image: minio/minio:latest
-    container_name: spark-minio
+  # S3-compatible storage for external seed tables.
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    container_name: spark-rustfs
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-    command: ["server", "/data", "--console-address", ":9001"]
+      - RUSTFS_ACCESS_KEY=rustfs
+      - RUSTFS_SECRET_KEY=rustfs123
     healthcheck:
-      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 5s
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
 
-  minio-setup:
-    image: minio/mc
-    container_name: spark-minio-setup
+  rustfs-setup:
+    image: rustfs/rc:v0.1.36
+    container_name: spark-rustfs-setup
     depends_on:
-      minio:
+      rustfs:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
       set -e;
-      mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      mc mb --ignore-existing myminio/spark-seeds;
-      echo 'MinIO bucket spark-seeds created.';
+      rc alias set local http://rustfs:9000 rustfs rustfs123;
+      rc bucket create --ignore-existing local/spark-seeds;
+      echo 'Bucket spark-seeds created.';
       "
 
 volumes:
   spark-warehouse:
   hive-metastore:
-  minio-data:
+  rustfs-data:

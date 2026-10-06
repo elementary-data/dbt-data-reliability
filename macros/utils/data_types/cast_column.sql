@@ -12,18 +12,25 @@
 
 {#
   BigQuery's TIMESTAMP type only supports microsecond precision (6 fractional digits).
-  Some runtimes (e.g. dbt-fusion) write nanosecond-precision strings like
+  Some runtimes (e.g. dbt-fusion, dbt-core 1.11) wrote nanosecond-precision strings like
   '2026-04-03T10:50:50.961498756Z' into Elementary's metadata tables, which fail
-  to cast. This truncates any sub-microsecond fractional digits before casting.
+  to cast. When bigquery_truncate_nanosecond_timestamps is enabled, sub-microsecond
+  fractional digits are truncated before casting.
+  The string round trip prevents partition pruning on the casted column, so disable the var
+  once old rows are out of range or fixed with fix_nanosecond_timing_values.
+  New rows are truncated on upload (truncate_to_microseconds).
 #}
 {%- macro bigquery__edr_cast_as_timestamp(timestamp_field) -%}
-    cast(
-        regexp_replace(
-            cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
-            r'(\.\d{6})\d+',
-            r'\1'
-        ) as {{ elementary.edr_type_timestamp() }}
-    )
+    {%- if elementary.get_config_var("bigquery_truncate_nanosecond_timestamps") -%}
+        cast(
+            regexp_replace(
+                cast({{ timestamp_field }} as {{ elementary.edr_type_string() }}),
+                r'(\.\d{6})\d+',
+                r'\1'
+            ) as {{ elementary.edr_type_timestamp() }}
+        )
+    {%- else -%} {{ elementary.default__edr_cast_as_timestamp(timestamp_field) }}
+    {%- endif -%}
 {%- endmacro -%}
 
 {# Athena and Trino needs explicit conversion for ISO8601 timestamps used in buckets_cte #}

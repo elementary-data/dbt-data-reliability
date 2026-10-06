@@ -245,7 +245,7 @@ class BaseSqlInsertSeeder(ABC):
 
 
 class SparkS3CsvSeeder:
-    """Seeder for Spark that uploads CSVs to MinIO (S3) and creates external tables.
+    """Seeder for Spark that uploads CSVs to RustFS (S3) and creates external tables.
 
     Bypasses ``dbt seed`` entirely — Spark reads the CSV natively via
     ``CREATE TABLE ... USING CSV``.  This avoids the ``_fix_binding`` bug
@@ -262,16 +262,16 @@ class SparkS3CsvSeeder:
     that empty cells are also read as NULL.
 
     The S3 CSV files are **not** deleted after the test — they live in
-    ephemeral MinIO storage that is destroyed with ``docker compose down``.
+    ephemeral RustFS storage that is destroyed with ``docker compose down``.
     The external table continues to reference the S3 path throughout the
     test lifecycle.
     """
 
-    # MinIO connection defaults (matching docker-compose-spark.yml).
-    _MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "http://127.0.0.1:9000")
-    _MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")  # noqa: S105
-    _MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin")  # noqa: S105
-    _S3_BUCKET = os.environ.get("MINIO_BUCKET", "spark-seeds")
+    # RustFS connection defaults (matching docker-compose-spark.yml).
+    _RUSTFS_ENDPOINT = os.environ.get("RUSTFS_ENDPOINT", "http://127.0.0.1:9000")
+    _RUSTFS_ACCESS_KEY = os.environ.get("RUSTFS_ACCESS_KEY", "rustfs")  # noqa: S105
+    _RUSTFS_SECRET_KEY = os.environ.get("RUSTFS_SECRET_KEY", "rustfs123")  # noqa: S105
+    _S3_BUCKET = os.environ.get("RUSTFS_BUCKET", "spark-seeds")
 
     # Spark Thrift Server connection defaults.
     _THRIFT_HOST = os.environ.get("SPARK_THRIFT_HOST", "127.0.0.1")
@@ -287,14 +287,14 @@ class SparkS3CsvSeeder:
         self._seeds_dir_path = seeds_dir_path
 
     def _get_s3_client(self):  # type: ignore[no-untyped-def]
-        """Return a boto3 S3 client configured for the local MinIO endpoint."""
+        """Return a boto3 S3 client configured for the local RustFS endpoint."""
         import boto3
 
         return boto3.client(
             "s3",
-            endpoint_url=self._MINIO_ENDPOINT,
-            aws_access_key_id=self._MINIO_ACCESS_KEY,
-            aws_secret_access_key=self._MINIO_SECRET_KEY,
+            endpoint_url=self._RUSTFS_ENDPOINT,
+            aws_access_key_id=self._RUSTFS_ACCESS_KEY,
+            aws_secret_access_key=self._RUSTFS_SECRET_KEY,
         )
 
     @contextmanager
@@ -366,14 +366,14 @@ class SparkS3CsvSeeder:
 
     @contextmanager
     def seed(self, data: List[dict], table_name: str) -> Generator[None, None, None]:
-        """Upload CSV to MinIO and create a Spark external table.
+        """Upload CSV to RustFS and create a Spark external table.
 
         The CSV is also written locally so dbt discovers the seed node
         for ``{{ ref() }}`` resolution.  The local CSV is cleaned up
         when the context manager exits to prevent dbt compilation
         errors (duplicate resource names).  The S3 object is **not**
         deleted — the external table references it throughout the test,
-        and MinIO storage is ephemeral (destroyed with
+        and RustFS storage is ephemeral (destroyed with
         ``docker compose down``).
         """
         if not data:
@@ -384,7 +384,7 @@ class SparkS3CsvSeeder:
         fq_table = f"`{self._schema}`.`{table_name}`"
 
         try:
-            # Upload CSV to MinIO.
+            # Upload CSV to RustFS.
             s3 = self._get_s3_client()
             s3.upload_file(str(seed_path), self._S3_BUCKET, s3_key)
 
