@@ -103,14 +103,13 @@ def test_run_started_at_is_taken_per_call(
 # Runs dbt for real. The harness clock reads one minute before the last UTC
 # midnight, while dbt runs on the real clock, a day later: the same as a CI run
 # where midnight passes while seeding. The buckets must follow the harness clock.
+# The seeded table is named after the test id: Postgres allows 63 characters.
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
-    name="spike_in_unfinished_bucket", spike_days_ago=0, expected_status="pass"
+    name="unfinished_bucket", spike_days_ago=0, expected_status="pass"
 )
-@Parametrization.case(
-    name="spike_in_last_full_bucket", spike_days_ago=1, expected_status="fail"
-)
-def test_buckets_follow_harness_clock_across_midnight(
+@Parametrization.case(name="last_full_bucket", spike_days_ago=1, expected_status="fail")
+def test_buckets_follow_harness_clock(
     test_id: str,
     dbt_project: DbtProject,
     monkeypatch,
