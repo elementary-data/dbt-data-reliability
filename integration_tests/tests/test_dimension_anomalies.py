@@ -632,7 +632,7 @@ def test_include_current_bucket_tests_previous_bucket(
 
 # Redshift does not support monthly time buckets.
 @pytest.mark.skip_targets(["redshift"])
-def test_include_current_bucket_recalculates_partial_bucket_after_gap(
+def test_include_current_bucket_recalculates_partial_bucket(
     test_id: str, dbt_project: DbtProject
 ):
     """A partial snapshot is recalculated once its bucket has ended, even when that is outside backfill_days."""
