@@ -11,24 +11,33 @@ services:
       - "4040:4040"
     depends_on:
       spark-hive-metastore:
-        condition: service_started
+        condition: service_healthy
       rustfs-setup:
         condition: service_completed_successfully
     command: >
       --class org.apache.spark.sql.hive.thriftserver.HiveThriftServer2
       --name Thrift JDBC/ODBC Server
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 10000"]
+      test:
+        [
+          "CMD",
+          "beeline",
+          "-u",
+          "jdbc:hive2://localhost:10000",
+          "-n",
+          "dbt",
+          "--silent=true",
+          "-e",
+          "select 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 20
       start_period: 30s
     volumes:
-      - spark-warehouse:/spark-warehouse/
-      - ./docker/spark/hive-site.xml:/usr/spark/conf/hive-site.xml
-      - ./docker/spark/spark-defaults.conf:/usr/spark/conf/spark-defaults.conf
-    environment:
-      - WAIT_FOR=spark-hive-metastore:5432
+      - spark-warehouse:/opt/spark/work-dir/spark-warehouse
+      - ./docker/spark/hive-site.xml:/opt/spark/conf/hive-site.xml
+      - ./docker/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
 
   spark-hive-metastore:
     image: postgres:15-alpine
@@ -38,6 +47,11 @@ services:
       - POSTGRES_USER=dbt
       - POSTGRES_PASSWORD=dbt
       - POSTGRES_DB=metastore
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbt"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # S3-compatible storage for external seed tables.
   rustfs:
