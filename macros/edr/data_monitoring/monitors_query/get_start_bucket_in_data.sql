@@ -1,4 +1,5 @@
 {% macro get_start_bucket_in_data(timestamp_column, min_bucket_start, time_bucket) %}
+    {% set time_bucket = elementary.get_datediff_time_bucket(time_bucket) %}
     {% set bucket_start_datediff_expr %}
       floor({{ elementary.edr_datediff(min_bucket_start, elementary.edr_cast_as_timestamp(timestamp_column), time_bucket.period) }} / {{ time_bucket.count }}) * {{ time_bucket.count }}
     {% endset %}
