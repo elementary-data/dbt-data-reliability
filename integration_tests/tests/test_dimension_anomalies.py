@@ -1,7 +1,8 @@
 import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
 
+import dateutil.parser
 import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
@@ -315,3 +316,372 @@ def test_anomaly_in_detection_period(
     )
 
     assert test_result["status"] == expected_status
+
+
+def _generate_current_bucket_data(utc_today: date, today_superheroes: List[str]):
+    """One Superman and one Spiderman per day until yesterday, and today_superheroes today.
+
+    Today is the bucket that is still in progress when the test runs.
+    """
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": superhero}
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for superhero in ["Superman", "Spiderman"]
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: utc_today.strftime(DATE_FORMAT), "superhero": superhero}
+        for superhero in today_superheroes
+    ]
+    return data
+
+
+def test_include_current_bucket_detects_anomaly_in_current_bucket(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data = _generate_current_bucket_data(
+        utc_today, ["Superman", "Superman", "Superman", "Spiderman"]
+    )
+
+    # By default only complete buckets are tested, so today's anomaly is not detected yet.
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, DBT_TEST_ARGS, data=data)
+    assert test_result["status"] == "pass"
+
+    test_args = {**DBT_TEST_ARGS, "include_current_bucket": True}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
+    anomalous_points = [x for x in anomaly_test_points if x["is_anomalous"]]
+    assert set(x["dimension_value"] for x in anomalous_points) == {"Superman"}
+    assert all(
+        x["bucket_start"].startswith(utc_today.strftime("%Y-%m-%d"))
+        for x in anomalous_points
+    )
+
+
+def test_include_current_bucket_passes_on_normal_current_bucket(
+    test_id: str, dbt_project: DbtProject
+):
+    data = _generate_current_bucket_data(
+        datetime.utcnow().date(), ["Superman", "Spiderman"]
+    )
+    test_args = {**DBT_TEST_ARGS, "include_current_bucket": True}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
+def test_include_current_bucket_ignores_dimension_not_arrived_yet(
+    test_id: str, dbt_project: DbtProject
+):
+    """A dimension without rows in the current bucket has not arrived yet, so it is not a drop to zero."""
+    data = _generate_current_bucket_data(datetime.utcnow().date(), ["Spiderman"])
+    test_args = {**DBT_TEST_ARGS, "include_current_bucket": True}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
+def test_include_current_bucket_ignores_deleted_rows(
+    test_id: str, dbt_project: DbtProject
+):
+    """Rows deleted from the current bucket are not scored from the metrics of an earlier run."""
+    utc_today = datetime.utcnow().date()
+    test_args = {**DBT_TEST_ARGS, "include_current_bucket": True}
+
+    data = _generate_current_bucket_data(
+        utc_today, ["Superman", "Superman", "Superman", "Spiderman"]
+    )
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    # Today's Superman rows were a bad upload and got deleted, so Superman has not arrived yet.
+    data = _generate_current_bucket_data(utc_today, ["Spiderman"])
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+
+def test_include_current_bucket_requires_timestamp_column(
+    test_id: str, dbt_project: DbtProject
+):
+    data = _generate_current_bucket_data(datetime.utcnow().date(), ["Superman"])
+    test_args = {"dimensions": ["superhero"], "include_current_bucket": True}
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "error"
+
+
+@pytest.mark.parametrize("as_model", [False, True], ids=["source", "model"])
+def test_include_current_bucket_with_multi_hour_buckets(
+    test_id: str, dbt_project: DbtProject, as_model: bool
+):
+    """4-hour buckets, so the current bucket end is calculated with count > 1.
+
+    A source takes the incremental path. A table model recalculates all buckets, like force_metrics_backfill.
+    """
+    test_id = test_id.replace("[", "_").replace("]", "_")
+    # In the middle of a bucket, so the current bucket cannot end while the test runs.
+    run_at = datetime.utcnow().replace(
+        hour=10, minute=0, second=0, microsecond=0
+    ) - timedelta(days=1)
+    current_bucket_start = run_at.replace(hour=8)
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "superhero": superhero}
+        for bucket_start in generate_dates(
+            base_date=current_bucket_start - timedelta(hours=4),
+            step=timedelta(hours=4),
+            days_back=7,
+        )
+        for superhero in ["Superman", "Spiderman"]
+    ]
+    data += [
+        {
+            TIMESTAMP_COLUMN: current_bucket_start.strftime(DATE_FORMAT),
+            "superhero": superhero,
+        }
+        for superhero in ["Superman", "Superman", "Superman", "Spiderman"]
+    ]
+    test_args = {**DBT_TEST_ARGS, "time_bucket": {"period": "hour", "count": 4}}
+    test_vars = {"custom_run_started_at": run_at.isoformat()}
+
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        as_model=as_model,
+        test_vars=test_vars,
+    )
+    assert test_result["status"] == "pass"
+
+    test_args["include_current_bucket"] = True
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        as_model=as_model,
+        test_vars=test_vars,
+    )
+    assert test_result["status"] == "fail"
+
+    anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
+    anomalous_points = [x for x in anomaly_test_points if x["is_anomalous"]]
+    assert set(x["dimension_value"] for x in anomalous_points) == {"Superman"}
+    assert all(
+        x["bucket_start"][:13].replace("T", " ")
+        == current_bucket_start.strftime("%Y-%m-%d %H")
+        for x in anomalous_points
+    )
+
+
+# Redshift does not support monthly time buckets.
+@pytest.mark.skip_targets(["redshift"])
+def test_include_current_bucket_monthly_snapshot_upload(
+    test_id: str, dbt_project: DbtProject
+):
+    """Monthly uploads per country: a short upload is detected in the month it lands."""
+    current_month, *previous_months = _get_previous_bucket_starts("month", 12)
+
+    rows_per_upload = {"PL": 100, "MY": 20}
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: month_start.strftime(DATE_FORMAT), "country": country}
+        for month_start in previous_months
+        for country, rows in rows_per_upload.items()
+        for _ in range(rows)
+    ]
+    # This month PL delivered a normal upload and MY a short one.
+    data += [
+        {TIMESTAMP_COLUMN: current_month.strftime(DATE_FORMAT), "country": country}
+        for country, rows in {"PL": 100, "MY": 10}.items()
+        for _ in range(rows)
+    ]
+
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": "month", "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "detection_period": {"period": "day", "count": 31},
+    }
+
+    # By default this month is only tested once it has ended.
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "pass"
+
+    test_args["include_current_bucket"] = True
+    test_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert test_result["status"] == "fail"
+
+    anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
+    anomalous_points = [x for x in anomaly_test_points if x["is_anomalous"]]
+    assert set(x["dimension_value"] for x in anomalous_points) == {"MY"}
+
+
+def _get_previous_bucket_starts(
+    period: str, count: int, base_date: Optional[date] = None
+) -> List[date]:
+    """The start of the week or month of base_date (default today), followed by the starts of the `count` before it."""
+    base_date = base_date or datetime.utcnow().date()
+    if period == "week":
+        current_week_start = base_date - timedelta(days=base_date.weekday())
+        return [current_week_start - timedelta(weeks=i) for i in range(count + 1)]
+    bucket_starts = [base_date.replace(day=1)]
+    for _ in range(count):
+        previous = bucket_starts[-1] - timedelta(days=1)
+        bucket_starts.append(previous.replace(day=1))
+    return bucket_starts
+
+
+@pytest.mark.parametrize("period", ["week", "month"])
+def test_buckets_stay_aligned_on_rerun(
+    test_id: str, dbt_project: DbtProject, target: str, period: str
+):
+    """On a rerun the backfill window starts mid-bucket; buckets must still be calendar weeks/months."""
+    if target == "redshift" and period == "month":
+        pytest.skip("Redshift does not support monthly time buckets.")
+    # Uploads on the first day of each bucket, for the buckets before the current one.
+    bucket_starts = _get_previous_bucket_starts(period, 12)[1:]
+
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
+        for bucket_start in bucket_starts
+        for country, rows in {"PL": 100, "MY": 20}.items()
+        for _ in range(rows)
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": period, "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "detection_period": {"period": "day", "count": 31},
+    }
+
+    first_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert first_result["status"] == "pass"
+    second_result = dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    assert second_result["status"] == "pass"
+
+
+@pytest.mark.parametrize(
+    "period,first_run_at,run_at",
+    [
+        ("week", "2026-10-07T12:00:00", "2026-10-14T12:00:00"),
+        # October has more days than the 30 backfill_days of monthly buckets.
+        ("month", "2026-09-10T12:00:00", "2026-10-15T12:00:00"),
+    ],
+    ids=["week", "month"],
+)
+def test_include_current_bucket_tests_previous_bucket(
+    test_id: str,
+    dbt_project: DbtProject,
+    target: str,
+    period: str,
+    first_run_at: str,
+    run_at: str,
+):
+    """MY skipped the previous bucket. Testing the current bucket must not stop testing the previous one."""
+    if target == "redshift" and period == "month":
+        pytest.skip("Redshift does not support monthly time buckets.")
+    test_id = test_id.replace("[", "_").replace("]", "_")
+    current_bucket, previous_bucket, *older_buckets = _get_previous_bucket_starts(
+        period, 12, base_date=datetime.fromisoformat(run_at).date()
+    )
+    rows_per_bucket = {bucket: {"PL": 100, "MY": 20} for bucket in older_buckets}
+    rows_per_bucket[previous_bucket] = {"PL": 100}
+    rows_per_bucket[current_bucket] = {"PL": 100, "MY": 20}
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
+        for bucket_start, rows_per_country in rows_per_bucket.items()
+        for country, rows in rows_per_country.items()
+        for _ in range(rows)
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": period, "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "include_current_bucket": True,
+    }
+
+    # A run during the previous bucket stores MY in the metrics history, so the next run
+    # fills in a zero for MY once the previous bucket is complete. The dates stay valid once
+    # they have passed: the first run's snapshot then counts as complete (updated_at is the
+    # real clock), but the previous bucket is inside the second run's backfill window, so
+    # it is recalculated anyway.
+    first_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_vars={"custom_run_started_at": first_run_at},
+    )
+    assert first_result["status"] == "pass"
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        test_vars={"custom_run_started_at": run_at},
+    )
+    assert test_result["status"] == "fail"
+
+    # Only checks that the bucket is complete, since some adapters start weeks on Sunday.
+    anomaly_test_points = get_latest_anomaly_test_points(dbt_project, test_id)
+    anomalous_points = [x for x in anomaly_test_points if x["is_anomalous"]]
+    assert set(x["dimension_value"] for x in anomalous_points) == {"MY"}
+    assert all(x["bucket_end"][:10] <= run_at[:10] for x in anomalous_points)
+
+
+# Redshift does not support monthly time buckets.
+@pytest.mark.skip_targets(["redshift"])
+def test_include_current_bucket_recalculates_partial_bucket(
+    test_id: str, dbt_project: DbtProject
+):
+    """A partial snapshot is recalculated once its bucket has ended, even when that is outside backfill_days."""
+    current_month, *previous_months = _get_previous_bucket_starts("month", 12)
+    next_month = (current_month + timedelta(days=32)).replace(day=1)
+    rows_per_bucket = {month: {"PL": 100, "MY": 20} for month in previous_months}
+    rows_per_bucket[current_month] = {"PL": 100}  # MY never arrives this month
+    rows_per_bucket[next_month] = {"PL": 100, "MY": 20}
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
+        for bucket_start, rows_per_country in rows_per_bucket.items()
+        for country, rows in rows_per_country.items()
+        for _ in range(rows)
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "dimensions": ["country"],
+        "time_bucket": {"period": "month", "count": 1},
+        "training_period": {"period": "day", "count": 400},
+        "include_current_bucket": True,
+    }
+
+    # Runs now, so it stores a partial snapshot of this month before the month ends.
+    dbt_project.test(test_id, DBT_TEST_NAME, test_args, data=data)
+    # The next run is two months later, when this month is outside the backfill window.
+    later_run_at = (next_month + timedelta(days=32)).replace(day=10)
+    dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        test_vars={"custom_run_started_at": f"{later_run_at.isoformat()}T12:00:00"},
+    )
+
+    results = dbt_project.run_query(
+        f"""
+        with my_metrics as (
+            select
+                bucket_start,
+                metric_value,
+                row_number() over (partition by id order by updated_at desc) as row_num
+            from {{{{ ref("data_monitoring_metrics") }}}}
+            where dimension_value = 'MY' and lower(full_table_name) like '%{test_id.lower()}'
+        )
+        select bucket_start, metric_value from my_metrics where row_num = 1
+        """
+    )
+    current_month_values = [
+        result["metric_value"]
+        for result in results
+        if dateutil.parser.parse(result["bucket_start"]).date() == current_month
+    ]
+    assert current_month_values == [0]
