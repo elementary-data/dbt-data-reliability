@@ -242,10 +242,22 @@ def test_volume_anomalies_result_owners(test_id: str, dbt_project: DbtProject):
     assert _owners(test_result) == ["volume@example.com"]
 
 
+def test_max_conditions_runs(test_id: str, dbt_project: DbtProject):
+    # 1500 conditions, one column each, must fit in a single query on every warehouse.
+    data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
+    conditions = [
+        {"condition": f"value_field = 'X{i}'", "owners": [f"owner{i}@example.com"]}
+        for i in range(1499)
+    ] + [{"condition": "value_field = 'JP'", "owners": ["japan@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["japan@example.com"]
+
+
 def test_too_many_conditions_errors(test_id: str, dbt_project: DbtProject):
     data = [{COLUMN_NAME: "JP"}]
     conditions = [
-        {"condition": "1 = 1", "owners": [f"owner{i}@example.com"]} for i in range(101)
+        {"condition": "1 = 1", "owners": [f"owner{i}@example.com"]} for i in range(1501)
     ]
     test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert test_result["status"] == "error"
