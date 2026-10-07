@@ -48,7 +48,7 @@ services:
       - POSTGRES_PASSWORD=dbt
       - POSTGRES_DB=metastore
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dbt"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U dbt -d metastore"]
       interval: 5s
       timeout: 5s
       retries: 10
