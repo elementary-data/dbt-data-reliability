@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+import pytest
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 
@@ -249,3 +250,25 @@ def test_too_many_conditions_errors(test_id: str, dbt_project: DbtProject):
     test_result = _accepted_values_test(test_id, dbt_project, data, conditions)
     assert test_result["status"] == "error"
     assert "Compilation Error" in test_result["test_results_description"]
+
+
+# Schema change tests don't support conditional_result_owners: the config is
+# ignored (with a warning), so results keep the default owners.
+@pytest.mark.skip_targets(["databricks", "spark", "athena", "trino"])
+def test_schema_changes_ignore_conditional_owners(
+    test_id: str, dbt_project: DbtProject
+):
+    conditions = [{"condition": "1 = 1", "owners": ["everyone@example.com"]}]
+    test_results = dbt_project.test(
+        test_id,
+        "elementary.schema_changes_from_baseline",
+        test_args={"fail_on_added": True},
+        columns=[{"name": "id", "data_type": "integer"}],
+        data=[{"id": 1, "name": "Elon"}],
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": conditions}},
+        multiple_results=True,
+    )
+    failed_results = [r for r in test_results if r["status"] == "fail"]
+    assert failed_results
+    assert all(_owners(r) == [DEFAULT_OWNER] for r in failed_results)

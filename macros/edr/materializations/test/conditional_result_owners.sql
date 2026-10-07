@@ -13,6 +13,8 @@
   result keeps its default owners.
 #}
 {% macro get_conditional_result_owners(flattened_test) %}
+    {# A deliberate guard, not a warehouse limit: each condition becomes one
+       aggregate column in a single query, so this keeps that query a sane size. #}
     {% set max_conditions = 100 %}
     {% set meta = elementary.insensitive_get_dict_value(flattened_test, "meta") or {} %}
     {% set conditions = meta.get("conditional_result_owners") %}
