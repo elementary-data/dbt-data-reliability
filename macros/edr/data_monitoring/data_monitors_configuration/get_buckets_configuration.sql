@@ -74,7 +74,9 @@
         ) %}
     {%- else %}
         {%- set data_monitoring_metrics_relation = (
-            elementary.get_elementary_relation("data_monitoring_metrics")
+            elementary.get_elementary_relation(
+                "data_monitoring_metrics", allow_deferred_fallback=true
+            )
         ) %}
     {%- endif %}
     {%- set regular_bucket_times_query %}
