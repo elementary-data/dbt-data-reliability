@@ -31,7 +31,7 @@
         AND t1.{{ col }} = t2.{{ col }}
         {% endfor %}
     {% endset %}
-    {% do elementary.run_query(query) %}
+    {% do elementary.execute_no_fetch(query) %}
     {% do adapter.commit() %}
 {% endmacro %}
 

@@ -159,7 +159,7 @@
                             dimensions,
                         )
                     ) %}
-                    {%- do elementary.run_query(
+                    {%- do elementary.execute_no_fetch(
                         elementary.insert_as_select(
                             temp_table_relation, column_monitoring_query
                         )
