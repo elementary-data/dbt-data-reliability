@@ -207,34 +207,37 @@
     drop_failure_percent_threshold,
     anomaly_direction
 ) -%}
-    (
-        {% set spike_filter %}
+    {% set direction = anomaly_direction | lower %}
+    {% set spike_filter %}
     (metric_value > ((1 + {{ spike_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
-        {% set drop_filter %}
+    {% endset %}
+    {% set drop_filter %}
     (metric_value < ((1 - {{ drop_failure_percent_threshold }}/100.0) * training_avg))
-        {% endset %}
-
-        {% if spike_failure_percent_threshold and drop_failure_percent_threshold and (
-            anomaly_direction | lower
-        ) == "both" %}
-            {{ spike_filter }} or {{ drop_filter }}
-        {% else %}
-            {% if spike_failure_percent_threshold and anomaly_direction | lower in [
-                "spike",
-                "both",
-            ] %}
-                {{ spike_filter }}
-            {% else %} (1 = 1)
-            {% endif %} and
-
-            {% if drop_failure_percent_threshold and anomaly_direction | lower in [
-                "drop",
-                "both",
-            ] %}
-                {{ drop_filter }}
-            {% else %} (1 = 1)
-            {% endif %}
+    {% endset %}
+    (
+        {% if direction == "both" and (
+            spike_failure_percent_threshold or drop_failure_percent_threshold
+        ) %}
+            {# A threshold only ignores small changes in its own direction. #}
+            {{
+                (
+                    spike_filter
+                    if spike_failure_percent_threshold
+                    else "(anomaly_score >= 0)"
+                )
+            }}
+            or {{
+                (
+                    drop_filter
+                    if drop_failure_percent_threshold
+                    else "(anomaly_score < 0)"
+                )
+            }}
+        {% elif direction == "spike" and spike_failure_percent_threshold %}
+            {{ spike_filter }}
+        {% elif direction == "drop" and drop_failure_percent_threshold %}
+            {{ drop_filter }}
+        {% else %}(1 = 1)
         {% endif %}
     )
 {%- endmacro -%}

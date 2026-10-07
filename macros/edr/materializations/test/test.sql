@@ -290,7 +290,8 @@
     {% do run_query("create view " ~ full_view_name ~ " as " ~ sql) %}
 
     {% set query %}
-        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %} *
+        select {% if sample_limit is not none %} top {{ sample_limit }} {% endif %}
+        {{ elementary.fabric__get_test_sample_select_list(full_view_name) }}
         from {{ full_view_name }}
     {% endset %}
 
@@ -300,6 +301,41 @@
     {% do run_query("drop view if exists " ~ full_view_name) %}
 
     {% do return(result) %}
+{% endmacro %}
+
+{#
+    Builds the sample query's select list. T-SQL drivers return binary columns
+    as Python bytes, which agate stores as an unusable repr ("b'\x1a_,:'"), so
+    binary columns are selected as hex strings ('0x1A5F2C3A') instead.
+    `timestamp` is how T-SQL reports `rowversion`, a binary column, not a date.
+#}
+{% macro fabric__get_test_sample_select_list(full_view_name) %}
+    {% set columns_query %}
+        exec sp_describe_first_result_set N'select * from {{ full_view_name }}'
+    {% endset %}
+    {% set columns = elementary.agate_to_dicts(elementary.run_query(columns_query)) %}
+
+    {% set binary_types = ["binary", "varbinary", "image", "timestamp"] %}
+    {% set select_items = [] %}
+    {% set ns = namespace(has_binary=false) %}
+    {% for column in columns %}
+        {% set quoted_column = adapter.quote(column.name) %}
+        {# system_type_name is null for user-defined CLR types #}
+        {% set data_type = (column.system_type_name or "").split("(")[0] | lower %}
+        {% if data_type in binary_types %}
+            {% set ns.has_binary = true %}
+            {% do select_items.append(
+                "convert(varchar(max), convert(varbinary(max), "
+                ~ quoted_column
+                ~ "), 1) as "
+                ~ quoted_column
+            ) %}
+        {% else %} {% do select_items.append(quoted_column) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if not ns.has_binary %} {% do return("*") %} {% endif %}
+    {% do return(select_items | join(", ")) %}
 {% endmacro %}
 
 {% macro sqlserver__query_test_result_rows(
