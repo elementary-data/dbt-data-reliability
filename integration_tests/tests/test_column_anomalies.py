@@ -724,54 +724,96 @@ def test_col_excl_detect_train_seven_day_bucket(test_id: str, dbt_project: DbtPr
 
 
 # Regression test for https://github.com/elementary-data/elementary/issues/2370
-def test_column_anomalies_weekly_buckets_with_sunday_rows(
-    test_id: str, dbt_project: DbtProject
+# Weeks start on Monday or on Sunday depending on the adapter, so the test reads
+# the week start from the buckets, then checks every bucket against the data.
+# A source takes the incremental path. A model takes the regular one, where a
+# Sunday run used to add an unfinished bucket. The test name stays short: the
+# seeded table is named after it and Postgres allows 63 characters.
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="source_wednesday_run",
+    as_model=False,
+    run_started_at=datetime(2026, 9, 16, 12),
+)
+@Parametrization.case(
+    name="model_sunday_run",
+    as_model=True,
+    run_started_at=datetime(2026, 9, 13, 12),
+)
+def test_weekly_buckets_sunday_rows(
+    test_id: str, dbt_project: DbtProject, as_model: bool, run_started_at: datetime
 ):
-    utc_today = datetime.utcnow().date()
-    last_sunday = utc_today - timedelta(days=utc_today.isoweekday() % 7 or 7)
-    sundays = [last_sunday - timedelta(weeks=week) for week in range(12)]
+    training_days = 12 * 7
+    run_date = run_started_at.date()
+    data_dates = generate_dates(
+        base_date=run_date - timedelta(days=1), days_back=training_days + 7
+    )
 
     # Nulls only on Sundays, with a different count each week, so a Sunday
     # counted in the wrong week changes the weekly null_count.
-    expected_null_counts = {}
-    data: List[Dict[str, Any]] = []
-    for week, sunday in enumerate(sundays):
-        null_count = 1 + week % 3
-        expected_null_counts[sunday - timedelta(days=6)] = null_count
+    sundays = [cur_date for cur_date in data_dates if cur_date.isoweekday() == 7]
+    sunday_null_counts = {
+        sunday: 1 + week % 3 for week, sunday in enumerate(sorted(sundays))
+    }
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": "Superman"}
+        for cur_date in data_dates
+    ]
+    for sunday, null_count in sunday_null_counts.items():
         data += [
             {TIMESTAMP_COLUMN: sunday.strftime(DATE_FORMAT), "superhero": None}
-            for _ in range(null_count)
-        ]
-    data += [
-        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": "Superman"}
-        for cur_date in generate_dates(base_date=last_sunday, days_back=12 * 7)
-    ]
+        ] * null_count
 
     test_args = {
         **DBT_TEST_ARGS,
         "time_bucket": {"period": "week", "count": 1},
-        "training_period": {"period": "day", "count": 12 * 7},
+        "training_period": {"period": "day", "count": training_days},
     }
     test_result = dbt_project.test(
-        test_id, DBT_TEST_NAME, test_args, data=data, test_column="superhero"
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_column="superhero",
+        as_model=as_model,
+        test_vars={"custom_run_started_at": run_started_at.isoformat()},
     )
     assert test_result["status"] == "pass"
 
+    table_name = test_id.replace("[", "_").replace("]", "_").lower()
     metrics = dbt_project.run_query(
         f"""
         select bucket_start, metric_value
         from {{{{ ref("data_monitoring_metrics") }}}}
         where metric_name = 'null_count'
-        and lower(full_table_name) like '%{test_id.lower()}'
+        and lower(full_table_name) like '%{table_name}'
         """
     )
+    assert metrics, "Found no null_count metrics"
+    assert all(
+        metric["bucket_start"] is not None for metric in metrics
+    ), "Found metrics without a bucket"
     null_counts = {
-        dateutil.parser.parse(metric["bucket_start"]).date(): metric["metric_value"]
+        dateutil.parser.parse(str(metric["bucket_start"])).date(): metric[
+            "metric_value"
+        ]
         for metric in metrics
-        if metric["bucket_start"] is not None
     }
-    assert len(null_counts) == len(metrics), "Found metrics without a bucket"
-    assert null_counts
-    for bucket_start, null_count in null_counts.items():
-        assert bucket_start.isoweekday() == 1, f"{bucket_start} is not a Monday"
-        assert null_count == expected_null_counts[bucket_start], bucket_start
+    assert len(null_counts) == len(metrics), "Found duplicate buckets"
+
+    # Every full week from the start of the training period to the run.
+    week_start_day = min(null_counts).isoweekday()
+    assert week_start_day in (1, 7), f"{min(null_counts)} is not a Monday or Sunday"
+    days_back_start = run_date - timedelta(days=training_days)
+    bucket_start = days_back_start - timedelta(
+        days=(days_back_start.isoweekday() - week_start_day) % 7
+    )
+    expected_null_counts = {}
+    while bucket_start + timedelta(weeks=1) <= run_date:
+        expected_null_counts[bucket_start] = sum(
+            null_count
+            for sunday, null_count in sunday_null_counts.items()
+            if bucket_start <= sunday < bucket_start + timedelta(weeks=1)
+        )
+        bucket_start += timedelta(weeks=1)
+    assert null_counts == expected_null_counts
