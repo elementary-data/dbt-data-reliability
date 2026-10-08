@@ -15,7 +15,7 @@
     {% set create_query = elementary.edr_get_create_table_as_sql(
         temporary, relation, sql_query, expiration_hours=expiration_hours
     ) %}
-    {% do elementary.run_query(create_query) %}
+    {% do elementary.execute_no_fetch(create_query) %}
 
     {% if should_commit %} {% do elementary.edr_commit() %} {% endif %}
 {% endmacro %}

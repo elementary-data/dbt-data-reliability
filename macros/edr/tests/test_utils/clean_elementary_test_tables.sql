@@ -26,7 +26,9 @@
         {% set queries = elementary.get_clean_elementary_test_tables_queries(
             test_table_relations
         ) %}
-        {% for query in queries %} {% do elementary.run_query(query) %} {% endfor %}
+        {% for query in queries %}
+            {% do elementary.execute_no_fetch(query) %}
+        {% endfor %}
     {% endif %}
 {% endmacro %}
 
