@@ -63,6 +63,9 @@
         trunc_min_bucket_start_expr,
         metric_properties.time_bucket,
     ) %}
+    {%- set datediff_time_bucket = elementary.get_datediff_time_bucket(
+        metric_properties.time_bucket
+    ) %}
     {%- set full_table_name = elementary.relation_to_full_name(model_relation) %}
     {%- set force_metrics_backfill = elementary.get_config_var(
         "force_metrics_backfill"
@@ -89,12 +92,12 @@
         ),
         full_buckets_calc as (
             select *,
-                floor({{ elementary.edr_datediff('days_back_start', 'detection_end', metric_properties.time_bucket.period) }} / {{ metric_properties.time_bucket.count }}) * {{ metric_properties.time_bucket.count }} as periods_until_max
+                floor({{ elementary.edr_datediff('days_back_start', 'detection_end', datediff_time_bucket.period) }} / {{ datediff_time_bucket.count }}) * {{ datediff_time_bucket.count }} as periods_until_max
             from bucket_times
         )
         select
              days_back_start as min_bucket_start,
-             {{ elementary.edr_timeadd(metric_properties.time_bucket.period, 'periods_until_max', 'days_back_start') }} {# Add full buckets to last_max_bucket_end #}
+             {{ elementary.edr_timeadd(datediff_time_bucket.period, 'periods_until_max', 'days_back_start') }} {# Add full buckets to last_max_bucket_end #}
         as max_bucket_end
         from full_buckets_calc
     {%- endset %}
