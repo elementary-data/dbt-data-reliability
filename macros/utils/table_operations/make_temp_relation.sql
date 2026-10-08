@@ -72,20 +72,41 @@
     {{ return(elementary.spark__edr_make_temp_relation(base_relation, suffix)) }}
 {% endmacro %}
 
-{% macro redshift__edr_make_temp_relation(base_relation, suffix) %}
-    {% if elementary.is_dbt_fusion() %}
-        {# Workaround for dbt-fusion temp table metadata bug - create regular relations
-           with explicit schema/database instead of temp relations #}
-        {% set tmp_identifier = elementary.table_name_with_suffix(
-            base_relation.identifier, suffix
-        ) %}
-        {% set tmp_relation = api.Relation.create(
+{% macro _fusion_regular_temp_relation(base_relation, suffix) %}
+    {# dbt-fusion runs each statement on a pooled connection, so a session-scoped temp
+       relation is not visible to the statement that reads it.  Build a regular relation
+       with an explicit database/schema instead - Elementary's normal cleanup drops it. #}
+    {% set tmp_identifier = elementary.table_name_with_suffix(
+        base_relation.identifier, suffix
+    ) %}
+    {% do return(
+        api.Relation.create(
             identifier=tmp_identifier,
             schema=base_relation.schema,
             database=base_relation.database,
             type="table",
+        )
+    ) %}
+{% endmacro %}
+
+{% macro redshift__edr_make_temp_relation(base_relation, suffix) %}
+    {% if elementary.is_dbt_fusion() %}
+        {# Workaround for dbt-fusion temp table metadata bug - create regular relations
+           with explicit schema/database instead of temp relations #}
+        {% do return(
+            elementary._fusion_regular_temp_relation(base_relation, suffix)
         ) %}
-        {% do return(tmp_relation) %}
+    {% else %} {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
+    {% endif %}
+{% endmacro %}
+
+{% macro duckdb__edr_make_temp_relation(base_relation, suffix) %}
+    {% if elementary.is_dbt_fusion() %}
+        {# DuckDB additionally rejects TEMPORARY on a qualified name, so the regular
+           relation is required rather than merely convenient. #}
+        {% do return(
+            elementary._fusion_regular_temp_relation(base_relation, suffix)
+        ) %}
     {% else %} {% do return(dbt.make_temp_relation(base_relation, suffix)) %}
     {% endif %}
 {% endmacro %}
