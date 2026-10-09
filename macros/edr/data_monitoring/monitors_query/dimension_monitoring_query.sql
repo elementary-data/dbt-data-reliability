@@ -25,7 +25,7 @@
     ) %}
     {% set timestamp_column = metric_properties.timestamp_column %}
     {%- set data_monitoring_metrics_relation = elementary.get_elementary_relation(
-        "data_monitoring_metrics"
+        "data_monitoring_metrics", allow_deferred_fallback=true
     ) %}
 
     with
