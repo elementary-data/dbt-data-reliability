@@ -9,6 +9,8 @@ services:
       VERTICA_SCHEMA: ${SCHEMA_NAME}
       APP_DB_USER: dbadmin
       APP_DB_PASSWORD: vertica
+      # Deliberately not UTC: keeps the suite honest about macros that must
+      # use UTC rather than the server's local time.
       TZ: "America/Los_Angeles"
       VERTICA_DB_NAME: elementary_tests
       VMART_ETL_SCRIPT: ""
