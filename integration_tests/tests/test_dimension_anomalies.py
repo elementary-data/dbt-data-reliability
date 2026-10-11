@@ -384,6 +384,11 @@ def test_buckets_stay_aligned_on_rerun(
     test_id = test_id.replace("[", "_").replace("]", "_")
     # Uploads on the first day of each bucket, for the buckets before the current one.
     bucket_starts = _get_previous_bucket_starts(time_bucket, 12)[1:]
+    if time_bucket["period"] == "week":
+        # Uploads are on Mondays. On a Sunday, warehouses whose weeks start on Sunday
+        # already have the week of the latest Monday complete, so upload there too.
+        # Where weeks start on Monday, that upload falls in the current, unscored week.
+        bucket_starts = _get_previous_bucket_starts(time_bucket, 12)
 
     data: List[Dict[str, Any]] = [
         {TIMESTAMP_COLUMN: bucket_start.strftime(DATE_FORMAT), "country": country}
