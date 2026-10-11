@@ -32,7 +32,7 @@ PARAM_VALUES = {
         {"count": 1, "period": "day"},
     ),
     "backfill_days": ParamValues(30, 60, 90),
-    "seasonality": ParamValues("day_of_week", "hour_of_day", "day_of_week"),
+    "seasonality": ParamValues("day_of_week", "hour_of_day", "Day_Of_Week"),
     "event_timestamp_column": ParamValues(
         "vars.updated_at", "model.updated_at", "test.updated_at"
     ),
@@ -67,7 +67,8 @@ PARAM_VALUES = {
 
 def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
     def get_value(key: str):
-        return PARAM_VALUES[key].__dict__[values_type]
+        value = PARAM_VALUES[key].__dict__[values_type]
+        return value.lower() if key == "seasonality" and value else value
 
     days_back_multiplier = (
         7 if get_value("seasonality") in ["day_of_week", "hour_of_week"] else 1
