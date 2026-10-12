@@ -60,10 +60,10 @@
     {% set vw_ref = vw_relation.include(database=false) %}
     {% set tbl_ref = table_relation.include(database=false) %}
 
-    {% do elementary.run_query("DROP VIEW IF EXISTS " ~ vw_ref) %}
-    {% do elementary.run_query("CREATE VIEW " ~ vw_ref ~ " AS " ~ sql_query) %}
-    {% do elementary.run_query("SELECT * INTO " ~ tbl_ref ~ " FROM " ~ vw_ref) %}
-    {% do elementary.run_query("DROP VIEW " ~ vw_ref) %}
+    {% do elementary.execute_no_fetch("DROP VIEW IF EXISTS " ~ vw_ref) %}
+    {% do elementary.execute_no_fetch("CREATE VIEW " ~ vw_ref ~ " AS " ~ sql_query) %}
+    {% do elementary.execute_no_fetch("SELECT * INTO " ~ tbl_ref ~ " FROM " ~ vw_ref) %}
+    {% do elementary.execute_no_fetch("DROP VIEW " ~ vw_ref) %}
 
     {{ return(table_relation) }}
 {% endmacro %}
@@ -88,7 +88,7 @@
 
     {% endset %}
 
-    {% do elementary.run_query(create_query) %}
+    {% do elementary.execute_no_fetch(create_query) %}
 
     {{ return(temp_table_relation) }}
 {% endmacro %}

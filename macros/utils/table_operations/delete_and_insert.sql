@@ -29,7 +29,7 @@
     {% set queries = elementary.get_delete_and_insert_queries(
         relation, insert_relation, delete_relation, delete_column_key
     ) %}
-    {% for query in queries %} {% do elementary.run_query(query) %} {% endfor %}
+    {% for query in queries %} {% do elementary.execute_no_fetch(query) %} {% endfor %}
 
     {# DuckDB: explicit commit so changes survive dbt's post-on-run-end ROLLBACK #}
     {% if target.type == "duckdb" %} {% do adapter.commit() %} {% endif %}

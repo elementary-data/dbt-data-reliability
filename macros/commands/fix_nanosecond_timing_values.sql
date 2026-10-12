@@ -46,7 +46,7 @@
             {% endfor %}
             where {{ where_clause }}
         {% endset %}
-        {% do elementary.run_query(update_query) %}
+        {% do elementary.execute_no_fetch(update_query) %}
         {% do print("Fixed {} rows in {}.".format(rows_to_fix, relation)) %}
     {% endfor %}
 {% endmacro %}
