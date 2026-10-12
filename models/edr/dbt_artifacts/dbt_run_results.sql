@@ -12,6 +12,7 @@
             ],
         ),
         partition_by=elementary.get_partition_by(),
+        cluster_by=elementary.get_cluster_by(columns=["unique_id"]),
         full_refresh=elementary.get_config_var("elementary_full_refresh"),
         meta={
             "dedup_by_column": "model_execution_id",
