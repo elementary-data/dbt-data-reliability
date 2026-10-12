@@ -98,9 +98,18 @@
         {% set sample_limit = 0 %}
     {% endif %}
 
-    {% set result_rows = elementary.query_test_result_rows(
-        sample_limit=sample_limit, ignore_passed_tests=true
-    ) %}
+    {% set external_stage = elementary.get_config_var("test_samples_external_stage") %}
+    {% if external_stage %}
+        {# Samples go straight from the warehouse to the customer's own storage.
+           Only a pointer row is stored in the elementary schema. #}
+        {% set result_rows = elementary.export_test_result_rows_to_stage(
+            flattened_test, external_stage, sample_limit
+        ) %}
+    {% else %}
+        {% set result_rows = elementary.query_test_result_rows(
+            sample_limit=sample_limit, ignore_passed_tests=true
+        ) %}
+    {% endif %}
 
     {# Truncate result rows if they exceed dbt's failure count (can happen with non-deterministic queries) #}
     {% if result_rows | length > 0 %}
