@@ -120,6 +120,34 @@
 {% endmacro %}
 
 
+{# An 8-byte floating point type. dbt's type_float() is already 8 bytes on most
+   adapters, but on these it is a 4-byte float that silently rounds Python
+   floats (dbt's own run timings among them) to ~7 significant digits. #}
+{% macro edr_type_double() %}
+    {{ return(adapter.dispatch("edr_type_double", "elementary")()) }}
+{% endmacro %}
+
+{% macro default__edr_type_double() %}
+    {{ return(elementary.edr_type_float()) }}
+{% endmacro %}
+
+{% macro duckdb__edr_type_double() %} {% do return("double") %} {% endmacro %}
+
+{% macro spark__edr_type_double() %} {% do return("double") %} {% endmacro %}
+
+{% macro fabricspark__edr_type_double() %}
+    {{ return(elementary.spark__edr_type_double()) }}
+{% endmacro %}
+
+{% macro dremio__edr_type_double() %} {% do return("double") %} {% endmacro %}
+
+{% macro clickhouse__edr_type_double() %} {% do return("Float64") %} {% endmacro %}
+
+{# MaxCompute's FLOAT is 4 bytes, and it rejects inserting a DOUBLE literal into
+   it rather than rounding. #}
+{% macro maxcompute__edr_type_double() %} {% do return("double") %} {% endmacro %}
+
+
 {% macro edr_type_int() %}
     {% set macro = dbt.type_int or dbt_utils.type_int %}
     {% if not macro %}

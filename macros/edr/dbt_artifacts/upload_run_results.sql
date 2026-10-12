@@ -28,7 +28,7 @@
             ("message", "long_string"),
             ("status", "string"),
             ("resource_type", "string"),
-            ("execution_time", "float"),
+            ("execution_time", "double"),
             ("execute_started_at", "string"),
             ("execute_completed_at", "string"),
             ("compile_started_at", "string"),
