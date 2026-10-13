@@ -1,4 +1,4 @@
-{% macro get_elementary_relation(identifier) %}
+{% macro get_elementary_relation(identifier, allow_deferred_fallback=false) %}
     {%- if execute %}
         {%- set identifier_node = elementary.get_node(
             "model.elementary." ~ identifier
@@ -27,9 +27,15 @@
         {# Relation not found in the target schema. Under dbt deferral
            (--favor-state / --defer) the Elementary models may exist only
            in the deferred (e.g. prod) schema and not in the current
-           target. Construct a relation from the graph node coordinates
-           so the generated SQL references the correct schema instead of
-           rendering "from None". #}
+           target. Callers that render the relation into test SQL opt in
+           (allow_deferred_fallback=true) to a relation constructed from
+           the graph node coordinates, so the test SQL references the
+           correct schema instead of rendering "from None". Callers that
+           only check whether the relation exists (e.g. the on-run-end
+           artifact uploads) keep getting none, so a run against a target
+           whose Elementary schema was never created skips the upload
+           instead of failing. #}
+        {% if not allow_deferred_fallback %} {% do return(none) %} {% endif %}
         {% set is_defer = (
             (
                 invocation_args_dict.get("defer", false)

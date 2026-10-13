@@ -2,7 +2,7 @@
     model_relation, full_table_name, into_relation=none
 ) %}
     {%- set schema_columns_snapshot_relation = elementary.get_elementary_relation(
-        "schema_columns_snapshot"
+        "schema_columns_snapshot", allow_deferred_fallback=true
     ) %}
     {%- set known_columns_query %}
         select full_column_name from {{ schema_columns_snapshot_relation }}

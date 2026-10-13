@@ -16,7 +16,7 @@
         {#  data_monitoring_metrics_table is none except for integration-tests that test the get_anomaly_scores_query macro,
           and in which case it holds mock history metrics #}
         {%- set data_monitoring_metrics_table = elementary.get_elementary_relation(
-            "data_monitoring_metrics"
+            "data_monitoring_metrics", allow_deferred_fallback=true
         ) %}
     {%- endif %}
 

@@ -2,7 +2,7 @@
     full_table_name, temp_columns_snapshot_relation
 ) %}
     {%- set schema_columns_snapshot_relation = elementary.get_elementary_relation(
-        "schema_columns_snapshot"
+        "schema_columns_snapshot", allow_deferred_fallback=true
     ) %}
     {%- set previous_schema_time_query -%}
         (select max(detected_at) from {{ schema_columns_snapshot_relation }} where lower(full_table_name) = lower('{{ full_table_name }}'))
