@@ -264,7 +264,6 @@ def test_too_many_conditions_errors(test_id: str, dbt_project: DbtProject):
     assert "Compilation Error" in test_result["test_results_description"]
 
 
-
 def test_column_rule_on_dimension(test_id: str, dbt_project: DbtProject):
     # A column rule names the dimension column, not dimension_value.
     data = _dimension_data(
@@ -273,7 +272,11 @@ def test_column_rule_on_dimension(test_id: str, dbt_project: DbtProject):
     )
     rules = [
         {"column": "superhero", "values": ["Superman"], "owners": ["dc@example.com"]},
-        {"column": "superhero", "values": "Spiderman", "owners": ["marvel@example.com"]},
+        {
+            "column": "superhero",
+            "values": "Spiderman",
+            "owners": ["marvel@example.com"],
+        },
     ]
     test_result = dbt_project.test(
         test_id,
@@ -299,7 +302,11 @@ def test_column_rule_on_multi_column_dimension(test_id: str, dbt_project: DbtPro
     )
     rules = [
         {"column": "Universe", "values": ["DC"], "owners": ["dc@example.com"]},
-        {"column": "superhero", "values": ["Superman"], "owners": ["heroes@example.com"]},
+        {
+            "column": "superhero",
+            "values": ["Superman"],
+            "owners": ["heroes@example.com"],
+        },
         {"column": "universe", "values": ["Marvel"], "owners": ["marvel@example.com"]},
     ]
     test_result = dbt_project.test(
@@ -320,7 +327,9 @@ def test_column_rule_on_multi_column_dimension(test_id: str, dbt_project: DbtPro
 def test_column_rule_on_returned_column(test_id: str, dbt_project: DbtProject):
     # accepted_values returns value_field; column names match case-insensitively.
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
-    rules = [{"column": "VALUE_FIELD", "values": ["JP"], "owners": ["japan@example.com"]}]
+    rules = [
+        {"column": "VALUE_FIELD", "values": ["JP"], "owners": ["japan@example.com"]}
+    ]
     test_result = _accepted_values_test(test_id, dbt_project, data, rules)
     assert test_result["status"] == "fail"
     assert _owners(test_result) == ["japan@example.com"]
@@ -330,7 +339,9 @@ def test_column_rule_skipped_when_not_returned(test_id: str, dbt_project: DbtPro
     # accepted_values doesn't return dimension_value, so the rule is skipped
     # instead of erroring the test, as a condition on that column would.
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
-    rules = [{"column": "dimension_value", "values": ["JP"], "owners": ["japan@example.com"]}]
+    rules = [
+        {"column": "dimension_value", "values": ["JP"], "owners": ["japan@example.com"]}
+    ]
     test_result = _accepted_values_test(test_id, dbt_project, data, rules)
     assert test_result["status"] == "fail"
     assert _owners(test_result) == [DEFAULT_OWNER]
@@ -349,6 +360,7 @@ def test_rule_with_condition_and_column_errors(test_id: str, dbt_project: DbtPro
     test_result = _accepted_values_test(test_id, dbt_project, data, rules)
     assert test_result["status"] == "error"
     assert "Compilation Error" in test_result["test_results_description"]
+
 
 # Schema change tests don't support conditional_result_owners: the config is
 # ignored (with a warning), so results keep the default owners.

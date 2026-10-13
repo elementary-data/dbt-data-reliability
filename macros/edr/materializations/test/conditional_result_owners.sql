@@ -48,12 +48,19 @@
         ) %}
     {% endif %}
     {% for item in conditions %}
-        {% set is_condition_rule = item is mapping and item.get(
-            "condition"
-        ) is string and item.get("condition") and "column" not in item %}
-        {% set is_column_rule = item is mapping and item.get(
-            "column"
-        ) is string and item.get("column") and "values" in item and "condition" not in item %}
+        {% set is_condition_rule = (
+            item is mapping
+            and item.get("condition") is string
+            and item.get("condition")
+            and "column" not in item
+        ) %}
+        {% set is_column_rule = (
+            item is mapping
+            and item.get("column") is string
+            and item.get("column")
+            and "values" in item
+            and "condition" not in item
+        ) %}
         {% if not (is_condition_rule or is_column_rule) or not item.get("owners") %}
             {% do exceptions.raise_compiler_error(
                 "Invalid conditional_result_owners item in test `{}`: {}. Each item needs `owners`, and either a string `condition` or a `column` with `values`.".format(
@@ -79,8 +86,7 @@
     {% set literals = [] %}
     {% set checks = [] %}
     {% for value in elementary.get_column_rule_values(rule) %}
-        {% if value is none %}
-            {% do checks.append(quoted_column ~ " is null") %}
+        {% if value is none %} {% do checks.append(quoted_column ~ " is null") %}
         {% elif value is number and value is not sameas true and value is not sameas false %}
             {% do literals.append(value | string) %}
         {% else %} {% do literals.append(elementary.edr_quote(value | string)) %}
@@ -148,6 +154,37 @@
 {% endmacro %}
 
 {#
+  The column names the test's SQL returns, in their actual case so they can be
+  quoted. Reads one failing row rather than an empty result, because some
+  adapters (ClickHouse) return no column names for an empty result. Only called
+  when the test failed or warned, so there is at least one row.
+  On T-SQL `sql` already selects from a temp table, so it can be a derived table.
+#}
+{% macro get_test_returned_column_names() %}
+    {% set columns_query = adapter.dispatch(
+        "get_test_returned_columns_query", "elementary"
+    )() %}
+    {% do return(
+        elementary.run_query(
+            columns_query, lowercase_column_names=false
+        ).column_names
+        | list
+    ) %}
+{% endmacro %}
+
+{% macro default__get_test_returned_columns_query() %}
+    {% do return("select * from (" ~ sql ~ "\n) results limit 1") %}
+{% endmacro %}
+
+{% macro fabric__get_test_returned_columns_query() %}
+    {% do return("select top 1 * from (" ~ sql ~ "\n) results") %}
+{% endmacro %}
+
+{% macro sqlserver__get_test_returned_columns_query() %}
+    {% do return(elementary.fabric__get_test_returned_columns_query()) %}
+{% endmacro %}
+
+{#
   For dbt tests, the failing rows are the rows returned by the test's SQL.
   On T-SQL (and with tests_use_temp_tables) `sql` already selects from a temp
   table, so wrapping it in a derived table is safe there too.
@@ -159,12 +196,8 @@
     {% set column_rules = rules | selectattr("column", "defined") | list %}
     {% if column_rules %}
         {# Column rules only apply to the columns the test returns, so read them first #}
-        {% set columns_query %}
-            select * from ({{ sql }}
-            ) results where 1 = 0
-        {% endset %}
         {% set returned_columns = {} %}
-        {% for column in elementary.run_query(columns_query).column_names %}
+        {% for column in elementary.get_test_returned_column_names() %}
             {% do returned_columns.update({column | lower: column}) %}
         {% endfor %}
         {% for rule in column_rules %}
@@ -280,7 +313,9 @@
                 {# dimension_value joins multiple dimensions with "; ", and nulls as NULL #}
                 {% set rule_values = [] %}
                 {% for value in elementary.get_column_rule_values(rule) %}
-                    {% do rule_values.append("NULL" if value is none else value | string) %}
+                    {% do rule_values.append(
+                        "NULL" if value is none else value | string
+                    ) %}
                 {% endfor %}
                 {% for row in anomalous_rows %}
                     {% set dimension_value = elementary.insensitive_get_dict_value(
@@ -294,8 +329,12 @@
                     {% if parts | length == dimensions | length and parts[
                         position
                     ] in rule_values %}
-                        {% set group_key = elementary.get_anomaly_result_owners_group_key(
-                            row.full_table_name, row.column_name, row.metric_name
+                        {% set group_key = (
+                            elementary.get_anomaly_result_owners_group_key(
+                                row.full_table_name,
+                                row.column_name,
+                                row.metric_name,
+                            )
                         ) %}
                         {% set owners = owners_by_group.get(group_key) or [] %}
                         {% for owner in elementary.normalize_result_owners(
