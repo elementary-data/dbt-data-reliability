@@ -295,9 +295,15 @@
     {% endif %}
 
     {% if column_rules %}
-        {% set dimensions = (flattened_test.get("test_params") or {}).get(
-            "dimensions"
-        ) or [] %}
+        {# The resolved configuration also has dimensions set in the model config or vars #}
+        {% set test_configuration = (
+            elementary.get_cache(flattened_test.unique_id) or {}
+        ) %}
+        {% set dimensions = (
+            test_configuration.get("dimensions")
+            or (flattened_test.get("test_params") or {}).get("dimensions")
+            or []
+        ) %}
         {% if dimensions is string %} {% set dimensions = [dimensions] %} {% endif %}
         {% set dimensions = dimensions | map("lower") | list %}
         {% for rule in column_rules %}
@@ -321,11 +327,12 @@
                     {% set dimension_value = elementary.insensitive_get_dict_value(
                         row, "dimension_value"
                     ) %}
-                    {% set parts = (
-                        (dimension_value | string).split("; ")
-                        if dimension_value is not none
-                        else []
-                    ) %}
+                    {# A single dimension's value is never split, since it may contain "; " #}
+                    {% if dimension_value is none %} {% set parts = [] %}
+                    {% elif dimensions | length == 1 %}
+                        {% set parts = [dimension_value | string] %}
+                    {% else %} {% set parts = (dimension_value | string).split("; ") %}
+                    {% endif %}
                     {% if parts | length == dimensions | length and parts[
                         position
                     ] in rule_values %}

@@ -324,6 +324,55 @@ def test_column_rule_on_multi_column_dimension(test_id: str, dbt_project: DbtPro
     assert _owners(test_result) == ["dc@example.com", "heroes@example.com"]
 
 
+def test_column_rule_on_dimension_from_test_vars(test_id: str, dbt_project: DbtProject):
+    # Dimensions resolved from vars, not test arguments, still match column rules.
+    data = _dimension_data(
+        [{"superhero": "Superman"}] * 3 + [{"superhero": "Spiderman"}],
+        [{"superhero": "Superman"}, {"superhero": "Spiderman"}],
+    )
+    rules = [
+        {"column": "superhero", "values": ["Superman"], "owners": ["dc@example.com"]}
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.dimension_anomalies",
+        {"timestamp_column": TIMESTAMP_COLUMN},
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": rules}},
+        test_vars={"dimensions": ["superhero"]},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["dc@example.com"]
+
+
+def test_column_rule_on_dimension_value_with_separator(
+    test_id: str, dbt_project: DbtProject
+):
+    # A single dimension's value isn't split on "; ".
+    data = _dimension_data(
+        [{"superhero": "Superman; Batman"}] * 3 + [{"superhero": "Spiderman"}],
+        [{"superhero": "Superman; Batman"}, {"superhero": "Spiderman"}],
+    )
+    rules = [
+        {
+            "column": "superhero",
+            "values": ["Superman; Batman"],
+            "owners": ["dc@example.com"],
+        }
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.dimension_anomalies",
+        {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]},
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": rules}},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["dc@example.com"]
+
+
 def test_column_rule_on_returned_column(test_id: str, dbt_project: DbtProject):
     # accepted_values returns value_field; column names match case-insensitively.
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
