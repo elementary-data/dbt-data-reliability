@@ -59,11 +59,16 @@
     {% do return([pointer]) %}
 {% endmacro %}
 
+{#
+  <test name>/<run start, UTC>_<invocation id prefix>.<format>
+  e.g. not_null_orders_id/2026-10-13_07-10-47_c8116664.csv
+#}
 {% macro get_external_test_samples_path(flattened_test, file_format="csv") %}
-    {% set test_unique_id = elementary.insensitive_get_dict_value(
-        flattened_test, "unique_id"
+    {% set test_name = elementary.insensitive_get_dict_value(flattened_test, "name") %}
+    {% set file_name = (
+        run_started_at.strftime("%Y-%m-%d_%H-%M-%S") ~ "_" ~ invocation_id[:8]
     ) %}
-    {% do return(test_unique_id ~ "/" ~ invocation_id ~ "." ~ file_format) %}
+    {% do return(test_name ~ "/" ~ file_name ~ "." ~ file_format) %}
 {% endmacro %}
 
 {% macro export_test_result_rows(
