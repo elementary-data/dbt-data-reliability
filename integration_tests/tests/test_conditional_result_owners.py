@@ -264,6 +264,92 @@ def test_too_many_conditions_errors(test_id: str, dbt_project: DbtProject):
     assert "Compilation Error" in test_result["test_results_description"]
 
 
+
+def test_column_rule_on_dimension(test_id: str, dbt_project: DbtProject):
+    # A column rule names the dimension column, not dimension_value.
+    data = _dimension_data(
+        [{"superhero": "Superman"}] * 3 + [{"superhero": "Spiderman"}],
+        [{"superhero": "Superman"}, {"superhero": "Spiderman"}],
+    )
+    rules = [
+        {"column": "superhero", "values": ["Superman"], "owners": ["dc@example.com"]},
+        {"column": "superhero", "values": "Spiderman", "owners": ["marvel@example.com"]},
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.dimension_anomalies",
+        {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]},
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": rules}},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["dc@example.com"]
+
+
+def test_column_rule_on_multi_column_dimension(test_id: str, dbt_project: DbtProject):
+    # Each rule matches its own part of the "; "-joined dimension value.
+    data = _dimension_data(
+        [{"universe": "DC", "superhero": "Superman"}] * 3
+        + [{"universe": "Marvel", "superhero": "Spiderman"}],
+        [
+            {"universe": "DC", "superhero": "Superman"},
+            {"universe": "Marvel", "superhero": "Spiderman"},
+        ],
+    )
+    rules = [
+        {"column": "Universe", "values": ["DC"], "owners": ["dc@example.com"]},
+        {"column": "superhero", "values": ["Superman"], "owners": ["heroes@example.com"]},
+        {"column": "universe", "values": ["Marvel"], "owners": ["marvel@example.com"]},
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.dimension_anomalies",
+        {
+            "timestamp_column": TIMESTAMP_COLUMN,
+            "dimensions": ["universe", "superhero"],
+        },
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": rules}},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["dc@example.com", "heroes@example.com"]
+
+
+def test_column_rule_on_returned_column(test_id: str, dbt_project: DbtProject):
+    # accepted_values returns value_field; column names match case-insensitively.
+    data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
+    rules = [{"column": "VALUE_FIELD", "values": ["JP"], "owners": ["japan@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, rules)
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["japan@example.com"]
+
+
+def test_column_rule_skipped_when_not_returned(test_id: str, dbt_project: DbtProject):
+    # accepted_values doesn't return dimension_value, so the rule is skipped
+    # instead of erroring the test, as a condition on that column would.
+    data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
+    rules = [{"column": "dimension_value", "values": ["JP"], "owners": ["japan@example.com"]}]
+    test_result = _accepted_values_test(test_id, dbt_project, data, rules)
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == [DEFAULT_OWNER]
+
+
+def test_rule_with_condition_and_column_errors(test_id: str, dbt_project: DbtProject):
+    data = [{COLUMN_NAME: "JP"}]
+    rules = [
+        {
+            "condition": "1 = 1",
+            "column": "value_field",
+            "values": ["JP"],
+            "owners": ["japan@example.com"],
+        }
+    ]
+    test_result = _accepted_values_test(test_id, dbt_project, data, rules)
+    assert test_result["status"] == "error"
+    assert "Compilation Error" in test_result["test_results_description"]
+
 # Schema change tests don't support conditional_result_owners: the config is
 # ignored (with a warning), so results keep the default owners.
 @pytest.mark.skip_targets(["databricks", "spark", "athena", "trino"])
