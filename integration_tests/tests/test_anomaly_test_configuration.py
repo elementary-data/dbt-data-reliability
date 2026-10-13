@@ -32,7 +32,7 @@ PARAM_VALUES = {
         {"count": 1, "period": "day"},
     ),
     "backfill_days": ParamValues(30, 60, 90),
-    "seasonality": ParamValues("day_of_week", "hour_of_day", "day_of_week"),
+    "seasonality": ParamValues("day_of_week", "hour_of_day", "Day_Of_Week"),
     "event_timestamp_column": ParamValues(
         "vars.updated_at", "model.updated_at", "test.updated_at"
     ),
@@ -62,12 +62,15 @@ PARAM_VALUES = {
     ),
     "exclude_final_results": ParamValues(*(["1 = 1"] * 3)),
     "min_value": ParamValues(0.5, 1.0, 2.0),
+    # Only dimension_anomalies supports it, so it is ignored here (and must not raise).
+    "include_current_bucket": ParamValues(True, True, True),
 }
 
 
 def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
     def get_value(key: str):
-        return PARAM_VALUES[key].__dict__[values_type]
+        value = PARAM_VALUES[key].__dict__[values_type]
+        return value.lower() if key == "seasonality" and value else value
 
     days_back_multiplier = (
         7 if get_value("seasonality") in ["day_of_week", "hour_of_week"] else 1
@@ -91,6 +94,7 @@ def _get_expected_adapted_config(values_type: Literal["vars", "model", "test"]):
         "exclude_final_results": get_value("exclude_final_results"),
         "min_value": get_value("min_value"),
         "exclude_detection_period_from_training": None,
+        "include_current_bucket": None,
     }
 
 
