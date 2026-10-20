@@ -102,15 +102,23 @@
                 {% if timing.get("name") == "execute" %}
                     {% do flatten_run_result_dict.update(
                         {
-                            "execute_started_at": timing.get("started_at"),
-                            "execute_completed_at": timing.get("completed_at"),
+                            "execute_started_at": elementary.truncate_to_microseconds(
+                                timing.get("started_at")
+                            ),
+                            "execute_completed_at": elementary.truncate_to_microseconds(
+                                timing.get("completed_at")
+                            ),
                         }
                     ) %}
                 {% elif timing.get("name") == "compile" %}
                     {% do flatten_run_result_dict.update(
                         {
-                            "compile_started_at": timing.get("started_at"),
-                            "compile_completed_at": timing.get("completed_at"),
+                            "compile_started_at": elementary.truncate_to_microseconds(
+                                timing.get("started_at")
+                            ),
+                            "compile_completed_at": elementary.truncate_to_microseconds(
+                                timing.get("completed_at")
+                            ),
                         }
                     ) %}
                 {% endif %}

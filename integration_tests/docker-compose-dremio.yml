@@ -8,39 +8,39 @@ services:
     ports:
       - 19120:19120
 
-  # Minio Storage Server
-  minio:
-    image: minio/minio:latest
+  # RustFS Storage Server
+  rustfs:
+    image: rustfs/rustfs:1.0.0
     container_name: storage
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=password
-      - MINIO_DOMAIN=storage
-      - MINIO_REGION_NAME=us-east-1
-      - MINIO_REGION=us-east-1
+      - RUSTFS_ACCESS_KEY=admin
+      - RUSTFS_SECRET_KEY=password
     networks:
       - dremio-lakehouse
     ports:
       - 9001:9001
       - 9000:9000
-    command: ["server", "/data", "--console-address", ":9001"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
 
-  minio-setup:
-    image: minio/mc
-    container_name: minio-setup
+  rustfs-setup:
+    image: rustfs/rc:v0.1.36
+    container_name: rustfs-setup
     depends_on:
-      - minio
+      rustfs:
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      until (echo > /dev/tcp/minio/9000) >/dev/null 2>&1; do
-        echo 'Waiting for MinIO...';
-        sleep 2;
-      done;
-      mc alias set myminio http://minio:9000 admin password;
-      mc mb myminio/datalake;
-      mc ls myminio;
+      set -e;
+      rc alias set local http://rustfs:9000 admin password;
+      rc bucket create --ignore-existing local/datalake;
+      rc ls local;
       "
     networks:
       - dremio-lakehouse
@@ -89,4 +89,4 @@ networks:
 
 volumes:
   dremio_data:
-  minio_data:
+  rustfs_data:

@@ -152,8 +152,13 @@
 {% macro sqlserver__get_stale_test_tables(
     elementary_database, elementary_schema, hours, table_name_pattern, limit
 ) %}
+    {# Columns are aliased because dbt-sqlserver 1.12 gives unnamed columns the same
+       empty name, so the result table keeps only one of them. #}
     {% set query %}
-        select top {{ limit }} db_name(), schema_name(schema_id), name
+        select top {{ limit }}
+            db_name() as database_name,
+            schema_name(schema_id) as schema_name,
+            name
         from sys.tables
         where
             upper(schema_name(schema_id)) = upper('{{ elementary_schema }}')
