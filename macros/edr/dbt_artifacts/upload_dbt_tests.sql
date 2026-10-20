@@ -121,20 +121,55 @@
     {% else %}
         {% set test_model_jinja = test_kwargs.get("model") %}
         {% if test_model_jinja %}
-            {% set test_model_name_matches = modules.re.findall(
-                "ref\(['\"](\w+)['\"]\)", test_model_jinja
-            ) + modules.re.findall(
+            {#- A ref to a versioned model is rendered with its version, e.g.
+                ref('my_model', version='1'), and its unique_id ends with the
+                version (model.my_project.my_model.v1). Capture the ref arguments
+                first, then read the name and the optional version from them. -#}
+            {% set test_model_ref_args = modules.re.findall(
+                "ref\((\s*['\"]\w+['\"]\s*(?:,\s*(?:v|version)\s*=\s*['\"]?[\w.]+['\"]?\s*)?)\)",
+                test_model_jinja,
+            ) %}
+            {% set test_model_name_matches = [] %}
+            {% set test_model_version_matches = [] %}
+            {% for ref_args in test_model_ref_args %}
+                {% do test_model_name_matches.append(
+                    modules.re.findall("['\"](\w+)['\"]", ref_args)[0]
+                ) %}
+                {% set version_matches = modules.re.findall(
+                    "=\s*['\"]?([\w.]+)", ref_args
+                ) %}
+                {% do test_model_version_matches.append(
+                    version_matches[0] if version_matches else none
+                ) %}
+            {% endfor %}
+            {% for source_table_name in modules.re.findall(
                 "source\(['\"]\w+['\"], ['\"](\w+)['\"]\)", test_model_jinja
             ) %}
+                {% do test_model_name_matches.append(source_table_name) %}
+                {% do test_model_version_matches.append(none) %}
+            {% endfor %}
             {% if test_model_name_matches | length == 1 %}
                 {% set test_model_name = test_model_name_matches[0] %}
+                {% set test_model_version = test_model_version_matches[0] %}
                 {% for test_model_unique_id in test_model_unique_ids %}
                     {% set split_test_model_unique_id = test_model_unique_id.split(
                         "."
                     ) %}
                     {% if split_test_model_unique_id and split_test_model_unique_id | length > 0 %}
-                        {% set test_node_model_name = split_test_model_unique_id[-1] %}
-                        {% if test_node_model_name == test_model_name %}
+                        {% if test_model_version is not none %}
+                            {% set is_test_model = test_model_unique_id.endswith(
+                                "."
+                                ~ test_model_name
+                                ~ ".v"
+                                ~ test_model_version
+                            ) %}
+                        {% else %}
+                            {% set is_test_model = (
+                                split_test_model_unique_id[-1]
+                                == test_model_name
+                            ) %}
+                        {% endif %}
+                        {% if is_test_model %}
                             {% set primary_test_model_id.data = test_model_unique_id %}
                         {% endif %}
                     {% endif %}
