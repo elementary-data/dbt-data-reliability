@@ -212,6 +212,107 @@ def test_relationship_test_uses_primary_model_owner_only(
 
 @pytest.mark.skip_targets(["dremio"])
 @pytest.mark.skip_for_dbt_fusion
+def test_relationship_test_on_versioned_model_uses_primary_model_owner(
+    dbt_project: DbtProject,
+) -> None:
+    """
+    Test that a relationship test on a versioned model resolves the primary
+    model and uses its owner.
+
+    A test on a versioned model renders its model argument with the version,
+    e.g. ref('my_model', version='1'), and the model's unique_id ends with the
+    version (model.<project>.my_model.v1). Both have to be handled to find the
+    primary model; otherwise the test has no primary model and no owner.
+    """
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    primary_model_name = f"model_versioned_primary_{unique_id}"
+    referenced_model_name = f"model_versioned_referenced_{unique_id}"
+    test_name = f"rel_versioned_owner_{unique_id}"
+    primary_owner = "Alice"
+    referenced_owner = "Bob"
+
+    primary_model_sql = _create_model_sql(
+        owner=primary_owner, columns="1 as id, 1 as ref_id"
+    )
+    referenced_model_sql = _create_model_sql(owner=referenced_owner)
+
+    schema_yaml = {
+        "version": 2,
+        "models": [
+            {
+                "name": primary_model_name,
+                "description": "Versioned primary model with owner Alice",
+                "latest_version": 1,
+                "versions": [{"v": 1}],
+                "columns": [
+                    {"name": "id"},
+                    {
+                        "name": "ref_id",
+                        "tests": [
+                            {
+                                "relationships": {
+                                    "name": test_name,
+                                    "arguments": {
+                                        "to": f"ref('{referenced_model_name}')",
+                                        "field": "id",
+                                    },
+                                }
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "name": referenced_model_name,
+                "description": "Referenced model with owner Bob",
+                "columns": [{"name": "id"}],
+            },
+        ],
+    }
+
+    # dbt looks for <model>_v<version>.sql for a versioned model
+    primary_model_path = (
+        dbt_project.models_dir_path / "tmp" / f"{primary_model_name}_v1.sql"
+    )
+    referenced_model_path = (
+        dbt_project.models_dir_path / "tmp" / f"{referenced_model_name}.sql"
+    )
+
+    with cleanup_file(primary_model_path), cleanup_file(referenced_model_path):
+        with dbt_project.write_yaml(
+            schema_yaml, name=f"schema_versioned_relationship_{unique_id}.yml"
+        ):
+            primary_model_path.parent.mkdir(parents=True, exist_ok=True)
+            primary_model_path.write_text(primary_model_sql)
+            referenced_model_path.write_text(referenced_model_sql)
+
+            dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+            dbt_project.dbt_runner.run(
+                select=f"{primary_model_name} {referenced_model_name}"
+            )
+
+            tests = dbt_project.read_table(
+                "dbt_tests",
+                where=f"name LIKE '%{test_name}%'",
+                raise_if_empty=False,
+            )
+
+            assert (
+                len(tests) == 1
+            ), f"Expected 1 relationship test with name containing '{test_name}', got {len(tests)}. Tests found: {[t.get('name') for t in tests]}"
+            test_row = tests[0]
+            assert (test_row.get("parent_model_unique_id") or "").endswith(
+                f".{primary_model_name}.v1"
+            ), f"Expected the versioned primary model, got {test_row.get('parent_model_unique_id')}"
+            model_owners = _parse_model_owners(test_row.get("model_owners"))
+
+            assert model_owners == [
+                primary_owner
+            ], f"Expected model_owners to be ['{primary_owner}'] (primary model only), got {model_owners}."
+
+
+@pytest.mark.skip_targets(["dremio"])
+@pytest.mark.skip_for_dbt_fusion
 def test_relationship_test_no_owner_on_primary_model(dbt_project: DbtProject) -> None:
     """
     Test that when the primary model has no owner but the referenced model does,
