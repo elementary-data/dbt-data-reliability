@@ -132,7 +132,9 @@
     {% set elementary_test_results_row = elementary.get_dbt_test_result_row(
         flattened_test, result_rows
     ) %}
-    {% set result_owners = elementary.get_dbt_test_result_owners(flattened_test) %}
+    {% set result_owners = elementary.get_dbt_test_result_owners(
+        flattened_test, result_rows
+    ) %}
     {% if result_owners %}
         {% do elementary_test_results_row.update({"owners": result_owners}) %}
     {% endif %}

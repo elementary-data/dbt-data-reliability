@@ -431,3 +431,65 @@ def test_schema_changes_ignore_conditional_owners(
     failed_results = [r for r in test_results if r["status"] == "fail"]
     assert failed_results
     assert all(_owners(r) == [DEFAULT_OWNER] for r in failed_results)
+
+
+def test_condition_and_column_rules_union_on_dbt_test(
+    test_id: str, dbt_project: DbtProject
+):
+    # Conditions and column rules go through different code; their owners are unioned.
+    data = [{COLUMN_NAME: value} for value in ["NL", "JP", "KR"]]
+    rules = [
+        {"condition": "value_field = 'JP'", "owners": ["japan@example.com"]},
+        {"column": "value_field", "values": ["KR"], "owners": ["korea@example.com"]},
+    ]
+    test_result = _accepted_values_test(test_id, dbt_project, data, rules)
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["japan@example.com", "korea@example.com"]
+
+
+def test_condition_and_column_rules_union_on_dimension_anomalies(
+    test_id: str, dbt_project: DbtProject
+):
+    # Both dimension values are anomalous: one matched by a condition, one by a column rule.
+    data = _dimension_data(
+        [{"superhero": "Superman"}] * 3 + [{"superhero": "Spiderman"}] * 3,
+        [{"superhero": "Superman"}, {"superhero": "Spiderman"}],
+    )
+    rules = [
+        {"condition": "dimension_value = 'Superman'", "owners": ["dc@example.com"]},
+        {
+            "column": "superhero",
+            "values": ["Spiderman"],
+            "owners": ["marvel@example.com"],
+        },
+    ]
+    test_result = dbt_project.test(
+        test_id,
+        "elementary.dimension_anomalies",
+        {"timestamp_column": TIMESTAMP_COLUMN, "dimensions": ["superhero"]},
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={"meta": {"conditional_result_owners": rules}},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["dc@example.com", "marvel@example.com"]
+
+
+def test_column_rule_without_samples(test_id: str, dbt_project: DbtProject):
+    # With samples disabled, the returned columns are read with a separate query.
+    data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
+    rules = [{"column": "value_field", "values": ["JP"], "owners": ["japan@example.com"]}]
+    test_result = dbt_project.test(
+        test_id,
+        "accepted_values",
+        ACCEPTED_VALUES_ARGS,
+        test_column=COLUMN_NAME,
+        data=data,
+        model_config=MODEL_CONFIG,
+        test_config={
+            "meta": {"conditional_result_owners": rules, "disable_test_samples": True}
+        },
+        test_vars={"enable_elementary_test_materialization": True},
+    )
+    assert test_result["status"] == "fail"
+    assert _owners(test_result) == ["japan@example.com"]

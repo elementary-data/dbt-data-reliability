@@ -189,13 +189,33 @@
   On T-SQL (and with tests_use_temp_tables) `sql` already selects from a temp
   table, so wrapping it in a derived table is safe there too.
 #}
-{% macro get_dbt_test_result_owners(flattened_test) %}
+{% macro get_dbt_test_result_owners(flattened_test, sample_rows=none) %}
     {% set rules = elementary.get_conditional_result_owners(flattened_test) %}
     {% if not rules or elementary.did_test_pass() %} {% do return(none) %} {% endif %}
     {% set conditions = rules | selectattr("condition", "defined") | list %}
     {% set column_rules = rules | selectattr("column", "defined") | list %}
+    {% if column_rules and sample_rows %}
+        {# The sampled failing rows already show which columns the test returns
+           (lowercased), so skip rules on columns it doesn't return without a query #}
+        {% set sampled_columns = sample_rows[0].keys() | map("lower") | list %}
+        {% set kept_rules = [] %}
+        {% for rule in column_rules %}
+            {% if rule.column | lower in sampled_columns %}
+                {% do kept_rules.append(rule) %}
+            {% else %}
+                {% do elementary.debug_log(
+                    flattened_test.unique_id
+                    ~ ": skipping the conditional_result_owners rule on column "
+                    ~ rule.column
+                    ~ ", which the test doesn't return."
+                ) %}
+            {% endif %}
+        {% endfor %}
+        {% set column_rules = kept_rules %}
+    {% endif %}
     {% if column_rules %}
-        {# Column rules only apply to the columns the test returns, so read them first #}
+        {# Column rules only apply to the columns the test returns, so read them first.
+           The real column names (not lowercased) are needed to quote them. #}
         {% set returned_columns = {} %}
         {% for column in elementary.get_test_returned_column_names() %}
             {% do returned_columns.update({column | lower: column}) %}
@@ -306,6 +326,9 @@
         ) %}
         {% if dimensions is string %} {% set dimensions = [dimensions] %} {% endif %}
         {% set dimensions = dimensions | map("lower") | list %}
+        {# Build a value -> owners lookup per dimension position once,
+           then match every anomalous row in a single pass. #}
+        {% set owners_by_position = {} %}
         {% for rule in column_rules %}
             {% if rule.column | lower not in dimensions %}
                 {% do elementary.debug_log(
@@ -316,26 +339,47 @@
                 ) %}
             {% else %}
                 {% set position = dimensions.index(rule.column | lower) %}
-                {# dimension_value joins multiple dimensions with "; ", and nulls as NULL #}
-                {% set rule_values = [] %}
+                {% do owners_by_position.setdefault(position, {}) %}
+                {# dimension_value shows nulls as NULL #}
                 {% for value in elementary.get_column_rule_values(rule) %}
-                    {% do rule_values.append(
-                        "NULL" if value is none else value | string
-                    ) %}
+                    {% set value_key = "NULL" if value is none else value | string %}
+                    {% do owners_by_position[position].setdefault(value_key, []) %}
+                    {% for owner in elementary.normalize_result_owners(rule.owners) %}
+                        {% if owner not in owners_by_position[position][value_key] %}
+                            {% do owners_by_position[position][value_key].append(owner) %}
+                        {% endif %}
+                    {% endfor %}
                 {% endfor %}
-                {% for row in anomalous_rows %}
-                    {% set dimension_value = elementary.insensitive_get_dict_value(
-                        row, "dimension_value"
-                    ) %}
-                    {# A single dimension's value is never split, since it may contain "; " #}
-                    {% if dimension_value is none %} {% set parts = [] %}
-                    {% elif dimensions | length == 1 %}
-                        {% set parts = [dimension_value | string] %}
-                    {% else %} {% set parts = (dimension_value | string).split("; ") %}
+            {% endif %}
+        {% endfor %}
+
+        {% if owners_by_position %}
+            {% set unsplittable = namespace(count=0) %}
+            {% for row in anomalous_rows %}
+                {% set dimension_value = elementary.insensitive_get_dict_value(
+                    row, "dimension_value"
+                ) %}
+                {# dimension_value joins multiple dimensions with "; ". A single
+                   dimension's value is never split, since it may contain "; ". #}
+                {% if dimension_value is none %} {% set parts = [] %}
+                {% elif dimensions | length == 1 %}
+                    {% set parts = [dimension_value | string] %}
+                {% else %} {% set parts = (dimension_value | string).split("; ") %}
+                {% endif %}
+                {% if parts | length != dimensions | length %}
+                    {% if dimension_value is not none %}
+                        {% set unsplittable.count = unsplittable.count + 1 %}
                     {% endif %}
-                    {% if parts | length == dimensions | length and parts[
-                        position
-                    ] in rule_values %}
+                {% else %}
+                    {% set row_owners = [] %}
+                    {% for position, owners_by_value in owners_by_position.items() %}
+                        {% for owner in owners_by_value.get(parts[position], []) %}
+                            {% if owner not in row_owners %}
+                                {% do row_owners.append(owner) %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    {% if row_owners %}
                         {% set group_key = (
                             elementary.get_anomaly_result_owners_group_key(
                                 row.full_table_name,
@@ -344,9 +388,7 @@
                             )
                         ) %}
                         {% set owners = owners_by_group.get(group_key) or [] %}
-                        {% for owner in elementary.normalize_result_owners(
-                            rule.owners
-                        ) %}
+                        {% for owner in row_owners %}
                             {% if owner not in owners %}
                                 {% do owners.append(owner) %}
                             {% endif %}
@@ -355,9 +397,19 @@
                             {group_key: owners | sort | list}
                         ) %}
                     {% endif %}
-                {% endfor %}
+                {% endif %}
+            {% endfor %}
+            {% if unsplittable.count %}
+                {% do elementary.debug_log(
+                    flattened_test.unique_id
+                    ~ ": "
+                    ~ unsplittable.count
+                    ~ " anomalous rows have a dimension value containing \"; \", so it can't be split into the test's "
+                    ~ dimensions | length
+                    ~ " dimensions; conditional_result_owners column rules don't match them."
+                ) %}
             {% endif %}
-        {% endfor %}
+        {% endif %}
     {% endif %}
     {% do return(owners_by_group) %}
 {% endmacro %}
