@@ -346,7 +346,9 @@
                     {% do owners_by_position[position].setdefault(value_key, []) %}
                     {% for owner in elementary.normalize_result_owners(rule.owners) %}
                         {% if owner not in owners_by_position[position][value_key] %}
-                            {% do owners_by_position[position][value_key].append(owner) %}
+                            {% do owners_by_position[position][value_key].append(
+                                owner
+                            ) %}
                         {% endif %}
                     {% endfor %}
                 {% endfor %}
@@ -405,7 +407,8 @@
                     ~ ": "
                     ~ unsplittable.count
                     ~ " anomalous rows have a dimension value containing \"; \", so it can't be split into the test's "
-                    ~ dimensions | length
+                    ~ dimensions
+                    | length
                     ~ " dimensions; conditional_result_owners column rules don't match them."
                 ) %}
             {% endif %}

@@ -478,7 +478,9 @@ def test_condition_and_column_rules_union_on_dimension_anomalies(
 def test_column_rule_without_samples(test_id: str, dbt_project: DbtProject):
     # With samples disabled, the returned columns are read with a separate query.
     data = [{COLUMN_NAME: value} for value in ["NL", "JP"]]
-    rules = [{"column": "value_field", "values": ["JP"], "owners": ["japan@example.com"]}]
+    rules = [
+        {"column": "value_field", "values": ["JP"], "owners": ["japan@example.com"]}
+    ]
     test_result = dbt_project.test(
         test_id,
         "accepted_values",
