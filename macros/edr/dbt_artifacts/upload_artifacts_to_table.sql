@@ -76,6 +76,32 @@
                     | reject("in", new_metadata_hashes)
                     | list
                 ) %}
+                {#- A hash stored more than once (e.g. after two overlapping uploads)
+                    keeps the stored hashes from ever matching the new ones, so its
+                    rows are deleted and the artifact is inserted again once. -#}
+                {% set duplicated_artifact_hashes = (
+                    elementary.get_duplicated_values(
+                        upload_artifact_method.metadata_hashes
+                    )
+                    | select("in", new_metadata_hashes)
+                    | list
+                ) %}
+                {% if duplicated_artifact_hashes %}
+                    {% do elementary.file_log(
+                        "[{}] Replacing {} duplicated artifacts.".format(
+                            table_relation.identifier,
+                            duplicated_artifact_hashes | length,
+                        )
+                    ) %}
+                    {% do added_artifacts.extend(
+                        flatten_artifact_dicts
+                        | selectattr(
+                            "metadata_hash", "in", duplicated_artifact_hashes
+                        )
+                        | list
+                    ) %}
+                    {% do removed_artifact_hashes.extend(duplicated_artifact_hashes) %}
+                {% endif %}
                 {% do elementary.delete_and_insert(
                     table_relation,
                     insert_rows=added_artifacts,
