@@ -41,8 +41,8 @@ jobs:
           echo "DBT_PROFILES_DIR=$profiles_dir" >> "$GITHUB_ENV"
 
       - name: Review compiled schema changes
-        uses: PresentJay/dbt-plan@4caa03dd9d778e2bbfd54cb34f744e6bc7b3669f # v0.18.2
+        uses: PresentJay/dbt-plan@0954f1dc64bc3596c8b2dcc77b034c9cd1c34704 # v0.18.3
         with:
-          version: "0.18.2"
+          version: "0.18.3"
           fail-on: never
           compile-command: dbt deps && dbt compile --target duckdb --no-partial-parse
