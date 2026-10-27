@@ -67,6 +67,9 @@ def test_artifacts_diff_removes_duplicated_hashes(dbt_project: DbtProject):
     assert len(new_metadata_hashes) == len(
         set(new_metadata_hashes)
     ), "Duplicated artifacts were not removed by the diff upload."
+    assert set(new_metadata_hashes) == set(
+        metadata_hashes
+    ), "Artifacts were lost while removing the duplicated ones."
 
 
 def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
