@@ -180,6 +180,27 @@ def test_anomalyless_numeric_column_anomalies_with_nulls(
     assert test_results
     assert all(res["status"] == "pass" for res in test_results)
 
+    # NULLs must be skipped, not read as 0 (that would make average 3.75).
+    # zero_count counts NULLs as zeros by design.
+    table_name = test_id.replace("[", "_").replace("]", "_").lower()
+    metrics = dbt_project.run_query(
+        f"""
+        select metric_name, metric_value
+        from {{{{ ref("data_monitoring_metrics") }}}}
+        where lower(full_table_name) like '%{table_name}'
+        and lower(column_name) = 'amount'
+        """
+    )
+    expected = {"max": 10, "min": 0, "average": 5, "sum": 15, "zero_count": 2}
+    values_by_metric: Dict[str, set] = {}
+    for metric in metrics:
+        values_by_metric.setdefault(metric["metric_name"], set()).add(
+            float(metric["metric_value"])
+        )
+    assert values_by_metric == {
+        name: {float(value)} for name, value in expected.items()
+    }
+
 
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
