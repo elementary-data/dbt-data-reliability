@@ -153,6 +153,34 @@ def test_column_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
+def test_anomalyless_numeric_column_anomalies_with_nulls(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "amount": amount,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for amount in [0, 5, 10, None]
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["max", "min", "average", "sum", "zero_count"],
+    }
+    test_results = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_column="amount",
+        multiple_results=True,
+    )
+    assert test_results
+    assert all(res["status"] == "pass" for res in test_results)
+
+
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
     name="true_positive",
