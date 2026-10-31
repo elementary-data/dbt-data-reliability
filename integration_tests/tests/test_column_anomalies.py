@@ -176,6 +176,7 @@ def test_anomalyless_numeric_column_anomalies_with_nulls(
         data=data,
         test_column="amount",
         multiple_results=True,
+        test_vars={"force_metrics_backfill": True},
     )
     assert test_results
     assert all(res["status"] == "pass" for res in test_results)
@@ -183,12 +184,20 @@ def test_anomalyless_numeric_column_anomalies_with_nulls(
     # NULLs must be skipped, not read as 0 (that would make average 3.75).
     # zero_count counts NULLs as zeros by design.
     table_name = test_id.replace("[", "_").replace("]", "_").lower()
+    # The metrics table is append-only, so read only the latest row per metric.
     metrics = dbt_project.run_query(
         f"""
-        select metric_name, metric_value
-        from {{{{ ref("data_monitoring_metrics") }}}}
-        where lower(full_table_name) like '%{table_name}'
-        and lower(column_name) = 'amount'
+        with metrics_ordered as (
+            select
+                metric_name,
+                metric_value,
+                row_number() over (partition by id order by updated_at desc) as row_num
+            from {{{{ ref("data_monitoring_metrics") }}}}
+            where lower(full_table_name) like '%{table_name}'
+            and lower(column_name) = 'amount'
+        )
+        select metric_name, metric_value from metrics_ordered
+        where row_num = 1
         """
     )
     expected = {"max": 10, "min": 0, "average": 5, "sum": 15, "zero_count": 2}
