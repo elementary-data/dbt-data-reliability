@@ -369,7 +369,7 @@ def test_metric_stability_both_thresholds_must_be_exceeded(
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
-def test_metric_stability_absolute_threshold_tolerates_a_zero_baseline(
+def test_metric_stability_absolute_tolerates_zero_baseline(
     test_id: str, dbt_project: DbtProject
 ):
     """Relative change is undefined at zero; absolute change is not.
@@ -392,6 +392,65 @@ def test_metric_stability_absolute_threshold_tolerates_a_zero_baseline(
 
     # And the threshold still bites beyond it.
     rows[SETTLED_DAYS_AGO] = 10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_both_detect_zero_baseline(
+    test_id: str, dbt_project: DbtProject
+):
+    """At a zero baseline the absolute threshold has to decide on its own.
+
+    Relative change has no meaning at zero, so a relative conjunct written as
+     is false there. ANDead with the absolute one it would
+    suppress every zero-baseline restatement, and adding an absolute threshold
+    as a noise floor would silently switch that detection off.
+    """
+    args = {**RATIO_ARGS, "max_change_percent": 10, "max_change_absolute": 5}
+    rows = {d: 0 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    rows[SETTLED_DAYS_AGO] = 1000
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_unset_threshold_still_fails_any_change(
+    test_id: str, dbt_project: DbtProject
+):
+    """An unconfigured threshold means zero, not "some small number".
+
+    max_change_percent defaults to none internally so that unset is
+    distinguishable from an explicit zero. The other tests restate by a factor
+    of two, so they would still pass if unset silently resolved to anything
+    under 100%. This pins a change far below any plausible accidental default.
+    """
+    assert _run(dbt_project, test_id, _rows()) == "pass"
+    assert _run(dbt_project, test_id, _rows()) == "pass"
+
+    # 0.1% of the base amount, which must still fail with nothing configured.
+    assert _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 100.1})) == "fail"
+
+
+def test_metric_stability_absolute_on_both_baselines(
+    test_id: str, dbt_project: DbtProject
+):
+    """Each baseline gets its own threshold pair, OR'd together."""
+    args = {
+        **RATIO_ARGS,
+        "change_since": ["last_check", "first_check"],
+        "max_change_absolute": 0.20,
+    }
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 15bp per step: under the tolerance against the previous measurement, but
+    # first_check sees the total move from where the bucket started.
+    rows[SETTLED_DAYS_AGO] = 45.15
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    rows[SETTLED_DAYS_AGO] = 45.00
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 

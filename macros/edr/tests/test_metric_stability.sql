@@ -4,7 +4,9 @@
    scale varies between models. max_change_absolute is the raw move, which
    suits ratios that already sit on a fixed scale (20 basis points is 0.20 on a
    0-100 scale). Setting both fails only when both are exceeded, so the
-   absolute one acts as a noise floor under the relative one.
+   absolute one acts as a noise floor under the relative one. At a zero
+   baseline, where relative change has no meaning, the absolute threshold
+   decides on its own.
 
    Configuration, baseline behavior, and limits:
    https://docs.elementary-data.com/data-tests/metric-stability #}
@@ -407,7 +409,9 @@
         ("max_change_absolute", max_change_absolute, "0.20"),
     ] %}
         {%- if arg_value is not none %}
-            {%- if arg_value is not number %}
+            {#- bool subclasses int in python, so `is number` alone lets
+                `max_change_percent: true` through as a threshold of 1. -#}
+            {%- if arg_value is not number or arg_value is boolean %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name
@@ -425,6 +429,19 @@
                 {{
                     exceptions.raise_compiler_error(
                         arg_name ~ " must be non-negative."
+                    )
+                }}
+            {%- endif %}
+            {#- Thresholds render through "%.10f", so anything smaller than
+                that silently becomes 0, turning a deliberately tight tolerance
+                into "any change at all". -#}
+            {%- if arg_value > 0 and "%.10f" | format(arg_value) == "0.0000000000" %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name
+                        ~ " is smaller than the smallest value this test can express ("
+                        ~ arg_value
+                        ~ "). Use at least 0.0000000001, or rescale the metric."
                     )
                 }}
             {%- endif %}

@@ -62,12 +62,13 @@
        directly. Unset percent means 0 unless an absolute threshold stands in
        for it, which is why the default is none rather than 0. #}
     {%- set has_absolute = max_change_absolute is not none %}
-    {%- set has_percent = max_change_percent is not none or not has_absolute %}
     {%- set effective_percent = (
         max_change_percent if max_change_percent is not none else 0
     ) %}
 
-    {# Suppress floating-point aggregation noise. #}
+    {# Suppress floating-point aggregation noise. Re-aggregating the same rows
+       in a different order differs in the last bits, so the relative guard is
+       kept even when an absolute threshold is doing the real work. #}
     {%- set change_percent_noise_floor = 0.000000001 %}
     {%- set change_threshold = "%.10f" | format(
         [effective_percent, change_percent_noise_floor] | max
@@ -82,41 +83,43 @@
         {%- set baseline_column = baseline ~ "_value" %}
         {%- if baseline_column not in baseline_columns %}
             {%- do baseline_columns.append(baseline_column) %}
+            {%- set change_percent = elementary.metric_stability_change_percent(
+                baseline_column
+            ) %}
             {%- set threshold_tests = [] %}
-            {%- if has_percent %}
-                {# Relative change is undefined at a zero baseline, so any move
-                   away from zero counts. An absolute threshold is well defined
-                   there and carries the comparison on its own. #}
+            {%- if has_absolute %}
+                {# Relative change is undefined at a zero baseline, so the
+                   relative guard has to be satisfied there rather than
+                   falsified, or the AND below would suppress every zero
+                   baseline and the absolute threshold would never decide. #}
+                {%- do threshold_tests.append(
+                    "("
+                    ~ baseline_column
+                    ~ " = 0 or "
+                    ~ change_percent
+                    ~ " > "
+                    ~ change_threshold
+                    ~ ")"
+                ) %}
+                {%- do threshold_tests.append(
+                    "abs(measured_value - "
+                    ~ baseline_column
+                    ~ ") > "
+                    ~ absolute_threshold
+                ) %}
+            {%- else %}
+                {# With no absolute threshold to decide at zero, any move away
+                   from exactly zero counts. #}
                 {%- do threshold_tests.append(
                     "(("
                     ~ baseline_column
                     ~ " = 0 and measured_value != 0) or ("
                     ~ baseline_column
                     ~ " != 0 and "
-                    ~ elementary.metric_stability_change_percent(
-                        baseline_column
-                    )
+                    ~ change_percent
                     ~ " > "
                     ~ change_threshold
                     ~ "))"
-                    if not has_absolute
-                    else "("
-                    ~ baseline_column
-                    ~ " != 0 and "
-                    ~ elementary.metric_stability_change_percent(
-                        baseline_column
-                    )
-                    ~ " > "
-                    ~ change_threshold
-                    ~ ")"
-                ) %}
-            {%- endif %}
-            {%- if has_absolute %}
-                {%- do threshold_tests.append(
-                    "abs(measured_value - "
-                    ~ baseline_column
-                    ~ ") > "
-                    ~ absolute_threshold
                 ) %}
             {%- endif %}
             {% set exceeds_condition %}
