@@ -189,6 +189,7 @@ def test_anomalyless_numeric_column_anomalies_with_nulls(
         f"""
         with metrics_ordered as (
             select
+                bucket_end,
                 metric_name,
                 metric_value,
                 row_number() over (partition by id order by updated_at desc) as row_num
@@ -196,19 +197,27 @@ def test_anomalyless_numeric_column_anomalies_with_nulls(
             where lower(full_table_name) like '%{table_name}'
             and lower(column_name) = 'amount'
         )
-        select metric_name, metric_value from metrics_ordered
+        select bucket_end, metric_name, metric_value from metrics_ordered
         where row_num = 1
         """
     )
-    expected = {"max": 10, "min": 0, "average": 5, "sum": 15, "zero_count": 2}
-    values_by_metric: Dict[str, set] = {}
-    for metric in metrics:
-        values_by_metric.setdefault(metric["metric_name"], set()).add(
-            float(metric["metric_value"])
-        )
-    assert values_by_metric == {
-        name: {float(value)} for name, value in expected.items()
+    expected = {
+        name: float(value)
+        for name, value in {
+            "max": 10,
+            "min": 0,
+            "average": 5,
+            "sum": 15,
+            "zero_count": 2,
+        }.items()
     }
+    values_by_bucket: Dict[str, Dict[str, float]] = {}
+    for metric in metrics:
+        values_by_bucket.setdefault(str(metric["bucket_end"]), {})[
+            metric["metric_name"]
+        ] = float(metric["metric_value"])
+    assert values_by_bucket
+    assert all(values == expected for values in values_by_bucket.values())
 
 
 @Parametrization.autodetect_parameters()
