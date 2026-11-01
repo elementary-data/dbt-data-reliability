@@ -8,6 +8,14 @@
    baseline, where relative change has no meaning, the absolute threshold
    decides on its own.
 
+   An absolute threshold is limited by how precisely the warehouse stores a
+   metric. metric_value goes through dbt's type_float, which is double
+   precision on some adapters and single on others (DuckDB and ClickHouse
+   among them). At single precision a value around 45 carries roughly 1e-5 of
+   representation error, so a threshold within a few orders of magnitude of
+   that measures storage noise rather than the data. A relative threshold is
+   unaffected, since the error scales with the value.
+
    Configuration, baseline behavior, and limits:
    https://docs.elementary-data.com/data-tests/metric-stability #}
 {% test metric_stability(
@@ -404,9 +412,13 @@
         }}
     {%- endif %}
 
-    {%- for arg_name, arg_value, example in [
-        ("max_change_percent", max_change_percent, "25"),
-        ("max_change_absolute", max_change_absolute, "0.20"),
+    {#- Smallest value each threshold can actually act on. Below the percent
+        noise floor the query clamps the value, and below the absolute minimum
+        it renders as 0, so either would silently mean something other than what
+        was written. -#}
+    {%- for arg_name, arg_value, example, minimum in [
+        ("max_change_percent", max_change_percent, "25", 0.000000001),
+        ("max_change_absolute", max_change_absolute, "0.20", 0.0000000001),
     ] %}
         {%- if arg_value is not none %}
             {#- bool subclasses int in python, so `is number` alone lets
@@ -432,16 +444,17 @@
                     )
                 }}
             {%- endif %}
-            {#- Thresholds render through "%.10f", so anything smaller than
-                that silently becomes 0, turning a deliberately tight tolerance
-                into "any change at all". -#}
-            {%- if arg_value > 0 and "%.10f" | format(arg_value) == "0.0000000000" %}
+            {%- if arg_value > 0 and arg_value < minimum %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name
-                        ~ " is smaller than the smallest value this test can express ("
+                        ~ " is "
                         ~ arg_value
-                        ~ "). Use at least 0.0000000001, or rescale the metric."
+                        ~ ", below the smallest value it can act on ("
+                        ~ minimum
+                        ~ "). Anything smaller would be silently rounded up or"
+                        ~ " down rather than applied. Use a larger value, or"
+                        ~ " rescale the metric."
                     )
                 }}
             {%- endif %}

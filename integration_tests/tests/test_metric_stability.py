@@ -400,10 +400,10 @@ def test_metric_stability_both_detect_zero_baseline(
 ):
     """At a zero baseline the absolute threshold has to decide on its own.
 
-    Relative change has no meaning at zero, so a relative conjunct written as
-     is false there. ANDead with the absolute one it would
-    suppress every zero-baseline restatement, and adding an absolute threshold
-    as a noise floor would silently switch that detection off.
+    Relative change has no meaning at zero, so a relative conjunct of the form
+    "baseline != 0 and ..." is false there. Combined with the absolute one under
+    AND it would suppress every zero-baseline restatement, so adding an absolute
+    threshold as a noise floor would silently switch that detection off.
     """
     args = {**RATIO_ARGS, "max_change_percent": 10, "max_change_absolute": 5}
     rows = {d: 0 for d in range(1, 7)}
@@ -451,6 +451,77 @@ def test_metric_stability_absolute_on_both_baselines(
     rows[SETTLED_DAYS_AGO] = 45.15
     assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
     rows[SETTLED_DAYS_AGO] = 45.00
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"max_change_absolute": -1},
+        {"max_change_absolute": "0.20"},
+        {"max_change_absolute": True},
+        {"max_change_absolute": 0.00000000001},
+        {"max_change_percent": -1},
+        {"max_change_percent": "25"},
+        {"max_change_percent": True},
+        {"max_change_percent": 0.0000000001},
+    ],
+)
+def test_metric_stability_rejects_bad_thresholds(
+    test_id: str, dbt_project: DbtProject, overrides: Dict[str, Any]
+):
+    """Every threshold value that cannot mean what it says must raise.
+
+    Booleans matter because bool subclasses int in python, so Jinja's `number`
+    test accepts True and would render it as a threshold of 1. The tiny values
+    matter because one is clamped to the noise floor and the other rounds to
+    zero, either of which would apply a threshold nobody asked for.
+    """
+    assert _run(dbt_project, test_id, _rows(), **overrides) == "error"
+
+
+# metric_value is stored through dbt's type_float, which is single precision on
+# some adapters and double on others: the same subtraction gives
+# 0.20000000000000284 on Postgres and 0.20000076293945312 on DuckDB and
+# ClickHouse. Where it is single precision the storage error is four orders of
+# magnitude above the tolerance below, so a move sitting exactly on the threshold
+# is not decidable and the assertion would be meaningless rather than wrong. The
+# list errs towards over-skipping; the behaviour under test is the tolerance, and
+# that is exercised wherever metric_value is double precision.
+@pytest.mark.skip_targets(
+    [
+        "clickhouse",
+        "duckdb",
+        "spark",
+        "fabricspark",
+        "databricks_catalog",
+        "athena",
+        "trino",
+    ]
+)
+def test_metric_stability_absolute_float_boundary(
+    test_id: str, dbt_project: DbtProject
+):
+    """A move of exactly the threshold must not fire, in either direction.
+
+    Decimal thresholds have no exact float representation, so two moves that are
+    both 0.20 in decimal land either side of it: 45.30 -> 45.10 comes out as
+    0.19999999999999574 and 45.30 -> 45.50 as 0.20000000000000284. Without a
+    tolerance the second fires and the first does not, which is the customer's
+    own 20bp example behaving differently depending on which way it moved.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 0.20}
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Exactly 20bp up, the direction that rounds against us.
+    rows[SETTLED_DAYS_AGO] = 45.50
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 30bp further, comfortably past the threshold.
+    rows[SETTLED_DAYS_AGO] = 45.80
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 

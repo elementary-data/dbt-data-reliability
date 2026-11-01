@@ -73,8 +73,15 @@
     {%- set change_threshold = "%.10f" | format(
         [effective_percent, change_percent_noise_floor] | max
     ) %}
+    {#- A decimal threshold has no exact float representation, so two moves that
+        are both 0.20 in decimal land either side of it: 45.30 -> 45.10 is
+        0.19999999999999574 and 45.50 -> 45.30 is 0.20000000000000284. Without a
+        tolerance the customer's own 20bp example fires in one direction and not
+        the other. The slack is far below any move anyone would configure. -#}
     {%- set absolute_threshold = (
-        "%.10f" | format(max_change_absolute) if has_absolute else none
+        "%.10f" | format(max_change_absolute * (1 + 0.000000001))
+        if has_absolute
+        else none
     ) %}
 
     {%- set exceeds_conditions = [] %}
@@ -268,6 +275,13 @@
   Relative change from a baseline column, in percentage points. Shared by the
   WHERE predicate and the reported columns so the two cannot drift apart.
 #}
+{# Relative change from a baseline, in percentage points.
+
+   nullif keeps this NULL rather than raising at a zero baseline. SQL does not
+   guarantee that the `= 0` guards around the call are evaluated first, so on an
+   engine that evaluates both sides of an OR the division would raise. #}
 {% macro metric_stability_change_percent(baseline_column) -%}
-    abs(measured_value - {{ baseline_column }}) / abs({{ baseline_column }}) * 100.0
+    abs(measured_value - {{ baseline_column }})
+    / nullif(abs({{ baseline_column }}), 0)
+    * 100.0
 {%- endmacro %}
