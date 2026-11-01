@@ -1,13 +1,27 @@
+{#- ClickHouse columns are non-Nullable by default, so casting a NULL to a
+    plain Float32 raises an error instead of yielding NULL. -#}
+{% macro edr_cast_numeric_monitor_column(column_name) -%}
+    {{ adapter.dispatch("edr_cast_numeric_monitor_column", "elementary")(column_name) }}
+{%- endmacro %}
+
+{% macro default__edr_cast_numeric_monitor_column(column_name) -%}
+    cast({{ column_name }} as {{ elementary.edr_type_float() }})
+{%- endmacro %}
+
+{% macro clickhouse__edr_cast_numeric_monitor_column(column_name) -%}
+    cast({{ column_name }} as Nullable({{ elementary.edr_type_float() }}))
+{%- endmacro %}
+
 {% macro max(column_name) -%}
-    max(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    max({{ elementary.edr_cast_numeric_monitor_column(column_name) }})
 {%- endmacro %}
 
 {% macro min(column_name) -%}
-    min(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    min({{ elementary.edr_cast_numeric_monitor_column(column_name) }})
 {%- endmacro %}
 
 {% macro average(column_name) -%}
-    avg(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    avg({{ elementary.edr_cast_numeric_monitor_column(column_name) }})
 {%- endmacro %}
 
 {% macro zero_count(column_name) %}
@@ -16,7 +30,7 @@
             case
                 when {{ column_name }} is null
                 then 1
-                when cast({{ column_name }} as {{ elementary.edr_type_float() }}) = 0
+                when {{ elementary.edr_cast_numeric_monitor_column(column_name) }} = 0
                 then 1
                 else 0
             end
@@ -92,7 +106,7 @@
 {%- endmacro %}
 
 {% macro sum(column_name) -%}
-    sum(cast({{ column_name }} as {{ elementary.edr_type_float() }}))
+    sum({{ elementary.edr_cast_numeric_monitor_column(column_name) }})
 {%- endmacro %}
 
 {#- edr_normalize_stddev – post-process a stddev column reference so that
