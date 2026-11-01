@@ -32,8 +32,8 @@ BASE_ARGS: Dict[str, Any] = {
 
 
 def _rows(
-    restatements: Optional[Dict[int, int]] = None,
-    other_restatements: Optional[Dict[int, int]] = None,
+    restatements: Optional[Dict[int, float]] = None,
+    other_restatements: Optional[Dict[int, float]] = None,
 ) -> List[Dict[str, Any]]:
     """One row per day, midday so it lands unambiguously inside a daily bucket."""
     restatements = restatements or {}
@@ -304,6 +304,95 @@ def test_metric_stability_ignores_measurements_taken_while_settling(
     )
 
     assert _run(dbt_project, test_id, _rows(), **args) == "pass"
+
+
+# A ratio sits on a fixed scale, so the move that matters is the absolute one.
+# 45.30% dropping to 45.10% is 20 basis points, which is what max_change_absolute
+# expresses directly.
+BASE_MARGIN = 45.30
+RATIO_ARGS: Dict[str, Any] = {"metrics": ["average"]}
+
+
+def test_metric_stability_absolute_threshold_on_a_ratio(
+    test_id: str, dbt_project: DbtProject
+):
+    """An absolute threshold means the same move at every level of the ratio."""
+    args = {**RATIO_ARGS, "max_change_absolute": 0.20}
+
+    assert (
+        _run(dbt_project, test_id, _rows({d: BASE_MARGIN for d in range(1, 7)}), **args)
+        == "pass"
+    )
+    assert (
+        _run(dbt_project, test_id, _rows({d: BASE_MARGIN for d in range(1, 7)}), **args)
+        == "pass"
+    )
+
+    # 10bp, inside the tolerance.
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+    rows[SETTLED_DAYS_AGO] = 45.20
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # A further 30bp, outside it.
+    rows[SETTLED_DAYS_AGO] = 44.90
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_both_thresholds_must_be_exceeded(
+    test_id: str, dbt_project: DbtProject
+):
+    """With both set the absolute one is a floor under the relative one.
+
+    A small absolute move on a small base looks large in relative terms, which
+    is exactly the noise an absolute floor is meant to suppress.
+    """
+    args = {**RATIO_ARGS, "max_change_percent": 1.0, "max_change_absolute": 0.20}
+    low = 5.00
+
+    assert (
+        _run(dbt_project, test_id, _rows({d: low for d in range(1, 7)}), **args)
+        == "pass"
+    )
+    assert (
+        _run(dbt_project, test_id, _rows({d: low for d in range(1, 7)}), **args)
+        == "pass"
+    )
+
+    # 0.10 is 2% of a base of 5, so the relative threshold alone would fire. It
+    # is under the absolute floor, so together they do not.
+    rows = {d: low for d in range(1, 7)}
+    rows[SETTLED_DAYS_AGO] = 5.10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 0.50 clears the floor and is still well over 1%, so both agree.
+    rows[SETTLED_DAYS_AGO] = 5.60
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_absolute_threshold_tolerates_a_zero_baseline(
+    test_id: str, dbt_project: DbtProject
+):
+    """Relative change is undefined at zero; absolute change is not.
+
+    With only a relative threshold any move away from exactly zero has to fail,
+    because the division has no meaning there. An absolute threshold is well
+    defined at zero, so a metric legitimately sitting at 0 is held to the same
+    tolerance as everything else.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 5}
+    rows = {d: 0 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # A move away from zero inside the tolerance. A relative threshold would
+    # have had to fail this.
+    rows[SETTLED_DAYS_AGO] = 2
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # And the threshold still bites beyond it.
+    rows[SETTLED_DAYS_AGO] = 10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
 def test_metric_stability_ignores_unsettled_buckets(

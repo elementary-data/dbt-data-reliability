@@ -1,4 +1,11 @@
 {# Detect restatements of settled bucket metrics within the observation window.
+
+   Thresholds: max_change_percent is relative, which suits magnitudes whose
+   scale varies between models. max_change_absolute is the raw move, which
+   suits ratios that already sit on a fixed scale (20 basis points is 0.20 on a
+   0-100 scale). Setting both fails only when both are exceeded, so the
+   absolute one acts as a noise floor under the relative one.
+
    Configuration, baseline behavior, and limits:
    https://docs.elementary-data.com/data-tests/metric-stability #}
 {% test metric_stability(
@@ -8,7 +15,8 @@
     timestamp_column,
     min_bucket_age,
     change_since=["last_check"],
-    max_change_percent=0,
+    max_change_percent=none,
+    max_change_absolute=none,
     time_bucket=none,
     where_expression=none,
     days_back=none,
@@ -33,6 +41,7 @@
         min_bucket_age,
         change_since,
         max_change_percent,
+        max_change_absolute,
         days_back,
         backfill_days,
     ) %}
@@ -96,6 +105,7 @@
         days_back=days_back,
         min_bucket_age=min_bucket_age,
         max_change_percent=max_change_percent,
+        max_change_absolute=max_change_absolute,
         change_since=change_since,
         column_names=collected.columns,
         measurement_windows=collected.windows,
@@ -362,6 +372,7 @@
     min_bucket_age,
     change_since,
     max_change_percent,
+    max_change_absolute,
     days_back,
     backfill_days
 ) %}
@@ -391,22 +402,34 @@
         }}
     {%- endif %}
 
-    {%- if max_change_percent is not number %}
-        {{
-            exceptions.raise_compiler_error(
-                "max_change_percent must be a number, got '"
-                ~ max_change_percent
-                ~ "'. Write it unquoted, e.g. max_change_percent: 25."
-            )
-        }}
-    {%- endif %}
-    {%- if max_change_percent < 0 %}
-        {{
-            exceptions.raise_compiler_error(
-                "max_change_percent must be non-negative."
-            )
-        }}
-    {%- endif %}
+    {%- for arg_name, arg_value, example in [
+        ("max_change_percent", max_change_percent, "25"),
+        ("max_change_absolute", max_change_absolute, "0.20"),
+    ] %}
+        {%- if arg_value is not none %}
+            {%- if arg_value is not number %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name
+                        ~ " must be a number, got '"
+                        ~ arg_value
+                        ~ "'. Write it unquoted, e.g. "
+                        ~ arg_name
+                        ~ ": "
+                        ~ example
+                        ~ "."
+                    )
+                }}
+            {%- endif %}
+            {%- if arg_value < 0 %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name ~ " must be non-negative."
+                    )
+                }}
+            {%- endif %}
+        {%- endif %}
+    {%- endfor %}
     {%- for arg_name, arg_value in [
         ("days_back", days_back),
         ("backfill_days", backfill_days),
