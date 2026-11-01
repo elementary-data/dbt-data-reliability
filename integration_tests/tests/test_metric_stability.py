@@ -32,8 +32,8 @@ BASE_ARGS: Dict[str, Any] = {
 
 
 def _rows(
-    restatements: Optional[Dict[int, int]] = None,
-    other_restatements: Optional[Dict[int, int]] = None,
+    restatements: Optional[Dict[int, float]] = None,
+    other_restatements: Optional[Dict[int, float]] = None,
 ) -> List[Dict[str, Any]]:
     """One row per day, midday so it lands unambiguously inside a daily bucket."""
     restatements = restatements or {}
@@ -304,6 +304,263 @@ def test_metric_stability_ignores_measurements_taken_while_settling(
     )
 
     assert _run(dbt_project, test_id, _rows(), **args) == "pass"
+
+
+# A ratio sits on a fixed scale, so the move that matters is the absolute one.
+# 45.30% dropping to 45.10% is 20 basis points, which is what max_change_absolute
+# expresses directly.
+BASE_MARGIN = 45.30
+RATIO_ARGS: Dict[str, Any] = {"metrics": ["average"]}
+
+
+def test_metric_stability_absolute_threshold_on_a_ratio(
+    test_id: str, dbt_project: DbtProject
+):
+    """An absolute threshold means the same move at every level of the ratio."""
+    args = {**RATIO_ARGS, "max_change_absolute": 0.20}
+
+    assert (
+        _run(dbt_project, test_id, _rows({d: BASE_MARGIN for d in range(1, 7)}), **args)
+        == "pass"
+    )
+    assert (
+        _run(dbt_project, test_id, _rows({d: BASE_MARGIN for d in range(1, 7)}), **args)
+        == "pass"
+    )
+
+    # 10bp, inside the tolerance.
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+    rows[SETTLED_DAYS_AGO] = 45.20
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # A further 30bp, outside it.
+    rows[SETTLED_DAYS_AGO] = 44.90
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_both_thresholds_must_be_exceeded(
+    test_id: str, dbt_project: DbtProject
+):
+    """With both set the absolute one is a floor under the relative one.
+
+    A small absolute move on a small base looks large in relative terms, which
+    is exactly the noise an absolute floor is meant to suppress.
+    """
+    args = {**RATIO_ARGS, "max_change_percent": 1.0, "max_change_absolute": 0.20}
+    low = 5.00
+
+    assert (
+        _run(dbt_project, test_id, _rows({d: low for d in range(1, 7)}), **args)
+        == "pass"
+    )
+    assert (
+        _run(dbt_project, test_id, _rows({d: low for d in range(1, 7)}), **args)
+        == "pass"
+    )
+
+    # 0.10 is 2% of a base of 5, so the relative threshold alone would fire. It
+    # is under the absolute floor, so together they do not.
+    rows = {d: low for d in range(1, 7)}
+    rows[SETTLED_DAYS_AGO] = 5.10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 0.50 clears the floor and is still well over 1%, so both agree.
+    rows[SETTLED_DAYS_AGO] = 5.60
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_absolute_tolerates_zero_baseline(
+    test_id: str, dbt_project: DbtProject
+):
+    """Relative change is undefined at zero; absolute change is not.
+
+    With only a relative threshold any move away from exactly zero has to fail,
+    because the division has no meaning there. An absolute threshold is well
+    defined at zero, so a metric legitimately sitting at 0 is held to the same
+    tolerance as everything else.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 5}
+    rows = {d: 0 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # A move away from zero inside the tolerance. A relative threshold would
+    # have had to fail this.
+    rows[SETTLED_DAYS_AGO] = 2
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # And the threshold still bites beyond it.
+    rows[SETTLED_DAYS_AGO] = 10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_both_detect_zero_baseline(
+    test_id: str, dbt_project: DbtProject
+):
+    """At a zero baseline the absolute threshold has to decide on its own.
+
+    Relative change has no meaning at zero, so a relative conjunct of the form
+    "baseline != 0 and ..." is false there. Combined with the absolute one under
+    AND it would suppress every zero-baseline restatement, so adding an absolute
+    threshold as a noise floor would silently switch that detection off.
+    """
+    args = {**RATIO_ARGS, "max_change_percent": 10, "max_change_absolute": 5}
+    rows = {d: 0 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    rows[SETTLED_DAYS_AGO] = 1000
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_unset_threshold_still_fails_any_change(
+    test_id: str, dbt_project: DbtProject
+):
+    """An unconfigured threshold means zero, not "some small number".
+
+    max_change_percent defaults to none internally so that unset is
+    distinguishable from an explicit zero. The other tests restate by a factor
+    of two, so they would still pass if unset silently resolved to anything
+    under 100%. This pins a change far below any plausible accidental default.
+    """
+    assert _run(dbt_project, test_id, _rows()) == "pass"
+    assert _run(dbt_project, test_id, _rows()) == "pass"
+
+    # 0.1% of the base amount, which must still fail with nothing configured.
+    assert _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 100.1})) == "fail"
+
+
+def test_metric_stability_absolute_on_both_baselines(
+    test_id: str, dbt_project: DbtProject
+):
+    """Each baseline gets its own threshold pair, OR'd together."""
+    args = {
+        **RATIO_ARGS,
+        "change_since": ["last_check", "first_check"],
+        "max_change_absolute": 0.20,
+    }
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 15bp per step: under the tolerance against the previous measurement, but
+    # first_check sees the total move from where the bucket started.
+    rows[SETTLED_DAYS_AGO] = 45.15
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    rows[SETTLED_DAYS_AGO] = 45.00
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"max_change_absolute": -1},
+        {"max_change_absolute": "0.20"},
+        {"max_change_absolute": True},
+        {"max_change_percent": -1},
+        {"max_change_percent": "25"},
+        {"max_change_percent": True},
+        {"max_change_percent": 0.0000000001},
+    ],
+)
+def test_metric_stability_rejects_bad_thresholds(
+    test_id: str, dbt_project: DbtProject, overrides: Dict[str, Any]
+):
+    """Every threshold value that cannot mean what it says must raise.
+
+    Booleans matter because bool subclasses int in python, so Jinja's `number`
+    test accepts True and would render it as a threshold of 1. The tiny percent
+    matters because the query clamps it up to the noise floor, applying a
+    threshold nobody asked for. There is no equivalent absolute case: an
+    absolute threshold renders at full precision and is used as given.
+    """
+    assert _run(dbt_project, test_id, _rows(), **overrides) == "error"
+
+
+# metric_value is stored through dbt's type_float, which is single precision on
+# some adapters and double on others: the same subtraction gives
+# 0.20000000000000284 on Postgres and 0.20000076293945312 on DuckDB and
+# ClickHouse. Where it is single precision the storage error is four orders of
+# magnitude above the tolerance below, so a move sitting exactly on the threshold
+# is not decidable and the assertion would be meaningless rather than wrong. The
+# list errs towards over-skipping; the behaviour under test is the tolerance, and
+# that is exercised wherever metric_value is double precision.
+@pytest.mark.skip_targets(
+    [
+        "clickhouse",
+        "duckdb",
+        "spark",
+        "fabricspark",
+        "databricks_catalog",
+        "athena",
+        "trino",
+    ]
+)
+def test_metric_stability_absolute_float_boundary(
+    test_id: str, dbt_project: DbtProject
+):
+    """A move of exactly the threshold must not fire, in either direction.
+
+    Decimal thresholds have no exact float representation, so two moves that are
+    both 0.20 in decimal land either side of it: 45.30 -> 45.10 comes out as
+    0.19999999999999574 and 45.30 -> 45.50 as 0.20000000000000284. Without a
+    tolerance the second fires and the first does not, which is the customer's
+    own 20bp example behaving differently depending on which way it moved.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 0.20}
+    rows = {d: BASE_MARGIN for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Exactly 20bp up, the direction that rounds against us.
+    rows[SETTLED_DAYS_AGO] = 45.50
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 30bp further, comfortably past the threshold.
+    rows[SETTLED_DAYS_AGO] = 45.80
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+# Single precision loses this outright: see the note on the test above.
+@pytest.mark.skip_targets(
+    [
+        "clickhouse",
+        "duckdb",
+        "spark",
+        "fabricspark",
+        "databricks_catalog",
+        "athena",
+        "trino",
+    ]
+)
+def test_metric_stability_absolute_boundary_on_unit_scale(
+    test_id: str, dbt_project: DbtProject
+):
+    """The same move must behave the same however the metric is scaled.
+
+    20bp is 0.20 on a 0-100 scale and 0.0020 on a 0-1 scale. Rendering the
+    threshold with a fixed ten decimals kept the tolerance on the first and
+    dropped it on the second, so 0.1000 -> 0.0980 (a diff of
+    0.0020000000000000018) fired while the identical move on the other scale
+    did not.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 0.0020}
+    rows = {d: 0.1000 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Exactly 20bp down, the direction that rounds against us.
+    rows[SETTLED_DAYS_AGO] = 0.0980
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 30bp further, comfortably past the threshold.
+    rows[SETTLED_DAYS_AGO] = 0.0950
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
 def test_metric_stability_ignores_unsettled_buckets(
