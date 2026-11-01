@@ -460,7 +460,6 @@ def test_metric_stability_absolute_on_both_baselines(
         {"max_change_absolute": -1},
         {"max_change_absolute": "0.20"},
         {"max_change_absolute": True},
-        {"max_change_absolute": 0.00000000001},
         {"max_change_percent": -1},
         {"max_change_percent": "25"},
         {"max_change_percent": True},
@@ -473,9 +472,10 @@ def test_metric_stability_rejects_bad_thresholds(
     """Every threshold value that cannot mean what it says must raise.
 
     Booleans matter because bool subclasses int in python, so Jinja's `number`
-    test accepts True and would render it as a threshold of 1. The tiny values
-    matter because one is clamped to the noise floor and the other rounds to
-    zero, either of which would apply a threshold nobody asked for.
+    test accepts True and would render it as a threshold of 1. The tiny percent
+    matters because the query clamps it up to the noise floor, applying a
+    threshold nobody asked for. There is no equivalent absolute case: an
+    absolute threshold renders at full precision and is used as given.
     """
     assert _run(dbt_project, test_id, _rows(), **overrides) == "error"
 
@@ -522,6 +522,44 @@ def test_metric_stability_absolute_float_boundary(
 
     # 30bp further, comfortably past the threshold.
     rows[SETTLED_DAYS_AGO] = 45.80
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+# Single precision loses this outright: see the note on the test above.
+@pytest.mark.skip_targets(
+    [
+        "clickhouse",
+        "duckdb",
+        "spark",
+        "fabricspark",
+        "databricks_catalog",
+        "athena",
+        "trino",
+    ]
+)
+def test_metric_stability_absolute_boundary_on_unit_scale(
+    test_id: str, dbt_project: DbtProject
+):
+    """The same move must behave the same however the metric is scaled.
+
+    20bp is 0.20 on a 0-100 scale and 0.0020 on a 0-1 scale. Rendering the
+    threshold with a fixed ten decimals kept the tolerance on the first and
+    dropped it on the second, so 0.1000 -> 0.0980 (a diff of
+    0.0020000000000000018) fired while the identical move on the other scale
+    did not.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 0.0020}
+    rows = {d: 0.1000 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Exactly 20bp down, the direction that rounds against us.
+    rows[SETTLED_DAYS_AGO] = 0.0980
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 30bp further, comfortably past the threshold.
+    rows[SETTLED_DAYS_AGO] = 0.0950
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 

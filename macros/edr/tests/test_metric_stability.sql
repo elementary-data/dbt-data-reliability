@@ -412,13 +412,13 @@
         }}
     {%- endif %}
 
-    {#- Smallest value each threshold can actually act on. Below the percent
-        noise floor the query clamps the value, and below the absolute minimum
-        it renders as 0, so either would silently mean something other than what
-        was written. -#}
+    {#- A percent below the noise floor is clamped up to it by the query, so
+        it would silently mean something other than what was written. An
+        absolute threshold has no such floor: it renders at full precision and
+        is used as given, so any positive value is honoured. -#}
     {%- for arg_name, arg_value, example, minimum in [
         ("max_change_percent", max_change_percent, "25", 0.000000001),
-        ("max_change_absolute", max_change_absolute, "0.20", 0.0000000001),
+        ("max_change_absolute", max_change_absolute, "0.20", none),
     ] %}
         {%- if arg_value is not none %}
             {#- bool subclasses int in python, so `is number` alone lets
@@ -444,17 +444,18 @@
                     )
                 }}
             {%- endif %}
-            {%- if arg_value > 0 and arg_value < minimum %}
+            {%- if minimum is not none and arg_value > 0 and arg_value < minimum %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name
                         ~ " is "
                         ~ arg_value
-                        ~ ", below the smallest value it can act on ("
+                        ~ ", below the floating-point noise floor this test"
+                        ~ " applies ("
                         ~ minimum
-                        ~ "). Anything smaller would be silently rounded up or"
-                        ~ " down rather than applied. Use a larger value, or"
-                        ~ " rescale the metric."
+                        ~ "). Anything smaller would be raised to the floor"
+                        ~ " rather than applied. Use a larger value, use"
+                        ~ " max_change_absolute, or rescale the metric."
                     )
                 }}
             {%- endif %}

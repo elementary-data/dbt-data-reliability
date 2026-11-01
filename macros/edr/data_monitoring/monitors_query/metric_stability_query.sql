@@ -60,7 +60,15 @@
        recomputed per bucket, so a setting meaning 20bp at a 45% margin means
        about 9bp at 20% and 27bp at 60%. max_change_absolute expresses the move
        directly. Unset percent means 0 unless an absolute threshold stands in
-       for it, which is why the default is none rather than 0. #}
+       for it, which is why the default is none rather than 0.
+
+       How small an absolute threshold can usefully be is bounded by how the
+       warehouse stores metric_value, which goes through dbt's type_float:
+       double precision on most adapters, single on some (DuckDB and ClickHouse
+       among them). At single precision a value around 45 carries roughly 1e-5
+       of storage error, so a move sitting within that of the threshold is not
+       decidable there and may be reported in one direction but not the other.
+       The tolerance below addresses decimal representation, not storage. #}
     {%- set has_absolute = max_change_absolute is not none %}
     {%- set effective_percent = (
         max_change_percent if max_change_percent is not none else 0
@@ -70,8 +78,14 @@
        in a different order differs in the last bits, so the relative guard is
        kept even when an absolute threshold is doing the real work. #}
     {%- set change_percent_noise_floor = 0.000000001 %}
-    {%- set change_threshold = "%.10f" | format(
-        [effective_percent, change_percent_noise_floor] | max
+    {#- Thresholds render through `string`, which is python's shortest
+        round-tripping form, so the literal in the SQL is the same double the
+        test was configured with. A fixed number of decimals would not be: at
+        "%.10f" the slack below survives on a 0-100 scale but vanishes on a 0-1
+        scale, which made identical moves behave differently depending on how
+        the metric happened to be scaled. -#}
+    {%- set change_threshold = (
+        [effective_percent, change_percent_noise_floor] | max | string
     ) %}
     {#- A decimal threshold has no exact float representation, so two moves that
         are both 0.20 in decimal land either side of it: 45.30 -> 45.10 is
@@ -79,7 +93,7 @@
         tolerance the customer's own 20bp example fires in one direction and not
         the other. The slack is far below any move anyone would configure. -#}
     {%- set absolute_threshold = (
-        "%.10f" | format(max_change_absolute * (1 + 0.000000001))
+        (max_change_absolute * (1 + 0.000000001)) | string
         if has_absolute
         else none
     ) %}
@@ -256,12 +270,14 @@
             first_check_value as initial_value,
             case when is_current = 1 then measured_value - last_check_value end as change_since_last_check,
             case when is_current = 1 then measured_value - first_check_value end as change_since_first_check,
+            {#- nullif inside the helper already yields NULL at a zero or
+                missing baseline, so is_current is the only guard left. -#}
             case
-                when is_current = 1 and last_check_value is not null and last_check_value != 0
+                when is_current = 1
                 then {{ elementary.metric_stability_change_percent("last_check_value") }}
             end as change_percent_since_last_check,
             case
-                when is_current = 1 and first_check_value is not null and first_check_value != 0
+                when is_current = 1
                 then {{ elementary.metric_stability_change_percent("first_check_value") }}
             end as change_percent_since_first_check
         from latest_measurement
@@ -274,12 +290,11 @@
 {#
   Relative change from a baseline column, in percentage points. Shared by the
   WHERE predicate and the reported columns so the two cannot drift apart.
-#}
-{# Relative change from a baseline, in percentage points.
 
-   nullif keeps this NULL rather than raising at a zero baseline. SQL does not
-   guarantee that the `= 0` guards around the call are evaluated first, so on an
-   engine that evaluates both sides of an OR the division would raise. #}
+  nullif keeps this NULL rather than raising at a zero baseline. SQL does not
+  guarantee that a `= 0` guard around the call is evaluated first, so on an
+  engine that evaluates both sides of an OR the division would raise.
+#}
 {% macro metric_stability_change_percent(baseline_column) -%}
     abs(measured_value - {{ baseline_column }})
     / nullif(abs({{ baseline_column }}), 0)
