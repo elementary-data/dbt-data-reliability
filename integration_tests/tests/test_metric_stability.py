@@ -539,10 +539,16 @@ def test_metric_stability_absolute_on_both_baselines(
         pytest.param({"max_change_percent": "x"}, "max_change_percent", id="pct_str"),
         pytest.param({"max_change_percent": None}, "max_change_percent", id="pct_null"),
         pytest.param(
-            {"max_change_absolute": float("inf")}, "max_change_absolute", id="abs_inf"
+            {"max_change_absolute": float("inf")},
+            "max_change_absolute",
+            id="abs_inf",
+            marks=pytest.mark.skip_for_dbt_fusion,
         ),
         pytest.param(
-            {"max_change_absolute": float("nan")}, "max_change_absolute", id="abs_nan"
+            {"max_change_absolute": float("nan")},
+            "max_change_absolute",
+            id="abs_nan",
+            marks=pytest.mark.skip_for_dbt_fusion,
         ),
     ],
 )
@@ -565,6 +571,10 @@ def test_metric_stability_rejects_bad_thresholds(
     ClickHouse reads as a literal that makes every comparison false, so the test
     would never fail again.
 
+    inf and nan skip dbt-fusion, which does not carry either through to the
+    macro: both arrive as null, which for an optional argument means "unset",
+    so the validation under test is never reached.
+
     A string is rejected rather than parsed. dbt reads YAML 1.1, where an
     exponent without a decimal point is text, so `2e-3` arrives here as a
     string; the message says to write it with a point rather than telling the
@@ -576,6 +586,7 @@ def test_metric_stability_rejects_bad_thresholds(
     assert expected_argument in (result.get("test_results_description") or "")
 
 
+@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
 def test_metric_stability_absolute_bites_on_large_metrics(
     test_id: str, dbt_project: DbtProject
 ):
