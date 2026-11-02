@@ -420,13 +420,7 @@
 
     {#- max_change_percent defaults to 0, so a none here can only come from an
         explicit `max_change_percent: null`. master rejected that, and it must
-        not quietly become "report any change at all".
-
-        Numeric strings are accepted rather than rejected. dbt-core reads YAML
-        1.1, where a float needs a decimal point, so `max_change_absolute: 2e-3`
-        (a natural way to write 20bp on a 0-1 scale) arrives as the string
-        '2e-3'. Telling the user to write it unquoted, when they already did,
-        is not something they can act on. -#}
+        not quietly become "report any change at all". -#}
     {%- set thresholds = {} %}
     {%- for arg_name, arg_value, example, optional in [
         ("max_change_percent", max_change_percent, "25", false),
@@ -445,46 +439,48 @@
             {%- do thresholds.update({arg_name: none}) %}
         {%- else %}
             {#- bool subclasses int in python, so `is number` alone lets
-                `max_change_percent: true` through as a threshold of 1. Parsing
-                twice with different fallbacks separates a value that failed to
-                parse from one that happens to equal a fallback. -#}
-            {%- set parsed = arg_value | float(1.0) %}
-            {%- if arg_value is boolean or parsed != arg_value | float(2.0) %}
+                `max_change_percent: true` through as a threshold of 1.
+
+                The message names the decimal point because dbt reads YAML 1.1,
+                where an exponent written without one is text rather than a
+                number: `max_change_absolute: 2e-3`, a natural way to write 20bp
+                on a 0-1 scale, arrives here as the string '2e-3'. Telling the
+                user to unquote something they never quoted is not actionable. -#}
+            {%- if arg_value is boolean or arg_value is not number %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name
                         ~ " must be a number, got '"
                         ~ arg_value
-                        ~ "'. For example "
+                        ~ "'. Write it with a decimal point, e.g. "
                         ~ arg_name
                         ~ ": "
                         ~ example
-                        ~ "."
+                        ~ ". An exponent without one, such as 2e-3, is read as"
+                        ~ " text rather than a number."
                     )
                 }}
             {%- endif %}
-            {#- inf is a number, is not negative and clears every bound, so
-                without this it renders as a bare inf: most warehouses read
-                that as an unknown column and fail at runtime, and ClickHouse
-                reads it as a literal that makes every comparison false, so the
-                test would simply never fail again. nan is already rejected
-                above, because it is not equal to itself and so fails the
-                two-parse comparison. -#}
-            {%- if parsed - parsed != 0 %}
+            {#- inf and nan are numbers, are not negative and clear every bound,
+                so without this they render as a bare inf / nan: most warehouses
+                read that as an unknown column and fail at runtime, and
+                ClickHouse reads it as a literal that makes every comparison
+                false, so the test would simply never fail again. -#}
+            {%- if arg_value - arg_value != 0 %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name ~ " must be finite, got '" ~ arg_value ~ "'."
                     )
                 }}
             {%- endif %}
-            {%- if parsed < 0 %}
+            {%- if arg_value < 0 %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name ~ " must be non-negative, got '" ~ arg_value ~ "'."
                     )
                 }}
             {%- endif %}
-            {%- do thresholds.update({arg_name: parsed}) %}
+            {%- do thresholds.update({arg_name: arg_value}) %}
         {%- endif %}
     {%- endfor %}
 

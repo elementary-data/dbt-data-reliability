@@ -86,8 +86,8 @@
        slack cannot do this, because that error grows with the operands: at a
        bucket of 12345678.30 it reaches 1e-9, five orders of magnitude above a
        slack sized for values around 45. #}
-    {%- set noise_floor = 10**-11 %}
-    {%- set comparison_tolerance = 10**-13 %}
+    {%- set noise_floor = 0.00000000001 %}
+    {%- set comparison_tolerance = 0.0000000000001 %}
 
     {#- Thresholds render through `string`, python's shortest round-tripping
         form, so the literal in the SQL is the double that was configured.

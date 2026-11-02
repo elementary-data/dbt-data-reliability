@@ -560,10 +560,15 @@ def test_metric_stability_rejects_bad_thresholds(
     shows that the check, rather than an incidental crash, rejected it.
 
     Booleans matter because bool subclasses int in python, so Jinja's `number`
-    test accepts True. inf matters because it clears every bound and then
-    renders as a bare inf, which ClickHouse reads as a literal that makes every
-    comparison false, so the test would never fail again. nan is caught earlier,
-    by not being equal to itself.
+    test accepts True. inf and nan matter because they are numbers, are not
+    negative and clear every bound, and then render as a bare inf / nan, which
+    ClickHouse reads as a literal that makes every comparison false, so the test
+    would never fail again.
+
+    A string is rejected rather than parsed. dbt reads YAML 1.1, where an
+    exponent without a decimal point is text, so `2e-3` arrives here as a
+    string; the message says to write it with a point rather than telling the
+    user to unquote something they never quoted.
     """
     result = _run_result(dbt_project, test_id, _rows(), **overrides)
 
@@ -571,33 +576,6 @@ def test_metric_stability_rejects_bad_thresholds(
     assert expected_argument in (result.get("test_results_description") or "")
 
 
-@pytest.mark.skip_targets(FRACTIONAL_SEED_TARGETS)
-def test_metric_stability_accepts_a_numeric_string_threshold(
-    test_id: str, dbt_project: DbtProject
-):
-    """A threshold written in exponent form arrives as a string, and must work.
-
-    dbt-core reads YAML 1.1, where a float needs a decimal point, so
-    `max_change_absolute: 2e-3` is a string rather than a number. That is a
-    natural way to write 20bp on a 0-1 scale, so rejecting it as "not a number"
-    would be telling the user to unquote something they never quoted.
-    """
-    args = {**RATIO_ARGS, "max_change_absolute": "2e-3"}
-    rows = {d: 0.1000 for d in range(1, 7)}
-
-    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
-    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
-
-    # 10bp, inside a threshold of 20bp.
-    rows[SETTLED_DAYS_AGO] = 0.0990
-    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
-
-    # 50bp, outside it. A threshold read as 0 or rejected could not do both.
-    rows[SETTLED_DAYS_AGO] = 0.0950
-    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
-
-
-@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
 def test_metric_stability_absolute_bites_on_large_metrics(
     test_id: str, dbt_project: DbtProject
 ):
