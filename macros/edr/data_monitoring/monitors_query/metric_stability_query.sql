@@ -8,7 +8,7 @@
     detection_end,
     days_back,
     min_bucket_age,
-    max_change_percent=none,
+    max_change_percent=0,
     max_change_absolute=none,
     change_since=["last_check"],
     column_names=none,
@@ -59,42 +59,46 @@
        because the relative form divides by the baseline, its sensitivity is
        recomputed per bucket, so a setting meaning 20bp at a 45% margin means
        about 9bp at 20% and 27bp at 60%. max_change_absolute expresses the move
-       directly. Unset percent means 0 unless an absolute threshold stands in
-       for it, which is why the default is none rather than 0.
+       directly.
 
-       How small an absolute threshold can usefully be is bounded by how the
-       warehouse stores metric_value, which goes through dbt's type_float:
-       double precision on most adapters, single on some (DuckDB and ClickHouse
-       among them). At single precision a value around 45 carries roughly 1e-5
-       of storage error, so a move sitting within that of the threshold is not
-       decidable there and may be reported in one direction but not the other.
-       The tolerance below addresses decimal representation, not storage. #}
-    {%- set has_absolute = max_change_absolute is not none %}
-    {%- set effective_percent = (
-        max_change_percent if max_change_percent is not none else 0
-    ) %}
+       Both legs are written as `moved > threshold * scale`, with no division,
+       so neither needs a zero-baseline escape: at a zero baseline the relative
+       leg reduces to `moved > 0`, which is satisfied by any change rather than
+       falsified by it, and the absolute leg decides on its own. The earlier
+       form built a separate predicate per branch, which is how the zero
+       baseline was suppressed once already. #}
+    {# Two coefficients, both scaled by the operands, because the errors they
+       cover scale with the operands too.
 
-    {# Suppress floating-point aggregation noise. Re-aggregating the same rows
-       in a different order differs in the last bits, so the relative guard is
-       kept even when an absolute threshold is doing the real work. #}
-    {%- set change_percent_noise_floor = 0.000000001 %}
-    {#- Thresholds render through `string`, which is python's shortest
-        round-tripping form, so the literal in the SQL is the same double the
-        test was configured with. A fixed number of decimals would not be: at
-        "%.10f" the slack below survives on a 0-100 scale but vanishes on a 0-1
-        scale, which made identical moves behave differently depending on how
-        the metric happened to be scaled. -#}
-    {%- set change_threshold = (
-        [effective_percent, change_percent_noise_floor] | max | string
-    ) %}
-    {#- A decimal threshold has no exact float representation, so two moves that
-        are both 0.20 in decimal land either side of it: 45.30 -> 45.10 is
-        0.19999999999999574 and 45.50 -> 45.30 is 0.20000000000000284. Without a
-        tolerance the customer's own 20bp example fires in one direction and not
-        the other. The slack is far below any move anyone would configure. -#}
-    {%- set absolute_threshold = (
-        (max_change_absolute * (1 + 0.000000001)) | string
-        if has_absolute
+       noise_floor stands in for an absolute threshold when none was given, so
+       that re-aggregating the same rows in a different order does not read as
+       a restatement. It is the old 1e-9 percent floor written as a fraction,
+       so the default behaviour is unchanged. It is deliberately NOT added on
+       top of an explicit max_change_absolute: setting one states the
+       resolution wanted, and folding the floor into it dropped real moves on
+       large metrics (a move of 2 on a daily sum of 2.5e11, with
+       max_change_absolute: 1, went unreported).
+
+       comparison_tolerance absorbs the representation error in the comparison
+       itself. A decimal threshold has no exact binary form, so 45.30 -> 45.10
+       is 0.19999999999999574 while 45.50 -> 45.30 is 0.20000000000000284, and
+       without it the same 20bp move is reported in one direction only. A fixed
+       slack cannot do this, because that error grows with the operands: at a
+       bucket of 12345678.30 it reaches 1e-9, five orders of magnitude above a
+       slack sized for values around 45. #}
+    {%- set noise_floor = 10**-11 %}
+    {%- set comparison_tolerance = 10**-13 %}
+
+    {#- Thresholds render through `string`, python's shortest round-tripping
+        form, so the literal in the SQL is the double that was configured.
+        Fixed decimals are not: at "%.10f" a tolerance survived on a 0-100
+        scale and vanished on a 0-1 scale, so the same move behaved differently
+        depending on how the metric happened to be scaled. -#}
+    {%- set percent_fraction = (max_change_percent / 100.0) | string %}
+    {%- set tolerance_coefficient = comparison_tolerance | string %}
+    {%- set absolute_literal = (
+        max_change_absolute | string
+        if max_change_absolute is not none
         else none
     ) %}
 
@@ -104,48 +108,18 @@
         {%- set baseline_column = baseline ~ "_value" %}
         {%- if baseline_column not in baseline_columns %}
             {%- do baseline_columns.append(baseline_column) %}
-            {%- set change_percent = elementary.metric_stability_change_percent(
-                baseline_column
+            {%- set moved = "abs(measured_value - " ~ baseline_column ~ ")" %}
+            {%- set scale = "(abs(measured_value) + abs(" ~ baseline_column ~ "))" %}
+            {%- set tolerance = tolerance_coefficient ~ " * " ~ scale %}
+            {%- set absolute_leg = (
+                absolute_literal
+                if absolute_literal is not none
+                else (noise_floor | string) ~ " * " ~ scale
             ) %}
-            {%- set threshold_tests = [] %}
-            {%- if has_absolute %}
-                {# Relative change is undefined at a zero baseline, so the
-                   relative guard has to be satisfied there rather than
-                   falsified, or the AND below would suppress every zero
-                   baseline and the absolute threshold would never decide. #}
-                {%- do threshold_tests.append(
-                    "("
-                    ~ baseline_column
-                    ~ " = 0 or "
-                    ~ change_percent
-                    ~ " > "
-                    ~ change_threshold
-                    ~ ")"
-                ) %}
-                {%- do threshold_tests.append(
-                    "abs(measured_value - "
-                    ~ baseline_column
-                    ~ ") > "
-                    ~ absolute_threshold
-                ) %}
-            {%- else %}
-                {# With no absolute threshold to decide at zero, any move away
-                   from exactly zero counts. #}
-                {%- do threshold_tests.append(
-                    "(("
-                    ~ baseline_column
-                    ~ " = 0 and measured_value != 0) or ("
-                    ~ baseline_column
-                    ~ " != 0 and "
-                    ~ change_percent
-                    ~ " > "
-                    ~ change_threshold
-                    ~ "))"
-                ) %}
-            {%- endif %}
             {% set exceeds_condition %}
                 ({{ baseline_column }} is not null
-                 and {{ threshold_tests | join(" and ") }})
+                 and {{ moved }} > {{ percent_fraction }} * abs({{ baseline_column }}) + {{ tolerance }}
+                 and {{ moved }} > {{ absolute_leg }} + {{ tolerance }})
             {% endset %}
             {% do exceeds_conditions.append(exceeds_condition) %}
         {%- endif %}

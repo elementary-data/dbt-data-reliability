@@ -12,6 +12,26 @@ VALUE_COLUMN = "amount"
 OTHER_VALUE_COLUMN = "other_amount"
 DBT_TEST_NAME = "elementary.metric_stability"
 
+# metric_value goes through dbt's type_float, which is 4 bytes on these. A value
+# around 45 then carries about 1e-5 of storage error, orders of magnitude above
+# the tolerance the boundary tests probe, so a move sitting exactly on a
+# threshold is not decidable there and the assertion would be meaningless.
+SINGLE_PRECISION_TARGETS = [
+    "clickhouse",
+    "duckdb",
+    "spark",
+    "fabricspark",
+    "databricks_catalog",
+    "athena",
+    "trino",
+    "dremio",
+]
+
+# dbt-dremio seeds a fractional column as a bare `decimal`, which Dremio reads
+# at scale 0, so 45.30 and 45.20 both arrive as 45 and the move under test never
+# exists. Tests whose data cannot be expressed as integers skip it.
+FRACTIONAL_SEED_TARGETS = ["dremio"]
+
 BASE_AMOUNT = 100
 OTHER_BASE_AMOUNT = 500
 DAYS_OF_HISTORY = 6
@@ -61,6 +81,16 @@ def _run(dbt_project: DbtProject, test_id: str, data, **overrides) -> str:
         test_vars={"enable_elementary_test_materialization": True},
     )
     return result["status"]
+
+
+def _run_result(dbt_project: DbtProject, test_id: str, data, **overrides) -> dict:
+    return dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        {**BASE_ARGS, **overrides},
+        data=data,
+        test_vars={"enable_elementary_test_materialization": True},
+    )
 
 
 def _bucket_values(
@@ -313,6 +343,7 @@ BASE_MARGIN = 45.30
 RATIO_ARGS: Dict[str, Any] = {"metrics": ["average"]}
 
 
+@pytest.mark.skip_targets(FRACTIONAL_SEED_TARGETS)
 def test_metric_stability_absolute_threshold_on_a_ratio(
     test_id: str, dbt_project: DbtProject
 ):
@@ -345,9 +376,14 @@ def test_metric_stability_both_thresholds_must_be_exceeded(
 
     A small absolute move on a small base looks large in relative terms, which
     is exactly the noise an absolute floor is meant to suppress.
+
+    The data is integral because a column of 5.00 is written as 5.0, which agate
+    normalizes to zero decimals: the seed column becomes INT64 on BigQuery,
+    integer on Athena and bigint on Dremio, and the load fails before any
+    assertion runs. Postgres, DuckDB and ClickHouse coerce on insert and hide it.
     """
-    args = {**RATIO_ARGS, "max_change_percent": 1.0, "max_change_absolute": 0.20}
-    low = 5.00
+    args = {**RATIO_ARGS, "max_change_percent": 1.0, "max_change_absolute": 20}
+    low = 500
 
     assert (
         _run(dbt_project, test_id, _rows({d: low for d in range(1, 7)}), **args)
@@ -358,14 +394,40 @@ def test_metric_stability_both_thresholds_must_be_exceeded(
         == "pass"
     )
 
-    # 0.10 is 2% of a base of 5, so the relative threshold alone would fire. It
+    # 10 is 2% of a base of 500, so the relative threshold alone would fire. It
     # is under the absolute floor, so together they do not.
     rows = {d: low for d in range(1, 7)}
-    rows[SETTLED_DAYS_AGO] = 5.10
+    rows[SETTLED_DAYS_AGO] = 510
     assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
 
-    # 0.50 clears the floor and is still well over 1%, so both agree.
-    rows[SETTLED_DAYS_AGO] = 5.60
+    # 50 clears the floor and is still well over 1%, so both agree.
+    rows[SETTLED_DAYS_AGO] = 560
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+def test_metric_stability_percent_still_applies_when_both_set(
+    test_id: str, dbt_project: DbtProject
+):
+    """The relative leg has to keep biting when an absolute one is present.
+
+    Every other both-thresholds case is decided by the absolute leg, so dropping
+    max_change_percent from that branch would not have been caught. This move
+    clears the absolute threshold and stays under the relative one, so it can
+    only pass if both are still being applied.
+    """
+    args = {**RATIO_ARGS, "max_change_percent": 1.0, "max_change_absolute": 20}
+    base = 4530
+    rows = {d: base for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 30 absolute (over the floor of 20) but 0.66% relative (under 1%).
+    rows[SETTLED_DAYS_AGO] = 4560
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 70 absolute and 1.5% relative, so both agree.
+    rows[SETTLED_DAYS_AGO] = 4630
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
@@ -379,7 +441,15 @@ def test_metric_stability_absolute_tolerates_zero_baseline(
     defined at zero, so a metric legitimately sitting at 0 is held to the same
     tolerance as everything else.
     """
-    args = {**RATIO_ARGS, "max_change_absolute": 5}
+    # first_check pins the baseline at the original zero. Under the default
+    # last_check the second move would be measured against 2, not 0, and the
+    # zero baseline would never be the thing deciding: an implementation that
+    # never fires at zero would still pass.
+    args = {
+        **RATIO_ARGS,
+        "max_change_absolute": 5,
+        "change_since": ["first_check"],
+    }
     rows = {d: 0 for d in range(1, 7)}
 
     assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
@@ -390,7 +460,7 @@ def test_metric_stability_absolute_tolerates_zero_baseline(
     rows[SETTLED_DAYS_AGO] = 2
     assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
 
-    # And the threshold still bites beyond it.
+    # And the threshold still bites beyond it, still measured against zero.
     rows[SETTLED_DAYS_AGO] = 10
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
@@ -415,6 +485,7 @@ def test_metric_stability_both_detect_zero_baseline(
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
+@pytest.mark.skip_targets(FRACTIONAL_SEED_TARGETS)
 def test_metric_stability_unset_threshold_still_fails_any_change(
     test_id: str, dbt_project: DbtProject
 ):
@@ -432,6 +503,7 @@ def test_metric_stability_unset_threshold_still_fails_any_change(
     assert _run(dbt_project, test_id, _rows({SETTLED_DAYS_AGO: 100.1})) == "fail"
 
 
+@pytest.mark.skip_targets(FRACTIONAL_SEED_TARGETS)
 def test_metric_stability_absolute_on_both_baselines(
     test_id: str, dbt_project: DbtProject
 ):
@@ -455,50 +527,132 @@ def test_metric_stability_absolute_on_both_baselines(
 
 
 @pytest.mark.parametrize(
-    "overrides",
+    "overrides,expected_argument",
     [
-        {"max_change_absolute": -1},
-        {"max_change_absolute": "0.20"},
-        {"max_change_absolute": True},
-        {"max_change_percent": -1},
-        {"max_change_percent": "25"},
-        {"max_change_percent": True},
-        {"max_change_percent": 0.0000000001},
+        pytest.param({"max_change_absolute": -1}, "max_change_absolute", id="abs_neg"),
+        pytest.param({"max_change_percent": -1}, "max_change_percent", id="pct_neg"),
+        pytest.param(
+            {"max_change_absolute": True}, "max_change_absolute", id="abs_bool"
+        ),
+        pytest.param({"max_change_percent": True}, "max_change_percent", id="pct_bool"),
+        pytest.param({"max_change_absolute": "x"}, "max_change_absolute", id="abs_str"),
+        pytest.param({"max_change_percent": "x"}, "max_change_percent", id="pct_str"),
+        pytest.param({"max_change_percent": None}, "max_change_percent", id="pct_null"),
+        pytest.param(
+            {"max_change_absolute": float("inf")}, "max_change_absolute", id="abs_inf"
+        ),
+        pytest.param(
+            {"max_change_absolute": float("nan")}, "max_change_absolute", id="abs_nan"
+        ),
     ],
 )
 def test_metric_stability_rejects_bad_thresholds(
-    test_id: str, dbt_project: DbtProject, overrides: Dict[str, Any]
+    test_id: str,
+    dbt_project: DbtProject,
+    overrides: Dict[str, Any],
+    expected_argument: str,
 ):
     """Every threshold value that cannot mean what it says must raise.
 
+    The description is asserted on, not just the status. Several of these would
+    error anyway without any validation: a string raises inside the arithmetic,
+    and True renders as a threshold of 1. Only an error naming the argument
+    shows that the check, rather than an incidental crash, rejected it.
+
     Booleans matter because bool subclasses int in python, so Jinja's `number`
-    test accepts True and would render it as a threshold of 1. The tiny percent
-    matters because the query clamps it up to the noise floor, applying a
-    threshold nobody asked for. There is no equivalent absolute case: an
-    absolute threshold renders at full precision and is used as given.
+    test accepts True. inf matters because it clears every bound and then
+    renders as a bare inf, which ClickHouse reads as a literal that makes every
+    comparison false, so the test would never fail again. nan is caught earlier,
+    by not being equal to itself.
     """
-    assert _run(dbt_project, test_id, _rows(), **overrides) == "error"
+    result = _run_result(dbt_project, test_id, _rows(), **overrides)
+
+    assert result["status"] == "error"
+    assert expected_argument in (result.get("test_results_description") or "")
 
 
-# metric_value is stored through dbt's type_float, which is single precision on
-# some adapters and double on others: the same subtraction gives
-# 0.20000000000000284 on Postgres and 0.20000076293945312 on DuckDB and
-# ClickHouse. Where it is single precision the storage error is four orders of
-# magnitude above the tolerance below, so a move sitting exactly on the threshold
-# is not decidable and the assertion would be meaningless rather than wrong. The
-# list errs towards over-skipping; the behaviour under test is the tolerance, and
-# that is exercised wherever metric_value is double precision.
-@pytest.mark.skip_targets(
-    [
-        "clickhouse",
-        "duckdb",
-        "spark",
-        "fabricspark",
-        "databricks_catalog",
-        "athena",
-        "trino",
-    ]
-)
+@pytest.mark.skip_targets(FRACTIONAL_SEED_TARGETS)
+def test_metric_stability_accepts_a_numeric_string_threshold(
+    test_id: str, dbt_project: DbtProject
+):
+    """A threshold written in exponent form arrives as a string, and must work.
+
+    dbt-core reads YAML 1.1, where a float needs a decimal point, so
+    `max_change_absolute: 2e-3` is a string rather than a number. That is a
+    natural way to write 20bp on a 0-1 scale, so rejecting it as "not a number"
+    would be telling the user to unquote something they never quoted.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": "2e-3"}
+    rows = {d: 0.1000 for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 10bp, inside a threshold of 20bp.
+    rows[SETTLED_DAYS_AGO] = 0.0990
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 50bp, outside it. A threshold read as 0 or rejected could not do both.
+    rows[SETTLED_DAYS_AGO] = 0.0950
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
+def test_metric_stability_absolute_bites_on_large_metrics(
+    test_id: str, dbt_project: DbtProject
+):
+    """A noise floor must not quietly override an explicit absolute threshold.
+
+    The predicate used to AND a fixed 1e-9 percent floor onto every comparison,
+    absolute-only ones included. On a daily sum of 2.5e11 a move of 2 is 8e-10
+    percent, under that floor, so `max_change_absolute: 1` never reported it
+    however far the value moved in absolute terms.
+
+    The base carries a fraction so the seed column stays floating point: whole
+    numbers this large are inferred as integer and overflow a 32-bit int column.
+    """
+    args = {"max_change_absolute": 1}
+    base = 250000000000.5
+    rows = {d: base for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Twice the threshold, and far below the old relative floor.
+    rows[SETTLED_DAYS_AGO] = base + 2
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
+def test_metric_stability_absolute_boundary_on_large_values(
+    test_id: str, dbt_project: DbtProject
+):
+    """The boundary stays symmetric as the metric grows.
+
+    Representation error grows with the operands, so a slack of a fixed size
+    stops absorbing it. At a bucket of 12345678.30 the two directions of a 0.20
+    move compute 0.2000000011175871 and 0.19999999925494194, so the move was
+    reported going down and not going up: the same one-direction-only behaviour
+    the smaller boundary test guards against, returning about a million times
+    the threshold.
+    """
+    args = {**RATIO_ARGS, "max_change_absolute": 0.20}
+    base = 12345678.30
+    rows = {d: base for d in range(1, 7)}
+
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # Exactly 0.20 down, the direction that rounds against us here.
+    rows[SETTLED_DAYS_AGO] = 12345678.10
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "pass"
+
+    # 0.70 further, comfortably past the threshold.
+    rows[SETTLED_DAYS_AGO] = 12345678.80
+    assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
+
+
+@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
 def test_metric_stability_absolute_float_boundary(
     test_id: str, dbt_project: DbtProject
 ):
@@ -525,18 +679,7 @@ def test_metric_stability_absolute_float_boundary(
     assert _run(dbt_project, test_id, _rows(rows), **args) == "fail"
 
 
-# Single precision loses this outright: see the note on the test above.
-@pytest.mark.skip_targets(
-    [
-        "clickhouse",
-        "duckdb",
-        "spark",
-        "fabricspark",
-        "databricks_catalog",
-        "athena",
-        "trino",
-    ]
-)
+@pytest.mark.skip_targets(SINGLE_PRECISION_TARGETS)
 def test_metric_stability_absolute_boundary_on_unit_scale(
     test_id: str, dbt_project: DbtProject
 ):

@@ -8,13 +8,17 @@
    baseline, where relative change has no meaning, the absolute threshold
    decides on its own.
 
-   An absolute threshold is limited by how precisely the warehouse stores a
-   metric. metric_value goes through dbt's type_float, which is double
-   precision on some adapters and single on others (DuckDB and ClickHouse
-   among them). At single precision a value around 45 carries roughly 1e-5 of
-   representation error, so a threshold within a few orders of magnitude of
-   that measures storage noise rather than the data. A relative threshold is
-   unaffected, since the error scales with the value.
+   max_change_absolute is one number for every column, metric and dimension the
+   test covers, so it only means something when they share a scale. A test over
+   a 0-100 margin and a 0-1 rate holds both to the same raw move, and a test
+   over `average` and `null_count` holds a ratio and a row count to it. Use one
+   test per scale, or max_change_percent, which is scale-free.
+
+   Both thresholds are bounded by how precisely the warehouse stores a metric.
+   metric_value goes through dbt's type_float, which is 4 bytes on DuckDB,
+   ClickHouse, Spark, Databricks and Dremio. There a sum of 12345678.30
+   restated to 12345678.00 stores as the same value twice, and no threshold,
+   relative or absolute, can see a move that was never recorded.
 
    Configuration, baseline behavior, and limits:
    https://docs.elementary-data.com/data-tests/metric-stability #}
@@ -25,7 +29,7 @@
     timestamp_column,
     min_bucket_age,
     change_since=["last_check"],
-    max_change_percent=none,
+    max_change_percent=0,
     max_change_absolute=none,
     time_bucket=none,
     where_expression=none,
@@ -55,6 +59,8 @@
         days_back,
         backfill_days,
     ) %}
+    {% set max_change_percent = arguments.max_change_percent %}
+    {% set max_change_absolute = arguments.max_change_absolute %}
     {% set model_relation = arguments.model_relation %}
     {% set model_graph_node = arguments.model_graph_node %}
     {% set timestamp_column = arguments.timestamp_column %}
@@ -412,24 +418,44 @@
         }}
     {%- endif %}
 
-    {#- A percent below the noise floor is clamped up to it by the query, so
-        it would silently mean something other than what was written. An
-        absolute threshold has no such floor: it renders at full precision and
-        is used as given, so any positive value is honoured. -#}
-    {%- for arg_name, arg_value, example, minimum in [
-        ("max_change_percent", max_change_percent, "25", 0.000000001),
-        ("max_change_absolute", max_change_absolute, "0.20", none),
+    {#- max_change_percent defaults to 0, so a none here can only come from an
+        explicit `max_change_percent: null`. master rejected that, and it must
+        not quietly become "report any change at all".
+
+        Numeric strings are accepted rather than rejected. dbt-core reads YAML
+        1.1, where a float needs a decimal point, so `max_change_absolute: 2e-3`
+        (a natural way to write 20bp on a 0-1 scale) arrives as the string
+        '2e-3'. Telling the user to write it unquoted, when they already did,
+        is not something they can act on. -#}
+    {%- set thresholds = {} %}
+    {%- for arg_name, arg_value, example, optional in [
+        ("max_change_percent", max_change_percent, "25", false),
+        ("max_change_absolute", max_change_absolute, "0.20", true),
     ] %}
-        {%- if arg_value is not none %}
+        {%- if arg_value is none %}
+            {%- if not optional %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name
+                        ~ " cannot be null. Omit it to keep the default of 0,"
+                        ~ " or give a number."
+                    )
+                }}
+            {%- endif %}
+            {%- do thresholds.update({arg_name: none}) %}
+        {%- else %}
             {#- bool subclasses int in python, so `is number` alone lets
-                `max_change_percent: true` through as a threshold of 1. -#}
-            {%- if arg_value is not number or arg_value is boolean %}
+                `max_change_percent: true` through as a threshold of 1. Parsing
+                twice with different fallbacks separates a value that failed to
+                parse from one that happens to equal a fallback. -#}
+            {%- set parsed = arg_value | float(1.0) %}
+            {%- if arg_value is boolean or parsed != arg_value | float(2.0) %}
                 {{
                     exceptions.raise_compiler_error(
                         arg_name
                         ~ " must be a number, got '"
                         ~ arg_value
-                        ~ "'. Write it unquoted, e.g. "
+                        ~ "'. For example "
                         ~ arg_name
                         ~ ": "
                         ~ example
@@ -437,30 +463,31 @@
                     )
                 }}
             {%- endif %}
-            {%- if arg_value < 0 %}
+            {#- inf is a number, is not negative and clears every bound, so
+                without this it renders as a bare inf: most warehouses read
+                that as an unknown column and fail at runtime, and ClickHouse
+                reads it as a literal that makes every comparison false, so the
+                test would simply never fail again. nan is already rejected
+                above, because it is not equal to itself and so fails the
+                two-parse comparison. -#}
+            {%- if parsed - parsed != 0 %}
                 {{
                     exceptions.raise_compiler_error(
-                        arg_name ~ " must be non-negative."
+                        arg_name ~ " must be finite, got '" ~ arg_value ~ "'."
                     )
                 }}
             {%- endif %}
-            {%- if minimum is not none and arg_value > 0 and arg_value < minimum %}
+            {%- if parsed < 0 %}
                 {{
                     exceptions.raise_compiler_error(
-                        arg_name
-                        ~ " is "
-                        ~ arg_value
-                        ~ ", below the floating-point noise floor this test"
-                        ~ " applies ("
-                        ~ minimum
-                        ~ "). Anything smaller would be raised to the floor"
-                        ~ " rather than applied. Use a larger value, use"
-                        ~ " max_change_absolute, or rescale the metric."
+                        arg_name ~ " must be non-negative, got '" ~ arg_value ~ "'."
                     )
                 }}
             {%- endif %}
+            {%- do thresholds.update({arg_name: parsed}) %}
         {%- endif %}
     {%- endfor %}
+
     {%- for arg_name, arg_value in [
         ("days_back", days_back),
         ("backfill_days", backfill_days),
@@ -607,6 +634,8 @@
             "columns": column_definitions,
             "metrics": metrics,
             "change_since": change_since,
+            "max_change_percent": thresholds["max_change_percent"],
+            "max_change_absolute": thresholds["max_change_absolute"],
             "model_relation": model_relation,
             "model_graph_node": model_graph_node,
             "timestamp_column": timestamp_column,
