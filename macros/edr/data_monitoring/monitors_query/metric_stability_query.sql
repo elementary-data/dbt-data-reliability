@@ -80,14 +80,19 @@
        max_change_absolute: 1, went unreported).
 
        comparison_tolerance absorbs the representation error in the comparison
-       itself. A decimal threshold has no exact binary form, so 45.30 -> 45.10
+       itself. It is about 4 ulps of a double, which is the smallest value that
+       still covers the boundary cases below with room to spare (measured: 30x
+       the worst observed excess, over magnitudes from 0.1 to 1e12). Sizing it
+       more loosely masks real moves on large metrics: at 1e-13 a baseline of
+       1e12 carries a tolerance of 0.2, which hides a move of 0.01 under an
+       absolute threshold of 0.001. A decimal threshold has no exact binary form, so 45.30 -> 45.10
        is 0.19999999999999574 while 45.50 -> 45.30 is 0.20000000000000284, and
        without it the same 20bp move is reported in one direction only. A fixed
        slack cannot do this, because that error grows with the operands: at a
        bucket of 12345678.30 it reaches 1e-9, five orders of magnitude above a
        slack sized for values around 45. #}
     {%- set noise_floor = 0.00000000001 %}
-    {%- set comparison_tolerance = 0.0000000000001 %}
+    {%- set comparison_tolerance = 0.000000000000001 %}
 
     {#- Thresholds render through `string`, python's shortest round-tripping
         form, so the literal in the SQL is the double that was configured.
