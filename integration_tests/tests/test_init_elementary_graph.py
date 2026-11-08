@@ -19,6 +19,10 @@ ENTRIES = {
     [
         pytest.param({}, id="empty_entry_left_by_an_earlier_read"),
         pytest.param({"tests_schema_name": "kept"}, id="entry_with_a_value"),
+        pytest.param(
+            {"elementary_test_results": {"test.pkg.not_null_id": [{"status": "pass"}]}},
+            id="cache_entry_with_results",
+        ),
     ],
 )
 def test_init_elementary_graph_fills_every_missing_entry(
