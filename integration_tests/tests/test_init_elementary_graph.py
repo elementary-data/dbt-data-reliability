@@ -3,14 +3,17 @@ import json
 import pytest
 from dbt_project import DbtProject
 
-ENTRIES = {
-    "elementary_test_results",
-    "elementary_test_failed_row_counts",
-    "tests_schema_name",
-    "tables",
-    "temp_test_table_relations_map",
-    "duration_context_stack",
-    "microbatch_compiled_code_by_unique_id",
+DEFAULTS = {
+    "elementary_test_results": {},
+    "elementary_test_failed_row_counts": {},
+    "tests_schema_name": None,
+    "tables": {
+        "metrics": {"relations": [], "rows": []},
+        "schema_snapshots": [],
+    },
+    "temp_test_table_relations_map": {},
+    "duration_context_stack": {},
+    "microbatch_compiled_code_by_unique_id": {},
 }
 
 
@@ -39,10 +42,4 @@ def test_init_elementary_graph_fills_every_missing_entry(
         macro_args={"existing": existing},
     )
     elementary_graph = json.loads(result[0])
-    assert set(elementary_graph) == ENTRIES
-    assert elementary_graph["tables"] == {
-        "metrics": {"relations": [], "rows": []},
-        "schema_snapshots": [],
-    }
-    for entry, value in existing.items():
-        assert elementary_graph[entry] == value
+    assert elementary_graph == {**DEFAULTS, **existing}
