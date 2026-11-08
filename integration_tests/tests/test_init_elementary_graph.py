@@ -28,6 +28,12 @@ ENTRIES = {
 def test_init_elementary_graph_fills_every_missing_entry(
     dbt_project: DbtProject, existing: dict
 ):
+    """init_elementary_graph fills each missing entry and keeps the ones present.
+
+    `existing` is what an earlier read can leave under graph["elementary"]: dbt v2
+    shares `graph` between parsing and the run, so a get_cache rendered at parse
+    time leaves an empty mapping before the on-run-start hook runs.
+    """
     result = dbt_project.dbt_runner.run_operation(
         "elementary_tests.test_init_elementary_graph",
         macro_args={"existing": existing},
