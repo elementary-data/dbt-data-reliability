@@ -35,13 +35,23 @@
             }
         ) %}
     {% endif %}
+    {#
+        dbt-core exposes the time since the last load as `age`; dbt-fusion has no
+        `age` and exposes it as `max_loaded_at_time_ago_in_s` (the sources.json name).
+    #}
+    {% set max_loaded_at_time_ago_in_s = result_dict.get("age") %}
+    {% if max_loaded_at_time_ago_in_s is none %}
+        {% set max_loaded_at_time_ago_in_s = result_dict.get(
+            "max_loaded_at_time_ago_in_s"
+        ) %}
+    {% endif %}
     {% do return(
         {
             "unique_id": result_dict.node.unique_id,
             "status": result_dict.status,
             "max_loaded_at": result_dict.max_loaded_at,
             "snapshotted_at": result_dict.snapshotted_at,
-            "max_loaded_at_time_ago_in_s": result_dict.age,
+            "max_loaded_at_time_ago_in_s": max_loaded_at_time_ago_in_s,
             "criteria": result_dict.node.get("freshness", {}),
             "adapter_response": result_dict.adapter_response,
             "timing": result_dict.timing,
