@@ -191,10 +191,13 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         dbt_project, {"source_freshness_run_project_hooks": True}
     ):
         dbt_project.dbt_runner.source_freshness()
-        dbt_project.read_table(
+        results = dbt_project.read_table(
             "dbt_source_freshness_results",
             where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
             raise_if_empty=True,
+        )
+        assert all(
+            result["max_loaded_at_time_ago_in_s"] is not None for result in results
         )
 
 
