@@ -149,11 +149,14 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     database_property, schema_property = get_database_and_schema_properties(
         dbt_project.target
     )
-    loaded_at_field = (
-        '"UPDATE_TIME"::timestamp'
-        if dbt_project.target != "dremio"
-        else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
-    )
+    if dbt_project.target == "dremio":
+        loaded_at_field = (
+            "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
+        )
+    elif dbt_project.is_tsql:
+        loaded_at_field = 'CAST("UPDATE_TIME" AS datetime2(6))'
+    else:
+        loaded_at_field = '"UPDATE_TIME"::timestamp'
     source_def = {
         "name": "test_source",
         "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
