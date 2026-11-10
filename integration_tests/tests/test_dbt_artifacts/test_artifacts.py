@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 from dbt_flags import set_flags
-from dbt_project import DbtProject
+from dbt_project import SCHEMA_NAME_SUFFIX, DbtProject
 from dbt_utils import get_database_and_schema_properties
 
 TEST_MODEL = "one"
@@ -156,7 +156,7 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     )
     source_def = {
         "name": "test_source",
-        "schema": f"{{{{ target.{schema_property} }}}}",
+        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
         "tables": [
             {
                 "name": test_id,
