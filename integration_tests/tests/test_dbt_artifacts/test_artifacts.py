@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 from dbt_flags import set_flags
-from dbt_project import DbtProject
+from dbt_project import SCHEMA_NAME_SUFFIX, DbtProject
 from dbt_utils import get_database_and_schema_properties
 
 TEST_MODEL = "one"
@@ -143,19 +143,24 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 
 @pytest.mark.requires_dbt_version("1.8.0")
-@pytest.mark.skip_for_dbt_fusion
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     database_property, schema_property = get_database_and_schema_properties(
         dbt_project.target
     )
-    loaded_at_field = (
-        '"UPDATE_TIME"::timestamp'
-        if dbt_project.target != "dremio"
-        else "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
-    )
+    if dbt_project.target == "dremio":
+        loaded_at_field = (
+            "TO_TIMESTAMP(SUBSTRING(UPDATE_TIME, 0, 23), 'YYYY-MM-DD HH24:MI:SS.FFF')"
+        )
+    elif dbt_project.is_tsql:
+        loaded_at_field = 'CAST("UPDATE_TIME" AS datetime2(6))'
+    elif dbt_project.target in ("spark", "databricks_catalog", "bigquery"):
+        # Double quotes are string literals on these targets.
+        loaded_at_field = "CAST(UPDATE_TIME AS timestamp)"
+    else:
+        loaded_at_field = 'CAST("UPDATE_TIME" AS timestamp)'
     source_def = {
         "name": "test_source",
-        "schema": f"{{{{ target.{schema_property} }}}}",
+        "schema": f"{{{{ target.{schema_property} }}}}{SCHEMA_NAME_SUFFIX}",
         "tables": [
             {
                 "name": test_id,
@@ -191,11 +196,17 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         dbt_project, {"source_freshness_run_project_hooks": True}
     ):
         dbt_project.dbt_runner.source_freshness()
-        dbt_project.read_table(
+        results = dbt_project.read_table(
             "dbt_source_freshness_results",
             where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
             raise_if_empty=True,
         )
+        # dbt-dremio doesn't implement current_timestamp, so dbt can't compute
+        # freshness there and stores an error row without the age.
+        if dbt_project.target != "dremio":
+            assert all(
+                row["max_loaded_at_time_ago_in_s"] is not None for row in results
+            )
 
 
 def test_timings(dbt_project: DbtProject):
