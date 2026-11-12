@@ -53,10 +53,6 @@
     ) %}
 {% endmacro %}
 
-{#
-    dbt-core exposes the time since the last load as `age`; dbt-fusion has no
-    `age` and exposes it as `max_loaded_at_time_ago_in_s` (the sources.json name).
-#}
 {% macro get_freshness_result_age(result_dict) %}
     {% if elementary.is_dbt_fusion() %}
         {% do return(result_dict.get("max_loaded_at_time_ago_in_s")) %}
