@@ -143,7 +143,6 @@ def test_metrics_anomaly_score(dbt_project: DbtProject):
 
 
 @pytest.mark.requires_dbt_version("1.8.0")
-@pytest.mark.skip_for_dbt_fusion
 def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
     database_property, schema_property = get_database_and_schema_properties(
         dbt_project.target
@@ -191,11 +190,12 @@ def test_source_freshness_results(test_id: str, dbt_project: DbtProject):
         dbt_project, {"source_freshness_run_project_hooks": True}
     ):
         dbt_project.dbt_runner.source_freshness()
-        dbt_project.read_table(
+        results = dbt_project.read_table(
             "dbt_source_freshness_results",
             where=f"unique_id = 'source.elementary_tests.test_source.{test_id}'",
             raise_if_empty=True,
         )
+        assert all(row["max_loaded_at_time_ago_in_s"] is not None for row in results)
 
 
 def test_timings(dbt_project: DbtProject):
