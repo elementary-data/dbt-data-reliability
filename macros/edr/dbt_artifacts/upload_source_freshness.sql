@@ -58,11 +58,10 @@
     `age` and exposes it as `max_loaded_at_time_ago_in_s` (the sources.json name).
 #}
 {% macro get_freshness_result_age(result_dict) %}
-    {% set age = result_dict.get("age") %}
-    {% if age is none %}
-        {% set age = result_dict.get("max_loaded_at_time_ago_in_s") %}
+    {% if elementary.is_dbt_fusion() %}
+        {% do return(result_dict.get("max_loaded_at_time_ago_in_s")) %}
     {% endif %}
-    {% do return(age) %}
+    {% do return(result_dict.get("age")) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}
