@@ -41,7 +41,9 @@
             "status": result_dict.status,
             "max_loaded_at": result_dict.max_loaded_at,
             "snapshotted_at": result_dict.snapshotted_at,
-            "max_loaded_at_time_ago_in_s": result_dict.age,
+            "max_loaded_at_time_ago_in_s": elementary.get_freshness_result_age(
+                result_dict
+            ),
             "criteria": result_dict.node.get("freshness", {}),
             "adapter_response": result_dict.adapter_response,
             "timing": result_dict.timing,
@@ -49,6 +51,13 @@
             "execution_time": result_dict.execution_time,
         }
     ) %}
+{% endmacro %}
+
+{% macro get_freshness_result_age(result_dict) %}
+    {% if elementary.is_dbt_fusion() %}
+        {% do return(result_dict.get("max_loaded_at_time_ago_in_s")) %}
+    {% endif %}
+    {% do return(result_dict.get("age")) %}
 {% endmacro %}
 
 {% macro flatten_source_freshness(node_dict) %}
