@@ -4,7 +4,7 @@
 
 {% macro default__get_latest_full_refresh(model_node) %}
     {%- set dbt_run_results_relation = elementary.get_elementary_relation(
-        "dbt_run_results"
+        "dbt_run_results", allow_deferred_fallback=true
     ) %}
     {% set query %}
         select generated_at from {{ dbt_run_results_relation }}
@@ -19,7 +19,7 @@
 
 {% macro fabric__get_latest_full_refresh(model_node) %}
     {%- set dbt_run_results_relation = elementary.get_elementary_relation(
-        "dbt_run_results"
+        "dbt_run_results", allow_deferred_fallback=true
     ) %}
     {% set query %}
         select top 1 generated_at from {{ dbt_run_results_relation }}

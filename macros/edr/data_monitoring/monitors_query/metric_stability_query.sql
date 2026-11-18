@@ -16,7 +16,7 @@
 ) %}
     {%- if not data_monitoring_metrics_table %}
         {%- set data_monitoring_metrics_table = elementary.get_elementary_relation(
-            "data_monitoring_metrics"
+            "data_monitoring_metrics", allow_deferred_fallback=true
         ) %}
     {%- endif %}
 
