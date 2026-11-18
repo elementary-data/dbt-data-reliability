@@ -114,3 +114,9 @@
     -- Dremio CURRENT_TIMESTAMP() is always in UTC
     current_timestamp()
 {%- endmacro -%}
+
+{% macro vertica__edr_current_timestamp_in_utc() -%}
+    {#- dbt's default falls back to the session-local current_timestamp, which
+        is off by the server's UTC offset whenever Vertica is not set to UTC. -#}
+    cast(current_timestamp at time zone 'UTC' as timestamp)
+{%- endmacro -%}
