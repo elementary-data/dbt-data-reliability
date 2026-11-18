@@ -40,6 +40,38 @@ def test_artifacts_updating(dbt_project: DbtProject):
     assert first_row != second_row, "Artifacts are not updated at the on-run-end."
 
 
+@pytest.mark.skip_targets(["dremio"])
+def test_artifacts_diff_removes_duplicated_hashes(dbt_project: DbtProject):
+    # Disabled by default in the tests for performance reasons.
+    dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
+
+    dbt_project.dbt_runner.vars["cache_artifacts"] = True
+
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    metadata_hashes = [
+        row["metadata_hash"] for row in dbt_project.read_table("dbt_models")
+    ]
+    assert len(metadata_hashes) == len(set(metadata_hashes))
+
+    # Leave every stored hash duplicated, as two overlapping uploads would.
+    dbt_project.dbt_runner.run_operation(
+        "elementary_tests.duplicate_table_rows",
+        macro_args={"table_name": "dbt_models"},
+    )
+    assert len(dbt_project.read_table("dbt_models")) == 2 * len(metadata_hashes)
+
+    dbt_project.dbt_runner.run(select=TEST_MODEL)
+    new_metadata_hashes = [
+        row["metadata_hash"] for row in dbt_project.read_table("dbt_models")
+    ]
+    assert len(new_metadata_hashes) == len(
+        set(new_metadata_hashes)
+    ), "Duplicated artifacts were not removed by the diff upload."
+    assert set(new_metadata_hashes) == set(
+        metadata_hashes
+    ), "Artifacts were lost while removing the duplicated ones."
+
+
 def test_artifacts_collection_in_multiple_row_batches(dbt_project: DbtProject):
     existing_artifacts = dbt_project.read_table("dbt_models")
 
