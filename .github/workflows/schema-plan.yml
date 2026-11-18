@@ -1,0 +1,48 @@
+name: Review schema changes
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schema-plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  schema-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dbt and DuckDB adapter
+        run: pip install dbt-core==1.11.14 dbt-duckdb==1.10.1
+
+      - name: Generate local-only profiles
+        run: |
+          profiles_dir="$RUNNER_TEMP/dbt-plan-profiles"
+          python integration_tests/profiles/generate_profiles.py \
+            --template integration_tests/profiles/profiles.yml.j2 \
+            --output "$profiles_dir/profiles.yml" \
+            --schema-name dbt_plan_pilot
+          echo "DBT_PROFILES_DIR=$profiles_dir" >> "$GITHUB_ENV"
+
+      - name: Review compiled schema changes
+        uses: PresentJay/dbt-plan@0954f1dc64bc3596c8b2dcc77b034c9cd1c34704 # v0.18.3
+        with:
+          version: "0.18.3"
+          fail-on: never
+          compile-command: dbt deps && dbt compile --target duckdb --no-partial-parse
