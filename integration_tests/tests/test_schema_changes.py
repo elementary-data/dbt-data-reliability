@@ -74,3 +74,47 @@ def test_schema_changes_from_baseline(test_id: str, dbt_project: DbtProject):
         multiple_results=True,
     )
     assert_test_results(test_results)
+
+
+POSTGRES_ALIASES_MODEL_SQL = """
+select
+    cast(1 as integer) as id,
+    cast('2024-01-01 00:00:00' as timestamp) as updated_at,
+    cast('12:00:00' as time) as opened_at,
+    cast(1.5 as float) as score
+"""
+
+
+# Postgres reports these columns as "integer", "timestamp without time zone",
+# "time without time zone" and "double precision". A baseline that declares
+# them with their standard aliases should not report type changes.
+@pytest.mark.only_on_targets(["postgres"])
+@pytest.mark.parametrize("int_alias", ["int", "int4"])
+def test_schema_changes_from_baseline_postgres_type_aliases(
+    test_id: str, dbt_project: DbtProject, int_alias: str
+):
+    model_name = test_id.replace("[", "_").replace("]", "_")
+    with dbt_project.create_temp_model_for_existing_table(
+        model_name, materialization="table", raw_code=POSTGRES_ALIASES_MODEL_SQL
+    ) as model_path:
+        assert dbt_project.dbt_runner.run(select=str(model_path))
+
+    test_results = dbt_project.test(
+        test_id,
+        "elementary.schema_changes_from_baseline",
+        test_args={"fail_on_added": True, "enforce_types": True},
+        columns=[
+            {"name": "id", "data_type": int_alias},
+            {"name": "updated_at", "data_type": "timestamp"},
+            {"name": "opened_at", "data_type": "time"},
+            {"name": "score", "data_type": "float"},
+        ],
+        as_model=True,
+        multiple_results=True,
+    )
+    failures = [
+        (result["column_name"], result["test_results_description"])
+        for result in test_results
+        if result["status"] != "pass"
+    ]
+    assert not failures

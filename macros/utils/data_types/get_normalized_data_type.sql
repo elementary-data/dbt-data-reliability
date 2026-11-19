@@ -230,6 +230,10 @@
 {% macro postgres__get_normalized_data_type(exact_data_type) %}
     {# understanding Postgres data type synonyms:
  https://www.postgresql.org/docs/current/datatype.html #}
+    {# Columns read from the database carry the info schema name (e.g. INTEGER,
+       TIMESTAMP WITHOUT TIME ZONE), so an alias has to map to the same value as
+       that name. "INT, INT4" is kept as is because it is already stored in
+       schema_columns_snapshot for every integer column. #}
     {% set exact_data_type_to_data_type_returned_by_the_info_schema = {
         "BIGINT": "INT8",
         "BIGSERIAL": "SERIAL8",
@@ -246,6 +250,11 @@
         "SERIAL": "SERIAL4",
         "TIME WITH TIME ZONE": "TIMETZ",
         "TIMESTAMP WITH TIME ZONE": "TIMESTAMPTZ",
+        "INT": "INT, INT4",
+        "INT4": "INT, INT4",
+        "FLOAT": "FLOAT8",
+        "TIME": "TIME WITHOUT TIME ZONE",
+        "TIMESTAMP": "TIMESTAMP WITHOUT TIME ZONE",
     } %}
     {%- if exact_data_type in exact_data_type_to_data_type_returned_by_the_info_schema %}
         {{
