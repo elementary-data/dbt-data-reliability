@@ -210,6 +210,37 @@ def test_timings(dbt_project: DbtProject):
     assert results[0]["execute_started_at"]
 
 
+def test_run_results_execution_time_precision(dbt_project: DbtProject):
+    # dbt reports execution_time as a Python float (8 bytes). A 4-byte float
+    # column keeps ~7 significant digits and would store this as ~1234.5679.
+    execution_time = 1234.5678901234
+    model_execution_id = "precision_sentinel.%s" % datetime.utcnow().timestamp()
+
+    # Rebuild so the table picks up the current column types even if an older
+    # version of the package created it in this schema.
+    dbt_project.dbt_runner.run(
+        select="dbt_run_results",
+        full_refresh=True,
+        vars={"elementary_full_refresh": True},
+    )
+    dbt_project.dbt_runner.run_operation(
+        "elementary_tests.insert_run_result_row",
+        macro_args={
+            "model_execution_id": model_execution_id,
+            "execution_time": execution_time,
+        },
+    )
+    results = dbt_project.run_query(
+        """select execution_time from {{ ref("dbt_run_results") }} where model_execution_id='%s'"""
+        % model_execution_id
+    )
+
+    assert len(results) == 1
+    assert float(results[0]["execution_time"]) == pytest.approx(
+        execution_time, abs=1e-9
+    )
+
+
 @pytest.mark.skip_for_dbt_fusion
 def test_compiled_code_preserves_newlines(dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_dbt_artifacts_autoupload"] = False
