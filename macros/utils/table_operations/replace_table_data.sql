@@ -60,12 +60,12 @@
         relation, rows, temporary=True
     ) %}
 
-    {% do elementary.run_query("begin") %}
-    {% do elementary.run_query("delete from " ~ relation) %}
-    {% do elementary.run_query(
+    {% do elementary.execute_no_fetch("begin") %}
+    {% do elementary.execute_no_fetch("delete from " ~ relation) %}
+    {% do elementary.execute_no_fetch(
         "insert into " ~ relation ~ " select * from " ~ intermediate_relation
     ) %}
-    {% do elementary.run_query("commit") %}
+    {% do elementary.execute_no_fetch("commit") %}
 
     {% do adapter.drop_relation(intermediate_relation) %}
 {% endmacro %}
@@ -80,8 +80,8 @@
         relation, rows, temporary=True
     ) %}
 
-    {% do elementary.run_query("delete from " ~ relation) %}
-    {% do elementary.run_query(
+    {% do elementary.execute_no_fetch("delete from " ~ relation) %}
+    {% do elementary.execute_no_fetch(
         "insert into " ~ relation ~ " select * from " ~ intermediate_relation
     ) %}
 
@@ -127,7 +127,7 @@
    Uses explicit TRUNCATE with on_cluster_clause for distributed/replicated tables,
    matching the pattern in delete_and_insert.sql and clean_elementary_test_tables.sql. #}
 {% macro clickhouse__replace_table_data(relation, rows) %}
-    {% do elementary.run_query(
+    {% do elementary.execute_no_fetch(
         "truncate table " ~ relation ~ " " ~ on_cluster_clause(relation)
     ) %}
     {% do elementary.insert_rows(
