@@ -15,7 +15,7 @@
         {% set legacy_tests_schema_name = (
             elementary_schema ~ LEGACY_TESTS_SCHEMA_SUFFIX
         ) %}
-        {% if adapter.check_schema_exists(
+        {% if elementary.tests_schema_exists(
             elementary_database, legacy_tests_schema_name
         ) %}
             {% set tests_schema_name = legacy_tests_schema_name %}
@@ -25,4 +25,19 @@
     {% do elementary.set_cache("tests_schema_name", tests_schema_name) %}
 
     {{ return(tests_schema_name) }}
+{% endmacro %}
+
+{% macro tests_schema_exists(database, schema) %}
+    {% do return(
+        adapter.dispatch("tests_schema_exists", "elementary")(database, schema)
+    ) %}
+{% endmacro %}
+
+{% macro default__tests_schema_exists(database, schema) %}
+    {% do return(adapter.check_schema_exists(database, schema)) %}
+{% endmacro %}
+
+{# A ClickHouse relation's database must equal its schema, so the tests schema is its own database #}
+{% macro clickhouse__tests_schema_exists(database, schema) %}
+    {% do return(adapter.check_schema_exists(schema, schema)) %}
 {% endmacro %}
