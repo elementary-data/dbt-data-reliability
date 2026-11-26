@@ -1,4 +1,3 @@
-import pytest
 from dbt_project import DbtProject
 
 SAFE_QUERY_SIZE = 10000
@@ -18,7 +17,6 @@ def read_run_result(dbt_project, test_id):
     )[0]
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_query_size_exceed(test_id: str, dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
     max_query_size = int(
@@ -37,7 +35,6 @@ def test_query_size_exceed(test_id: str, dbt_project: DbtProject):
         assert len(result["compiled_code"]) < max_query_size
 
 
-@pytest.mark.skip_for_dbt_fusion
 def test_query_size_safe(test_id: str, dbt_project: DbtProject):
     dbt_project.dbt_runner.vars["disable_run_results"] = False
     query = generate_query(SAFE_QUERY_SIZE)
