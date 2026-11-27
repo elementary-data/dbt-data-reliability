@@ -1,4 +1,25 @@
 {# Detect restatements of settled bucket metrics within the observation window.
+
+   Thresholds: max_change_percent is relative, which suits magnitudes whose
+   scale varies between models. max_change_absolute is the raw move, which
+   suits ratios that already sit on a fixed scale (20 basis points is 0.20 on a
+   0-100 scale). Setting both fails only when both are exceeded, so the
+   absolute one acts as a noise floor under the relative one. At a zero
+   baseline, where relative change has no meaning, the absolute threshold
+   decides on its own.
+
+   max_change_absolute is one number for every column, metric and dimension the
+   test covers, so it only means something when they share a scale. A test over
+   a 0-100 margin and a 0-1 rate holds both to the same raw move, and a test
+   over `average` and `null_count` holds a ratio and a row count to it. Use one
+   test per scale, or max_change_percent, which is scale-free.
+
+   Both thresholds are bounded by how precisely the warehouse stores a metric.
+   metric_value goes through dbt's type_float, which is 4 bytes on DuckDB,
+   ClickHouse, Spark, Databricks and Dremio. There a sum of 12345678.30
+   restated to 12345678.00 stores as the same value twice, and no threshold,
+   relative or absolute, can see a move that was never recorded.
+
    Configuration, baseline behavior, and limits:
    https://docs.elementary-data.com/data-tests/metric-stability #}
 {% test metric_stability(
@@ -9,6 +30,7 @@
     min_bucket_age,
     change_since=["last_check"],
     max_change_percent=0,
+    max_change_absolute=none,
     time_bucket=none,
     where_expression=none,
     days_back=none,
@@ -33,9 +55,12 @@
         min_bucket_age,
         change_since,
         max_change_percent,
+        max_change_absolute,
         days_back,
         backfill_days,
     ) %}
+    {% set max_change_percent = arguments.max_change_percent %}
+    {% set max_change_absolute = arguments.max_change_absolute %}
     {% set model_relation = arguments.model_relation %}
     {% set model_graph_node = arguments.model_graph_node %}
     {% set timestamp_column = arguments.timestamp_column %}
@@ -96,6 +121,7 @@
         days_back=days_back,
         min_bucket_age=min_bucket_age,
         max_change_percent=max_change_percent,
+        max_change_absolute=max_change_absolute,
         change_since=change_since,
         column_names=collected.columns,
         measurement_windows=collected.windows,
@@ -362,6 +388,7 @@
     min_bucket_age,
     change_since,
     max_change_percent,
+    max_change_absolute,
     days_back,
     backfill_days
 ) %}
@@ -391,22 +418,72 @@
         }}
     {%- endif %}
 
-    {%- if max_change_percent is not number %}
-        {{
-            exceptions.raise_compiler_error(
-                "max_change_percent must be a number, got '"
-                ~ max_change_percent
-                ~ "'. Write it unquoted, e.g. max_change_percent: 25."
-            )
-        }}
-    {%- endif %}
-    {%- if max_change_percent < 0 %}
-        {{
-            exceptions.raise_compiler_error(
-                "max_change_percent must be non-negative."
-            )
-        }}
-    {%- endif %}
+    {#- max_change_percent defaults to 0, so a none here can only come from an
+        explicit `max_change_percent: null`. master rejected that, and it must
+        not quietly become "report any change at all". -#}
+    {%- set thresholds = {} %}
+    {%- for arg_name, arg_value, example, optional in [
+        ("max_change_percent", max_change_percent, "25", false),
+        ("max_change_absolute", max_change_absolute, "0.20", true),
+    ] %}
+        {%- if arg_value is none %}
+            {%- if not optional %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name
+                        ~ " cannot be null. Omit it to keep the default of 0,"
+                        ~ " or give a number."
+                    )
+                }}
+            {%- endif %}
+            {%- do thresholds.update({arg_name: none}) %}
+        {%- else %}
+            {#- bool subclasses int in python, so `is number` alone lets
+                `max_change_percent: true` through as a threshold of 1.
+
+                The message names the decimal point because dbt reads YAML 1.1,
+                where an exponent written without one is text rather than a
+                number: `max_change_absolute: 2e-3`, a natural way to write 20bp
+                on a 0-1 scale, arrives here as the string '2e-3'. Telling the
+                user to unquote something they never quoted is not actionable. -#}
+            {%- if arg_value is boolean or arg_value is not number %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name
+                        ~ " must be a number, got '"
+                        ~ arg_value
+                        ~ "'. Write it with a decimal point, e.g. "
+                        ~ arg_name
+                        ~ ": "
+                        ~ example
+                        ~ ". An exponent without one, such as 2e-3, is read as"
+                        ~ " text rather than a number."
+                    )
+                }}
+            {%- endif %}
+            {#- inf and nan are numbers, are not negative and clear every bound,
+                so without this they render as a bare inf / nan: most warehouses
+                read that as an unknown column and fail at runtime, and
+                ClickHouse reads it as a literal that makes every comparison
+                false, so the test would simply never fail again. -#}
+            {%- if arg_value - arg_value != 0 %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name ~ " must be finite, got '" ~ arg_value ~ "'."
+                    )
+                }}
+            {%- endif %}
+            {%- if arg_value < 0 %}
+                {{
+                    exceptions.raise_compiler_error(
+                        arg_name ~ " must be non-negative, got '" ~ arg_value ~ "'."
+                    )
+                }}
+            {%- endif %}
+            {%- do thresholds.update({arg_name: arg_value}) %}
+        {%- endif %}
+    {%- endfor %}
+
     {%- for arg_name, arg_value in [
         ("days_back", days_back),
         ("backfill_days", backfill_days),
@@ -553,6 +630,8 @@
             "columns": column_definitions,
             "metrics": metrics,
             "change_since": change_since,
+            "max_change_percent": thresholds["max_change_percent"],
+            "max_change_absolute": thresholds["max_change_absolute"],
             "model_relation": model_relation,
             "model_graph_node": model_graph_node,
             "timestamp_column": timestamp_column,
