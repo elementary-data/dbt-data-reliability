@@ -83,7 +83,9 @@
         "compile_completed_at": none,
         "full_refresh": flags.FULL_REFRESH,
         "compiled_code": elementary.get_compiled_code(
-            node, as_column_value=true
+            node,
+            as_column_value=true,
+            compiled_code=run_result_dict.get("compiled_code"),
         ),
         "failures": run_result_dict.get("failures"),
         "query_id": run_result_dict.get("adapter_response", {}).get(

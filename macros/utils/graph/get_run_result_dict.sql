@@ -27,6 +27,11 @@
                     else None
                 ),
                 "thread_id": run_result.thread_id,
+                "compiled_code": (
+                    run_result.compiled_code
+                    if run_result.compiled_code is defined
+                    else None
+                ),
             }
         ) %}
     {% endif %}

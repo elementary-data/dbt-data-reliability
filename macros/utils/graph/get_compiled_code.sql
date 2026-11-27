@@ -1,5 +1,7 @@
-{% macro get_compiled_code(node, as_column_value=false) %}
-    {% set compiled_code = node.get("compiled_code") or node.get("compiled_sql") %}
+{% macro get_compiled_code(node, as_column_value=false, compiled_code=none) %}
+    {% set compiled_code = (
+        compiled_code or node.get("compiled_code") or node.get("compiled_sql")
+    ) %}
     {% if not compiled_code and node and node.get("unique_id") %}
         {% set compiled_code = elementary.get_cache(
             "microbatch_compiled_code_by_unique_id", {}
