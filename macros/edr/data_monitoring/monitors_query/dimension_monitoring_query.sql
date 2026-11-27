@@ -5,7 +5,8 @@
     min_bucket_start,
     max_bucket_end,
     metric_properties,
-    metric_name=none
+    metric_name=none,
+    zero_fill_max_bucket_end=none
 ) %}
     {% set metric_name = metric_name or "dimension" %}
     {% set full_table_name_str = elementary.edr_quote(
@@ -105,6 +106,19 @@
                         buckets.joiner = training_set_dimensions.joiner
                         {# This makes sure we dont create empty buckets for dimensions before their first appearance #}
                         and edr_bucket_end >= dimension_min_bucket_end
+                        {# With include_current_bucket, the bucket in progress ends after zero_fill_max_bucket_end.
+                           A dimension without rows in it has not arrived yet rather than dropped to zero,
+                           so only complete buckets are filled. #}
+                        {% if zero_fill_max_bucket_end %}
+                            and edr_bucket_end
+                            <= {{
+                                elementary.edr_cast_as_timestamp(
+                                    elementary.edr_datetime_to_sql(
+                                        zero_fill_max_bucket_end
+                                    )
+                                )
+                            }}
+                        {% endif %}
                     )
                 where dimension_value is not null
             ),
