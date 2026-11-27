@@ -33,7 +33,7 @@
 {% macro postgres__create_or_replace(
     temporary, relation, sql_query, expiration_hours=none
 ) %}
-    {% do elementary.run_query("BEGIN") %}
+    {% do elementary.execute_no_fetch("BEGIN") %}
     {% do elementary.edr_create_table_as(
         temporary,
         relation,
@@ -41,7 +41,7 @@
         drop_first=true,
         expiration_hours=expiration_hours,
     ) %}
-    {% do elementary.run_query("COMMIT") %}
+    {% do elementary.execute_no_fetch("COMMIT") %}
 {% endmacro %}
 
 {% macro spark__create_or_replace(

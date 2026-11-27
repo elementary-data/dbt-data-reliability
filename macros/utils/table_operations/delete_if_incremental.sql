@@ -5,6 +5,6 @@
         where {{ where_clause }}
     {% endset %}
 
-    {% if is_incremental() %} {% do elementary.run_query(query) %} {% endif %}
+    {% if is_incremental() %} {% do elementary.execute_no_fetch(query) %} {% endif %}
 
 {% endmacro %}
