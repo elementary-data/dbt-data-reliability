@@ -153,6 +153,73 @@ def test_column_anomalies_with_timestamp_as_sql_expression(
     assert test_result["status"] == "pass"
 
 
+def test_anomalyless_numeric_column_anomalies_with_nulls(
+    test_id: str, dbt_project: DbtProject
+):
+    utc_today = datetime.utcnow().date()
+    data: List[Dict[str, Any]] = [
+        {
+            TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT),
+            "amount": amount,
+        }
+        for cur_date in generate_dates(base_date=utc_today - timedelta(1))
+        for amount in [0, 5, 10, None]
+    ]
+    test_args = {
+        "timestamp_column": TIMESTAMP_COLUMN,
+        "column_anomalies": ["max", "min", "average", "sum", "zero_count"],
+    }
+    test_results = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_column="amount",
+        multiple_results=True,
+        test_vars={"force_metrics_backfill": True},
+    )
+    assert test_results
+    assert all(res["status"] == "pass" for res in test_results)
+
+    # NULLs must be skipped, not read as 0 (that would make average 3.75).
+    # zero_count counts NULLs as zeros by design.
+    table_name = test_id.replace("[", "_").replace("]", "_").lower()
+    # The metrics table is append-only, so read only the latest row per metric.
+    metrics = dbt_project.run_query(
+        f"""
+        with metrics_ordered as (
+            select
+                bucket_end,
+                metric_name,
+                metric_value,
+                row_number() over (partition by id order by updated_at desc) as row_num
+            from {{{{ ref("data_monitoring_metrics") }}}}
+            where lower(full_table_name) like '%{table_name}'
+            and lower(column_name) = 'amount'
+        )
+        select bucket_end, metric_name, metric_value from metrics_ordered
+        where row_num = 1
+        """
+    )
+    expected = {
+        name: float(value)
+        for name, value in {
+            "max": 10,
+            "min": 0,
+            "average": 5,
+            "sum": 15,
+            "zero_count": 2,
+        }.items()
+    }
+    values_by_bucket: Dict[str, Dict[str, float]] = {}
+    for metric in metrics:
+        values_by_bucket.setdefault(str(metric["bucket_end"]), {})[
+            metric["metric_name"]
+        ] = float(metric["metric_value"])
+    assert values_by_bucket
+    assert all(values == expected for values in values_by_bucket.values())
+
+
 @Parametrization.autodetect_parameters()
 @Parametrization.case(
     name="true_positive",
