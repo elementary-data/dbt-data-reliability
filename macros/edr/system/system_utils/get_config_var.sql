@@ -164,6 +164,7 @@
         "show_sample_rows_tags": ["show_sample_rows"],
         "bigquery_disable_partitioning": false,
         "bigquery_disable_clustering": false,
+        "bigquery_truncate_nanosecond_timestamps": true,
         "upload_only_current_project_artifacts": false,
         "elementary_extra_indexes": {},
     } %}
