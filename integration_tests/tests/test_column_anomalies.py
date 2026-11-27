@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List
 
+import dateutil.parser
 from data_generator import DATE_FORMAT, generate_dates
 from dbt_project import DbtProject
 from parametrization import Parametrization
@@ -720,3 +721,105 @@ def test_col_excl_detect_train_seven_day_bucket(test_id: str, dbt_project: DbtPr
         "Expected FAIL when exclude_detection_period_from_training=True "
         "(large bucket fix: detection period set to bucket size)"
     )
+
+
+# Regression test for https://github.com/elementary-data/elementary/issues/2370:
+# Sunday rows must land in their week, whichever day the adapter starts weeks on.
+# Short name: the seeded table is named after it, and Postgres allows 63 characters.
+@Parametrization.autodetect_parameters()
+@Parametrization.case(
+    name="source_wednesday_run",
+    as_model=False,
+    run_started_at=datetime(2026, 9, 16, 12),
+)
+@Parametrization.case(
+    name="model_sunday_run",
+    as_model=True,
+    run_started_at=datetime(2026, 9, 13, 12),
+)
+def test_weekly_buckets_sunday_rows(
+    test_id: str, dbt_project: DbtProject, as_model: bool, run_started_at: datetime
+):
+    training_days = 12 * 7
+    run_date = run_started_at.date()
+    dates = generate_dates(
+        base_date=run_date - timedelta(days=1), days_back=training_days + 7
+    )
+    # A different null count each Sunday, so a Sunday in the wrong week shows.
+    sundays = sorted(cur_date for cur_date in dates if cur_date.isoweekday() == 7)
+    sunday_nulls = {sunday: 1 + week % 3 for week, sunday in enumerate(sundays)}
+    data: List[Dict[str, Any]] = [
+        {TIMESTAMP_COLUMN: cur_date.strftime(DATE_FORMAT), "superhero": "Superman"}
+        for cur_date in dates
+    ]
+    data += [
+        {TIMESTAMP_COLUMN: sunday.strftime(DATE_FORMAT), "superhero": None}
+        for sunday, null_count in sunday_nulls.items()
+        for _ in range(null_count)
+    ]
+
+    test_args = {
+        **DBT_TEST_ARGS,
+        "time_bucket": {"period": "week", "count": 1},
+        "training_period": {"period": "day", "count": training_days},
+    }
+    test_result = dbt_project.test(
+        test_id,
+        DBT_TEST_NAME,
+        test_args,
+        data=data,
+        test_column="superhero",
+        as_model=as_model,
+        test_vars={"custom_run_started_at": run_started_at.isoformat()},
+    )
+    assert test_result["status"] == "pass"
+
+    null_counts = _read_weekly_null_counts(dbt_project, test_id)
+    week_start_day = min(null_counts).isoweekday()
+    assert week_start_day in (1, 7), f"{min(null_counts)} is not a Monday or Sunday"
+    training_start = run_date - timedelta(days=training_days)
+    assert null_counts == _expected_weekly_null_counts(
+        sunday_nulls, training_start, run_date, week_start_day
+    )
+
+
+def _read_weekly_null_counts(dbt_project: DbtProject, test_id: str) -> Dict[date, Any]:
+    """The stored null_count of each bucket, by bucket start date."""
+    table_name = test_id.replace("[", "_").replace("]", "_").lower()
+    metrics = dbt_project.run_query(
+        f"""
+        select bucket_start, metric_value
+        from {{{{ ref("data_monitoring_metrics") }}}}
+        where metric_name = 'null_count'
+        and lower(full_table_name) like '%{table_name}'
+        """
+    )
+    assert metrics, "Found no null_count metrics"
+    return {
+        dateutil.parser.parse(str(metric["bucket_start"])).date(): metric[
+            "metric_value"
+        ]
+        for metric in metrics
+    }
+
+
+def _expected_weekly_null_counts(
+    sunday_nulls: Dict[date, int],
+    training_start: date,
+    run_date: date,
+    week_start_day: int,
+) -> Dict[date, int]:
+    """Every full week from the week of training_start to run_date, with its nulls."""
+    week_start = training_start - timedelta(
+        days=(training_start.isoweekday() - week_start_day) % 7
+    )
+    expected = {}
+    while week_start + timedelta(weeks=1) <= run_date:
+        week_end = week_start + timedelta(weeks=1)
+        expected[week_start] = sum(
+            null_count
+            for sunday, null_count in sunday_nulls.items()
+            if week_start <= sunday < week_end
+        )
+        week_start = week_end
+    return expected
