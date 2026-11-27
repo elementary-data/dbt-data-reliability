@@ -120,6 +120,11 @@
 {% macro duckdb__edr_get_create_table_as_sql(
     temporary, relation, sql_query, expiration_hours=none
 ) %}
+    {# dbt-fusion uses connection pooling - DuckDB temp tables are session-scoped and
+       aren't visible in other sessions.  DuckDB also rejects TEMPORARY on a qualified
+       name.  Create regular tables instead - these are cleaned up by Elementary's
+       normal cleanup logic. #}
+    {% set temporary = temporary and not elementary.is_dbt_fusion() %}
   create or replace {% if temporary %} temporary {% endif %} table {{ relation }}
   as {{ sql_query }}
 {% endmacro %}
