@@ -6,7 +6,7 @@
         {% set tests_schema_name = elementary.get_elementary_tests_schema(
             database_name, schema_name
         ) %}
-        {%- if tests_schema_name != schema_name and not adapter.check_schema_exists(
+        {%- if tests_schema_name != schema_name and not elementary.tests_schema_exists(
             database_name, tests_schema_name
         ) %}
             {{ elementary.edr_log("Creating Elementary's tests schema.") }}
