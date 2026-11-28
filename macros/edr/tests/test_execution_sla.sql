@@ -190,7 +190,7 @@
 
     {# Get reference to dbt_run_results table #}
     {% set run_results_relation = elementary.get_elementary_relation(
-        "dbt_run_results"
+        "dbt_run_results", allow_deferred_fallback=true
     ) %}
 
     {% if not run_results_relation %}
